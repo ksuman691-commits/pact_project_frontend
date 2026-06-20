@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosRequestHeaders, InternalAxiosRequestConfig } from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -16,7 +16,7 @@ const api: AxiosInstance = axios.create({
 });
 
 // Add Bearer token to all requests and keep the token in sync with localStorage
-api.interceptors.request.use((config) => {
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (typeof window !== 'undefined') {
     const storedToken = localStorage.getItem('access_token');
     if (storedToken) {
@@ -25,10 +25,11 @@ api.interceptors.request.use((config) => {
   }
 
   if (token) {
+    const headers = config.headers as AxiosRequestHeaders | undefined;
     config.headers = {
-      ...config.headers,
+      ...(headers ?? {}),
       Authorization: `Bearer ${token}`,
-    };
+    } as AxiosRequestHeaders;
   }
 
   return config;
