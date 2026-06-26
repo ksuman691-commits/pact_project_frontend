@@ -1,0 +1,247 @@
+PASTE THIS INTO YOUR LLM (SIMPLIFIED VERSION)
+
+Project: CirclePact NextJS app
+Status: UI built with dummy data, backend APIs exist but not connected
+Need: Fix 10 backend misalignments + integrate APIs
+
+FILES YOU'LL MODIFY:
+- src/components/CirclePactApp.tsx (main dashboard)
+- src/types/index.ts (type definitions)
+- src/services/api.ts (API calls)
+- Create: src/components/VerificationForm.tsx
+- Create: src/components/JoinRequestsModal.tsx
+
+---
+
+ISSUE 1: MOCK PACT DATA
+Location: src/components/CirclePactApp.tsx
+Problem: UI shows believers, doubters, confidence - backend stores different format
+Fix: Call api.get('/pacts/{id}/stats') to fetch: believers_count, confidence_score, verification_count
+Code:
+```
+const getPactStats = async (pactId) => {
+  const res = await api.get(`/pacts/${pactId}/stats`);
+  return res.data; // { believers_count, confidence_score, verification_count }
+};
+
+useEffect(() => {
+  pacts.forEach(pact => {
+    getPactStats(pact.id).then(stats => {
+      setPacts(prev => prev.map(p => p.id === pact.id ? {...p, ...stats} : p));
+    });
+  });
+}, []);
+```
+Test: Network tab should show GET /pacts/{id}/stats
+
+---
+
+ISSUE 2: VOTE BUTTON DOESN'T WORK
+Location: src/components/CirclePactApp.tsx
+Problem: Clicking believe/doubt does nothing. Backend needs 4-question verification.
+Fix: Replace handleVote to open modal with 4 text inputs, then POST /verifications
+Code:
+```
+const submitVerification = async (pactId, answers) => {
+  const res = await api.post('/verifications', {
+    pact_id: pactId,
+    answer_1: answers[0],
+    answer_2: answers[1],
+    answer_3: answers[2],
+    answer_4: answers[3]
+  });
+  console.log('[v0] Confidence:', res.data.confidence_score);
+};
+```
+Create: src/components/VerificationForm.tsx (4 text inputs + submit button)
+Test: Click believe → modal opens → enter 4 answers → POST /verifications shows in network tab
+
+---
+
+ISSUE 3: PROOF CLIPS
+Location: src/components/CirclePactApp.tsx
+Problem: UI expects array of clips, backend has single proof_url + Shorts table
+Fix: Upload file to POST /pacts/{id}/proof, then fetch GET /pacts/{id}/shorts
+Code:
+```
+const uploadProof = async (pactId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  await api.post(`/pacts/${pactId}/proof`, formData);
+};
+
+const getProofClips = async (pactId) => {
+  const res = await api.get(`/pacts/${pactId}/shorts`);
+  return res.data; // Array of { id, video_url, created_at }
+};
+```
+Test: Upload file → see POST /pacts/{id}/proof → GET /pacts/{id}/shorts returns it
+
+---
+
+ISSUE 4: UPLOAD BUTTON SHOWS FOR EVERYONE
+Location: src/components/CirclePactApp.tsx
+Problem: Anyone can click upload, backend only allows creator
+Fix: Check if current user === pact creator before showing button
+Code:
+```
+const isCreator = currentUser.id === pact.creator_id;
+<button disabled={!isCreator}>
+  {isCreator ? 'Upload Proof' : 'Creator only'}
+</button>
+```
+Test: Log in as creator → button enabled. Switch user → disabled.
+
+---
+
+ISSUE 5: HARDCODED STREAK & REPUTATION
+Location: src/components/CirclePactApp.tsx
+Problem: Shows hardcoded 14 and 92, should fetch from API
+Fix: Call GET /users/me/stats and store in state
+Code:
+```
+const [userStats, setUserStats] = useState({ streak: 0, reputation: 0 });
+
+useEffect(() => {
+  api.get('/users/me/stats').then(res => {
+    setUserStats({
+      streak: res.data.current_streak,
+      reputation: res.data.reputation_score
+    });
+  });
+}, []);
+
+// In JSX:
+<span>{userStats.streak}</span> {/* Now real, not hardcoded */}
+```
+Test: Refresh → streak updates from backend
+
+---
+
+ISSUE 6: COMMENTS
+Action: Ask backend team "Do we have a comments API?"
+If NO: Comment out comment section in CirclePactApp.tsx
+If YES: Get endpoint and integrate like verification flow
+
+---
+
+ISSUE 7: JOIN REQUESTS
+Location: src/components/CirclePactApp.tsx
+Problem: Backend has join request workflow, frontend has no UI
+Fix: Create modal showing pending requests with approve/reject buttons
+Code:
+```
+const getJoinRequests = async (circleId) => {
+  return api.get(`/circles/${circleId}/join-requests`);
+};
+
+const approveJoinRequest = async (requestId) => {
+  return api.post(`/join-requests/${requestId}/approve`);
+};
+
+// In Circles tab:
+<button onClick={() => openJoinRequestsModal()}>
+  Pending Requests
+</button>
+```
+Create: src/components/JoinRequestsModal.tsx with list of requests + approve/reject buttons
+Test: Create circle, request to join, approve → user added
+
+---
+
+ISSUE 8: CATEGORY DROPDOWN
+Location: src/components/CirclePactApp.tsx
+Problem: Uses freetext, should be predefined categories
+Fix: Replace input with select dropdown
+Code:
+```
+// types/index.ts
+export enum PactCategory {
+  FITNESS = 'fitness',
+  LEARNING = 'learning',
+  FINANCE = 'finance',
+  PRODUCTIVITY = 'productivity',
+  HEALTH = 'health'
+}
+
+// In component:
+<select value={category} onChange={(e) => setCategory(e.target.value)}>
+  {Object.values(PactCategory).map(cat => (
+    <option key={cat} value={cat}>{cat}</option>
+  ))}
+</select>
+```
+Test: Category is now dropdown, not text input
+
+---
+
+ISSUE 9: WALLET BALANCE
+Action: Ask backend "Do pacts need stakes? Do users have wallets?"
+If YES:
+```
+const getWallet = async () => {
+  return api.get('/users/me/wallet');
+};
+// Check balance before creating pact
+```
+If NO: Skip for MVP
+
+---
+
+ISSUE 10: LEADERBOARD TAB EMPTY
+Location: src/components/CirclePactApp.tsx - leaderboard tab
+Problem: Should show recent proof videos
+Fix: Fetch and display Shorts
+Code:
+```
+if (currentTab === 'leaderboard') {
+  useEffect(() => {
+    api.get('/shorts').then(res => setShorts(res.data));
+  }, []);
+  
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      {shorts.map(short => (
+        <video key={short.id} src={short.video_url} className="w-full h-32 rounded" />
+      ))}
+    </div>
+  );
+}
+```
+Test: Leaderboard shows grid of videos
+
+---
+
+EXECUTION PLAN:
+
+DAY 1 (Start here):
+[ ] Fix Issue #1: Fetch real pact stats
+[ ] Fix Issue #2: Verification form + API call
+[ ] Fix Issue #4: Permission checks
+
+DAY 2:
+[ ] Fix Issue #3: Upload and get proof clips
+[ ] Fix Issue #5: Fetch streak/reputation
+[ ] Fix Issue #7: Join requests modal
+
+LATER:
+[ ] Issue #6, #8, #9, #10
+
+---
+
+TESTING:
+1. Open DevTools → Network tab
+2. Do each action
+3. Verify API call appears in Network
+4. Check response has correct data
+5. Verify UI updates with real data
+
+---
+
+BEFORE YOU CODE:
+1. Verify backend base URL in .env
+2. Test one endpoint with Postman first
+3. Ask backend team confirmation on each issue
+4. Check you have test user credentials
+
+That's it! Copy each code snippet, modify for your project, test in Network tab. Go!
