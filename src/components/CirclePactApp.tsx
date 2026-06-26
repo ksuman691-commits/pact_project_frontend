@@ -91,218 +91,191 @@ const CirclePact = () => {
 
   if (currentTab === 'feed') {
     return (
-      <div className="min-h-screen bg-slate-50 pb-24">
-        {/* Enhanced Header with Welcome & Notification */}
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-4 z-10">
-          <div className="flex items-center justify-between mb-4">
+      <div className="min-h-screen bg-white pb-24">
+        {/* Elegant Header with Welcome & Action Buttons */}
+        <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 z-10">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-lg">
+              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm">
                 MC
               </div>
               <div>
                 <p className="text-xs text-gray-500">Welcome back</p>
-                <h1 className="text-lg font-bold text-gray-900">Maya</h1>
+                <h1 className="text-sm font-bold text-gray-900">Maya</h1>
               </div>
             </div>
-            <button className="relative p-2 hover:bg-gray-100 rounded-full transition">
-              <Bell className="w-5 h-5 text-gray-700" />
-              <span className="absolute top-1 right-1 w-5 h-5 bg-amber-500 text-white text-xs font-bold rounded-full flex items-center justify-center">2</span>
-            </button>
-          </div>
-
-          {/* Streak Card - Dark Navy with Week Tracker */}
-          <div className="bg-slate-900 rounded-2xl p-5 text-white">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <p className="text-sm text-slate-300 mb-1">Current streak</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black">14</span>
-                  <span className="text-lg text-slate-300">days</span>
-                </div>
-              </div>
-              <div className="w-16 h-16 bg-slate-800 rounded-xl flex items-center justify-center text-2xl">
-                🔥
-              </div>
-            </div>
-            {/* Week Tracker */}
-            <div className="flex justify-between gap-2">
-              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, idx) => (
-                <div key={day} className="flex flex-col items-center gap-1">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                    idx < 3 || idx === 4 || idx > 5 ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-400'
-                  }`}>
-                    {idx < 3 || idx === 4 || idx > 5 ? '✓' : ''}
-                  </div>
-                  <span className="text-xs text-slate-400 font-medium">{day}</span>
-                </div>
-              ))}
+            <div className="flex items-center gap-3">
+              {/* Create Pact Circular Button */}
+              <button className="w-10 h-10 rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center text-white transition-all shadow-sm hover:shadow-md">
+                <Plus className="w-5 h-5" />
+              </button>
+              {/* Create/Join Circle Circular Button */}
+              <button className="w-10 h-10 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center text-white transition-all shadow-sm hover:shadow-md">
+                <Users className="w-5 h-5" />
+              </button>
+              {/* Notification */}
+              <button className="relative p-2 hover:bg-gray-100 rounded-full transition">
+                <Bell className="w-4 h-4 text-gray-700" />
+                <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">2</span>
+              </button>
             </div>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-3 gap-3 mt-4">
-            <div className="bg-white border border-gray-200 rounded-xl p-3 text-center hover:shadow-md transition">
-              <div className="flex justify-center mb-2">
-                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                  <Target className="w-5 h-5 text-emerald-600" />
-                </div>
-              </div>
-              <p className="text-2xl font-bold text-gray-900">4</p>
-              <p className="text-xs text-gray-600 font-medium">Active</p>
+          {/* Elegant Stats Row - Minimal */}
+          <div className="flex justify-between gap-4 px-2">
+            <div className="text-center">
+              <p className="text-xs text-gray-500 font-medium">Active</p>
+              <p className="text-sm font-bold text-gray-900">4</p>
             </div>
-            <div className="bg-white border border-gray-200 rounded-xl p-3 text-center hover:shadow-md transition">
-              <div className="flex justify-center mb-2">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Users className="w-5 h-5 text-blue-600" />
-                </div>
-              </div>
-              <p className="text-2xl font-bold text-gray-900">3</p>
-              <p className="text-xs text-gray-600 font-medium">Circles</p>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 font-medium">Circles</p>
+              <p className="text-sm font-bold text-gray-900">3</p>
             </div>
-            <div className="bg-white border border-gray-200 rounded-xl p-3 text-center hover:shadow-md transition">
-              <div className="flex justify-center mb-2">
-                <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                  <Trophy className="w-5 h-5 text-amber-600" />
-                </div>
-              </div>
-              <p className="text-2xl font-bold text-gray-900">27</p>
-              <p className="text-xs text-gray-600 font-medium">Done</p>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 font-medium">Streak</p>
+              <p className="text-sm font-bold text-emerald-600">14d 🔥</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-gray-500 font-medium">Done</p>
+              <p className="text-sm font-bold text-gray-900">27</p>
             </div>
           </div>
         </div>
 
-        {/* Feed Cards - Facebook Style */}
-        <div className="px-4 py-4 space-y-4">
+        {/* Feed Cards - Instagram Style */}
+        <div className="px-4 py-3 space-y-6">
           {pacts.map((pact) => (
-            <div key={pact.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-              {/* Card Header */}
-              <div className="p-3 border-b border-gray-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-lg font-bold">
-                      {pact.avatar}
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm text-gray-900">@{pact.creator}</p>
-                      <p className="text-xs text-gray-500">{pact.category} • Day {pact.daysCurrent}/{pact.daysTotal}</p>
-                    </div>
+            <div key={pact.id} className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              {/* Card Header - Minimal */}
+              <div className="px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-300 to-blue-400 flex items-center justify-center text-white font-bold text-sm">
+                    {pact.avatar}
                   </div>
-                  <span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-1 rounded-full">
-                    {pact.category}
-                  </span>
+                  <div>
+                    <p className="font-bold text-sm text-gray-900">@{pact.creator}</p>
+                    <p className="text-xs text-gray-500">Day {pact.daysCurrent}/{pact.daysTotal}</p>
+                  </div>
+                </div>
+                <button className="text-gray-400 hover:text-gray-600 transition">
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Pact Title with Spacing */}
+              <div className="px-4 py-2">
+                <h2 className="text-lg font-bold text-gray-900 leading-tight">{pact.title}</h2>
+              </div>
+
+              {/* Spacer & Image Area - Instagram Style */}
+              <div className="mx-4 my-3 aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center text-center shadow-sm">
+                <div className="text-center">
+                  <p className="text-6xl mb-3">{pact.avatar}</p>
+                  <p className="text-xs text-gray-600 font-medium">{pact.proofClips.length} proof clips</p>
                 </div>
               </div>
 
-              {/* Card Title */}
-              <div className="px-4 py-4">
-                <h2 className="text-xl font-black text-gray-900 mb-2">{pact.title}</h2>
-                <p className="text-sm text-gray-600">{pact.proofClips.length} proof clips submitted</p>
-              </div>
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-4 gap-2 px-4 py-3 bg-gray-50">
+              {/* Stats - Compact and Subtle */}
+              <div className="px-4 py-2 flex gap-3 justify-between text-xs">
                 <div className="text-center">
-                  <p className="text-xs text-gray-600 font-semibold mb-1">Confidence</p>
-                  <p className="font-black text-lg text-blue-600">{pact.confidence}%</p>
+                  <p className="text-gray-500 font-medium mb-0.5">Confidence</p>
+                  <p className="font-bold text-emerald-600 text-sm">{pact.confidence}%</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xs text-gray-600 font-semibold mb-1">Believers</p>
-                  <p className="font-black text-lg text-green-600">{(pact.believers / 1000).toFixed(1)}k</p>
+                  <p className="text-gray-500 font-medium mb-0.5">Believe</p>
+                  <p className="font-bold text-blue-600 text-sm">{(pact.believers / 1000).toFixed(0)}k</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xs text-gray-600 font-semibold mb-1">Doubters</p>
-                  <p className="font-black text-lg text-red-600">{(pact.doubters / 1000).toFixed(1)}k</p>
+                  <p className="text-gray-500 font-medium mb-0.5">Doubt</p>
+                  <p className="font-bold text-red-600 text-sm">{(pact.doubters / 1000).toFixed(0)}k</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-xs text-gray-600 font-semibold mb-1">Time Left</p>
-                  <p className="font-black text-lg text-orange-600">{pact.daysCurrent}d</p>
+                  <p className="text-gray-500 font-medium mb-0.5">Time Left</p>
+                  <p className="font-bold text-orange-600 text-sm">{pact.timeRemaining}</p>
                 </div>
               </div>
 
-              {/* Progress Bar */}
-              <div className="px-4 py-3 bg-white">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs font-semibold text-gray-600">PROGRESS</span>
-                  <span className="text-sm font-bold text-gray-900">{pact.progressPercentage}%</span>
-                </div>
-                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+              {/* Progress Bar - Subtle */}
+              <div className="px-4 py-2">
+                <div className="w-full h-1 bg-gray-200 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"
+                    className="h-full bg-gradient-to-r from-emerald-400 to-blue-500 rounded-full"
                     style={{ width: `${pact.progressPercentage}%` }}
                   />
                 </div>
               </div>
 
-              {/* Proof Clips Preview */}
-              <div className="px-4 py-3 border-t border-gray-200">
-                <p className="text-xs font-semibold text-gray-600 mb-2">Recent Proof</p>
-                <div className="flex flex-wrap gap-2">
-                  {pact.proofClips.slice(-3).map((clip, idx) => (
-                    <div key={idx} className="text-xs bg-blue-50 border border-blue-200 text-blue-800 px-2 py-1 rounded-lg">
-                      Day {clip.day}: {clip.text}
+              {/* Elegant Action Buttons - Like Instagram */}
+              <div className="px-4 py-3 flex items-center justify-between border-t border-gray-100">
+                <div className="flex gap-2">
+                  {/* Subtle Believe Button */}
+                  <button
+                    onClick={() => handleVote(pact.id, 'believe')}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+                      pact.userVote === 'believe'
+                        ? 'bg-emerald-100 text-emerald-700 shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    ✓ Believe
+                  </button>
+                  {/* Subtle Doubt Button */}
+                  <button
+                    onClick={() => handleVote(pact.id, 'doubt')}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+                      pact.userVote === 'doubt'
+                        ? 'bg-red-100 text-red-700 shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    ✗ Doubt
+                  </button>
+                </div>
+                {/* Upload Proof Subtle */}
+                <button 
+                  onClick={() => handleUploadProof(pact.id)}
+                  className="text-gray-500 hover:text-gray-700 transition text-xs font-medium flex items-center gap-1"
+                >
+                  <Camera className="w-3 h-3" />
+                  Proof
+                </button>
+              </div>
+
+              {/* Circle Members - Small Circular Avatars */}
+              <div className="px-4 py-3 border-t border-gray-100">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-gray-500 font-medium">Members:</p>
+                  <div className="flex -space-x-2">
+                    {[
+                      { name: 'A', bg: 'from-emerald-400 to-emerald-600' },
+                      { name: 'P', bg: 'from-blue-400 to-blue-600' },
+                      { name: 'R', bg: 'from-purple-400 to-purple-600' },
+                      { name: 'S', bg: 'from-pink-400 to-pink-600' },
+                    ].map((member, idx) => (
+                      <div 
+                        key={idx}
+                        className={`w-7 h-7 rounded-full bg-gradient-to-br ${member.bg} flex items-center justify-center text-white text-xs font-bold border-2 border-white hover:scale-110 transition-transform cursor-pointer`}
+                        title={`Member ${member.name}`}
+                      >
+                        {member.name}
+                      </div>
+                    ))}
+                    <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-bold border-2 border-white text-center">
+                      +2
                     </div>
-                  ))}
+                  </div>
                 </div>
               </div>
 
-              {/* Upload Proof Button */}
-              <div className="px-4 py-2 border-t border-gray-200 flex gap-2">
-                <button 
-                  onClick={() => handleUploadProof(pact.id)}
-                  className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-semibold text-sm rounded-lg transition"
-                >
-                  <Camera className="w-4 h-4" />
-                  Photo
-                </button>
-                <button 
-                  onClick={() => handleUploadProof(pact.id)}
-                  className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-semibold text-sm rounded-lg transition"
-                >
-                  <Upload className="w-4 h-4" />
-                  File
-                </button>
-                <button 
-                  onClick={() => handleUploadProof(pact.id)}
-                  className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-semibold text-sm rounded-lg transition"
-                >
-                  <ImageIcon className="w-4 h-4" />
-                  Gallery
-                </button>
-              </div>
-
-              {/* Vote Buttons */}
-              <div className="grid grid-cols-2 gap-2 px-4 py-3 border-t border-gray-200">
-                <button
-                  onClick={() => handleVote(pact.id, 'doubt')}
-                  className={`py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
-                    pact.userVote === 'doubt'
-                      ? 'bg-red-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-700'
-                  }`}
-                >
-                  🚫 DOUBT
-                </button>
-                <button
-                  onClick={() => handleVote(pact.id, 'believe')}
-                  className={`py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
-                    pact.userVote === 'believe'
-                      ? 'bg-green-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-green-100 hover:text-green-700'
-                  }`}
-                >
-                  ✅ BELIEVE
-                </button>
-              </div>
-
               {/* Engagement Footer */}
-              <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-                <button className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition text-sm">
-                  <Heart className="w-4 h-4" />
-                  <span className="text-xs">{Math.floor(pact.believers * 0.8)}</span>
+              <div className="px-4 py-3 bg-white border-t border-gray-100 flex items-center justify-between text-xs">
+                <button className="flex items-center gap-1 text-gray-600 hover:text-red-500 transition font-medium">
+                  <Heart className="w-3.5 h-3.5" />
+                  {Math.floor(pact.believers * 0.8)}
                 </button>
-                <button className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition text-sm">
-                  <MessageCircle className="w-4 h-4" />
-                  <span className="text-xs">{pact.comments.length}</span>
+                <button className="flex items-center gap-1 text-gray-600 hover:text-blue-500 transition font-medium">
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  {pact.comments.length}
                 </button>
                 <button className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition text-sm">
                   <Share2 className="w-4 h-4" />
@@ -519,7 +492,7 @@ const BottomNav = ({ currentTab, setCurrentTab }: { currentTab: string; setCurre
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex items-center justify-around">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex items-center justify-around px-2 py-2 max-w-md mx-auto">
       {tabs.map(tab => {
         const Icon = tab.icon;
         const isActive = currentTab === tab.id;
@@ -528,13 +501,13 @@ const BottomNav = ({ currentTab, setCurrentTab }: { currentTab: string; setCurre
           <button
             key={tab.id}
             onClick={() => setCurrentTab(tab.id)}
-            className={`flex-1 flex flex-col items-center justify-center py-3 transition ${
+            className={`flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-2xl transition-all ${
               isActive 
-                ? 'text-blue-600 bg-blue-50' 
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'text-white bg-gradient-to-br from-emerald-500 to-blue-500 shadow-md' 
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
             }`}
           >
-            <Icon className="w-6 h-6 mb-1" />
+            <Icon className="w-5 h-5 mb-0.5" />
             <span className="text-xs font-semibold">{tab.label}</span>
           </button>
         );
