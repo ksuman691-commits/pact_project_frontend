@@ -1,0 +1,311 @@
+====================================================================
+  CIRCLEPACT BACKEND INTEGRATION - PROMPT FILES SUMMARY
+====================================================================
+
+YOU NOW HAVE 5 COMPREHENSIVE PROMPT FILES IN YOUR PROJECT:
+
+1. README_INTEGRATION.md (333 lines) ⭐ START HERE FIRST
+   - Explains how to use all other files
+   - Shows which file to pick based on your learning style
+   - Includes workflow timeline, testing checklist, common issues
+   - FILE DECISION TREE to choose the right guide
+   
+   → READ THIS FIRST TO UNDERSTAND WHICH PROMPT TO USE
+
+2. QUICK_START_PROMPT.txt (248 lines) - FASTEST EXECUTION
+   - Ultra-simplified, just the code snippets
+   - 10 issues with brief explanations
+   - Copy-paste code blocks directly
+   - No LLM needed - code directly into your editor
+   
+   → USE THIS if you know what you're doing
+   → USE THIS if you want to implement immediately
+   → USE THIS if you prefer reading code over guidance
+
+3. COPY_PASTE_PROMPT.txt (331 lines) - BALANCED REFERENCE
+   - Complete but concise (not overwhelming)
+   - Designed to paste ENTIRE CONTENT into your LLM at once
+   - All 10 issues with full context
+   - Execution roadmap with testing steps
+   
+   → USE THIS with Claude, ChatGPT, or any LLM
+   → USE THIS if you want LLM to guide each step
+   → USE THIS if you want balance between detail and brevity
+
+4. VSCODE_MASTER_PROMPT.md (632 lines) - COMPREHENSIVE DEEP DIVE
+   - Complete architectural guide
+   - Debugging tips and troubleshooting
+   - Questions to ask backend team (10 detailed questions)
+   - File locations reference, API endpoint mappings
+   - Error handling strategies
+   - Success criteria checklist
+   
+   → USE THIS if you need full understanding
+   → USE THIS if something isn't working
+   → USE THIS for architectural decisions
+
+5. TOP_10_ISSUES_SUMMARY.md (264 lines) - EXECUTIVE SUMMARY
+   - Issues ranked by severity and impact
+   - Impact matrix (what breaks if you don't fix)
+   - File locations for each issue
+   - Recommended fix order
+   
+   → READ THIS to understand the priorities
+   → REFERENCE THIS when deciding what to fix next
+
+PLUS 3 MORE REFERENCE DOCUMENTS:
+
+6. BACKEND_ALIGNMENT_ISSUES.md (333 lines) - TECHNICAL DEEP DIVE
+   - For each issue: backend reality vs frontend assumption
+   - Code examples and mapping
+   - Detailed fix requirements
+   
+   → Use for understanding WHY each issue exists
+
+7. API_INTEGRATION_CHECKLIST.md (395 lines) - PHASE-BY-PHASE GUIDE
+   - 6 phases of integration with code examples
+   - Endpoint testing commands
+   - Common errors & solutions
+   
+   → Use as phase-by-phase execution guide
+
+8. This file (INTEGRATION_PROMPTS_SUMMARY.txt) - YOU ARE HERE
+   - Quick reference to all prompts
+   - How to choose the right one
+   - Copy-paste instructions
+
+====================================================================
+WHICH PROMPT TO USE? (DECISION TREE)
+====================================================================
+
+I'm experienced and want to code immediately
+→ Use: QUICK_START_PROMPT.txt
+→ Action: Copy code snippets, implement directly, test with Network tab
+
+I want an LLM to guide me step-by-step
+→ Use: COPY_PASTE_PROMPT.txt
+→ Action: Paste entire file into Claude/ChatGPT, follow guidance
+
+I need to understand the full architecture
+→ Use: VSCODE_MASTER_PROMPT.md
+→ Action: Read thoroughly, reference while coding
+
+I'm unsure what to fix first
+→ Use: TOP_10_ISSUES_SUMMARY.md
+→ Action: Read to understand priorities
+
+I just want to know which file to read
+→ Use: README_INTEGRATION.md
+→ Action: Read file decision tree at the top
+
+Something is broken and I don't know why
+→ Use: VSCODE_MASTER_PROMPT.md (Debugging section)
+→ Action: Follow troubleshooting steps
+
+====================================================================
+RECOMMENDED 3-DAY EXECUTION PLAN
+====================================================================
+
+DAY 1 (4-6 hours): Core Functionality
+┌─────────────────────────────────────────┐
+│ Step 1: Read README_INTEGRATION.md      │
+│ (5 min - understand what you need)      │
+├─────────────────────────────────────────┤
+│ Step 2: Pick your prompt file           │
+│ (1 min - use the decision tree)         │
+├─────────────────────────────────────────┤
+│ Step 3: Fix Issue #1 (Pact stats)       │
+│ (30 min - fetch real data)              │
+├─────────────────────────────────────────┤
+│ Step 4: Fix Issue #2 (Verification)     │
+│ (90 min - create form, API call)        │
+├─────────────────────────────────────────┤
+│ Step 5: Fix Issue #4 (RBAC)             │
+│ (60 min - permission checks)            │
+├─────────────────────────────────────────┤
+│ Step 6: Test & Commit                   │
+│ (30 min - verify Network tab, commit)   │
+└─────────────────────────────────────────┘
+
+DAY 2 (4-6 hours): Workflows
+┌─────────────────────────────────────────┐
+│ Fix Issue #3: Proof uploads (90 min)    │
+├─────────────────────────────────────────┤
+│ Fix Issue #5: Streak/reputation (60 min)│
+├─────────────────────────────────────────┤
+│ Fix Issue #7: Join requests (90 min)    │
+├─────────────────────────────────────────┤
+│ Test & Commit (30 min)                  │
+└─────────────────────────────────────────┘
+
+DAY 3+ (As needed): Polish
+┌─────────────────────────────────────────┐
+│ Fix Issue #6: Comments (if API exists)  │
+│ Fix Issue #8: Categories dropdown       │
+│ Fix Issue #9: Wallet integration        │
+│ Fix Issue #10: Leaderboard feed         │
+└─────────────────────────────────────────┘
+
+====================================================================
+HOW TO COPY-PASTE INTO YOUR LLM
+====================================================================
+
+STEP 1: Choose your LLM
+- Claude (Cursor/VS Code)
+- ChatGPT (web)
+- Deepseek
+- Gemini
+- Any other LLM
+
+STEP 2: Open the prompt file
+If using QUICK_START_PROMPT.txt:
+  1. Open in your editor
+  2. Read issue by issue
+  3. Copy code snippet
+  4. Paste into your LLM with: "Fix this in my code:"
+
+If using COPY_PASTE_PROMPT.txt or VSCODE_MASTER_PROMPT.md:
+  1. Open file in your editor
+  2. Select all (Ctrl+A)
+  3. Copy (Ctrl+C)
+  4. Open your LLM chat
+  5. Paste (Ctrl+V)
+  6. Add this at the end: "Help me implement these fixes step by step"
+
+STEP 3: Work with LLM
+  - Ask for Issue #1 first
+  - Ask which files to modify
+  - Ask for code examples
+  - Paste LLM's response into your editor
+  - Test with Network tab
+  - Move to next issue
+
+STEP 4: Commit after each issue
+  git add -A
+  git commit -m "Fix Issue #X: [description]"
+  git push origin your-branch-name
+
+====================================================================
+QUICK REFERENCE: THE 10 ISSUES
+====================================================================
+
+#1 MOCK PACT DATA → Fetch from /pacts/{id}/stats
+#2 VOTE BUTTON → Create verification form with 4 questions
+#3 PROOF CLIPS → Upload to /proof, fetch from /shorts
+#4 PERMISSIONS → Check creator before showing upload button
+#5 HARDCODED STATS → Fetch from /users/me/stats
+#6 COMMENTS → Ask backend if API exists
+#7 JOIN REQUESTS → Create modal with approve/reject
+#8 CATEGORIES → Replace text input with dropdown
+#9 WALLET → Check balance before creating pact
+#10 LEADERBOARD → Fetch from /shorts and display grid
+
+Recommended fix order: #1 → #2 → #4 → #3 → #5 → #7 → rest
+
+====================================================================
+FILES YOU'LL MODIFY
+====================================================================
+
+Main file (you'll spend 80% of time here):
+  src/components/CirclePactApp.tsx
+
+Create new files:
+  src/components/VerificationForm.tsx
+  src/components/JoinRequestsModal.tsx
+
+Update existing files:
+  src/types/index.ts (add interfaces)
+  src/services/api.ts (add endpoints)
+  src/store/auth.ts (may need updates)
+
+====================================================================
+TESTING WORKFLOW FOR EACH FIX
+====================================================================
+
+After you implement each issue:
+
+1. Open DevTools (F12)
+2. Go to Network tab
+3. Filter by XHR
+4. Perform the action (click button, upload file, etc.)
+5. Look for new API call in Network tab
+6. Click the request → Response tab
+7. Verify response has the expected data
+8. Refresh page and verify it still works
+9. Check console for any errors (should be none)
+10. Commit: git commit -m "Fix Issue #X: [description]"
+
+====================================================================
+SUCCESS CHECKLIST (After all 10 fixes)
+====================================================================
+
+✓ Dashboard shows real user data (not dummy "Maya")
+✓ Pact cards show real stats (believers, confidence from API)
+✓ Click believe button → 4-question verification form opens
+✓ Submit form → API call shows in Network tab
+✓ Upload proof file → see POST /pacts/{id}/proof in Network
+✓ Uploaded videos show in proof clips section
+✓ User streak shows real number (not hardcoded 14)
+✓ User reputation shows real score (not hardcoded 92)
+✓ Upload button only shows for pact creator
+✓ Non-creator sees "Creator only" disabled message
+✓ Circles tab shows pending requests count
+✓ Click pending requests → modal shows list
+✓ Approve/Reject buttons work
+✓ Category field is dropdown (not freetext)
+✓ Leaderboard tab shows grid of recent videos
+✓ All Network calls have 200 status (no 404/403/500)
+✓ No console errors when performing actions
+✓ Data persists after page refresh
+
+====================================================================
+PRE-FLIGHT CHECKLIST (Before you start coding)
+====================================================================
+
+[ ] Read README_INTEGRATION.md
+[ ] Choose your prompt file (QUICK_START, COPY_PASTE, or MASTER)
+[ ] Backend team confirmed all 10 endpoints exist
+[ ] Backend team answered the 10 questions (in VSCODE_MASTER_PROMPT.md)
+[ ] You have test user credentials (email/password)
+[ ] Backend base URL is in your .env file
+[ ] CORS is enabled on backend for your frontend domain
+[ ] You tested one backend endpoint with Postman first
+[ ] Your LLM is ready (Claude, ChatGPT, etc.)
+
+====================================================================
+NEED HELP?
+====================================================================
+
+Something not working?
+  → Check VSCODE_MASTER_PROMPT.md → Debugging Tips
+
+Don't know which file to start with?
+  → Read README_INTEGRATION.md → File Decision Tree
+
+Want the fastest possible implementation?
+  → Use QUICK_START_PROMPT.txt → copy code snippets directly
+
+Want LLM guidance for each step?
+  → Use COPY_PASTE_PROMPT.txt → paste into Claude/ChatGPT
+
+Need to prioritize which issues to fix?
+  → Read TOP_10_ISSUES_SUMMARY.md → Impact Matrix
+
+Want to understand the architecture?
+  → Read BACKEND_ALIGNMENT_ISSUES.md → understand WHY
+
+====================================================================
+
+RIGHT NOW, DO THIS:
+
+1. Read README_INTEGRATION.md (file decision tree)
+2. Choose ONE prompt file based on your style
+3. Open that file in your editor
+4. Start with Issue #1
+5. Open DevTools Network tab
+6. Test as you implement
+7. Commit after each issue
+8. Repeat for all 10 issues
+
+YOU'VE GOT THIS. All the information you need is in these files.
+Good luck! 🚀
