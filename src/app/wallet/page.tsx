@@ -1,230 +1,162 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/auth';
-import Navbar from '@/components/Navbar';
-import { walletService } from '@/services/api';
-import { Wallet } from '@/types';
-import toast from 'react-hot-toast';
-import { TrendingUp, Send, Plus } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Download, TrendingUp, DollarSign, AlertCircle } from 'lucide-react';
+import WalletSummary from '@/components/WalletSummary';
+import DepositModal from '@/components/DepositModal';
+import WithdrawModal from '@/components/WithdrawModal';
+import TransactionHistory from '@/components/TransactionHistory';
+import { useWalletBalance, useWalletHistory, useWalletLocked, useWalletRewards } from '@/hooks/useWallet';
+import { useDeposit, useWithdraw } from '@/hooks/useWalletMutations';
 
 export default function WalletPage() {
-  const router = useRouter();
-  const user = useAuthStore((state) => state.user);
-  const isInitialized = useAuthStore((state) => state.isInitialized);
-  const [wallet, setWallet] = useState<Wallet | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [depositAmount, setDepositAmount] = useState('');
-  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [depositModal, setDepositModal] = useState(false);
+  const [withdrawModal, setWithdrawModal] = useState(false);
 
-  useEffect(() => {
-    if (!isInitialized) return;
-    if (!user) {
-      router.push('/auth/login');
-      return;
-    }
+  // Fetch wallet data
+  const { data: balanceData, isLoading: balanceLoading } = useWalletBalance();
+  const { data: lockedData, isLoading: lockedLoading } = useWalletLocked();
+  const { data: rewardsData, isLoading: rewardsLoading } = useWalletRewards();
+  const { data: historyData, isLoading: historyLoading } = useWalletHistory();
 
-    const fetchWallet = async () => {
-      try {
-        const response = await walletService.get();
-        setWallet(response.data);
-      } catch (error: any) {
-        toast.error('Failed to load wallet');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Mutations
+  const depositMutation = useDeposit();
+  const withdrawMutation = useWithdraw();
 
-    fetchWallet();
-  }, [isInitialized, user, router]);
+  const balance = balanceData?.balance || 0;
+  const locked = lockedData?.locked || 0;
+  const rewards = rewardsData?.rewards || 0;
+  const transactions = historyData?.pages?.[0]?.data || [];
 
-  const handleDeposit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!depositAmount || Number(depositAmount) <= 0) {
-      toast.error('Enter a valid amount');
-      return;
-    }
-
+  const handleDeposit = async (amount: number, method: string) => {
     try {
-      await walletService.deposit({
-        amount: Number(depositAmount),
-        payment_method: 'razorpay',
-      });
-      toast.success('Deposit successful!');
-      setDepositAmount('');
-      // Refresh wallet data instead of full page reload
-      const response = await walletService.get();
-      setWallet(response.data);
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Deposit failed');
+      await depositMutation.mutateAsync({ amount, method });
+    } catch (error) {
+      throw error;
     }
   };
 
-  const handleWithdraw = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!withdrawAmount || Number(withdrawAmount) <= 0) {
-      toast.error('Enter a valid amount');
-      return;
-    }
-
-    if (wallet && Number(withdrawAmount) > wallet.balance) {
-      toast.error('Insufficient balance');
-      return;
-    }
-
+  const handleWithdraw = async (amount: number, method: string) => {
     try {
-      await walletService.withdraw(Number(withdrawAmount));
-      toast.success('Withdrawal initiated!');
-      setWithdrawAmount('');
-      // Refresh wallet data instead of full page reload
-      const response = await walletService.get();
-      setWallet(response.data);
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Withdrawal failed');
+      await withdrawMutation.mutateAsync(amount);
+    } catch (error) {
+      throw error;
     }
   };
-
-  if (!isInitialized) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  if (loading || !wallet) {
-    return (
-      <>
-        <Navbar />
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      </>
-    );
-  }
-
 
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold text-slate-900 mb-8">Wallet</h1>
-
-          {/* Balance Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="card bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-              <p className="text-blue-100 text-sm font-medium mb-2">Available Balance</p>
-              <p className="text-4xl font-bold">₹{wallet.balance.toFixed(2)}</p>
-            </div>
-
-            <div className="card bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-              <p className="text-purple-100 text-sm font-medium mb-2">Locked Escrow</p>
-              <p className="text-4xl font-bold">₹{wallet.escrow_locked.toFixed(2)}</p>
-            </div>
-
-            <div className="card bg-gradient-to-br from-green-500 to-green-600 text-white">
-              <p className="text-green-100 text-sm font-medium mb-2">Rewards Earned</p>
-              <p className="text-4xl font-bold">₹{wallet.rewards_earned.toFixed(2)}</p>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Wallet</h1>
+            <p className="text-gray-600 text-sm mt-1">Manage your CirclePact funds</p>
           </div>
-
-          {/* Deposit & Withdraw */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="card">
-              <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <Plus className="w-6 h-6 text-green-600" />
-                Deposit Funds
-              </h2>
-              <form onSubmit={handleDeposit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Amount (₹)
-                  </label>
-                  <input
-                    type="number"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
-                    className="input-field"
-                    placeholder="Enter amount"
-                    min="0"
-                    step="100"
-                  />
-                </div>
-                <button type="submit" className="w-full btn-primary">
-                  Deposit
-                </button>
-              </form>
-            </div>
-
-            <div className="card">
-              <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <Send className="w-6 h-6 text-orange-600" />
-                Withdraw Funds
-              </h2>
-              <form onSubmit={handleWithdraw} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Amount (₹)
-                  </label>
-                  <input
-                    type="number"
-                    value={withdrawAmount}
-                    onChange={(e) => setWithdrawAmount(e.target.value)}
-                    className="input-field"
-                    placeholder="Enter amount"
-                    min="0"
-                    step="100"
-                    max={wallet.balance}
-                  />
-                </div>
-                <button type="submit" className="w-full btn-primary">
-                  Withdraw
-                </button>
-              </form>
-            </div>
-          </div>
-
-          {/* Wallet Stats */}
-          <div className="card">
-            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-              <TrendingUp className="w-6 h-6 text-blue-600" />
-              Wallet Statistics
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-slate-50 rounded-lg p-4">
-                <p className="text-slate-600 text-sm">Total Transactions</p>
-                <p className="text-3xl font-bold text-slate-900">{wallet.total_transactions}</p>
-              </div>
-              <div className="bg-slate-50 rounded-lg p-4">
-                <p className="text-slate-600 text-sm">Total Balance</p>
-                <p className="text-3xl font-bold text-slate-900">
-                  ₹{(wallet.balance + wallet.escrow_locked).toFixed(2)}
-                </p>
-              </div>
-              <div className="bg-slate-50 rounded-lg p-4">
-                <p className="text-slate-600 text-sm">Escrow % of Total</p>
-                <p className="text-3xl font-bold text-slate-900">
-                  {((wallet.escrow_locked / (wallet.balance + wallet.escrow_locked)) * 100 || 0).toFixed(1)}%
-                </p>
-              </div>
-              <div className="bg-slate-50 rounded-lg p-4">
-                <p className="text-slate-600 text-sm">Rewards/Balance Ratio</p>
-                <p className="text-3xl font-bold text-slate-900">
-                  {wallet.balance > 0 
-                    ? ((wallet.rewards_earned / wallet.balance) * 100).toFixed(1) 
-                    : 0}%
-                </p>
-              </div>
-            </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setDepositModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition"
+            >
+              <Plus className="w-5 h-5" />
+              Add Funds
+            </button>
+            <button
+              onClick={() => setWithdrawModal(true)}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition"
+            >
+              <Download className="w-5 h-5" />
+              Withdraw
+            </button>
           </div>
         </div>
       </div>
-    </>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Wallet Summary */}
+          <div className="lg:col-span-1">
+            <WalletSummary 
+              balance={balance}
+              locked={locked}
+              rewards={rewards}
+              loading={balanceLoading || lockedLoading || rewardsLoading}
+            />
+          </div>
+
+          {/* Quick Stats */}
+          <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+            {/* Monthly Spending */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-gray-600">Monthly Spending</h3>
+                <TrendingUp className="w-5 h-5 text-red-600" />
+              </div>
+              <p className="text-3xl font-bold text-gray-900">₹5,450</p>
+              <p className="text-xs text-gray-600 mt-2">+2.5% from last month</p>
+            </div>
+
+            {/* Stakes Active */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-gray-600">Active Stakes</h3>
+                <DollarSign className="w-5 h-5 text-orange-600" />
+              </div>
+              <p className="text-3xl font-bold text-gray-900">3 Pacts</p>
+              <p className="text-xs text-gray-600 mt-2">₹25,000 total staked</p>
+            </div>
+
+            {/* Earning Streak */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-gray-600">Current Streak</h3>
+                <span className="text-2xl">🔥</span>
+              </div>
+              <p className="text-3xl font-bold text-emerald-600">12 Days</p>
+              <p className="text-xs text-gray-600 mt-2">Keep it up!</p>
+            </div>
+
+            {/* Pending Rewards */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-gray-600">Pending Rewards</h3>
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+              </div>
+              <p className="text-3xl font-bold text-blue-600">₹850</p>
+              <p className="text-xs text-gray-600 mt-2">Available tomorrow</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Transaction History */}
+        <TransactionHistory 
+          transactions={transactions}
+          loading={historyLoading}
+        />
+
+        {/* Security Info */}
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 mt-8 flex gap-4">
+          <AlertCircle className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <h3 className="font-semibold text-blue-900 mb-1">Your funds are secure</h3>
+            <p className="text-sm text-blue-800">All transactions are encrypted and verified. Money in pacts is held in escrow until verification.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Modals */}
+      <DepositModal
+        isOpen={depositModal}
+        onClose={() => setDepositModal(false)}
+        onDeposit={handleDeposit}
+      />
+      <WithdrawModal
+        isOpen={withdrawModal}
+        onClose={() => setWithdrawModal(false)}
+        maxAmount={balance}
+        onWithdraw={handleWithdraw}
+      />
+    </div>
   );
 }

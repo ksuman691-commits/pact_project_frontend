@@ -1,38 +1,47 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/auth';
-import { usePacts } from '@/hooks/usePacts';
-import { useWalletBalance, useWalletRewards } from '@/hooks/useWallet';
+import React, { useState } from 'react';
+import { useParams } from 'next/navigation';
 import ProfileHero from '@/components/ProfileHero';
 import ProfileStats from '@/components/ProfileStats';
 import ProfileTabs, { PactsTab, AchievementsTab, FollowersTab } from '@/components/ProfileTabs';
 import AchievementsBadges from '@/components/AchievementsBadges';
 import UserFollowModal from '@/components/UserFollowModal';
-import { LogOut, Settings } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
-export default function Profile() {
+export default function PublicProfilePage() {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
-  const { data: pactsData } = usePacts();
-  const { data: balanceData } = useWalletBalance();
-  const { data: rewardsData } = useWalletRewards();
+  const params = useParams();
+  const username = params.username as string;
   const [activeTab, setActiveTab] = useState('pacts');
+  const [isFollowing, setIsFollowing] = useState(false);
   const [followModal, setFollowModal] = useState<{ isOpen: boolean; type: 'followers' | 'following' }>({
     isOpen: false,
     type: 'followers',
   });
 
-  const pacts = (Array.isArray(pactsData) ? pactsData : pactsData?.data || []) as any[];
-  const balance = balanceData?.balance || 0;
-  const rewards = rewardsData?.rewards || 0;
+  // Mock user data - in real app, fetch from API based on username
+  const user = {
+    id: 123,
+    name: 'John Developer',
+    username: username,
+    bio: 'Building the future of accountability. Coffee lover ☕',
+    avatar: undefined,
+    reputationScore: 8.7,
+    badges: ['trusted', 'consistent'],
+  };
 
-  const completedPacts = pacts.filter((p: any) => p.status === 'completed').length;
-  const winRate = pacts.length > 0 ? Math.round((completedPacts / pacts.length) * 100) : 0;
+  const stats = {
+    pactsCreated: 24,
+    pactsCompleted: 18,
+    winRate: 75,
+    currentStreak: 8,
+    totalEarned: 12500,
+    reputation: 87,
+  };
 
-  // Mock achievements data
   const allAchievements = [
     {
       id: 'first-pact',
@@ -40,8 +49,8 @@ export default function Profile() {
       description: 'Create your first pact',
       icon: '🎯',
       rarity: 'common' as const,
-      unlocked: pacts.length > 0,
-      unlockedAt: pacts.length > 0 ? new Date().toISOString() : undefined,
+      unlocked: true,
+      unlockedAt: new Date().toISOString(),
     },
     {
       id: 'on-fire',
@@ -49,8 +58,8 @@ export default function Profile() {
       description: 'Reach 7-day streak',
       icon: '🔥',
       rarity: 'rare' as const,
-      unlocked: false,
-      progress: 30,
+      unlocked: true,
+      unlockedAt: new Date().toISOString(),
     },
     {
       id: 'winner',
@@ -58,8 +67,8 @@ export default function Profile() {
       description: 'Complete 5 pacts',
       icon: '🏆',
       rarity: 'rare' as const,
-      unlocked: completedPacts >= 5,
-      unlockedAt: completedPacts >= 5 ? new Date().toISOString() : undefined,
+      unlocked: true,
+      unlockedAt: new Date().toISOString(),
     },
     {
       id: 'trusted',
@@ -67,17 +76,17 @@ export default function Profile() {
       description: 'Build 50 reputation',
       icon: '⭐',
       rarity: 'epic' as const,
-      unlocked: false,
-      progress: 70,
+      unlocked: true,
+      unlockedAt: new Date().toISOString(),
     },
     {
-      id: 'richest',
-      name: 'Richest',
-      description: 'Earn ₹5000',
-      icon: '💰',
+      id: 'community',
+      name: 'Community Hero',
+      description: 'Join 10 circles',
+      icon: '👥',
       rarity: 'epic' as const,
-      unlocked: rewards >= 5000,
-      unlockedAt: rewards >= 5000 ? new Date().toISOString() : undefined,
+      unlocked: false,
+      progress: 60,
     },
     {
       id: 'legendary',
@@ -85,12 +94,11 @@ export default function Profile() {
       description: 'Complete 50 pacts',
       icon: '👑',
       rarity: 'legendary' as const,
-      unlocked: false,
-      progress: 20,
+      unlocked: true,
+      unlockedAt: new Date().toISOString(),
     },
   ];
 
-  // Mock follower data
   const mockFollowers = [
     { id: 1, name: 'Alice Smith', username: 'alice_smith', isFollowing: false },
     { id: 2, name: 'Bob Johnson', username: 'bob_j', isFollowing: true },
@@ -102,68 +110,54 @@ export default function Profile() {
     { id: 5, name: 'Eve Taylor', username: 'eve_t', isFollowing: true },
   ];
 
-  const handleLogout = async () => {
-    await logout();
-    router.push('/auth/login');
+  const displayedPacts = [
+    {
+      id: 1,
+      title: 'Learn React in 30 days',
+      description: 'Complete React tutorial and build 2 projects',
+      status: 'completed',
+      daysRemaining: 0,
+      participantCount: 12,
+    },
+    {
+      id: 2,
+      title: 'Gym 5x per week',
+      description: 'Hit the gym at least 5 days every week',
+      status: 'active',
+      daysRemaining: 15,
+      participantCount: 8,
+    },
+    {
+      id: 3,
+      title: 'Read 2 books per month',
+      description: 'Complete reading 2 books every month',
+      status: 'completed',
+      daysRemaining: 0,
+      participantCount: 5,
+    },
+  ];
+
+  const handleFollow = () => {
+    setIsFollowing(!isFollowing);
+    toast.success(isFollowing ? 'Unfollowed' : 'Following');
   };
 
-  const handleEditProfile = () => {
-    router.push('/profile/edit');
+  const handleMessage = () => {
+    toast.success('Opening direct messages...');
   };
-
-  if (!user) {
-    return null;
-  }
-
-  const profileUser = {
-    id: user.id,
-    name: user.full_name || 'User',
-    username: user.username || 'user',
-    bio: 'Building better habits, one pact at a time',
-    reputationScore: user.reputation_score || 0,
-    badges: completedPacts >= 5 ? ['trusted', 'onfire', 'consistent'] : [],
-  };
-
-  const stats = {
-    pactsCreated: pacts.length,
-    pactsCompleted: completedPacts,
-    winRate,
-    currentStreak: 12,
-    totalEarned: Math.round(rewards),
-    reputation: Math.round(user.reputation_score || 0),
-  };
-
-  const displayedPacts = pacts.slice(0, 5).map((p: any) => ({
-    id: p.id,
-    title: p.title,
-    description: p.description,
-    status: p.status,
-    daysRemaining: Math.ceil(Math.random() * 30),
-    participantCount: Math.ceil(Math.random() * 10),
-  }));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Top Bar */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900">My Profile</h1>
-          <div className="flex gap-2">
-            <button
-              onClick={handleEditProfile}
-              className="p-2 hover:bg-gray-100 rounded-lg transition"
-              title="Edit settings"
-            >
-              <Settings className="w-5 h-5 text-gray-600" />
-            </button>
-            <button
-              onClick={handleLogout}
-              className="p-2 hover:bg-red-50 rounded-lg transition text-red-600"
-              title="Logout"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center gap-4">
+          <button
+            onClick={() => router.back()}
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </button>
+          <h1 className="text-xl font-bold text-gray-900">{user.name}</h1>
         </div>
       </div>
 
@@ -171,9 +165,11 @@ export default function Profile() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Profile Hero */}
         <ProfileHero
-          user={profileUser}
-          isOwnProfile={true}
-          onEdit={handleEditProfile}
+          user={user}
+          isOwnProfile={false}
+          isFollowing={isFollowing}
+          onFollow={handleFollow}
+          onMessage={handleMessage}
         />
 
         {/* Stats */}
@@ -186,7 +182,7 @@ export default function Profile() {
           {activeTab === 'followers' && (
             <div className="flex gap-4">
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">My Followers</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Followers</h3>
                 <button
                   onClick={() => setFollowModal({ isOpen: true, type: 'followers' })}
                   className="text-emerald-600 hover:underline text-sm"
@@ -207,8 +203,8 @@ export default function Profile() {
           )}
           {activeTab === 'circles' && (
             <div className="text-center py-12 text-gray-500">
-              <p className="font-medium mb-2">You are a member of 3 circles</p>
-              <p className="text-sm">Visit the circles page to explore and join more</p>
+              <p className="font-medium mb-2">{user.name} is a member of 5 circles</p>
+              <button className="text-emerald-600 hover:underline">View all circles</button>
             </div>
           )}
         </ProfileTabs>
