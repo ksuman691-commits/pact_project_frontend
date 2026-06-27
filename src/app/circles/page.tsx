@@ -1,138 +1,226 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useCircles } from '@/hooks/useCircles';
-import { useAuthStore } from '@/store/auth';
-import { Circle } from '@/types';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Plus, Search, TrendingUp, Users } from 'lucide-react';
+import { useInView } from 'react-intersection-observer';
+import { useCircles, usePublicCircles, useSearchCircles } from '@/hooks/useCircles';
+import { useJoinCircle } from '@/hooks/useCircleMutations';
+import CircleCard from '@/components/CircleCard';
 import toast from 'react-hot-toast';
-import PremiumLayout from '@/layouts/PremiumLayout';
-import PremiumCard from '@/components/premium/PremiumCard';
-import CircleStats from '@/components/premium/CircleStats';
-import Leaderboard from '@/components/premium/Leaderboard';
-import CircleMembers from '@/components/premium/CircleMembers';
-import { Plus, Users, Lock, Globe, Search, TrendingUp } from 'lucide-react';
 
 export default function CirclesPage() {
-  const router = useRouter();
-  const { user } = useAuthStore();
-  const { data: circlesData = [], isLoading } = useCircles();
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<'members' | 'active' | 'trending'>('members');
+  const [sortBy, setSortBy] = useState<'all' | 'my' | 'public' | 'trending'>('all');
+  const { ref, inView } = useInView();
 
-  const circles = circlesData as Circle[];
-  const filtered = circles.filter((circle) =>
-    circle.name.toLowerCase().includes(search.toLowerCase())
-  );
+  // Fetch different circle lists based on sort
+  const myCircles = useCircles();
+  const publicCircles = usePublicCircles();
+  const searchResults = useSearchCircles(search);
+  const joinMutation = useJoinCircle(0);
 
-  const sorted = [...filtered].sort((a, b) => {
-    if (sortBy === 'members') return (b.members?.length || 0) - (a.members?.length || 0);
-    return 0;
-  });
+  // Determine which hook to use
+  useEffect(() => {
+    if (inView && sortBy === 'public' && publicCircles.hasNextPage) {
+      publicCircles.fetchNextPage();
+    }
+    if (inView && sortBy === 'trending' && publicCircles.hasNextPage) {
+      publicCircles.fetchNextPage();
+    }
+    if (inView && search && searchResults.hasNextPage) {
+      searchResults.fetchNextPage();
+    }
+  }, [inView, sortBy, search, publicCircles, searchResults]);
 
-  if (!user) {
-    return null;
+  // Get display data
+  let displayCircles: any[] = [];
+  let isLoading = false;
+  let hasMore = false;
+
+  if (search) {
+    displayCircles = searchResults.data?.pages?.flatMap(p => p.data) || [];
+    isLoading = searchResults.isLoading;
+    hasMore = searchResults.hasNextPage || false;
+  } else if (sortBy === 'my') {
+    displayCircles = myCircles.data || [];
+    isLoading = myCircles.isLoading;
+  } else if (sortBy === 'public' || sortBy === 'trending') {
+    displayCircles = publicCircles.data?.pages?.flatMap(p => p.data) || [];
+    isLoading = publicCircles.isLoading;
+    hasMore = publicCircles.hasNextPage || false;
+  } else {
+    // Mix my circles + public circles
+    const myList = myCircles.data || [];
+    const publicList = publicCircles.data?.pages?.[0]?.data || [];
+    displayCircles = [...myList, ...publicList];
+    isLoading = myCircles.isLoading || publicCircles.isLoading;
   }
 
+  const handleJoin = async (circleId: number) => {
+    try {
+      await joinMutation.mutateAsync(undefined);
+      toast.success('Joined circle!');
+    } catch (error) {
+      toast.error('Failed to join circle');
+    }
+  };
+
+  // Mock data fallback
+  const mockCircles = [
+    {
+      id: 1,
+      name: 'Startup Builders',
+      description: 'For founders and entrepreneurs building the next big thing',
+      avatar: '🚀',
+      memberCount: 234,
+      isPrivate: false,
+      isJoined: false,
+      isTrending: true,
+      memberList: ['Alice', 'Bob', 'Charlie', 'Diana'],
+      winRate: 78,
+    },
+    {
+      id: 2,
+      name: 'Fitness Crew',
+      description: 'Supporting each other in fitness goals and healthy lifestyle',
+      avatar: '💪',
+      memberCount: 456,
+      isPrivate: false,
+      isJoined: true,
+      memberList: ['Eve', 'Frank', 'Grace'],
+      winRate: 85,
+    },
+    {
+      id: 3,
+      name: 'Tech Learners',
+      description: 'Learning new technologies and programming skills together',
+      avatar: '💻',
+      memberCount: 189,
+      isPrivate: true,
+      isJoined: false,
+      isTrending: true,
+      memberList: ['Henry', 'Iris', 'Jack', 'Kate', 'Leo'],
+      winRate: 72,
+    },
+  ];
+
+  const finalCircles = displayCircles.length > 0 ? displayCircles : mockCircles;
+
   return (
-    <PremiumLayout>
-      <div className="px-4 py-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black text-slate-900">Circles</h1>
-            <p className="text-sm text-slate-600 mt-1">Trusted communities</p>
+            <h1 className="text-3xl font-bold text-gray-900">Circles</h1>
+            <p className="text-gray-600 text-sm mt-1">Join communities and earn together</p>
           </div>
-          <button
-            onClick={() => router.push('/circles/create')}
-            className="w-12 h-12 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center transition-all"
+          <Link
+            href="/circles/create"
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition"
           >
             <Plus className="w-5 h-5" />
-          </button>
+            Create Circle
+          </Link>
         </div>
+      </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search circles..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 bg-slate-50"
-          />
-        </div>
-
-        {/* Sort */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {(['members', 'active', 'trending'] as const).map((sort) => (
-            <button
-              key={sort}
-              onClick={() => setSortBy(sort)}
-              className={`px-4 py-2 rounded-full whitespace-nowrap font-semibold text-sm transition-all ${
-                sortBy === sort
-                  ? 'bg-emerald-500 text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              {sort === 'members' ? 'By Members' : sort === 'active' ? 'Most Active' : 'Trending'}
-            </button>
-          ))}
-        </div>
-
-        {/* Circles */}
-        {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 bg-slate-100 rounded-2xl animate-pulse" />
-            ))}
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Search and Filters */}
+        <div className="space-y-4 mb-8">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-4 top-3 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search circles..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            />
           </div>
-        ) : sorted.length === 0 ? (
-          <PremiumCard>
-            <div className="text-center py-12">
-              <Users className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-              <p className="text-slate-600 font-medium">No circles found</p>
-              <p className="text-sm text-slate-500">Create one or join existing circles</p>
-            </div>
-          </PremiumCard>
-        ) : (
-          <div className="space-y-3">
-            {sorted.map((circle) => (
-              <div
-                key={circle.id}
-                onClick={() => router.push(`/circles/${circle.id}`)}
-                className="bg-white rounded-xl p-4 border border-slate-200 hover:border-emerald-400 hover:shadow-md transition-all cursor-pointer"
+
+          {/* Sort Tabs */}
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {[
+              { key: 'all', label: 'All Circles', icon: '🌐' },
+              { key: 'my', label: 'My Circles', icon: '👤' },
+              { key: 'public', label: 'Public', icon: '🔓' },
+              { key: 'trending', label: 'Trending', icon: '🔥' },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setSortBy(tab.key as any)}
+                className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition ${
+                  sortBy === tab.key
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                }`}
               >
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h3 className="font-bold text-slate-900">{circle.name}</h3>
-                    <p className="text-xs text-slate-600">{circle.description}</p>
-                  </div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                    circle.is_public
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-orange-100 text-orange-700'
-                  }`}>
-                    {circle.is_public ? 'Public' : 'Private'}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-slate-600">
-                    <Users className="w-4 h-4" />
-                    <span>{circle.members?.length || 0} members</span>
-                  </div>
-                  <button
-                    className="px-3 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold transition-all"
-                  >
-                    View
-                  </button>
-                </div>
-              </div>
+                {tab.icon} {tab.label}
+              </button>
             ))}
           </div>
+        </div>
+
+        {/* Circles Grid */}
+        {isLoading && displayCircles.length === 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-96 bg-gray-200 rounded-2xl animate-pulse" />
+            ))}
+          </div>
+        ) : finalCircles.length === 0 ? (
+          <div className="text-center py-20">
+            <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-600 text-lg font-medium mb-2">No circles found</p>
+            <p className="text-gray-500 mb-6">
+              {search ? 'Try a different search' : 'Create one or explore public circles'}
+            </p>
+            <Link
+              href="/circles/create"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition"
+            >
+              <Plus className="w-5 h-5" />
+              Create First Circle
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {finalCircles.map((circle) => (
+                <CircleCard
+                  key={circle.id}
+                  circle={circle}
+                  onJoin={handleJoin}
+                />
+              ))}
+            </div>
+
+            {/* Load More */}
+            {hasMore && (
+              <div ref={ref} className="py-12 flex justify-center">
+                {isLoading ? (
+                  <div className="text-gray-600">Loading more circles...</div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      if (search) searchResults.fetchNextPage();
+                      else if (sortBy === 'public' || sortBy === 'trending')
+                        publicCircles.fetchNextPage();
+                    }}
+                    className="px-6 py-2 text-emerald-600 font-medium hover:bg-emerald-50 rounded-lg transition"
+                  >
+                    Load More
+                  </button>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
-    </PremiumLayout>
+    </div>
   );
 }

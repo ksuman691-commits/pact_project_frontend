@@ -7,7 +7,9 @@ import Navbar from '@/components/Navbar';
 import { circleService, circleJoinRequestService, joinRequestService, pactService } from '@/services/api';
 import { Circle, Pact } from '@/types';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Users, Globe, Lock, Target, Plus } from 'lucide-react';
+import { ArrowLeft, Users, Globe, Lock, Target, Plus, Trophy } from 'lucide-react';
+import CircleLeaderboard from '@/components/CircleLeaderboard';
+import InviteMembersModal from '@/components/InviteMembersModal';
 
 export default function CircleDetailPage() {
   const router = useRouter();
@@ -17,6 +19,7 @@ export default function CircleDetailPage() {
   const [pacts, setPacts] = useState<Pact[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMember, setIsMember] = useState(false);
+  const [inviteModal, setInviteModal] = useState(false);
 
   if (!isInitialized) {
     return (
@@ -115,6 +118,40 @@ export default function CircleDetailPage() {
     );
   }
 
+  // Mock leaderboard data for demo
+  const mockLeaderboardEntries = [
+    {
+      rank: 1,
+      userId: 1,
+      username: 'alice_doe',
+      avatar: '👩',
+      pactsCompleted: 12,
+      winRate: 92,
+      rewardsEarned: 5200,
+      streak: 12,
+    },
+    {
+      rank: 2,
+      userId: 2,
+      username: 'bob_smith',
+      avatar: '👨',
+      pactsCompleted: 8,
+      winRate: 85,
+      rewardsEarned: 3400,
+      streak: 7,
+    },
+    {
+      rank: 3,
+      userId: 3,
+      username: 'charlie_brown',
+      avatar: '🧔',
+      pactsCompleted: 6,
+      winRate: 78,
+      rewardsEarned: 2100,
+      streak: 5,
+    },
+  ];
+
   return (
     <>
       <Navbar />
@@ -186,6 +223,13 @@ export default function CircleDetailPage() {
                     Create Pact
                   </button>
                   <button
+                    onClick={() => setInviteModal(true)}
+                    className="btn-primary flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Users className="w-5 h-5" />
+                    Invite Members
+                  </button>
+                  <button
                     onClick={handleLeaveCircle}
                     className="btn-secondary"
                   >
@@ -230,6 +274,46 @@ export default function CircleDetailPage() {
               <p className="text-slate-600">No members yet</p>
             )}
           </div>
+
+          {/* Leaderboard Section */}
+          {isMember && (
+            <div className="card mb-8">
+              <CircleLeaderboard
+                entries={[
+                  {
+                    rank: 1,
+                    userId: 1,
+                    username: 'alice_doe',
+                    avatar: '👩',
+                    pactsCompleted: 12,
+                    winRate: 92,
+                    rewardsEarned: 5200,
+                    streak: 12,
+                  },
+                  {
+                    rank: 2,
+                    userId: 2,
+                    username: 'bob_smith',
+                    avatar: '👨',
+                    pactsCompleted: 8,
+                    winRate: 85,
+                    rewardsEarned: 3400,
+                    streak: 7,
+                  },
+                  {
+                    rank: 3,
+                    userId: 3,
+                    username: 'charlie_brown',
+                    avatar: '🧔',
+                    pactsCompleted: 6,
+                    winRate: 78,
+                    rewardsEarned: 2100,
+                    streak: 5,
+                  },
+                ]}
+              />
+            </div>
+          )}
 
           {/* Pacts Section */}
           <div className="card">
@@ -335,6 +419,16 @@ export default function CircleDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Invite Members Modal */}
+      {circle && (
+        <InviteMembersModal
+          isOpen={inviteModal}
+          onClose={() => setInviteModal(false)}
+          circleId={circle.id}
+          circleName={circle.name}
+        />
+      )}
     </>
   );
 }
