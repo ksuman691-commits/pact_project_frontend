@@ -1,136 +1,162 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/auth';
-import { useWallet, useWalletTransactions } from '@/hooks/useWallet';
-import { walletService } from '@/services/api';
-import toast from 'react-hot-toast';
-import PremiumLayout from '@/layouts/PremiumLayout';
-import PremiumCard from '@/components/premium/PremiumCard';
-import WalletStats from '@/components/premium/WalletStats';
-import WalletActions from '@/components/premium/WalletActions';
-import TransactionHistory from '@/components/premium/TransactionHistory';
-import { TrendingUp, PiggyBank, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Download, TrendingUp, DollarSign, AlertCircle } from 'lucide-react';
+import WalletSummary from '@/components/WalletSummary';
+import DepositModal from '@/components/DepositModal';
+import WithdrawModal from '@/components/WithdrawModal';
+import TransactionHistory from '@/components/TransactionHistory';
+import { useWalletBalance, useWalletHistory, useWalletLocked, useWalletRewards } from '@/hooks/useWallet';
+import { useDeposit, useWithdraw } from '@/hooks/useWalletMutations';
 
 export default function WalletPage() {
-  const { data: walletData, isLoading: walletLoading } = useWallet();
-  const { data: transactionsData, isLoading: transactionsLoading } = useWalletTransactions();
-  const wallet = walletData?.data;
-  const transactions = transactionsData?.data || [];
+  const [depositModal, setDepositModal] = useState(false);
+  const [withdrawModal, setWithdrawModal] = useState(false);
 
-  const handleDeposit = async (amount: number) => {
+  // Fetch wallet data
+  const { data: balanceData, isLoading: balanceLoading } = useWalletBalance();
+  const { data: lockedData, isLoading: lockedLoading } = useWalletLocked();
+  const { data: rewardsData, isLoading: rewardsLoading } = useWalletRewards();
+  const { data: historyData, isLoading: historyLoading } = useWalletHistory();
+
+  // Mutations
+  const depositMutation = useDeposit();
+  const withdrawMutation = useWithdraw();
+
+  const balance = balanceData?.balance || 0;
+  const locked = lockedData?.locked || 0;
+  const rewards = rewardsData?.rewards || 0;
+  const transactions = historyData?.pages?.[0]?.data || [];
+
+  const handleDeposit = async (amount: number, method: string) => {
     try {
-      await walletService.deposit({ amount, payment_method: 'razorpay' });
-      toast.success('Deposit successful!');
-    } catch (error: any) {
-      toast.error('Deposit failed');
+      await depositMutation.mutateAsync({ amount, method });
+    } catch (error) {
+      throw error;
     }
   };
 
-  const handleWithdraw = async (amount: number) => {
+  const handleWithdraw = async (amount: number, method: string) => {
     try {
-      await walletService.withdraw(amount);
-      toast.success('Withdrawal initiated!');
-    } catch (error: any) {
-      toast.error('Withdrawal failed');
+      await withdrawMutation.mutateAsync(amount);
+    } catch (error) {
+      throw error;
     }
   };
-
-  if (!wallet) {
-    return <PremiumLayout>Loading...</PremiumLayout>;
-  }
 
   return (
-    <PremiumLayout>
-      <div className="px-4 py-6 space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 mb-2">Your Wallet</h1>
-          <p className="text-sm text-slate-600">Manage your CirclePact funds</p>
-        </div>
-
-        {/* Main Balance Hero */}
-        <PremiumCard glass className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
-          <div className="flex items-center justify-between mb-4">
-            <PiggyBank className="w-8 h-8 text-slate-700" />
-            <span className="text-xs font-bold text-slate-600 uppercase">Total Account</span>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Wallet</h1>
+            <p className="text-gray-600 text-sm mt-1">Manage your CirclePact funds</p>
           </div>
-          <p className="text-5xl font-black text-slate-900 mb-2">
-            ${wallet.balance.toFixed(2)}
-          </p>
-          <p className="text-sm text-slate-600">
-            {wallet.balance > 100 ? 'Keep building!' : 'Start making pacts to earn rewards'}
-          </p>
-        </PremiumCard>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setDepositModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition"
+            >
+              <Plus className="w-5 h-5" />
+              Add Funds
+            </button>
+            <button
+              onClick={() => setWithdrawModal(true)}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition"
+            >
+              <Download className="w-5 h-5" />
+              Withdraw
+            </button>
+          </div>
+        </div>
+      </div>
 
-        {/* Quick Stats */}
-        <WalletStats
-          balance={wallet.balance}
-          locked={wallet.escrow_locked}
-          earned={wallet.rewards_earned}
-          pending={0}
-        />
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Wallet Summary */}
+          <div className="lg:col-span-1">
+            <WalletSummary 
+              balance={balance}
+              locked={locked}
+              rewards={rewards}
+              loading={balanceLoading || lockedLoading || rewardsLoading}
+            />
+          </div>
 
-        {/* Actions */}
-        <div>
-          <h2 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">Quick Actions</h2>
-          <WalletActions
-            onDeposit={handleDeposit}
-            onWithdraw={handleWithdraw}
-            isLoading={walletLoading}
-          />
+          {/* Quick Stats */}
+          <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+            {/* Monthly Spending */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-gray-600">Monthly Spending</h3>
+                <TrendingUp className="w-5 h-5 text-red-600" />
+              </div>
+              <p className="text-3xl font-bold text-gray-900">₹5,450</p>
+              <p className="text-xs text-gray-600 mt-2">+2.5% from last month</p>
+            </div>
+
+            {/* Stakes Active */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-gray-600">Active Stakes</h3>
+                <DollarSign className="w-5 h-5 text-orange-600" />
+              </div>
+              <p className="text-3xl font-bold text-gray-900">3 Pacts</p>
+              <p className="text-xs text-gray-600 mt-2">₹25,000 total staked</p>
+            </div>
+
+            {/* Earning Streak */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-gray-600">Current Streak</h3>
+                <span className="text-2xl">🔥</span>
+              </div>
+              <p className="text-3xl font-bold text-emerald-600">12 Days</p>
+              <p className="text-xs text-gray-600 mt-2">Keep it up!</p>
+            </div>
+
+            {/* Pending Rewards */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-gray-600">Pending Rewards</h3>
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+              </div>
+              <p className="text-3xl font-bold text-blue-600">₹850</p>
+              <p className="text-xs text-gray-600 mt-2">Available tomorrow</p>
+            </div>
+          </div>
         </div>
 
         {/* Transaction History */}
-        <div>
-          <h2 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">Activity</h2>
-          <TransactionHistory
-            transactions={[
-              {
-                id: 1,
-                type: 'deposit',
-                amount: 50,
-                description: 'Deposit via Card',
-                date: new Date().toISOString(),
-                status: 'completed',
-              },
-              {
-                id: 2,
-                type: 'lock',
-                amount: 25,
-                description: 'Locked for "Ship MVP"',
-                date: new Date(Date.now() - 86400000).toISOString(),
-                status: 'completed',
-              },
-              {
-                id: 3,
-                type: 'reward',
-                amount: 35,
-                description: 'Earned from "100 Days Code"',
-                date: new Date(Date.now() - 172800000).toISOString(),
-                status: 'completed',
-              },
-            ]}
-            isLoading={transactionsLoading}
-          />
-        </div>
+        <TransactionHistory 
+          transactions={transactions}
+          loading={historyLoading}
+        />
 
-        {/* Security Note */}
-        <PremiumCard className="bg-blue-50 border-blue-200">
-          <div className="flex gap-3">
-            <div className="flex-shrink-0">
-              <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-blue-900">Your funds are secure</p>
-              <p className="text-xs text-blue-700 mt-1">All transactions are encrypted and verified. Money in pacts is held in escrow until verification.</p>
-            </div>
+        {/* Security Info */}
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 mt-8 flex gap-4">
+          <AlertCircle className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <h3 className="font-semibold text-blue-900 mb-1">Your funds are secure</h3>
+            <p className="text-sm text-blue-800">All transactions are encrypted and verified. Money in pacts is held in escrow until verification.</p>
           </div>
-        </PremiumCard>
+        </div>
       </div>
-    </PremiumLayout>
+
+      {/* Modals */}
+      <DepositModal
+        isOpen={depositModal}
+        onClose={() => setDepositModal(false)}
+        onDeposit={handleDeposit}
+      />
+      <WithdrawModal
+        isOpen={withdrawModal}
+        onClose={() => setWithdrawModal(false)}
+        maxAmount={balance}
+        onWithdraw={handleWithdraw}
+      />
+    </div>
   );
 }

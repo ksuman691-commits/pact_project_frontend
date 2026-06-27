@@ -96,36 +96,39 @@ export default function PactCard({
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons - Believe (left), Proof (center), Doubt (right) */}
         <div className="px-4 py-3 flex items-center justify-between border-t border-gray-100">
-          <div className="flex gap-2">
-            <button
-              onClick={() => onVote?.(pact.id, 'believe')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
-                userVote === 'believe'
-                  ? 'bg-emerald-100 text-emerald-700 shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              ✓ Believe
-            </button>
-            <button
-              onClick={() => onVote?.(pact.id, 'doubt')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
-                userVote === 'doubt'
-                  ? 'bg-red-100 text-red-700 shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              ✗ Doubt
-            </button>
-          </div>
+          {/* Believe Button - Left */}
+          <button
+            onClick={() => onVote?.(pact.id, 'believe')}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+              userVote === 'believe'
+                ? 'bg-emerald-100 text-emerald-700 shadow-sm'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            ✓ Believe
+          </button>
+
+          {/* Proof Button - Center */}
           <button 
             onClick={() => setProofModal(true)}
-            className="text-gray-500 hover:text-gray-700 transition text-xs font-medium flex items-center gap-1"
+            className="text-gray-500 hover:text-emerald-600 transition text-xs font-medium flex items-center gap-1 px-3 py-1.5"
           >
             <Camera className="w-3 h-3" />
             Proof
+          </button>
+
+          {/* Doubt Button - Right */}
+          <button
+            onClick={() => onVote?.(pact.id, 'doubt')}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+              userVote === 'doubt'
+                ? 'bg-red-100 text-red-700 shadow-sm'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            ✗ Doubt
           </button>
         </div>
 
