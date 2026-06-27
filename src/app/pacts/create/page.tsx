@@ -1,271 +1,161 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { PactWizardProvider, usePactWizard } from '@/context/PactWizardContext';
+import { useCreatePact } from '@/hooks/usePactMutations';
+import { useWalletBalance } from '@/hooks/useWallet';
 import Navbar from '@/components/Navbar';
-import { pactService, circleService } from '@/services/api';
-import { Circle } from '@/types';
+import PactWizardStep1 from '@/components/PactWizardStep1';
+import PactWizardStep2 from '@/components/PactWizardStep2';
+import PactWizardStep3 from '@/components/PactWizardStep3';
+import PactWizardStep4 from '@/components/PactWizardStep4';
+import PactWizardStep5 from '@/components/PactWizardStep5';
 import toast from 'react-hot-toast';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 
-export default function CreatePactPage() {
+function WizardContent() {
   const router = useRouter();
-  const { user, isInitialized } = useRequireAuth();
-  const [circles, setCircles] = useState<Circle[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    stake_amount: 0,
-    deadline: '',
-    verification_type: 'video',
-    circle_id: 0,
-    required_approvers: 4,
-    is_public: false, // NEW: Public/Private pact
-  });
+  const { data, currentStep, nextStep, prevStep } = usePactWizard();
+  const createMutation = useCreatePact();
+  const { data: balanceData } = useWalletBalance();
 
-  if (!isInitialized) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-      </div>
-    );
-  }
+  const balance = balanceData?.balance || 0;
 
-  if (!user) {
-    return null;
-  }
-
-  useEffect(() => {
-    if (!isInitialized) return;
-    if (!user) {
-      router.push('/auth/login');
-      return;
+  // Validation for each step
+  const isStepValid = () => {
+    switch (currentStep) {
+      case 1:
+        return data.title.trim().length > 0 && data.description.trim().length > 0;
+      case 2:
+        return data.endDate && data.stakeAmount > 0 && data.minParticipants <= data.maxParticipants;
+      case 3:
+        return data.verificationType && data.maxProofUploads > 0;
+      case 4:
+        return data.visibility === 'circle-specific' ? !!data.selectedCircleId : true;
+      case 5:
+        return true;
+      default:
+        return false;
     }
-
-    const fetchCircles = async () => {
-      try {
-        const response = await circleService.list();
-        setCircles(response.data);
-        if (response.data.length > 0) {
-          setFormData((prev) => ({ ...prev, circle_id: response.data[0].id }));
-        }
-      } catch (error) {
-        toast.error('Failed to load circles');
-      }
-    };
-
-    fetchCircles();
-  }, [user, router]);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value, type } = e.target;
-    const isCheckbox = type === 'checkbox';
-    const inputValue = isCheckbox ? (e.target as HTMLInputElement).checked : value;
-    
-    setFormData({
-      ...formData,
-      [name]: (name === 'stake_amount' || name === 'circle_id' || name === 'required_approvers') && !isCheckbox
-        ? Number(inputValue) 
-        : inputValue,
-    });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.circle_id) {
-      toast.error('Please select a circle');
+  const handleCreate = async () => {
+    if (data.stakeAmount > balance) {
+      toast.error(`Insufficient balance. You have ₹${balance} but need ₹${data.stakeAmount}`);
       return;
     }
 
-    if (formData.stake_amount < 99) {
-      toast.error('Stake amount must be at least ₹99.');
-      return;
-    }
-
-    setLoading(true);
     try {
-      const response = await pactService.create(formData);
+      await createMutation.mutateAsync({
+        title: data.title,
+        description: data.description,
+        stake_amount: data.stakeAmount,
+        deadline: data.endDate,
+        verification_type: data.verificationType,
+        verification_frequency: data.verificationFrequency,
+        max_proof_uploads: data.maxProofUploads,
+        min_participants: data.minParticipants,
+        max_participants: data.maxParticipants,
+        visibility: data.visibility,
+        circle_id: data.selectedCircleId || null,
+      });
       toast.success('Pact created successfully!');
-      router.push(`/pacts/${response.data.id}`);
+      router.push('/home');
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Failed to create pact');
-    } finally {
-      setLoading(false);
+      toast.error(error.message || 'Failed to create pact');
     }
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold text-slate-900 mb-8">Create New Pact</h1>
 
-          <form onSubmit={handleSubmit} className="card space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Pact Title *
-              </label>
-              <input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                required
-                className="input-field"
-                placeholder="e.g., Lose 5kg in 60 days"
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Create Your Pact</h1>
+          <p className="text-gray-600 mt-1">Step {currentStep} of 5: Make your commitment</p>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="flex gap-2">
+            {[1, 2, 3, 4, 5].map((step) => (
+              <div
+                key={step}
+                className={`flex-1 h-2 rounded-full transition ${
+                  step <= currentStep ? 'bg-emerald-500' : 'bg-gray-200'
+                }`}
               />
-            </div>
+            ))}
+          </div>
+          <div className="flex justify-between mt-2 text-xs text-gray-500">
+            <span>Info</span>
+            <span>Schedule</span>
+            <span>Verify</span>
+            <span>Visibility</span>
+            <span>Review</span>
+          </div>
+        </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Description *
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                required
-                className="input-field h-24 resize-none"
-                placeholder="Describe your pact in detail..."
-              />
-            </div>
+        {/* Step Content */}
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
+          {currentStep === 1 && <PactWizardStep1 />}
+          {currentStep === 2 && <PactWizardStep2 />}
+          {currentStep === 3 && <PactWizardStep3 />}
+          {currentStep === 4 && <PactWizardStep4 />}
+          {currentStep === 5 && <PactWizardStep5 />}
+        </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Stake Amount (₹)
-                </label>
-                <input
-                  type="number"
-                  name="stake_amount"
-                  value={formData.stake_amount}
-                  onChange={handleChange}
-                  min="99"
-                  className="input-field"
-                  placeholder="99"
-                />
-                <p className="text-xs text-slate-500 mt-1">
-                  Minimum stake is ₹99 and your wallet must have sufficient balance.
-                </p>
-              </div>
+        {/* Navigation */}
+        <div className="flex gap-4">
+          <button
+            onClick={() => {
+              if (currentStep > 1) prevStep();
+              else router.back();
+            }}
+            className="flex items-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {currentStep === 1 ? 'Cancel' : 'Back'}
+          </button>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Deadline *
-                </label>
-                <input
-                  type="datetime-local"
-                  name="deadline"
-                  value={formData.deadline}
-                  onChange={handleChange}
-                  required
-                  className="input-field"
-                />
-              </div>
-            </div>
+          {currentStep < 5 && (
+            <button
+              onClick={nextStep}
+              disabled={!isStepValid()}
+              className="flex items-center gap-2 flex-1 px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Verification Type
-                </label>
-                <select
-                  name="verification_type"
-                  value={formData.verification_type}
-                  onChange={handleChange}
-                  className="input-field"
-                >
-                  <option value="video">Video</option>
-                  <option value="image">Image</option>
-                  <option value="document">Document</option>
-                  <option value="manual">Manual</option>
-                </select>
-              </div>
+          {currentStep === 5 && (
+            <button
+              onClick={handleCreate}
+              disabled={createMutation.isPending}
+              className="flex-1 px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50"
+            >
+              {createMutation.isPending ? 'Creating...' : 'Create Pact'}
+            </button>
+          )}
+        </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Required Approvers
-                </label>
-                <input
-                  type="number"
-                  name="required_approvers"
-                  value={formData.required_approvers}
-                  onChange={handleChange}
-                  min="1"
-                  max="10"
-                  className="input-field"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Circle *
-              </label>
-              <select
-                name="circle_id"
-                value={formData.circle_id}
-                onChange={handleChange}
-                required
-                className="input-field"
-              >
-                <option value="">Select a circle</option>
-                {circles.map((circle) => (
-                  <option key={circle.id} value={circle.id}>
-                    {circle.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-slate-700">
-                Pact Visibility
-              </label>
-              <div className="space-y-2">
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="is_public"
-                    checked={formData.is_public}
-                    onChange={handleChange}
-                    className="w-4 h-4 rounded border-slate-300 text-blue-600 cursor-pointer"
-                  />
-                  <span className="ml-3 text-sm text-slate-700">
-                    Public Pact (Anyone can see and join)
-                  </span>
-                </label>
-                <p className="text-xs text-slate-500 ml-7">
-                  {formData.is_public 
-                    ? '✓ Public: Anyone from the community can discover and request to join this pact'
-                    : '✓ Private: Only circle members can see and request to join'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4 pt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 btn-primary disabled:opacity-50"
-              >
-                {loading ? 'Creating...' : 'Create Pact'}
-              </button>
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="flex-1 btn-secondary"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
+        {/* Wallet Balance Info */}
+        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+          Current balance: <span className="font-semibold">₹{balance}</span> | Stake required: <span className="font-semibold">₹{data.stakeAmount}</span>
         </div>
       </div>
-    </>
+    </div>
+  );
+}
+
+export default function CreatePactPage() {
+  return (
+    <PactWizardProvider>
+      <WizardContent />
+    </PactWizardProvider>
   );
 }
