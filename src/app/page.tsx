@@ -1,13 +1,14 @@
 'use client'
 
-import CirclePact from '@/components/CirclePactApp'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function DashboardPage() {
-  return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="relative mx-auto min-h-screen max-w-md bg-slate-50">
-        <CirclePact />
-      </div>
-    </div>
-  )
+  const router = useRouter()
+
+  useEffect(() => {
+    router.push('/home')
+  }, [router])
+
+  return null
 }
