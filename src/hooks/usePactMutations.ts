@@ -213,3 +213,31 @@ export function useSubmitVerification(pactId: number) {
     },
   });
 }
+
+export function useBelievePact() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (pactId: number) => socialService.likePact(pactId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
+    },
+    onError: (error: any) => {
+      console.error('Failed to vote believe:', error);
+    },
+  });
+}
+
+export function useDoubtPact() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (pactId: number) => socialService.unlikePact(pactId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
+    },
+    onError: (error: any) => {
+      console.error('Failed to vote doubt:', error);
+    },
+  });
+}
