@@ -1,10 +1,14 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/store/auth';
 import { Heart, MessageCircle, Share2, Upload, Camera, Image as ImageIcon, ChevronDown, Home, Users, Plus, Trophy, User as UserIcon, X, Zap, Target, Award, Bell } from 'lucide-react';
 import ShareModal from './ShareModal';
 
 const CirclePact = () => {
+  const router = useRouter();
+  const user = useAuthStore((state) => state.user);
   const [currentTab, setCurrentTab] = useState('feed');
   const [shareModal, setShareModal] = useState<{ isOpen: boolean; pact: any | null }>({ isOpen: false, pact: null });
   const [selectedPactId, setSelectedPactId] = useState(null);
@@ -88,7 +92,30 @@ const CirclePact = () => {
   };
 
   const handleUploadProof = (pactId: number) => {
-    alert(`Upload proof for pact ${pactId}`);
+    router.push(`/pacts/${pactId}`);
+  };
+
+  const handleCreatePact = () => {
+    router.push('/pacts/create');
+  };
+
+  const handleOpenCircles = () => {
+    router.push('/circles');
+  };
+
+  const getUserName = () => {
+    if (!user) return 'Friend';
+    return user.full_name ? user.full_name.split(' ')[0] : user.username;
+  };
+
+  const getUserInitials = () => {
+    if (!user) return 'CP';
+    const name = user.full_name || user.username;
+    return name
+      .split(' ')
+      .map((segment) => segment.charAt(0).toUpperCase())
+      .slice(0, 2)
+      .join('');
   };
 
   if (currentTab === 'feed') {
@@ -99,20 +126,26 @@ const CirclePact = () => {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm">
-                MC
+                {getUserInitials()}
               </div>
               <div>
                 <p className="text-xs text-gray-500">Welcome back</p>
-                <h1 className="text-sm font-bold text-gray-900">Maya</h1>
+                <h1 className="text-sm font-bold text-gray-900">{getUserName()}</h1>
               </div>
             </div>
             <div className="flex items-center gap-3">
               {/* Create Pact Circular Button */}
-              <button className="w-10 h-10 rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center text-white transition-all shadow-sm hover:shadow-md">
+              <button
+                onClick={handleCreatePact}
+                className="w-10 h-10 rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center text-white transition-all shadow-sm hover:shadow-md"
+              >
                 <Plus className="w-5 h-5" />
               </button>
-              {/* Create/Join Circle Circular Button */}
-              <button className="w-10 h-10 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center text-white transition-all shadow-sm hover:shadow-md">
+              {/* Open Circles List */}
+              <button
+                onClick={handleOpenCircles}
+                className="w-10 h-10 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center text-white transition-all shadow-sm hover:shadow-md"
+              >
                 <Users className="w-5 h-5" />
               </button>
               {/* Notification */}
@@ -127,7 +160,7 @@ const CirclePact = () => {
           <div className="flex justify-between gap-4 px-2">
             <div className="text-center">
               <p className="text-xs text-gray-500 font-medium">Active</p>
-              <p className="text-sm font-bold text-gray-900">4</p>
+              <p className="text-sm font-bold text-gray-900">{pacts.length}</p>
             </div>
             <div className="text-center">
               <p className="text-xs text-gray-500 font-medium">Circles</p>
@@ -365,7 +398,10 @@ const CirclePact = () => {
             ))}
           </div>
 
-          <button className="w-full mt-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
+          <button
+            onClick={() => router.push('/circles/create')}
+            className="w-full mt-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition"
+          >
             + New Circle
           </button>
         </div>
