@@ -128,19 +128,17 @@ export default function CategorySection({ onCategorySelect, onCreatePact }: Cate
       </div>
 
       {/* Create Pact Button - appears when category selected */}
-      {selectedCategory && (
-        <div className="mt-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <button
-            onClick={() => {
-              onCreatePact?.();
-              setSelectedCategory(null);
-            }}
-            className="w-full py-4 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:from-emerald-700 hover:to-emerald-800 transition-all active:scale-95 flex items-center justify-center gap-2"
-          >
-            <span>Create Pact in {CATEGORIES.find(c => c.id === selectedCategory)?.name}</span>
-          </button>
-        </div>
-      )}
+      <div className={`mt-6 transition-all duration-300 overflow-hidden ${selectedCategory ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'}`}>
+        <button
+          onClick={() => {
+            onCreatePact?.();
+            setSelectedCategory(null);
+          }}
+          className="w-full py-4 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:from-emerald-700 hover:to-emerald-800 transition-all active:scale-95 flex items-center justify-center gap-2"
+        >
+          <span>Create Pact in {CATEGORIES.find(c => c.id === selectedCategory)?.name || 'Category'}</span>
+        </button>
+      </div>
     </div>
   );
 }
