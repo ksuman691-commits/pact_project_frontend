@@ -227,3 +227,67 @@ Modal closes, back to home feed
 
 **Status: Complete and Ready for Testing** ✅
 
+
+---
+
+## Terminology Update: Circle vs Pact
+
+### What Changed
+Updated all "Join Circle" text to "Join Pact" throughout the application to clarify the difference between Circles (communities) and Pacts (commitments).
+
+### Terminology Clarification
+
+**Circles** = Communities/Groups of Friends
+- Places where people gather together
+- You join circles to participate in pacts with friends
+- Each circle has members, leaderboard, and associated pacts
+- Example: "Tech Founders Circle" or "Fitness Friends Circle"
+
+**Pacts** = Personal Commitments/Goals
+- What users create and commit money to
+- Individual challenges within circles or personal
+- People vote believe/doubt on your pact progress
+- Example: "Ship MVP in 7 days" or "Lose 5kg in 60 days"
+
+### Files Updated
+
+1. **Circle Detail Page** (`src/app/circles/[id]/page.tsx`)
+   - "Join Circle" → "Join Pact" (3 occurrences)
+   - Users join pacts within a circle community
+
+2. **CircleCard Component** (`src/components/CircleCard.tsx`)
+   - Button text: "Join Circle" → "Join Pact"
+   - Consistent with overall terminology
+
+3. **JoinCircleModal** (`src/components/JoinCircleModal.tsx`)
+   - Modal header: "Join Circle" → "Join Pact"
+   - User-facing messaging updated
+
+4. **Circles List Page** (`src/app/circles/page.tsx`)
+   - Removed "Create Circle" button
+   - Circles are communities to join, not create
+   - Pact creation is via the + button in BottomNav
+
+### User Flow Now
+
+```
+User Experience:
+1. Click + button (BottomNav) → Create Pact modal opens
+   - This is where you CREATE what you're committing to
+   
+2. Click Circles → Browse community circles
+   - This is where you JOIN communities with friends
+   
+3. Within a Circle → See all pacts created by that circle
+   - Click "Join Pact" to participate in someone's goal
+   - Vote Believe/Doubt on their progress
+```
+
+### Summary
+
+✓ Terminology is now consistent
+✓ "Join Pact" clearly indicates what you're doing
+✓ Circles are communities (join them)
+✓ Pacts are goals (create/join them)
+✓ User flow is more intuitive
+
