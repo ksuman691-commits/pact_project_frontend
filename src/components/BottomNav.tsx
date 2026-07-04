@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { Home, Users, Activity, User, Plus } from 'lucide-react'
 
 const items = [
@@ -11,9 +11,12 @@ const items = [
   { href: '/profile', label: 'Profile', icon: User },
 ]
 
-export default function BottomNav() {
+interface BottomNavProps {
+  onCreatePactClick?: () => void
+}
+
+export default function BottomNav({ onCreatePactClick }: BottomNavProps) {
   const pathname = usePathname()
-  const router = useRouter()
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md">
@@ -26,11 +29,11 @@ export default function BottomNav() {
           {/* Center create button */}
           <div className="flex justify-center">
             <button
-              onClick={() => router.push('/pacts/create')}
+              onClick={onCreatePactClick}
               aria-label="Create pact"
-              className="-mt-7 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 transition-transform active:scale-95"
+              className="-mt-7 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-xl shadow-emerald-600/50 transition-all transform hover:scale-110 active:scale-95 hover:shadow-2xl"
             >
-              <Plus className="h-6 w-6" />
+              <Plus className="h-8 w-8" />
             </button>
           </div>
 

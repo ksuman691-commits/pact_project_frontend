@@ -241,7 +241,7 @@ export default function CircleDetailPage() {
                   onClick={handleJoinCircle}
                   className="btn-primary"
                 >
-                  {circle.is_public ? 'Join Circle' : 'Request to Join'}
+                  {circle.is_public ? 'Join Pact' : 'Request to Join'}
                 </button>
               )}
             </div>
@@ -326,7 +326,7 @@ export default function CircleDetailPage() {
                 <Target className="w-12 h-12 text-slate-300 mx-auto mb-2" />
                 <p className="text-slate-600 mb-4">Join this circle to view and request its pacts.</p>
                 <button onClick={handleJoinCircle} className="btn-primary">
-                  {circle.is_public ? 'Join Circle' : 'Request to Join'}
+                  {circle.is_public ? 'Join Pact' : 'Request to Join'}
                 </button>
               </div>
             ) : pacts.length > 0 ? (
@@ -393,7 +393,7 @@ export default function CircleDetailPage() {
                           disabled={!isMember && !circle.is_public}
                         >
                           {!isMember && !circle.is_public
-                            ? 'Join Circle to request'
+                            ? 'Join Pact to request'
                             : 'Request to Join Pact'}
                         </button>
                       )}

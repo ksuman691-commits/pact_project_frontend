@@ -97,38 +97,40 @@ export default function PactCard({
         </div>
 
         {/* Action Buttons - Believe (left), Proof (center), Doubt (right) */}
-        <div className="px-4 py-3 flex items-center justify-between border-t border-gray-100">
-          {/* Believe Button - Left */}
+        <div className="px-4 py-4 flex items-center justify-between gap-3 border-t border-gray-100">
+          {/* Believe Button - Left - Green */}
           <button
             onClick={() => onVote?.(pact.id, 'believe')}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all transform hover:scale-105 active:scale-95 ${
               userVote === 'believe'
-                ? 'bg-emerald-100 text-emerald-700 shadow-sm'
-                : 'text-gray-600 hover:bg-gray-50'
+                ? 'bg-green-600 text-white shadow-lg shadow-green-600/40'
+                : 'bg-green-500 hover:bg-green-600 text-white shadow-md hover:shadow-lg'
             }`}
           >
-            ✓ Believe
+            <span className="text-lg">✓</span>
+            <span className="text-sm">Believe</span>
           </button>
 
           {/* Proof Button - Center */}
           <button 
             onClick={() => setProofModal(true)}
-            className="text-gray-500 hover:text-emerald-600 transition text-xs font-medium flex items-center gap-1 px-3 py-1.5"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-white font-semibold bg-blue-500 hover:bg-blue-600 transition-all transform hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
           >
-            <Camera className="w-3 h-3" />
-            Proof
+            <Camera className="w-5 h-5" />
+            <span className="text-sm">Proof</span>
           </button>
 
-          {/* Doubt Button - Right */}
+          {/* Doubt Button - Right - Red */}
           <button
             onClick={() => onVote?.(pact.id, 'doubt')}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all transform hover:scale-105 active:scale-95 ${
               userVote === 'doubt'
-                ? 'bg-red-100 text-red-700 shadow-sm'
-                : 'text-gray-600 hover:bg-gray-50'
+                ? 'bg-red-600 text-white shadow-lg shadow-red-600/40'
+                : 'bg-red-500 hover:bg-red-600 text-white shadow-md hover:shadow-lg'
             }`}
           >
-            ✗ Doubt
+            <span className="text-lg">✗</span>
+            <span className="text-sm">Doubt</span>
           </button>
         </div>
 

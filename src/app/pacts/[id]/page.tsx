@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import PremiumLayout from '@/layouts/PremiumLayout';
 import PactHero from '@/components/premium/PactHero';
 import PremiumCard from '@/components/premium/PremiumCard';
+import ProofsSection from '@/components/ProofsSection';
 import { Upload, Users, MessageSquare, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function PactDetailPage() {
@@ -137,6 +138,42 @@ export default function PactDetailPage() {
             </form>
           </PremiumCard>
         )}
+
+        {/* Proofs Section - Instagram Style */}
+        <PremiumCard>
+          <ProofsSection
+            proofs={[
+              {
+                id: 1,
+                url: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600',
+                type: 'image',
+                description: 'Started the project setup',
+                day: 1,
+                uploadedAt: '2024-01-15',
+                uploader: pact?.creator_id ? 'You' : 'Creator',
+              },
+              {
+                id: 2,
+                url: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600',
+                type: 'image',
+                description: 'API integration complete',
+                day: 3,
+                uploadedAt: '2024-01-17',
+                uploader: pact?.creator_id ? 'You' : 'Creator',
+              },
+              {
+                id: 3,
+                url: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600',
+                type: 'image',
+                description: 'Database migrations done',
+                day: 5,
+                uploadedAt: '2024-01-19',
+                uploader: pact?.creator_id ? 'You' : 'Creator',
+              },
+            ]}
+            title="Daily Progress"
+          />
+        </PremiumCard>
 
         {/* Verification Section */}
         {verifications.length > 0 && (

@@ -60,7 +60,7 @@ export default function JoinCircleModal({
       <div className="bg-white rounded-2xl max-w-md w-full shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-900">Join Circle</h2>
+          <h2 className="text-xl font-bold text-gray-900">Join Pact</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition"
