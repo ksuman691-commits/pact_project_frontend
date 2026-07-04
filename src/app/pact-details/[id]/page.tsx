@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { usePact } from '@/hooks/usePacts';
 import { useSubmitVerification } from '@/hooks/usePactMutations';
-import { ArrowLeft, Share2, Heart, MessageCircle, Upload } from 'lucide-react';
+import { ArrowLeft, Share2, MessageCircle, Upload } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import VerificationModal from '@/components/VerificationModal';
@@ -133,8 +133,8 @@ export default function PactDetailsPage() {
             onClick={() => setVerificationModal(true)}
             className="flex-1 px-4 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition flex items-center justify-center gap-2"
           >
-            <Heart className="w-4 h-4" />
-            Vote on Proof
+            <span className="text-lg">✓</span>
+            Verify
           </button>
           <button
             onClick={() => setProofUploadModal(true)}
@@ -163,18 +163,18 @@ export default function PactDetailsPage() {
         )}
 
         {/* Engagement Stats */}
-        <div className="flex items-center justify-between text-sm text-gray-600 bg-gray-50 p-4 rounded-xl">
-          <div className="flex items-center gap-2">
-            <Heart className="w-4 h-4" />
-            <span>{Math.floor(pact.believers * 0.8)} likes</span>
+        <div className="flex items-center justify-between text-sm bg-gradient-to-r from-green-50 to-red-50 p-4 rounded-xl border border-gray-100">
+          <div className="flex items-center gap-2 text-green-600 font-medium">
+            <span className="text-lg">✓</span>
+            <span>{(pact.believers / 1000).toFixed(1)}k Believe</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-red-600 font-medium">
+            <span className="text-lg">✗</span>
+            <span>{(pact.doubters / 1000).toFixed(1)}k Doubt</span>
+          </div>
+          <div className="flex items-center gap-2 text-blue-600 font-medium">
             <MessageCircle className="w-4 h-4" />
-            <span>{comments.length} comments</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Share2 className="w-4 h-4" />
-            <span>Share</span>
+            <span>{comments.length}</span>
           </div>
         </div>
 
