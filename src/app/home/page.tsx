@@ -6,12 +6,10 @@ import WalletDisplay from '@/components/premium/WalletDisplay';
 import StreakDisplay from '@/components/premium/StreakDisplay';
 import DailyTasksSection from '@/components/premium/DailyTasksSection';
 import { useAuthStore } from '@/store/auth';
-import { Plus, Bell } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Bell } from 'lucide-react';
 
 export default function HomePage() {
   const { user } = useAuthStore();
-  const router = useRouter();
 
   return (
     <PremiumLayout>
@@ -47,7 +45,7 @@ export default function HomePage() {
           <StreakDisplay
             streak={14}
             todayComplete={false}
-            onUploadProof={() => router.push('/pacts/create')}
+            onUploadProof={() => {}}
           />
         </div>
 
@@ -87,14 +85,6 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-
-      {/* Floating Action Button */}
-      <button
-        onClick={() => router.push('/pacts/create')}
-        className="fixed bottom-24 right-4 w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center active:scale-95"
-      >
-        <Plus className="w-6 h-6" />
-      </button>
     </PremiumLayout>
   );
 }

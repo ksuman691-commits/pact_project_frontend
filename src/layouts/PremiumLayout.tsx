@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import BottomNav from '@/components/BottomNav';
+import PactWizardModal from '@/components/PactWizardModal';
 
 interface PremiumLayoutProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ interface PremiumLayoutProps {
 export default function PremiumLayout({ children, showNav = true }: PremiumLayoutProps) {
   const { user, isInitialized } = useAuthStore();
   const router = useRouter();
+  const [pactModalOpen, setPactModalOpen] = useState(false);
 
   useEffect(() => {
     if (isInitialized && !user) {
@@ -38,8 +40,9 @@ export default function PremiumLayout({ children, showNav = true }: PremiumLayou
         <main className="flex-1 overflow-y-auto pb-20">
           {children}
         </main>
-        {showNav && <BottomNav />}
+        {showNav && <BottomNav onCreatePactClick={() => setPactModalOpen(true)} />}
       </div>
+      <PactWizardModal isOpen={pactModalOpen} onClose={() => setPactModalOpen(false)} />
     </div>
   );
 }
