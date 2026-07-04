@@ -116,13 +116,7 @@ export default function CirclesPage() {
             <h1 className="text-3xl font-bold text-gray-900">Circles</h1>
             <p className="text-gray-600 text-sm mt-1">Join communities and earn together</p>
           </div>
-          <Link
-            href="/circles/create"
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition"
-          >
-            <Plus className="w-5 h-5" />
-            Create Circle
-          </Link>
+
         </div>
       </div>
 
