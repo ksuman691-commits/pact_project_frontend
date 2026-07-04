@@ -139,17 +139,23 @@ export default function CirclesPage() {
           {/* Sort Tabs */}
           <div className="flex gap-2 overflow-x-auto pb-2">
             {[
-              { key: 'all', label: 'All Circles', icon: '🌐' },
-              { key: 'my', label: 'My Circles', icon: '👤' },
-              { key: 'public', label: 'Public', icon: '🔓' },
-              { key: 'trending', label: 'Trending', icon: '🔥' },
+              { key: 'all', label: 'All Pacts', icon: '🌐' },
+              { key: 'my', label: 'My Pacts', icon: '👤' },
+              { key: 'public', label: 'Public', icon: '🔓', action: () => setSortBy('public') },
+              { key: 'trending', label: 'Trending', icon: '🔥', action: () => setSortBy('trending') },
             ].map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => setSortBy(tab.key as any)}
-                className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition ${
+                onClick={() => {
+                  setSortBy(tab.key as any);
+                  // Trigger data fetch for public/trending
+                  if ((tab.key === 'public' || tab.key === 'trending') && publicCircles.data?.pages?.length === 0) {
+                    publicCircles.refetch();
+                  }
+                }}
+                className={`px-4 py-3 rounded-lg font-medium text-sm whitespace-nowrap transition ${
                   sortBy === tab.key
-                    ? 'bg-emerald-600 text-white'
+                    ? 'bg-emerald-600 text-white shadow-md'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                 }`}
               >
@@ -169,17 +175,10 @@ export default function CirclesPage() {
         ) : finalCircles.length === 0 ? (
           <div className="text-center py-20">
             <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg font-medium mb-2">No circles found</p>
+            <p className="text-gray-600 text-lg font-medium mb-2">No pacts found</p>
             <p className="text-gray-500 mb-6">
-              {search ? 'Try a different search' : 'Create one or explore public circles'}
+              {search ? 'Try a different search' : 'Explore communities and join pacts'}
             </p>
-            <Link
-              href="/circles/create"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition"
-            >
-              <Plus className="w-5 h-5" />
-              Create First Circle
-            </Link>
           </div>
         ) : (
           <>
