@@ -5,6 +5,7 @@ import PremiumLayout from '@/layouts/PremiumLayout';
 import WalletDisplay from '@/components/premium/WalletDisplay';
 import StreakDisplay from '@/components/premium/StreakDisplay';
 import DailyTasksSection from '@/components/premium/DailyTasksSection';
+import CategorySection from '@/components/premium/CategorySection';
 import { useAuthStore } from '@/store/auth';
 import { Bell } from 'lucide-react';
 
@@ -48,6 +49,16 @@ export default function HomePage() {
             onUploadProof={() => {}}
           />
         </div>
+
+        {/* Category Section for Creating Pacts */}
+        <CategorySection
+          onCategorySelect={(categoryId) => {
+            console.log('[v0] Category selected:', categoryId);
+          }}
+          onCreatePact={() => {
+            console.log('[v0] Create pact clicked');
+          }}
+        />
 
         {/* Daily Tasks */}
         <div className="mb-6">

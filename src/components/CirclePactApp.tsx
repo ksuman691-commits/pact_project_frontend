@@ -208,7 +208,7 @@ const CirclePact = () => {
               <p className="text-sm font-bold text-emerald-600">14d 🔥</p>
             </div>
             <div className="text-center">
-              <p className="text-xs text-gray-500 font-medium">Done</p>
+              <p className="text-xs text-gray-500 font-medium">Completed</p>
               <p className="text-sm font-bold text-gray-900">27</p>
             </div>
           </div>
