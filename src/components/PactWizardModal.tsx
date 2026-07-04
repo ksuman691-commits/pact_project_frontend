@@ -98,7 +98,7 @@ function WizardContent({ onClose }: { onClose: () => void }) {
           {currentStep === 2 && <PactWizardStep2 />}
           {currentStep === 3 && <PactWizardStep3 />}
           {currentStep === 4 && <PactWizardStep4 />}
-          {currentStep === 5 && <PactWizardStep5 balance={balance} />}
+          {currentStep === 5 && <PactWizardStep5 />}
         </div>
 
         {/* Footer - Navigation Buttons */}
