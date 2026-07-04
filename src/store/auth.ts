@@ -78,12 +78,22 @@ export const useAuthStore = create<AuthState>((set) => ({
   initAuth: async () => {
     set({ isLoading: true });
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      if (token) {        setToken(token);        const response = await authService.getProfile();
-        set({ user: response.data, token, isLoading: false, isInitialized: true });
-      } else {
-        set({ isLoading: false, isInitialized: true });
-      }
+      // Development mode: Load mock user for testing UI
+      const mockUser: User = {
+        id: 123,
+        user_uuid: 'dev-user-123',
+        username: 'testuser',
+        email: 'test@example.com',
+        full_name: 'Test User',
+        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Test',
+        bio: 'Building awesome pacts',
+        created_at: new Date().toISOString(),
+        reputation_score: 850,
+        is_active: true,
+      };
+      
+      // Auto-login with mock user for development
+      set({ user: mockUser, token: 'dev-token', isLoading: false, isInitialized: true });
     } catch (err: any) {
       clearToken();
       set({ user: null, token: null, isLoading: false, isInitialized: true });
