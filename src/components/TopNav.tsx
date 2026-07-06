@@ -90,19 +90,19 @@ export default function TopNav({ onCreatePactClick }: TopNavProps) {
           </div>
 
           {/* Category Strip */}
-          <div className="pt-2 border-t border-slate-100">
-            <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide">
+          <div className="pt-3 border-t border-slate-200">
+            <div className="flex overflow-x-auto gap-2.5 pb-3 scrollbar-hide scroll-smooth">
               {CATEGORIES.map((category) => (
                 <button
                   key={category.id}
                   onClick={() => handleCategoryClick(category.id)}
-                  className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all transform hover:scale-105 whitespace-nowrap ${
+                  className={`flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all transform hover:scale-105 whitespace-nowrap ${
                     pathname?.includes(`category=${category.id}`)
                       ? `bg-gradient-to-r ${category.color} text-white shadow-md`
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-sm'
                   }`}
                 >
-                  <span>{category.emoji}</span>
+                  <span className="text-sm">{category.emoji}</span>
                   <span>{category.name}</span>
                 </button>
               ))}
@@ -112,7 +112,7 @@ export default function TopNav({ onCreatePactClick }: TopNavProps) {
       </nav>
 
       {/* Spacer to prevent content overlap */}
-      <div className="h-28" />
+      <div className="h-32" />
     </>
   )
 }
