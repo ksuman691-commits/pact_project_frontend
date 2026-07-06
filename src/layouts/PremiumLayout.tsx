@@ -37,7 +37,7 @@ export default function PremiumLayout({ children, showNav = true }: PremiumLayou
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="max-w-md mx-auto min-h-screen bg-white flex flex-col">
-        {showNav && <TopNav onCreatePactClick={() => setPactModalOpen(true)} />}
+        {showNav && <TopNav onCreatePactClick={() => setPactModalOpen(true)} showCategories={true} />}
         <main className="flex-1 overflow-y-auto">
           {children}
         </main>

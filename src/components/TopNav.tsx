@@ -112,7 +112,7 @@ export default function TopNav({ onCreatePactClick, showBack = false, showCatego
             </button>
           </div>
 
-          {/* Category Strip - Only show on feed/home pages */}
+          {/* Category Strip - Only show when showCategories is true */}
           {showCategories && (
           <div className="pt-3 border-t border-slate-200">
             <div className="flex overflow-x-auto gap-2.5 pb-3 scrollbar-hide scroll-smooth">
