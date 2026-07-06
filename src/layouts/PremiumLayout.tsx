@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import BottomNav from '@/components/BottomNav';
+import TopNav from '@/components/TopNav';
 import PactWizardModal from '@/components/PactWizardModal';
 
 interface PremiumLayoutProps {
@@ -37,10 +37,10 @@ export default function PremiumLayout({ children, showNav = true }: PremiumLayou
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="max-w-md mx-auto min-h-screen bg-white flex flex-col">
-        <main className="flex-1 overflow-y-auto pb-20">
+        {showNav && <TopNav onCreatePactClick={() => setPactModalOpen(true)} />}
+        <main className="flex-1 overflow-y-auto">
           {children}
         </main>
-        {showNav && <BottomNav onCreatePactClick={() => setPactModalOpen(true)} />}
       </div>
       <PactWizardModal isOpen={pactModalOpen} onClose={() => setPactModalOpen(false)} />
     </div>

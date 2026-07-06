@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Heart, MessageCircle, Share2, Camera, ChevronDown } from 'lucide-react';
+import { MessageCircle, Share2, Camera, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import ProofUploadModal from './ProofUploadModal';
@@ -22,13 +22,6 @@ export default function PactCard({
 }: PactCardProps) {
   const [proofModal, setProofModal] = useState(false);
   const [shareModal, setShareModal] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(Math.floor(pact.believers * 0.8));
-
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
-  };
 
   return (
     <>
@@ -161,16 +154,17 @@ export default function PactCard({
         </div>
 
         {/* Engagement Footer */}
-        <div className="px-4 py-3 bg-white border-t border-gray-100 flex items-center justify-between text-xs">
-          <button 
-            onClick={handleLike}
-            className="flex items-center gap-1 text-gray-600 hover:text-red-500 transition font-medium"
-          >
-            <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-current text-red-500' : ''}`} />
-            {likeCount}
-          </button>
+        <div className="px-4 py-3 bg-white border-t border-gray-100 flex items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-1 text-green-600 font-medium">
+            <span className="text-lg">✓</span>
+            <span>{(pact.believers / 1000).toFixed(1)}k</span>
+          </div>
+          <div className="flex items-center gap-1 text-red-600 font-medium">
+            <span className="text-lg">✗</span>
+            <span>{(pact.doubters / 1000).toFixed(1)}k</span>
+          </div>
           <Link href={`/pact-details/${pact.id}`}>
-            <button className="flex items-center gap-1 text-gray-600 hover:text-blue-500 transition font-medium">
+            <button className="flex items-center gap-1 text-blue-600 hover:text-blue-700 transition font-medium">
               <MessageCircle className="w-3.5 h-3.5" />
               {pact.comments?.length || 0}
             </button>

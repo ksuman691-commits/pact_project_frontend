@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Heart, Send, Loader } from 'lucide-react';
+import { Send, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface Comment {
@@ -28,7 +28,6 @@ export default function CommentSection({
   const [newComment, setNewComment] = useState('');
   const [localComments, setLocalComments] = useState<Comment[]>(comments);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [likedComments, setLikedComments] = useState<Set<number>>(new Set());
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,34 +62,12 @@ export default function CommentSection({
     }
   };
 
-  const handleLikeComment = (commentId: number) => {
-    setLikedComments(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(commentId)) {
-        newSet.delete(commentId);
-      } else {
-        newSet.add(commentId);
-      }
-      return newSet;
-    });
 
-    setLocalComments(prev =>
-      prev.map(comment =>
-        comment.id === commentId
-          ? {
-              ...comment,
-              likes: comment.likes + (likedComments.has(commentId) ? -1 : 1),
-              isLiked: !likedComments.has(commentId),
-            }
-          : comment
-      )
-    );
-  };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       {/* Comment Input */}
-      <form onSubmit={handleAddComment} className="border border-gray-200 rounded-2xl p-4">
+      <form onSubmit={handleAddComment} className="border border-gray-200 rounded-2xl p-4 w-full">
         <div className="flex gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
             U
@@ -120,12 +97,12 @@ export default function CommentSection({
       </form>
 
       {/* Comments List */}
-      <div className="space-y-3">
+      <div className="space-y-4 w-full">
         {localComments.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-8">No comments yet. Be the first!</p>
         ) : (
           localComments.map(comment => (
-            <div key={comment.id} className="hover:bg-gray-50 p-3 rounded-xl transition">
+            <div key={comment.id} className="hover:bg-gray-50 p-4 rounded-xl transition border border-gray-100 hover:border-gray-200">
               <div className="flex gap-3">
                 {/* Avatar */}
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
@@ -138,19 +115,6 @@ export default function CommentSection({
                   <p className="text-sm text-gray-700 break-words">{comment.text}</p>
                   <p className="text-xs text-gray-500 mt-1">{comment.timestamp}</p>
                 </div>
-
-                {/* Like Button */}
-                <button
-                  onClick={() => handleLikeComment(comment.id)}
-                  className="flex items-center gap-1 text-gray-600 hover:text-red-500 transition flex-shrink-0"
-                >
-                  <Heart
-                    className={`w-3.5 h-3.5 ${
-                      likedComments.has(comment.id) ? 'fill-current text-red-500' : ''
-                    }`}
-                  />
-                  <span className="text-xs font-medium">{comment.likes}</span>
-                </button>
               </div>
             </div>
           ))
