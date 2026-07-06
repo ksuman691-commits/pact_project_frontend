@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Target, Plus, Bell } from 'lucide-react'
+import { Home, Target, Plus, Bell, ArrowLeft } from 'lucide-react'
 import { useState } from 'react'
 
 const CATEGORIES = [
@@ -20,12 +20,23 @@ const CATEGORIES = [
 
 interface TopNavProps {
   onCreatePactClick?: () => void
+  showBack?: boolean
+  showCategories?: boolean
 }
 
-export default function TopNav({ onCreatePactClick }: TopNavProps) {
+export default function TopNav({ onCreatePactClick, showBack = false, showCategories = true }: TopNavProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [scrollPos, setScrollPos] = useState(0)
+
+  const handleBack = () => {
+    // Go back to feed if on a detail page, otherwise to home
+    if (pathname?.includes('/pact-details') || pathname?.includes('/profile') || pathname?.includes('/wallet') || pathname?.includes('/circles')) {
+      router.push('/feed')
+    } else {
+      router.back()
+    }
+  }
 
   const isActive = (path: string) => pathname === path || pathname?.startsWith(path + '/')
 
@@ -41,7 +52,19 @@ export default function TopNav({ onCreatePactClick }: TopNavProps) {
         <div className="px-4 py-3">
           {/* Navigation Links */}
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4">
+              {/* Back Button - Show on detail pages */}
+              {showBack && (
+                <button
+                  onClick={handleBack}
+                  className="flex flex-col items-center gap-1 py-1 text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors"
+                  aria-label="Go back"
+                >
+                  <ArrowLeft className="h-6 w-6" strokeWidth={2} />
+                  <span>Back</span>
+                </button>
+              )}
+
               {/* Home Button */}
               <Link
                 href="/"
@@ -89,7 +112,8 @@ export default function TopNav({ onCreatePactClick }: TopNavProps) {
             </button>
           </div>
 
-          {/* Category Strip */}
+          {/* Category Strip - Only show on feed/home pages */}
+          {showCategories && (
           <div className="pt-3 border-t border-slate-200">
             <div className="flex overflow-x-auto gap-2.5 pb-3 scrollbar-hide scroll-smooth">
               {CATEGORIES.map((category) => (
@@ -108,11 +132,12 @@ export default function TopNav({ onCreatePactClick }: TopNavProps) {
               ))}
             </div>
           </div>
+          )}
         </div>
       </nav>
 
       {/* Spacer to prevent content overlap */}
-      <div className="h-32" />
+      <div className={showCategories ? 'h-32' : 'h-24'} />
     </>
   )
 }

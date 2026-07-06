@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { usePact } from '@/hooks/usePacts';
 import { useSubmitVerification } from '@/hooks/usePactMutations';
-import { ArrowLeft, Share2, MessageCircle, Upload } from 'lucide-react';
+import { Share2, MessageCircle, Upload } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import TopNav from '@/components/TopNav';
 import VerificationModal from '@/components/VerificationModal';
 import ProofUploadModal from '@/components/ProofUploadModal';
 import CommentSection from '@/components/CommentSection';
@@ -65,25 +66,21 @@ export default function PactDetailsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-12">
-      {/* Header */}
-      <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 z-20">
-        <div className="flex items-center justify-between max-w-2xl mx-auto">
-          <button
-            onClick={() => router.back()}
-            className="p-2 hover:bg-gray-100 rounded-full transition"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-700" />
-          </button>
-          <h1 className="font-bold text-gray-900">{pact.title}</h1>
-          <button className="p-2 hover:bg-gray-100 rounded-full transition">
-            <Share2 className="w-5 h-5 text-gray-700" />
-          </button>
+    <>
+      <TopNav showBack={true} showCategories={false} />
+      <div className="min-h-screen bg-white pb-12 max-w-md mx-auto">
+        {/* Pact Title Header */}
+        <div className="sticky top-24 bg-white border-b border-gray-100 px-4 py-3 z-20">
+          <div className="flex items-center justify-between">
+            <h1 className="font-bold text-gray-900 flex-1">{pact.title}</h1>
+            <button className="p-2 hover:bg-gray-100 rounded-full transition ml-2">
+              <Share2 className="w-5 h-5 text-gray-700" />
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="px-4 py-6 max-w-2xl mx-auto space-y-6">
+        {/* Main Content */}
+        <div className="px-4 py-6 space-y-6">
         {/* Creator Card */}
         <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6">
           <div className="flex items-center gap-4 mb-4">
@@ -240,5 +237,6 @@ export default function PactDetailsPage() {
         }}
       />
     </div>
+    </>
   );
 }
