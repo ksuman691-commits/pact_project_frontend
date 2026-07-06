@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Target, Plus, Bell, ArrowLeft } from 'lucide-react'
+import { Home, Plus, Bell, ArrowLeft } from 'lucide-react'
 import { useState } from 'react'
 
 const CATEGORIES = [
@@ -65,25 +65,14 @@ export default function TopNav({ onCreatePactClick, showBack = false, showCatego
                 </button>
               )}
 
-              {/* Home Button */}
-              <Link
-                href="/"
-                className={`flex flex-col items-center gap-1 py-1 text-xs font-medium transition-colors ${
-                  isActive('/') ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'
-                }`}
-              >
-                <Home className="h-6 w-6" strokeWidth={isActive('/') ? 2.4 : 2} />
-                <span>Home</span>
-              </Link>
-
-              {/* Pact Button */}
+              {/* Feed/Home Button - Single button for main page */}
               <Link
                 href="/feed"
                 className={`flex flex-col items-center gap-1 py-1 text-xs font-medium transition-colors ${
-                  isActive('/feed') ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'
+                  isActive('/feed') || isActive('/') ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'
                 }`}
               >
-                <Target className="h-6 w-6" strokeWidth={isActive('/feed') ? 2.4 : 2} />
+                <Home className="h-6 w-6" strokeWidth={isActive('/feed') || isActive('/') ? 2.4 : 2} />
                 <span>Feed</span>
               </Link>
             </div>
