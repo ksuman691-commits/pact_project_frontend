@@ -31,11 +31,11 @@ export default function FeedPage() {
         onCreatePact={() => setPactModalOpen(true)}
       />
 
-      <div className="max-w-md mx-auto bg-slate-50 pb-20">
-        {/* Stats Bar */}
-        <StatsBar stats={stats} />
+      {/* Stats Bar */}
+      <StatsBar stats={stats} />
 
-        {/* Pacts Feed Section */}
+      {/* Pacts Feed Section */}
+      <div className="max-w-md mx-auto bg-slate-50 pb-20 px-4">
         <PactFeed showMockData={true} />
       </div>
 
