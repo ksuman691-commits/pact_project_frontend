@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { usePacts } from '@/hooks/usePacts';
 import { useWalletBalance, useWalletRewards } from '@/hooks/useWallet';
+import TopNav from '@/components/TopNav';
 import ProfileHero from '@/components/ProfileHero';
 import ProfileStats from '@/components/ProfileStats';
 import ProfileTabs, { PactsTab, AchievementsTab, FollowersTab } from '@/components/ProfileTabs';
@@ -143,29 +144,31 @@ export default function Profile() {
   }));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Top Bar */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900">My Profile</h1>
-          <div className="flex gap-2">
-            <button
-              onClick={handleEditProfile}
-              className="p-2 hover:bg-gray-100 rounded-lg transition"
-              title="Edit settings"
-            >
-              <Settings className="w-5 h-5 text-gray-600" />
-            </button>
-            <button
-              onClick={handleLogout}
-              className="p-2 hover:bg-red-50 rounded-lg transition text-red-600"
-              title="Logout"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+    <>
+      <TopNav showBack={true} showCategories={false} />
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 max-w-md mx-auto">
+        {/* Top Bar */}
+        <div className="bg-white border-b border-gray-100 sticky top-24 z-40">
+          <div className="px-4 py-4 flex items-center justify-between">
+            <h1 className="text-xl font-bold text-gray-900">My Profile</h1>
+            <div className="flex gap-2">
+              <button
+                onClick={handleEditProfile}
+                className="p-2 hover:bg-gray-100 rounded-lg transition"
+                title="Edit settings"
+              >
+                <Settings className="w-5 h-5 text-gray-600" />
+              </button>
+              <button
+                onClick={handleLogout}
+                className="p-2 hover:bg-red-50 rounded-lg transition text-red-600"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 py-8">
@@ -214,13 +217,14 @@ export default function Profile() {
         </ProfileTabs>
       </div>
 
-      {/* Follow Modal */}
-      <UserFollowModal
-        isOpen={followModal.isOpen}
-        onClose={() => setFollowModal({ ...followModal, isOpen: false })}
-        type={followModal.type}
-        users={followModal.type === 'followers' ? mockFollowers : mockFollowing}
-      />
-    </div>
+        {/* Follow Modal */}
+        <UserFollowModal
+          isOpen={followModal.isOpen}
+          onClose={() => setFollowModal({ ...followModal, isOpen: false })}
+          type={followModal.type}
+          users={followModal.type === 'followers' ? mockFollowers : mockFollowing}
+        />
+      </div>
+    </>
   );
 }

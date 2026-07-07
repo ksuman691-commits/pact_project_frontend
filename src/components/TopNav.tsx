@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Target, Plus, Bell } from 'lucide-react'
+import { Home, Plus, Bell, ArrowLeft } from 'lucide-react'
 import { useState } from 'react'
 
 const CATEGORIES = [
@@ -20,12 +20,23 @@ const CATEGORIES = [
 
 interface TopNavProps {
   onCreatePactClick?: () => void
+  showBack?: boolean
+  showCategories?: boolean
 }
 
-export default function TopNav({ onCreatePactClick }: TopNavProps) {
+export default function TopNav({ onCreatePactClick, showBack = false, showCategories = true }: TopNavProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [scrollPos, setScrollPos] = useState(0)
+
+  const handleBack = () => {
+    // Go back to feed if on a detail page, otherwise to home
+    if (pathname?.includes('/pact-details') || pathname?.includes('/profile') || pathname?.includes('/wallet') || pathname?.includes('/circles')) {
+      router.push('/feed')
+    } else {
+      router.back()
+    }
+  }
 
   const isActive = (path: string) => pathname === path || pathname?.startsWith(path + '/')
 
@@ -37,30 +48,31 @@ export default function TopNav({ onCreatePactClick }: TopNavProps) {
   return (
     <>
       {/* Top Navigation Bar */}
-      <nav className="fixed inset-x-0 top-0 z-50 mx-auto max-w-md bg-white border-b border-slate-200 shadow-sm">
+      <nav className="fixed inset-x-0 top-0 z-50 mx-auto max-w-md bg-white border-b border-slate-200 shadow-sm overflow-visible">
         <div className="px-4 py-3">
           {/* Navigation Links */}
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-6">
-              {/* Home Button */}
-              <Link
-                href="/"
-                className={`flex flex-col items-center gap-1 py-1 text-xs font-medium transition-colors ${
-                  isActive('/') ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'
-                }`}
-              >
-                <Home className="h-6 w-6" strokeWidth={isActive('/') ? 2.4 : 2} />
-                <span>Home</span>
-              </Link>
+            <div className="flex items-center gap-4">
+              {/* Back Button - Show on detail pages */}
+              {showBack && (
+                <button
+                  onClick={handleBack}
+                  className="flex flex-col items-center gap-1 py-1 text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors"
+                  aria-label="Go back"
+                >
+                  <ArrowLeft className="h-6 w-6" strokeWidth={2} />
+                  <span>Back</span>
+                </button>
+              )}
 
-              {/* Pact Button */}
+              {/* Feed/Home Button - Single button for main page */}
               <Link
                 href="/feed"
                 className={`flex flex-col items-center gap-1 py-1 text-xs font-medium transition-colors ${
-                  isActive('/feed') ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'
+                  isActive('/feed') || isActive('/') ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'
                 }`}
               >
-                <Target className="h-6 w-6" strokeWidth={isActive('/feed') ? 2.4 : 2} />
+                <Home className="h-6 w-6" strokeWidth={isActive('/feed') || isActive('/') ? 2.4 : 2} />
                 <span>Feed</span>
               </Link>
             </div>
@@ -89,30 +101,32 @@ export default function TopNav({ onCreatePactClick }: TopNavProps) {
             </button>
           </div>
 
-          {/* Category Strip */}
-          <div className="pt-3 border-t border-slate-200">
-            <div className="flex overflow-x-auto gap-2.5 pb-3 scrollbar-hide scroll-smooth">
-              {CATEGORIES.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => handleCategoryClick(category.id)}
-                  className={`flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all transform hover:scale-105 whitespace-nowrap ${
-                    pathname?.includes(`category=${category.id}`)
-                      ? `bg-gradient-to-r ${category.color} text-white shadow-md`
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-sm'
-                  }`}
-                >
-                  <span className="text-sm">{category.emoji}</span>
-                  <span>{category.name}</span>
-                </button>
-              ))}
+          {/* Category Strip - Only show when showCategories is true */}
+          {showCategories && (
+            <div className="pt-4 border-t border-slate-200 -mx-4 px-4 bg-white">
+              <div className="flex overflow-x-auto gap-2 pb-4 scrollbar-hide scroll-smooth">
+                {CATEGORIES.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => handleCategoryClick(category.id)}
+                    className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all transform hover:scale-105 whitespace-nowrap ${
+                      pathname?.includes(`category=${category.id}`)
+                        ? `bg-gradient-to-r ${category.color} text-white shadow-md`
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-sm'
+                    }`}
+                  >
+                    <span className="text-sm">{category.emoji}</span>
+                    <span>{category.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </nav>
 
       {/* Spacer to prevent content overlap */}
-      <div className="h-32" />
+      <div className={showCategories ? 'h-36' : 'h-24'} />
     </>
   )
 }

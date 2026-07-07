@@ -6,6 +6,7 @@ import { Plus, Search, TrendingUp, Users } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
 import { useCircles, usePublicCircles, useSearchCircles } from '@/hooks/useCircles';
 import { useJoinCircle } from '@/hooks/useCircleMutations';
+import TopNav from '@/components/TopNav';
 import CircleCard from '@/components/CircleCard';
 import toast from 'react-hot-toast';
 
@@ -108,20 +109,22 @@ export default function CirclesPage() {
   const finalCircles = displayCircles.length > 0 ? displayCircles : mockCircles;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Circles</h1>
-            <p className="text-gray-600 text-sm mt-1">Join communities and earn together</p>
+    <>
+      <TopNav showBack={true} showCategories={false} />
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 max-w-md mx-auto">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-100 sticky top-24 z-40">
+          <div className="px-4 py-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Circles</h1>
+              <p className="text-gray-600 text-sm mt-1">Join communities and earn together</p>
+            </div>
+
           </div>
-
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Main Content */}
+        <div className="px-4 py-8">
         {/* Search and Filters */}
         <div className="space-y-4 mb-8">
           {/* Search Bar */}
@@ -213,7 +216,8 @@ export default function CirclesPage() {
             )}
           </>
         )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

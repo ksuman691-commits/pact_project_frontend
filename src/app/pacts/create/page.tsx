@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { PactWizardProvider, usePactWizard } from '@/context/PactWizardContext';
 import { useCreatePact } from '@/hooks/usePactMutations';
 import { useWalletBalance } from '@/hooks/useWallet';
-import Navbar from '@/components/Navbar';
+import TopNav from '@/components/TopNav';
 import PactWizardStep1 from '@/components/PactWizardStep1';
 import PactWizardStep2 from '@/components/PactWizardStep2';
 import PactWizardStep3 from '@/components/PactWizardStep3';
@@ -68,10 +68,10 @@ function WizardContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      <Navbar />
+    <div className="min-h-screen bg-slate-50">
+      <TopNav showBack={true} />
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto px-4 pt-32 pb-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Create Your Pact</h1>

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Plus, Download, TrendingUp, DollarSign, AlertCircle } from 'lucide-react';
+import TopNav from '@/components/TopNav';
 import WalletSummary from '@/components/WalletSummary';
 import DepositModal from '@/components/DepositModal';
 import WithdrawModal from '@/components/WithdrawModal';
@@ -45,9 +46,11 @@ export default function WalletPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-40">
+    <>
+      <TopNav showBack={true} showCategories={false} />
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 max-w-md mx-auto">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-100 sticky top-24 z-40">
         <div className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Wallet</h1>
@@ -145,18 +148,19 @@ export default function WalletPage() {
         </div>
       </div>
 
-      {/* Modals */}
-      <DepositModal
-        isOpen={depositModal}
-        onClose={() => setDepositModal(false)}
-        onDeposit={handleDeposit}
-      />
-      <WithdrawModal
-        isOpen={withdrawModal}
-        onClose={() => setWithdrawModal(false)}
-        maxAmount={balance}
-        onWithdraw={handleWithdraw}
-      />
-    </div>
+        {/* Modals */}
+        <DepositModal
+          isOpen={depositModal}
+          onClose={() => setDepositModal(false)}
+          onDeposit={handleDeposit}
+        />
+        <WithdrawModal
+          isOpen={withdrawModal}
+          onClose={() => setWithdrawModal(false)}
+          maxAmount={balance}
+          onWithdraw={handleWithdraw}
+        />
+      </div>
+    </>
   );
 }
