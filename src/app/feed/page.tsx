@@ -3,10 +3,9 @@
 import React, { useState } from 'react'
 import TopNav from '@/components/TopNav'
 import PactWizardModal from '@/components/PactWizardModal'
-import ActivityFeed from '@/components/dashboard/ActivityFeed'
+import PactFeed from '@/components/PactFeed'
 import WalletDisplay from '@/components/premium/WalletDisplay'
 import StreakDisplay from '@/components/premium/StreakDisplay'
-import { activity } from '@/lib/dashboard-data'
 import { useAuthStore } from '@/store/auth'
 
 export default function FeedPage() {
@@ -46,16 +45,16 @@ export default function FeedPage() {
           />
         </div>
 
-        {/* Activity Section */}
-        <div className="border-t border-slate-200 pt-6">
-          <header className="px-4 pb-4">
+        {/* Pacts Feed Section */}
+        <div className="border-t border-slate-200 pt-6 px-4">
+          <header className="pb-4">
             <h2 className="text-2xl font-bold text-slate-900">Activity</h2>
             <p className="mt-1 text-sm text-slate-500">
               See what your circles are achieving today
             </p>
           </header>
 
-          <ActivityFeed activity={activity} />
+          <PactFeed showMockData={true} />
         </div>
       </div>
 
