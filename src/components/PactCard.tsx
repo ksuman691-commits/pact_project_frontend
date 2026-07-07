@@ -27,10 +27,10 @@ export default function PactCard({
 
   return (
     <>
-      <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-lg transition-shadow mb-5">
+      <div className="bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-lg transition-shadow mb-3 sm:mb-5 mx-2 sm:mx-0">
         
         {/* 1. HEADER ROW - Minimal metadata */}
-        <div className="px-4 py-3 flex items-center justify-between border-b border-slate-100">
+        <div className="px-3 sm:px-4 py-3 flex items-center justify-between border-b border-slate-100">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
               {pact.avatar}
@@ -47,15 +47,15 @@ export default function PactCard({
 
         {/* 2. HERO SECTION - Large title */}
         <Link href={`/pact-details/${pact.id}`}>
-          <div className="px-4 pt-5 pb-4 cursor-pointer hover:bg-slate-50 transition">
-            <h2 className="text-2xl font-bold text-slate-900 leading-tight">
+          <div className="px-3 sm:px-4 pt-4 sm:pt-5 pb-3 sm:pb-4 cursor-pointer hover:bg-slate-50 transition">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">
               {pact.title}
             </h2>
           </div>
         </Link>
 
         {/* 3. PROOF PREVIEW - Visual thumbnail */}
-        <div className="px-4 pb-4">
+        <div className="px-3 sm:px-4 pb-3 sm:pb-4">
           {pact.proofClips && pact.proofClips.length > 0 ? (
             <div className="flex gap-2 overflow-x-auto pb-2">
               {pact.proofClips.slice(0, 3).map((clip: any, idx: number) => (
@@ -83,8 +83,8 @@ export default function PactCard({
         </div>
 
         {/* SENTIMENT BAR - Single unified visualization */}
-        <div className="px-4 pb-4">
-          <div className="flex items-end gap-3 mb-3">
+        <div className="px-3 sm:px-4 pb-3 sm:pb-4">
+          <div className="flex items-end gap-2 sm:gap-3 mb-3">
             {/* Progress bar */}
             <div className="flex-1">
               <div className="h-8 bg-slate-100 rounded-full overflow-hidden flex">
@@ -109,24 +109,24 @@ export default function PactCard({
             </div>
           </div>
           {/* Vote counts inline */}
-          <div className="flex gap-4 text-xs">
+          <div className="flex gap-3 text-xs">
             <div className="flex items-center gap-1">
-              <span className="text-lg">✓</span>
+              <span className="text-base sm:text-lg">✓</span>
               <span className="font-semibold text-slate-900">{(pact.believers / 1000).toFixed(1)}k</span>
-              <span className="text-slate-500">Believe</span>
+              <span className="text-slate-500 hidden sm:inline">Believe</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-lg">✗</span>
+              <span className="text-base sm:text-lg">✗</span>
               <span className="font-semibold text-slate-900">{(pact.doubters / 1000).toFixed(1)}k</span>
-              <span className="text-slate-500">Doubt</span>
+              <span className="text-slate-500 hidden sm:inline">Doubt</span>
             </div>
           </div>
         </div>
 
         {/* 4. METADATA ROW - Members and info */}
-        <div className="px-4 py-3 border-t border-slate-100">
-          <div className="flex items-center justify-between">
-            <div className="text-xs text-slate-600 font-medium">
+        <div className="px-3 sm:px-4 py-3 border-t border-slate-100">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-xs text-slate-600 font-medium whitespace-nowrap">
               {pact.proofClips?.length || 0} proofs
             </div>
             <div className="flex -space-x-2">
@@ -152,31 +152,31 @@ export default function PactCard({
         </div>
 
         {/* 5. ACTION ROW - Primary actions (Believe/Doubt large, secondary below) */}
-        <div className="px-4 py-4 border-t border-slate-100 space-y-3">
+        <div className="px-3 sm:px-4 py-3 sm:py-4 border-t border-slate-100 space-y-2 sm:space-y-3">
           {/* Primary action buttons */}
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3">
             <button
               onClick={() => onVote?.(pact.id, 'believe')}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-bold transition-all transform text-base ${
+              className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 sm:py-3 rounded-lg font-bold transition-all transform text-sm sm:text-base ${
                 userVote === 'believe'
                   ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/40 scale-105'
                   : 'bg-emerald-50 text-emerald-700 border-2 border-emerald-300 hover:bg-emerald-100'
               }`}
             >
               <span>✓</span>
-              Believe
+              <span className="hidden sm:inline">Believe</span>
             </button>
 
             <button
               onClick={() => onVote?.(pact.id, 'doubt')}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-bold transition-all transform text-base ${
+              className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 sm:py-3 rounded-lg font-bold transition-all transform text-sm sm:text-base ${
                 userVote === 'doubt'
                   ? 'bg-red-600 text-white shadow-lg shadow-red-600/40 scale-105'
                   : 'bg-red-50 text-red-700 border-2 border-red-300 hover:bg-red-100'
               }`}
             >
               <span>✗</span>
-              Doubt
+              <span className="hidden sm:inline">Doubt</span>
             </button>
           </div>
 
@@ -184,22 +184,24 @@ export default function PactCard({
           <div className="flex gap-2 justify-between">
             <button 
               onClick={() => setProofModal(true)}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 transition font-semibold text-sm"
+              className="flex items-center justify-center gap-1 px-2 sm:px-3 py-2 rounded text-slate-700 bg-slate-100 hover:bg-slate-200 transition font-semibold text-xs sm:text-sm"
+              title="Upload proof"
             >
               <Camera className="w-4 h-4" />
-              Proof
+              <span className="hidden sm:inline">Proof</span>
             </button>
 
             <Link href={`/pact-details/${pact.id}`}>
-              <button className="flex items-center gap-1.5 px-3 py-2 text-slate-600 hover:text-blue-600 transition font-medium text-sm bg-slate-50 hover:bg-slate-100 rounded-lg">
+              <button className="flex items-center justify-center gap-1 px-2 sm:px-3 py-2 text-slate-600 hover:text-blue-600 transition font-medium text-xs sm:text-sm bg-slate-50 hover:bg-slate-100 rounded" title="Comments">
                 <MessageCircle className="w-4 h-4" />
-                {pact.comments?.length || 0}
+                <span className="hidden sm:inline">{pact.comments?.length || 0}</span>
               </button>
             </Link>
 
             <button 
               onClick={() => setShareModal(true)}
-              className="flex items-center gap-1.5 px-3 py-2 text-slate-600 hover:text-emerald-600 transition font-medium text-sm bg-slate-50 hover:bg-slate-100 rounded-lg"
+              className="flex items-center justify-center gap-1 px-2 sm:px-3 py-2 text-slate-600 hover:text-emerald-600 transition font-medium text-xs sm:text-sm bg-slate-50 hover:bg-slate-100 rounded"
+              title="Share"
             >
               <Share2 className="w-4 h-4" />
             </button>

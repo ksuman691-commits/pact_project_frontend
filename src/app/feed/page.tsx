@@ -25,18 +25,18 @@ export default function FeedPage() {
       
       <div className="max-w-md mx-auto bg-slate-50 pb-20">
         {/* User Greeting */}
-        <div className="px-4 pt-6 pb-2">
-          <h1 className="text-3xl font-black text-slate-900">
+        <div className="px-3 sm:px-4 pt-4 sm:pt-6 pb-1 sm:pb-2">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
             Hey, {user?.full_name?.split(' ')[0] || 'there'}
           </h1>
-          <p className="text-sm text-slate-600 mt-1">Let&apos;s build accountability today</p>
+          <p className="text-xs sm:text-sm text-slate-600 mt-1">Let&apos;s build accountability today</p>
         </div>
 
         {/* Stats Bar */}
         <StatsBar stats={stats} />
 
         {/* Pacts Feed Section */}
-        <div className="px-4">
+        <div>
           <PactFeed showMockData={true} />
         </div>
       </div>
