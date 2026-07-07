@@ -48,7 +48,7 @@ export default function TopNav({ onCreatePactClick, showBack = false, showCatego
   return (
     <>
       {/* Top Navigation Bar */}
-      <nav className="fixed inset-x-0 top-0 z-50 mx-auto max-w-md bg-white border-b border-slate-200 shadow-sm">
+      <nav className="fixed inset-x-0 top-0 z-50 mx-auto max-w-md bg-white border-b border-slate-200 shadow-sm overflow-visible">
         <div className="px-4 py-3">
           {/* Navigation Links */}
           <div className="flex items-center justify-between mb-3">
@@ -103,8 +103,8 @@ export default function TopNav({ onCreatePactClick, showBack = false, showCatego
 
           {/* Category Strip - Only show when showCategories is true */}
           {showCategories && (
-            <div className="pt-3 border-t border-slate-200 -mx-4 px-4">
-              <div className="flex overflow-x-auto gap-2 pb-3 scrollbar-hide scroll-smooth">
+            <div className="pt-4 border-t border-slate-200 -mx-4 px-4 bg-white">
+              <div className="flex overflow-x-auto gap-2 pb-4 scrollbar-hide scroll-smooth">
                 {CATEGORIES.map((category) => (
                   <button
                     key={category.id}
