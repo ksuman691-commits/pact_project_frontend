@@ -12,7 +12,7 @@ export default function FeedPage() {
     <div className="min-h-screen bg-slate-50">
       <TopNav onCreatePactClick={() => setPactModalOpen(true)} showCategories={true} />
       
-      <div className="max-w-md mx-auto bg-slate-50 pt-32 pb-20">
+      <div className="max-w-md mx-auto bg-slate-50 pb-20">
         {/* Pacts Feed Section - Main Content */}
         <div className="px-4">
           <header className="pb-6">
