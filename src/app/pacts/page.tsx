@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import Navbar from '@/components/Navbar';
+import TopNav from '@/components/TopNav';
 import { pactService } from '@/services/api';
 import { Pact } from '@/types';
 import toast from 'react-hot-toast';
@@ -73,10 +73,10 @@ export default function PactsPage() {
   };
 
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50">
+      <TopNav showBack={true} />
+      <div className="pt-32 pb-8">
+        <div className="max-w-2xl mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-4xl font-bold text-slate-900">All Pacts</h1>
             <button
@@ -228,6 +228,6 @@ export default function PactsPage() {
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }
