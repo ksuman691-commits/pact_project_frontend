@@ -7,15 +7,13 @@ import { useState } from 'react'
 
 const CATEGORIES = [
   { id: 'trending', name: 'Trending', emoji: '🔥', color: 'from-red-500 to-orange-500' },
-  { id: 'elections', name: 'Elections', emoji: '🗳️', color: 'from-blue-500 to-blue-600' },
-  { id: 'politics', name: 'Politics', emoji: '📊', color: 'from-purple-500 to-purple-600' },
-  { id: 'sports', name: 'Sports', emoji: '🏃', color: 'from-green-500 to-green-600' },
-  { id: 'culture', name: 'Culture', emoji: '🎨', color: 'from-pink-500 to-rose-500' },
-  { id: 'climate', name: 'Climate', emoji: '🌱', color: 'from-emerald-500 to-teal-600' },
-  { id: 'commodities', name: 'Commodities', emoji: '📈', color: 'from-amber-500 to-orange-600' },
-  { id: 'economics', name: 'Economics', emoji: '📉', color: 'from-cyan-500 to-blue-600' },
-  { id: 'finance', name: 'Finance', emoji: '💰', color: 'from-yellow-500 to-amber-600' },
-  { id: 'tech', name: 'Tech & Science', emoji: '⚡', color: 'from-indigo-500 to-purple-600' },
+  { id: 'fitness', name: 'Fitness', emoji: '💪', color: 'from-green-500 to-emerald-600' },
+  { id: 'startup', name: 'Startup', emoji: '🚀', color: 'from-blue-500 to-cyan-600' },
+  { id: 'coding', name: 'Coding', emoji: '💻', color: 'from-purple-500 to-indigo-600' },
+  { id: 'creator', name: 'Creator', emoji: '🎬', color: 'from-pink-500 to-rose-500' },
+  { id: 'study', name: 'Study', emoji: '📚', color: 'from-amber-500 to-orange-600' },
+  { id: 'habits', name: 'Habits', emoji: '⚡', color: 'from-yellow-500 to-amber-600' },
+  { id: 'social', name: 'Social', emoji: '👥', color: 'from-cyan-500 to-blue-600' },
 ]
 
 interface TopNavProps {

@@ -55,37 +55,43 @@ export default function PactCard({
         </Link>
 
         {/* 3. PROOF PREVIEW - Visual thumbnail */}
-        <div className="px-3 sm:px-4 pb-3 sm:pb-4">
-          {pact.proofClips && pact.proofClips.length > 0 ? (
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {pact.proofClips.slice(0, 3).map((clip: any, idx: number) => (
+        {pact.proofClips && pact.proofClips.length > 0 ? (
+          <div className="px-3 sm:px-4 pb-2 sm:pb-3">
+            <p className="text-xs text-slate-600 font-medium mb-2 uppercase tracking-wide">
+              {pact.proofClips.length} Proof{pact.proofClips.length !== 1 ? 's' : ''}
+            </p>
+            <div className="flex gap-2 overflow-x-auto">
+              {pact.proofClips.slice(0, 4).map((clip: any, idx: number) => (
                 <div
                   key={idx}
-                  className="flex-shrink-0 w-20 h-20 rounded-lg bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-2xl border border-slate-300"
+                  className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-lg sm:text-2xl border border-slate-300 hover:border-slate-400 transition"
                 >
                   {clip.type === 'coding' ? '💻' : clip.type === 'checkpoint' ? '✅' : '📷'}
                 </div>
               ))}
-              {pact.proofClips.length > 3 && (
-                <div className="flex-shrink-0 w-20 h-20 rounded-lg bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-600 border border-slate-300">
-                  +{pact.proofClips.length - 3}
+              {pact.proofClips.length > 4 && (
+                <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-slate-100 flex items-center justify-center text-xs sm:text-sm font-bold text-slate-600 border border-slate-300">
+                  +{pact.proofClips.length - 4}
                 </div>
               )}
             </div>
-          ) : (
-            <div className="aspect-video bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center border border-slate-300">
+          </div>
+        ) : (
+          <div className="px-3 sm:px-4 pb-3 sm:pb-4">
+            <p className="text-xs text-slate-600 font-medium mb-2 uppercase tracking-wide">Proof</p>
+            <div className="aspect-video bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300">
               <div className="text-center">
-                <p className="text-3xl mb-1">🎬</p>
-                <p className="text-xs text-slate-500 font-medium">No proof yet</p>
+                <p className="text-2xl sm:text-3xl mb-1">📸</p>
+                <p className="text-xs text-slate-500 font-medium">No proof uploaded yet</p>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* SENTIMENT BAR - Single unified visualization */}
         <div className="px-3 sm:px-4 pb-3 sm:pb-4">
-          <div className="flex items-end gap-2 sm:gap-3 mb-3">
-            {/* Progress bar */}
+          <div className="flex items-end gap-2 sm:gap-3">
+            {/* Progress bar with vote counts integrated */}
             <div className="flex-1">
               <div className="h-8 bg-slate-100 rounded-full overflow-hidden flex">
                 <div 
@@ -101,24 +107,22 @@ export default function PactCard({
                   {doubtPercent > 25 && `${doubtPercent}%`}
                 </div>
               </div>
+              {/* Vote counts below the bar */}
+              <div className="flex justify-between gap-2 mt-1.5 text-xs">
+                <div className="flex items-center gap-1">
+                  <span className="text-sm">✓</span>
+                  <span className="font-semibold text-slate-900">{(pact.believers / 1000).toFixed(1)}k</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm">✗</span>
+                  <span className="font-semibold text-slate-900">{(pact.doubters / 1000).toFixed(1)}k</span>
+                </div>
+              </div>
             </div>
             {/* Time remaining - small badge */}
             <div className="text-right flex-shrink-0">
               <p className="text-xs text-slate-500 font-medium">Time left</p>
               <p className="font-bold text-sm text-orange-600">{pact.timeRemaining}</p>
-            </div>
-          </div>
-          {/* Vote counts inline */}
-          <div className="flex gap-3 text-xs">
-            <div className="flex items-center gap-1">
-              <span className="text-base sm:text-lg">✓</span>
-              <span className="font-semibold text-slate-900">{(pact.believers / 1000).toFixed(1)}k</span>
-              <span className="text-slate-500 hidden sm:inline">Believe</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-base sm:text-lg">✗</span>
-              <span className="font-semibold text-slate-900">{(pact.doubters / 1000).toFixed(1)}k</span>
-              <span className="text-slate-500 hidden sm:inline">Doubt</span>
             </div>
           </div>
         </div>

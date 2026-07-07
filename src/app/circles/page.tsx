@@ -110,7 +110,7 @@ export default function CirclesPage() {
 
   return (
     <>
-      <TopNav showBack={true} showCategories={false} />
+      <TopNav showBack={false} showCategories={false} />
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 max-w-md mx-auto">
         {/* Header */}
         <div className="bg-white border-b border-gray-100 sticky top-24 z-40">
@@ -170,9 +170,9 @@ export default function CirclesPage() {
 
         {/* Circles Grid */}
         {isLoading && displayCircles.length === 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-96 bg-gray-200 rounded-2xl animate-pulse" />
+              <div key={i} className="h-48 bg-gray-200 rounded-2xl animate-pulse" />
             ))}
           </div>
         ) : finalCircles.length === 0 ? (
@@ -185,7 +185,7 @@ export default function CirclesPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-4">
               {finalCircles.map((circle) => (
                 <CircleCard
                   key={circle.id}
