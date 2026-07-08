@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { usePact } from '@/hooks/usePacts';
-import { useSubmitVerification } from '@/hooks/usePactMutations';
 import { Share2, MessageCircle, Upload, AlertCircle, Loader } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -16,7 +15,6 @@ export default function PactDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const { data: pactData, isLoading, isError } = usePact(Number(params.id));
-  const submitVerification = useSubmitVerification(Number(params.id));
   
   const [verificationModal, setVerificationModal] = useState(false);
   const [proofUploadModal, setProofUploadModal] = useState(false);
@@ -100,12 +98,9 @@ export default function PactDetailsPage() {
     ],
   };
 
-  const handleVerify = (pactId: number, verdict: 'believe' | 'doubt', confidence: number) => {
-    // Submit verification through API
-    submitVerification.mutate({
-      verdict,
-      confidence,
-    });
+  const handleVerificationSubmit = () => {
+    setVerificationModal(false);
+    toast.success('Progress verification submitted!');
   };
 
   return (
@@ -266,9 +261,7 @@ export default function PactDetailsPage() {
         isOpen={verificationModal}
         onClose={() => setVerificationModal(false)}
         pactId={pact.id}
-        pactTitle={pact.title}
-        proofDescription={pact.proofClips?.[0]?.text || 'No recent proof'}
-        onVerify={handleVerify}
+        onSubmit={handleVerificationSubmit}
       />
       <ProofUploadModal
         isOpen={proofUploadModal}

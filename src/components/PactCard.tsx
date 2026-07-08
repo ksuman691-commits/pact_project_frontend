@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { MessageCircle, Share2, Camera, MoreVertical } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import ProofUploadModal from './ProofUploadModal';
+import VerificationModal from './VerificationModal';
 import ShareModal from './ShareModal';
 
 interface PactCardProps {
@@ -20,11 +20,15 @@ export default function PactCard({
   userVote,
   onProofUpload,
 }: PactCardProps) {
-  const [proofModal, setProofModal] = useState(false);
+  const [verificationModal, setVerificationModal] = useState(false);
   const [shareModal, setShareModal] = useState(false);
   const [currentVote, setCurrentVote] = useState<'believe' | 'doubt' | null>(userVote as any);
   
-  const believePercent = Math.round((pact.believers / (pact.believers + pact.doubters)) * 100) || 50;
+  // Calculate percentages, handling zero/null values
+  const believers = pact.believers ?? 0;
+  const doubters = pact.doubters ?? 0;
+  const totalVotes = believers + doubters;
+  const believePercent = totalVotes > 0 ? Math.round((believers / totalVotes) * 100) : 50;
   const doubtPercent = 100 - believePercent;
 
   const handleVote = (vote: 'believe' | 'doubt') => {
@@ -113,17 +117,25 @@ export default function PactCard({
             {/* Progress bar */}
             <div className="flex-1">
               <div className="h-6 rounded-full overflow-hidden flex shadow-sm">
+                {/* Believe segment - ensure minimum width if not 0 */}
                 <div
-                  className="bg-blue-600 flex items-center justify-center text-white text-xs font-bold"
-                  style={{ width: `${believePercent}%` }}
+                  className="bg-blue-600 flex items-center justify-center text-white text-xs font-bold transition-all"
+                  style={{ 
+                    width: `${believePercent}%`,
+                    minWidth: believePercent > 0 ? '40px' : '0'
+                  }}
                 >
-                  {believePercent > 30 && `${believePercent}%`}
+                  {believePercent > 25 && `${believePercent}%`}
                 </div>
+                {/* Doubt segment - ensure minimum width if not 0 */}
                 <div
-                  className="bg-red-400 flex items-center justify-center text-white text-xs font-bold"
-                  style={{ width: `${doubtPercent}%` }}
+                  className="bg-red-400 flex items-center justify-center text-white text-xs font-bold transition-all"
+                  style={{ 
+                    width: `${doubtPercent}%`,
+                    minWidth: doubtPercent > 0 ? '40px' : '0'
+                  }}
                 >
-                  {doubtPercent > 30 && `${doubtPercent}%`}
+                  {doubtPercent > 25 && `${doubtPercent}%`}
                 </div>
               </div>
             </div>
@@ -204,9 +216,9 @@ export default function PactCard({
           {/* Action icons */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setProofModal(true)}
+              onClick={() => setVerificationModal(true)}
               className="text-slate-600 hover:text-slate-900 transition"
-              title="Upload proof"
+              title="Submit progress"
             >
               <Camera className="w-5 h-5" />
             </button>
@@ -233,11 +245,11 @@ export default function PactCard({
       </div>
 
       {/* Modals */}
-      <ProofUploadModal
-        isOpen={proofModal}
-        onClose={() => setProofModal(false)}
+      <VerificationModal
+        isOpen={verificationModal}
+        onClose={() => setVerificationModal(false)}
         pactId={pact.id}
-        onUpload={onProofUpload}
+        onSubmit={() => onProofUpload?.(pact.id)}
       />
       <ShareModal
         isOpen={shareModal}

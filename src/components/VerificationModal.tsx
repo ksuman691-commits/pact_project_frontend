@@ -1,234 +1,174 @@
-'use client';
+'use client'
 
-import React, { useState } from 'react';
-import { X, Loader, CheckCircle, XCircle } from 'lucide-react';
-import toast from 'react-hot-toast';
+import React, { useState } from 'react'
+import { X, Loader2 } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 interface VerificationModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  pactId: number;
-  proofUrl?: string;
-  proofDescription?: string;
-  pactTitle?: string;
-  onVerify?: (pactId: number, verdict: 'believe' | 'doubt', confidence: number) => void;
+  isOpen: boolean
+  onClose: () => void
+  pactId: number
+  onSubmit?: () => void
 }
-
-const VERIFICATION_CRITERIA = [
-  { id: 1, label: 'Is the proof legitimate?', hint: 'Does the evidence clearly show commitment?' },
-  { id: 2, label: 'Is the scope reasonable?', hint: 'Is the goal achievable within the timeframe?' },
-  { id: 3, label: 'Is the effort genuine?', hint: 'Does this show real progress toward the goal?' },
-  { id: 4, label: 'Is the timeline feasible?', hint: 'Can they complete this by the deadline?' },
-];
 
 export default function VerificationModal({
   isOpen,
   onClose,
   pactId,
-  proofUrl,
-  proofDescription,
-  pactTitle,
-  onVerify,
+  onSubmit,
 }: VerificationModalProps) {
-  const [step, setStep] = useState<'vote' | 'criteria' | 'confirm'>('vote');
-  const [verdict, setVerdict] = useState<'believe' | 'doubt' | null>(null);
-  const [criteria, setCriteria] = useState<Record<number, boolean>>({});
-  const [confidence, setConfidence] = useState(50);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false)
+  const [answers, setAnswers] = useState({
+    q1_answer: '',
+    q2_answer: '',
+    q3_answer: '',
+    q4_answer: '',
+  })
+  const [reasons, setReasons] = useState({
+    q1_reason: '',
+    q2_reason: '',
+    q3_reason: '',
+    q4_reason: '',
+  })
 
-  if (!isOpen) return null;
+  const questions = [
+    { id: 'q1', label: 'What did you complete today?', placeholder: 'Describe your progress...' },
+    { id: 'q2', label: 'How confident are you this counts as progress?', placeholder: 'Scale 1-10 or describe...' },
+    { id: 'q3', label: 'Any obstacles you overcame?', placeholder: 'Optional: mention challenges...' },
+    { id: 'q4', label: 'What\'s your next step?', placeholder: 'Describe your next goal...' },
+  ]
 
-  const handleVoteClick = (v: 'believe' | 'doubt') => {
-    setVerdict(v);
-    setStep('criteria');
-  };
+  const handleAnswerChange = (qNum: number, value: string) => {
+    setAnswers({
+      ...answers,
+      [`q${qNum}_answer`]: value,
+    })
+  }
 
-  const handleCriteriaToggle = (id: number) => {
-    setCriteria(prev => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
+  const handleReasonChange = (qNum: number, value: string) => {
+    setReasons({
+      ...reasons,
+      [`q${qNum}_reason`]: value,
+    })
+  }
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      toast.success(`Verification submitted as "${verdict}"`);
-      onVerify?.(pactId, verdict as 'believe' | 'doubt', confidence);
-      
-      // Reset and close
-      setStep('vote');
-      setVerdict(null);
-      setCriteria({});
-      setConfidence(50);
-      onClose();
-    } catch (error) {
-      toast.error('Failed to submit verification');
-    } finally {
-      setIsSubmitting(false);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!answers.q1_answer || !answers.q2_answer || !answers.q3_answer || !answers.q4_answer) {
+      toast.error('Please fill in all required fields')
+      return
     }
-  };
+
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/verifications/${pactId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          q1_answer: answers.q1_answer,
+          q2_answer: answers.q2_answer,
+          q3_answer: answers.q3_answer,
+          q4_answer: answers.q4_answer,
+          q1_reason: reasons.q1_reason || undefined,
+          q2_reason: reasons.q2_reason || undefined,
+          q3_reason: reasons.q3_reason || undefined,
+          q4_reason: reasons.q4_reason || undefined,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to submit verification')
+      }
+
+      toast.success('Verification submitted successfully!')
+      onSubmit?.()
+      onClose()
+      setAnswers({ q1_answer: '', q2_answer: '', q3_answer: '', q4_answer: '' })
+      setReasons({ q1_reason: '', q2_reason: '', q3_reason: '', q4_reason: '' })
+    } catch (error) {
+      console.error('Verification error:', error)
+      toast.error('Failed to submit verification')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50">
-      <div className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+      <div className="bg-white w-full max-h-[90vh] rounded-t-3xl flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Verify Proof</h2>
+        <div className="flex items-center justify-between px-6 py-6 border-b border-slate-100 flex-shrink-0">
+          <div>
+            <h2 className="text-2xl font-black text-slate-900">Submit Progress</h2>
+            <p className="text-sm text-slate-600 font-medium mt-1">Share how you&apos;re progressing on this pact</p>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition"
+            className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+            aria-label="Close"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-6 h-6 text-slate-600" strokeWidth={2} />
           </button>
         </div>
 
-        {/* Vote Step */}
-        {step === 'vote' && (
-          <div className="space-y-4">
-            {proofDescription && (
-              <div className="bg-gray-50 p-4 rounded-xl">
-                <p className="text-xs text-gray-500 font-semibold mb-1">Proof Description:</p>
-                <p className="text-sm text-gray-900">{proofDescription}</p>
-              </div>
-            )}
-
-            <p className="text-sm text-gray-600">Do you believe this pact will be completed?</p>
-
-            <div className="space-y-3">
-              <button
-                onClick={() => handleVoteClick('believe')}
-                className="w-full p-4 border-2 border-emerald-200 bg-emerald-50 hover:border-emerald-400 hover:bg-emerald-100 rounded-xl transition flex items-center gap-3"
-              >
-                <CheckCircle className="w-6 h-6 text-emerald-600" />
-                <div className="text-left">
-                  <p className="font-bold text-gray-900">Believe</p>
-                  <p className="text-xs text-gray-600">They will complete this</p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleVoteClick('doubt')}
-                className="w-full p-4 border-2 border-red-200 bg-red-50 hover:border-red-400 hover:bg-red-100 rounded-xl transition flex items-center gap-3"
-              >
-                <XCircle className="w-6 h-6 text-red-600" />
-                <div className="text-left">
-                  <p className="font-bold text-gray-900">Doubt</p>
-                  <p className="text-xs text-gray-600">They might not complete</p>
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Criteria Step */}
-        {step === 'criteria' && (
-          <div className="space-y-4">
-            <p className="text-sm font-semibold text-gray-900">Check criteria:</p>
-
-            <div className="space-y-3">
-              {VERIFICATION_CRITERIA.map(item => (
-                <label key={item.id} className="flex items-start gap-3 p-3 border border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={criteria[item.id] || false}
-                    onChange={() => handleCriteriaToggle(item.id)}
-                    className="w-5 h-5 rounded border-gray-300 text-blue-600 mt-0.5"
-                  />
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-900 text-sm">{item.label}</p>
-                    <p className="text-xs text-gray-600">{item.hint}</p>
+        {/* Form Content */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-6 pb-24">
+          <div className="space-y-6">
+            {questions.map((q, idx) => (
+              <div key={q.id} className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                    <span className="text-sm font-bold text-blue-600">{idx + 1}</span>
                   </div>
-                </label>
-              ))}
-            </div>
-
-            {/* Confidence Slider */}
-            <div className="pt-2">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-semibold text-gray-900">Confidence Level</label>
-                <span className="text-lg font-bold text-blue-600">{confidence}%</span>
+                  <label className="block font-semibold text-slate-900">{q.label}</label>
+                </div>
+                <textarea
+                  value={answers[`q${idx + 1}_answer` as keyof typeof answers]}
+                  onChange={(e) => handleAnswerChange(idx + 1, e.target.value)}
+                  placeholder={q.placeholder}
+                  required
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  rows={3}
+                />
+                <textarea
+                  value={reasons[`q${idx + 1}_reason` as keyof typeof reasons]}
+                  onChange={(e) => handleReasonChange(idx + 1, e.target.value)}
+                  placeholder="Optional reason or note..."
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                  rows={2}
+                />
               </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={confidence}
-                onChange={(e) => setConfidence(Number(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-600"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>Not sure</span>
-                <span>Certain</span>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-4">
-              <button
-                onClick={() => {
-                  setStep('vote');
-                  setVerdict(null);
-                  setCriteria({});
-                }}
-                className="flex-1 px-4 py-3 border border-gray-300 text-gray-900 font-semibold rounded-xl hover:bg-gray-50 transition"
-              >
-                Back
-              </button>
-              <button
-                onClick={() => setStep('confirm')}
-                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition"
-              >
-                Next
-              </button>
-            </div>
+            ))}
           </div>
-        )}
+        </form>
 
-        {/* Confirm Step */}
-        {step === 'confirm' && (
-          <div className="space-y-4">
-            <div className={`p-4 rounded-xl text-center ${
-              verdict === 'believe' ? 'bg-emerald-100' : 'bg-red-100'
-            }`}>
-              <p className={`text-sm font-bold ${
-                verdict === 'believe' ? 'text-emerald-900' : 'text-red-900'
-              }`}>
-                You&apos;re voting to {verdict}
-              </p>
-              <p className="text-sm text-gray-600 mt-1">
-                Confidence: {confidence}%
-              </p>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-xl">
-              <p className="text-xs text-gray-500 font-semibold mb-2">Criteria met:</p>
-              <p className="text-sm text-gray-900">
-                {Object.values(criteria).filter(Boolean).length} of {VERIFICATION_CRITERIA.length} checks passed
-              </p>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <button
-                onClick={() => setStep('criteria')}
-                className="flex-1 px-4 py-3 border border-gray-300 text-gray-900 font-semibold rounded-xl hover:bg-gray-50 transition"
-              >
-                Back
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold rounded-xl transition flex items-center justify-center gap-2"
-              >
-                {isSubmitting && <Loader className="w-4 h-4 animate-spin" />}
-                {isSubmitting ? 'Submitting...' : 'Submit Verification'}
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Footer - Submit Button */}
+        <div className="border-t border-slate-100 px-6 py-4 flex gap-3 flex-shrink-0 bg-white">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-3 rounded-lg border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="flex-1 px-4 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              'Submit Progress'
+            )}
+          </button>
+        </div>
       </div>
     </div>
-  );
+  )
 }
