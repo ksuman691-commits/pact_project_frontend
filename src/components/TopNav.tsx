@@ -63,16 +63,18 @@ export default function TopNav({ onCreatePactClick, showBack = false, showCatego
                 </button>
               )}
 
-              {/* Feed/Home Button - Single button for main page */}
-              <Link
-                href="/feed"
-                className={`flex flex-col items-center gap-1 py-1 text-xs font-medium transition-colors ${
-                  isActive('/feed') || isActive('/') ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'
-                }`}
-              >
-                <Home className="h-6 w-6" strokeWidth={isActive('/feed') || isActive('/') ? 2.4 : 2} />
-                <span>Feed</span>
-              </Link>
+              {/* Feed/Home Button - Hide when on feed page */}
+              {!isActive('/feed') && (
+                <Link
+                  href="/feed"
+                  className={`flex flex-col items-center gap-1 py-1 text-xs font-medium transition-colors ${
+                    isActive('/') ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'
+                  }`}
+                >
+                  <Home className="h-6 w-6" strokeWidth={isActive('/') ? 2.4 : 2} />
+                  <span>Feed</span>
+                </Link>
+              )}
             </div>
 
             {/* Create Pact Button */}
