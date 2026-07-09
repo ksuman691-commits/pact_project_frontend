@@ -21,11 +21,12 @@ export function useCreateCircle() {
   });
 }
 
-export function useJoinCircle(circleId: number, isPublic: boolean = true) {
+export function useJoinCircle() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (message?: string) => {
+    mutationFn: async (params: { circleId: number; isPublic: boolean; message?: string }) => {
+      const { circleId, isPublic, message } = params;
       // For public circles, use direct join endpoint
       // For private circles, send a join request
       if (isPublic) {
@@ -34,11 +35,12 @@ export function useJoinCircle(circleId: number, isPublic: boolean = true) {
         return circleJoinRequestService.sendRequest(circleId, message);
       }
     },
-    onSuccess: (response) => {
+    onSuccess: (response, params) => {
+      const { circleId, isPublic } = params;
       queryClient.invalidateQueries({ queryKey: queryKeys.circles.detail(circleId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.circles.all });
-      const message = isPublic ? 'Joined circle!' : 'Join request sent!';
-      toast.success(message);
+      const successMessage = isPublic ? 'Joined circle!' : 'Join request sent!';
+      toast.success(successMessage);
       return response.data;
     },
     onError: (error: any) => {

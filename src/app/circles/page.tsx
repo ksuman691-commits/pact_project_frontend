@@ -19,7 +19,7 @@ export default function CirclesPage() {
   const myCircles = useCircles();
   const publicCircles = usePublicCircles();
   const searchResults = useSearchCircles(search);
-  const joinMutation = useJoinCircle(0);
+  const joinMutation = useJoinCircle();
 
   // Determine which hook to use
   useEffect(() => {
@@ -58,11 +58,12 @@ export default function CirclesPage() {
     isLoading = myCircles.isLoading || publicCircles.isLoading;
   }
 
-  const handleJoin = async (circleId: number, isPublic: boolean = true) => {
+  const handleJoin = async (circleId: number, isPublicCircle: boolean = true) => {
     try {
-      // Create new mutation with correct circleId and isPublic flag
-      const mutation = useJoinCircle(circleId, isPublic);
-      await mutation.mutateAsync(undefined);
+      await joinMutation.mutateAsync({
+        circleId,
+        isPublic: isPublicCircle,
+      });
     } catch (error) {
       // Error already handled in mutation
     }
