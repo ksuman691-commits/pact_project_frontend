@@ -3,6 +3,7 @@
 import React from 'react';
 import { usePactWizard } from '@/context/PactWizardContext';
 import { AlertCircle } from 'lucide-react';
+import { realMoneyFeatures } from '@/config/features';
 
 export default function PactWizardStep2() {
   const { data, updateData } = usePactWizard();
@@ -11,7 +12,10 @@ export default function PactWizardStep2() {
   const endDate = data.endDate ? new Date(data.endDate) : null;
   const daysRemaining = endDate ? Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
-  const isValid = data.endDate && data.stakeAmount > 0 && data.minParticipants <= data.maxParticipants;
+  // Stake is only required when real money features are enabled
+  const isValid = data.endDate && data.minParticipants <= data.maxParticipants && (
+    realMoneyFeatures.makeStakeRequired ? data.stakeAmount > 0 : true
+  );
 
   const quickAmounts = [100, 250, 500, 1000, 2500, 5000];
 
@@ -47,38 +51,40 @@ export default function PactWizardStep2() {
         )}
       </div>
 
-      {/* Stake Amount */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Your Stake Amount (₹) <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="number"
-          value={data.stakeAmount}
-          onChange={(e) => updateData({ stakeAmount: Math.max(0, parseFloat(e.target.value) || 0) })}
-          min="0"
-          step="50"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-        />
-        <p className="text-xs text-gray-500 mt-1">This amount will be locked until verification ends</p>
+      {/* Stake Amount - Only shown when real money features are enabled */}
+      {realMoneyFeatures.showStakeAmountStep && (
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Your Stake Amount (₹) <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            value={data.stakeAmount}
+            onChange={(e) => updateData({ stakeAmount: Math.max(0, parseFloat(e.target.value) || 0) })}
+            min="0"
+            step="50"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+          <p className="text-xs text-gray-500 mt-1">This amount will be locked until verification ends</p>
 
-        {/* Quick Amount Buttons */}
-        <div className="flex flex-wrap gap-2 mt-3">
-          {quickAmounts.map((amount) => (
-            <button
-              key={amount}
-              onClick={() => updateData({ stakeAmount: amount })}
-              className={`px-3 py-1 rounded-full text-sm font-medium transition ${
-                data.stakeAmount === amount
-                  ? 'bg-emerald-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              ₹{amount}
-            </button>
-          ))}
+          {/* Quick Amount Buttons */}
+          <div className="flex flex-wrap gap-2 mt-3">
+            {quickAmounts.map((amount) => (
+              <button
+                key={amount}
+                onClick={() => updateData({ stakeAmount: amount })}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                  data.stakeAmount === amount
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                ₹{amount}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Participants */}
       <div className="grid grid-cols-2 gap-4">
