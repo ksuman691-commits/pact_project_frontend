@@ -32,7 +32,7 @@ export default function CirclesPage() {
     if (inView && search && searchResults.hasNextPage) {
       searchResults.fetchNextPage();
     }
-  }, [inView, sortBy, search, publicCircles, searchResults]);
+  }, [inView, sortBy, search, publicCircles.hasNextPage, searchResults.hasNextPage]);
 
   // Get display data
   let displayCircles: any[] = [];
@@ -144,8 +144,8 @@ export default function CirclesPage() {
           {/* Sort Tabs */}
           <div className="flex gap-2 overflow-x-auto pb-2">
             {[
-              { key: 'all', label: 'All Pacts', icon: '🌐' },
-              { key: 'my', label: 'My Pacts', icon: '👤' },
+              { key: 'all', label: 'All Circles', icon: '🌐' },
+              { key: 'my', label: 'My Circles', icon: '👤' },
               { key: 'public', label: 'Public', icon: '🔓', action: () => setSortBy('public') },
               { key: 'trending', label: 'Trending', icon: '🔥', action: () => setSortBy('trending') },
             ].map((tab) => (
@@ -180,9 +180,9 @@ export default function CirclesPage() {
         ) : finalCircles.length === 0 ? (
           <div className="text-center py-20">
             <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg font-medium mb-2">No pacts found</p>
+            <p className="text-gray-600 text-lg font-medium mb-2">No circles found</p>
             <p className="text-gray-500 mb-6">
-              {search ? 'Try a different search' : 'Explore communities and join pacts'}
+              {search ? 'Try a different search' : 'Explore communities and join circles'}
             </p>
           </div>
         ) : (
