@@ -125,7 +125,7 @@ export default function CircleCard({ circle, onJoin }: CircleCardProps) {
                 }}
                 className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium text-sm hover:bg-emerald-700 transition"
               >
-                Join Pact
+                Join Circle
               </button>
             )}
           </div>

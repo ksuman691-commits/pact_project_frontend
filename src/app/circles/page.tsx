@@ -58,12 +58,13 @@ export default function CirclesPage() {
     isLoading = myCircles.isLoading || publicCircles.isLoading;
   }
 
-  const handleJoin = async (circleId: number) => {
+  const handleJoin = async (circleId: number, isPublic: boolean = true) => {
     try {
-      await joinMutation.mutateAsync(undefined);
-      toast.success('Joined circle!');
+      // Create new mutation with correct circleId and isPublic flag
+      const mutation = useJoinCircle(circleId, isPublic);
+      await mutation.mutateAsync(undefined);
     } catch (error) {
-      toast.error('Failed to join circle');
+      // Error already handled in mutation
     }
   };
 
@@ -117,7 +118,7 @@ export default function CirclesPage() {
           <div className="px-4 py-6 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Circles</h1>
-              <p className="text-gray-600 text-sm mt-1">Join communities and earn together</p>
+              <p className="text-gray-600 text-sm mt-1">Join communities and stay accountable together</p>
             </div>
 
           </div>
