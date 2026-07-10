@@ -93,6 +93,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       };
       
       // Auto-login with mock user for development
+      // CRITICAL: Call setToken() to save token to localStorage for API interceptor
+      setToken('dev-token');
       set({ user: mockUser, token: 'dev-token', isLoading: false, isInitialized: true });
     } catch (err: any) {
       clearToken();
