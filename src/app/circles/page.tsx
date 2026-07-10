@@ -19,7 +19,7 @@ export default function CirclesPage() {
   const myCircles = useCircles();
   const publicCircles = usePublicCircles();
   const searchResults = useSearchCircles(search);
-  const joinMutation = useJoinCircle(0);
+  const joinMutation = useJoinCircle();
 
   // Determine which hook to use
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function CirclesPage() {
     if (inView && search && searchResults.hasNextPage) {
       searchResults.fetchNextPage();
     }
-  }, [inView, sortBy, search, publicCircles, searchResults]);
+  }, [inView, sortBy, search, publicCircles.hasNextPage, searchResults.hasNextPage]);
 
   // Get display data
   let displayCircles: any[] = [];
@@ -58,12 +58,14 @@ export default function CirclesPage() {
     isLoading = myCircles.isLoading || publicCircles.isLoading;
   }
 
-  const handleJoin = async (circleId: number) => {
+  const handleJoin = async (circleId: number, isPublicCircle: boolean = true) => {
     try {
-      await joinMutation.mutateAsync(undefined);
-      toast.success('Joined circle!');
+      await joinMutation.mutateAsync({
+        circleId,
+        isPublic: isPublicCircle,
+      });
     } catch (error) {
-      toast.error('Failed to join circle');
+      // Error already handled in mutation
     }
   };
 
@@ -110,14 +112,14 @@ export default function CirclesPage() {
 
   return (
     <>
-      <TopNav showBack={true} showCategories={false} />
+      <TopNav showBack={false} showCategories={false} />
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 max-w-md mx-auto">
         {/* Header */}
         <div className="bg-white border-b border-gray-100 sticky top-24 z-40">
           <div className="px-4 py-6 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Circles</h1>
-              <p className="text-gray-600 text-sm mt-1">Join communities and earn together</p>
+              <p className="text-gray-600 text-sm mt-1">Join communities and stay accountable together</p>
             </div>
 
           </div>
@@ -142,8 +144,8 @@ export default function CirclesPage() {
           {/* Sort Tabs */}
           <div className="flex gap-2 overflow-x-auto pb-2">
             {[
-              { key: 'all', label: 'All Pacts', icon: '🌐' },
-              { key: 'my', label: 'My Pacts', icon: '👤' },
+              { key: 'all', label: 'All Circles', icon: '🌐' },
+              { key: 'my', label: 'My Circles', icon: '👤' },
               { key: 'public', label: 'Public', icon: '🔓', action: () => setSortBy('public') },
               { key: 'trending', label: 'Trending', icon: '🔥', action: () => setSortBy('trending') },
             ].map((tab) => (
@@ -170,22 +172,22 @@ export default function CirclesPage() {
 
         {/* Circles Grid */}
         {isLoading && displayCircles.length === 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-96 bg-gray-200 rounded-2xl animate-pulse" />
+              <div key={i} className="h-48 bg-gray-200 rounded-2xl animate-pulse" />
             ))}
           </div>
         ) : finalCircles.length === 0 ? (
           <div className="text-center py-20">
             <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg font-medium mb-2">No pacts found</p>
+            <p className="text-gray-600 text-lg font-medium mb-2">No circles found</p>
             <p className="text-gray-500 mb-6">
-              {search ? 'Try a different search' : 'Explore communities and join pacts'}
+              {search ? 'Try a different search' : 'Explore communities and join circles'}
             </p>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-4">
               {finalCircles.map((circle) => (
                 <CircleCard
                   key={circle.id}

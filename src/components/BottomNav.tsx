@@ -2,12 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, Activity, User, Plus } from 'lucide-react'
+import { Home, Users, TrendingUp, User } from 'lucide-react'
 
 const items = [
-  { href: '/', label: 'Home', icon: Home },
+  { href: '/feed', label: 'Feed', icon: Home },
   { href: '/circles', label: 'Circles', icon: Users },
-  { href: '/feed', label: 'Feed', icon: Activity },
+  { href: '/leaderboard', label: 'Leaderboard', icon: TrendingUp },
   { href: '/profile', label: 'Profile', icon: User },
 ]
 
@@ -18,51 +18,30 @@ interface BottomNavProps {
 export default function BottomNav({ onCreatePactClick }: BottomNavProps) {
   const pathname = usePathname()
 
+  const isActive = (href: string) => pathname === href || pathname?.startsWith(href + '/')
+
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md">
-      <div className="relative border-t border-slate-200 bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] pt-2 shadow-[0_-4px_20px_rgba(15,23,42,0.06)] backdrop-blur">
-        <div className="grid grid-cols-5 items-center">
-          {items.slice(0, 2).map((item) => (
-            <NavLink key={item.href} item={item} active={pathname === item.href} />
-          ))}
-
-          {/* Center create button */}
-          <div className="flex justify-center">
-            <button
-              onClick={onCreatePactClick}
-              aria-label="Create pact"
-              className="-mt-7 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-xl shadow-emerald-600/50 transition-all transform hover:scale-110 active:scale-95 hover:shadow-2xl"
+    <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md bg-white border-t border-slate-200 shadow-lg">
+      <div className="flex justify-around items-center px-4 py-3 pb-safe">
+        {items.map((item) => {
+          const Icon = item.icon
+          const active = isActive(item.href)
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${
+                active
+                  ? 'text-blue-600 bg-blue-50'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
             >
-              <Plus className="h-8 w-8" />
-            </button>
-          </div>
-
-          {items.slice(2).map((item) => (
-            <NavLink key={item.href} item={item} active={pathname === item.href} />
-          ))}
-        </div>
+              <Icon className="w-6 h-6" strokeWidth={active ? 2.4 : 2} />
+              <span className="text-xs font-medium">{item.label}</span>
+            </Link>
+          )
+        })}
       </div>
     </nav>
-  )
-}
-
-function NavLink({
-  item,
-  active,
-}: {
-  item: { href: string; label: string; icon: typeof Home }
-  active: boolean
-}) {
-  const Icon = item.icon
-  return (
-    <Link
-      href={item.href}
-      className={`flex flex-col items-center gap-1 py-1 text-[11px] font-medium transition-colors ${
-        active ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'
-      }`}
-    >
-      <Icon className="h-5 w-5" strokeWidth={active ? 2.4 : 2} />
-      {item.label}
-    </Link>
   )
 }

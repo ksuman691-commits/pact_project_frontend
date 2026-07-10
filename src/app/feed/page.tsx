@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import TopNav from '@/components/TopNav'
+import WelcomeHeader from '@/components/WelcomeHeader'
 import PactWizardModal from '@/components/PactWizardModal'
 import PactFeed from '@/components/PactFeed'
 import StatsBar from '@/components/StatsBar'
@@ -13,32 +14,29 @@ export default function FeedPage() {
 
   // Mock stats - replace with actual data from API
   const stats = [
-    { label: 'Active', value: 3, icon: '🔄' },
-    { label: 'Circles', value: 5, icon: '👥' },
+    { label: 'Active', value: 2, icon: '🔄' },
+    { label: 'Circles', value: 3, icon: '👥' },
     { label: 'Streak', value: '14d', icon: '🔥' },
-    { label: 'Completed', value: 27, icon: '✓' },
+    { label: 'Done', value: 27, icon: '✓' },
   ]
 
   return (
     <div className="min-h-screen bg-slate-50">
       <TopNav onCreatePactClick={() => setPactModalOpen(true)} showCategories={true} />
       
-      <div className="max-w-md mx-auto bg-slate-50 pb-20">
-        {/* User Greeting */}
-        <div className="px-3 sm:px-4 pt-4 sm:pt-6 pb-1 sm:pb-2">
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
-            Hey, {user?.full_name?.split(' ')[0] || 'there'}
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-600 mt-1">Let&apos;s build accountability today</p>
-        </div>
+      {/* Welcome Header with avatar, greeting, notifications, and New Pact button */}
+      <WelcomeHeader 
+        userName={user?.full_name || 'Test User'}
+        notificationCount={3}
+        onCreatePact={() => setPactModalOpen(true)}
+      />
 
-        {/* Stats Bar */}
-        <StatsBar stats={stats} />
+      {/* Stats Bar */}
+      <StatsBar stats={stats} />
 
-        {/* Pacts Feed Section */}
-        <div>
-          <PactFeed showMockData={true} />
-        </div>
+      {/* Pacts Feed Section */}
+      <div className="max-w-md mx-auto bg-slate-50 pb-20 px-4">
+        <PactFeed showMockData={true} />
       </div>
 
       <PactWizardModal isOpen={pactModalOpen} onClose={() => setPactModalOpen(false)} />

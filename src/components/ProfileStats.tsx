@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Target, CheckCircle, TrendingUp, Flame, DollarSign, Star } from 'lucide-react';
+import { realMoneyFeatures } from '@/config/features';
 
 interface ProfileStatsProps {
   stats: {
@@ -14,7 +15,7 @@ interface ProfileStatsProps {
   };
 }
 
-const statConfigs = [
+const baseStatConfigs = [
   {
     label: 'Pacts Created',
     value: 'pactsCreated',
@@ -40,13 +41,16 @@ const statConfigs = [
     icon: Flame,
     color: 'text-orange-600 bg-orange-100',
   },
-  {
-    label: 'Total Earned',
-    value: 'totalEarned',
-    icon: DollarSign,
-    color: 'text-green-600 bg-green-100',
-    prefix: '₹',
-  },
+  // Total Earned only shown if real money features enabled
+  ...(realMoneyFeatures.showWalletBalance ? [
+    {
+      label: 'Total Earned',
+      value: 'totalEarned',
+      icon: DollarSign,
+      color: 'text-green-600 bg-green-100',
+      prefix: '₹',
+    },
+  ] : []),
   {
     label: 'Reputation',
     value: 'reputation',
@@ -54,6 +58,8 @@ const statConfigs = [
     color: 'text-yellow-600 bg-yellow-100',
   },
 ];
+
+const statConfigs = baseStatConfigs;
 
 export default function ProfileStats({ stats }: ProfileStatsProps) {
   return (

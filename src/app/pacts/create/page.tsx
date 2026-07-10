@@ -13,6 +13,7 @@ import PactWizardStep4 from '@/components/PactWizardStep4';
 import PactWizardStep5 from '@/components/PactWizardStep5';
 import toast from 'react-hot-toast';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { realMoneyFeatures } from '@/config/features';
 
 function WizardContent() {
   const router = useRouter();
@@ -28,7 +29,10 @@ function WizardContent() {
       case 1:
         return data.title.trim().length > 0 && data.description.trim().length > 0;
       case 2:
-        return data.endDate && data.stakeAmount > 0 && data.minParticipants <= data.maxParticipants;
+        // When real money features are disabled, stake is not required
+        // When enabled, stake must be > 0
+        const stakeValid = realMoneyFeatures.showStakeAmountStep ? data.stakeAmount > 0 : true;
+        return data.endDate && stakeValid && data.minParticipants <= data.maxParticipants;
       case 3:
         return data.verificationType && data.maxProofUploads > 0;
       case 4:
@@ -41,16 +45,21 @@ function WizardContent() {
   };
 
   const handleCreate = async () => {
-    if (data.stakeAmount > balance) {
+    // Only check balance if real money features are enabled
+    if (realMoneyFeatures.showStakeAmountStep && data.stakeAmount > balance) {
       toast.error(`Insufficient balance. You have ₹${balance} but need ₹${data.stakeAmount}`);
       return;
     }
 
     try {
+      // When real money features are disabled, send stake_amount as 0
+      // When enabled, send the actual stake amount
+      const stakeAmount = realMoneyFeatures.showStakeAmountStep ? data.stakeAmount : 0;
+
       await createMutation.mutateAsync({
         title: data.title,
         description: data.description,
-        stake_amount: data.stakeAmount,
+        stake_amount: stakeAmount,
         deadline: data.endDate,
         verification_type: data.verificationType,
         verification_frequency: data.verificationFrequency,

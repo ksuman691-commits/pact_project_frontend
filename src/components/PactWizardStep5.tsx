@@ -3,6 +3,7 @@
 import React from 'react';
 import { usePactWizard } from '@/context/PactWizardContext';
 import { Check, DollarSign, Users, Calendar, Eye, Lock } from 'lucide-react';
+import { realMoneyFeatures } from '@/config/features';
 
 export default function PactWizardStep5() {
   const { data } = usePactWizard();
@@ -50,7 +51,7 @@ export default function PactWizardStep5() {
         </div>
 
         {/* Duration & Stakes */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-4" style={{ gridTemplateColumns: realMoneyFeatures.showStakeReview ? '1fr 1fr' : '1fr' }}>
           <div className="p-4 border border-gray-200 rounded-lg bg-white">
             <div className="flex items-center gap-2 text-gray-600 text-sm mb-1">
               <Calendar className="w-4 h-4" />
@@ -62,14 +63,16 @@ export default function PactWizardStep5() {
             </p>
           </div>
 
-          <div className="p-4 border border-gray-200 rounded-lg bg-white">
-            <div className="flex items-center gap-2 text-gray-600 text-sm mb-1">
-              <DollarSign className="w-4 h-4" />
-              Your Stake
+          {realMoneyFeatures.showStakeReview && (
+            <div className="p-4 border border-gray-200 rounded-lg bg-white">
+              <div className="flex items-center gap-2 text-gray-600 text-sm mb-1">
+                <DollarSign className="w-4 h-4" />
+                Your Stake
+              </div>
+              <p className="font-bold text-gray-900 text-lg">₹{data.stakeAmount}</p>
+              <p className="text-xs text-gray-500 mt-1">Will be locked until verification</p>
             </div>
-            <p className="font-bold text-gray-900 text-lg">₹{data.stakeAmount}</p>
-            <p className="text-xs text-gray-500 mt-1">Will be locked until verification</p>
-          </div>
+          )}
         </div>
 
         {/* Participants */}
@@ -123,10 +126,12 @@ export default function PactWizardStep5() {
       <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
         <p className="text-sm font-semibold text-blue-900">By creating this pact, you agree to:</p>
         <ul className="text-sm text-blue-800 space-y-2">
-          <li className="flex gap-2">
-            <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            <span>Stake ₹{data.stakeAmount} that will be locked for the duration</span>
-          </li>
+          {realMoneyFeatures.showStakeReview && (
+            <li className="flex gap-2">
+              <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>Stake ₹{data.stakeAmount} that will be locked for the duration</span>
+            </li>
+          )}
           <li className="flex gap-2">
             <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <span>Submit {data.maxProofUploads} proofs of completion</span>
@@ -135,10 +140,12 @@ export default function PactWizardStep5() {
             <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <span>Accept verification votes from circle members (75% approval needed)</span>
           </li>
-          <li className="flex gap-2">
-            <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            <span>Forfeit stake if pact is not completed</span>
-          </li>
+          {realMoneyFeatures.showStakeReview && (
+            <li className="flex gap-2">
+              <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>Forfeit stake if pact is not completed</span>
+            </li>
+          )}
         </ul>
       </div>
 

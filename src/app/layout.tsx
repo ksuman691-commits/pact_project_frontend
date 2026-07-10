@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import { Toaster } from 'react-hot-toast';
 import AuthInitializer from '@/components/AuthInitializer';
 import QueryProvider from '@/providers/QueryProvider';
+import BottomNav from '@/components/BottomNav';
 
 export const metadata: Metadata = {
   title: 'CirclePact - Accountability, together',
@@ -28,6 +29,7 @@ export default function RootLayout({
         <QueryProvider>
           <AuthInitializer />
           {children}
+          <BottomNav />
           <Toaster position="top-center" />
         </QueryProvider>
       </body>

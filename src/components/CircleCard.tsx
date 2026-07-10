@@ -59,28 +59,28 @@ export default function CircleCard({ circle, onJoin }: CircleCardProps) {
           </div>
 
           {/* Circle Stats */}
-          <div className="px-6 py-4 grid grid-cols-2 gap-4 border-b border-gray-100">
-            <div>
-              <p className="text-xs text-gray-600 font-medium mb-1">Members</p>
+          <div className="px-6 py-4 grid grid-cols-2 gap-6 border-b border-gray-100">
+            <div className="flex flex-col min-w-0">
+              <p className="text-xs text-gray-600 font-medium mb-2 uppercase tracking-wide">Members</p>
               <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-emerald-600" />
+                <Users className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                 <span className="text-lg font-bold text-gray-900">
                   {circle.memberCount}
                 </span>
               </div>
             </div>
-            <div>
-              <p className="text-xs text-gray-600 font-medium mb-1">Type</p>
+            <div className="flex flex-col min-w-0">
+              <p className="text-xs text-gray-600 font-medium mb-2 uppercase tracking-wide">Type</p>
               <div className="flex items-center gap-2">
                 {circle.isPrivate ? (
                   <>
-                    <Lock className="w-4 h-4 text-red-600" />
-                    <span className="text-sm font-medium text-gray-900">Private</span>
+                    <Lock className="w-4 h-4 text-red-600 flex-shrink-0" />
+                    <span className="text-sm font-medium text-gray-900 whitespace-nowrap">Private</span>
                   </>
                 ) : (
                   <>
-                    <Globe className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm font-medium text-gray-900">Public</span>
+                    <Globe className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                    <span className="text-sm font-medium text-gray-900 whitespace-nowrap">Public</span>
                   </>
                 )}
               </div>
@@ -125,7 +125,7 @@ export default function CircleCard({ circle, onJoin }: CircleCardProps) {
                 }}
                 className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium text-sm hover:bg-emerald-700 transition"
               >
-                Join Pact
+                Join Circle
               </button>
             )}
           </div>

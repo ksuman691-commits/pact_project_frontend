@@ -3,24 +3,28 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { usePact } from '@/hooks/usePacts';
-import { useSubmitVerification } from '@/hooks/usePactMutations';
-import { Share2, MessageCircle, Upload, AlertCircle, Loader } from 'lucide-react';
+import { Share2, MessageCircle, Upload, AlertCircle, Loader, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import TopNav from '@/components/TopNav';
-import VerificationModal from '@/components/VerificationModal';
 import ProofUploadModal from '@/components/ProofUploadModal';
 import CommentSection from '@/components/CommentSection';
+import ProofDisplay from '@/components/ProofDisplay';
+import ProofVerificationModal from '@/components/ProofVerificationModal';
+import VerificationResults from '@/components/VerificationResults';
+import { useAuthStore } from '@/store/auth';
 
 export default function PactDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const { data: pactData, isLoading, isError } = usePact(Number(params.id));
-  const submitVerification = useSubmitVerification(Number(params.id));
+  const { user } = useAuthStore();
   
-  const [verificationModal, setVerificationModal] = useState(false);
+  const [proofVerificationModal, setProofVerificationModal] = useState(false);
   const [proofUploadModal, setProofUploadModal] = useState(false);
   const [loadTimeout, setLoadTimeout] = useState(false);
+  const [showVotePrompt, setShowVotePrompt] = useState(false);
+  const [hasVoted, setHasVoted] = useState(false); // TODO: fetch from API based on user's belief/doubt vote
   const [comments, setComments] = useState([
     { id: 1, user: 'dev_pro', text: 'Always delivers 🔥', timestamp: '2h ago', likes: 234 },
     { id: 2, user: 'startup_judge', text: '7 days is tough', timestamp: '1h ago', likes: 145 },
@@ -100,12 +104,17 @@ export default function PactDetailsPage() {
     ],
   };
 
-  const handleVerify = (pactId: number, verdict: 'believe' | 'doubt', confidence: number) => {
-    // Submit verification through API
-    submitVerification.mutate({
-      verdict,
-      confidence,
-    });
+  const handleVerifyClick = () => {
+    if (!hasVoted) {
+      setShowVotePrompt(true);
+      return;
+    }
+    setProofVerificationModal(true);
+  };
+
+  const handleVerificationSubmit = () => {
+    setProofVerificationModal(false);
+    toast.success('Verification submitted successfully!');
   };
 
   return (
@@ -170,37 +179,75 @@ export default function PactDetailsPage() {
         {/* Action Buttons */}
         <div className="flex gap-3">
           <button
-            onClick={() => setVerificationModal(true)}
-            className="flex-1 px-4 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition flex items-center justify-center gap-2"
+            onClick={handleVerifyClick}
+            className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition flex items-center justify-center gap-2"
           >
-            <span className="text-lg">✓</span>
-            Verify
+            <CheckCircle className="w-4 h-4" />
+            Verify Proof
           </button>
           <button
             onClick={() => setProofUploadModal(true)}
-            className="flex-1 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition flex items-center justify-center gap-2"
           >
             <Upload className="w-4 h-4" />
             Upload Proof
           </button>
         </div>
 
-        {/* Proof Gallery */}
-        {pact.proofClips && pact.proofClips.length > 0 && (
-          <div>
-            <h2 className="font-bold text-gray-900 mb-4">Proof Clips ({pact.proofClips.length})</h2>
-            <div className="space-y-3">
-              {pact.proofClips.map((clip: any, idx: number) => (
-                <div key={idx} className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-semibold text-gray-900">Day {clip.day}: {clip.text}</p>
-                    <span className="text-2xl">{clip.type === 'coding' ? '💻' : clip.type === 'checkpoint' ? '✅' : '📷'}</span>
-                  </div>
-                </div>
-              ))}
+        {/* Vote Eligibility Prompt */}
+        {showVotePrompt && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-semibold text-yellow-900">Vote first to verify</p>
+                <p className="text-sm text-yellow-800 mt-1 mb-3">
+                  You must cast a Believe or Doubt vote on this pact before you can submit a verification.
+                </p>
+                <button
+                  onClick={() => {
+                    setShowVotePrompt(false);
+                    // Scroll to voting section (if it exists)
+                  }}
+                  className="text-sm font-medium text-yellow-700 hover:text-yellow-900 underline"
+                >
+                  Go vote now
+                </button>
+              </div>
             </div>
           </div>
         )}
+
+        {/* Real Proof Display */}
+        {pact.proofClips && pact.proofClips.length > 0 && (
+          <div>
+            <h2 className="font-bold text-gray-900 mb-4">Recent Proof</h2>
+            <ProofDisplay 
+              proof={{
+                id: 'proof-1',
+                type: 'image',
+                url: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&q=80',
+                description: pact.proofClips[pact.proofClips.length - 1]?.text || 'Latest proof submission',
+                timestamp: `Day ${pact.daysCurrent}`,
+              }}
+            />
+          </div>
+        )}
+
+        {!pact.proofClips || pact.proofClips.length === 0 && (
+          <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-6 text-center">
+            <p className="text-sm font-medium text-slate-600">No proof submitted yet</p>
+            <p className="text-xs text-slate-500 mt-1">
+              The pact creator hasn&apos;t uploaded any proof yet.
+            </p>
+          </div>
+        )}
+
+        {/* Verification Results */}
+        <div>
+          <h2 className="font-bold text-gray-900 mb-4">Verification Status</h2>
+          <VerificationResults pactId={pact.id} />
+        </div>
 
         {/* Engagement Stats */}
         <div className="flex items-center justify-between text-sm bg-gradient-to-r from-green-50 to-red-50 p-4 rounded-xl border border-gray-100">
@@ -262,13 +309,18 @@ export default function PactDetailsPage() {
       </div>
 
       {/* Modals */}
-      <VerificationModal
-        isOpen={verificationModal}
-        onClose={() => setVerificationModal(false)}
+      <ProofVerificationModal
+        isOpen={proofVerificationModal}
+        onClose={() => setProofVerificationModal(false)}
         pactId={pact.id}
-        pactTitle={pact.title}
-        proofDescription={pact.proofClips?.[0]?.text || 'No recent proof'}
-        onVerify={handleVerify}
+        proof={{
+          id: 'proof-1',
+          type: 'image',
+          url: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&q=80',
+          description: pact.proofClips?.[0]?.text || 'Proof submission',
+          timestamp: `Day ${pact.daysCurrent}`,
+        }}
+        onSubmit={handleVerificationSubmit}
       />
       <ProofUploadModal
         isOpen={proofUploadModal}

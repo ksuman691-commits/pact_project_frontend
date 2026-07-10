@@ -14,22 +14,24 @@ interface StatsBarProps {
 
 export default function StatsBar({ stats }: StatsBarProps) {
   return (
-    <div className="px-2 sm:px-4 py-3 sm:py-4 mb-4 sm:mb-6">
-      <div className="grid grid-cols-4 gap-2 sm:gap-3">
-        {stats.map((stat, idx) => (
-          <div
-            key={idx}
-            className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg sm:rounded-xl p-2.5 sm:p-4 border border-slate-200 text-center hover:shadow-md transition-shadow"
-          >
-            {stat.icon && <p className="text-xl sm:text-2xl mb-0.5 sm:mb-1">{stat.icon}</p>}
-            <p className="text-lg sm:text-2xl font-bold text-slate-900 leading-tight">
-              {stat.value}
-            </p>
-            <p className="text-xs text-slate-600 font-medium mt-0.5 sm:mt-1 uppercase tracking-wide">
-              {stat.label}
-            </p>
-          </div>
-        ))}
+    <div className="max-w-md mx-auto px-4 py-6 mb-6">
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm py-6 px-4">
+        <div className="grid grid-cols-4 gap-3 divide-x divide-slate-200">
+          {stats.map((stat, idx) => (
+            <div
+              key={idx}
+              className="text-center px-3 first:pl-0 last:pr-0"
+            >
+              {stat.icon && <p className="text-3xl mb-2">{stat.icon}</p>}
+              <p className="text-3xl sm:text-4xl font-black text-slate-900 leading-tight">
+                {stat.value}
+              </p>
+              <p className="text-xs text-slate-500 font-semibold mt-2 uppercase tracking-wide">
+                {stat.label}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

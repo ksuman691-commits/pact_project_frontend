@@ -21,19 +21,30 @@ export function useCreateCircle() {
   });
 }
 
-export function useJoinCircle(circleId: number) {
+export function useJoinCircle() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (message?: string) =>
-      circleJoinRequestService.sendRequest(circleId, message),
-    onSuccess: (response) => {
+    mutationFn: async (params: { circleId: number; isPublic: boolean; message?: string }) => {
+      const { circleId, isPublic, message } = params;
+      // For public circles, use direct join endpoint
+      // For private circles, send a join request
+      if (isPublic) {
+        return circleService.join(circleId);
+      } else {
+        return circleJoinRequestService.sendRequest(circleId, message);
+      }
+    },
+    onSuccess: (response, params) => {
+      const { circleId, isPublic } = params;
       queryClient.invalidateQueries({ queryKey: queryKeys.circles.detail(circleId) });
-      toast.success('Join request sent to circle!');
+      queryClient.invalidateQueries({ queryKey: queryKeys.circles.all });
+      const successMessage = isPublic ? 'Joined circle!' : 'Join request sent!';
+      toast.success(successMessage);
       return response.data;
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to send join request');
+      toast.error(error.response?.data?.detail || 'Failed to join circle');
     },
   });
 }

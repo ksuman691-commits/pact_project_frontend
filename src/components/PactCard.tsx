@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MessageCircle, Share2, Camera, ChevronDown } from 'lucide-react';
+import { MessageCircle, Share2, Camera, MoreVertical } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import ProofUploadModal from './ProofUploadModal';
+import VerificationModal from './VerificationModal';
 import ShareModal from './ShareModal';
 
 interface PactCardProps {
@@ -20,201 +20,236 @@ export default function PactCard({
   userVote,
   onProofUpload,
 }: PactCardProps) {
-  const [proofModal, setProofModal] = useState(false);
+  const [verificationModal, setVerificationModal] = useState(false);
   const [shareModal, setShareModal] = useState(false);
-  const believePercent = Math.round((pact.believers / (pact.believers + pact.doubters)) * 100) || 50;
+  const [currentVote, setCurrentVote] = useState<'believe' | 'doubt' | null>(userVote as any);
+  
+  // Calculate percentages, handling zero/null values
+  const believers = pact.believers ?? 0;
+  const doubters = pact.doubters ?? 0;
+  const totalVotes = believers + doubters;
+  const believePercent = totalVotes > 0 ? Math.round((believers / totalVotes) * 100) : 50;
   const doubtPercent = 100 - believePercent;
+
+  const handleVote = (vote: 'believe' | 'doubt') => {
+    setCurrentVote(vote);
+    onVote?.(pact.id, vote);
+    toast.success(`You voted ${vote}!`);
+  };
 
   return (
     <>
-      <div className="bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-lg transition-shadow mb-3 sm:mb-5 mx-2 sm:mx-0">
+      <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-shadow mb-4 mx-2 sm:mx-0">
         
-        {/* 1. HEADER ROW - Minimal metadata */}
-        <div className="px-3 sm:px-4 py-3 flex items-center justify-between border-b border-slate-100">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
-              {pact.avatar}
+        {/* 1. HEADER ROW - Avatar, Username, Label, Menu */}
+        <div className="px-4 py-4 flex items-start justify-between border-b border-slate-100">
+          <div className="flex items-start gap-3 flex-1">
+            {/* Avatar */}
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-orange-500 flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
+              {pact.avatar || '🔥'}
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold text-sm text-slate-900 truncate">@{pact.creator}</p>
-              <p className="text-xs text-slate-500">Day {pact.daysCurrent}/{pact.daysTotal}</p>
+            
+            <div className="flex-1 min-w-0">
+              {/* Username and label row */}
+              <div className="flex items-baseline gap-2 mb-0.5">
+                <h3 className="font-bold text-slate-900">@{pact.creator}</h3>
+                <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">
+                  Day {pact.daysCurrent || 2} of {pact.daysTotal || 7}
+                </p>
+              </div>
+              <p className="text-xs text-slate-600 font-semibold uppercase tracking-wide">
+                {pact.circle || 'Founder Sprint'}
+              </p>
             </div>
           </div>
-          <button className="text-slate-400 hover:text-slate-600 transition flex-shrink-0">
-            <ChevronDown className="w-4 h-4" />
+
+          {/* Menu button */}
+          <button className="p-1 text-slate-400 hover:text-slate-600 transition flex-shrink-0">
+            <MoreVertical className="w-5 h-5" />
           </button>
         </div>
 
         {/* 2. HERO SECTION - Large title */}
         <Link href={`/pact-details/${pact.id}`}>
-          <div className="px-3 sm:px-4 pt-4 sm:pt-5 pb-3 sm:pb-4 cursor-pointer hover:bg-slate-50 transition">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 leading-tight">
+          <div className="px-4 py-5 cursor-pointer hover:bg-slate-50 transition">
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 leading-tight">
               {pact.title}
             </h2>
           </div>
         </Link>
 
-        {/* 3. PROOF PREVIEW - Visual thumbnail */}
-        <div className="px-3 sm:px-4 pb-3 sm:pb-4">
-          {pact.proofClips && pact.proofClips.length > 0 ? (
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {pact.proofClips.slice(0, 3).map((clip: any, idx: number) => (
+        {/* 3. PROOF GRID - 2-column layout with thumbnails */}
+        {pact.proofClips && pact.proofClips.length > 0 ? (
+          <div className="px-4 py-4 border-t border-slate-100">
+            <div className="grid grid-cols-2 gap-3">
+              {pact.proofClips.slice(0, 2).map((clip: any, idx: number) => (
                 <div
                   key={idx}
-                  className="flex-shrink-0 w-20 h-20 rounded-lg bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-2xl border border-slate-300"
+                  className="aspect-square rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 border-2 border-slate-300 flex flex-col items-center justify-center gap-2 hover:border-slate-400 transition cursor-pointer"
                 >
-                  {clip.type === 'coding' ? '💻' : clip.type === 'checkpoint' ? '✅' : '📷'}
+                  <div className="text-4xl">
+                    {clip.type === 'coding' ? '💻' : clip.type === 'checkpoint' ? '✅' : '📷'}
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-600 font-medium">Proof #{idx + 1}</p>
                 </div>
               ))}
-              {pact.proofClips.length > 3 && (
-                <div className="flex-shrink-0 w-20 h-20 rounded-lg bg-slate-100 flex items-center justify-center text-sm font-bold text-slate-600 border border-slate-300">
-                  +{pact.proofClips.length - 3}
+            </div>
+          </div>
+        ) : (
+          <div className="px-4 py-4 border-t border-slate-100">
+            <div className="grid grid-cols-2 gap-3">
+              {[1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="aspect-square rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-2"
+                >
+                  <div className="text-3xl sm:text-4xl">📸</div>
+                  <p className="text-xs text-slate-600 font-medium">Proof #{i}</p>
                 </div>
-              )}
+              ))}
             </div>
-          ) : (
-            <div className="aspect-video bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center border border-slate-300">
-              <div className="text-center">
-                <p className="text-3xl mb-1">🎬</p>
-                <p className="text-xs text-slate-500 font-medium">No proof yet</p>
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* SENTIMENT BAR - Single unified visualization */}
-        <div className="px-3 sm:px-4 pb-3 sm:pb-4">
-          <div className="flex items-end gap-2 sm:gap-3 mb-3">
+        {/* SENTIMENT BAR - Blue-red gradient with vote summary */}
+        <div className="px-4 py-4 border-t border-slate-100">
+          <div className="flex items-end gap-4 mb-4">
             {/* Progress bar */}
             <div className="flex-1">
-              <div className="h-8 bg-slate-100 rounded-full overflow-hidden flex">
-                <div 
-                  className="bg-emerald-500 flex items-center justify-center text-white text-xs font-bold"
-                  style={{ width: `${believePercent}%` }}
+              <div className="h-6 rounded-full overflow-hidden flex shadow-sm">
+                {/* Believe segment - ensure minimum width if not 0 */}
+                <div
+                  className="bg-blue-600 flex items-center justify-center text-white text-xs font-bold transition-all"
+                  style={{ 
+                    width: `${believePercent}%`,
+                    minWidth: believePercent > 0 ? '40px' : '0'
+                  }}
                 >
                   {believePercent > 25 && `${believePercent}%`}
                 </div>
-                <div 
-                  className="bg-red-500 flex items-center justify-center text-white text-xs font-bold"
-                  style={{ width: `${doubtPercent}%` }}
+                {/* Doubt segment - ensure minimum width if not 0 */}
+                <div
+                  className="bg-red-400 flex items-center justify-center text-white text-xs font-bold transition-all"
+                  style={{ 
+                    width: `${doubtPercent}%`,
+                    minWidth: doubtPercent > 0 ? '40px' : '0'
+                  }}
                 >
                   {doubtPercent > 25 && `${doubtPercent}%`}
                 </div>
               </div>
             </div>
-            {/* Time remaining - small badge */}
-            <div className="text-right flex-shrink-0">
-              <p className="text-xs text-slate-500 font-medium">Time left</p>
-              <p className="font-bold text-sm text-orange-600">{pact.timeRemaining}</p>
+
+            {/* Time remaining */}
+            <div className="text-right flex-shrink-0 min-w-max">
+              <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Ends in</p>
+              <p className="text-sm font-black text-red-600">{pact.timeRemaining}</p>
             </div>
           </div>
-          {/* Vote counts inline */}
-          <div className="flex gap-3 text-xs">
-            <div className="flex items-center gap-1">
-              <span className="text-base sm:text-lg">✓</span>
-              <span className="font-semibold text-slate-900">{(pact.believers / 1000).toFixed(1)}k</span>
-              <span className="text-slate-500 hidden sm:inline">Believe</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-base sm:text-lg">✗</span>
-              <span className="font-semibold text-slate-900">{(pact.doubters / 1000).toFixed(1)}k</span>
-              <span className="text-slate-500 hidden sm:inline">Doubt</span>
+
+          {/* Vote summary */}
+          <div className="flex items-baseline justify-between">
+            <div>
+              <p className="text-lg font-black text-slate-900">
+                {believePercent}% Believe
+              </p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {(pact.believers / 1000).toFixed(1)}k believers · {(pact.doubters / 1000).toFixed(1)}k doubters
+              </p>
             </div>
           </div>
         </div>
 
-        {/* 4. METADATA ROW - Members and info */}
-        <div className="px-3 sm:px-4 py-3 border-t border-slate-100">
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-xs text-slate-600 font-medium whitespace-nowrap">
-              {pact.proofClips?.length || 0} proofs
-            </div>
+        {/* VOTING BUTTONS - Believe (blue) and Doubt (gray) */}
+        <div className="px-4 py-4 border-t border-slate-100">
+          <div className="flex gap-3">
+            <button
+              onClick={() => handleVote('believe')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full font-bold text-base transition-all transform ${
+                currentVote === 'believe'
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/40'
+                  : 'bg-blue-100 text-blue-700 border-2 border-blue-300 hover:bg-blue-200'
+              }`}
+            >
+              <span className="text-lg">✓</span>
+              Believe
+            </button>
+
+            <button
+              onClick={() => handleVote('doubt')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full font-bold text-base transition-all transform ${
+                currentVote === 'doubt'
+                  ? 'bg-red-600 text-white shadow-lg shadow-red-600/40'
+                  : 'bg-slate-100 text-slate-700 border-2 border-slate-300 hover:bg-slate-200'
+              }`}
+            >
+              <span className="text-lg">✕</span>
+              Doubt
+            </button>
+          </div>
+        </div>
+
+        {/* FOOTER - Members, Proofs count, and action icons */}
+        <div className="px-4 py-4 flex items-center justify-between border-t border-slate-100">
+          {/* Members avatars - overlapped circles */}
+          <div className="flex items-center gap-1">
             <div className="flex -space-x-2">
-              {[
-                { name: 'A', bg: 'from-emerald-400 to-emerald-600' },
-                { name: 'P', bg: 'from-blue-400 to-blue-600' },
-                { name: 'R', bg: 'from-purple-400 to-purple-600' },
-                { name: 'S', bg: 'from-pink-400 to-pink-600' },
-              ].map((member, idx) => (
-                <div 
+              {['A', 'P', 'R'].map((letter, idx) => (
+                <div
                   key={idx}
-                  className={`w-6 h-6 rounded-full bg-gradient-to-br ${member.bg} flex items-center justify-center text-white text-xs font-bold border border-white hover:scale-110 transition-transform cursor-pointer`}
-                  title={`Member ${member.name}`}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white ${
+                    idx === 0 ? 'bg-blue-600' : idx === 1 ? 'bg-red-600' : 'bg-slate-900'
+                  }`}
                 >
-                  {member.name}
+                  {letter}
                 </div>
               ))}
-              <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-xs font-bold border border-white">
-                +2
-              </div>
             </div>
-          </div>
-        </div>
-
-        {/* 5. ACTION ROW - Primary actions (Believe/Doubt large, secondary below) */}
-        <div className="px-3 sm:px-4 py-3 sm:py-4 border-t border-slate-100 space-y-2 sm:space-y-3">
-          {/* Primary action buttons */}
-          <div className="flex gap-2 sm:gap-3">
-            <button
-              onClick={() => onVote?.(pact.id, 'believe')}
-              className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 sm:py-3 rounded-lg font-bold transition-all transform text-sm sm:text-base ${
-                userVote === 'believe'
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/40 scale-105'
-                  : 'bg-emerald-50 text-emerald-700 border-2 border-emerald-300 hover:bg-emerald-100'
-              }`}
-            >
-              <span>✓</span>
-              <span className="hidden sm:inline">Believe</span>
-            </button>
-
-            <button
-              onClick={() => onVote?.(pact.id, 'doubt')}
-              className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 sm:py-3 rounded-lg font-bold transition-all transform text-sm sm:text-base ${
-                userVote === 'doubt'
-                  ? 'bg-red-600 text-white shadow-lg shadow-red-600/40 scale-105'
-                  : 'bg-red-50 text-red-700 border-2 border-red-300 hover:bg-red-100'
-              }`}
-            >
-              <span>✗</span>
-              <span className="hidden sm:inline">Doubt</span>
-            </button>
+            <span className="text-xs text-slate-600 font-medium ml-1">+2</span>
           </div>
 
-          {/* Secondary actions */}
-          <div className="flex gap-2 justify-between">
-            <button 
-              onClick={() => setProofModal(true)}
-              className="flex items-center justify-center gap-1 px-2 sm:px-3 py-2 rounded text-slate-700 bg-slate-100 hover:bg-slate-200 transition font-semibold text-xs sm:text-sm"
-              title="Upload proof"
+          {/* Proof count */}
+          <p className="text-xs text-slate-600 font-semibold uppercase tracking-wide">
+            {pact.proofClips?.length || 0} Proofs
+          </p>
+
+          {/* Action icons */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setVerificationModal(true)}
+              className="text-slate-600 hover:text-slate-900 transition"
+              title="Submit progress"
             >
-              <Camera className="w-4 h-4" />
-              <span className="hidden sm:inline">Proof</span>
+              <Camera className="w-5 h-5" />
             </button>
 
             <Link href={`/pact-details/${pact.id}`}>
-              <button className="flex items-center justify-center gap-1 px-2 sm:px-3 py-2 text-slate-600 hover:text-blue-600 transition font-medium text-xs sm:text-sm bg-slate-50 hover:bg-slate-100 rounded" title="Comments">
-                <MessageCircle className="w-4 h-4" />
-                <span className="hidden sm:inline">{pact.comments?.length || 0}</span>
+              <button
+                className="text-slate-600 hover:text-slate-900 transition flex items-center gap-1"
+                title="Comments"
+              >
+                <MessageCircle className="w-5 h-5" />
+                <span className="text-xs font-medium">{pact.comments?.length || 0}</span>
               </button>
             </Link>
 
-            <button 
+            <button
               onClick={() => setShareModal(true)}
-              className="flex items-center justify-center gap-1 px-2 sm:px-3 py-2 text-slate-600 hover:text-emerald-600 transition font-medium text-xs sm:text-sm bg-slate-50 hover:bg-slate-100 rounded"
+              className="text-slate-600 hover:text-slate-900 transition"
               title="Share"
             >
-              <Share2 className="w-4 h-4" />
+              <Share2 className="w-5 h-5" />
             </button>
           </div>
         </div>
       </div>
 
       {/* Modals */}
-      <ProofUploadModal
-        isOpen={proofModal}
-        onClose={() => setProofModal(false)}
+      <VerificationModal
+        isOpen={verificationModal}
+        onClose={() => setVerificationModal(false)}
         pactId={pact.id}
-        onUpload={onProofUpload}
+        onSubmit={() => onProofUpload?.(pact.id)}
       />
       <ShareModal
         isOpen={shareModal}

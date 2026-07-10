@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Download, TrendingUp, DollarSign, AlertCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import TopNav from '@/components/TopNav';
 import WalletSummary from '@/components/WalletSummary';
 import DepositModal from '@/components/DepositModal';
@@ -9,8 +10,17 @@ import WithdrawModal from '@/components/WithdrawModal';
 import TransactionHistory from '@/components/TransactionHistory';
 import { useWalletBalance, useWalletHistory, useWalletLocked, useWalletRewards } from '@/hooks/useWallet';
 import { useDeposit, useWithdraw } from '@/hooks/useWalletMutations';
+import { realMoneyFeatures } from '@/config/features';
 
 export default function WalletPage() {
+  const router = useRouter();
+  
+  // Redirect if real money features are disabled
+  useEffect(() => {
+    if (!realMoneyFeatures.showWalletBalance) {
+      router.push('/feed');
+    }
+  }, [router]);
   const [depositModal, setDepositModal] = useState(false);
   const [withdrawModal, setWithdrawModal] = useState(false);
 

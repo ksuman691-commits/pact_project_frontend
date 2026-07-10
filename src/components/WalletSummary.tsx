@@ -3,6 +3,7 @@
 import React from 'react';
 import { Wallet, TrendingUp, Lock, Zap } from 'lucide-react';
 import Image from 'next/image';
+import { realMoneyFeatures } from '@/config/features';
 
 interface WalletSummaryProps {
   balance?: number;
@@ -17,6 +18,11 @@ export default function WalletSummary({
   rewards = 0,
   loading = false 
 }: WalletSummaryProps) {
+  // Hide wallet summary if real money features are disabled
+  if (!realMoneyFeatures.showWalletBalance) {
+    return null;
+  }
+
   return (
     <div className="bg-gradient-to-br from-emerald-50 to-blue-50 rounded-2xl p-6 border border-emerald-200 shadow-sm">
       {/* Header with Logo */}
