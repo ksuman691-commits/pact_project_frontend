@@ -19,6 +19,8 @@ const api: AxiosInstance = axios.create({
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (typeof window !== 'undefined') {
     const storedToken = localStorage.getItem('access_token');
+    console.log('[v0] Interceptor - localStorage.getItem(access_token):', storedToken);
+    console.log('[v0] Interceptor - module-level token variable:', token);
     if (storedToken) {
       token = storedToken;
     }
@@ -30,6 +32,8 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
       ...(headers ?? {}),
       Authorization: `Bearer ${token}`,
     } as AxiosRequestHeaders;
+  } else {
+    console.log('[v0] Interceptor - NO TOKEN SET, Authorization header will NOT be added');
   }
 
   return config;
