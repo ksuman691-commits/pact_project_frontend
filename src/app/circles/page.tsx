@@ -34,7 +34,7 @@ export default function CirclesPage() {
     ownerAvatarUrl: circle.owner_avatar_url || null,
     memberCount: circle.member_count ?? circle.memberCount ?? 0,
     isPrivate: circle.visibility === 'private' || circle.isPrivate === true,
-    isJoined: circle.isJoined || false,
+    isJoined: circle.isJoined || circle.is_member || circle.is_joined || false,
     isTrending: false,
     memberList: circle.memberList || [],
     winRate: circle.winRate,

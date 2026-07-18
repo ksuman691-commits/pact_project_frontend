@@ -40,13 +40,8 @@ export default function CircleDetailPage() {
         const fetchedMembers = membersRes.data || [];
         setMembers(fetchedMembers);
 
-        // Check if user is member
-        const isUserMember = fetchedMembers.some(
-          (m: any) =>
-            (typeof user.id === 'number' && m.user_id === user.id) ||
-            (typeof user.username === 'string' && m.username === user.username)
-        );
-        setIsMember(isUserMember);
+        // Use is_member field from API response
+        setIsMember(circleRes.data?.is_member || false);
 
         // Fetch pacts for this circle
         const pactsRes = await circleService.listPacts(circleId);
@@ -79,25 +74,18 @@ export default function CircleDetailPage() {
       if (circle?.visibility === 'public') {
         await circleService.join(circleId);
         toast.success('Joined circle!');
-        setIsMember(true);
       } else {
         await circleJoinRequestService.sendRequest(circleId);
         toast.success('Join request sent!');
       }
 
+      // Refresh circle data to get updated is_member status
       const circleRes = await circleService.getById(circleId);
       setCircle(circleRes.data);
+      setIsMember(circleRes.data?.is_member || false);
 
       const membersRes = await circleJoinRequestService.listMembers(circleId);
-      const fetchedMembers = membersRes.data || [];
-      setMembers(fetchedMembers);
-      setIsMember(
-        fetchedMembers.some(
-          (m: any) =>
-            (typeof user.id === 'number' && m.user_id === user.id) ||
-            (typeof user.username === 'string' && m.username === user.username)
-        )
-      );
+      setMembers(membersRes.data || []);
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to join circle');
     }
