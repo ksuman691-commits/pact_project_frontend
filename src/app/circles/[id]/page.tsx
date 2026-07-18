@@ -40,13 +40,17 @@ export default function CircleDetailPage() {
         const fetchedMembers = membersRes.data || [];
         setMembers(fetchedMembers);
 
-        // Check if user is member
+        // Check if user is member or owner
         const isUserMember = fetchedMembers.some(
           (m: any) =>
             (typeof user.id === 'number' && m.user_id === user.id) ||
             (typeof user.username === 'string' && m.username === user.username)
         );
-        setIsMember(isUserMember);
+        const isUserOwner = 
+          (typeof user.id === 'number' && circleRes.data?.owner_id === user.id) ||
+          (typeof user.username === 'string' && circleRes.data?.owner_username === user.username);
+        
+        setIsMember(isUserMember || isUserOwner);
 
         // Fetch pacts for this circle
         const pactsRes = await circleService.listPacts(circleId);
@@ -91,13 +95,18 @@ export default function CircleDetailPage() {
       const membersRes = await circleJoinRequestService.listMembers(circleId);
       const fetchedMembers = membersRes.data || [];
       setMembers(fetchedMembers);
-      setIsMember(
-        fetchedMembers.some(
-          (m: any) =>
-            (typeof user.id === 'number' && m.user_id === user.id) ||
-            (typeof user.username === 'string' && m.username === user.username)
-        )
+      
+      const updatedCircle = circleRes.data;
+      const isUserMember = fetchedMembers.some(
+        (m: any) =>
+          (typeof user.id === 'number' && m.user_id === user.id) ||
+          (typeof user.username === 'string' && m.username === user.username)
       );
+      const isUserOwner = 
+        (typeof user.id === 'number' && updatedCircle?.owner_id === user.id) ||
+        (typeof user.username === 'string' && updatedCircle?.owner_username === user.username);
+      
+      setIsMember(isUserMember || isUserOwner);
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to join circle');
     }
