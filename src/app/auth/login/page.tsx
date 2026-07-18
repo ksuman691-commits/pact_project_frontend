@@ -13,8 +13,8 @@ export default function Login() {
   const isLoading = useAuthStore((state) => state.isLoading);
 
   const [formData, setFormData] = useState({
-    email: 'demo@example.com',
-    password: 'password123',
+    email: 'test@example.com',
+    password: 'Test@123456',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,7 +31,7 @@ export default function Login() {
       toast.success('Login successful!');
       router.push('/');
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Login failed');
+      toast.error(error.response?.data?.detail || error.message || 'Login failed');
     }
   };
 
