@@ -6,14 +6,12 @@ import { AlertCircle } from 'lucide-react';
 
 const categories = [
   { id: 'fitness', emoji: '💪', label: 'Fitness' },
-  { id: 'learning', emoji: '📚', label: 'Learning' },
-  { id: 'productivity', emoji: '⚡', label: 'Productivity' },
-  { id: 'career', emoji: '🎯', label: 'Career' },
-  { id: 'finance', emoji: '💰', label: 'Finance' },
-  { id: 'wellness', emoji: '🧘', label: 'Wellness' },
+  { id: 'coding', emoji: '💻', label: 'Coding' },
+  { id: 'study', emoji: '📚', label: 'Study' },
+  { id: 'startup', emoji: '🚀', label: 'Startup' },
+  { id: 'habits', emoji: '⚡', label: 'Habits' },
+  { id: 'creator', emoji: '🎨', label: 'Creator' },
   { id: 'social', emoji: '👥', label: 'Social' },
-  { id: 'creative', emoji: '🎨', label: 'Creative' },
-  { id: 'other', emoji: '🌟', label: 'Other' },
 ];
 
 export default function PactWizardStep1() {
