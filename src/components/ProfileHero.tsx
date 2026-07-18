@@ -41,7 +41,10 @@ export default function ProfileHero({
     <div className="bg-gradient-to-r from-emerald-500 to-blue-500 px-6 py-12 rounded-2xl mb-8 text-white">
       <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
         {/* Avatar */}
-        <div className="relative">
+        <div 
+          className="relative cursor-pointer hover:opacity-80 transition"
+          onClick={isOwnProfile ? onEdit : undefined}
+        >
           <div className="w-24 h-24 rounded-2xl bg-white p-1">
             {user.avatar ? (
               <Image
@@ -64,7 +67,6 @@ export default function ProfileHero({
         <div className="flex-1">
           <h1 className="text-3xl font-bold">{user.name}</h1>
           <p className="text-emerald-100 text-lg mb-3">@{user.username}</p>
-          {user.bio && <p className="text-emerald-50 mb-4 max-w-2xl">{user.bio}</p>}
 
           {/* Reputation */}
           <div className="flex items-center gap-2 mb-4">

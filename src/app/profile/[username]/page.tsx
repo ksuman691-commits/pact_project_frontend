@@ -58,6 +58,10 @@ export default function PublicProfilePage() {
   const rejectFollow = useRejectFollow(profileUserId);
   const removeFollow = useRemoveFollow(profileUserId);
 
+  const displayedPacts = profilePactsQuery.data?.data || [];
+  const followers = followersQuery.data?.data || [];
+  const following = followingQuery.data?.data || [];
+
   const stats = {
     pactsCreated: userStatsQuery.data?.data?.pacts_created ?? 0,
     pactsCompleted: userStatsQuery.data?.data?.pacts_completed ?? 0,
@@ -65,18 +69,15 @@ export default function PublicProfilePage() {
     currentStreak: userStatsQuery.data?.data?.current_streak ?? 0,
     totalEarned: userStatsQuery.data?.data?.total_earned ?? 0,
     reputation: userStatsQuery.data?.data?.reputation ?? 0,
+    followers: followers.length,
+    following: following.length,
   };
-
-  const displayedPacts = profilePactsQuery.data?.data || [];
-  const followers = followersQuery.data?.data || [];
-  const following = followingQuery.data?.data || [];
 
   const followState = followStateQuery.data?.data;
   const outgoingStatus = followState?.outgoing_status || null;
   const outgoingFollowId = followState?.outgoing_follow_id || null;
   const incomingStatus = followState?.incoming_status || null;
   const incomingFollowId = followState?.incoming_follow_id || null;
-
   const isBusy =
     requestFollow.isPending ||
     acceptFollow.isPending ||

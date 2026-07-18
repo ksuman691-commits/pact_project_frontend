@@ -8,6 +8,7 @@ import WelcomeHeader from '@/components/WelcomeHeader'
 import PactWizardModal from '@/components/PactWizardModal'
 import PactFeed from '@/components/PactFeed'
 import StatsBar from '@/components/StatsBar'
+import MemberSearchModal from '@/components/MemberSearchModal'
 import { useAuthStore } from '@/store/auth'
 import { useUnreadNotificationCount } from '@/hooks/useNotifications'
 import toast from 'react-hot-toast'
@@ -17,6 +18,7 @@ export default function FeedPage() {
   const { user, isInitialized } = useAuthStore()
   const { data: unreadCountData } = useUnreadNotificationCount()
   const [pactModalOpen, setPactModalOpen] = useState(false)
+  const [searchModalOpen, setSearchModalOpen] = useState(false)
   const unreadCount = unreadCountData?.unread_count ?? 0
 
   useEffect(() => {
@@ -56,6 +58,7 @@ export default function FeedPage() {
         notificationCount={unreadCount}
         onNotificationsClick={handleNotificationsClick}
         onCreatePact={handleCreatePact}
+        onSearch={() => setSearchModalOpen(true)}
       />
 
       {/* Category strip below welcome panel */}
@@ -70,6 +73,7 @@ export default function FeedPage() {
       </div>
 
       <PactWizardModal isOpen={pactModalOpen} onClose={() => setPactModalOpen(false)} />
+      <MemberSearchModal isOpen={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
     </div>
   )
 }

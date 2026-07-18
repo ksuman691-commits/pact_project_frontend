@@ -132,6 +132,8 @@ export default function Profile() {
     currentStreak: 12,
     totalEarned: Math.round(rewards),
     reputation: Math.round(user.reputation_score || 0),
+    followers: followers.length,
+    following: following.length,
   };
 
   return (
