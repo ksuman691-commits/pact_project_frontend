@@ -101,41 +101,37 @@ export default function CirclesPage() {
       <TopNav showBack={false} showCategories={false} />
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 max-w-md mx-auto">
         {/* Header */}
-        <div className="bg-white border-b border-gray-100 sticky top-24 z-40">
-          <div className="px-4 py-6 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Circles</h1>
-              <p className="text-gray-600 text-sm mt-1">Join communities and stay accountable together</p>
-            </div>
+        <div className="bg-white/80 backdrop-blur-sm border-b border-white/70 sticky top-24 z-40">
+          <div className="px-4 py-8 flex items-center justify-between gap-4">
+            <h1 className="text-4xl font-black leading-tight tracking-tight text-slate-950">Circles</h1>
 
             <Link href="/circles/create">
-              <button className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700">
+              <button className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-[0_8px_20px_rgba(16,185,129,0.25)] transition hover:shadow-[0_12px_28px_rgba(16,185,129,0.35)] hover:-translate-y-0.5">
                 <Plus className="h-4 w-4" />
                 Create Circle
               </button>
             </Link>
-
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="px-4 py-8">
+        <div className="px-4 py-6">
         {/* Search and Filters */}
-        <div className="space-y-4 mb-8">
+        <div className="space-y-5 mb-8">
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-4 top-3 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-4 top-4 w-5 h-5 text-slate-400" />
             <input
               type="text"
               placeholder="Search circles..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full pl-12 pr-4 py-3.5 bg-white/80 backdrop-blur-sm border border-white/70 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-300 text-slate-900 placeholder-slate-400 transition shadow-[0_4px_12px_rgba(15,23,42,0.06)]"
             />
           </div>
 
           {/* Sort Tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <div className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory">
             {[
               { key: 'all', label: 'All Circles', icon: '🌐' },
               { key: 'my', label: 'My Circles', icon: '👤' },
@@ -151,15 +147,16 @@ export default function CirclesPage() {
                     publicCircles.refetch();
                   }
                 }}
-                className={`px-4 py-3 rounded-lg font-medium text-sm whitespace-nowrap transition ${
+                className={`snap-start shrink-0 px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition ${
                   sortBy === tab.key
-                    ? 'bg-emerald-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-[0_8px_20px_rgba(16,185,129,0.25)]'
+                    : 'bg-white/80 text-slate-700 border border-white/70 hover:bg-white/90 hover:border-slate-200'
                 }`}
               >
                 {tab.icon} {tab.label}
               </button>
             ))}
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50/80 to-transparent pointer-events-none rounded-r-2xl" />
           </div>
         </div>
 
