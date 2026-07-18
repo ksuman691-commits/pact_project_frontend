@@ -8,11 +8,13 @@ import { useCircles, usePublicCircles, useSearchCircles } from '@/hooks/useCircl
 import { useJoinCircle } from '@/hooks/useCircleMutations';
 import TopNav from '@/components/TopNav';
 import CircleCard from '@/components/CircleCard';
+import MemberSearchModal from '@/components/MemberSearchModal';
 import toast from 'react-hot-toast';
 
 export default function CirclesPage() {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'all' | 'my' | 'public' | 'trending'>('all');
+  const [memberSearchOpen, setMemberSearchOpen] = useState(false);
   const { ref, inView } = useInView();
 
   // Fetch different circle lists based on sort
@@ -102,15 +104,25 @@ export default function CirclesPage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 max-w-md mx-auto">
         {/* Header */}
         <div className="bg-white/80 backdrop-blur-sm border-b border-white/70 sticky top-24 z-40">
-          <div className="px-4 py-8 flex items-center justify-between gap-4">
+          <div className="px-4 py-8 flex items-center justify-between gap-3">
             <h1 className="text-4xl font-black leading-tight tracking-tight text-slate-950">Circles</h1>
 
-            <Link href="/circles/create">
-              <button className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-[0_8px_20px_rgba(16,185,129,0.25)] transition hover:shadow-[0_12px_28px_rgba(16,185,129,0.35)] hover:-translate-y-0.5">
-                <Plus className="h-4 w-4" />
-                Create Circle
+            <div className="flex gap-2">
+              <button
+                onClick={() => setMemberSearchOpen(true)}
+                className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition"
+                aria-label="Search members"
+              >
+                <Search className="h-5 w-5" />
               </button>
-            </Link>
+              
+              <Link href="/circles/create">
+                <button className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-[0_8px_20px_rgba(16,185,129,0.25)] transition hover:shadow-[0_12px_28px_rgba(16,185,129,0.35)] hover:-translate-y-0.5">
+                  <Plus className="h-4 w-4" />
+                  Create Circle
+                </button>
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -210,6 +222,9 @@ export default function CirclesPage() {
         )}
         </div>
       </div>
+
+      {/* Member Search Modal */}
+      <MemberSearchModal isOpen={memberSearchOpen} onClose={() => setMemberSearchOpen(false)} />
     </>
   );
 }

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Star, Trophy, Flame, Edit2, UserPlus, MessageCircle } from 'lucide-react';
+import { Edit2, UserPlus, MessageCircle } from 'lucide-react';
 
 interface ProfileHeroProps {
   user: {
@@ -22,12 +22,6 @@ interface ProfileHeroProps {
   customActions?: React.ReactNode;
 }
 
-const badgeConfig: Record<string, { icon: any; color: string; label: string }> = {
-  trusted: { icon: Trophy, color: 'bg-yellow-100 text-yellow-700', label: 'Trusted' },
-  onfire: { icon: Flame, color: 'bg-red-100 text-red-700', label: 'On Fire' },
-  consistent: { icon: Star, color: 'bg-blue-100 text-blue-700', label: 'Consistent' },
-};
-
 export default function ProfileHero({
   user,
   isOwnProfile = false,
@@ -38,100 +32,78 @@ export default function ProfileHero({
   customActions,
 }: ProfileHeroProps) {
   return (
-    <div className="bg-gradient-to-r from-emerald-500 to-blue-500 px-6 py-12 rounded-2xl mb-8 text-white">
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+    <div className="mb-6">
+      {/* Compact Header */}
+      <div className="flex items-center gap-4">
         {/* Avatar */}
-        <div className="relative">
-          <div className="w-24 h-24 rounded-2xl bg-white p-1">
+        <div 
+          className="relative cursor-pointer hover:opacity-80 transition"
+          onClick={isOwnProfile ? onEdit : undefined}
+        >
+          <div className="w-20 h-20 rounded-xl bg-emerald-100 p-0.5 flex-shrink-0">
             {user.avatar ? (
               <Image
                 src={user.avatar}
                 alt={user.name}
-                width={96}
-                height={96}
+                width={80}
+                height={80}
                 unoptimized
-                className="w-full h-full rounded-xl object-cover"
+                className="w-full h-full rounded-lg object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-emerald-300 to-blue-300 rounded-xl flex items-center justify-center text-3xl font-bold">
+              <div className="w-full h-full bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg flex items-center justify-center text-2xl font-bold text-white">
                 {user.name.charAt(0)}
               </div>
             )}
           </div>
         </div>
 
-        {/* Info */}
+        {/* Info & Actions */}
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">{user.name}</h1>
-          <p className="text-emerald-100 text-lg mb-3">@{user.username}</p>
-          {user.bio && <p className="text-emerald-50 mb-4 max-w-2xl">{user.bio}</p>}
-
-          {/* Reputation */}
-          <div className="flex items-center gap-2 mb-4">
-            <Star className="w-5 h-5 fill-yellow-300 text-yellow-300" />
-            <span className="font-bold text-lg">{user.reputationScore.toFixed(1)}</span>
-            <span className="text-emerald-100">reputation</span>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">{user.name}</h1>
+            <p className="text-sm text-slate-500">@{user.username}</p>
           </div>
 
-          {/* Badges */}
-          {user.badges && user.badges.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {user.badges.map((badge) => {
-                const config = badgeConfig[badge];
-                if (!config) return null;
-                const Icon = config.icon;
-                return (
-                  <div
-                    key={badge}
-                    className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${config.color}`}
+          {/* Action Buttons */}
+          <div className="flex gap-2 mt-3">
+            {customActions ? (
+              customActions
+            ) : (
+              <>
+                {isOwnProfile ? (
+                  <button
+                    onClick={onEdit}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-medium hover:bg-emerald-100 transition"
                   >
-                    <Icon className="w-4 h-4" />
-                    {config.label}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Actions */}
-        <div className="flex flex-col gap-2 w-full md:w-auto">
-          {customActions ? (
-            customActions
-          ) : (
-            <>
-          {isOwnProfile ? (
-            <button
-              onClick={onEdit}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-white text-emerald-600 rounded-lg font-medium hover:bg-gray-50 transition"
-            >
-              <Edit2 className="w-4 h-4" />
-              Edit Profile
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={onFollow}
-                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
-                  isFollowing
-                    ? 'bg-white/20 text-white border border-white/50 hover:bg-white/30'
-                    : 'bg-white text-emerald-600 hover:bg-gray-50'
-                }`}
-              >
-                <UserPlus className="w-4 h-4" />
-                {isFollowing ? 'Following' : 'Follow'}
-              </button>
-              <button
-                onClick={onMessage}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-white/20 text-white border border-white/50 rounded-lg font-medium hover:bg-white/30 transition"
-              >
-                <MessageCircle className="w-4 h-4" />
-                Message
-              </button>
-            </>
-          )}
-            </>
-          )}
+                    <Edit2 className="w-4 h-4" />
+                    Edit
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={onFollow}
+                      className={`flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg transition ${
+                        isFollowing
+                          ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                          : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                      }`}
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      {isFollowing ? 'Following' : 'Follow'}
+                    </button>
+                    <button
+                      onClick={onMessage}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      Message
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
