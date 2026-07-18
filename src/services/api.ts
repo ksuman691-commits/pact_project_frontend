@@ -1,14 +1,24 @@
 import axios, { AxiosInstance, AxiosRequestHeaders, InternalAxiosRequestConfig } from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pact-project-backend-v2.onrender.com';
 
 let token: string | null = null;
+let refreshToken: string | null = null;
+let refreshPromise: Promise<string | null> | null = null;
 
 if (typeof window !== 'undefined') {
   token = localStorage.getItem('access_token');
+  refreshToken = localStorage.getItem('refresh_token');
 }
 
 const api: AxiosInstance = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+const refreshClient = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
@@ -105,18 +115,29 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 // Clear stale auth state when the backend rejects the token
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     const response = error.response;
+    const originalRequest = error.config || {};
     const requestUrl: string = error.config?.url || '';
     const isAuthEndpoint =
       requestUrl.includes('/api/auth/login') ||
       requestUrl.includes('/api/auth/register') ||
-      requestUrl.includes('/api/auth/token');
-    if (
-      response &&
-      response.status === 401 &&
-      !isAuthEndpoint
-    ) {
+      requestUrl.includes('/api/auth/token') ||
+      requestUrl.includes('/api/auth/refresh');
+
+    if (response && response.status === 401 && !isAuthEndpoint && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      const newAccessToken = await refreshAccessTokenSilently();
+      if (newAccessToken) {
+        const headers = originalRequest.headers as AxiosRequestHeaders | undefined;
+        originalRequest.headers = {
+          ...(headers ?? {}),
+          Authorization: `Bearer ${newAccessToken}`,
+        } as AxiosRequestHeaders;
+        return api.request(originalRequest);
+      }
+
       clearToken();
       if (typeof window !== 'undefined') {
         window.location.href = '/auth/login';
@@ -133,17 +154,72 @@ export const setToken = (newToken: string) => {
   }
 };
 
-export const clearToken = () => {
-  token = null;
+export const setRefreshToken = (newRefreshToken: string) => {
+  refreshToken = newRefreshToken;
   if (typeof window !== 'undefined') {
-    localStorage.removeItem('access_token');
+    localStorage.setItem('refresh_token', newRefreshToken);
   }
 };
+
+export const setAuthTokens = (newToken: string, newRefreshToken?: string | null) => {
+  setToken(newToken);
+  if (newRefreshToken) {
+    setRefreshToken(newRefreshToken);
+  }
+};
+
+export const getRefreshToken = () => {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('refresh_token');
+    if (stored) refreshToken = stored;
+  }
+  return refreshToken;
+};
+
+export const clearToken = () => {
+  token = null;
+  refreshToken = null;
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+  }
+};
+
+async function refreshAccessTokenSilently(): Promise<string | null> {
+  const currentRefreshToken = getRefreshToken();
+  if (!currentRefreshToken) {
+    return null;
+  }
+
+  if (!refreshPromise) {
+    refreshPromise = refreshClient
+      .post('/api/auth/refresh', { refresh_token: currentRefreshToken })
+      .then((response) => {
+        const newAccessToken = response.data?.access_token;
+        const newRefreshToken = response.data?.refresh_token;
+        if (!newAccessToken || !newRefreshToken) {
+          throw new Error('Invalid refresh response');
+        }
+        setAuthTokens(newAccessToken, newRefreshToken);
+        return newAccessToken as string;
+      })
+      .catch(() => {
+        clearToken();
+        return null;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
+}
 
 // Auth Services
 export const authService = {
   register: (data: any) => api.post('/api/auth/register', data),
   login: (data: any) => api.post('/api/auth/login', data),
+  refresh: (refresh_token: string) => api.post('/api/auth/refresh', { refresh_token }),
   getProfile: async () => {
     const response = await api.get('/api/auth/me');
     return { ...response, data: mapUser(response.data) };

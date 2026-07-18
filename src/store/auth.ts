@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { User } from '@/types';
-import { authService, setToken, clearToken } from '@/services/api';
+import { authService, clearToken, getRefreshToken, setAuthTokens, setToken } from '@/services/api';
 
 interface AuthState {
   user: User | null;
@@ -32,8 +32,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         full_name,
         password,
       });
-      const { access_token } = response.data;
-      setToken(access_token);
+      const { access_token, refresh_token } = response.data;
+      setAuthTokens(access_token, refresh_token);
       const profile = await authService.getProfile();
       set({ user: profile.data, token: access_token, isLoading: false });
     } catch (err: any) {
@@ -49,8 +49,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await authService.login({ email, password });
-      const { access_token } = response.data;
-      setToken(access_token);
+      const { access_token, refresh_token } = response.data;
+      setAuthTokens(access_token, refresh_token);
       const profile = await authService.getProfile();
       set({ user: profile.data, token: access_token, isLoading: false });
     } catch (err: any) {
@@ -80,19 +80,39 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const storedToken =
         typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      const storedRefreshToken = getRefreshToken();
 
-      if (!storedToken) {
+      if (!storedToken && !storedRefreshToken) {
         set({ user: null, token: null, isLoading: false, isInitialized: true });
         return;
       }
 
-      setToken(storedToken);
-      await authService.verify();
+      if (storedToken) {
+        setToken(storedToken);
+      }
+
+      try {
+        await authService.verify();
+      } catch {
+        if (!storedRefreshToken) {
+          throw new Error('No refresh token available');
+        }
+
+        const refreshed = await authService.refresh(storedRefreshToken);
+        const newAccessToken = refreshed.data?.access_token;
+        const newRefreshToken = refreshed.data?.refresh_token;
+        if (!newAccessToken || !newRefreshToken) {
+          throw new Error('Invalid refresh response');
+        }
+        setAuthTokens(newAccessToken, newRefreshToken);
+      }
+
       const profile = await authService.getProfile();
+      const activeToken = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
 
       set({
         user: profile.data,
-        token: storedToken,
+        token: activeToken,
         isLoading: false,
         isInitialized: true,
       });

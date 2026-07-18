@@ -62,7 +62,7 @@ export default function DebugPage() {
               <button
                 onClick={async () => {
                   try {
-                    const res = await fetch('http://localhost:8000/api/auth/me', {
+                    const res = await fetch('https://pact-project-backend-v2.onrender.com/api/auth/me', {
                       headers: {
                         'Authorization': `Bearer ${localToken}`,
                       },
