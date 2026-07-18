@@ -107,12 +107,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const response = error.response;
+    const requestUrl: string = error.config?.url || '';
+    const isAuthEndpoint =
+      requestUrl.includes('/api/auth/login') ||
+      requestUrl.includes('/api/auth/register') ||
+      requestUrl.includes('/api/auth/token');
     if (
       response &&
       response.status === 401 &&
-      response.data &&
-      typeof response.data.detail === 'string' &&
-      response.data.detail.toLowerCase().includes('token')
+      !isAuthEndpoint
     ) {
       clearToken();
       if (typeof window !== 'undefined') {
