@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Home, ArrowLeft } from 'lucide-react'
 
 const CATEGORIES = [
@@ -38,8 +38,7 @@ export default function TopNav({
 }: TopNavProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const currentCategory = (activeCategory || searchParams.get('category') || 'all').toLowerCase()
+  const currentCategory = (activeCategory || 'all').toLowerCase()
 
   const handleBack = () => {
     // Go back to feed if on a detail page, otherwise to home
