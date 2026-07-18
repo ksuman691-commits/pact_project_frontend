@@ -95,7 +95,7 @@ export default function PactWizardStep3() {
           min="1"
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
-        <p className="text-xs text-gray-500 mt-1">Total number of proofs you'll submit</p>
+        <p className="text-xs text-gray-500 mt-1">Total number of proofs you will submit</p>
       </div>
 
       {/* Info Box */}

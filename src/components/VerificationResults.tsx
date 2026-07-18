@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Loader, CheckCircle2, AlertCircle } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { verificationService } from '@/services/api';
 
 interface VerificationStats {
   confidence_score: number;
@@ -26,18 +26,24 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/verifications/${pactId}/stats`);
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch verification stats');
-        }
-
-        const data = await response.json();
-        setStats(data);
+        const response = await verificationService.getStats(pactId);
+        const apiStats = response.data || {};
+        const normalizedStats: VerificationStats = {
+          confidence_score: Number(
+            apiStats.confidence_score ?? apiStats.average_confidence_score ?? 0
+          ),
+          total_verifications: Number(apiStats.total_verifications ?? 0),
+          completion_score: Number(apiStats.completion_score ?? 0),
+          authenticity_score: Number(apiStats.authenticity_score ?? 0),
+          rule_adherence_score: Number(apiStats.rule_adherence_score ?? 0),
+          reputation_confidence_score: Number(apiStats.reputation_confidence_score ?? 0),
+        };
+        setStats(normalizedStats);
         setError(null);
       } catch (err: any) {
         console.error('Error fetching verification stats:', err);
-        setError(err.message);
+        const message = err?.response?.data?.detail || err?.message || 'Failed to fetch verification stats';
+        setError(message);
       } finally {
         setLoading(false);
       }

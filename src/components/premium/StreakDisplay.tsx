@@ -13,7 +13,7 @@ export default function StreakDisplay({ streak, todayComplete, onUploadProof }: 
     <PremiumCard glass>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-600 mb-1">Today's Streak</p>
+          <p className="text-sm font-medium text-slate-600 mb-1">Today Streak</p>
           <div className="flex items-baseline gap-2">
             <p className="text-4xl font-black text-slate-900">{streak}</p>
             <p className="text-lg text-slate-600">days</p>

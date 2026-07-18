@@ -103,7 +103,7 @@ export default function PactJoinRequestsManager({
               </p>
               {request.request_message && (
                 <p className="text-sm text-slate-700 mt-2 italic">
-                  "{request.request_message}"
+                  &quot;{request.request_message}&quot;
                 </p>
               )}
             </div>

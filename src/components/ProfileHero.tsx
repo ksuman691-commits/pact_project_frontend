@@ -19,6 +19,7 @@ interface ProfileHeroProps {
   onFollow?: () => void;
   onMessage?: () => void;
   onEdit?: () => void;
+  customActions?: React.ReactNode;
 }
 
 const badgeConfig: Record<string, { icon: any; color: string; label: string }> = {
@@ -34,6 +35,7 @@ export default function ProfileHero({
   onFollow,
   onMessage,
   onEdit,
+  customActions,
 }: ProfileHeroProps) {
   return (
     <div className="bg-gradient-to-r from-emerald-500 to-blue-500 px-6 py-12 rounded-2xl mb-8 text-white">
@@ -47,6 +49,7 @@ export default function ProfileHero({
                 alt={user.name}
                 width={96}
                 height={96}
+                unoptimized
                 className="w-full h-full rounded-xl object-cover"
               />
             ) : (
@@ -93,6 +96,10 @@ export default function ProfileHero({
 
         {/* Actions */}
         <div className="flex flex-col gap-2 w-full md:w-auto">
+          {customActions ? (
+            customActions
+          ) : (
+            <>
           {isOwnProfile ? (
             <button
               onClick={onEdit}
@@ -121,6 +128,8 @@ export default function ProfileHero({
                 <MessageCircle className="w-4 h-4" />
                 Message
               </button>
+            </>
+          )}
             </>
           )}
         </div>

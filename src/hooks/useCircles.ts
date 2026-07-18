@@ -12,6 +12,7 @@ export function useCircles() {
       return response.data;
     },
     staleTime: 1000 * 60 * 5,
+    refetchOnMount: 'always',
   });
 }
 
@@ -42,8 +43,10 @@ export function useCircleMembers(circleId: number) {
 export function usePublicCircles() {
   return useInfiniteQuery({
     queryKey: queryKeys.circles.public(),
-    queryFn: ({ pageParam = 0 }) =>
-      circleAdvancedService.getPublicCircles(pageParam, ITEMS_PER_PAGE),
+    queryFn: async ({ pageParam = 0 }) => {
+      const response = await circleService.listPublic(pageParam, ITEMS_PER_PAGE);
+      return { ...response, data: response.data };
+    },
     getNextPageParam: (lastPage, pages) =>
       lastPage.data?.length === ITEMS_PER_PAGE ? pages.length * ITEMS_PER_PAGE : undefined,
     initialPageParam: 0,
@@ -80,8 +83,7 @@ export function useCirclePactsList(circleId: number) {
   return useQuery({
     queryKey: queryKeys.circles.pacts(circleId),
     queryFn: async () => {
-      // Using pactAdvancedService to get circle pacts
-      const response = await circleAdvancedService.getLeaderboard(circleId);
+      const response = await circleService.listPacts(circleId);
       return response.data;
     },
     enabled: !!circleId,

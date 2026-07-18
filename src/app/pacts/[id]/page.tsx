@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { usePact } from '@/hooks/usePacts';
+import { usePact, usePactProofs } from '@/hooks/usePacts';
 import { useAuthStore } from '@/store/auth';
 import { joinRequestService, pactService, verificationService } from '@/services/api';
 import { Pact, Verification } from '@/types';
@@ -18,7 +18,17 @@ export default function PactDetailPage() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { data: pactData, isLoading: pactLoading } = usePact(Number(params.id));
+  const { data: proofsData, refetch: refetchProofs } = usePactProofs(Number(params.id));
   const pact = pactData?.data;
+  const proofs = (proofsData?.data || []).map((proof: any) => ({
+    id: proof.id,
+    url: proof.file_url,
+    type: proof.proof_type === 'video' ? 'video' : 'image',
+    description: proof.caption || 'Proof submission',
+    day: proof.day_number,
+    uploadedAt: proof.created_at,
+    uploader: pact?.creator_id === user?.id ? 'You' : 'Creator',
+  }));
   const [verifications, setVerifications] = useState<Verification[]>([]);
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [showVerificationForm, setShowVerificationForm] = useState(false);
@@ -48,7 +58,7 @@ export default function PactDetailPage() {
       await pactService.uploadProofFile(Number(params.id), proofFile);
       toast.success('Proof uploaded successfully!');
       setProofFile(null);
-      window.location.reload();
+      await refetchProofs();
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to upload proof');
     }
@@ -77,7 +87,10 @@ export default function PactDetailPage() {
       });
       toast.success('Verification submitted!');
       setShowVerificationForm(false);
-      window.location.reload();
+      if (pact?.id) {
+        const refreshed = await verificationService.getByPactId(pact.id);
+        setVerifications(refreshed.data);
+      }
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to submit verification');
     }
@@ -141,38 +154,7 @@ export default function PactDetailPage() {
 
         {/* Proofs Section - Instagram Style */}
         <PremiumCard>
-          <ProofsSection
-            proofs={[
-              {
-                id: 1,
-                url: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600',
-                type: 'image',
-                description: 'Started the project setup',
-                day: 1,
-                uploadedAt: '2024-01-15',
-                uploader: pact?.creator_id ? 'You' : 'Creator',
-              },
-              {
-                id: 2,
-                url: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600',
-                type: 'image',
-                description: 'API integration complete',
-                day: 3,
-                uploadedAt: '2024-01-17',
-                uploader: pact?.creator_id ? 'You' : 'Creator',
-              },
-              {
-                id: 3,
-                url: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600',
-                type: 'image',
-                description: 'Database migrations done',
-                day: 5,
-                uploadedAt: '2024-01-19',
-                uploader: pact?.creator_id ? 'You' : 'Creator',
-              },
-            ]}
-            title="Daily Progress"
-          />
+          <ProofsSection proofs={proofs} title="Daily Progress" />
         </PremiumCard>
 
         {/* Verification Section */}

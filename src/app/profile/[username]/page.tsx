@@ -1,46 +1,95 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import ProfileHero from '@/components/ProfileHero';
 import ProfileStats from '@/components/ProfileStats';
-import ProfileTabs, { PactsTab, AchievementsTab, FollowersTab } from '@/components/ProfileTabs';
+import ProfileTabs, { PactsTab, AchievementsTab } from '@/components/ProfileTabs';
 import AchievementsBadges from '@/components/AchievementsBadges';
-import UserFollowModal from '@/components/UserFollowModal';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '@/store/auth';
+import { useQuery } from '@tanstack/react-query';
+import { userService } from '@/services/api';
+import {
+  useAcceptFollow,
+  useFollowers,
+  useFollowing,
+  useFollowState,
+  useRejectFollow,
+  useRemoveFollow,
+  useRequestFollow,
+} from '@/hooks/useFollows';
+import {
+  useUserByUsername,
+  useUserStats,
+} from '@/hooks/useUserQueries';
 
 export default function PublicProfilePage() {
   const router = useRouter();
   const params = useParams();
   const username = params.username as string;
+  const { user: currentUser } = useAuthStore();
   const [activeTab, setActiveTab] = useState('pacts');
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [followModal, setFollowModal] = useState<{ isOpen: boolean; type: 'followers' | 'following' }>({
-    isOpen: false,
-    type: 'followers',
+
+  const isOwnProfile =
+    typeof currentUser?.username === 'string' &&
+    currentUser.username.trim().toLowerCase() === username.trim().toLowerCase();
+
+  const userByUsernameQuery = useUserByUsername(username);
+  const profileUser = userByUsernameQuery.data?.data;
+  const profileUserId = profileUser?.id;
+
+  const userStatsQuery = useUserStats(profileUserId || 0);
+  const profilePactsQuery = useQuery({
+    queryKey: ['profile-user-pacts', profileUserId],
+    queryFn: () => userService.getPacts(profileUserId as number),
+    enabled: typeof profileUserId === 'number' && profileUserId > 0,
+    staleTime: 1000 * 60,
   });
 
-  // Mock user data - in real app, fetch from API based on username
-  const user = {
-    id: 123,
-    name: 'John Developer',
-    username: username,
-    bio: 'Building the future of accountability. Coffee lover ☕',
-    avatar: undefined,
-    reputationScore: 8.7,
-    badges: ['trusted', 'consistent'],
-  };
+  const followersQuery = useFollowers(profileUserId);
+  const followingQuery = useFollowing(profileUserId);
+  const followStateQuery = useFollowState(profileUserId);
+
+  const requestFollow = useRequestFollow(profileUserId);
+  const acceptFollow = useAcceptFollow(profileUserId);
+  const rejectFollow = useRejectFollow(profileUserId);
+  const removeFollow = useRemoveFollow(profileUserId);
 
   const stats = {
-    pactsCreated: 24,
-    pactsCompleted: 18,
-    winRate: 75,
-    currentStreak: 8,
-    totalEarned: 12500,
-    reputation: 87,
+    pactsCreated: userStatsQuery.data?.data?.pacts_created ?? 0,
+    pactsCompleted: userStatsQuery.data?.data?.pacts_completed ?? 0,
+    winRate: userStatsQuery.data?.data?.win_rate ?? 0,
+    currentStreak: userStatsQuery.data?.data?.current_streak ?? 0,
+    totalEarned: userStatsQuery.data?.data?.total_earned ?? 0,
+    reputation: userStatsQuery.data?.data?.reputation ?? 0,
   };
+
+  const displayedPacts = profilePactsQuery.data?.data || [];
+  const followers = followersQuery.data?.data || [];
+  const following = followingQuery.data?.data || [];
+
+  const followState = followStateQuery.data?.data;
+  const outgoingStatus = followState?.outgoing_status || null;
+  const outgoingFollowId = followState?.outgoing_follow_id || null;
+  const incomingStatus = followState?.incoming_status || null;
+  const incomingFollowId = followState?.incoming_follow_id || null;
+
+  const isBusy =
+    requestFollow.isPending ||
+    acceptFollow.isPending ||
+    rejectFollow.isPending ||
+    removeFollow.isPending;
+
+  const badgeList = useMemo(() => {
+    const badges: string[] = [];
+    if (stats.pactsCompleted >= 5) badges.push('trusted');
+    if (stats.currentStreak >= 7) badges.push('onfire');
+    if (stats.pactsCreated >= 3) badges.push('consistent');
+    return badges;
+  }, [stats.pactsCompleted, stats.currentStreak, stats.pactsCreated]);
 
   const allAchievements = [
     {
@@ -49,8 +98,8 @@ export default function PublicProfilePage() {
       description: 'Create your first pact',
       icon: '🎯',
       rarity: 'common' as const,
-      unlocked: true,
-      unlockedAt: new Date().toISOString(),
+      unlocked: stats.pactsCreated > 0,
+      unlockedAt: stats.pactsCreated > 0 ? new Date().toISOString() : undefined,
     },
     {
       id: 'on-fire',
@@ -58,8 +107,8 @@ export default function PublicProfilePage() {
       description: 'Reach 7-day streak',
       icon: '🔥',
       rarity: 'rare' as const,
-      unlocked: true,
-      unlockedAt: new Date().toISOString(),
+      unlocked: stats.currentStreak >= 7,
+      unlockedAt: stats.currentStreak >= 7 ? new Date().toISOString() : undefined,
     },
     {
       id: 'winner',
@@ -67,8 +116,8 @@ export default function PublicProfilePage() {
       description: 'Complete 5 pacts',
       icon: '🏆',
       rarity: 'rare' as const,
-      unlocked: true,
-      unlockedAt: new Date().toISOString(),
+      unlocked: stats.pactsCompleted >= 5,
+      unlockedAt: stats.pactsCompleted >= 5 ? new Date().toISOString() : undefined,
     },
     {
       id: 'trusted',
@@ -76,8 +125,8 @@ export default function PublicProfilePage() {
       description: 'Build 50 reputation',
       icon: '⭐',
       rarity: 'epic' as const,
-      unlocked: true,
-      unlockedAt: new Date().toISOString(),
+      unlocked: stats.reputation >= 50,
+      unlockedAt: stats.reputation >= 50 ? new Date().toISOString() : undefined,
     },
     {
       id: 'community',
@@ -86,7 +135,7 @@ export default function PublicProfilePage() {
       icon: '👥',
       rarity: 'epic' as const,
       unlocked: false,
-      progress: 60,
+      progress: Math.min(100, Math.round((followers.length / 10) * 100)),
     },
     {
       id: 'legendary',
@@ -94,57 +143,67 @@ export default function PublicProfilePage() {
       description: 'Complete 50 pacts',
       icon: '👑',
       rarity: 'legendary' as const,
-      unlocked: true,
-      unlockedAt: new Date().toISOString(),
+      unlocked: stats.pactsCompleted >= 50,
+      unlockedAt: stats.pactsCompleted >= 50 ? new Date().toISOString() : undefined,
     },
   ];
 
-  const mockFollowers = [
-    { id: 1, name: 'Alice Smith', username: 'alice_smith', isFollowing: false },
-    { id: 2, name: 'Bob Johnson', username: 'bob_j', isFollowing: true },
-    { id: 3, name: 'Carol White', username: 'carol_w', isFollowing: false },
-  ];
+  const handlePrimaryFollowAction = async () => {
+    if (typeof profileUserId !== 'number' || isOwnProfile) {
+      return;
+    }
 
-  const mockFollowing = [
-    { id: 4, name: 'Diana Prince', username: 'diana_p', isFollowing: true },
-    { id: 5, name: 'Eve Taylor', username: 'eve_t', isFollowing: true },
-  ];
+    if (incomingStatus === 'pending' && incomingFollowId) {
+      await acceptFollow.mutateAsync(incomingFollowId);
+      return;
+    }
 
-  const displayedPacts = [
-    {
-      id: 1,
-      title: 'Learn React in 30 days',
-      description: 'Complete React tutorial and build 2 projects',
-      status: 'completed',
-      daysRemaining: 0,
-      participantCount: 12,
-    },
-    {
-      id: 2,
-      title: 'Gym 5x per week',
-      description: 'Hit the gym at least 5 days every week',
-      status: 'active',
-      daysRemaining: 15,
-      participantCount: 8,
-    },
-    {
-      id: 3,
-      title: 'Read 2 books per month',
-      description: 'Complete reading 2 books every month',
-      status: 'completed',
-      daysRemaining: 0,
-      participantCount: 5,
-    },
-  ];
+    if (outgoingStatus === 'accepted' && outgoingFollowId) {
+      await removeFollow.mutateAsync(outgoingFollowId);
+      return;
+    }
 
-  const handleFollow = () => {
-    setIsFollowing(!isFollowing);
-    toast.success(isFollowing ? 'Unfollowed' : 'Following');
+    if (outgoingStatus === 'pending' && outgoingFollowId) {
+      await removeFollow.mutateAsync(outgoingFollowId);
+      return;
+    }
+
+    await requestFollow.mutateAsync(profileUserId);
   };
 
-  const handleMessage = () => {
-    toast.success('Opening direct messages...');
+  if (userByUsernameQuery.isLoading) {
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-600">Loading profile...</div>;
+  }
+
+  if (!profileUser) {
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-600">Profile not found.</div>;
+  }
+
+  const heroUser = {
+    id: profileUser.id,
+    name: profileUser.full_name,
+    username: profileUser.username,
+    avatar: profileUser.avatar_url || undefined,
+    bio: profileUser.bio || undefined,
+    reputationScore: Number(profileUser.reputation_score || 0),
+    badges: badgeList,
   };
+
+  const primaryFollowLabel =
+    incomingStatus === 'pending'
+      ? 'Accept'
+      : outgoingStatus === 'accepted'
+      ? 'Following'
+      : outgoingStatus === 'pending'
+      ? 'Requested'
+      : 'Follow';
+
+  const primaryFollowClass =
+    outgoingStatus === 'accepted'
+      ? 'bg-white/20 text-white border border-white/50 hover:bg-white/30'
+      : outgoingStatus === 'pending'
+      ? 'bg-white/20 text-white border border-white/40 hover:bg-white/30'
+      : 'bg-white text-emerald-600 hover:bg-gray-50';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
@@ -157,7 +216,7 @@ export default function PublicProfilePage() {
           >
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
-          <h1 className="text-xl font-bold text-gray-900">{user.name}</h1>
+          <h1 className="text-xl font-bold text-gray-900">{profileUser.full_name}</h1>
         </div>
       </div>
 
@@ -165,58 +224,95 @@ export default function PublicProfilePage() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Profile Hero */}
         <ProfileHero
-          user={user}
-          isOwnProfile={false}
-          isFollowing={isFollowing}
-          onFollow={handleFollow}
-          onMessage={handleMessage}
+          user={heroUser}
+          isOwnProfile={isOwnProfile}
+          customActions={
+            isOwnProfile ? null : (
+              <div className="flex flex-col gap-2 w-full md:w-auto">
+                <button
+                  onClick={handlePrimaryFollowAction}
+                  disabled={isBusy}
+                  className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition disabled:opacity-60 ${primaryFollowClass}`}
+                >
+                  {primaryFollowLabel}
+                </button>
+                {incomingStatus === 'pending' && incomingFollowId ? (
+                  <button
+                    onClick={() => rejectFollow.mutate(incomingFollowId)}
+                    disabled={isBusy}
+                    className="flex items-center justify-center gap-2 px-5 py-2 rounded-xl font-semibold transition bg-white/20 text-white border border-white/40 hover:bg-white/30 disabled:opacity-60"
+                  >
+                    Reject
+                  </button>
+                ) : null}
+              </div>
+            )
+          }
         />
+
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-6">
+          <div className="flex items-center justify-center gap-3 text-sm font-semibold text-slate-700">
+            <button onClick={() => setActiveTab('followers')} className="hover:text-emerald-600 transition">
+              {followers.length} Followers
+            </button>
+            <span className="text-slate-300">·</span>
+            <button onClick={() => setActiveTab('following')} className="hover:text-emerald-600 transition">
+              {following.length} Following
+            </button>
+          </div>
+        </div>
 
         {/* Stats */}
         <ProfileStats stats={stats} />
 
         {/* Tabs */}
         <ProfileTabs onTabChange={setActiveTab}>
-          {activeTab === 'pacts' && <PactsTab pacts={displayedPacts} />}
+          {activeTab === 'pacts' && <PactsTab pacts={displayedPacts} joinedPacts={[]} votedPacts={[]} />}
           {activeTab === 'achievements' && <AchievementsBadges achievements={allAchievements} />}
           {activeTab === 'followers' && (
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Followers</h3>
-                <button
-                  onClick={() => setFollowModal({ isOpen: true, type: 'followers' })}
-                  className="text-emerald-600 hover:underline text-sm"
-                >
-                  View all {mockFollowers.length} followers
-                </button>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Following</h3>
-                <button
-                  onClick={() => setFollowModal({ isOpen: true, type: 'following' })}
-                  className="text-emerald-600 hover:underline text-sm"
-                >
-                  View all {mockFollowing.length} following
-                </button>
-              </div>
+            <div className="space-y-2">
+              {followers.length === 0 ? (
+                <p className="text-sm text-slate-500">No followers yet.</p>
+              ) : (
+                followers.map((row: any) => (
+                  <button
+                    key={row.id}
+                    onClick={() => router.push(`/profile/${encodeURIComponent(row.username)}`)}
+                    className="w-full text-left p-3 bg-white border border-gray-100 rounded-xl hover:border-emerald-200 transition"
+                  >
+                    <p className="font-semibold text-slate-900">{row.full_name || row.username}</p>
+                    <p className="text-xs text-slate-500">@{row.username}</p>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+          {activeTab === 'following' && (
+            <div className="space-y-2">
+              {following.length === 0 ? (
+                <p className="text-sm text-slate-500">Not following anyone yet.</p>
+              ) : (
+                following.map((row: any) => (
+                  <button
+                    key={row.id}
+                    onClick={() => router.push(`/profile/${encodeURIComponent(row.username)}`)}
+                    className="w-full text-left p-3 bg-white border border-gray-100 rounded-xl hover:border-emerald-200 transition"
+                  >
+                    <p className="font-semibold text-slate-900">{row.full_name || row.username}</p>
+                    <p className="text-xs text-slate-500">@{row.username}</p>
+                  </button>
+                ))
+              )}
             </div>
           )}
           {activeTab === 'circles' && (
             <div className="text-center py-12 text-gray-500">
-              <p className="font-medium mb-2">{user.name} is a member of 5 circles</p>
-              <button className="text-emerald-600 hover:underline">View all circles</button>
+              <p className="font-medium mb-2">{profileUser.full_name} is in circles</p>
+              <p className="text-sm">Circle data will appear here.</p>
             </div>
           )}
         </ProfileTabs>
       </div>
-
-      {/* Follow Modal */}
-      <UserFollowModal
-        isOpen={followModal.isOpen}
-        onClose={() => setFollowModal({ ...followModal, isOpen: false })}
-        type={followModal.type}
-        users={followModal.type === 'followers' ? mockFollowers : mockFollowing}
-      />
     </div>
   );
 }

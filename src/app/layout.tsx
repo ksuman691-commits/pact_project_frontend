@@ -2,12 +2,13 @@ import '@/styles/globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Toaster } from 'react-hot-toast';
 import AuthInitializer from '@/components/AuthInitializer';
+import NotificationRealtimeBridge from '@/components/NotificationRealtimeBridge';
 import QueryProvider from '@/providers/QueryProvider';
 import BottomNav from '@/components/BottomNav';
 
 export const metadata: Metadata = {
   title: 'CirclePact - Accountability, together',
-  description: 'Join circles, make pacts, track goals, and build streaks with friends who keep you accountable.',
+  description: 'Join circles, make pacts, track goals, and build streaks with followers who keep you accountable.',
 };
 
 export const viewport: Viewport = {
@@ -28,6 +29,7 @@ export default function RootLayout({
       <body className="bg-slate-50 text-slate-900 antialiased">
         <QueryProvider>
           <AuthInitializer />
+          <NotificationRealtimeBridge />
           {children}
           <BottomNav />
           <Toaster position="top-center" />

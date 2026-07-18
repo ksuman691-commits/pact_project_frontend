@@ -1,45 +1,58 @@
 export interface User {
-  id: number;
+  id?: number;
   user_uuid: string; // UUID for public API
   username: string;
   email: string;
   full_name: string;
   reputation_score: number;
-  is_active: boolean;
-  created_at: string;
+  is_active?: boolean;
+  created_at?: string;
   avatar_url?: string;
   bio?: string;
 }
 
 export interface Circle {
   id: number;
-  circle_uuid: string; // UUID for public API
+  circle_uuid?: string; // UUID for public API
   name: string;
   description?: string;
   owner_id: number;
-  is_public: boolean;
+  owner_username?: string;
+  owner_avatar_url?: string;
+  is_public?: boolean;
+  visibility?: 'public' | 'private';
+  member_count?: number;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   members?: User[];
 }
 
 export interface Pact {
   id: number;
-  pact_uuid: string; // UUID for public API
+  pact_uuid?: string; // UUID for public API
   creator_id: number;
-  circle_id: number;
+  circle_id?: number;
   title: string;
   description: string;
-  stake_amount: number;
-  deadline: string;
+  stake_amount?: number;
+  deadline?: string;
+  end_date?: string;
+  start_date?: string;
   status: 'pending' | 'active' | 'completed' | 'failed' | 'cancelled';
-  verification_type: string;
+  verification_type?: string;
+  verification_method?: string;
   proof_url?: string;
-  required_approvers: number;
-  is_public: boolean; // NEW: Public or Private pact
+  required_approvers?: number;
+  is_public?: boolean; // NEW: Public or Private pact
+  visibility?: 'public' | 'private' | 'circle_only';
   created_at: string;
-  updated_at: string;
-  creator?: User;
+  updated_at?: string;
+  creator?: User | any;
+  creator_username?: string;
+  creator_full_name?: string;
+  creator_avatar_url?: string;
+  circle_name?: string;
+  circle_icon_emoji?: string;
 }
 
 export interface PactParticipant {
@@ -103,5 +116,5 @@ export interface Short {
 export interface AuthToken {
   access_token: string;
   token_type: string;
-  user: User;
+  user?: User;
 }

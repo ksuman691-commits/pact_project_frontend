@@ -4,6 +4,8 @@ import React from 'react';
 import { usePactWizard } from '@/context/PactWizardContext';
 import { Globe, Lock, Users } from 'lucide-react';
 import { useCircles } from '@/hooks/useCircles';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/store/auth';
 
 const visibilityOptions = [
   {
@@ -16,7 +18,7 @@ const visibilityOptions = [
   {
     id: 'private',
     name: 'Private',
-    description: 'Only you, your score visible to others',
+    description: 'Visible to you and your accepted followers',
     icon: Lock,
     color: 'text-orange-600 bg-orange-50',
   },
@@ -30,19 +32,28 @@ const visibilityOptions = [
 ];
 
 export default function PactWizardStep4() {
+  const router = useRouter();
   const { data, updateData } = usePactWizard();
+  const { user } = useAuthStore();
   const { data: circles } = useCircles();
 
-  const selectedVisibility = visibilityOptions.find((v) => v.id === data.visibility);
+  const ownedCircles = (circles || []).filter((circle: any) => {
+    const ownerIdMatches = typeof user?.id === 'number' && circle.owner_id === user.id;
+    const ownerUsernameMatches =
+      typeof user?.username === 'string' &&
+      typeof circle.owner_username === 'string' &&
+      circle.owner_username.trim().toLowerCase() === user.username.trim().toLowerCase();
+    return ownerIdMatches || ownerUsernameMatches;
+  });
+  const hasOwnedCircles = ownedCircles.length > 0;
 
-  // Mock circles data if none available
-  const mockCircles = [
-    { id: 1, name: 'Startup Builders', memberCount: 234 },
-    { id: 2, name: 'Fitness Crew', memberCount: 456 },
-    { id: 3, name: 'Tech Learners', memberCount: 189 },
-  ];
+  const handleVisibilitySelect = (visibility: 'public' | 'private' | 'circle-specific') => {
+    if (visibility === 'circle-specific' && !hasOwnedCircles) {
+      return;
+    }
 
-  const circleList = circles && circles.length > 0 ? circles : mockCircles;
+    updateData({ visibility, selectedCircleId: visibility === 'circle-specific' ? data.selectedCircleId : undefined });
+  };
 
   return (
     <div className="space-y-6">
@@ -54,13 +65,18 @@ export default function PactWizardStep4() {
         <div className="space-y-3">
           {visibilityOptions.map((option) => {
             const Icon = option.icon;
+            const isCircleOnly = option.id === 'circle-specific';
+            const isDisabled = isCircleOnly && !hasOwnedCircles;
             return (
               <button
                 key={option.id}
-                onClick={() => updateData({ visibility: option.id as any })}
+                onClick={() => handleVisibilitySelect(option.id as any)}
+                disabled={isDisabled}
                 className={`w-full p-4 border-2 rounded-lg transition text-left ${
                   data.visibility === option.id
                     ? 'border-emerald-500 bg-emerald-50'
+                    : isDisabled
+                    ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
                     : 'border-gray-200 bg-white hover:border-emerald-300'
                 }`}
               >
@@ -75,41 +91,58 @@ export default function PactWizardStep4() {
             );
           })}
         </div>
+        {!hasOwnedCircles && (
+          <p className="mt-2 text-xs font-medium text-amber-700">
+            Create a circle first to make circle-only pacts.
+          </p>
+        )}
       </div>
 
-      {/* Circle Selection for circle-specific pacts */}
       {data.visibility === 'circle-specific' && (
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
-            Select Circle <span className="text-red-500">*</span>
+            Select Owned Circle <span className="text-red-500">*</span>
           </label>
-          <div className="space-y-2">
-            {circleList.map((circle: any) => (
+
+          {!hasOwnedCircles ? (
+            <div className="p-4 border border-amber-200 bg-amber-50 rounded-lg space-y-3">
+              <p className="text-sm text-amber-800">
+                Create a circle first to make circle-only pacts.
+              </p>
               <button
-                key={circle.id}
-                onClick={() => updateData({ selectedCircleId: circle.id })}
-                className={`w-full p-4 border-2 rounded-lg transition text-left ${
-                  data.selectedCircleId === circle.id
-                    ? 'border-emerald-500 bg-emerald-50'
-                    : 'border-gray-200 bg-white hover:border-emerald-300'
-                }`}
+                onClick={() => router.push('/circles/create')}
+                className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition"
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-gray-900">{circle.name || circle.name}</p>
-                    <p className="text-sm text-gray-600">
-                      {circle.memberCount || circle.members?.length || 0} members
-                    </p>
-                  </div>
-                  <div className="text-right">
+                Create Circle
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {ownedCircles.map((circle: any) => (
+                <button
+                  key={circle.id}
+                  onClick={() => updateData({ selectedCircleId: circle.id })}
+                  className={`w-full p-4 border-2 rounded-lg transition text-left ${
+                    data.selectedCircleId === circle.id
+                      ? 'border-emerald-500 bg-emerald-50'
+                      : 'border-gray-200 bg-white hover:border-emerald-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-900">{circle.name}</p>
+                      <p className="text-sm text-gray-600">
+                        {circle.member_count ?? circle.memberCount ?? circle.members?.length ?? 0} members
+                      </p>
+                    </div>
                     <div className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                      {circle.memberCount || circle.members?.length || 0}
+                      {circle.icon_emoji || '◌'}
                     </div>
                   </div>
-                </div>
-              </button>
-            ))}
-          </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -123,7 +156,7 @@ export default function PactWizardStep4() {
         )}
         {data.visibility === 'private' && (
           <p className="text-sm text-blue-800">
-            Your pact details are private, but your completion status and rewards are public.
+            Only you and your accepted followers can see and join this pact.
           </p>
         )}
         {data.visibility === 'circle-specific' && (

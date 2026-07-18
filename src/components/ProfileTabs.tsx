@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Target, Award, Users, Heart, Circle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Target, Award, Users, Heart, Circle, Plus } from 'lucide-react';
+import PactCard from './PactCard';
 
 interface ProfileTabsProps {
   children: React.ReactNode;
@@ -54,34 +56,93 @@ export default function ProfileTabs({ children, onTabChange }: ProfileTabsProps)
 }
 
 // Individual tab components for content rendering
-export function PactsTab({ pacts }: { pacts: any[] }) {
+export function PactsTab({
+  pacts,
+  joinedPacts,
+  votedPacts,
+}: {
+  pacts: any[];
+  joinedPacts: any[];
+  votedPacts: any[];
+}) {
+  const router = useRouter();
+  const [activeSection, setActiveSection] = useState<'created' | 'joined' | 'voted'>('created');
+
+  const sections = [
+    { id: 'created' as const, label: 'Created by Me', count: pacts.length },
+    { id: 'joined' as const, label: 'Joined Pacts', count: joinedPacts.length },
+    { id: 'voted' as const, label: 'Voted Pacts', count: votedPacts.length },
+  ];
+
+  const renderEmptyState = (sectionId: 'created' | 'joined' | 'voted') => {
+    if (sectionId === 'created') {
+      return (
+        <div className="rounded-3xl border border-dashed border-emerald-200 bg-emerald-50/70 px-6 py-10 text-center">
+          <p className="text-base font-semibold text-slate-900">You haven&apos;t created any pacts yet</p>
+          <p className="mt-2 text-sm text-slate-600">Create a pact to start tracking progress with your circles.</p>
+          <button
+            onClick={() => router.push('/pacts/create')}
+            className="mt-5 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+          >
+            <Plus className="h-4 w-4" />
+            Create Pact
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center">
+        <p className="text-base font-semibold text-slate-900">Nothing here yet</p>
+        <p className="mt-2 text-sm text-slate-600">
+          {sectionId === 'joined'
+            ? 'You have not joined any pacts yet.'
+            : 'You have not voted on any pacts yet.'}
+        </p>
+      </div>
+    );
+  };
+
+  const currentPacts =
+    activeSection === 'created' ? pacts : activeSection === 'joined' ? joinedPacts : votedPacts;
+
   return (
-    <div className="grid gap-4">
-      {pacts && pacts.length > 0 ? (
-        pacts.map((pact) => (
-          <div key={pact.id} className="bg-white rounded-lg p-4 border border-gray-100 hover:shadow-md transition">
-            <div className="flex items-start justify-between mb-2">
-              <h4 className="font-semibold text-gray-900 text-lg">{pact.title}</h4>
-              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                pact.status === 'completed'
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : pact.status === 'active'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'bg-gray-100 text-gray-700'
-              }`}>
-                {pact.status}
+    <div className="space-y-5">
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {sections.map((section) => {
+          const isActive = activeSection === section.id;
+          return (
+            <button
+              key={section.id}
+              onClick={() => setActiveSection(section.id)}
+              className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition ${
+                isActive
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              <span>{section.label}</span>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isActive ? 'bg-white/15' : 'bg-slate-100 text-slate-500'}`}>
+                {section.count}
               </span>
-            </div>
-            <p className="text-gray-600 text-sm">{pact.description}</p>
-            <div className="flex justify-between mt-3 text-xs text-gray-500">
-              <span>{pact.daysRemaining} days remaining</span>
-              <span>{pact.participantCount} participants</span>
-            </div>
-          </div>
-        ))
-      ) : (
-        <div className="text-center py-12 text-gray-500">No pacts yet</div>
-      )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="grid gap-4">
+        {currentPacts.length > 0 ? (
+          currentPacts.map((pact) => (
+            <PactCard
+              key={pact.id}
+              pact={pact}
+              userVote={pact.userVote}
+            />
+          ))
+        ) : (
+          renderEmptyState(activeSection)
+        )}
+      </div>
     </div>
   );
 }

@@ -1,31 +1,37 @@
 'use client'
 
-import { User, Bell, Plus } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { Bell, Plus } from 'lucide-react'
+import UserAvatarLink from '@/components/UserAvatarLink'
 
 interface WelcomeHeaderProps {
   userName?: string
+  avatarUrl?: string | null
   notificationCount?: number
+  onNotificationsClick?: () => void
   onCreatePact?: () => void
 }
 
 export default function WelcomeHeader({
   userName = 'User',
+  avatarUrl = null,
   notificationCount = 3,
+  onNotificationsClick,
   onCreatePact
 }: WelcomeHeaderProps) {
-  const router = useRouter()
-
   return (
     <div className="bg-white border-b border-slate-100">
       <div className="max-w-md mx-auto px-4 pt-4 pb-4">
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm px-4 py-5 sm:py-6 flex items-center justify-between gap-4">
         {/* Left: Avatar + Text */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="w-12 h-12 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
-            {userName.slice(0, 2).toUpperCase()}
-          </div>
+          <UserAvatarLink
+            name={userName}
+            avatarUrl={avatarUrl}
+            href="/profile"
+            sizeClassName="w-12 h-12"
+            textClassName="text-sm"
+            className="flex-shrink-0"
+          />
           <div className="min-w-0">
             <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Welcome back</p>
             <p className="text-lg font-bold text-slate-900 truncate">{userName}</p>
@@ -34,17 +40,9 @@ export default function WelcomeHeader({
 
         {/* Right: Icons + Button */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          {/* Profile icon */}
-          <button
-            onClick={() => router.push('/profile')}
-            className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-colors"
-            aria-label="Profile"
-          >
-            <User className="w-5 h-5" strokeWidth={1.5} />
-          </button>
-
           {/* Notification bell */}
           <button
+            onClick={onNotificationsClick}
             className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-colors relative"
             aria-label="Notifications"
           >

@@ -159,7 +159,7 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
       <AlertCircle className="w-8 h-8 text-slate-400 mb-2" />
       <p className="text-sm font-medium text-slate-600">No proof submitted yet</p>
       <p className="text-xs text-slate-500 mt-1">
-        The pact creator hasn't uploaded any proof yet.
+        The pact creator has not uploaded any proof yet.
       </p>
     </div>
   );

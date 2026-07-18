@@ -20,19 +20,46 @@ export default function CirclesPage() {
   const publicCircles = usePublicCircles();
   const searchResults = useSearchCircles(search);
   const joinMutation = useJoinCircle();
+  const publicHasNextPage = publicCircles.hasNextPage;
+  const publicFetchNextPage = publicCircles.fetchNextPage;
+  const searchHasNextPage = searchResults.hasNextPage;
+  const searchFetchNextPage = searchResults.fetchNextPage;
+
+  const toCardShape = (circle: any) => ({
+    id: circle.id,
+    name: circle.name,
+    description: circle.description || '',
+    avatar: circle.icon_emoji || circle.name?.charAt(0) || 'C',
+    ownerUsername: circle.owner_username || null,
+    ownerAvatarUrl: circle.owner_avatar_url || null,
+    memberCount: circle.member_count ?? circle.memberCount ?? 0,
+    isPrivate: circle.visibility === 'private' || circle.isPrivate === true,
+    isJoined: circle.isJoined || false,
+    isTrending: false,
+    memberList: circle.memberList || [],
+    winRate: circle.winRate,
+  });
 
   // Determine which hook to use
   useEffect(() => {
-    if (inView && sortBy === 'public' && publicCircles.hasNextPage) {
-      publicCircles.fetchNextPage();
+    if (inView && sortBy === 'public' && publicHasNextPage) {
+      publicFetchNextPage();
     }
-    if (inView && sortBy === 'trending' && publicCircles.hasNextPage) {
-      publicCircles.fetchNextPage();
+    if (inView && sortBy === 'trending' && publicHasNextPage) {
+      publicFetchNextPage();
     }
-    if (inView && search && searchResults.hasNextPage) {
-      searchResults.fetchNextPage();
+    if (inView && search && searchHasNextPage) {
+      searchFetchNextPage();
     }
-  }, [inView, sortBy, search, publicCircles.hasNextPage, searchResults.hasNextPage]);
+  }, [
+    inView,
+    sortBy,
+    search,
+    publicHasNextPage,
+    publicFetchNextPage,
+    searchHasNextPage,
+    searchFetchNextPage,
+  ]);
 
   // Get display data
   let displayCircles: any[] = [];
@@ -40,20 +67,20 @@ export default function CirclesPage() {
   let hasMore = false;
 
   if (search) {
-    displayCircles = searchResults.data?.pages?.flatMap(p => p.data) || [];
+    displayCircles = (searchResults.data?.pages?.flatMap(p => p.data) || []).map(toCardShape);
     isLoading = searchResults.isLoading;
     hasMore = searchResults.hasNextPage || false;
   } else if (sortBy === 'my') {
-    displayCircles = myCircles.data || [];
+    displayCircles = (myCircles.data || []).map(toCardShape);
     isLoading = myCircles.isLoading;
   } else if (sortBy === 'public' || sortBy === 'trending') {
-    displayCircles = publicCircles.data?.pages?.flatMap(p => p.data) || [];
+    displayCircles = (publicCircles.data?.pages?.flatMap(p => p.data) || []).map(toCardShape);
     isLoading = publicCircles.isLoading;
     hasMore = publicCircles.hasNextPage || false;
   } else {
     // Mix my circles + public circles
-    const myList = myCircles.data || [];
-    const publicList = publicCircles.data?.pages?.[0]?.data || [];
+    const myList = (myCircles.data || []).map(toCardShape);
+    const publicList = (publicCircles.data?.pages?.[0]?.data || []).map(toCardShape);
     displayCircles = [...myList, ...publicList];
     isLoading = myCircles.isLoading || publicCircles.isLoading;
   }
@@ -69,47 +96,6 @@ export default function CirclesPage() {
     }
   };
 
-  // Mock data fallback
-  const mockCircles = [
-    {
-      id: 1,
-      name: 'Startup Builders',
-      description: 'For founders and entrepreneurs building the next big thing',
-      avatar: '🚀',
-      memberCount: 234,
-      isPrivate: false,
-      isJoined: false,
-      isTrending: true,
-      memberList: ['Alice', 'Bob', 'Charlie', 'Diana'],
-      winRate: 78,
-    },
-    {
-      id: 2,
-      name: 'Fitness Crew',
-      description: 'Supporting each other in fitness goals and healthy lifestyle',
-      avatar: '💪',
-      memberCount: 456,
-      isPrivate: false,
-      isJoined: true,
-      memberList: ['Eve', 'Frank', 'Grace'],
-      winRate: 85,
-    },
-    {
-      id: 3,
-      name: 'Tech Learners',
-      description: 'Learning new technologies and programming skills together',
-      avatar: '💻',
-      memberCount: 189,
-      isPrivate: true,
-      isJoined: false,
-      isTrending: true,
-      memberList: ['Henry', 'Iris', 'Jack', 'Kate', 'Leo'],
-      winRate: 72,
-    },
-  ];
-
-  const finalCircles = displayCircles.length > 0 ? displayCircles : mockCircles;
-
   return (
     <>
       <TopNav showBack={false} showCategories={false} />
@@ -121,6 +107,13 @@ export default function CirclesPage() {
               <h1 className="text-3xl font-bold text-gray-900">Circles</h1>
               <p className="text-gray-600 text-sm mt-1">Join communities and stay accountable together</p>
             </div>
+
+            <Link href="/circles/create">
+              <button className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700">
+                <Plus className="h-4 w-4" />
+                Create Circle
+              </button>
+            </Link>
 
           </div>
         </div>
@@ -177,7 +170,7 @@ export default function CirclesPage() {
               <div key={i} className="h-48 bg-gray-200 rounded-2xl animate-pulse" />
             ))}
           </div>
-        ) : finalCircles.length === 0 ? (
+        ) : displayCircles.length === 0 ? (
           <div className="text-center py-20">
             <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-600 text-lg font-medium mb-2">No circles found</p>
@@ -188,7 +181,7 @@ export default function CirclesPage() {
         ) : (
           <>
             <div className="space-y-4">
-              {finalCircles.map((circle) => (
+              {displayCircles.map((circle) => (
                 <CircleCard
                   key={circle.id}
                   circle={circle}

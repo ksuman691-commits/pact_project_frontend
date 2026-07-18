@@ -14,7 +14,7 @@ export default function PactWizardStep5() {
 
   const visibilityLabel = {
     public: 'Public - Anyone can join',
-    private: 'Private - Only you',
+    private: 'Private - Accepted followers only',
     'circle-specific': 'Circle Only',
   }[data.visibility];
 
@@ -152,7 +152,7 @@ export default function PactWizardStep5() {
       {/* Ready to Create */}
       <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
         <p className="text-sm text-emerald-800">
-          You're ready to create your pact! Click the create button below to get started.
+          You are ready to create your pact. Click the create button below to get started.
         </p>
       </div>
     </div>

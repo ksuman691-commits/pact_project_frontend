@@ -67,7 +67,7 @@ export default function Login() {
               <div className="text-2xl">👥</div>
               <div className="text-left">
                 <p className="font-semibold text-slate-900">Invite Your Circle</p>
-                <p className="text-sm text-slate-600">Get accountability from friends who care</p>
+                <p className="text-sm text-slate-600">Get accountability from followers who care</p>
               </div>
             </div>
             <div className="flex items-start gap-4">

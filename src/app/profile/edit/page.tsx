@@ -2,14 +2,18 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAuthStore } from '@/store/auth';
+import { authService } from '@/services/api';
 import { Upload, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function EditProfilePage() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const [loading, setLoading] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar_url || null);
   const [formData, setFormData] = useState({
     fullName: user?.full_name || '',
     username: user?.username || '',
@@ -40,10 +44,22 @@ export default function EditProfilePage() {
     }
   };
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file) {
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      const response = await authService.uploadAvatar(file);
+      setUser(response.data);
+      setAvatarPreview(response.data.avatar_url || null);
       toast.success('Avatar uploaded successfully!');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || 'Failed to upload avatar');
+    } finally {
+      setAvatarUploading(false);
     }
   };
 
@@ -71,13 +87,30 @@ export default function EditProfilePage() {
               <label className="block text-sm font-semibold text-gray-700 mb-3">Profile Picture</label>
               <div className="flex items-center gap-4">
                 <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-emerald-300 to-blue-300 flex items-center justify-center text-white font-bold text-3xl">
-                  {formData.fullName.charAt(0)}
+                  {avatarPreview ? (
+                    <Image
+                      src={avatarPreview}
+                      alt="Profile"
+                      width={96}
+                      height={96}
+                      unoptimized
+                      className="w-24 h-24 rounded-xl object-cover"
+                    />
+                  ) : (
+                    formData.fullName.charAt(0)
+                  )}
                 </div>
                 <div>
                   <label className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition cursor-pointer">
                     <Upload className="w-4 h-4" />
-                    Upload Photo
-                    <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                    {avatarUploading ? 'Uploading...' : 'Upload Photo'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      disabled={avatarUploading}
+                      className="hidden"
+                    />
                   </label>
                   <p className="text-xs text-gray-500 mt-2">JPG, PNG or GIF (max 5MB)</p>
                 </div>

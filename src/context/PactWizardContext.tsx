@@ -46,7 +46,7 @@ const initialData: PactWizardData = {
   categoryEmoji: '🎯',
   startDate: new Date().toISOString().split('T')[0],
   endDate: '',
-  stakeAmount: 100,
+  stakeAmount: 0,
   minParticipants: 1,
   maxParticipants: 10,
   verificationType: 'photo',

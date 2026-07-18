@@ -3,35 +3,38 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
-import { usePacts } from '@/hooks/usePacts';
-import { useWalletBalance, useWalletRewards } from '@/hooks/useWallet';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useUserJoinedPacts, useUserPacts, useUserVotedPacts } from '@/hooks/useFeedQueries';
 import TopNav from '@/components/TopNav';
 import ProfileHero from '@/components/ProfileHero';
 import ProfileStats from '@/components/ProfileStats';
-import ProfileTabs, { PactsTab, AchievementsTab, FollowersTab } from '@/components/ProfileTabs';
+import ProfileTabs, { PactsTab, AchievementsTab } from '@/components/ProfileTabs';
 import AchievementsBadges from '@/components/AchievementsBadges';
-import UserFollowModal from '@/components/UserFollowModal';
 import { LogOut, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useFollowers, useFollowing } from '@/hooks/useFollows';
 
 export default function Profile() {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
-  const { data: pactsData } = usePacts();
-  const { data: balanceData } = useWalletBalance();
-  const { data: rewardsData } = useWalletRewards();
+  const { user, isInitialized } = useRequireAuth();
+  const logout = useAuthStore((state) => state.logout);
   const [activeTab, setActiveTab] = useState('pacts');
-  const [followModal, setFollowModal] = useState<{ isOpen: boolean; type: 'followers' | 'following' }>({
-    isOpen: false,
-    type: 'followers',
-  });
 
-  const pacts = (Array.isArray(pactsData) ? pactsData : pactsData?.data || []) as any[];
-  const balance = balanceData?.balance || 0;
-  const rewards = rewardsData?.rewards || 0;
+  const userId = user?.id;
+  const { data: createdPactsData } = useUserPacts(userId || 0);
+  const { data: joinedPactsData } = useUserJoinedPacts(userId || 0);
+  const { data: votedPactsData } = useUserVotedPacts(userId || 0);
+  const createdPacts = (createdPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[];
+  const joinedPacts = (joinedPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[];
+  const votedPacts = (votedPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[];
+  const rewards = 0;
+  const followersQuery = useFollowers(userId || 0);
+  const followingQuery = useFollowing(userId || 0);
+  const followers = followersQuery.data?.data || [];
+  const following = followingQuery.data?.data || [];
 
-  const completedPacts = pacts.filter((p: any) => p.status === 'completed').length;
-  const winRate = pacts.length > 0 ? Math.round((completedPacts / pacts.length) * 100) : 0;
+  const completedPacts = createdPacts.filter((p: any) => p.status === 'completed').length;
+  const winRate = createdPacts.length > 0 ? Math.round((completedPacts / createdPacts.length) * 100) : 0;
 
   // Mock achievements data
   const allAchievements = [
@@ -41,8 +44,8 @@ export default function Profile() {
       description: 'Create your first pact',
       icon: '🎯',
       rarity: 'common' as const,
-      unlocked: pacts.length > 0,
-      unlockedAt: pacts.length > 0 ? new Date().toISOString() : undefined,
+      unlocked: createdPacts.length > 0,
+      unlockedAt: createdPacts.length > 0 ? new Date().toISOString() : undefined,
     },
     {
       id: 'on-fire',
@@ -91,18 +94,6 @@ export default function Profile() {
     },
   ];
 
-  // Mock follower data
-  const mockFollowers = [
-    { id: 1, name: 'Alice Smith', username: 'alice_smith', isFollowing: false },
-    { id: 2, name: 'Bob Johnson', username: 'bob_j', isFollowing: true },
-    { id: 3, name: 'Carol White', username: 'carol_w', isFollowing: false },
-  ];
-
-  const mockFollowing = [
-    { id: 4, name: 'Diana Prince', username: 'diana_p', isFollowing: true },
-    { id: 5, name: 'Eve Taylor', username: 'eve_t', isFollowing: true },
-  ];
-
   const handleLogout = async () => {
     await logout();
     router.push('/auth/login');
@@ -112,36 +103,36 @@ export default function Profile() {
     router.push('/profile/edit');
   };
 
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+
   if (!user) {
     return null;
   }
 
   const profileUser = {
-    id: user.id,
+    id: user.id || 0,
     name: user.full_name || 'User',
     username: user.username || 'user',
-    bio: 'Building better habits, one pact at a time',
+    avatar: user.avatar_url || undefined,
+    bio: user.bio || 'Building better habits, one pact at a time',
     reputationScore: user.reputation_score || 0,
     badges: completedPacts >= 5 ? ['trusted', 'onfire', 'consistent'] : [],
   };
 
   const stats = {
-    pactsCreated: pacts.length,
+    pactsCreated: createdPacts.length,
     pactsCompleted: completedPacts,
     winRate,
     currentStreak: 12,
     totalEarned: Math.round(rewards),
     reputation: Math.round(user.reputation_score || 0),
   };
-
-  const displayedPacts = pacts.slice(0, 5).map((p: any) => ({
-    id: p.id,
-    title: p.title,
-    description: p.description,
-    status: p.status,
-    daysRemaining: Math.ceil(Math.random() * 30),
-    participantCount: Math.ceil(Math.random() * 10),
-  }));
 
   return (
     <>
@@ -184,28 +175,42 @@ export default function Profile() {
 
         {/* Tabs */}
         <ProfileTabs onTabChange={setActiveTab}>
-          {activeTab === 'pacts' && <PactsTab pacts={displayedPacts} />}
+          {activeTab === 'pacts' && <PactsTab pacts={createdPacts} joinedPacts={joinedPacts} votedPacts={votedPacts} />}
           {activeTab === 'achievements' && <AchievementsBadges achievements={allAchievements} />}
           {activeTab === 'followers' && (
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">My Followers</h3>
-                <button
-                  onClick={() => setFollowModal({ isOpen: true, type: 'followers' })}
-                  className="text-emerald-600 hover:underline text-sm"
-                >
-                  View all {mockFollowers.length} followers
-                </button>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Following</h3>
-                <button
-                  onClick={() => setFollowModal({ isOpen: true, type: 'following' })}
-                  className="text-emerald-600 hover:underline text-sm"
-                >
-                  View all {mockFollowing.length} following
-                </button>
-              </div>
+            <div className="space-y-2">
+              {followers.length === 0 ? (
+                <p className="text-sm text-slate-500">No followers yet.</p>
+              ) : (
+                followers.map((row: any) => (
+                  <button
+                    key={row.id}
+                    onClick={() => router.push(`/profile/${encodeURIComponent(row.username)}`)}
+                    className="w-full text-left p-3 bg-white border border-gray-100 rounded-xl hover:border-emerald-200 transition"
+                  >
+                    <p className="font-semibold text-slate-900">{row.full_name || row.username}</p>
+                    <p className="text-xs text-slate-500">@{row.username}</p>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+          {activeTab === 'following' && (
+            <div className="space-y-2">
+              {following.length === 0 ? (
+                <p className="text-sm text-slate-500">Not following anyone yet.</p>
+              ) : (
+                following.map((row: any) => (
+                  <button
+                    key={row.id}
+                    onClick={() => router.push(`/profile/${encodeURIComponent(row.username)}`)}
+                    className="w-full text-left p-3 bg-white border border-gray-100 rounded-xl hover:border-emerald-200 transition"
+                  >
+                    <p className="font-semibold text-slate-900">{row.full_name || row.username}</p>
+                    <p className="text-xs text-slate-500">@{row.username}</p>
+                  </button>
+                ))
+              )}
             </div>
           )}
           {activeTab === 'circles' && (
@@ -216,14 +221,6 @@ export default function Profile() {
           )}
         </ProfileTabs>
       </div>
-
-        {/* Follow Modal */}
-        <UserFollowModal
-          isOpen={followModal.isOpen}
-          onClose={() => setFollowModal({ ...followModal, isOpen: false })}
-          type={followModal.type}
-          users={followModal.type === 'followers' ? mockFollowers : mockFollowing}
-        />
       </div>
     </>
   );

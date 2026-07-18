@@ -31,6 +31,15 @@ export function usePactProofHistory(pactId: number) {
   });
 }
 
+export function usePactProofs(pactId: number, limit = 20) {
+  return useQuery({
+    queryKey: [...queryKeys.pacts.proofHistory(pactId), limit],
+    queryFn: () => pactService.listProofs(pactId, limit),
+    enabled: !!pactId,
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
 export function usePactAnalytics(pactId: number) {
   return useQuery({
     queryKey: queryKeys.pacts.analytics(pactId),
@@ -48,7 +57,7 @@ export function useTodaysPacts() {
       const pacts = response.data;
       const today = new Date().toDateString();
       return pacts.filter((pact: Pact) => {
-        const deadline = new Date(pact.deadline).toDateString();
+        const deadline = new Date((pact as any).deadline || (pact as any).end_date).toDateString();
         return deadline === today;
       });
     },

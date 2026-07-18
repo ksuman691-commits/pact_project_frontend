@@ -2,8 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Plus, Bell, ArrowLeft } from 'lucide-react'
-import { useState } from 'react'
+import { Home, ArrowLeft } from 'lucide-react'
 
 const CATEGORIES = [
   { id: 'trending', name: 'Trending', emoji: '🔥', color: 'from-red-500 to-orange-500' },
@@ -17,19 +16,20 @@ const CATEGORIES = [
 ]
 
 interface TopNavProps {
-  onCreatePactClick?: () => void
   showBack?: boolean
   showCategories?: boolean
+  fixed?: boolean
+  compact?: boolean
+  onCreatePactClick?: () => void
 }
 
-export default function TopNav({ onCreatePactClick, showBack = false, showCategories = true }: TopNavProps) {
+export default function TopNav({ showBack = false, showCategories = true, fixed = true, compact = false }: TopNavProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const [scrollPos, setScrollPos] = useState(0)
 
   const handleBack = () => {
     // Go back to feed if on a detail page, otherwise to home
-    if (pathname?.includes('/pact-details') || pathname?.includes('/profile') || pathname?.includes('/wallet') || pathname?.includes('/circles')) {
+    if (pathname?.includes('/pact-details') || pathname?.includes('/profile') || pathname?.includes('/circles')) {
       router.push('/feed')
     } else {
       router.back()
@@ -46,10 +46,10 @@ export default function TopNav({ onCreatePactClick, showBack = false, showCatego
   return (
     <>
       {/* Top Navigation Bar */}
-      <nav className="fixed inset-x-0 top-0 z-50 mx-auto max-w-md bg-white border-b border-slate-200 shadow-sm overflow-visible">
-        <div className="px-4 py-3">
+      <nav className={`${fixed ? 'fixed inset-x-0 top-0 z-50 mx-auto max-w-md' : 'relative max-w-md mx-auto'} bg-white border-b border-slate-200 shadow-sm overflow-visible`}>
+        <div className={`px-4 ${compact ? 'py-2' : 'py-3'}`}>
           {/* Navigation Links */}
-          <div className="flex items-center justify-between mb-3">
+          <div className={`flex items-center ${compact ? 'mb-1' : 'mb-3'}`}>
             <div className="flex items-center gap-4">
               {/* Back Button - Show on detail pages */}
               {showBack && (
@@ -76,40 +76,17 @@ export default function TopNav({ onCreatePactClick, showBack = false, showCatego
                 </Link>
               )}
             </div>
-
-            {/* Create Pact Button */}
-            <button
-              onClick={onCreatePactClick}
-              aria-label="Create pact"
-              className="flex items-center justify-center h-12 w-12 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-600/30 transition-all transform hover:scale-110 active:scale-95 hover:shadow-xl -mt-1"
-            >
-              <Plus className="h-7 w-7" strokeWidth={2.5} />
-            </button>
-
-            {/* Notification Bell */}
-            <button
-              aria-label="Notifications"
-              className="flex flex-col items-center gap-1 py-1 text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors relative"
-            >
-              <div className="relative">
-                <Bell className="h-6 w-6" strokeWidth={2} />
-                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold">
-                  3
-                </span>
-              </div>
-              <span>Notify</span>
-            </button>
           </div>
 
           {/* Category Strip - Only show when showCategories is true */}
           {showCategories && (
-            <div className="pt-4 border-t border-slate-200 -mx-4 px-4 bg-white">
-              <div className="flex overflow-x-auto gap-2 pb-4 scrollbar-hide scroll-smooth">
+            <div className={`${compact ? 'pt-2' : 'pt-4'} border-t border-slate-200 -mx-4 px-4 bg-white`}>
+              <div className={`flex overflow-x-auto gap-2 ${compact ? 'pb-2' : 'pb-4'} scrollbar-hide scroll-smooth`}>
                 {CATEGORIES.map((category) => (
                   <button
                     key={category.id}
                     onClick={() => handleCategoryClick(category.id)}
-                    className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all transform hover:scale-105 whitespace-nowrap ${
+                    className={`flex-shrink-0 inline-flex items-center gap-1.5 ${compact ? 'px-3 py-1' : 'px-3 py-1.5'} rounded-lg text-xs font-semibold transition-all transform hover:scale-105 whitespace-nowrap ${
                       pathname?.includes(`category=${category.id}`)
                         ? `bg-gradient-to-r ${category.color} text-white shadow-md`
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-sm'
@@ -126,7 +103,7 @@ export default function TopNav({ onCreatePactClick, showBack = false, showCatego
       </nav>
 
       {/* Spacer to prevent content overlap */}
-      <div className={showCategories ? 'h-36' : 'h-24'} />
+      {fixed && <div className={showCategories ? 'h-36' : 'h-24'} />}
     </>
   )
 }

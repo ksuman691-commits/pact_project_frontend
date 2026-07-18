@@ -19,8 +19,8 @@ export function useWalletBalance() {
   return useQuery({
     queryKey: queryKeys.wallet.balance(),
     queryFn: async () => {
-      const response = await walletAdvancedService.getBalance();
-      return response.data;
+      const response = await walletService.get();
+      return { balance: Number(response.data?.balance ?? 0) };
     },
     staleTime: 1000 * 60 * 1,
   });
@@ -41,8 +41,8 @@ export function useWalletRewards() {
   return useQuery({
     queryKey: queryKeys.wallet.rewards(),
     queryFn: async () => {
-      const response = await walletAdvancedService.getRewards();
-      return response.data;
+      const response = await walletService.get();
+      return { rewards: Number(response.data?.escrow_locked ?? 0) };
     },
     staleTime: 1000 * 60 * 5,
   });

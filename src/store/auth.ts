@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { User, AuthToken } from '@/types';
+import { User } from '@/types';
 import { authService, setToken, clearToken } from '@/services/api';
 
 interface AuthState {
@@ -32,10 +32,10 @@ export const useAuthStore = create<AuthState>((set) => ({
         full_name,
         password,
       });
-      // Backend returns: { access_token, token_type, user }
-      const { access_token, user } = response.data;
+      const { access_token } = response.data;
       setToken(access_token);
-      set({ user, token: access_token, isLoading: false });
+      const profile = await authService.getProfile();
+      set({ user: profile.data, token: access_token, isLoading: false });
     } catch (err: any) {
       set({
         error: err.response?.data?.detail || 'Registration failed',
@@ -49,10 +49,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await authService.login({ email, password });
-      // Backend returns: { access_token, token_type, user }
-      const { access_token, user } = response.data;
+      const { access_token } = response.data;
       setToken(access_token);
-      set({ user, token: access_token, isLoading: false });
+      const profile = await authService.getProfile();
+      set({ user: profile.data, token: access_token, isLoading: false });
     } catch (err: any) {
       set({
         error: err.response?.data?.detail || 'Login failed',
@@ -78,24 +78,24 @@ export const useAuthStore = create<AuthState>((set) => ({
   initAuth: async () => {
     set({ isLoading: true });
     try {
-      // Development mode: Load mock user for testing UI
-      const mockUser: User = {
-        id: 123,
-        user_uuid: 'dev-user-123',
-        username: 'testuser',
-        email: 'test@example.com',
-        full_name: 'Test User',
-        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Test',
-        bio: 'Building awesome pacts',
-        created_at: new Date().toISOString(),
-        reputation_score: 850,
-        is_active: true,
-      };
-      
-      // Auto-login with mock user for development
-      // CRITICAL: Call setToken() to save token to localStorage for API interceptor
-      setToken('dev-token');
-      set({ user: mockUser, token: 'dev-token', isLoading: false, isInitialized: true });
+      const storedToken =
+        typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+
+      if (!storedToken) {
+        set({ user: null, token: null, isLoading: false, isInitialized: true });
+        return;
+      }
+
+      setToken(storedToken);
+      await authService.verify();
+      const profile = await authService.getProfile();
+
+      set({
+        user: profile.data,
+        token: storedToken,
+        isLoading: false,
+        isInitialized: true,
+      });
     } catch (err: any) {
       clearToken();
       set({ user: null, token: null, isLoading: false, isInitialized: true });

@@ -26,7 +26,8 @@ export function useUnreadNotificationCount() {
       const response = await notificationService.getUnreadCount();
       return response.data;
     },
-    staleTime: 1000 * 60 * 1,
+    staleTime: 1000 * 15,
+    refetchInterval: 1000 * 15,
   });
 }
 

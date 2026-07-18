@@ -122,3 +122,15 @@ export {
   useMarkAllNotificationsAsRead,
   useDeleteNotification,
 } from './useNotifications';
+
+// Follow hooks
+export {
+  useFollowState,
+  usePendingFollowRequests,
+  useFollowers,
+  useFollowing,
+  useRequestFollow,
+  useAcceptFollow,
+  useRejectFollow,
+  useRemoveFollow,
+} from './useFollows';

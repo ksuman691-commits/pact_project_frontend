@@ -11,6 +11,8 @@ interface CircleCardProps {
     name: string;
     description: string;
     avatar?: string;
+    ownerUsername?: string | null;
+    ownerAvatarUrl?: string | null;
     memberCount: number;
     isPrivate: boolean;
     isJoined: boolean;
@@ -51,6 +53,22 @@ export default function CircleCard({ circle, onJoin }: CircleCardProps) {
                 <p className="text-sm text-gray-600 line-clamp-2">
                   {circle.description}
                 </p>
+                {circle.ownerUsername && (
+                  <div className="mt-2 flex items-center gap-2">
+                    {circle.ownerAvatarUrl ? (
+                      <img
+                        src={circle.ownerAvatarUrl}
+                        alt={circle.ownerUsername}
+                        className="h-6 w-6 rounded-full object-cover border border-gray-200"
+                      />
+                    ) : (
+                      <div className="h-6 w-6 rounded-full bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center border border-gray-200">
+                        {circle.ownerUsername.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <p className="text-xs font-medium text-slate-600">Owner @{circle.ownerUsername}</p>
+                  </div>
+                )}
               </div>
               <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
                 {circle.avatar || circle.name.charAt(0)}

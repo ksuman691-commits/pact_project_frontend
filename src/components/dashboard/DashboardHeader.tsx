@@ -1,22 +1,30 @@
 'use client'
 
 import { Bell } from 'lucide-react'
+import UserAvatarLink from '@/components/UserAvatarLink'
 
 export default function DashboardHeader({
   name,
   initials,
+  avatarUrl,
   notifications = 0,
 }: {
   name: string
   initials: string
+  avatarUrl?: string | null
   notifications?: number
 }) {
   return (
     <header className="flex items-center justify-between px-5 pt-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-600 text-sm font-bold text-white">
-          {initials}
-        </div>
+        <UserAvatarLink
+          name={name || initials}
+          avatarUrl={avatarUrl}
+          href="/profile"
+          sizeClassName="h-11 w-11"
+          textClassName="text-sm"
+          className="bg-emerald-600"
+        />
         <div>
           <p className="text-xs text-slate-500">Welcome back</p>
           <h1 className="text-lg font-bold leading-tight text-slate-900">{name}</h1>

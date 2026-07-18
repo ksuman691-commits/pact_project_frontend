@@ -63,25 +63,29 @@ const statConfigs = baseStatConfigs;
 
 export default function ProfileStats({ stats }: ProfileStatsProps) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+    <div className="grid grid-flow-col auto-cols-[minmax(11rem,1fr)] gap-4 overflow-x-auto pb-2 mb-8 md:grid md:grid-cols-5 md:overflow-visible md:auto-cols-auto">
       {statConfigs.map((config) => {
         const Icon = config.icon;
         const value = stats[config.value as keyof typeof stats];
+        const formattedValue = `${config.prefix || ''}${value}${config.suffix || ''}`;
         
         return (
           <div
             key={config.value}
-            className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition"
+            className="min-w-[11rem] rounded-3xl border border-white/70 bg-white/80 p-5 shadow-[0_12px_30px_rgba(15,23,42,0.08)] backdrop-blur transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
           >
-            <div className={`w-10 h-10 rounded-lg ${config.color} flex items-center justify-center mb-3`}>
-              <Icon className="w-5 h-5" />
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-blue-500 text-white shadow-sm">
+                <Icon className="w-5 h-5" strokeWidth={2.2} />
+              </div>
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Live
+              </span>
             </div>
-            <p className="text-gray-600 text-xs font-medium mb-1">{config.label}</p>
-            <p className="text-2xl font-bold text-gray-900">
-              {config.prefix && <span>{config.prefix}</span>}
-              {value}
-              {config.suffix && <span>{config.suffix}</span>}
+            <p className="text-4xl font-black leading-none tracking-tight text-slate-950 sm:text-[2.6rem]">
+              {formattedValue}
             </p>
+            <p className="mt-2 text-sm font-medium text-slate-500">{config.label}</p>
           </div>
         );
       })}

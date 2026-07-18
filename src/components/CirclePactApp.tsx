@@ -8,6 +8,7 @@ import { usePersonalizedFeed } from '@/hooks/useFeedQueries';
 import { useBelievePact, useDoubtPact } from '@/hooks/usePactMutations';
 import { useInView } from 'react-intersection-observer';
 import PactCard from './PactCard';
+import UserAvatarLink from './UserAvatarLink';
 import toast from 'react-hot-toast';
 
 const CirclePact = () => {
@@ -145,16 +146,6 @@ const CirclePact = () => {
     return user.full_name ? user.full_name.split(' ')[0] : user.username;
   };
 
-  const getUserInitials = () => {
-    if (!user) return 'CP';
-    const name = user.full_name || user.username;
-    return name
-      .split(' ')
-      .map((segment) => segment.charAt(0).toUpperCase())
-      .slice(0, 2)
-      .join('');
-  };
-
   if (currentTab === 'feed') {
     return (
       <div className="min-h-screen bg-white pb-24">
@@ -162,9 +153,14 @@ const CirclePact = () => {
         <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 z-10">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm">
-                {getUserInitials()}
-              </div>
+              <UserAvatarLink
+                name={user?.full_name || user?.username || 'Friend'}
+                avatarUrl={user?.avatar_url || null}
+                href="/profile"
+                sizeClassName="w-11 h-11"
+                textClassName="text-sm"
+                className="bg-gradient-to-br from-emerald-400 to-emerald-600"
+              />
               <div>
                 <p className="text-xs text-gray-500">Welcome back</p>
                 <h1 className="text-sm font-bold text-gray-900">{getUserName()}</h1>
@@ -296,7 +292,7 @@ const CirclePact = () => {
           
           <form className="space-y-4">
             <div>
-              <label className="block text-sm font-bold text-gray-900 mb-2">What's your challenge?</label>
+              <label className="block text-sm font-bold text-gray-900 mb-2">What is your challenge?</label>
               <input 
                 type="text" 
                 placeholder="e.g., Ship MVP in 7 days" 

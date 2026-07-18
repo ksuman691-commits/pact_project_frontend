@@ -91,6 +91,32 @@ export function useUserPacts(userId: number) {
   });
 }
 
+export function useUserJoinedPacts(userId: number) {
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.pacts.byUser(userId), 'joined'],
+    queryFn: ({ pageParam = 0 }) =>
+      pactAdvancedService.getJoinedPactsByUser(userId, pageParam, ITEMS_PER_PAGE),
+    getNextPageParam: (lastPage, pages) =>
+      lastPage.data?.length === ITEMS_PER_PAGE ? pages.length * ITEMS_PER_PAGE : undefined,
+    initialPageParam: 0,
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function useUserVotedPacts(userId: number) {
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.pacts.byUser(userId), 'voted'],
+    queryFn: ({ pageParam = 0 }) =>
+      pactAdvancedService.getVotedPactsByUser(userId, pageParam, ITEMS_PER_PAGE),
+    getNextPageParam: (lastPage, pages) =>
+      lastPage.data?.length === ITEMS_PER_PAGE ? pages.length * ITEMS_PER_PAGE : undefined,
+    initialPageParam: 0,
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
 export function useCirclePacts(circleId: number) {
   return useInfiniteQuery({
     queryKey: queryKeys.pacts.byCircle(circleId),

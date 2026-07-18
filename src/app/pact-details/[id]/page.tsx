@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { usePact } from '@/hooks/usePacts';
+import { usePact, usePactProofs } from '@/hooks/usePacts';
 import { Share2, MessageCircle, Upload, AlertCircle, Loader, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -18,6 +18,7 @@ export default function PactDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const { data: pactData, isLoading, isError } = usePact(Number(params.id));
+  const { data: proofsData, refetch: refetchProofs } = usePactProofs(Number(params.id));
   const { user } = useAuthStore();
   
   const [proofVerificationModal, setProofVerificationModal] = useState(false);
@@ -80,29 +81,15 @@ export default function PactDetailsPage() {
     );
   }
 
-  const pact = pactData?.data || {
-    id: 1,
-    creator: 'Aniket',
-    avatar: '🔥',
-    title: 'Ship MVP in 7 days',
-    category: 'Startup',
-    daysTotal: 7,
-    daysCurrent: 2,
-    confidence: 73,
-    believers: 3420,
-    doubters: 1250,
-    timeRemaining: '2d 14h',
-    progressPercentage: 28,
-    description: 'Build and launch the MVP for my startup idea with all core features working.',
-    proofClips: [
-      { day: 1, type: 'coding', text: 'Started backend setup' },
-      { day: 2, type: 'checkpoint', text: 'API endpoints complete' },
-    ],
-    comments: [
-      { user: 'dev_pro', text: 'Always delivers 🔥', likes: 234 },
-      { user: 'startup_judge', text: '7 days is tough', likes: 145 },
-    ],
-  };
+  const pact = pactData.data;
+  const proofClips = (proofsData?.data || []).map((proof: any) => ({
+    id: proof.id,
+    type: proof.proof_type === 'video' ? 'video' : 'image',
+    text: proof.caption || 'Proof submission',
+    url: proof.file_url,
+    day: proof.day_number,
+    uploadedAt: proof.created_at,
+  }));
 
   const handleVerifyClick = () => {
     if (!hasVoted) {
@@ -219,22 +206,22 @@ export default function PactDetailsPage() {
         )}
 
         {/* Real Proof Display */}
-        {pact.proofClips && pact.proofClips.length > 0 && (
+        {proofClips.length > 0 && (
           <div>
             <h2 className="font-bold text-gray-900 mb-4">Recent Proof</h2>
             <ProofDisplay 
               proof={{
-                id: 'proof-1',
-                type: 'image',
-                url: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&q=80',
-                description: pact.proofClips[pact.proofClips.length - 1]?.text || 'Latest proof submission',
-                timestamp: `Day ${pact.daysCurrent}`,
+                id: String(proofClips[0]?.id || 'proof-1'),
+                type: proofClips[0]?.type === 'video' ? 'video' : 'image',
+                url: proofClips[0]?.url,
+                description: proofClips[0]?.text || 'Latest proof submission',
+                timestamp: proofClips[0]?.day ? `Day ${proofClips[0].day}` : `Day ${pact.daysCurrent}`,
               }}
             />
           </div>
         )}
 
-        {!pact.proofClips || pact.proofClips.length === 0 && (
+        {proofClips.length === 0 && (
           <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-6 text-center">
             <p className="text-sm font-medium text-slate-600">No proof submitted yet</p>
             <p className="text-xs text-slate-500 mt-1">
@@ -314,11 +301,11 @@ export default function PactDetailsPage() {
         onClose={() => setProofVerificationModal(false)}
         pactId={pact.id}
         proof={{
-          id: 'proof-1',
-          type: 'image',
-          url: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&q=80',
-          description: pact.proofClips?.[0]?.text || 'Proof submission',
-          timestamp: `Day ${pact.daysCurrent}`,
+          id: String(proofClips[0]?.id || 'proof-1'),
+          type: proofClips[0]?.type === 'video' ? 'video' : 'image',
+          url: proofClips[0]?.url,
+          description: proofClips[0]?.text || 'Proof submission',
+          timestamp: proofClips[0]?.day ? `Day ${proofClips[0].day}` : `Day ${pact.daysCurrent}`,
         }}
         onSubmit={handleVerificationSubmit}
       />
@@ -326,7 +313,8 @@ export default function PactDetailsPage() {
         isOpen={proofUploadModal}
         onClose={() => setProofUploadModal(false)}
         pactId={pact.id}
-        onUpload={(pactId) => {
+        onUpload={async (pactId) => {
+          await refetchProofs();
           toast.success('Proof uploaded! Waiting for verification...');
           setProofUploadModal(false);
         }}

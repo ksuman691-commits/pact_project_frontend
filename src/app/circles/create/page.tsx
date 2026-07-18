@@ -4,18 +4,22 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import Navbar from '@/components/Navbar';
-import { circleService } from '@/services/api';
+import { useCreateCircle } from '@/hooks/useCircleMutations';
 import toast from 'react-hot-toast';
 import { ArrowLeft } from 'lucide-react';
+
+const iconChoices = ['🚀', '💪', '💻', '📚', '⚡', '👥', '🎯', '🔥', '🌱', '🧠'];
 
 export default function CreateCirclePage() {
   const router = useRouter();
   const { user, isInitialized } = useRequireAuth();
+  const createCircleMutation = useCreateCircle();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    is_public: true,
+    visibility: 'public' as 'public' | 'private',
+    icon_emoji: '🚀',
   });
 
   if (!isInitialized) {
@@ -41,9 +45,13 @@ export default function CreateCirclePage() {
 
     setLoading(true);
     try {
-      await circleService.create(formData);
-      toast.success('Circle created successfully!');
-      router.push('/circles');
+      const createdCircleResponse = await createCircleMutation.mutateAsync({
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        visibility: formData.visibility,
+        icon_emoji: formData.icon_emoji,
+      });
+      router.push(`/circles/${createdCircleResponse.data.id}`);
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to create circle');
     } finally {
@@ -103,6 +111,30 @@ export default function CreateCirclePage() {
                 />
               </div>
 
+              {/* Icon */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Circle Icon / Emoji
+                </label>
+                <div className="grid grid-cols-5 gap-2">
+                  {iconChoices.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, icon_emoji: emoji })}
+                      className={`rounded-xl border px-0 py-3 text-xl transition ${
+                        formData.icon_emoji === emoji
+                          ? 'border-emerald-500 bg-emerald-50 shadow-sm'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                      aria-label={`Choose ${emoji}`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Privacy */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-3">
@@ -113,8 +145,8 @@ export default function CreateCirclePage() {
                     <input
                       type="radio"
                       name="privacy"
-                      checked={formData.is_public}
-                      onChange={() => setFormData({ ...formData, is_public: true })}
+                      checked={formData.visibility === 'public'}
+                      onChange={() => setFormData({ ...formData, visibility: 'public' })}
                       className="w-4 h-4"
                     />
                     <span>
@@ -126,8 +158,8 @@ export default function CreateCirclePage() {
                     <input
                       type="radio"
                       name="privacy"
-                      checked={!formData.is_public}
-                      onChange={() => setFormData({ ...formData, is_public: false })}
+                      checked={formData.visibility === 'private'}
+                      onChange={() => setFormData({ ...formData, visibility: 'private' })}
                       className="w-4 h-4"
                     />
                     <span>

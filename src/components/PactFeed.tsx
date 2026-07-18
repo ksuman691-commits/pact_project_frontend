@@ -7,6 +7,7 @@ import { useBelievePact, useDoubtPact } from '@/hooks/usePactMutations'
 import { useInView } from 'react-intersection-observer'
 import PactCard from './PactCard'
 import toast from 'react-hot-toast'
+import { pactService } from '@/services/api'
 
 const mockPacts = [
   {
@@ -76,10 +77,21 @@ interface PactFeedProps {
   // Force rebuild v2
 }
 
-export default function PactFeed({ showMockData = true }: PactFeedProps) {
-  const [pacts, setPacts] = useState(mockPacts)
+export default function PactFeed({ showMockData = false }: PactFeedProps) {
+  const [pacts, setPacts] = useState(showMockData ? mockPacts : [])
   const [userVotes, setUserVotes] = useState<Record<number, string>>({})
   const { ref, inView } = useInView()
+
+  const toProofClip = (proof: any) => ({
+    id: proof.id,
+    type: proof.proof_type === 'video' ? 'video' : 'photo',
+    url: proof.file_url,
+    file_url: proof.file_url,
+    text: proof.caption || '',
+    caption: proof.caption || '',
+    day: proof.day_number,
+    uploadedAt: proof.created_at,
+  })
 
   // Fetch feed data with infinite scroll (will integrate with API later)
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
@@ -96,17 +108,70 @@ export default function PactFeed({ showMockData = true }: PactFeedProps) {
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
 
-  // Use API data if available, otherwise use mock data
+  // Use API data when available. Mock data is opt-in only for isolated UI previews.
   useEffect(() => {
     if (data?.pages) {
       const apiPacts = data.pages.flatMap((page) => page.data)
       if (apiPacts.length > 0) {
-        setPacts(apiPacts)
+        Promise.all(
+          apiPacts.map(async (pact: any) => {
+            try {
+              const [voteRes, proofsRes] = await Promise.all([
+                pactService.getVotes(pact.id),
+                pactService.listProofs(pact.id).catch(() => ({ data: [] })),
+              ])
+              return {
+                ...pact,
+                believers: voteRes.data?.believe_count ?? 0,
+                doubters: voteRes.data?.doubt_count ?? 0,
+                confidence: voteRes.data?.confidence_percentage ?? 0,
+                proofClips: (proofsRes.data || []).map(toProofClip),
+              }
+            } catch {
+              return {
+                ...pact,
+                believers: pact.believers ?? 0,
+                doubters: pact.doubters ?? 0,
+                confidence: pact.confidence ?? 0,
+                proofClips: [],
+              }
+            }
+          })
+        ).then(setPacts)
+      } else if (!showMockData) {
+        setPacts([])
       }
     }
-  }, [data])
+  }, [data, showMockData])
 
   const handleVote = (pactId: number, voteType: 'believe' | 'doubt') => {
+    setPacts((prev) =>
+      prev.map((p) => {
+        if (p.id !== pactId) return p
+
+        const previousVote = (userVotes[pactId] || (p as any).userVote || null) as 'believe' | 'doubt' | null
+        let believers = Number((p as any).believers ?? 0)
+        let doubters = Number((p as any).doubters ?? 0)
+
+        if (previousVote === 'believe' && believers > 0) believers -= 1
+        if (previousVote === 'doubt' && doubters > 0) doubters -= 1
+
+        if (voteType === 'believe') believers += 1
+        if (voteType === 'doubt') doubters += 1
+
+        const total = believers + doubters
+        const confidence = total > 0 ? Math.round((believers / total) * 100) : 0
+
+        return {
+          ...p,
+          believers,
+          doubters,
+          confidence,
+          userVote: voteType,
+        }
+      })
+    )
+
     setUserVotes((prev) => ({
       ...prev,
       [pactId]: voteType,
@@ -143,8 +208,21 @@ export default function PactFeed({ showMockData = true }: PactFeedProps) {
           onVote={(pactId, vote) =>
             handleVote(pactId, vote as 'believe' | 'doubt')
           }
-          onProofUpload={(pactId) => {
-            // Handle proof upload
+          onProofUpload={(pactId, uploadedProof) => {
+            if (!uploadedProof) return
+            setPacts((prev) =>
+              prev.map((p) =>
+                p.id === pactId
+                  ? {
+                      ...p,
+                      proofClips: [
+                        toProofClip(uploadedProof),
+                        ...(Array.isArray((p as any).proofClips) ? (p as any).proofClips : []),
+                      ],
+                    }
+                  : p
+              )
+            )
           }}
         />
       ))}

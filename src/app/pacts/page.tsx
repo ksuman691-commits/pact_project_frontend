@@ -18,18 +18,6 @@ export default function PactsPage() {
   const [sortBy, setSortBy] = useState<'value' | 'deadline' | 'newest'>('value');
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
 
-  if (!isInitialized) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
   useEffect(() => {
     if (!isInitialized) return;
     if (!user) {
@@ -50,13 +38,25 @@ export default function PactsPage() {
     };
 
     fetchPacts();
-  }, [user, router, filterStatus]);
+  }, [isInitialized, user, router, filterStatus]);
+
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   const sortedPacts = [...pacts].sort((a, b) => {
     if (sortBy === 'value') {
-      return b.stake_amount - a.stake_amount;
+      return (b.stake_amount ?? 0) - (a.stake_amount ?? 0);
     } else if (sortBy === 'deadline') {
-      return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+      return new Date(a.deadline ?? a.end_date ?? '').getTime() - new Date(b.deadline ?? b.end_date ?? '').getTime();
     } else {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     }
@@ -209,12 +209,12 @@ export default function PactsPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-600">Stake:</span>
-                      <span className="font-bold text-purple-600">₹{pact.stake_amount}</span>
+                      <span className="font-bold text-purple-600">₹{pact.stake_amount ?? 0}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-600">Deadline:</span>
                       <span className="font-medium">
-                        {new Date(pact.deadline).toLocaleDateString()}
+                        {new Date(pact.deadline ?? pact.end_date ?? '').toLocaleDateString()}
                       </span>
                     </div>
                   </div>

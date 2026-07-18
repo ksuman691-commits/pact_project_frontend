@@ -1,10 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PactWizardProvider, usePactWizard } from '@/context/PactWizardContext';
 import { useCreatePact } from '@/hooks/usePactMutations';
-import { useWalletBalance } from '@/hooks/useWallet';
 import TopNav from '@/components/TopNav';
 import PactWizardStep1 from '@/components/PactWizardStep1';
 import PactWizardStep2 from '@/components/PactWizardStep2';
@@ -13,15 +11,19 @@ import PactWizardStep4 from '@/components/PactWizardStep4';
 import PactWizardStep5 from '@/components/PactWizardStep5';
 import toast from 'react-hot-toast';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { realMoneyFeatures } from '@/config/features';
 
 function WizardContent() {
   const router = useRouter();
   const { data, currentStep, nextStep, prevStep } = usePactWizard();
   const createMutation = useCreatePact();
-  const { data: balanceData } = useWalletBalance();
 
-  const balance = balanceData?.balance || 0;
+  const mapVisibility = (visibility: string) =>
+    visibility === 'circle-specific' ? 'circle_only' : visibility;
+
+  const mapProofFrequency = (frequency: string) => {
+    if (frequency === 'every-3-days') return 'weekly';
+    return frequency;
+  };
 
   // Validation for each step
   const isStepValid = () => {
@@ -29,10 +31,7 @@ function WizardContent() {
       case 1:
         return data.title.trim().length > 0 && data.description.trim().length > 0;
       case 2:
-        // When real money features are disabled, stake is not required
-        // When enabled, stake must be > 0
-        const stakeValid = realMoneyFeatures.showStakeAmountStep ? data.stakeAmount > 0 : true;
-        return data.endDate && stakeValid && data.minParticipants <= data.maxParticipants;
+        return !!data.endDate && data.minParticipants <= data.maxParticipants;
       case 3:
         return data.verificationType && data.maxProofUploads > 0;
       case 4:
@@ -45,29 +44,22 @@ function WizardContent() {
   };
 
   const handleCreate = async () => {
-    // Only check balance if real money features are enabled
-    if (realMoneyFeatures.showStakeAmountStep && data.stakeAmount > balance) {
-      toast.error(`Insufficient balance. You have ₹${balance} but need ₹${data.stakeAmount}`);
-      return;
-    }
-
     try {
-      // When real money features are disabled, send stake_amount as 0
-      // When enabled, send the actual stake amount
-      const stakeAmount = realMoneyFeatures.showStakeAmountStep ? data.stakeAmount : 0;
-
       await createMutation.mutateAsync({
         title: data.title,
         description: data.description,
-        stake_amount: stakeAmount,
+        category: data.category,
+        start_date: data.startDate,
+        end_date: data.endDate,
+        stake_amount: 0,
         deadline: data.endDate,
-        verification_type: data.verificationType,
-        verification_frequency: data.verificationFrequency,
+        verification_method: data.verificationType,
+        proof_submission_frequency: mapProofFrequency(data.verificationFrequency),
         max_proof_uploads: data.maxProofUploads,
         min_participants: data.minParticipants,
         max_participants: data.maxParticipants,
-        visibility: data.visibility,
-        circle_id: data.selectedCircleId || null,
+        visibility: mapVisibility(data.visibility),
+        circle_id: data.visibility === 'circle-specific' ? data.selectedCircleId : null,
       });
       toast.success('Pact created successfully!');
       router.push('/home');
@@ -152,10 +144,6 @@ function WizardContent() {
           )}
         </div>
 
-        {/* Wallet Balance Info */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-          Current balance: <span className="font-semibold">₹{balance}</span> | Stake required: <span className="font-semibold">₹{data.stakeAmount}</span>
-        </div>
       </div>
     </div>
   );

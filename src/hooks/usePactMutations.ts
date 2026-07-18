@@ -1,9 +1,42 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { pactService, joinRequestService, socialService, verificationAdvancedService } from '@/services/api';
+import { pactService, joinRequestService, socialService, verificationService } from '@/services/api';
 import { queryKeys } from '@/lib/queryKeys';
 import toast from 'react-hot-toast';
+
+function toErrorMessage(error: any, fallback: string) {
+  const detail = error?.response?.data?.detail;
+
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail;
+  }
+
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) => {
+        if (typeof item === 'string') return item;
+        if (item && typeof item.msg === 'string') return item.msg;
+        return null;
+      })
+      .filter(Boolean);
+
+    if (messages.length > 0) {
+      return messages.join(', ');
+    }
+  }
+
+  if (detail && typeof detail === 'object') {
+    if (typeof detail.msg === 'string') return detail.msg;
+    return fallback;
+  }
+
+  if (typeof error?.message === 'string' && error.message.trim()) {
+    return error.message;
+  }
+
+  return fallback;
+}
 
 export function useCreatePact() {
   const queryClient = useQueryClient();
@@ -17,8 +50,7 @@ export function useCreatePact() {
       return response.data;
     },
     onError: (error: any) => {
-      const message = error.response?.data?.detail || 'Failed to create pact';
-      toast.error(message);
+      toast.error(toErrorMessage(error, 'Failed to create pact'));
     },
   });
 }
@@ -35,7 +67,7 @@ export function useUpdatePact(pactId: number) {
       return response.data;
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to update pact');
+      toast.error(toErrorMessage(error, 'Failed to update pact'));
     },
   });
 }
@@ -44,11 +76,23 @@ export function useUploadPactProof(pactId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { proof_url?: string; proof_file?: File }) => {
+    mutationFn: (data: { proof_url?: string; proof_file?: File; proof_type?: 'photo' | 'video' | 'checklist'; caption?: string; day_number?: number }) => {
       if (data.proof_file) {
-        return pactService.uploadProofFile(pactId, data.proof_file);
+        return pactService.uploadProofFile(
+          pactId,
+          data.proof_file,
+          data.proof_type || 'photo',
+          data.caption,
+          data.day_number
+        );
       }
-      return pactService.uploadProof(pactId, data.proof_url || '');
+      return pactService.uploadProof(pactId, {
+        proof_type: data.proof_type || 'photo',
+        file_url: data.proof_url || null,
+        checklist_data: null,
+        caption: data.caption || null,
+        day_number: typeof data.day_number === 'number' ? data.day_number : null,
+      });
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.pacts.detail(pactId) });
@@ -57,7 +101,7 @@ export function useUploadPactProof(pactId: number) {
       return response.data;
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to upload proof');
+      toast.error(toErrorMessage(error, 'Failed to upload proof'));
     },
   });
 }
@@ -73,7 +117,7 @@ export function useJoinPact(pactId: number) {
       return response.data;
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to send join request');
+      toast.error(toErrorMessage(error, 'Failed to send join request'));
     },
   });
 }
@@ -89,7 +133,7 @@ export function useApprovePactJoinRequest(pactId: number, requestId: number) {
       return response.data;
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to approve request');
+      toast.error(toErrorMessage(error, 'Failed to approve request'));
     },
   });
 }
@@ -105,7 +149,7 @@ export function useRejectPactJoinRequest(pactId: number, requestId: number) {
       return response.data;
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to reject request');
+      toast.error(toErrorMessage(error, 'Failed to reject request'));
     },
   });
 }
@@ -121,7 +165,7 @@ export function useLeavePact(pactId: number) {
       toast.success('Left pact successfully!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to leave pact');
+      toast.error(toErrorMessage(error, 'Failed to leave pact'));
     },
   });
 }
@@ -164,7 +208,7 @@ export function useAddComment(pactId: number) {
       toast.success('Comment added!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to add comment');
+      toast.error(toErrorMessage(error, 'Failed to add comment'));
     },
   });
 }
@@ -179,7 +223,7 @@ export function useDeleteComment(pactId: number, commentId: number) {
       toast.success('Comment deleted!');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to delete comment');
+      toast.error(toErrorMessage(error, 'Failed to delete comment'));
     },
   });
 }
@@ -192,7 +236,7 @@ export function useSharePact(pactId: number) {
       return response.data;
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to share pact');
+      toast.error(toErrorMessage(error, 'Failed to share pact'));
     },
   });
 }
@@ -201,7 +245,7 @@ export function useSubmitVerification(pactId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: any) => verificationAdvancedService.submitVerification(pactId, data),
+    mutationFn: (data: any) => verificationService.create(pactId, data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.verifications.byPact(pactId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.pacts.detail(pactId) });
@@ -209,7 +253,7 @@ export function useSubmitVerification(pactId: number) {
       return response.data;
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to submit verification');
+      toast.error(toErrorMessage(error, 'Failed to submit verification'));
     },
   });
 }
@@ -218,7 +262,7 @@ export function useBelievePact() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (pactId: number) => socialService.likePact(pactId),
+    mutationFn: (pactId: number) => pactService.vote(pactId, 'believe'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
     },
@@ -232,7 +276,7 @@ export function useDoubtPact() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (pactId: number) => socialService.unlikePact(pactId),
+    mutationFn: (pactId: number) => pactService.vote(pactId, 'doubt'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
     },

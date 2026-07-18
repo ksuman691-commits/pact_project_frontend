@@ -106,6 +106,15 @@ export const queryKeys = {
     unreadCount: () => [...queryKeys.notifications.all, 'unread-count'],
   },
 
+  // Follows
+  follows: {
+    all: ['follows'],
+    pending: () => [...queryKeys.follows.all, 'pending'],
+    followers: (userId: number) => [...queryKeys.follows.all, 'followers', userId],
+    following: (userId: number) => [...queryKeys.follows.all, 'following', userId],
+    state: (userId: number) => [...queryKeys.follows.all, 'state', userId],
+  },
+
   // Shorts (Video feed)
   shorts: {
     all: ['shorts'],

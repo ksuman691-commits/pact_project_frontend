@@ -4,7 +4,6 @@ import React from 'react';
 import { X } from 'lucide-react';
 import { PactWizardProvider, usePactWizard } from '@/context/PactWizardContext';
 import { useCreatePact } from '@/hooks/usePactMutations';
-import { useWalletBalance } from '@/hooks/useWallet';
 import PactWizardStep1 from './PactWizardStep1';
 import PactWizardStep2 from './PactWizardStep2';
 import PactWizardStep3 from './PactWizardStep3';
@@ -16,16 +15,21 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 function WizardContent({ onClose }: { onClose: () => void }) {
   const { data, currentStep, nextStep, prevStep } = usePactWizard();
   const createMutation = useCreatePact();
-  const { data: balanceData } = useWalletBalance();
 
-  const balance = balanceData?.balance || 0;
+  const mapVisibility = (visibility: string) =>
+    visibility === 'circle-specific' ? 'circle_only' : visibility;
+
+  const mapProofFrequency = (frequency: string) => {
+    if (frequency === 'every-3-days') return 'weekly';
+    return frequency;
+  };
 
   const isStepValid = () => {
     switch (currentStep) {
       case 1:
         return data.title.trim().length > 0 && data.description.trim().length > 0;
       case 2:
-        return data.endDate && data.stakeAmount > 0 && data.minParticipants <= data.maxParticipants;
+        return !!data.endDate && data.minParticipants <= data.maxParticipants;
       case 3:
         return data.verificationType && data.maxProofUploads > 0;
       case 4:
@@ -38,26 +42,21 @@ function WizardContent({ onClose }: { onClose: () => void }) {
   };
 
   const handleCreate = async () => {
-    if (data.stakeAmount > balance) {
-      toast.error(`Insufficient balance. You have ₹${balance} but need ₹${data.stakeAmount}`);
-      return;
-    }
-
     try {
       await createMutation.mutateAsync({
         title: data.title,
         description: data.description,
         category: data.category,
-        start_date: new Date().toISOString(),
+        start_date: data.startDate,
         end_date: data.endDate,
-        stake_amount: data.stakeAmount,
+        stake_amount: 0,
         min_participants: data.minParticipants,
         max_participants: data.maxParticipants,
-        verification_type: data.verificationType,
-        verification_frequency: data.verificationFrequency,
+        verification_method: data.verificationType,
+        proof_submission_frequency: mapProofFrequency(data.verificationFrequency),
         max_proof_uploads: data.maxProofUploads,
-        visibility: data.visibility,
-        circle_id: data.selectedCircleId,
+        visibility: mapVisibility(data.visibility),
+        circle_id: data.selectedCircleId || null,
       });
 
       toast.success('Pact created successfully!');

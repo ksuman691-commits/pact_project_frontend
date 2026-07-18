@@ -3,15 +3,16 @@
 import React, { useState } from 'react';
 import { MessageCircle, Share2, Camera, MoreVertical } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import toast from 'react-hot-toast';
-import VerificationModal from './VerificationModal';
+import ProofUploadModal from './ProofUploadModal';
 import ShareModal from './ShareModal';
 
 interface PactCardProps {
   pact: any;
   onVote?: (pactId: number, vote: string) => void;
   userVote?: string | null;
-  onProofUpload?: (pactId: number) => void;
+  onProofUpload?: (pactId: number, proof?: any) => void;
 }
 
 export default function PactCard({
@@ -20,7 +21,7 @@ export default function PactCard({
   userVote,
   onProofUpload,
 }: PactCardProps) {
-  const [verificationModal, setVerificationModal] = useState(false);
+  const [proofUploadModal, setProofUploadModal] = useState(false);
   const [shareModal, setShareModal] = useState(false);
   const [currentVote, setCurrentVote] = useState<'believe' | 'doubt' | null>(userVote as any);
   
@@ -30,6 +31,19 @@ export default function PactCard({
   const totalVotes = believers + doubters;
   const believePercent = totalVotes > 0 ? Math.round((believers / totalVotes) * 100) : 50;
   const doubtPercent = 100 - believePercent;
+  const proofClips = Array.isArray(pact.proofClips) ? pact.proofClips : [];
+  const creatorLabel = pact.creator || pact.creator_username || 'unknown';
+  const creatorUsername = pact.creator_username || null;
+  const creatorProfileHref = creatorUsername
+    ? `/profile/${encodeURIComponent(creatorUsername)}`
+    : null;
+  const circleLabel = pact.circle || pact.circle_name || null;
+  const creatorAvatarUrl = pact.creatorAvatarUrl || pact.creator_avatar_url || null;
+
+  const formatVoteCount = (count: number) => {
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
+    return `${count}`;
+  };
 
   const handleVote = (vote: 'believe' | 'doubt') => {
     setCurrentVote(vote);
@@ -45,21 +59,61 @@ export default function PactCard({
         <div className="px-4 py-4 flex items-start justify-between border-b border-slate-100">
           <div className="flex items-start gap-3 flex-1">
             {/* Avatar */}
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-orange-500 flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
-              {pact.avatar || '🔥'}
-            </div>
+            {creatorProfileHref ? (
+              <Link href={creatorProfileHref} className="block" aria-label={`View @${creatorLabel} profile`}>
+                {creatorAvatarUrl ? (
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-slate-200">
+                    <Image
+                      src={creatorAvatarUrl}
+                      alt={creatorLabel}
+                      fill
+                      unoptimized
+                      sizes="48px"
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-orange-500 flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
+                    {pact.avatar || creatorLabel.charAt(0).toUpperCase() || '🔥'}
+                  </div>
+                )}
+              </Link>
+            ) : creatorAvatarUrl ? (
+              <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-slate-200">
+                <Image
+                  src={creatorAvatarUrl}
+                  alt={creatorLabel}
+                  fill
+                  unoptimized
+                  sizes="48px"
+                  className="object-cover"
+                />
+              </div>
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-orange-500 flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
+                {pact.avatar || creatorLabel.charAt(0).toUpperCase() || '🔥'}
+              </div>
+            )}
             
             <div className="flex-1 min-w-0">
               {/* Username and label row */}
               <div className="flex items-baseline gap-2 mb-0.5">
-                <h3 className="font-bold text-slate-900">@{pact.creator}</h3>
+                {creatorProfileHref ? (
+                  <Link href={creatorProfileHref} className="font-bold text-slate-900 hover:text-blue-700 transition-colors">
+                    @{creatorLabel}
+                  </Link>
+                ) : (
+                  <h3 className="font-bold text-slate-900">@{creatorLabel}</h3>
+                )}
                 <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">
-                  Day {pact.daysCurrent || 2} of {pact.daysTotal || 7}
+                  {pact.daysCurrent && pact.daysTotal ? `Day ${pact.daysCurrent} of ${pact.daysTotal}` : 'Active pact'}
                 </p>
               </div>
-              <p className="text-xs text-slate-600 font-semibold uppercase tracking-wide">
-                {pact.circle || 'Founder Sprint'}
-              </p>
+              {circleLabel && (
+                <p className="text-xs text-slate-600 font-semibold uppercase tracking-wide">
+                  {circleLabel}
+                </p>
+              )}
             </div>
           </div>
 
@@ -79,34 +133,54 @@ export default function PactCard({
         </Link>
 
         {/* 3. PROOF GRID - 2-column layout with thumbnails */}
-        {pact.proofClips && pact.proofClips.length > 0 ? (
+        {proofClips.length > 0 ? (
           <div className="px-4 py-4 border-t border-slate-100">
             <div className="grid grid-cols-2 gap-3">
-              {pact.proofClips.slice(0, 2).map((clip: any, idx: number) => (
+              {proofClips.slice(0, 2).map((clip: any, idx: number) => (
+                (() => {
+                  const mediaUrl = clip.url || clip.file_url || '';
+                  const hasMediaUrl = typeof mediaUrl === 'string' && mediaUrl.trim().length > 0;
+                  const isVideo = clip.type === 'video' || clip.proof_type === 'video';
+
+                  return (
                 <div
-                  key={idx}
-                  className="aspect-square rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 border-2 border-slate-300 flex flex-col items-center justify-center gap-2 hover:border-slate-400 transition cursor-pointer"
+                  key={clip.id || idx}
+                  className="aspect-square rounded-xl bg-slate-100 border-2 border-slate-300 overflow-hidden relative"
                 >
-                  <div className="text-4xl">
-                    {clip.type === 'coding' ? '💻' : clip.type === 'checkpoint' ? '✅' : '📷'}
+                  {isVideo && hasMediaUrl ? (
+                    <video
+                      src={mediaUrl}
+                      className="w-full h-full object-cover"
+                      muted
+                      playsInline
+                    />
+                  ) : hasMediaUrl ? (
+                    <Image
+                      src={mediaUrl}
+                      alt={clip.text || clip.caption || `Proof ${idx + 1}`}
+                      fill
+                      unoptimized
+                      sizes="(max-width: 768px) 50vw, 240px"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs font-medium bg-slate-100">
+                      No media
+                    </div>
+                  )}
+                  <div className="absolute left-2 bottom-2 px-2 py-1 rounded-md bg-black/60 text-white text-xs">
+                    {clip.text || clip.caption || `Proof ${idx + 1}`}
                   </div>
-                  <p className="text-xs sm:text-sm text-slate-600 font-medium">Proof #{idx + 1}</p>
                 </div>
+                  );
+                })()
               ))}
             </div>
           </div>
         ) : (
           <div className="px-4 py-4 border-t border-slate-100">
-            <div className="grid grid-cols-2 gap-3">
-              {[1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="aspect-square rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-2"
-                >
-                  <div className="text-3xl sm:text-4xl">📸</div>
-                  <p className="text-xs text-slate-600 font-medium">Proof #{i}</p>
-                </div>
-              ))}
+            <div className="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+              <p className="text-sm text-slate-600 font-medium">No proof uploaded yet</p>
             </div>
           </div>
         )}
@@ -154,7 +228,7 @@ export default function PactCard({
                 {believePercent}% Believe
               </p>
               <p className="text-xs text-slate-500 mt-0.5">
-                {(pact.believers / 1000).toFixed(1)}k believers · {(pact.doubters / 1000).toFixed(1)}k doubters
+                {formatVoteCount(believers)} believers · {formatVoteCount(doubters)} doubters
               </p>
             </div>
           </div>
@@ -210,13 +284,13 @@ export default function PactCard({
 
           {/* Proof count */}
           <p className="text-xs text-slate-600 font-semibold uppercase tracking-wide">
-            {pact.proofClips?.length || 0} Proofs
+            {proofClips.length} Proofs
           </p>
 
           {/* Action icons */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setVerificationModal(true)}
+              onClick={() => setProofUploadModal(true)}
               className="text-slate-600 hover:text-slate-900 transition"
               title="Submit progress"
             >
@@ -245,11 +319,11 @@ export default function PactCard({
       </div>
 
       {/* Modals */}
-      <VerificationModal
-        isOpen={verificationModal}
-        onClose={() => setVerificationModal(false)}
+      <ProofUploadModal
+        isOpen={proofUploadModal}
+        onClose={() => setProofUploadModal(false)}
         pactId={pact.id}
-        onSubmit={() => onProofUpload?.(pact.id)}
+        onUpload={(pactId, proof) => onProofUpload?.(pactId, proof)}
       />
       <ShareModal
         isOpen={shareModal}
