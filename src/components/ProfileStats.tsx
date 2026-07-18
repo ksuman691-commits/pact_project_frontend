@@ -74,13 +74,10 @@ export default function ProfileStats({ stats }: ProfileStatsProps) {
             key={config.value}
             className="min-w-[11rem] rounded-3xl border border-white/70 bg-white/80 p-5 shadow-[0_12px_30px_rgba(15,23,42,0.08)] backdrop-blur transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
           >
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-blue-500 text-white shadow-sm">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-sm">
                 <Icon className="w-5 h-5" strokeWidth={2.2} />
               </div>
-              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Live
-              </span>
             </div>
             <p className="text-4xl font-black leading-none tracking-tight text-slate-950 sm:text-[2.6rem]">
               {formattedValue}
