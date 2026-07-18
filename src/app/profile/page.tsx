@@ -19,6 +19,9 @@ export default function Profile() {
   const { user, isInitialized } = useRequireAuth();
   const logout = useAuthStore((state) => state.logout);
   const [activeTab, setActiveTab] = useState('pacts');
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [showPactsModal, setShowPactsModal] = useState(false);
 
   const userId = user?.id;
   const { data: createdPactsData } = useUserPacts(userId || 0);
@@ -173,7 +176,12 @@ export default function Profile() {
         />
 
         {/* Stats */}
-        <ProfileStats stats={stats} />
+        <ProfileStats 
+          stats={stats}
+          onPactClick={() => setShowPactsModal(true)}
+          onFollowersClick={() => setShowFollowersModal(true)}
+          onFollowingClick={() => setShowFollowingModal(true)}
+        />
 
         {/* Tabs */}
         <ProfileTabs onTabChange={setActiveTab}>
@@ -224,6 +232,78 @@ export default function Profile() {
         </ProfileTabs>
       </div>
       </div>
+
+      {/* Followers Modal */}
+      {showFollowersModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center p-4" onClick={() => setShowFollowersModal(false)}>
+          <div className="bg-white rounded-t-3xl md:rounded-3xl max-w-md w-full max-h-[70vh] overflow-y-auto md:max-h-96" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-3xl">
+              <h2 className="font-bold text-lg">Followers</h2>
+              <button onClick={() => setShowFollowersModal(false)} className="p-1 hover:bg-gray-100 rounded-lg">✕</button>
+            </div>
+            <div className="p-4 space-y-3">
+              {followers.length === 0 ? (
+                <p className="text-center text-slate-500 py-8">No followers yet</p>
+              ) : (
+                followers.map((row: any) => (
+                  <button key={row.id} onClick={() => { router.push(`/profile/${encodeURIComponent(row.username)}`); setShowFollowersModal(false); }} className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
+                    <p className="font-medium text-slate-900">{row.full_name || row.username}</p>
+                    <p className="text-xs text-slate-500">@{row.username}</p>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Following Modal */}
+      {showFollowingModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center p-4" onClick={() => setShowFollowingModal(false)}>
+          <div className="bg-white rounded-t-3xl md:rounded-3xl max-w-md w-full max-h-[70vh] overflow-y-auto md:max-h-96" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-3xl">
+              <h2 className="font-bold text-lg">Following</h2>
+              <button onClick={() => setShowFollowingModal(false)} className="p-1 hover:bg-gray-100 rounded-lg">✕</button>
+            </div>
+            <div className="p-4 space-y-3">
+              {following.length === 0 ? (
+                <p className="text-center text-slate-500 py-8">Not following anyone yet</p>
+              ) : (
+                following.map((row: any) => (
+                  <button key={row.id} onClick={() => { router.push(`/profile/${encodeURIComponent(row.username)}`); setShowFollowingModal(false); }} className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
+                    <p className="font-medium text-slate-900">{row.full_name || row.username}</p>
+                    <p className="text-xs text-slate-500">@{row.username}</p>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pacts Modal */}
+      {showPactsModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center p-4" onClick={() => setShowPactsModal(false)}>
+          <div className="bg-white rounded-t-3xl md:rounded-3xl max-w-md w-full max-h-[70vh] overflow-y-auto md:max-h-96" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-3xl">
+              <h2 className="font-bold text-lg">My Pacts</h2>
+              <button onClick={() => setShowPactsModal(false)} className="p-1 hover:bg-gray-100 rounded-lg">✕</button>
+            </div>
+            <div className="p-4 space-y-3">
+              {createdPacts.length === 0 ? (
+                <p className="text-center text-slate-500 py-8">No pacts created yet</p>
+              ) : (
+                createdPacts.map((pact: any) => (
+                  <button key={pact.id} onClick={() => { router.push(`/pacts/${pact.id}`); setShowPactsModal(false); }} className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
+                    <p className="font-medium text-slate-900">{pact.title}</p>
+                    <p className="text-xs text-slate-500">{pact.category}</p>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
