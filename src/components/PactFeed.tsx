@@ -1,13 +1,14 @@
 'use client'
 
 // Cache bust: 2024-07-07 08:40
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { usePersonalizedFeed } from '@/hooks/useFeedQueries'
 import { useBelievePact, useDoubtPact } from '@/hooks/usePactMutations'
 import { useInView } from 'react-intersection-observer'
 import PactCard from './PactCard'
 import toast from 'react-hot-toast'
 import { pactService } from '@/services/api'
+import { useRouter } from 'next/navigation'
 
 const mockPacts = [
   {
@@ -74,13 +75,35 @@ const mockPacts = [
 
 interface PactFeedProps {
   showMockData?: boolean
+  category?: string
+  onBusyChange?: (busy: boolean) => void
+  onCreatePact?: () => void
   // Force rebuild v2
 }
 
-export default function PactFeed({ showMockData = false }: PactFeedProps) {
+const categoryLabelMap: Record<string, string> = {
+  all: 'all pacts',
+  trending: 'trending pacts',
+  fitness: 'Fitness',
+  startup: 'Startup',
+  coding: 'Coding',
+  creator: 'Creator',
+  study: 'Study',
+  habits: 'Habits',
+  social: 'Social',
+}
+
+export default function PactFeed({
+  showMockData = false,
+  category = 'all',
+  onBusyChange,
+  onCreatePact,
+}: PactFeedProps) {
+  const router = useRouter()
   const [pacts, setPacts] = useState(showMockData ? mockPacts : [])
   const [userVotes, setUserVotes] = useState<Record<number, string>>({})
   const { ref, inView } = useInView()
+  const normalizedCategory = (category || 'all').toLowerCase()
 
   const toProofClip = (proof: any) => ({
     id: proof.id,
@@ -94,8 +117,20 @@ export default function PactFeed({ showMockData = false }: PactFeedProps) {
   })
 
   // Fetch feed data with infinite scroll (will integrate with API later)
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
-    usePersonalizedFeed()
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isFetching } =
+    usePersonalizedFeed(normalizedCategory)
+
+  const isBusy = isLoading || isFetching || isFetchingNextPage
+
+  useEffect(() => {
+    onBusyChange?.(isBusy)
+  }, [isBusy, onBusyChange])
+
+  useEffect(() => {
+    if (!showMockData) {
+      setPacts([])
+    }
+  }, [normalizedCategory, showMockData])
 
   // Mutations for voting
   const believeMutation = useBelievePact()
@@ -143,6 +178,14 @@ export default function PactFeed({ showMockData = false }: PactFeedProps) {
       }
     }
   }, [data, showMockData])
+
+  const emptyStateTitle = useMemo(() => {
+    return normalizedCategory === 'all' || normalizedCategory === 'trending'
+      ? 'No pacts found yet.'
+      : 'No pacts found for this category.'
+  }, [normalizedCategory])
+
+  const emptyStateMessage = useMemo(() => 'Be the first to create one!', [])
 
   const handleVote = (pactId: number, voteType: 'believe' | 'doubt') => {
     setPacts((prev) =>
@@ -199,8 +242,34 @@ export default function PactFeed({ showMockData = false }: PactFeedProps) {
   }
 
   return (
-    <div className="space-y-4">
-      {pacts.map((pact) => (
+    <div id="pact-feed-list" className="space-y-4 scroll-mt-6">
+      {isLoading ? (
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <div key={idx} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-pulse">
+              <div className="h-24 bg-slate-100" />
+              <div className="p-4 space-y-3">
+                <div className="h-5 w-2/3 bg-slate-200 rounded" />
+                <div className="h-4 w-1/2 bg-slate-200 rounded" />
+                <div className="h-32 bg-slate-100 rounded-xl" />
+                <div className="h-10 bg-slate-100 rounded-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : pacts.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-10 text-center">
+          <p className="text-lg font-bold text-slate-900">{emptyStateTitle}</p>
+          <p className="mt-2 text-sm text-slate-600">{emptyStateMessage}</p>
+          <button
+            onClick={() => onCreatePact ? onCreatePact() : router.push('/pacts/create')}
+            className="mt-6 inline-flex items-center justify-center px-5 py-3 rounded-full bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors"
+          >
+            Create Pact
+          </button>
+        </div>
+      ) : (
+        pacts.map((pact) => (
         <PactCard
           key={pact.id}
           pact={pact}
@@ -225,11 +294,12 @@ export default function PactFeed({ showMockData = false }: PactFeedProps) {
             )
           }}
         />
-      ))}
+        ))
+      )}
 
       {/* Infinite scroll trigger */}
       <div ref={ref} className="py-4 text-center">
-        {isFetchingNextPage && <p className="text-slate-600">Loading more...</p>}
+        {isFetchingNextPage && !isLoading && <p className="text-slate-600">Loading more...</p>}
         {!hasNextPage && pacts.length > 0 && (
           <p className="text-slate-500 text-sm">No more pacts to load</p>
         )}

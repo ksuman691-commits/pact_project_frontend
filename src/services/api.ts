@@ -457,8 +457,8 @@ export const followService = {
 
 // Feed Services (Personalized feed, trending, discover)
 export const feedService = {
-  getPersonalized: (skip?: number, limit?: number) =>
-    api.get('/api/pacts/feed/personalized', { params: { skip, limit } }),
+  getPersonalized: (skip?: number, limit?: number, category?: string) =>
+    api.get('/api/feed', { params: { skip, limit, category } }),
   getTrending: (skip?: number, limit?: number) =>
     api.get('/api/pacts', { params: { skip, limit } }),
   getDiscover: (skip?: number, limit?: number) =>

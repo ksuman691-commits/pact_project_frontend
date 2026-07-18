@@ -6,11 +6,11 @@ import { queryKeys } from '@/lib/queryKeys';
 
 const ITEMS_PER_PAGE = 10;
 
-export function usePersonalizedFeed() {
+export function usePersonalizedFeed(category = 'all') {
   return useInfiniteQuery({
-    queryKey: queryKeys.feed.personalized(),
+    queryKey: queryKeys.feed.personalized(category),
     queryFn: ({ pageParam = 0 }) =>
-      feedService.getPersonalized(pageParam, ITEMS_PER_PAGE),
+      feedService.getPersonalized(pageParam, ITEMS_PER_PAGE, category),
     getNextPageParam: (lastPage, pages) =>
       lastPage.data?.length === ITEMS_PER_PAGE ? pages.length * ITEMS_PER_PAGE : undefined,
     initialPageParam: 0,

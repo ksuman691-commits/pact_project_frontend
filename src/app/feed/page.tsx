@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import TopNav from '@/components/TopNav'
 import WelcomeHeader from '@/components/WelcomeHeader'
 import PactWizardModal from '@/components/PactWizardModal'
@@ -14,11 +14,15 @@ import toast from 'react-hot-toast'
 
 export default function FeedPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user, isInitialized } = useAuthStore()
   const { data: unreadCountData } = useUnreadNotificationCount()
   const [pactModalOpen, setPactModalOpen] = useState(false)
   const [searchModalOpen, setSearchModalOpen] = useState(false)
+  const [feedBusy, setFeedBusy] = useState(false)
+  const firstLoadRef = useRef(true)
   const unreadCount = unreadCountData?.unread_count ?? 0
+  const category = (searchParams.get('category') || 'all').toLowerCase()
 
   useEffect(() => {
     if (!isInitialized) return
@@ -26,6 +30,16 @@ export default function FeedPage() {
       router.replace('/auth/register')
     }
   }, [isInitialized, user, router])
+
+  useEffect(() => {
+    if (firstLoadRef.current) {
+      firstLoadRef.current = false
+      return
+    }
+
+    const feedAnchor = document.getElementById('pact-feed-list')
+    feedAnchor?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [category])
 
   const handleCreatePact = () => {
     if (!user) {
@@ -53,11 +67,16 @@ export default function FeedPage() {
       />
 
       {/* Category strip below welcome panel */}
-      <TopNav showCategories={true} fixed={false} compact={true} />
+      <TopNav showCategories={true} fixed={false} compact={true} isLoadingCategories={feedBusy} />
 
       {/* Pacts Feed Section */}
-      <div className="max-w-md mx-auto bg-slate-50 pb-20 px-4">
-        <PactFeed showMockData={false} />
+      <div className="max-w-md mx-auto bg-slate-50 pb-20 px-4" id="pact-feed-shell">
+        <PactFeed
+          showMockData={false}
+          category={category}
+          onBusyChange={setFeedBusy}
+          onCreatePact={handleCreatePact}
+        />
       </div>
 
       <PactWizardModal isOpen={pactModalOpen} onClose={() => setPactModalOpen(false)} />

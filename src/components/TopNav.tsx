@@ -1,18 +1,19 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Home, ArrowLeft } from 'lucide-react'
 
 const CATEGORIES = [
-  { id: 'trending', name: 'Trending', emoji: '🔥', color: 'from-red-500 to-orange-500' },
-  { id: 'fitness', name: 'Fitness', emoji: '💪', color: 'from-green-500 to-emerald-600' },
-  { id: 'startup', name: 'Startup', emoji: '🚀', color: 'from-blue-500 to-cyan-600' },
-  { id: 'coding', name: 'Coding', emoji: '💻', color: 'from-purple-500 to-indigo-600' },
-  { id: 'creator', name: 'Creator', emoji: '🎬', color: 'from-pink-500 to-rose-500' },
-  { id: 'study', name: 'Study', emoji: '📚', color: 'from-amber-500 to-orange-600' },
-  { id: 'habits', name: 'Habits', emoji: '⚡', color: 'from-yellow-500 to-amber-600' },
-  { id: 'social', name: 'Social', emoji: '👥', color: 'from-cyan-500 to-blue-600' },
+  { id: 'all', name: 'All', emoji: '✨', color: 'from-slate-700 to-slate-900' },
+  { id: 'Trending', name: 'Trending', emoji: '🔥', color: 'from-red-500 to-orange-500' },
+  { id: 'Fitness', name: 'Fitness', emoji: '💪', color: 'from-green-500 to-emerald-600' },
+  { id: 'Coding', name: 'Coding', emoji: '💻', color: 'from-purple-500 to-indigo-600' },
+  { id: 'Study', name: 'Study', emoji: '📚', color: 'from-amber-500 to-orange-600' },
+  { id: 'Startup', name: 'Startup', emoji: '🚀', color: 'from-blue-500 to-cyan-600' },
+  { id: 'Habits', name: 'Habits', emoji: '⚡', color: 'from-yellow-500 to-amber-600' },
+  { id: 'Creator', name: 'Creator', emoji: '🎨', color: 'from-pink-500 to-rose-500' },
+  { id: 'Social', name: 'Social', emoji: '👥', color: 'from-cyan-500 to-blue-600' },
 ]
 
 interface TopNavProps {
@@ -21,11 +22,24 @@ interface TopNavProps {
   fixed?: boolean
   compact?: boolean
   onCreatePactClick?: () => void
+  isLoadingCategories?: boolean
+  activeCategory?: string
+  onCategoryChange?: (categoryId: string) => void
 }
 
-export default function TopNav({ showBack = false, showCategories = true, fixed = true, compact = false }: TopNavProps) {
+export default function TopNav({
+  showBack = false,
+  showCategories = true,
+  fixed = true,
+  compact = false,
+  isLoadingCategories = false,
+  activeCategory,
+  onCategoryChange,
+}: TopNavProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const currentCategory = (activeCategory || searchParams.get('category') || 'all').toLowerCase()
 
   const handleBack = () => {
     // Go back to feed if on a detail page, otherwise to home
@@ -39,8 +53,15 @@ export default function TopNav({ showBack = false, showCategories = true, fixed 
   const isActive = (path: string) => pathname === path || pathname?.startsWith(path + '/')
 
   const handleCategoryClick = (categoryId: string) => {
-    // Navigate to feed with category filter or scroll to category
-    router.push(`/feed?category=${categoryId}`)
+    if (isLoadingCategories) return
+
+    if (onCategoryChange) {
+      onCategoryChange(categoryId)
+      return
+    }
+
+    const nextPath = categoryId === 'all' ? '/feed' : `/feed?category=${encodeURIComponent(categoryId)}`
+    router.replace(nextPath, { scroll: false })
   }
 
   return (
@@ -86,8 +107,9 @@ export default function TopNav({ showBack = false, showCategories = true, fixed 
                   <button
                     key={category.id}
                     onClick={() => handleCategoryClick(category.id)}
+                    disabled={isLoadingCategories}
                     className={`flex-shrink-0 inline-flex items-center gap-1.5 ${compact ? 'px-3 py-1' : 'px-3 py-1.5'} rounded-lg text-xs font-semibold transition-all transform hover:scale-105 whitespace-nowrap ${
-                      pathname?.includes(`category=${category.id}`)
+                      currentCategory === category.id.toLowerCase()
                         ? `bg-gradient-to-r ${category.color} text-white shadow-md`
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-sm'
                     }`}
