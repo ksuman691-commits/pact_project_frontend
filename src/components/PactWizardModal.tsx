@@ -74,7 +74,7 @@ function WizardContent({ onClose }: { onClose: () => void }) {
           <div>
             <h2 className="text-2xl font-black text-slate-900">Create Your Pact</h2>
             <p className="text-sm text-slate-600 font-medium mt-1">
-              <span className="font-bold text-emerald-600">{currentStep}</span>
+              <span className="font-bold text-blue-600">{currentStep}</span>
               <span className="text-slate-400"> of </span>
               <span className="font-bold text-slate-400">5</span>
             </p>
@@ -91,7 +91,7 @@ function WizardContent({ onClose }: { onClose: () => void }) {
         {/* Progress Bar */}
         <div className="h-2 bg-slate-100 flex-shrink-0">
           <div
-            className="h-full bg-gradient-to-r from-emerald-600 to-emerald-500 transition-all duration-300 rounded-r"
+            className="h-full bg-gradient-to-r from-blue-600 to-blue-500 transition-all duration-300 rounded-r"
             style={{ width: `${(currentStep / 5) * 100}%` }}
           />
         </div>

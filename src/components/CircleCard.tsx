@@ -131,8 +131,8 @@ export default function CircleCard({ circle, onJoin }: CircleCardProps) {
           {/* Footer Action */}
           <div className="px-6 py-4">
             {circle.isJoined ? (
-              <button className="w-full flex items-center justify-between px-4 py-2.5 bg-emerald-50 text-emerald-700 rounded-lg font-semibold text-sm hover:bg-emerald-100 transition">
-                <span>View Circle</span>
+              <button className="w-full flex items-center justify-between px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg font-medium text-sm hover:bg-emerald-100 transition">
+                <span>Joined</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             ) : (
@@ -141,7 +141,7 @@ export default function CircleCard({ circle, onJoin }: CircleCardProps) {
                   e.preventDefault();
                   handleJoinClick();
                 }}
-                className="w-full px-4 py-2.5 bg-emerald-600 text-white rounded-lg font-semibold text-sm hover:bg-emerald-700 transition"
+                className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium text-sm hover:bg-emerald-700 transition"
               >
                 Join Circle
               </button>

@@ -57,7 +57,7 @@ export default function WelcomeHeader({
           {/* Create Pact button */}
           <button
             onClick={onCreatePact}
-            className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-semibold text-sm flex items-center gap-2 transition-colors whitespace-nowrap shadow-sm hover:shadow-md"
+            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-semibold text-sm flex items-center gap-2 transition-colors whitespace-nowrap shadow-sm hover:shadow-md"
           >
             <Plus className="w-5 h-5" strokeWidth={2.5} />
             New Pact

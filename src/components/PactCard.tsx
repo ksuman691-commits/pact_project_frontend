@@ -193,7 +193,7 @@ export default function PactCard({
               <div className="h-6 rounded-full overflow-hidden flex shadow-sm">
                 {/* Believe segment - ensure minimum width if not 0 */}
                 <div
-                  className="bg-emerald-600 flex items-center justify-center text-white text-xs font-bold transition-all"
+                  className="bg-blue-600 flex items-center justify-center text-white text-xs font-bold transition-all"
                   style={{ 
                     width: `${believePercent}%`,
                     minWidth: believePercent > 0 ? '40px' : '0'
@@ -241,8 +241,8 @@ export default function PactCard({
               onClick={() => handleVote('believe')}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full font-bold text-base transition-all transform ${
                 currentVote === 'believe'
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/40'
-                  : 'bg-emerald-100 text-emerald-700 border-2 border-emerald-300 hover:bg-emerald-200'
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/40'
+                  : 'bg-blue-100 text-blue-700 border-2 border-blue-300 hover:bg-blue-200'
               }`}
             >
               <span className="text-lg">✓</span>
@@ -272,7 +272,7 @@ export default function PactCard({
                 <div
                   key={idx}
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white ${
-                    idx === 0 ? 'bg-emerald-600' : idx === 1 ? 'bg-red-600' : 'bg-slate-900'
+                    idx === 0 ? 'bg-blue-600' : idx === 1 ? 'bg-red-600' : 'bg-slate-900'
                   }`}
                 >
                   {letter}
