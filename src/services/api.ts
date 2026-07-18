@@ -460,17 +460,21 @@ export const feedService = {
   getPersonalized: (skip?: number, limit?: number, category?: string) =>
     api.get('/api/feed', { params: { skip, limit, category } }),
   getTrending: (skip?: number, limit?: number) =>
-    api.get('/api/pacts', { params: { skip, limit } }),
+    api.get('/api/feed', { params: { skip, limit, category: 'trending' } }),
   getDiscover: (skip?: number, limit?: number) =>
-    api.get('/api/pacts', { params: { skip, limit } }),
+    api.get('/api/feed', { params: { skip, limit } }),
   getFollowingFeed: (skip?: number, limit?: number) =>
-    api.get('/api/pacts', { params: { skip, limit } }),
+    api.get('/api/feed', { params: { skip, limit } }),
 };
 
 // Pact Advanced Services
 export const pactAdvancedService = {
   getPublicPacts: (skip?: number, limit?: number) =>
     api.get('/api/pacts', { params: { skip, limit } }),
+  getMyPacts: async (skip?: number, limit?: number) => {
+    const response = await api.get('/api/my-pacts', { params: { skip, limit } });
+    return { ...response, data: (response.data || []).map(mapPact) };
+  },
   getPactsByUser: async (userId: number, skip?: number, limit?: number) => {
     const response = await api.get(`/api/pacts/user/${userId}/created`, { params: { skip, limit } });
     return { ...response, data: (response.data || []).map(mapPact) };
