@@ -18,11 +18,13 @@ interface Proof {
 interface ProofsSectionProps {
   proofs: Proof[];
   title?: string;
+  variant?: 'grid' | 'immersive';
 }
 
 export default function ProofsSection({
   proofs,
   title = 'Daily Progress',
+  variant = 'grid',
 }: ProofsSectionProps) {
   const [carouselOpen, setCarouselOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -44,8 +46,52 @@ export default function ProofsSection({
           </h2>
         </div>
 
-        {/* Instagram-like Grid */}
-        {proofs.length > 0 && (
+        {variant === 'immersive' ? (
+          <div className="space-y-5">
+            {proofs.map((proof, index) => (
+              <button
+                key={proof.id}
+                onClick={() => handleProofClick(index)}
+                className="group w-full overflow-hidden rounded-[28px] border border-slate-200 bg-white text-left shadow-sm transition hover:shadow-md"
+              >
+                <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100">
+                  {proof.type === 'image' ? (
+                    <Image
+                      src={proof.url}
+                      alt={proof.description || 'Proof'}
+                      fill
+                      className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
+                      sizes="100vw"
+                    />
+                  ) : (
+                    <div className="relative h-full w-full bg-slate-950">
+                      <video src={proof.url} className="h-full w-full object-cover" muted playsInline />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+                        <Play className="h-10 w-10 fill-white text-white" />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-12 text-white">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/70">
+                          {proof.day ? `Day ${proof.day}` : 'Proof update'}
+                        </p>
+                        {proof.description && (
+                          <p className="mt-1 text-sm font-medium text-white">{proof.description}</p>
+                        )}
+                      </div>
+                      <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">
+                        {proof.type === 'video' ? 'video' : 'photo'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {proofs.map((proof, index) => (
               <button
@@ -101,7 +147,7 @@ export default function ProofsSection({
         )}
 
         {/* Timeline View (Alternative) */}
-        {proofs.length > 6 && (
+        {variant !== 'immersive' && proofs.length > 6 && (
           <div className="mt-6">
             <p className="text-sm font-medium text-slate-700 mb-3">Timeline</p>
             <div className="space-y-2">

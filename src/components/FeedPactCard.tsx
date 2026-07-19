@@ -7,6 +7,7 @@ import { ChevronRight, Flag, MessageCircle, Share2, FileImage, ArrowLeft, ArrowR
 import ProofUploadModal from './ProofUploadModal';
 import ShareModal from './ShareModal';
 import { useReportPact } from '@/hooks/usePactActions';
+import { useAuthStore } from '@/store/auth';
 
 type VoteDirection = 'support' | 'skip';
 type DragAxis = 'horizontal' | 'vertical' | null;
@@ -17,6 +18,12 @@ interface FeedPactCardProps {
   onVote?: (pactId: number, vote: VoteDirection) => Promise<void> | void;
   onDismiss?: (pactId: number) => void;
   onProofUpload?: (pactId: number, proof?: any) => void;
+  detailHref?: string;
+  dismissOnVote?: boolean;
+  enableGestures?: boolean;
+  showVoteActions?: boolean;
+  canUploadProof?: boolean;
+  canReport?: boolean;
 }
 
 const REPORT_OPTIONS = [
@@ -76,7 +83,20 @@ function getMedia(pact: any) {
   };
 }
 
-export default function FeedPactCard({ pact, userVote, onVote, onDismiss, onProofUpload }: FeedPactCardProps) {
+export default function FeedPactCard({
+  pact,
+  userVote,
+  onVote,
+  onDismiss,
+  onProofUpload,
+  detailHref,
+  dismissOnVote = true,
+  enableGestures,
+  showVoteActions,
+  canUploadProof,
+  canReport = true,
+}: FeedPactCardProps) {
+  const { user } = useAuthStore();
   const reportMutation = useReportPact(pact.id);
   const [proofUploadModal, setProofUploadModal] = useState(false);
   const [shareModal, setShareModal] = useState(false);
@@ -92,6 +112,8 @@ export default function FeedPactCard({ pact, userVote, onVote, onDismiss, onProo
   const startPoint = useRef({ x: 0, y: 0 });
   const lastTapAt = useRef(0);
   const committedRef = useRef(false);
+  const [displayVote, setDisplayVote] = useState<string | null>(null);
+  const [displaySupportCount, setDisplaySupportCount] = useState(0);
 
   useEffect(() => {
     setDragX(0);
@@ -104,18 +126,34 @@ export default function FeedPactCard({ pact, userVote, onVote, onDismiss, onProo
     committedRef.current = false;
   }, [pact.id]);
 
+  useEffect(() => {
+    const normalizedVote = userVote === 'believe' ? 'support' : userVote === 'doubt' ? 'skip' : userVote ?? null;
+    setDisplayVote(normalizedVote);
+  }, [userVote]);
+
+  useEffect(() => {
+    setDisplaySupportCount(Number(pact.support_count ?? pact.supportPool ?? 0));
+  }, [pact.supportPool, pact.support_count]);
+
   const creatorLabel = pact.creator || pact.creator_username || 'creator';
   const creatorUsername = pact.creator_username || null;
   const creatorProfileHref = creatorUsername ? `/profile/${encodeURIComponent(creatorUsername)}` : null;
   const creatorAvatarUrl = pact.creatorAvatarUrl || pact.creator_avatar_url || null;
   const circleLabel = pact.circle || pact.circle_name || pact.category || null;
-  const supportCount = Number(pact.support_count ?? pact.supportPool ?? 0);
+  const supportCount = displaySupportCount;
   const recentSupporters = Array.isArray(pact.recent_supporters) ? pact.recent_supporters : [];
   const proofCount = Number(pact.proof_count ?? pact.proofClips?.length ?? 0);
   const commentCount = Number(pact.comment_count ?? pact.comments?.length ?? 0);
   const timeRemaining = pact.timeRemaining || formatEndsIn(pact.end_date || pact.deadline);
   const media = useMemo(() => getMedia(pact), [pact]);
   const isExiting = exitDirection !== null;
+  const resolvedDetailHref = detailHref || `/pacts/${pact.id}`;
+  const gesturesEnabled = enableGestures ?? Boolean(onVote);
+  const voteActionsVisible = showVoteActions ?? Boolean(onVote);
+  const isParticipant = Array.isArray(pact.participants)
+    ? pact.participants.some((participant: any) => participant.id === user?.id || participant.user_id === user?.id)
+    : false;
+  const uploadAllowed = canUploadProof ?? Boolean(user && (pact.creator_id === user.id || isParticipant));
 
   const transformStyle = useMemo(() => {
     if (isExiting) {
@@ -142,15 +180,35 @@ export default function FeedPactCard({ pact, userVote, onVote, onDismiss, onProo
   };
 
   const completeVote = async (direction: VoteDirection) => {
-    if (isVoting || committedRef.current) return;
+    if (!onVote || isVoting || committedRef.current) return;
     committedRef.current = true;
     setIsVoting(true);
 
+    const previousVote = displayVote;
+    setDisplayVote(direction);
+    setDisplaySupportCount((currentCount) => {
+      if (direction === 'support') {
+        return previousVote === 'support' ? currentCount : currentCount + 1;
+      }
+      if (previousVote === 'support' && currentCount > 0) {
+        return currentCount - 1;
+      }
+      return currentCount;
+    });
+
     try {
-      await onVote?.(pact.id, direction);
-      setExitDirection(direction);
-      window.setTimeout(() => onDismiss?.(pact.id), 250);
+      await onVote(pact.id, direction);
+      if (dismissOnVote && onDismiss) {
+        setExitDirection(direction);
+        window.setTimeout(() => onDismiss(pact.id), 250);
+        return;
+      }
+
+      setIsVoting(false);
+      resetDrag();
     } catch {
+      setDisplayVote(previousVote);
+      setDisplaySupportCount(Number(pact.support_count ?? pact.supportPool ?? 0));
       committedRef.current = false;
       setIsVoting(false);
       resetDrag();
@@ -158,6 +216,7 @@ export default function FeedPactCard({ pact, userVote, onVote, onDismiss, onProo
   };
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!gesturesEnabled) return;
     if ((event.target as HTMLElement | null)?.closest('button,a')) return;
     if (isVoting || isExiting) return;
     activePointerId.current = event.pointerId;
@@ -169,6 +228,7 @@ export default function FeedPactCard({ pact, userVote, onVote, onDismiss, onProo
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!gesturesEnabled) return;
     if (activePointerId.current !== event.pointerId || isVoting || isExiting) return;
 
     const dx = event.clientX - startPoint.current.x;
@@ -200,6 +260,7 @@ export default function FeedPactCard({ pact, userVote, onVote, onDismiss, onProo
   };
 
   const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!gesturesEnabled) return;
     if (activePointerId.current !== event.pointerId) return;
     activePointerId.current = null;
 
@@ -215,7 +276,7 @@ export default function FeedPactCard({ pact, userVote, onVote, onDismiss, onProo
 
   const handleMediaTap = (event: React.MouseEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement | null)?.closest('button,a')) return;
-    if (isVoting || isExiting) return;
+    if (!gesturesEnabled || isVoting || isExiting) return;
 
     const now = Date.now();
     const tappedTwice = now - lastTapAt.current < 300;
@@ -351,7 +412,7 @@ export default function FeedPactCard({ pact, userVote, onVote, onDismiss, onProo
                 <span className="text-[10px] font-semibold">{formatCompactCount(proofCount)}</span>
               </button>
 
-              <Link href={`/pact-details/${pact.id}`} className="flex w-12 flex-col items-center gap-1 rounded-full border border-white/10 bg-black/25 px-2 py-3 text-white backdrop-blur-md transition hover:bg-black/40">
+              <Link href={resolvedDetailHref} className="flex w-12 flex-col items-center gap-1 rounded-full border border-white/10 bg-black/25 px-2 py-3 text-white backdrop-blur-md transition hover:bg-black/40">
                 <MessageCircle className="h-4 w-4" />
                 <span className="text-[10px] font-semibold">{formatCompactCount(commentCount)}</span>
               </Link>
@@ -365,17 +426,19 @@ export default function FeedPactCard({ pact, userVote, onVote, onDismiss, onProo
                 <Share2 className="h-4 w-4" />
               </button>
 
-              <button
-                type="button"
-                onClick={() => setReportSheetOpen(true)}
-                className="flex w-12 items-center justify-center rounded-full border border-red-400/70 bg-black/20 px-2 py-3 text-red-300 backdrop-blur-md transition hover:bg-red-500/10"
-                aria-label="report pact"
-              >
-                <Flag className="h-4 w-4" />
-              </button>
+              {canReport && (
+                <button
+                  type="button"
+                  onClick={() => setReportSheetOpen(true)}
+                  className="flex w-12 items-center justify-center rounded-full border border-red-400/70 bg-black/20 px-2 py-3 text-red-300 backdrop-blur-md transition hover:bg-red-500/10"
+                  aria-label="report pact"
+                >
+                  <Flag className="h-4 w-4" />
+                </button>
+              )}
             </div>
 
-            {dragAxis === 'horizontal' && showActionTag && !isExiting && (
+            {gesturesEnabled && dragAxis === 'horizontal' && showActionTag && !isExiting && (
               <div className="absolute inset-x-0 top-24 z-10 flex px-4">
                 <div className={`rounded-full border px-4 py-1 text-xs font-black uppercase tracking-[0.25em] ${dragX > 0 ? 'ml-auto border-emerald-400 text-emerald-300' : 'mr-auto border-rose-400 text-rose-300'}`}>
                   {dragX > 0 ? 'support' : 'skip'}
@@ -385,7 +448,7 @@ export default function FeedPactCard({ pact, userVote, onVote, onDismiss, onProo
 
             <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 via-black/65 to-transparent px-4 pb-4 pt-16">
               <div className="space-y-3 pr-16">
-                <Link href={`/pact-details/${pact.id}`} className="block">
+                <Link href={resolvedDetailHref} className="block">
                   <h2 className="max-w-[85%] text-3xl font-black leading-[1.02] tracking-tight text-white sm:text-4xl">
                     {pact.title}
                   </h2>
@@ -423,36 +486,40 @@ export default function FeedPactCard({ pact, userVote, onVote, onDismiss, onProo
                   </p>
                 </div>
 
-                <div className="flex gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => void completeVote('skip')}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/12"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    skip
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void completeVote('support')}
-                    className="inline-flex items-center gap-2 rounded-full border border-emerald-400/50 bg-emerald-400/12 px-4 py-2 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-400/18"
-                  >
-                    support
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                </div>
+                {voteActionsVisible && (
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => void completeVote('skip')}
+                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${displayVote === 'skip' ? 'border-rose-400/70 bg-rose-500/15 text-rose-200' : 'border-white/12 bg-white/8 text-white hover:bg-white/12'}`}
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      skip
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void completeVote('support')}
+                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${displayVote === 'support' ? 'border-emerald-400/70 bg-emerald-400/20 text-emerald-100' : 'border-emerald-400/50 bg-emerald-400/12 text-emerald-200 hover:bg-emerald-400/18'}`}
+                    >
+                      support
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <ProofUploadModal
-        isOpen={proofUploadModal}
-        onClose={() => setProofUploadModal(false)}
-        pactId={pact.id}
-        onUpload={(pactId, proof) => onProofUpload?.(pactId, proof)}
-      />
+      {uploadAllowed && (
+        <ProofUploadModal
+          isOpen={proofUploadModal}
+          onClose={() => setProofUploadModal(false)}
+          pactId={pact.id}
+          onUpload={(pactId, proof) => onProofUpload?.(pactId, proof)}
+        />
+      )}
 
       <ShareModal
         isOpen={shareModal}

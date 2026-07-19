@@ -8,7 +8,7 @@ interface PactCardProps {
   pact: Pact;
   confidence?: number;
   supporters?: number;
-  doubters?: number;
+  skipped?: number;
   proofToday?: boolean;
 }
 
@@ -16,7 +16,7 @@ export default function PactCard({
   pact,
   confidence = 75,
   supporters = 342,
-  doubters = 28,
+  skipped = 28,
   proofToday = false,
 }: PactCardProps) {
   const router = useRouter();
@@ -86,15 +86,15 @@ export default function PactCard({
           </div>
         </div>
 
-        {/* Support / Doubt */}
+        {/* Support / Skip */}
         <div className="flex gap-2">
           <div className="flex-1 bg-emerald-50 rounded-lg p-2 border border-emerald-100 text-center">
             <p className="text-xs text-emerald-700 font-medium">Supporters</p>
             <p className="text-sm font-bold text-emerald-900">{supporters}</p>
           </div>
           <div className="flex-1 bg-red-50 rounded-lg p-2 border border-red-100 text-center">
-            <p className="text-xs text-red-700 font-medium">Doubters</p>
-            <p className="text-sm font-bold text-red-900">{doubters}</p>
+            <p className="text-xs text-red-700 font-medium">Skipped</p>
+            <p className="text-sm font-bold text-red-900">{skipped}</p>
           </div>
         </div>
 

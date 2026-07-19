@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { ArrowLeft, Users, Globe, Lock, Target, Plus, Trophy } from 'lucide-react';
 import CircleLeaderboard from '@/components/CircleLeaderboard';
 import InviteMembersModal from '@/components/InviteMembersModal';
+import PactCard from '@/components/PactCard';
 
 export default function CircleDetailPage() {
   const router = useRouter();
@@ -356,53 +357,13 @@ export default function CircleDetailPage() {
                 </button>
               </div>
             ) : pacts.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 {pacts.map((pact) => (
-                  <div
-                    key={pact.id}
-                    onClick={() => router.push(`/pacts/${pact.id}`)}
-                    className="card border-2 border-purple-200 hover:border-purple-600 cursor-pointer transition-colors"
-                  >
-                    <h3 className="text-lg font-bold text-slate-900 mb-2">
-                      {pact.title}
-                    </h3>
-                    <p className="text-slate-600 text-sm line-clamp-2 mb-4">
-                      {pact.description}
-                    </p>
-                    <div className="space-y-2 text-sm mb-4">
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Status:</span>
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            pact.status === 'completed'
-                              ? 'bg-green-100 text-green-700'
-                              : pact.status === 'failed'
-                              ? 'bg-red-100 text-red-700'
-                              : pact.status === 'active'
-                              ? 'bg-blue-100 text-blue-700'
-                              : 'bg-slate-100 text-slate-700'
-                          }`}
-                        >
-                          {pact.status}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Stake:</span>
-                        <span className="font-bold text-purple-600">₹{pact.stake_amount}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-600">Deadline:</span>
-                        <span className="font-medium">
-                          {new Date((pact as any).deadline || (pact as any).end_date).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
+                  <div key={pact.id} className="space-y-3">
+                    <PactCard pact={pact} userVote={(pact as any).user_vote || (pact as any).userVote} />
                     <div className="flex flex-col gap-2">
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/pacts/${pact.id}`);
-                        }}
+                        onClick={() => router.push(`/pacts/${pact.id}`)}
                         className="w-full btn-secondary text-sm"
                         type="button"
                       >

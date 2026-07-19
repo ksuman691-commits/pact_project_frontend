@@ -185,7 +185,7 @@ export default function Profile() {
 
         {/* Tabs */}
         <ProfileTabs onTabChange={setActiveTab}>
-          {activeTab === 'pacts' && <PactsTab pacts={createdPacts} joinedPacts={joinedPacts} votedPacts={votedPacts} />}
+          {activeTab === 'pacts' && <PactsTab pacts={createdPacts} joinedPacts={joinedPacts} votedPacts={votedPacts} allowJoinedUploads={true} />}
           {activeTab === 'achievements' && <AchievementsBadges achievements={allAchievements} />}
           {activeTab === 'followers' && (
             <div className="space-y-2">

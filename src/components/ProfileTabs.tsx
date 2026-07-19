@@ -60,10 +60,12 @@ export function PactsTab({
   pacts,
   joinedPacts,
   votedPacts,
+  allowJoinedUploads = false,
 }: {
   pacts: any[];
   joinedPacts: any[];
   votedPacts: any[];
+  allowJoinedUploads?: boolean;
 }) {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState<'created' | 'joined' | 'voted'>('created');
@@ -137,6 +139,7 @@ export function PactsTab({
               key={pact.id}
               pact={pact}
               userVote={pact.userVote}
+              canUploadProof={activeSection === 'joined' ? allowJoinedUploads : undefined}
             />
           ))
         ) : (

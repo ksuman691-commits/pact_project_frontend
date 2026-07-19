@@ -130,11 +130,11 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, pact }) => {
                     <p className="text-2xl font-bold text-blue-600">{pact.daysTotal}d</p>
                   </div>
                   <div className="bg-white rounded-xl p-3 border border-gray-200">
-                    <p className="text-xs text-gray-600 font-medium mb-1">Believers</p>
+                    <p className="text-xs text-gray-600 font-medium mb-1">Supporting</p>
                     <p className="text-2xl font-bold text-emerald-600">{(pact.believers / 1000).toFixed(1)}k</p>
                   </div>
                   <div className="bg-white rounded-xl p-3 border border-gray-200">
-                    <p className="text-xs text-gray-600 font-medium mb-1">Doubters</p>
+                    <p className="text-xs text-gray-600 font-medium mb-1">Skipped</p>
                     <p className="text-2xl font-bold text-red-600">{(pact.doubters / 1000).toFixed(1)}k</p>
                   </div>
                 </div>

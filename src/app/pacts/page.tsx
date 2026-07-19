@@ -7,7 +7,9 @@ import TopNav from '@/components/TopNav';
 import { pactService } from '@/services/api';
 import { Pact } from '@/types';
 import toast from 'react-hot-toast';
-import { Plus, Star, TrendingUp } from 'lucide-react';
+import { Plus, TrendingUp } from 'lucide-react';
+import PactCard from '@/components/PactCard';
+import { useSkipPact, useSupportPact } from '@/hooks/usePactActions';
 
 export default function PactsPage() {
   const router = useRouter();
@@ -16,7 +18,8 @@ export default function PactsPage() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'value' | 'deadline' | 'newest'>('value');
-  const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const supportMutation = useSupportPact();
+  const skipMutation = useSkipPact();
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -62,14 +65,12 @@ export default function PactsPage() {
     }
   });
 
-  const toggleFavorite = (id: number) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(id)) {
-      newFavorites.delete(id);
-    } else {
-      newFavorites.add(id);
+  const handleVote = async (pactId: number, vote: string) => {
+    if (vote === 'support') {
+      await supportMutation.mutateAsync(pactId);
+      return;
     }
-    setFavorites(newFavorites);
+    await skipMutation.mutateAsync(pactId);
   };
 
   return (
@@ -159,70 +160,14 @@ export default function PactsPage() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-6">
               {sortedPacts.map((pact) => (
-                <div
+                <PactCard
                   key={pact.id}
-                  onClick={() => router.push(`/pacts/${pact.id}`)}
-                  className="card cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all relative"
-                >
-                  {/* Favorite Button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFavorite(pact.id);
-                    }}
-                    className="absolute top-4 right-4 z-10"
-                  >
-                    <Star
-                      className={`w-6 h-6 transition-colors ${
-                        favorites.has(pact.id)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-slate-300 hover:text-yellow-400'
-                      }`}
-                    />
-                  </button>
-
-                  <div className="mb-4 pr-10">
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">
-                      {pact.title}
-                    </h3>
-                    <p className="text-slate-600 text-sm line-clamp-2">
-                      {pact.description}
-                    </p>
-                  </div>
-
-                  <div className="space-y-2 mb-4 pb-4 border-b border-slate-200">
-                    <div className="flex justify-between">
-                      <span className="text-slate-600">Status:</span>
-                      <span
-                        className={`badge text-xs font-medium ${
-                          pact.status === 'completed'
-                            ? 'badge-success'
-                            : pact.status === 'failed'
-                            ? 'badge-danger'
-                            : 'badge-warning'
-                        }`}
-                      >
-                        {pact.status}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-600">Stake:</span>
-                      <span className="font-bold text-purple-600">₹{pact.stake_amount ?? 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-600">Deadline:</span>
-                      <span className="font-medium">
-                        {new Date(pact.deadline ?? pact.end_date ?? '').toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-
-                  <button className="w-full btn-secondary text-sm">
-                    View Details
-                  </button>
-                </div>
+                  pact={pact}
+                  userVote={(pact as any).user_vote || (pact as any).userVote}
+                  onVote={handleVote}
+                />
               ))}
             </div>
           )}

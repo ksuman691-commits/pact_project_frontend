@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { Home, Users, Plus, Trophy, User as UserIcon, Bell } from 'lucide-react';
 import { usePersonalizedFeed } from '@/hooks/useFeedQueries';
-import { useBelievePact, useDoubtPact } from '@/hooks/usePactMutations';
+import { useSkipPact, useSupportPact } from '@/hooks/usePactActions';
 import { useInView } from 'react-intersection-observer';
 import PactCard from './PactCard';
 import UserAvatarLink from './UserAvatarLink';
@@ -27,8 +27,8 @@ const CirclePact = () => {
   } = usePersonalizedFeed();
 
   // Mutations for voting
-  const believeMutation = useBelievePact();
-  const doubtMutation = useDoubtPact();
+  const supportMutation = useSupportPact();
+  const skipMutation = useSkipPact();
 
   // Trigger load more when near bottom
   useEffect(() => {
@@ -52,8 +52,8 @@ const CirclePact = () => {
       daysCurrent: 2,
       supportPool: 42000,
       confidence: 73,
-      believers: 3420,
-      doubters: 1250,
+      support_count: 3420,
+      skip_count: 1250,
       timeRemaining: '2d 14h',
       progressPercentage: 28,
       proofClips: [
@@ -76,8 +76,8 @@ const CirclePact = () => {
       daysCurrent: 11,
       supportPool: 28500,
       confidence: 82,
-      believers: 5643,
-      doubters: 892,
+      support_count: 5643,
+      skip_count: 892,
       timeRemaining: '49d 3h',
       progressPercentage: 18,
       proofClips: [
@@ -87,7 +87,7 @@ const CirclePact = () => {
       comments: [
         { user: 'fitness_mentor', text: 'Consistency wins', likes: 1203 },
       ],
-      userVote: 'believe',
+      userVote: 'support',
     },
     {
       id: 3,
@@ -99,8 +99,8 @@ const CirclePact = () => {
       daysCurrent: 34,
       supportPool: 15800,
       confidence: 65,
-      believers: 2345,
-      doubters: 1234,
+      support_count: 2345,
+      skip_count: 1234,
       timeRemaining: '66d 8h',
       progressPercentage: 34,
       proofClips: [
@@ -118,12 +118,12 @@ const CirclePact = () => {
 
   const handleVote = async (pactId: number, vote: string) => {
     try {
-      if (vote === 'believe') {
-        await believeMutation.mutateAsync(pactId);
+      if (vote === 'support') {
+        await supportMutation.mutateAsync(pactId);
       } else {
-        await doubtMutation.mutateAsync(pactId);
+        await skipMutation.mutateAsync(pactId);
       }
-      toast.success(`You voted to ${vote} this pact!`);
+      toast.success(`${vote} recorded`);
     } catch (error) {
       toast.error('Failed to submit vote');
     }
@@ -409,14 +409,14 @@ const CirclePact = () => {
             <h3 className="font-bold text-gray-900 mb-3">Your Pacts</h3>
             <div className="space-y-2">
               {[
-                { title: 'Lose 5kg in 60 days', status: '18% done', voted: 'BELIEVE' },
-                { title: 'Learn React', status: '45% done', voted: 'BELIEVE' },
+                { title: 'Lose 5kg in 60 days', status: '18% done', voted: 'SUPPORT' },
+                { title: 'Learn React', status: '45% done', voted: 'SUPPORT' },
               ].map((pact, i) => (
                 <div key={i} className="bg-white border border-gray-200 rounded-lg p-3">
                   <div className="flex items-center justify-between mb-2">
                     <p className="font-semibold text-sm text-gray-900">{pact.title}</p>
                     <span className={`text-xs font-bold px-2 py-1 rounded ${
-                      pact.voted === 'BELIEVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                      pact.voted === 'SUPPORT' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                     }`}>
                       {pact.voted}
                     </span>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, X, Play } from 'lucide-react';
 
@@ -28,6 +28,10 @@ export default function ProofCarousel({
   initialIndex = 0,
 }: ProofCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+
+  useEffect(() => {
+    setCurrentIndex(initialIndex);
+  }, [initialIndex, isOpen]);
 
   if (!isOpen || proofs.length === 0) return null;
 
