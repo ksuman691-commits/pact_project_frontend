@@ -88,8 +88,22 @@ const mapPact = (raw: any) => ({
   daysTotal: Number(raw?.duration_days ?? 0) || undefined,
   daysCurrent: calculateCurrentDay(raw?.start_date, Number(raw?.duration_days ?? 0) || undefined),
   timeRemaining: formatTimeRemaining(raw?.end_date),
+  
+  // Legacy fields (for backward compatibility)
   believers: raw?.believers ?? 0,
   doubters: raw?.doubters ?? 0,
+  
+  // New reporting fields
+  support_count: raw?.support_count ?? raw?.believers ?? 0,
+  recent_supporters: raw?.recent_supporters ?? [],
+  is_reported_by_me: raw?.is_reported_by_me ?? false,
+  report_count: raw?.report_count ?? 0,
+  
+  // Proof fields from feed
+  proof_url: raw?.proof_url ?? null,
+  proof_type: raw?.proof_type ?? null,
+  latest_proof_caption: raw?.latest_proof_caption ?? null,
+  latest_proof_upload_date: raw?.latest_proof_upload_date ?? null,
 });
 
 // Add Bearer token to all requests and keep the token in sync with localStorage
@@ -320,8 +334,28 @@ export const pactService = {
   listProofs: (id: number, limit = 20) =>
     api.get(`/api/pacts/${id}/proofs`, { params: { limit } }),
   vote: (id: number, vote: 'believe' | 'doubt') => api.post(`/api/pacts/${id}/vote`, { vote }),
+  voteSupport: (id: number) => api.post(`/api/pacts/${id}/vote-support`),
+  voteSkip: (id: number) => api.post(`/api/pacts/${id}/vote-skip`),
   getVotes: (id: number) => api.get(`/api/pacts/${id}/votes`),
   personalized: (skip = 0, limit = 20) => api.get('/api/pacts/feed/personalized', { params: { skip, limit } }),
+  
+  // Reporting endpoints
+  report: async (id: number, reason: 'fake_or_ai' | 'spam' | 'offensive') => {
+    const response = await api.post(`/api/pacts/${id}/report`, { reason });
+    return response;
+  },
+  getMyReports: async (skip = 0, limit = 20) => {
+    const response = await api.get('/api/pacts/my-reports', { params: { skip, limit } });
+    return { ...response, data: (response.data?.data || []).map(mapPact) };
+  },
+  getReportCount: async (id: number) => {
+    const response = await api.get(`/api/pacts/${id}/report-count`);
+    return response;
+  },
+  getReportLogs: async (id: number) => {
+    const response = await api.get(`/api/pacts/${id}/report-logs`);
+    return response;
+  },
 };
 
 // Pact Join Requests (NEW)
