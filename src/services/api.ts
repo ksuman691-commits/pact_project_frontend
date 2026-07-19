@@ -25,18 +25,21 @@ const refreshClient = axios.create({
   },
 });
 
-const mapUser = (raw: any) => ({
-  id: raw?.id ?? raw?.user_id,
-  user_uuid: raw?.user_uuid,
-  username: raw?.username,
-  email: raw?.email,
-  full_name: raw?.full_name,
-  reputation_score: Number(raw?.reputation_score ?? 0),
-  is_active: raw?.is_active ?? true,
-  created_at: raw?.created_at ?? new Date().toISOString(),
-  avatar_url: raw?.avatar_url ?? null,
-  bio: raw?.bio ?? null,
-});
+const mapUser = (raw: any) => {
+  if (!raw) return null;
+  return {
+    id: raw?.id ?? raw?.user_id,
+    user_uuid: raw?.user_uuid,
+    username: raw?.username,
+    email: raw?.email,
+    full_name: raw?.full_name,
+    reputation_score: Number(raw?.reputation_score ?? 0),
+    is_active: raw?.is_active ?? true,
+    created_at: raw?.created_at ?? new Date().toISOString(),
+    avatar_url: raw?.avatar_url ?? null,
+    bio: raw?.bio ?? null,
+  };
+};
 
 const formatTimeRemaining = (endDateRaw: string | undefined) => {
   if (!endDateRaw) return null;
@@ -67,44 +70,50 @@ const calculateCurrentDay = (startDateRaw: string | undefined, durationDaysRaw: 
   return Math.min(Math.max(elapsedDays, 1), Math.max(durationDaysRaw, 1));
 };
 
-const mapCircle = (raw: any) => ({
-  ...raw,
-  is_public: raw?.visibility === 'public',
-  memberCount: raw?.member_count ?? 0,
-});
+const mapCircle = (raw: any) => {
+  if (!raw) return null;
+  return {
+    ...raw,
+    is_public: raw?.visibility === 'public',
+    memberCount: raw?.member_count ?? 0,
+  };
+};
 
-const mapPact = (raw: any) => ({
-  ...raw,
-  pact_uuid: raw?.pact_uuid ?? String(raw?.id ?? ''),
-  is_public: raw?.visibility === 'public',
-  verification_type: raw?.verification_method,
-  deadline: raw?.end_date,
-  stake_amount: Number(raw?.stake_amount ?? 0),
-  creator: raw?.creator_username ?? raw?.creator?.username ?? 'unknown',
-  avatar: raw?.creator_username?.charAt(0)?.toUpperCase?.() ?? raw?.creator?.username?.charAt(0)?.toUpperCase?.() ?? '🔥',
-  creatorAvatarUrl: raw?.creator_avatar_url ?? raw?.creator?.avatar_url ?? null,
-  circle: raw?.circle_name ?? raw?.circle?.name ?? null,
-  circleEmoji: raw?.circle_icon_emoji ?? null,
-  daysTotal: Number(raw?.duration_days ?? 0) || undefined,
-  daysCurrent: calculateCurrentDay(raw?.start_date, Number(raw?.duration_days ?? 0) || undefined),
-  timeRemaining: formatTimeRemaining(raw?.end_date),
-  
-  // Legacy fields (for backward compatibility)
-  believers: raw?.believers ?? 0,
-  doubters: raw?.doubters ?? 0,
-  
-  // New reporting fields
-  support_count: raw?.support_count ?? raw?.believers ?? 0,
-  recent_supporters: raw?.recent_supporters ?? [],
-  is_reported_by_me: raw?.is_reported_by_me ?? false,
-  report_count: raw?.report_count ?? 0,
-  
-  // Proof fields from feed
-  proof_url: raw?.proof_url ?? null,
-  proof_type: raw?.proof_type ?? null,
-  latest_proof_caption: raw?.latest_proof_caption ?? null,
-  latest_proof_upload_date: raw?.latest_proof_upload_date ?? null,
-});
+const mapPact = (raw: any) => {
+  if (!raw) return null;
+  return {
+    ...raw,
+    pact_uuid: raw?.pact_uuid ?? String(raw?.id ?? ''),
+    is_public: raw?.visibility === 'public',
+    verification_type: raw?.verification_method,
+    deadline: raw?.end_date,
+    stake_amount: Number(raw?.stake_amount ?? 0),
+    creator: raw?.creator_username ?? raw?.creator?.username ?? 'unknown',
+    avatar: raw?.creator_username?.charAt(0)?.toUpperCase?.() ?? raw?.creator?.username?.charAt(0)?.toUpperCase?.() ?? '🔥',
+    creatorAvatarUrl: raw?.creator_avatar_url ?? raw?.creator?.avatar_url ?? null,
+    circle: raw?.circle_name ?? raw?.circle?.name ?? null,
+    circleEmoji: raw?.circle_icon_emoji ?? null,
+    daysTotal: Number(raw?.duration_days ?? 0) || undefined,
+    daysCurrent: calculateCurrentDay(raw?.start_date, Number(raw?.duration_days ?? 0) || undefined),
+    timeRemaining: formatTimeRemaining(raw?.end_date),
+    
+    // Legacy fields (for backward compatibility)
+    believers: raw?.believers ?? 0,
+    doubters: raw?.doubters ?? 0,
+    
+    // New reporting fields
+    support_count: raw?.support_count ?? raw?.believers ?? 0,
+    recent_supporters: raw?.recent_supporters ?? [],
+    is_reported_by_me: raw?.is_reported_by_me ?? false,
+    report_count: raw?.report_count ?? 0,
+    
+    // Proof fields from feed
+    proof_url: raw?.proof_url ?? null,
+    proof_type: raw?.proof_type ?? null,
+    latest_proof_caption: raw?.latest_proof_caption ?? null,
+    latest_proof_upload_date: raw?.latest_proof_upload_date ?? null,
+  };
+};
 
 // Add Bearer token to all requests and keep the token in sync with localStorage
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
