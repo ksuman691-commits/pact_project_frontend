@@ -94,7 +94,6 @@ export const activity: DashActivity[] = [
     action: 'completed',
     goal: 'Morning 5km run',
     time: '12m ago',
-    photo: '/achievements/morning-run.png',
     cheers: 14,
   },
   {
@@ -104,7 +103,6 @@ export const activity: DashActivity[] = [
     action: 'crushed a workout for',
     goal: 'Gym 4x a week',
     time: '1h ago',
-    photo: '/achievements/gym-workout.png',
     cheers: 9,
   },
   {
@@ -114,7 +112,6 @@ export const activity: DashActivity[] = [
     action: 'hit her daily',
     goal: 'Read 20 pages',
     time: '3h ago',
-    photo: '/achievements/reading.png',
     cheers: 22,
   },
   {
@@ -124,7 +121,6 @@ export const activity: DashActivity[] = [
     action: 'logged a clean',
     goal: 'No sugar meal prep',
     time: '6h ago',
-    photo: '/achievements/meal-prep.png',
     cheers: 7,
   },
 ]
