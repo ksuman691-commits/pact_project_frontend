@@ -216,14 +216,18 @@ export default function PactFeed({
             setPacts((prev) =>
               prev.map((p) =>
                 p.id === pactId
-                  ? {
-                      ...p,
-                      proof_url: uploadedProof.proof_url || uploadedProof.file_url || p.proof_url,
-                      proof_type: uploadedProof.proof_type || p.proof_type,
-                      latest_proof_caption: uploadedProof.caption || p.latest_proof_caption,
-                      latest_proof_upload_date: uploadedProof.uploaded_at || uploadedProof.created_at || p.latest_proof_upload_date,
-                      proof_count: Number(p.proof_count ?? 0) + 1,
-                    }
+                  ? (() => {
+                      const currentPact = p as any
+                      return {
+                        ...currentPact,
+                        proof_url: uploadedProof.proof_url || uploadedProof.file_url || currentPact.proof_url,
+                        proof_type: uploadedProof.proof_type || currentPact.proof_type,
+                        latest_proof_caption: uploadedProof.caption || currentPact.latest_proof_caption,
+                        latest_proof_upload_date:
+                          uploadedProof.uploaded_at || uploadedProof.created_at || currentPact.latest_proof_upload_date,
+                        proof_count: Number(currentPact.proof_count ?? 0) + 1,
+                      }
+                    })()
                   : p
               )
             )
