@@ -72,13 +72,8 @@ export default function CircleDetailPage() {
 
   const handleJoinCircle = async () => {
     try {
-      if (circle?.visibility === 'public') {
-        await circleService.join(circleId);
-        toast.success('Joined circle!');
-      } else {
-        await circleJoinRequestService.sendRequest(circleId);
-        toast.success('Join request sent!');
-      }
+      await circleService.join(circleId);
+      toast.success('Joined circle!');
 
       // Refresh circle data to get updated is_member status
       const circleRes = await circleService.getById(circleId);
@@ -107,13 +102,13 @@ export default function CircleDetailPage() {
   const handleRequestJoinPact = async (pactId: number) => {
     try {
       await joinRequestService.sendRequest(pactId);
-      toast.success('Join request sent!');
+      toast.success('Pact join request sent!');
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to request to join circle pact');
     }
   };
 
-  const canViewPacts = circle?.is_public || isMember;
+  const canViewPacts = isMember;
   const isOwner =
     (typeof user.id === 'number' && circle?.owner_id === user.id) ||
     (typeof user.username === 'string' && circle?.owner_username === user.username);
@@ -184,22 +179,8 @@ export default function CircleDetailPage() {
                 <h1 className="text-4xl font-bold text-slate-900 mb-2">{circle.name}</h1>
                 <p className="text-slate-600 text-lg">{circle.description}</p>
               </div>
-              <span
-                className={`px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 ${
-                  circle.visibility === 'public'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-slate-100 text-slate-700'
-                }`}
-              >
-                {circle.visibility === 'public' ? (
-                  <>
-                    <Globe className="w-4 h-4" /> Public
-                  </>
-                ) : (
-                  <>
-                    <Lock className="w-4 h-4" /> Private
-                  </>
-                )}
+              <span className="px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 bg-green-100 text-green-700">
+                <Globe className="w-4 h-4" /> Circle
               </span>
             </div>
 
@@ -254,7 +235,7 @@ export default function CircleDetailPage() {
                   onClick={handleJoinCircle}
                   className="btn-primary"
                 >
-                  {circle.visibility === 'public' ? 'Join Circle' : 'Request to Join'}
+                  Join Circle
                 </button>
               )}
             </div>
@@ -353,7 +334,7 @@ export default function CircleDetailPage() {
                 <Target className="w-12 h-12 text-slate-300 mx-auto mb-2" />
                 <p className="text-slate-600 mb-4">Join this circle to view and request its pacts.</p>
                 <button onClick={handleJoinCircle} className="btn-primary">
-                  {circle.is_public ? 'Join Circle' : 'Request to Join'}
+                  Join Circle
                 </button>
               </div>
             ) : pacts.length > 0 ? (
@@ -377,11 +358,9 @@ export default function CircleDetailPage() {
                           }}
                           className="w-full btn-primary text-sm"
                           type="button"
-                          disabled={!isMember && circle.visibility !== 'public'}
+                          disabled={!isMember}
                         >
-                          {!isMember && circle.visibility !== 'public'
-                            ? 'Join Circle to request'
-                            : 'Request to Join'}
+                          {!isMember ? 'Join Circle to join pact' : 'Join Pact'}
                         </button>
                       )}
                     </div>

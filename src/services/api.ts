@@ -71,6 +71,7 @@ const mapCircle = (raw: any) => ({
   ...raw,
   is_public: raw?.visibility === 'public',
   memberCount: raw?.member_count ?? 0,
+  visibility: 'public',
 });
 
 const mapSupporter = (raw: any) => ({
@@ -119,6 +120,8 @@ const mapPact = (raw: any) => ({
   recent_supporters: Array.isArray(raw?.recent_supporters) ? raw.recent_supporters.map(mapSupporter) : [],
   report_count: Number(raw?.report_count ?? 0),
   is_reported_by_me: Boolean(raw?.is_reported_by_me),
+  is_joined_by_me: Boolean(raw?.is_joined_by_me),
+  can_join: Boolean(raw?.can_join),
   proof_url: raw?.proof_url ?? null,
   proof_type: raw?.proof_type ?? null,
   latest_proof_caption: raw?.latest_proof_caption ?? null,
@@ -361,6 +364,7 @@ export const pactService = {
   },
   support: (id: number) => api.post(`/api/pacts/${id}/vote-support`),
   skip: (id: number) => api.post(`/api/pacts/${id}/vote-skip`),
+  join: (id: number) => api.post(`/api/pacts/${id}/join`),
   report: (id: number, reason: 'fake_or_ai' | 'spam' | 'offensive') =>
     api.post(`/api/pacts/${id}/report`, { reason }),
   getReportCount: (id: number) => api.get(`/api/pacts/${id}/report-count`),

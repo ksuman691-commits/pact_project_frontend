@@ -25,22 +25,15 @@ export function useJoinCircle() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: { circleId: number; isPublic: boolean; message?: string }) => {
-      const { circleId, isPublic, message } = params;
-      // For public circles, use direct join endpoint
-      // For private circles, send a join request
-      if (isPublic) {
-        return circleService.join(circleId);
-      } else {
-        return circleJoinRequestService.sendRequest(circleId, message);
-      }
+    mutationFn: async (params: { circleId: number }) => {
+      const { circleId } = params;
+      return circleService.join(circleId);
     },
     onSuccess: (response, params) => {
-      const { circleId, isPublic } = params;
+      const { circleId } = params;
       queryClient.invalidateQueries({ queryKey: queryKeys.circles.detail(circleId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.circles.all });
-      const successMessage = isPublic ? 'Joined circle!' : 'Join request sent!';
-      toast.success(successMessage);
+      toast.success('Joined circle!');
       return response.data;
     },
     onError: (error: any) => {

@@ -2,8 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Users, Lock, Globe, Star, ChevronRight } from 'lucide-react';
-import JoinCircleModal from './JoinCircleModal';
+import { Users, Star, ChevronRight } from 'lucide-react';
 
 interface CircleCardProps {
   circle: {
@@ -14,7 +13,6 @@ interface CircleCardProps {
     ownerUsername?: string | null;
     ownerAvatarUrl?: string | null;
     memberCount: number;
-    isPrivate: boolean;
     isJoined: boolean;
     isTrending?: boolean;
     memberList?: string[];
@@ -24,19 +22,8 @@ interface CircleCardProps {
 }
 
 export default function CircleCard({ circle, onJoin }: CircleCardProps) {
-  const [joinModal, setJoinModal] = useState(false);
-
-  const handleJoinClick = () => {
-    if (circle.isPrivate) {
-      setJoinModal(true);
-    } else {
-      onJoin?.(circle.id);
-    }
-  };
-
   return (
-    <>
-      <Link href={`/circles/${circle.id}`}>
+    <Link href={`/circles/${circle.id}`}>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all cursor-pointer h-full">
           {/* Circle Header */}
           <div className="p-6 border-b border-gray-100">
@@ -88,19 +75,9 @@ export default function CircleCard({ circle, onJoin }: CircleCardProps) {
               </div>
             </div>
             <div className="flex flex-col min-w-0">
-              <p className="text-xs text-gray-600 font-medium mb-2 uppercase tracking-wide">Type</p>
+              <p className="text-xs text-gray-600 font-medium mb-2 uppercase tracking-wide">Circle</p>
               <div className="flex items-center gap-2">
-                {circle.isPrivate ? (
-                  <>
-                    <Lock className="w-4 h-4 text-red-600 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-900 whitespace-nowrap">Private</span>
-                  </>
-                ) : (
-                  <>
-                    <Globe className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-900 whitespace-nowrap">Public</span>
-                  </>
-                )}
+                <span className="text-sm font-medium text-gray-900 whitespace-nowrap">Joinable</span>
               </div>
             </div>
           </div>
@@ -139,7 +116,7 @@ export default function CircleCard({ circle, onJoin }: CircleCardProps) {
               <button
                 onClick={(e) => {
                   e.preventDefault();
-                  handleJoinClick();
+                  onJoin?.(circle.id);
                 }}
                 className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium text-sm hover:bg-emerald-700 transition"
               >
@@ -149,14 +126,5 @@ export default function CircleCard({ circle, onJoin }: CircleCardProps) {
           </div>
         </div>
       </Link>
-
-      {/* Join Modal */}
-      <JoinCircleModal
-        isOpen={joinModal}
-        onClose={() => setJoinModal(false)}
-        circle={circle}
-        onJoin={onJoin}
-      />
-    </>
   );
 }

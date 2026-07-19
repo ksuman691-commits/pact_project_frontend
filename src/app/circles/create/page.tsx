@@ -18,7 +18,6 @@ export default function CreateCirclePage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    visibility: 'public' as 'public' | 'private',
     icon_emoji: '🚀',
   });
 
@@ -48,7 +47,7 @@ export default function CreateCirclePage() {
       const createdCircleResponse = await createCircleMutation.mutateAsync({
         name: formData.name.trim(),
         description: formData.description.trim(),
-        visibility: formData.visibility,
+        visibility: 'public',
         icon_emoji: formData.icon_emoji,
       });
       router.push(`/circles/${createdCircleResponse.data.id}`);
@@ -135,39 +134,8 @@ export default function CreateCirclePage() {
                 </div>
               </div>
 
-              {/* Privacy */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-3">
-                  Privacy
-                </label>
-                <div className="space-y-3">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="privacy"
-                      checked={formData.visibility === 'public'}
-                      onChange={() => setFormData({ ...formData, visibility: 'public' })}
-                      className="w-4 h-4"
-                    />
-                    <span>
-                      <span className="font-medium text-slate-900">Public</span>
-                      <p className="text-sm text-slate-600">Anyone can find and join this circle</p>
-                    </span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="privacy"
-                      checked={formData.visibility === 'private'}
-                      onChange={() => setFormData({ ...formData, visibility: 'private' })}
-                      className="w-4 h-4"
-                    />
-                    <span>
-                      <span className="font-medium text-slate-900">Private</span>
-                      <p className="text-sm text-slate-600">Only invited members can join</p>
-                    </span>
-                  </label>
-                </div>
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                Every circle is joinable. Circle pacts stay visible only to members of that circle.
               </div>
 
               {/* Submit Button */}

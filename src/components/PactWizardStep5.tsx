@@ -15,7 +15,7 @@ export default function PactWizardStep5() {
   const visibilityLabel = {
     public: 'Public - Anyone can join',
     private: 'Private - Accepted followers only',
-    'circle-specific': 'Circle Only',
+    'circle-specific': 'Circle Only - Visible to circle members',
   }[data.visibility];
 
   const verificationLabel = {

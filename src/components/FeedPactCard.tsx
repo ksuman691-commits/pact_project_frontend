@@ -8,6 +8,8 @@ import ProofUploadModal from './ProofUploadModal';
 import ShareModal from './ShareModal';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useAuthStore } from '@/store/auth';
+import { pactService } from '@/services/api';
+import toast from 'react-hot-toast';
 
 type VoteDirection = 'support' | 'skip';
 type DragAxis = 'horizontal' | 'vertical' | null;
@@ -114,6 +116,7 @@ export default function FeedPactCard({
   const committedRef = useRef(false);
   const [displayVote, setDisplayVote] = useState<string | null>(null);
   const [displaySupportCount, setDisplaySupportCount] = useState(0);
+  const [isJoining, setIsJoining] = useState(false);
 
   useEffect(() => {
     setDragX(0);
@@ -154,6 +157,7 @@ export default function FeedPactCard({
     ? pact.participants.some((participant: any) => participant.id === user?.id || participant.user_id === user?.id)
     : false;
   const uploadAllowed = canUploadProof ?? Boolean(user && (pact.creator_id === user.id || isParticipant));
+  const joinAllowed = Boolean(pact.can_join);
 
   const transformStyle = useMemo(() => {
     if (isExiting) {
@@ -293,6 +297,20 @@ export default function FeedPactCard({
       setReportSheetOpen(false);
     } catch {
       setReportSheetOpen(false);
+    }
+  };
+
+  const handleJoinPact = async () => {
+    if (isJoining || !joinAllowed) return;
+    setIsJoining(true);
+    try {
+      await pactService.join(pact.id);
+      toast.success('Joined pact');
+      window.location.href = resolvedDetailHref;
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || 'Failed to join pact');
+    } finally {
+      setIsJoining(false);
     }
   };
 
@@ -485,6 +503,17 @@ export default function FeedPactCard({
                     recent supporters
                   </p>
                 </div>
+
+                {joinAllowed && (
+                  <button
+                    type="button"
+                    onClick={handleJoinPact}
+                    disabled={isJoining}
+                    className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-50 disabled:opacity-60"
+                  >
+                    {isJoining ? 'joining...' : 'join pact'}
+                  </button>
+                )}
 
                 {voteActionsVisible && (
                   <div className="flex gap-2 pt-2">

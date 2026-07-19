@@ -12,7 +12,7 @@ import VerificationResults from '@/components/VerificationResults';
 import { usePact, usePactProofs } from '@/hooks/usePacts';
 import { useSkipPact, useSupportPact } from '@/hooks/usePactActions';
 import { useAuthStore } from '@/store/auth';
-import { joinRequestService } from '@/services/api';
+import { joinRequestService, pactService } from '@/services/api';
 
 export default function PactDetailPage() {
   const params = useParams();
@@ -58,10 +58,11 @@ export default function PactDetailPage() {
 
   const handleJoinRequest = async () => {
     try {
-      await joinRequestService.sendRequest(pactId);
-      toast.success('Join request sent');
+      await pactService.join(pactId);
+      toast.success('Joined pact');
+      router.refresh();
     } catch (error: any) {
-      toast.error(error?.response?.data?.detail || 'Failed to request to join pact');
+      toast.error(error?.response?.data?.detail || 'Failed to join pact');
     }
   };
 
@@ -117,12 +118,12 @@ export default function PactDetailPage() {
           {!isParticipant && pact.status === 'active' && (
             <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 text-white backdrop-blur-sm">
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-white/55">Join this pact</p>
-              <p className="mt-2 text-sm text-white/75">Become a pact member to upload proof updates from the camera or your gallery.</p>
+              <p className="mt-2 text-sm text-white/75">Join this pact to upload proof updates from the camera or your gallery.</p>
               <button
                 onClick={handleJoinRequest}
                 className="mt-4 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
               >
-                Request to join
+                Join pact
               </button>
             </div>
           )}

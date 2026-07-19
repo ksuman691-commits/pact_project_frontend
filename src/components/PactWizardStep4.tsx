@@ -37,18 +37,11 @@ export default function PactWizardStep4() {
   const { user } = useAuthStore();
   const { data: circles } = useCircles();
 
-  const ownedCircles = (circles || []).filter((circle: any) => {
-    const ownerIdMatches = typeof user?.id === 'number' && circle.owner_id === user.id;
-    const ownerUsernameMatches =
-      typeof user?.username === 'string' &&
-      typeof circle.owner_username === 'string' &&
-      circle.owner_username.trim().toLowerCase() === user.username.trim().toLowerCase();
-    return ownerIdMatches || ownerUsernameMatches;
-  });
-  const hasOwnedCircles = ownedCircles.length > 0;
+  const memberCircles = circles || [];
+  const hasMemberCircles = memberCircles.length > 0;
 
   const handleVisibilitySelect = (visibility: 'public' | 'private' | 'circle-specific') => {
-    if (visibility === 'circle-specific' && !hasOwnedCircles) {
+    if (visibility === 'circle-specific' && !hasMemberCircles) {
       return;
     }
 
@@ -66,7 +59,7 @@ export default function PactWizardStep4() {
           {visibilityOptions.map((option) => {
             const Icon = option.icon;
             const isCircleOnly = option.id === 'circle-specific';
-            const isDisabled = isCircleOnly && !hasOwnedCircles;
+            const isDisabled = isCircleOnly && !hasMemberCircles;
             return (
               <button
                 key={option.id}
@@ -91,9 +84,9 @@ export default function PactWizardStep4() {
             );
           })}
         </div>
-        {!hasOwnedCircles && (
+        {!hasMemberCircles && (
           <p className="mt-2 text-xs font-medium text-amber-700">
-            Create a circle first to make circle-only pacts.
+            Join or create a circle first to make circle-only pacts.
           </p>
         )}
       </div>
@@ -101,13 +94,13 @@ export default function PactWizardStep4() {
       {data.visibility === 'circle-specific' && (
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
-            Select Owned Circle <span className="text-red-500">*</span>
+            Select Circle <span className="text-red-500">*</span>
           </label>
 
-          {!hasOwnedCircles ? (
+          {!hasMemberCircles ? (
             <div className="p-4 border border-amber-200 bg-amber-50 rounded-lg space-y-3">
               <p className="text-sm text-amber-800">
-                Create a circle first to make circle-only pacts.
+                Join or create a circle first to make circle-only pacts.
               </p>
               <button
                 onClick={() => router.push('/circles/create')}
@@ -118,7 +111,7 @@ export default function PactWizardStep4() {
             </div>
           ) : (
             <div className="space-y-2">
-              {ownedCircles.map((circle: any) => (
+              {memberCircles.map((circle: any) => (
                 <button
                   key={circle.id}
                   onClick={() => updateData({ selectedCircleId: circle.id })}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { joinRequestService } from '@/services/api';
+import { joinRequestService, pactService } from '@/services/api';
 import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 import { MessageSquare, Send, LogOut } from 'lucide-react';
@@ -9,7 +9,7 @@ import { MessageSquare, Send, LogOut } from 'lucide-react';
 interface PactJoinRequestProps {
   pactId: number;
   creatorId: number;
-  isPublic: boolean;
+  canJoinDirectly?: boolean;
   isUserParticipant?: boolean;
   onRequestSuccess?: () => void;
   onLeaveSuccess?: () => void;
@@ -18,7 +18,7 @@ interface PactJoinRequestProps {
 export default function PactJoinRequest({
   pactId,
   creatorId,
-  isPublic,
+  canJoinDirectly = false,
   isUserParticipant = false,
   onRequestSuccess,
   onLeaveSuccess,
@@ -45,6 +45,19 @@ export default function PactJoinRequest({
       onRequestSuccess?.();
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Failed to send request');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDirectJoin = async () => {
+    setLoading(true);
+    try {
+      await pactService.join(pactId);
+      toast.success('Joined pact successfully!');
+      onRequestSuccess?.();
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || 'Failed to join pact');
     } finally {
       setLoading(false);
     }
@@ -90,11 +103,11 @@ export default function PactJoinRequest({
     <div className="space-y-3">
       {!showRequestForm ? (
         <button
-          onClick={() => setShowRequestForm(true)}
+          onClick={() => (canJoinDirectly ? handleDirectJoin() : setShowRequestForm(true))}
           className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition flex items-center justify-center gap-2"
         >
           <MessageSquare size={18} />
-          Request to Join
+          Join Pact
         </button>
       ) : (
         <div className="space-y-3 bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -125,9 +138,7 @@ export default function PactJoinRequest({
             </button>
           </div>
           <p className="text-xs text-slate-600">
-            {isPublic
-              ? 'Your request will be reviewed by the pact creator'
-              : 'As a circle member, your request will be reviewed by the pact creator'}
+            Your request will be reviewed by the pact creator
           </p>
         </div>
       )}

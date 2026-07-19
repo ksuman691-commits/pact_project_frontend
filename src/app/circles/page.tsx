@@ -35,7 +35,6 @@ export default function CirclesPage() {
     ownerUsername: circle.owner_username || null,
     ownerAvatarUrl: circle.owner_avatar_url || null,
     memberCount: circle.member_count ?? circle.memberCount ?? 0,
-    isPrivate: circle.visibility === 'private' || circle.isPrivate === true,
     isJoined: circle.isJoined || circle.is_member || circle.is_joined || false,
     isTrending: false,
     memberList: circle.memberList || [],
@@ -87,12 +86,9 @@ export default function CirclesPage() {
     isLoading = myCircles.isLoading || publicCircles.isLoading;
   }
 
-  const handleJoin = async (circleId: number, isPublicCircle: boolean = true) => {
+  const handleJoin = async (circleId: number) => {
     try {
-      await joinMutation.mutateAsync({
-        circleId,
-        isPublic: isPublicCircle,
-      });
+      await joinMutation.mutateAsync({ circleId });
     } catch (error) {
       // Error already handled in mutation
     }
@@ -147,7 +143,7 @@ export default function CirclesPage() {
             {[
               { key: 'all', label: 'All Circles', icon: '🌐' },
               { key: 'my', label: 'My Circles', icon: '👤' },
-              { key: 'public', label: 'Public', icon: '🔓', action: () => setSortBy('public') },
+                { key: 'public', label: 'Discover', icon: '🧭', action: () => setSortBy('public') },
               { key: 'trending', label: 'Trending', icon: '🔥', action: () => setSortBy('trending') },
             ].map((tab) => (
               <button
