@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useGetMyReports } from '@/hooks/useReportingMutations';
@@ -12,19 +12,16 @@ const REPORT_REASON_LABELS = {
 };
 
 export default function ReportedPactsTab() {
-  const [skip, setSkip] = useState(0);
   const limit = 10;
-  const { data: response, isLoading, hasNextPage = false, fetchNextPage } = useGetMyReports(skip, limit);
+  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useGetMyReports(limit);
 
-  const reportedPacts = response?.data || [];
-  const pagination = response?.pagination || {};
-  const hasMore = pagination?.has_more ?? false;
+  const reportedPacts = data?.pages.flatMap((page) => page.data?.data || []) || [];
 
   const handleLoadMore = useCallback(() => {
-    if (hasMore) {
-      setSkip((prev) => prev + limit);
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
-  }, [hasMore]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (isLoading && reportedPacts.length === 0) {
     return (
@@ -100,13 +97,13 @@ export default function ReportedPactsTab() {
       })}
 
       {/* Load More Button */}
-      {hasMore && (
+      {hasNextPage && (
         <button
           onClick={handleLoadMore}
-          disabled={isLoading}
+          disabled={isFetchingNextPage}
           className="w-full px-4 py-3 rounded-lg border-2 border-slate-300 text-slate-900 font-semibold hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading ? 'Loading...' : 'Load More'}
+          {isFetchingNextPage ? 'Loading...' : 'Load More'}
         </button>
       )}
     </div>

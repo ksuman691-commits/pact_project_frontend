@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { pactService } from '@/services/api';
 import { queryKeys } from '@/lib/queryKeys';
 import toast from 'react-hot-toast';
@@ -57,10 +57,21 @@ export function useReportPact() {
   });
 }
 
-export function useGetMyReports(skip: number = 0, limit: number = 20) {
-  return useQuery({
-    queryKey: ['reportedPacts', skip, limit],
-    queryFn: () => pactService.getMyReports(skip, limit),
+export function useGetMyReports(limit: number = 20) {
+  return useInfiniteQuery({
+    queryKey: ['reportedPacts', limit],
+    queryFn: ({ pageParam = 0 }) => pactService.getMyReports(pageParam, limit),
+    getNextPageParam: (lastPage, allPages) => {
+      const response = lastPage.data;
+      if (!response) return undefined;
+      
+      const pagination = response.pagination || {};
+      const totalFetched = allPages.reduce((acc, page) => acc + (page.data?.data?.length || 0), 0);
+      const hasMore = totalFetched < (pagination.total || 0);
+      
+      return hasMore ? totalFetched : undefined;
+    },
+    initialPageParam: 0,
     enabled: true,
   });
 }
