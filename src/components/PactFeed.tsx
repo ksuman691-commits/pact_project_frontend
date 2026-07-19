@@ -208,7 +208,7 @@ export default function PactFeed({
         <FeedPactCard
           key={pact.id}
           pact={pact}
-          userVote={pact.userVote || pact.user_vote}
+          userVote={pact.userVote || (pact as any).user_vote}
           onVote={handleVote}
           onDismiss={removePact}
           onProofUpload={(pactId, uploadedProof) => {
