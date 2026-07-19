@@ -129,7 +129,7 @@ export default function FeedPactCard({ pact, userVote, onVote, onDismiss, onProo
     }
 
     return { transform: 'translate3d(0, 0, 0)', transition: 'transform 240ms ease, opacity 240ms ease' };
-  }, [dragX, dragY, exitDirection, isDragging]);
+  }, [dragX, dragY, exitDirection, isDragging, isExiting]);
 
   const resetDrag = () => {
     if (isExiting) return;
