@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, Share2, Flag, MoreVertical } from 'lucide-react';
+import { MessageCircle, Share2, Flag, MoreVertical, Camera } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
