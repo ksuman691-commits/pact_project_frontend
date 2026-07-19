@@ -47,7 +47,6 @@ export default function ProfileHero({
                 alt={user.name}
                 width={80}
                 height={80}
-                unoptimized
                 className="w-full h-full rounded-lg object-cover"
               />
             ) : (

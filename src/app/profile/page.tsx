@@ -185,12 +185,17 @@ export default function Profile() {
 
         {/* Tabs */}
         <ProfileTabs onTabChange={setActiveTab}>
-          {activeTab === 'pacts' && <PactsTab pacts={createdPacts} joinedPacts={joinedPacts} votedPacts={votedPacts} allowJoinedUploads={true} />}
+          {activeTab === 'pacts' && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-black text-slate-900">Your pacts</h2>
+              <PactsTab pacts={createdPacts} joinedPacts={joinedPacts} votedPacts={votedPacts} allowJoinedUploads={true} />
+            </div>
+          )}
           {activeTab === 'achievements' && <AchievementsBadges achievements={allAchievements} />}
           {activeTab === 'followers' && (
             <div className="space-y-2">
               {followers.length === 0 ? (
-                <p className="text-sm text-slate-500">No followers yet.</p>
+                <p className="text-sm text-slate-500">You do not have followers yet.</p>
               ) : (
                 followers.map((row: any) => (
                   <button
@@ -208,7 +213,7 @@ export default function Profile() {
           {activeTab === 'following' && (
             <div className="space-y-2">
               {following.length === 0 ? (
-                <p className="text-sm text-slate-500">Not following anyone yet.</p>
+                <p className="text-sm text-slate-500">You are not following anyone yet.</p>
               ) : (
                 following.map((row: any) => (
                   <button
@@ -225,8 +230,8 @@ export default function Profile() {
           )}
           {activeTab === 'circles' && (
             <div className="text-center py-12 text-gray-500">
-              <p className="font-medium mb-2">You are a member of 3 circles</p>
-              <p className="text-sm">Visit the circles page to explore and join more</p>
+              <p className="font-medium mb-2">Your circles</p>
+              <p className="text-sm">Visit the circles page to explore and join more.</p>
             </div>
           )}
         </ProfileTabs>
@@ -243,7 +248,7 @@ export default function Profile() {
             </div>
             <div className="p-4 space-y-3">
               {followers.length === 0 ? (
-                <p className="text-center text-slate-500 py-8">No followers yet</p>
+                <p className="text-center text-slate-500 py-8">You do not have followers yet.</p>
               ) : (
                 followers.map((row: any) => (
                   <button key={row.id} onClick={() => { router.push(`/profile/${encodeURIComponent(row.username)}`); setShowFollowersModal(false); }} className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
@@ -267,7 +272,7 @@ export default function Profile() {
             </div>
             <div className="p-4 space-y-3">
               {following.length === 0 ? (
-                <p className="text-center text-slate-500 py-8">Not following anyone yet</p>
+                <p className="text-center text-slate-500 py-8">You are not following anyone yet.</p>
               ) : (
                 following.map((row: any) => (
                   <button key={row.id} onClick={() => { router.push(`/profile/${encodeURIComponent(row.username)}`); setShowFollowingModal(false); }} className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
@@ -291,7 +296,7 @@ export default function Profile() {
             </div>
             <div className="p-4 space-y-3">
               {createdPacts.length === 0 ? (
-                <p className="text-center text-slate-500 py-8">No pacts created yet</p>
+                <p className="text-center text-slate-500 py-8">You have not created any pacts yet.</p>
               ) : (
                 createdPacts.map((pact: any) => (
                   <button key={pact.id} onClick={() => { router.push(`/pacts/${pact.id}`); setShowPactsModal(false); }} className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition">

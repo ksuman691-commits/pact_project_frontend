@@ -93,7 +93,6 @@ export default function EditProfilePage() {
                       alt="Profile"
                       width={96}
                       height={96}
-                      unoptimized
                       className="w-24 h-24 rounded-xl object-cover"
                     />
                   ) : (

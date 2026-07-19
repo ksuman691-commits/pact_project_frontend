@@ -1,7 +1,7 @@
 'use client';
 
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { feedService, shortsService, pactAdvancedService } from '@/services/api';
+import { feedService, shortsService, pactAdvancedService, socialService } from '@/services/api';
 import { queryKeys } from '@/lib/queryKeys';
 
 const ITEMS_PER_PAGE = 10;
@@ -147,12 +147,9 @@ export function usePactComments(pactId: number) {
   return useInfiniteQuery({
     queryKey: queryKeys.pacts.comments(pactId),
     queryFn: ({ pageParam = 0 }) =>
-      (async () => {
-        const response = await feedService.getPersonalized(pageParam, ITEMS_PER_PAGE);
-        return response;
-      })(),
+      socialService.getComments(pactId, pageParam, ITEMS_PER_PAGE),
     getNextPageParam: (lastPage, pages) =>
-      lastPage.data?.length === 5 ? pages.length * 5 : undefined,
+      lastPage.data?.length === ITEMS_PER_PAGE ? pages.length * ITEMS_PER_PAGE : undefined,
     initialPageParam: 0,
     enabled: !!pactId,
     staleTime: 1000 * 60 * 2,

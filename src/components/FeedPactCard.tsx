@@ -46,6 +46,15 @@ const REPORT_OPTIONS = [
   },
 ];
 
+const JOIN_MESSAGES: Record<string, string> = {
+  creator: 'You created this pact',
+  already_joined: "You're already part of this pact",
+  full: 'This pact is full',
+  not_active: 'This pact is no longer active',
+  no_access: "You don't have access to this pact",
+  unauthenticated: 'Sign in to join this pact',
+};
+
 function formatEndsIn(endDateRaw?: string) {
   if (!endDateRaw) return 'soon';
 
@@ -358,7 +367,6 @@ export default function FeedPactCard({
                   src={media.proofUrl}
                   alt={media.caption || `${creatorLabel} proof`}
                   fill
-                  unoptimized
                   priority={false}
                   sizes="(max-width: 768px) 100vw, 640px"
                   className="object-cover"
@@ -369,7 +377,7 @@ export default function FeedPactCard({
                 <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
                   {creatorAvatarUrl ? (
                     <div className="absolute inset-0 scale-110 opacity-25 blur-[1px]">
-                      <Image src={creatorAvatarUrl} alt={creatorLabel} fill unoptimized sizes="100vw" className="object-cover" />
+                      <Image src={creatorAvatarUrl} alt={creatorLabel} fill sizes="100vw" className="object-cover" />
                     </div>
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center text-[120px] font-black text-white/10">
@@ -379,7 +387,7 @@ export default function FeedPactCard({
                   <div className="relative z-10 flex flex-col items-center gap-4 px-8 text-center">
                     <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/10 shadow-2xl shadow-black/20 backdrop-blur-sm">
                       {creatorAvatarUrl ? (
-                        <Image src={creatorAvatarUrl} alt={creatorLabel} fill unoptimized sizes="112px" className="object-cover opacity-90" />
+                        <Image src={creatorAvatarUrl} alt={creatorLabel} fill sizes="112px" className="object-cover opacity-90" />
                       ) : (
                         <span className="text-5xl font-black text-white/80">{creatorLabel.charAt(0).toUpperCase()}</span>
                       )}
@@ -398,7 +406,7 @@ export default function FeedPactCard({
               <div className="flex items-center gap-3 rounded-full bg-black/15 px-3 py-2 backdrop-blur-md">
                 {creatorAvatarUrl ? (
                   <div className="relative h-10 w-10 overflow-hidden rounded-full border border-white/20">
-                    <Image src={creatorAvatarUrl} alt={creatorLabel} fill unoptimized sizes="40px" className="object-cover" />
+                    <Image src={creatorAvatarUrl} alt={creatorLabel} fill sizes="40px" className="object-cover" />
                   </div>
                 ) : (
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-sm font-black text-white">
@@ -491,7 +499,7 @@ export default function FeedPactCard({
                       supporterStack.map((supporter: any) => (
                         <div key={supporter.id} className="relative h-9 w-9 overflow-hidden rounded-full border border-white/20 bg-white/10">
                           {supporter.avatar_url ? (
-                            <Image src={supporter.avatar_url} alt={supporter.username} fill unoptimized sizes="36px" className="object-cover" />
+                            <Image src={supporter.avatar_url} alt={supporter.username} fill sizes="36px" className="object-cover" />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center bg-white/10 text-xs font-black text-white">
                               {String(supporter.username || '?').charAt(0).toUpperCase()}
@@ -522,6 +530,15 @@ export default function FeedPactCard({
                   >
                     {isJoining ? 'joining...' : 'join pact'}
                   </button>
+                )}
+
+                {!joinAllowed && pact.join_block_reason && (
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/50">
+                    {JOIN_MESSAGES[pact.join_block_reason] ?? 'Joining is not available'}
+                    {pact.join_block_reason === 'full' && pact.max_participants
+                      ? ` — ${pact.max_participants}/${pact.max_participants} joined`
+                      : ''}
+                  </p>
                 )}
 
                 {voteStatusLabel && (

@@ -44,7 +44,6 @@ export default function UserAvatarLink({
           src={avatarUrl}
           alt={name || 'Profile'}
           fill
-          unoptimized
           sizes="48px"
           className="object-cover"
         />

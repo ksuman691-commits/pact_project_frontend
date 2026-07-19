@@ -60,7 +60,11 @@ export default function ProofUploadModal({
     try {
       stopCamera();
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
         audio: mode === 'video',
       });
       streamRef.current = stream;
@@ -374,7 +378,6 @@ export default function ProofUploadModal({
                       alt="Proof preview"
                       width={800}
                       height={800}
-                      unoptimized
                       className="w-full h-full object-cover"
                     />
                   ) : (

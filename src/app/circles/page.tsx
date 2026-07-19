@@ -178,9 +178,9 @@ export default function CirclesPage() {
         ) : displayCircles.length === 0 ? (
           <div className="text-center py-20">
             <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg font-medium mb-2">No circles found</p>
+            <p className="text-gray-600 text-lg font-medium mb-2">No circles match your search</p>
             <p className="text-gray-500 mb-6">
-              {search ? 'Try a different search' : 'Explore communities and join circles'}
+              {search ? 'Try a different search.' : 'Explore communities and join circles.'}
             </p>
           </div>
         ) : (

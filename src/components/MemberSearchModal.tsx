@@ -62,11 +62,11 @@ export default function MemberSearchModal({ isOpen, onClose }: MemberSearchModal
               </div>
             ) : searchQuery.length === 0 ? (
               <div className="flex items-center justify-center py-8 text-gray-500">
-                <p className="text-sm">Start typing to search members</p>
+                <p className="text-sm">Search by name or username</p>
               </div>
             ) : results.length === 0 ? (
               <div className="flex items-center justify-center py-8 text-gray-500">
-                <p className="text-sm">No members found</p>
+                <p className="text-sm">No members match your search</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
@@ -85,7 +85,6 @@ export default function MemberSearchModal({ isOpen, onClose }: MemberSearchModal
                           width={40}
                           height={40}
                           className="w-full h-full object-cover"
-                          unoptimized
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-white font-bold">

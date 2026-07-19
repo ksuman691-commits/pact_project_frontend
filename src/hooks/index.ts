@@ -80,8 +80,6 @@ export {
 
 export {
   useUpdateUser,
-  useFollowUser,
-  useUnfollowUser,
 } from './useUserMutations';
 
 // Feed hooks

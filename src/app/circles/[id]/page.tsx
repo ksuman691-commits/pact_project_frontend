@@ -279,7 +279,7 @@ export default function CircleDetailPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-slate-600">No members yet</p>
+              <p className="text-slate-600">No members yet. Be the first to join this circle.</p>
             )}
           </div>
 

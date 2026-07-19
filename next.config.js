@@ -3,7 +3,11 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    unoptimized: true,
+    remotePatterns: [
+      { protocol: 'https', hostname: '**.amazonaws.com' },
+      { protocol: 'https', hostname: '**.cloudfront.net' },
+      { protocol: 'https', hostname: 'pact-project-backend-v2.onrender.com' },
+    ],
   },
 }
 

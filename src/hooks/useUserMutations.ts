@@ -21,35 +21,3 @@ export function useUpdateUser(userId: number) {
     },
   });
 }
-
-export function useFollowUser(userId: number) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: () => userService.follow(userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.followers(userId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.leaderboards.all });
-      toast.success('User followed!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to follow user');
-    },
-  });
-}
-
-export function useUnfollowUser(userId: number) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: () => userService.unfollow(userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.followers(userId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.leaderboards.all });
-      toast.success('User unfollowed!');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to unfollow user');
-    },
-  });
-}

@@ -178,8 +178,8 @@ export default function CircleLeaderboard({
       {entries.length === 0 && !loading && (
         <div className="px-6 py-12 text-center">
           <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">No members yet</p>
-          <p className="text-sm text-gray-500">Be the first to join this circle!</p>
+          <p className="text-gray-600 font-medium">No leaderboard entries yet</p>
+          <p className="text-sm text-gray-500">Members will appear here once they start completing pacts.</p>
         </div>
       )}
     </div>

@@ -54,9 +54,36 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
 
   if (loading) {
     return (
-      <div className="rounded-xl bg-slate-50 border border-slate-200 p-6 flex items-center justify-center min-h-[200px]">
-        <Loader className="w-6 h-6 animate-spin text-indigo-600 mr-3" />
-        <p className="text-slate-600 font-medium">Loading verification results...</p>
+      <div className="space-y-4">
+        <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-3">
+              <div className="h-4 w-32 animate-pulse rounded-full bg-slate-200" />
+              <div className="h-10 w-24 animate-pulse rounded-full bg-slate-200" />
+            </div>
+            <div className="h-10 w-10 animate-pulse rounded-full bg-slate-200" />
+          </div>
+          <div className="mt-6 h-2 rounded-full bg-slate-200">
+            <div className="h-full w-2/3 rounded-full bg-slate-300" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="h-24 animate-pulse rounded-2xl border border-slate-200 bg-slate-50" />
+          <div className="h-24 animate-pulse rounded-2xl border border-slate-200 bg-slate-50" />
+          <div className="h-24 animate-pulse rounded-2xl border border-slate-200 bg-slate-50" />
+          <div className="h-24 animate-pulse rounded-2xl border border-slate-200 bg-slate-50" />
+        </div>
+
+        <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-2">
+              <div className="h-4 w-28 animate-pulse rounded-full bg-slate-200" />
+              <div className="h-7 w-16 animate-pulse rounded-full bg-slate-200" />
+            </div>
+            <div className="h-8 w-24 animate-pulse rounded-full bg-slate-200" />
+          </div>
+        </div>
       </div>
     );
   }

@@ -70,8 +70,8 @@ export default function TransactionHistory({ transactions, isLoading }: Transact
     return (
       <PremiumCard>
         <div className="text-center py-8">
-          <p className="text-slate-600 font-medium">No transactions yet</p>
-          <p className="text-xs text-slate-500">Your wallet activity will appear here</p>
+          <p className="text-slate-600 font-medium">No wallet activity yet</p>
+          <p className="text-xs text-slate-500">Transactions will appear here once you start using your wallet</p>
         </div>
       </PremiumCard>
     );

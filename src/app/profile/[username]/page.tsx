@@ -209,6 +209,16 @@ export default function PublicProfilePage() {
       ? 'bg-white/20 text-white border border-white/40 hover:bg-white/30'
       : 'bg-white text-emerald-600 hover:bg-gray-50';
 
+  const profilePactsHeading = isOwnProfile
+    ? 'Your pacts'
+    : `Pacts created by @${profileUser.username}`;
+  const followersEmptyCopy = isOwnProfile
+    ? 'You do not have followers yet.'
+    : `No one follows @${profileUser.username} yet.`;
+  const followingEmptyCopy = isOwnProfile
+    ? "You are not following anyone yet."
+    : `@${profileUser.username} is not following anyone yet.`;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Top Bar */}
@@ -276,12 +286,17 @@ export default function PublicProfilePage() {
 
         {/* Tabs */}
         <ProfileTabs onTabChange={setActiveTab}>
-          {activeTab === 'pacts' && <PactsTab pacts={displayedPacts} joinedPacts={[]} votedPacts={[]} />}
+          {activeTab === 'pacts' && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-black text-slate-900">{profilePactsHeading}</h2>
+              <PactsTab pacts={displayedPacts} joinedPacts={[]} votedPacts={[]} />
+            </div>
+          )}
           {activeTab === 'achievements' && <AchievementsBadges achievements={allAchievements} />}
           {activeTab === 'followers' && (
             <div className="space-y-2">
               {followers.length === 0 ? (
-                <p className="text-sm text-slate-500">No followers yet.</p>
+                <p className="text-sm text-slate-500">{followersEmptyCopy}</p>
               ) : (
                 followers.map((row: any) => (
                   <button
@@ -299,7 +314,7 @@ export default function PublicProfilePage() {
           {activeTab === 'following' && (
             <div className="space-y-2">
               {following.length === 0 ? (
-                <p className="text-sm text-slate-500">Not following anyone yet.</p>
+                <p className="text-sm text-slate-500">{followingEmptyCopy}</p>
               ) : (
                 following.map((row: any) => (
                   <button
@@ -316,8 +331,10 @@ export default function PublicProfilePage() {
           )}
           {activeTab === 'circles' && (
             <div className="text-center py-12 text-gray-500">
-              <p className="font-medium mb-2">{profileUser.full_name} is in circles</p>
-              <p className="text-sm">Circle data will appear here.</p>
+              <p className="font-medium mb-2">{isOwnProfile ? 'Your circles' : `Circles for @${profileUser.username}`}</p>
+              <p className="text-sm">
+                {isOwnProfile ? 'Circle data will appear here.' : 'Circle membership data will appear here.'}
+              </p>
             </div>
           )}
         </ProfileTabs>
@@ -333,7 +350,7 @@ export default function PublicProfilePage() {
             </div>
             <div className="p-4 space-y-3">
               {followers.length === 0 ? (
-                <p className="text-center text-slate-500 py-8">No followers yet</p>
+                <p className="text-center text-slate-500 py-8">{followersEmptyCopy}</p>
               ) : (
                 followers.map((row: any) => (
                   <button key={row.id} onClick={() => { router.push(`/profile/${encodeURIComponent(row.username)}`); setShowFollowersModal(false); }} className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
@@ -357,7 +374,7 @@ export default function PublicProfilePage() {
             </div>
             <div className="p-4 space-y-3">
               {following.length === 0 ? (
-                <p className="text-center text-slate-500 py-8">Not following anyone yet</p>
+                <p className="text-center text-slate-500 py-8">{followingEmptyCopy}</p>
               ) : (
                 following.map((row: any) => (
                   <button key={row.id} onClick={() => { router.push(`/profile/${encodeURIComponent(row.username)}`); setShowFollowingModal(false); }} className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
@@ -381,7 +398,7 @@ export default function PublicProfilePage() {
             </div>
             <div className="p-4 space-y-3">
               {displayedPacts.length === 0 ? (
-                <p className="text-center text-slate-500 py-8">No pacts created yet</p>
+                <p className="text-center text-slate-500 py-8">{isOwnProfile ? 'You have not created any pacts yet.' : `@${profileUser.username} has not created any pacts yet.`}</p>
               ) : (
                 displayedPacts.map((pact: any) => (
                   <button key={pact.id} onClick={() => { router.push(`/pacts/${pact.id}`); setShowPactsModal(false); }} className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition">

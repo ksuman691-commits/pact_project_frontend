@@ -440,8 +440,6 @@ export const userService = {
   getById: (id: number) => api.get(`/api/users/${id}`),
   getByUsername: (username: string) => api.get(`/api/users/by-username/${username}`),
   update: (id: number, data: any) => api.put(`/api/users/${id}`, data),
-  follow: (userId: number) => api.post(`/api/users/${userId}/follow`),
-  unfollow: (userId: number) => api.delete(`/api/users/${userId}/follow`),
   getFollowers: (userId: number) => api.get(`/api/users/${userId}/followers`),
   getFollowing: (userId: number) => api.get(`/api/users/${userId}/following`),
   getStats: (userId: number) => api.get(`/api/users/${userId}/stats`),
@@ -476,7 +474,7 @@ export const socialService = {
   deleteComment: (pactId: number, commentId: number) =>
     api.delete(`/api/pacts/${pactId}/comments/${commentId}`),
   getComments: (pactId: number, skip?: number, limit?: number) =>
-    api.get(`/api/pacts/${pactId}/comments`, { params: { skip, limit } }),
+    api.get(`/api/pacts/${pactId}/comments`, { params: { skip, limit } }).then((response) => normalizeListResponse(response)),
   
   // Shares
   sharePact: (pactId: number, platform?: string) =>
