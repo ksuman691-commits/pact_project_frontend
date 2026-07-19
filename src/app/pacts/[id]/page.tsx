@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, Camera, CheckCircle2, Clock3, MessageSquareText, Users } from 'lucide-react';
+import { AlertCircle, Camera, CheckCircle2, Clock3, MessageSquare, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import TopNav from '@/components/TopNav';
 import FeedPactCard from '@/components/FeedPactCard';
@@ -290,7 +290,7 @@ export default function PactDetailPage() {
                 />
                 <DetailTabButton
                   active={activeTab === 'comments'}
-                  icon={MessageSquareText}
+                  icon={MessageSquare}
                   label="Comments"
                   onClick={() => setActiveTab('comments')}
                 />
