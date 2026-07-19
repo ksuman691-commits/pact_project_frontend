@@ -21,7 +21,6 @@ const mockPacts = [
     supportPool: 42000,
     confidence: 73,
     support_count: 3420,
-    skip_count: 1250,
     timeRemaining: '2d 14h',
     progressPercentage: 28,
     proofClips: [
@@ -41,7 +40,6 @@ const mockPacts = [
     supportPool: 28500,
     confidence: 82,
     support_count: 5643,
-    skip_count: 892,
     timeRemaining: '49d 3h',
     progressPercentage: 18,
     proofClips: [
@@ -61,7 +59,6 @@ const mockPacts = [
     supportPool: 15800,
     confidence: 65,
     support_count: 4120,
-    skip_count: 2130,
     timeRemaining: '66d 18h',
     progressPercentage: 34,
     proofClips: [
