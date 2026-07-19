@@ -23,10 +23,10 @@ export default function PactCardMediaFirst({
   onNavigateNext,
   onNavigatePrev,
 }: PactCardMediaFirstProps) {
+  const [isClient, setIsClient] = useState(false);
   const [reportModal, setReportModal] = useState(false);
   const [currentVote, setCurrentVote] = useState<'support' | 'skip' | null>(userVote as any);
   const [dragX, setDragX] = useState(0);
-  const [dragY, setDragY] = useState(0);
   const [dragStartX, setDragStartX] = useState(0);
   const [dragStartY, setDragStartY] = useState(0);
   const [showDirectionalTag, setShowDirectionalTag] = useState<'skip' | 'support' | null>(null);
@@ -34,8 +34,14 @@ export default function PactCardMediaFirst({
   const [lastTapTime, setLastTapTime] = useState(0);
   
   const mediaRef = useRef<HTMLDivElement>(null);
+  const lastTapRef = useRef<number>(0);
   const voteSupportMutation = useVoteSupport();
   const voteSkipMutation = useVoteSkip();
+
+  // Hydration fix: ensure client-only initialization
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Data extraction
   const supportCount = pact.support_count ?? pact.believers ?? 0;
@@ -68,10 +74,10 @@ export default function PactCardMediaFirst({
   // Double-tap support
   const handleMediaClick = () => {
     const now = Date.now();
-    if (now - lastTapTime < 300) {
+    if (now - lastTapRef.current < 300) {
       handleVoteSupport();
     }
-    setLastTapTime(now);
+    lastTapRef.current = now;
   };
 
   const handleVoteSupport = async () => {
