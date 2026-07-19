@@ -73,6 +73,31 @@ const mapCircle = (raw: any) => ({
   memberCount: raw?.member_count ?? 0,
 });
 
+const mapSupporter = (raw: any) => ({
+  id: raw?.id,
+  username: raw?.username,
+  avatar_url: raw?.avatar_url ?? null,
+});
+
+const mapProof = (raw: any) => ({
+  ...raw,
+  proof_url: raw?.proof_url ?? raw?.file_url ?? null,
+  file_url: raw?.file_url ?? raw?.proof_url ?? null,
+  uploaded_at: raw?.uploaded_at ?? raw?.created_at ?? null,
+});
+
+const normalizeListResponse = <T,>(response: any, mapper: (item: any) => T = (item) => item): any => {
+  const payload = response.data;
+  const rows = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
+  const pagination = payload?.pagination ?? { skip: 0, limit: rows.length, total: rows.length };
+
+  return {
+    ...response,
+    data: rows.map(mapper),
+    pagination,
+  };
+};
+
 const mapPact = (raw: any) => ({
   ...raw,
   pact_uuid: raw?.pact_uuid ?? String(raw?.id ?? ''),
@@ -88,8 +113,17 @@ const mapPact = (raw: any) => ({
   daysTotal: Number(raw?.duration_days ?? 0) || undefined,
   daysCurrent: calculateCurrentDay(raw?.start_date, Number(raw?.duration_days ?? 0) || undefined),
   timeRemaining: formatTimeRemaining(raw?.end_date),
-  believers: raw?.believers ?? 0,
+  believers: raw?.support_count ?? raw?.believers ?? 0,
   doubters: raw?.doubters ?? 0,
+  support_count: raw?.support_count ?? raw?.believers ?? 0,
+  recent_supporters: Array.isArray(raw?.recent_supporters) ? raw.recent_supporters.map(mapSupporter) : [],
+  report_count: Number(raw?.report_count ?? 0),
+  is_reported_by_me: Boolean(raw?.is_reported_by_me),
+  proof_url: raw?.proof_url ?? null,
+  proof_type: raw?.proof_type ?? null,
+  latest_proof_caption: raw?.latest_proof_caption ?? null,
+  latest_proof_upload_date: raw?.latest_proof_upload_date ?? null,
+  comment_count: Number(raw?.comment_count ?? 0),
 });
 
 // Add Bearer token to all requests and keep the token in sync with localStorage
@@ -244,7 +278,7 @@ export const circleService = {
   },
   list: async () => {
     const response = await api.get('/api/circles');
-    return { ...response, data: (response.data || []).map(mapCircle) };
+    return normalizeListResponse(response, mapCircle);
   },
   getById: async (id: number) => {
     const response = await api.get(`/api/circles/${id}`);
@@ -252,13 +286,13 @@ export const circleService = {
   },
   listPublic: async (skip = 0, limit = 20) => {
     const response = await api.get('/api/circles/public', { params: { skip, limit } });
-    return { ...response, data: (response.data || []).map(mapCircle) };
+    return normalizeListResponse(response, mapCircle);
   },
   join: (id: number) => api.post(`/api/circles/${id}/join`),
   leave: (id: number) => api.post(`/api/circles/${id}/leave`),
   listPacts: async (id: number, skip = 0, limit = 20) => {
     const response = await api.get(`/api/circles/${id}/pacts`, { params: { skip, limit } });
-    return { ...response, data: (response.data || []).map(mapPact) };
+    return normalizeListResponse(response, mapPact);
   },
 };
 
@@ -294,11 +328,11 @@ export const pactService = {
   },
   list: async (params?: any) => {
     const response = await api.get('/api/pacts', { params });
-    let rows = (response.data || []).map(mapPact);
+    const normalized = normalizeListResponse(response, mapPact);
     if (params?.circle_id) {
-      rows = rows.filter((p: any) => p.circle_id === params.circle_id);
+      normalized.data = normalized.data.filter((p: any) => p.circle_id === params.circle_id);
     }
-    return { ...response, data: rows };
+    return normalized;
   },
   getById: async (id: number) => {
     const response = await api.get(`/api/pacts/${id}`);
@@ -317,9 +351,22 @@ export const pactService = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  listProofs: (id: number, limit = 20) =>
-    api.get(`/api/pacts/${id}/proofs`, { params: { limit } }),
-  vote: (id: number, vote: 'believe' | 'doubt') => api.post(`/api/pacts/${id}/vote`, { vote }),
+  listProofs: async (id: number, limit = 20, skip = 0) => {
+    const response = await api.get(`/api/pacts/${id}/proofs`, { params: { skip, limit } });
+    return normalizeListResponse(response, mapProof);
+  },
+  vote: (id: number, vote: 'support' | 'skip' | 'believe' | 'doubt') => {
+    const path = vote === 'support' || vote === 'believe' ? 'vote-support' : 'vote-skip';
+    return api.post(`/api/pacts/${id}/${path}`);
+  },
+  support: (id: number) => api.post(`/api/pacts/${id}/vote-support`),
+  skip: (id: number) => api.post(`/api/pacts/${id}/vote-skip`),
+  report: (id: number, reason: 'fake_or_ai' | 'spam' | 'offensive') =>
+    api.post(`/api/pacts/${id}/report`, { reason }),
+  getReportCount: (id: number) => api.get(`/api/pacts/${id}/report-count`),
+  getReportLogs: (id: number) => api.get(`/api/pacts/${id}/report-logs`),
+  getMyReports: (skip = 0, limit = 20) =>
+    api.get('/api/pacts/my-reports', { params: { skip, limit } }),
   getVotes: (id: number) => api.get(`/api/pacts/${id}/votes`),
   personalized: (skip = 0, limit = 20) => api.get('/api/pacts/feed/personalized', { params: { skip, limit } }),
 };
@@ -458,34 +505,34 @@ export const followService = {
 // Feed Services (Personalized feed, trending, discover)
 export const feedService = {
   getPersonalized: (skip?: number, limit?: number, category?: string) =>
-    api.get('/api/feed', { params: { skip, limit, category } }),
+    api.get('/api/feed', { params: { skip, limit, category } }).then((response) => normalizeListResponse(response, mapPact)),
   getTrending: (skip?: number, limit?: number) =>
-    api.get('/api/feed', { params: { skip, limit, category: 'trending' } }),
+    api.get('/api/feed', { params: { skip, limit, category: 'trending' } }).then((response) => normalizeListResponse(response, mapPact)),
   getDiscover: (skip?: number, limit?: number) =>
-    api.get('/api/feed', { params: { skip, limit } }),
+    api.get('/api/feed', { params: { skip, limit } }).then((response) => normalizeListResponse(response, mapPact)),
   getFollowingFeed: (skip?: number, limit?: number) =>
-    api.get('/api/feed', { params: { skip, limit } }),
+    api.get('/api/feed', { params: { skip, limit } }).then((response) => normalizeListResponse(response, mapPact)),
 };
 
 // Pact Advanced Services
 export const pactAdvancedService = {
   getPublicPacts: (skip?: number, limit?: number) =>
-    api.get('/api/pacts', { params: { skip, limit } }),
+    api.get('/api/pacts', { params: { skip, limit } }).then((response) => normalizeListResponse(response, mapPact)),
   getMyPacts: async (skip?: number, limit?: number) => {
     const response = await api.get('/api/my-pacts', { params: { skip, limit } });
-    return { ...response, data: (response.data || []).map(mapPact) };
+    return normalizeListResponse(response, mapPact);
   },
   getPactsByUser: async (userId: number, skip?: number, limit?: number) => {
     const response = await api.get(`/api/pacts/user/${userId}/created`, { params: { skip, limit } });
-    return { ...response, data: (response.data || []).map(mapPact) };
+    return normalizeListResponse(response, mapPact);
   },
   getJoinedPactsByUser: async (userId: number, skip?: number, limit?: number) => {
     const response = await api.get(`/api/pacts/user/${userId}/joined`, { params: { skip, limit } });
-    return { ...response, data: (response.data || []).map(mapPact) };
+    return normalizeListResponse(response, mapPact);
   },
   getVotedPactsByUser: async (userId: number, skip?: number, limit?: number) => {
     const response = await api.get(`/api/pacts/user/${userId}/voted`, { params: { skip, limit } });
-    return { ...response, data: (response.data || []).map(mapPact) };
+    return normalizeListResponse(response, mapPact);
   },
   getPactsByCircle: (circleId: number, skip?: number, limit?: number) =>
     circleService.listPacts(circleId, skip, limit),

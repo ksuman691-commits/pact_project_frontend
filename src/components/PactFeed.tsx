@@ -3,10 +3,9 @@
 // Cache bust: 2024-07-07 08:40
 import React, { useEffect, useMemo, useState } from 'react'
 import { usePersonalizedFeed } from '@/hooks/useFeedQueries'
-import { useBelievePact, useDoubtPact } from '@/hooks/usePactMutations'
+import { useSkipPact, useSupportPact } from '@/hooks/usePactActions'
 import { useInView } from 'react-intersection-observer'
-import PactCard from './PactCard'
-import toast from 'react-hot-toast'
+import FeedPactCard from './FeedPactCard'
 import { pactService } from '@/services/api'
 import { useRouter } from 'next/navigation'
 
@@ -21,8 +20,8 @@ const mockPacts = [
     daysCurrent: 2,
     supportPool: 42000,
     confidence: 73,
-    believers: 3420,
-    doubters: 1250,
+    support_count: 3420,
+    skip_count: 1250,
     timeRemaining: '2d 14h',
     progressPercentage: 28,
     proofClips: [
@@ -41,15 +40,15 @@ const mockPacts = [
     daysCurrent: 11,
     supportPool: 28500,
     confidence: 82,
-    believers: 5643,
-    doubters: 892,
+    support_count: 5643,
+    skip_count: 892,
     timeRemaining: '49d 3h',
     progressPercentage: 18,
     proofClips: [
       { day: 3, type: 'scale', text: '68kg (down 0.8kg)' },
       { day: 11, type: 'scale', text: '67.1kg (down 1.7kg)' },
     ],
-    userVote: 'believe',
+    userVote: 'support',
   },
   {
     id: 3,
@@ -61,15 +60,15 @@ const mockPacts = [
     daysCurrent: 34,
     supportPool: 15800,
     confidence: 65,
-    believers: 4120,
-    doubters: 2130,
+    support_count: 4120,
+    skip_count: 2130,
     timeRemaining: '66d 18h',
     progressPercentage: 34,
     proofClips: [
       { day: 1, type: 'code', text: 'Day 1 complete' },
       { day: 34, type: 'code', text: 'Halfway there!' },
     ],
-    userVote: 'doubt',
+    userVote: 'skip',
   },
 ]
 
@@ -101,20 +100,8 @@ export default function PactFeed({
 }: PactFeedProps) {
   const router = useRouter()
   const [pacts, setPacts] = useState(showMockData ? mockPacts : [])
-  const [userVotes, setUserVotes] = useState<Record<number, string>>({})
   const { ref, inView } = useInView()
   const normalizedCategory = (category || 'all').toLowerCase()
-
-  const toProofClip = (proof: any) => ({
-    id: proof.id,
-    type: proof.proof_type === 'video' ? 'video' : 'photo',
-    url: proof.file_url,
-    file_url: proof.file_url,
-    text: proof.caption || '',
-    caption: proof.caption || '',
-    day: proof.day_number,
-    uploadedAt: proof.created_at,
-  })
 
   // Fetch feed data with infinite scroll (will integrate with API later)
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isFetching } =
@@ -132,9 +119,8 @@ export default function PactFeed({
     }
   }, [normalizedCategory, showMockData])
 
-  // Mutations for voting
-  const believeMutation = useBelievePact()
-  const doubtMutation = useDoubtPact()
+  const supportMutation = useSupportPact()
+  const skipMutation = useSkipPact()
 
   // Trigger load more when near bottom
   useEffect(() => {
@@ -151,24 +137,15 @@ export default function PactFeed({
         Promise.all(
           apiPacts.map(async (pact: any) => {
             try {
-              const [voteRes, proofsRes] = await Promise.all([
-                pactService.getVotes(pact.id),
-                pactService.listProofs(pact.id).catch(() => ({ data: [] })),
-              ])
+              const proofsRes = await pactService.listProofs(pact.id, 1).catch(() => ({ pagination: { total: 0 } }))
               return {
                 ...pact,
-                believers: voteRes.data?.believe_count ?? 0,
-                doubters: voteRes.data?.doubt_count ?? 0,
-                confidence: voteRes.data?.confidence_percentage ?? 0,
-                proofClips: (proofsRes.data || []).map(toProofClip),
+                proof_count: proofsRes.pagination?.total ?? proofsRes.data?.pagination?.total ?? 0,
               }
             } catch {
               return {
                 ...pact,
-                believers: pact.believers ?? 0,
-                doubters: pact.doubters ?? 0,
-                confidence: pact.confidence ?? 0,
-                proofClips: [],
+                proof_count: pact.proof_count ?? 0,
               }
             }
           })
@@ -187,58 +164,16 @@ export default function PactFeed({
 
   const emptyStateMessage = useMemo(() => 'Be the first to create one!', [])
 
-  const handleVote = (pactId: number, voteType: 'believe' | 'doubt') => {
-    setPacts((prev) =>
-      prev.map((p) => {
-        if (p.id !== pactId) return p
-
-        const previousVote = (userVotes[pactId] || (p as any).userVote || null) as 'believe' | 'doubt' | null
-        let believers = Number((p as any).believers ?? 0)
-        let doubters = Number((p as any).doubters ?? 0)
-
-        if (previousVote === 'believe' && believers > 0) believers -= 1
-        if (previousVote === 'doubt' && doubters > 0) doubters -= 1
-
-        if (voteType === 'believe') believers += 1
-        if (voteType === 'doubt') doubters += 1
-
-        const total = believers + doubters
-        const confidence = total > 0 ? Math.round((believers / total) * 100) : 0
-
-        return {
-          ...p,
-          believers,
-          doubters,
-          confidence,
-          userVote: voteType,
-        }
-      })
-    )
-
-    setUserVotes((prev) => ({
-      ...prev,
-      [pactId]: voteType,
-    }))
-
-    if (voteType === 'believe') {
-      believeMutation.mutate(pactId, {
-        onSuccess: () => {
-          toast.success('Vote recorded!')
-        },
-        onError: () => {
-          toast.error('Failed to vote')
-        },
-      })
+  const handleVote = async (pactId: number, voteType: 'support' | 'skip') => {
+    if (voteType === 'support') {
+      await supportMutation.mutateAsync(pactId)
     } else {
-      doubtMutation.mutate(pactId, {
-        onSuccess: () => {
-          toast.success('Vote recorded!')
-        },
-        onError: () => {
-          toast.error('Failed to vote')
-        },
-      })
+      await skipMutation.mutateAsync(pactId)
     }
+  }
+
+  const removePact = (pactId: number) => {
+    setPacts((prev) => prev.filter((p) => p.id !== pactId))
   }
 
   return (
@@ -270,13 +205,12 @@ export default function PactFeed({
         </div>
       ) : (
         pacts.map((pact) => (
-        <PactCard
+        <FeedPactCard
           key={pact.id}
           pact={pact}
-          userVote={userVotes[pact.id] || pact.userVote}
-          onVote={(pactId, vote) =>
-            handleVote(pactId, vote as 'believe' | 'doubt')
-          }
+          userVote={pact.user_vote || pact.userVote}
+          onVote={handleVote}
+          onDismiss={removePact}
           onProofUpload={(pactId, uploadedProof) => {
             if (!uploadedProof) return
             setPacts((prev) =>
@@ -284,10 +218,11 @@ export default function PactFeed({
                 p.id === pactId
                   ? {
                       ...p,
-                      proofClips: [
-                        toProofClip(uploadedProof),
-                        ...(Array.isArray((p as any).proofClips) ? (p as any).proofClips : []),
-                      ],
+                      proof_url: uploadedProof.proof_url || uploadedProof.file_url || p.proof_url,
+                      proof_type: uploadedProof.proof_type || p.proof_type,
+                      latest_proof_caption: uploadedProof.caption || p.latest_proof_caption,
+                      latest_proof_upload_date: uploadedProof.uploaded_at || uploadedProof.created_at || p.latest_proof_upload_date,
+                      proof_count: Number(p.proof_count ?? 0) + 1,
                     }
                   : p
               )
