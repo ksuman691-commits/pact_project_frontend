@@ -13,9 +13,15 @@ const REPORT_REASON_LABELS = {
 
 export default function ReportedPactsTab() {
   const limit = 10;
-  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useGetMyReports(limit);
+  const query = useGetMyReports(limit);
+  const { data, isLoading, isFetchingNextPage = false } = query;
+  const hasNextPage = (query as any).hasNextPage || false;
+  const fetchNextPage = (query as any).fetchNextPage || (() => {});
 
-  const reportedPacts = data?.pages.flatMap((page) => page.data?.data || []) || [];
+  const reportedPacts = data?.pages?.flatMap((page) => {
+    const pageData = page?.data?.data || page?.data;
+    return Array.isArray(pageData) ? pageData : [];
+  }) || [];
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
