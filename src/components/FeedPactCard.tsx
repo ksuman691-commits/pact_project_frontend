@@ -151,13 +151,22 @@ export default function FeedPactCard({
   const media = useMemo(() => getMedia(pact), [pact]);
   const isExiting = exitDirection !== null;
   const resolvedDetailHref = detailHref || `/pacts/${pact.id}`;
-  const gesturesEnabled = enableGestures ?? Boolean(onVote);
-  const voteActionsVisible = showVoteActions ?? Boolean(onVote);
   const isParticipant = Array.isArray(pact.participants)
     ? pact.participants.some((participant: any) => participant.id === user?.id || participant.user_id === user?.id)
     : false;
+  const isCreator = Boolean(
+    user && (
+      pact.creator_id === user.id ||
+      pact.user_id === user.id ||
+      (pact.creator_username && pact.creator_username === user.username)
+    )
+  );
   const uploadAllowed = canUploadProof ?? Boolean(user && (pact.creator_id === user.id || isParticipant));
   const joinAllowed = Boolean(pact.can_join);
+  const canVote = Boolean(onVote) && !isCreator && !displayVote;
+  const gesturesEnabled = (enableGestures ?? Boolean(onVote)) && canVote;
+  const voteActionsVisible = (showVoteActions ?? Boolean(onVote)) && !isCreator;
+  const voteStatusLabel = displayVote === 'support' ? 'supported' : displayVote === 'skip' ? 'skipped' : null;
 
   const transformStyle = useMemo(() => {
     if (isExiting) {
@@ -184,7 +193,7 @@ export default function FeedPactCard({
   };
 
   const completeVote = async (direction: VoteDirection) => {
-    if (!onVote || isVoting || committedRef.current) return;
+    if (!canVote || !onVote || isVoting || committedRef.current) return;
     committedRef.current = true;
     setIsVoting(true);
 
@@ -515,7 +524,15 @@ export default function FeedPactCard({
                   </button>
                 )}
 
-                {voteActionsVisible && (
+                {voteStatusLabel && (
+                  <div className="pt-2">
+                    <p className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] ${voteStatusLabel === 'supported' ? 'border-emerald-400/70 bg-emerald-400/18 text-emerald-100' : 'border-rose-400/70 bg-rose-500/15 text-rose-200'}`}>
+                      {voteStatusLabel}
+                    </p>
+                  </div>
+                )}
+
+                {voteActionsVisible && !voteStatusLabel && (
                   <div className="flex gap-2 pt-2">
                     <button
                       type="button"

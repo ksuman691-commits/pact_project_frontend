@@ -80,6 +80,13 @@ interface PactFeedProps {
   // Force rebuild v2
 }
 
+const normalizeVote = (vote: unknown): string | null => {
+  if (typeof vote !== 'string') return null
+  if (vote === 'believe') return 'support'
+  if (vote === 'doubt') return 'skip'
+  return vote
+}
+
 const categoryLabelMap: Record<string, string> = {
   all: 'all pacts',
   trending: 'trending pacts',
@@ -149,7 +156,13 @@ export default function PactFeed({
               }
             }
           })
-        ).then(setPacts)
+        ).then((enrichedPacts) => {
+          const unvotedPacts = enrichedPacts.filter((pact: any) => {
+            const existingVote = normalizeVote(pact.user_vote ?? pact.userVote)
+            return existingVote !== 'support' && existingVote !== 'skip'
+          })
+          setPacts(unvotedPacts)
+        })
       } else if (!showMockData) {
         setPacts([])
       }
