@@ -41,7 +41,7 @@ export default function ReportedPactsTab() {
         <AlertCircle className="w-12 h-12 text-slate-300 mb-4" />
         <p className="text-slate-700 font-semibold text-center mb-1">No Reported Pacts</p>
         <p className="text-slate-600 text-sm text-center">
-          When you report pacts, they&apos;ll appear here for tracking.
+          {"When you report pacts, they'll appear here for tracking."}
         </p>
       </div>
     );
