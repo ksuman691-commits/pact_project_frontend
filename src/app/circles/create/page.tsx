@@ -62,7 +62,7 @@ export default function CreateCirclePage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 pb-20">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Back Button */}
           <button
