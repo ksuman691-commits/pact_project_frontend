@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { usePersonalizedFeed } from '@/hooks/useFeedQueries'
 import { useInView } from 'react-intersection-observer'
-import PactCardV2 from './PactCardV2'
+import PactCardMediaFirst from './PactCardMediaFirst'
 import { useRouter } from 'next/navigation'
 
 interface PactFeedV2Props {
@@ -115,7 +115,7 @@ export default function PactFeedV2({
       ) : (
         <>
           {pacts.map((pact) => (
-            <PactCardV2
+            <PactCardMediaFirst
               key={pact.id}
               pact={pact}
               userVote={userVotes[pact.id] || pact.user_vote}

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import TopNav from '@/components/TopNav'
 import WelcomeHeader from '@/components/WelcomeHeader'
 import PactWizardModal from '@/components/PactWizardModal'
-import PactFeed from '@/components/PactFeed'
+import PactFeedV2 from '@/components/PactFeedV2'
 import MemberSearchModal from '@/components/MemberSearchModal'
 import { useAuthStore } from '@/store/auth'
 import { useUnreadNotificationCount } from '@/hooks/useNotifications'
@@ -73,7 +73,7 @@ export default function FeedPageClient() {
       />
 
       <div className="max-w-md mx-auto bg-slate-50 pb-20 px-4" id="pact-feed-shell">
-        <PactFeed
+        <PactFeedV2
           showMockData={false}
           category={category}
           onBusyChange={setFeedBusy}
