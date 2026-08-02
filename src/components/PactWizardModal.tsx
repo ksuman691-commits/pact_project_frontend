@@ -49,7 +49,6 @@ function WizardContent({ onClose }: { onClose: () => void }) {
         category: data.category,
         start_date: data.startDate,
         end_date: data.endDate,
-        stake_amount: 0,
         min_participants: data.minParticipants,
         max_participants: data.maxParticipants,
         verification_method: data.verificationType,

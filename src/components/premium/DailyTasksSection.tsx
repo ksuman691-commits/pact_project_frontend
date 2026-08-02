@@ -45,7 +45,7 @@ export default function DailyTasksSection() {
             <div className="flex items-center gap-4 text-xs text-slate-600">
               <div className="flex items-center gap-1">
                 <AlertCircle className="w-3.5 h-3.5" />
-                <span>${pact.stake_amount}</span>
+                <span>Active today</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5" />

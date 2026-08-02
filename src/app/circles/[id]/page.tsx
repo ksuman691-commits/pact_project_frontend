@@ -133,7 +133,6 @@ export default function CircleDetailPage() {
       avatar: '👩',
       pactsCompleted: 12,
       winRate: 92,
-      rewardsEarned: 5200,
       streak: 12,
     },
     {
@@ -143,7 +142,6 @@ export default function CircleDetailPage() {
       avatar: '👨',
       pactsCompleted: 8,
       winRate: 85,
-      rewardsEarned: 3400,
       streak: 7,
     },
     {
@@ -153,7 +151,6 @@ export default function CircleDetailPage() {
       avatar: '🧔',
       pactsCompleted: 6,
       winRate: 78,
-      rewardsEarned: 2100,
       streak: 5,
     },
   ];
@@ -295,7 +292,6 @@ export default function CircleDetailPage() {
                     avatar: '👩',
                     pactsCompleted: 12,
                     winRate: 92,
-                    rewardsEarned: 5200,
                     streak: 12,
                   },
                   {
@@ -305,7 +301,6 @@ export default function CircleDetailPage() {
                     avatar: '👨',
                     pactsCompleted: 8,
                     winRate: 85,
-                    rewardsEarned: 3400,
                     streak: 7,
                   },
                   {
@@ -315,7 +310,6 @@ export default function CircleDetailPage() {
                     avatar: '🧔',
                     pactsCompleted: 6,
                     winRate: 78,
-                    rewardsEarned: 2100,
                     streak: 5,
                   },
                 ]}

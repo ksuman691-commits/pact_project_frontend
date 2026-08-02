@@ -9,10 +9,9 @@ export interface PactWizardData {
   category: string;
   categoryEmoji: string;
 
-  // Step 2: Duration & Stakes
+  // Step 2: Duration
   startDate: string;
   endDate: string;
-  stakeAmount: number;
   minParticipants: number;
   maxParticipants: number;
 
@@ -46,7 +45,6 @@ const initialData: PactWizardData = {
   categoryEmoji: '🎯',
   startDate: new Date().toISOString().split('T')[0],
   endDate: '',
-  stakeAmount: 0,
   minParticipants: 1,
   maxParticipants: 10,
   verificationType: 'photo',

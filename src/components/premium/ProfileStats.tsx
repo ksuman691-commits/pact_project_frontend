@@ -7,7 +7,6 @@ interface ProfileStatsProps {
   winRate: number;
   reputation: number;
   streak: number;
-  totalEarned: number;
 }
 
 export default function ProfileStats({
@@ -16,7 +15,6 @@ export default function ProfileStats({
   winRate,
   reputation,
   streak,
-  totalEarned,
 }: ProfileStatsProps) {
   return (
     <div className="grid grid-cols-2 gap-3">
@@ -63,14 +61,6 @@ export default function ProfileStats({
           <p className="text-xs font-semibold text-purple-700">Reputation</p>
         </div>
         <p className="text-2xl font-black text-purple-900">{reputation}</p>
-      </div>
-
-      {/* Money Earned */}
-      <div className="bg-amber-50 rounded-xl p-3 border border-amber-200">
-        <div className="flex items-center gap-2 mb-2">
-          <p className="text-xs font-semibold text-amber-700">Total Won</p>
-        </div>
-        <p className="text-2xl font-black text-amber-900">${totalEarned}</p>
       </div>
     </div>
   );

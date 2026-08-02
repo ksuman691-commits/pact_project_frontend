@@ -53,6 +53,10 @@ export default function FeedPageClient() {
     router.push('/notifications')
   }
 
+  const handleCreateDare = () => {
+    router.push('/dares')
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <WelcomeHeader
@@ -61,6 +65,7 @@ export default function FeedPageClient() {
         notificationCount={unreadCount}
         onNotificationsClick={handleNotificationsClick}
         onCreatePact={handleCreatePact}
+        onCreateDare={handleCreateDare}
         onSearch={() => setSearchModalOpen(true)}
       />
 
