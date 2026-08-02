@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, ArrowLeft, Sparkles } from 'lucide-react'
+import { Home, ArrowLeft } from 'lucide-react'
 
 const CATEGORIES = [
   { id: 'all', name: 'All', emoji: '✨', color: 'from-slate-700 to-slate-900' },
@@ -96,15 +96,7 @@ export default function TopNav({
                 </Link>
               )}
 
-              {!isActive('/dares') && (
-                <Link
-                  href="/dares"
-                  className="flex flex-col items-center gap-1 py-1 text-xs font-medium text-slate-400 transition-colors hover:text-[#A78BFA]"
-                >
-                  <Sparkles className="h-5 w-5" strokeWidth={2} />
-                  <span>Dares</span>
-                </Link>
-              )}
+
             </div>
           </div>
 

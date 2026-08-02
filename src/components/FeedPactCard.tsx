@@ -550,11 +550,11 @@ export default function FeedPactCard({
                   <div className="flex -space-x-2">
                     {supporterStack.length > 0 ? (
                       supporterStack.map((supporter: any) => (
-                        <div key={supporter.id} className="relative h-9 w-9 overflow-hidden rounded-full border border-white/20 bg-white/10">
+                        <div key={supporter.id} className={`relative h-9 w-9 overflow-hidden rounded-full border ${hasProof ? 'border-white/20 bg-white/10' : 'border-white bg-violet-100'}`}>
                           {supporter.avatar_url ? (
                             <Image src={supporter.avatar_url} alt={supporter.username} fill sizes="36px" className="object-cover" />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-white/10 text-xs font-black text-white">
+                            <div className={`flex h-full w-full items-center justify-center text-xs font-black ${hasProof ? 'bg-white/10 text-white' : 'bg-violet-100 text-violet-700'}`}>
                               {String(supporter.username || '?').charAt(0).toUpperCase()}
                             </div>
                           )}
@@ -562,14 +562,14 @@ export default function FeedPactCard({
                       ))
                     ) : (
                       <div className="flex -space-x-2">
-                        <div className="h-9 w-9 rounded-full border border-white/20 bg-white/12" />
-                        <div className="h-9 w-9 rounded-full border border-white/20 bg-white/10" />
-                        <div className="h-9 w-9 rounded-full border border-white/20 bg-white/8" />
+                        <div className={`h-9 w-9 rounded-full border ${hasProof ? 'border-white/20 bg-white/12' : 'border-white bg-violet-100/80'}`} />
+                        <div className={`h-9 w-9 rounded-full border ${hasProof ? 'border-white/20 bg-white/10' : 'border-white bg-violet-100/60'}`} />
+                        <div className={`h-9 w-9 rounded-full border ${hasProof ? 'border-white/20 bg-white/8' : 'border-white bg-violet-100/40'}`} />
                       </div>
                     )}
                   </div>
 
-                  <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/65">
+                  <p className={`text-xs font-medium uppercase tracking-[0.24em] ${hasProof ? 'text-white/65' : 'text-[#6B7280]'}`}>
                     recent supporters
                   </p>
                 </div>
@@ -579,14 +579,14 @@ export default function FeedPactCard({
                     type="button"
                     onClick={handleJoinPact}
                     disabled={isJoining}
-                    className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-[#EDE9FE] disabled:opacity-60"
+                    className={`inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition disabled:opacity-60 ${hasProof ? 'bg-white text-slate-950 hover:bg-[#EDE9FE]' : 'bg-[#14121F] text-white hover:bg-slate-800'}`}
                   >
                     {isJoining ? 'joining...' : 'join pact'}
                   </button>
                 )}
 
                 {!joinAllowed && pact.join_block_reason && (
-                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/50">
+                  <p className={`text-xs font-medium uppercase tracking-[0.2em] ${hasProof ? 'text-white/50' : 'text-[#6B7280]'}`}>
                     {JOIN_MESSAGES[pact.join_block_reason] ?? 'Joining is not available'}
                     {pact.join_block_reason === 'full' && pact.max_participants
                       ? ` — ${pact.max_participants}/${pact.max_participants} joined`
@@ -596,7 +596,15 @@ export default function FeedPactCard({
 
                 {voteStatusLabel && (
                   <div className="pt-2">
-                    <p className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] ${voteStatusLabel === 'supported' ? 'border-emerald-400/70 bg-emerald-400/18 text-emerald-100' : 'border-rose-400/70 bg-rose-500/15 text-rose-200'}`}>
+                    <p className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] ${
+                      voteStatusLabel === 'supported'
+                        ? hasProof
+                          ? 'border-emerald-400/70 bg-emerald-400/18 text-emerald-100'
+                          : 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                        : hasProof
+                          ? 'border-rose-400/70 bg-rose-500/15 text-rose-200'
+                          : 'border-rose-400 bg-rose-50 text-rose-600'
+                    }`}>
                       {voteStatusLabel}
                     </p>
                   </div>
@@ -607,7 +615,15 @@ export default function FeedPactCard({
                     <button
                       type="button"
                       onClick={() => void completeVote('skip')}
-                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${displayVote === 'skip' ? 'border-rose-400/70 bg-rose-500/15 text-rose-200' : 'border-white/12 bg-white/8 text-white hover:bg-white/12'}`}
+                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                        displayVote === 'skip'
+                          ? hasProof
+                            ? 'border-rose-400/70 bg-rose-500/15 text-rose-200'
+                            : 'border-rose-400 bg-rose-50 text-rose-600'
+                          : hasProof
+                            ? 'border-white/20 bg-white/10 text-white hover:bg-white/18'
+                            : 'border-[rgba(20,18,31,0.15)] bg-white text-[#14121F] hover:bg-[#F4F2FB]'
+                      }`}
                     >
                       <ArrowLeft className="h-4 w-4" />
                       skip
@@ -615,7 +631,15 @@ export default function FeedPactCard({
                     <button
                       type="button"
                       onClick={() => void completeVote('support')}
-                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${displayVote === 'support' ? 'border-emerald-400/70 bg-emerald-400/20 text-emerald-100' : 'border-emerald-400/50 bg-emerald-400/12 text-emerald-200 hover:bg-emerald-400/18'}`}
+                      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                        displayVote === 'support'
+                          ? hasProof
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-violet-700 text-white'
+                          : hasProof
+                            ? 'bg-emerald-500 text-white hover:bg-emerald-400'
+                            : 'bg-[#6D28D9] text-white hover:bg-[#7C3AED]'
+                      }`}
                     >
                       support
                       <ArrowRight className="h-4 w-4" />
