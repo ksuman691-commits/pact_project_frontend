@@ -40,17 +40,17 @@ export default function ProfileHero({
           className="relative cursor-pointer hover:opacity-80 transition"
           onClick={isOwnProfile ? onEdit : undefined}
         >
-          <div className="w-20 h-20 rounded-xl bg-emerald-100 p-0.5 flex-shrink-0">
+          <div className="w-20 h-20 rounded-[24px] bg-emerald-100 p-0.5 flex-shrink-0">
             {user.avatar ? (
               <Image
                 src={user.avatar}
                 alt={user.name}
                 width={80}
                 height={80}
-                className="w-full h-full rounded-lg object-cover"
+                className="w-full h-full rounded-[28px] object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg flex items-center justify-center text-2xl font-bold text-white">
+              <div className="w-full h-full bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-[28px] flex items-center justify-center text-2xl font-bold text-white">
                 {user.name.charAt(0)}
               </div>
             )}
@@ -60,8 +60,8 @@ export default function ProfileHero({
         {/* Info & Actions */}
         <div className="flex-1">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">{user.name}</h1>
-            <p className="text-sm text-slate-500">@{user.username}</p>
+            <h1 className="text-2xl font-bold text-[#14121F]">{user.name}</h1>
+            <p className="text-sm text-[#9CA3AF]">@{user.username}</p>
           </div>
 
           {/* Action Buttons */}
@@ -73,7 +73,7 @@ export default function ProfileHero({
                 {isOwnProfile ? (
                   <button
                     onClick={onEdit}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-medium hover:bg-emerald-100 transition"
+                    className="flex items-center gap-2 px-3 py-1.5 bg-[#EDE9FE] text-[#A78BFA] rounded-[28px] text-sm font-medium hover:bg-emerald-100 transition"
                   >
                     <Edit2 className="w-4 h-4" />
                     Edit
@@ -82,10 +82,10 @@ export default function ProfileHero({
                   <>
                     <button
                       onClick={onFollow}
-                      className={`flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg transition ${
+                      className={`flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-[28px] transition ${
                         isFollowing
-                          ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
-                          : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                          ? 'bg-[#EDE9FE] text-[#A78BFA] hover:bg-emerald-100'
+                          : 'bg-[#A78BFA] text-white hover:bg-emerald-700'
                       }`}
                     >
                       <UserPlus className="w-4 h-4" />
@@ -93,7 +93,7 @@ export default function ProfileHero({
                     </button>
                     <button
                       onClick={onMessage}
-                      className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition"
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium bg-[#EDE9FE] text-[#A78BFA] rounded-[28px] hover:bg-emerald-100 transition"
                     >
                       <MessageCircle className="w-4 h-4" />
                       Message

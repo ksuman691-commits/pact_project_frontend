@@ -65,7 +65,7 @@ export default function InviteMembersModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full shadow-xl">
+      <div className="bg-white rounded-[24px] max-w-md w-full shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <h2 className="text-xl font-bold text-gray-900">Invite Members</h2>
@@ -83,7 +83,7 @@ export default function InviteMembersModal({
             onClick={() => setTab('email')}
             className={`flex-1 px-4 py-3 font-medium text-sm border-b-2 transition ${
               tab === 'email'
-                ? 'text-emerald-600 border-emerald-600'
+                ? 'text-[#A78BFA] border-emerald-600'
                 : 'text-gray-600 border-transparent hover:text-gray-900'
             }`}
           >
@@ -94,7 +94,7 @@ export default function InviteMembersModal({
             onClick={() => setTab('link')}
             className={`flex-1 px-4 py-3 font-medium text-sm border-b-2 transition ${
               tab === 'link'
-                ? 'text-emerald-600 border-emerald-600'
+                ? 'text-[#A78BFA] border-emerald-600'
                 : 'text-gray-600 border-transparent hover:text-gray-900'
             }`}
           >
@@ -115,12 +115,12 @@ export default function InviteMembersModal({
                   value={emails}
                   onChange={(e) => setEmails(e.target.value)}
                   placeholder="Enter email addresses (one per line)&#10;user1@example.com&#10;user2@example.com"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-[28px] focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
                   rows={4}
                 />
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="bg-blue-50 border border-blue-200 rounded-[28px] p-3">
                 <p className="text-xs text-blue-900 font-medium">
                   Invites will be sent to {circleName}
                 </p>
@@ -129,14 +129,14 @@ export default function InviteMembersModal({
               <div className="flex gap-3">
                 <button
                   onClick={onClose}
-                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition"
+                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-[28px] font-medium hover:bg-gray-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSendInvites}
                   disabled={loading || !emails.trim()}
-                  className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2.5 bg-[#A78BFA] text-white rounded-[28px] font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Sending...' : 'Send Invites'}
                 </button>
@@ -151,7 +151,7 @@ export default function InviteMembersModal({
                 {!inviteLink ? (
                   <button
                     onClick={generateInviteLink}
-                    className="w-full px-4 py-3 border-2 border-dashed border-emerald-300 text-emerald-600 rounded-lg font-medium hover:bg-emerald-50 transition"
+                    className="w-full px-4 py-3 border-2 border-dashed border-emerald-300 text-[#A78BFA] rounded-[28px] font-medium hover:bg-[#EDE9FE] transition"
                   >
                     Generate Invite Link
                   </button>
@@ -161,11 +161,11 @@ export default function InviteMembersModal({
                       type="text"
                       value={inviteLink}
                       readOnly
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-[28px] bg-gray-50"
                     />
                     <button
                       onClick={copyLink}
-                      className="px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
+                      className="px-4 py-3 bg-[#A78BFA] text-white rounded-[28px] hover:bg-emerald-700 transition"
                     >
                       {copied ? (
                         <Check className="w-5 h-5" />
@@ -177,7 +177,7 @@ export default function InviteMembersModal({
                 )}
               </div>
 
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 space-y-2">
+              <div className="bg-green-50 border border-green-200 rounded-[28px] p-3 space-y-2">
                 <p className="text-xs text-green-900 font-medium">How it works:</p>
                 <ul className="text-xs text-green-800 space-y-1">
                   <li>• Share the link with anyone</li>
@@ -188,7 +188,7 @@ export default function InviteMembersModal({
 
               <button
                 onClick={onClose}
-                className="w-full px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition"
+                className="w-full px-4 py-2.5 border border-gray-300 text-gray-700 rounded-[28px] font-medium hover:bg-gray-50 transition"
               >
                 Done
               </button>

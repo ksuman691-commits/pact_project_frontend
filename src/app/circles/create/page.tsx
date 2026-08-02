@@ -74,7 +74,7 @@ export default function CreateCirclePage() {
 
           {/* Form Card */}
           <div className="card">
-            <h1 className="text-3xl font-bold text-slate-900 mb-8">Create a New Circle</h1>
+            <h1 className="text-3xl font-bold text-[#14121F] mb-8">Create a New Circle</h1>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Circle Name */}
@@ -89,7 +89,7 @@ export default function CreateCirclePage() {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   placeholder="e.g., Early Morning Runners"
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-blue-600"
                   required
                 />
               </div>
@@ -106,7 +106,7 @@ export default function CreateCirclePage() {
                   }
                   placeholder="Describe your circle..."
                   rows={4}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
               </div>
 
@@ -121,10 +121,10 @@ export default function CreateCirclePage() {
                       key={emoji}
                       type="button"
                       onClick={() => setFormData({ ...formData, icon_emoji: emoji })}
-                      className={`rounded-xl border px-0 py-3 text-xl transition ${
+                      className={`rounded-[24px] border px-0 py-3 text-xl transition ${
                         formData.icon_emoji === emoji
-                          ? 'border-emerald-500 bg-emerald-50 shadow-sm'
-                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                          ? 'border-emerald-500 bg-[#EDE9FE] shadow-[0_4px_12px_rgba(94,84,142,0.08)]'
+                          : 'border-[rgba(20,18,31,0.06)] bg-white hover:bg-[#F4F2FB]'
                       }`}
                       aria-label={`Choose ${emoji}`}
                     >
@@ -134,7 +134,7 @@ export default function CreateCirclePage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+              <div className="rounded-[24px] border border-emerald-100 bg-[#EDE9FE] px-4 py-3 text-sm text-emerald-900">
                 Every circle is joinable. Circle pacts stay visible only to members of that circle.
               </div>
 

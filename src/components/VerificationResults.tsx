@@ -55,7 +55,7 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-6">
+        <div className="rounded-[28px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-3">
               <div className="h-4 w-32 animate-pulse rounded-full bg-slate-200" />
@@ -69,13 +69,13 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="h-24 animate-pulse rounded-2xl border border-slate-200 bg-slate-50" />
-          <div className="h-24 animate-pulse rounded-2xl border border-slate-200 bg-slate-50" />
-          <div className="h-24 animate-pulse rounded-2xl border border-slate-200 bg-slate-50" />
-          <div className="h-24 animate-pulse rounded-2xl border border-slate-200 bg-slate-50" />
+          <div className="h-24 animate-pulse rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB]" />
+          <div className="h-24 animate-pulse rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB]" />
+          <div className="h-24 animate-pulse rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB]" />
+          <div className="h-24 animate-pulse rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB]" />
         </div>
 
-        <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-4">
+        <div className="rounded-[20px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] p-4">
           <div className="flex items-center justify-between gap-4">
             <div className="space-y-2">
               <div className="h-4 w-28 animate-pulse rounded-full bg-slate-200" />
@@ -90,7 +90,7 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
 
   if (error || !stats) {
     return (
-      <div className="rounded-xl bg-red-50 border border-red-200 p-6">
+      <div className="rounded-[24px] bg-red-50 border border-red-200 p-6">
         <div className="flex items-center gap-3 mb-2">
           <AlertCircle className="w-6 h-6 text-red-600" />
           <h3 className="font-semibold text-red-900">Unable to load verification results</h3>
@@ -118,7 +118,7 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
   return (
     <div className="space-y-4">
       {/* Main Confidence Card */}
-      <div className={`rounded-xl bg-gradient-to-br ${getConfidenceColor(stats.confidence_score)} p-6 text-white`}>
+      <div className={`rounded-[24px] bg-gradient-to-br ${getConfidenceColor(stats.confidence_score)} p-6 text-white`}>
         <div className="flex items-start justify-between mb-4">
           <div>
             <p className="text-sm font-medium text-white/90">Verified Confidence</p>
@@ -132,7 +132,7 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
         </p>
         <div className="w-full h-2 bg-white/30 rounded-full overflow-hidden">
           <div
-            className="h-full bg-white/90 transition-all"
+            className="h-full bg-white transition-all"
             style={{ width: `${stats.confidence_score}%` }}
           />
         </div>
@@ -158,7 +158,7 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
           label="Rule Adherence"
           score={stats.rule_adherence_score}
           weight={20}
-          color="bg-emerald-50 border-emerald-200"
+          color="bg-[#EDE9FE] border-emerald-200"
           textColor="text-emerald-900"
         />
         <ScoreCard
@@ -171,13 +171,13 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
       </div>
 
       {/* Verification Count */}
-      <div className="rounded-lg bg-slate-50 border border-slate-200 p-4 flex items-center justify-between">
+      <div className="rounded-[28px] bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] p-4 flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-600">Total Verifications</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{stats.total_verifications}</p>
+          <p className="text-sm font-medium text-[#6B7280]">Total Verifications</p>
+          <p className="text-2xl font-bold text-[#14121F] mt-1">{stats.total_verifications}</p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-slate-600 font-medium">COMMUNITY REVIEWED</p>
+          <p className="text-xs text-[#6B7280] font-medium">COMMUNITY REVIEWED</p>
           <p className="text-sm text-slate-700 mt-2">
             {stats.total_verifications === 0
               ? 'Awaiting reviews'
@@ -206,10 +206,10 @@ function ScoreCard({
   textColor: string;
 }) {
   return (
-    <div className={`rounded-lg border ${color} p-4`}>
+    <div className={`rounded-[28px] border ${color} p-4`}>
       <div className="flex items-center justify-between mb-2">
         <p className={`text-sm font-semibold ${textColor}`}>{label}</p>
-        <span className="text-xs font-medium text-slate-600">{weight}% weight</span>
+        <span className="text-xs font-medium text-[#6B7280]">{weight}% weight</span>
       </div>
       <p className={`text-2xl font-bold ${textColor}`}>{Math.round(score)}%</p>
       <div className="w-full h-1.5 bg-slate-300/50 rounded-full overflow-hidden mt-2">

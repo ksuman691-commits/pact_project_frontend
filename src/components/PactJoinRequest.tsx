@@ -80,7 +80,7 @@ export default function PactJoinRequest({
 
   if (isCreator) {
     return (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-blue-50 border border-blue-200 rounded-[28px] p-4">
         <p className="text-sm text-blue-800 font-medium">👑 You are the creator of this pact</p>
       </div>
     );
@@ -91,7 +91,7 @@ export default function PactJoinRequest({
       <button
         onClick={handleLeavePact}
         disabled={loading}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 rounded-lg font-medium transition disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 rounded-[28px] font-medium transition disabled:opacity-50"
       >
         <LogOut size={18} />
         {loading ? 'Leaving...' : 'Leave Pact'}
@@ -104,13 +104,13 @@ export default function PactJoinRequest({
       {!showRequestForm ? (
         <button
           onClick={() => (canJoinDirectly ? handleDirectJoin() : setShowRequestForm(true))}
-          className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition flex items-center justify-center gap-2"
+          className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-[28px] font-medium transition flex items-center justify-center gap-2"
         >
           <MessageSquare size={18} />
           Join Pact
         </button>
       ) : (
-        <div className="space-y-3 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="space-y-3 bg-blue-50 border border-blue-200 rounded-[28px] p-4">
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -137,7 +137,7 @@ export default function PactJoinRequest({
               Cancel
             </button>
           </div>
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-[#6B7280]">
             Your request will be reviewed by the pact creator
           </p>
         </div>

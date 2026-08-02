@@ -99,7 +99,7 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, pact }) => {
               {/* Share Image Preview */}
               <div 
                 ref={shareImageRef}
-                className="w-full bg-gradient-to-b from-yellow-50 to-amber-50 rounded-2xl p-6 text-center shadow-sm border border-gray-200"
+                className="w-full bg-gradient-to-b from-yellow-50 to-amber-50 rounded-[24px] p-6 text-center shadow-[0_4px_12px_rgba(94,84,142,0.08)] border border-gray-200"
                 style={{ backgroundColor: '#f5ede4' }}
               >
                 {/* Header */}
@@ -121,19 +121,19 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, pact }) => {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="bg-white rounded-xl p-3 border border-gray-200">
+                  <div className="bg-white rounded-[24px] p-3 border border-gray-200">
                     <p className="text-xs text-gray-600 font-medium mb-1">Confidence</p>
-                    <p className="text-2xl font-bold text-emerald-600">{pact.confidence}%</p>
+                    <p className="text-2xl font-bold text-[#A78BFA]">{pact.confidence}%</p>
                   </div>
-                  <div className="bg-white rounded-xl p-3 border border-gray-200">
+                  <div className="bg-white rounded-[24px] p-3 border border-gray-200">
                     <p className="text-xs text-gray-600 font-medium mb-1">Duration</p>
                     <p className="text-2xl font-bold text-blue-600">{pact.daysTotal}d</p>
                   </div>
-                  <div className="bg-white rounded-xl p-3 border border-gray-200">
+                  <div className="bg-white rounded-[24px] p-3 border border-gray-200">
                     <p className="text-xs text-gray-600 font-medium mb-1">Supporting</p>
-                    <p className="text-2xl font-bold text-emerald-600">{(pact.believers / 1000).toFixed(1)}k</p>
+                    <p className="text-2xl font-bold text-[#A78BFA]">{(pact.believers / 1000).toFixed(1)}k</p>
                   </div>
-                  <div className="bg-white rounded-xl p-3 border border-gray-200">
+                  <div className="bg-white rounded-[24px] p-3 border border-gray-200">
                     <p className="text-xs text-gray-600 font-medium mb-1">Skipped</p>
                     <p className="text-2xl font-bold text-red-600">{(pact.doubters / 1000).toFixed(1)}k</p>
                   </div>
@@ -171,7 +171,7 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, pact }) => {
                   link.click();
                 }
               }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-all shadow-md hover:shadow-lg mb-4"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#EDE9FE]0 hover:bg-[#A78BFA] text-white font-semibold rounded-[24px] transition-all shadow-md hover:shadow-lg mb-4"
             >
               <Download className="w-4 h-4" />
               Download Image

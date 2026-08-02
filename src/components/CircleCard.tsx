@@ -24,7 +24,7 @@ interface CircleCardProps {
 export default function CircleCard({ circle, onJoin }: CircleCardProps) {
   return (
     <Link href={`/circles/${circle.id}`}>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all cursor-pointer h-full">
+        <div className="bg-white rounded-[24px] border border-gray-100 shadow-[0_4px_12px_rgba(94,84,142,0.08)] hover:shadow-md hover:border-emerald-200 transition-all cursor-pointer h-full">
           {/* Circle Header */}
           <div className="p-6 border-b border-gray-100">
             <div className="flex items-start justify-between gap-4">
@@ -53,11 +53,11 @@ export default function CircleCard({ circle, onJoin }: CircleCardProps) {
                         {circle.ownerUsername.charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <p className="text-xs font-medium text-slate-600">Owner @{circle.ownerUsername}</p>
+                    <p className="text-xs font-medium text-[#6B7280]">Owner @{circle.ownerUsername}</p>
                   </div>
                 )}
               </div>
-              <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
+              <div className="flex-shrink-0 w-12 h-12 rounded-[28px] bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
                 {circle.avatar || circle.name.charAt(0)}
               </div>
             </div>
@@ -68,7 +68,7 @@ export default function CircleCard({ circle, onJoin }: CircleCardProps) {
             <div className="flex flex-col min-w-0">
               <p className="text-xs text-gray-600 font-medium mb-2 uppercase tracking-wide">Members</p>
               <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <Users className="w-4 h-4 text-[#A78BFA] flex-shrink-0" />
                 <span className="text-lg font-bold text-gray-900">
                   {circle.memberCount}
                 </span>
@@ -108,7 +108,7 @@ export default function CircleCard({ circle, onJoin }: CircleCardProps) {
           {/* Footer Action */}
           <div className="px-6 py-4">
             {circle.isJoined ? (
-              <button className="w-full flex items-center justify-between px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg font-medium text-sm hover:bg-emerald-100 transition">
+              <button className="w-full flex items-center justify-between px-4 py-2 bg-[#EDE9FE] text-emerald-700 rounded-[28px] font-medium text-sm hover:bg-emerald-100 transition">
                 <span>Joined</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -118,7 +118,7 @@ export default function CircleCard({ circle, onJoin }: CircleCardProps) {
                   e.preventDefault();
                   onJoin?.(circle.id);
                 }}
-                className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium text-sm hover:bg-emerald-700 transition"
+                className="w-full px-4 py-2 bg-[#A78BFA] text-white rounded-[28px] font-medium text-sm hover:bg-emerald-700 transition"
               >
                 Join Circle
               </button>

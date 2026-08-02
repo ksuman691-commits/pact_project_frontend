@@ -47,10 +47,10 @@ export default function ProfileStats({
         <button
           key={idx}
           onClick={config.onClick}
-          className="flex-1 p-4 bg-white border border-emerald-100 rounded-xl hover:border-emerald-300 hover:bg-emerald-50 transition group"
+          className="flex-1 p-4 bg-white border border-emerald-100 rounded-[24px] hover:border-emerald-300 hover:bg-[#EDE9FE] transition group"
         >
-          <p className="text-2xl font-bold text-emerald-600 group-hover:text-emerald-700">{config.value}</p>
-          <p className="text-xs font-medium text-slate-600 mt-1">{config.label}</p>
+          <p className="text-2xl font-bold text-[#A78BFA] group-hover:text-emerald-700">{config.value}</p>
+          <p className="text-xs font-medium text-[#6B7280] mt-1">{config.label}</p>
         </button>
       ))}
     </div>

@@ -40,7 +40,7 @@ export default function AchievementsBadges({ achievements }: AchievementsBadgesP
             return (
               <div
                 key={achievement.id}
-                className={`p-4 rounded-xl border-2 text-center transition hover:shadow-lg cursor-pointer group ${config.bg} ${config.border}`}
+                className={`p-4 rounded-[24px] border-2 text-center transition hover:shadow-lg cursor-pointer group ${config.bg} ${config.border}`}
               >
                 <div className="text-4xl mb-2">{achievement.icon}</div>
                 <p className="text-xs font-bold text-gray-900">{achievement.name}</p>
@@ -73,7 +73,7 @@ export default function AchievementsBadges({ achievements }: AchievementsBadgesP
               return (
                 <div
                   key={achievement.id}
-                  className={`p-4 rounded-xl border-2 text-center transition opacity-60 hover:opacity-80 ${config.bg} ${config.border}`}
+                  className={`p-4 rounded-[24px] border-2 text-center transition opacity-60 hover:opacity-80 ${config.bg} ${config.border}`}
                   title={achievement.description}
                 >
                   <div className="relative">
@@ -87,7 +87,7 @@ export default function AchievementsBadges({ achievements }: AchievementsBadgesP
                     <div className="mt-2">
                       <div className="w-full bg-gray-300 rounded-full h-2">
                         <div
-                          className="bg-emerald-500 h-2 rounded-full transition-all"
+                          className="bg-[#EDE9FE]0 h-2 rounded-full transition-all"
                           style={{ width: `${achievement.progress}%` }}
                         />
                       </div>

@@ -70,7 +70,7 @@ export default function EditProfilePage() {
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
           <button
             onClick={() => router.back()}
-            className="p-2 hover:bg-gray-100 rounded-lg transition"
+            className="p-2 hover:bg-gray-100 rounded-[28px] transition"
           >
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
@@ -80,27 +80,27 @@ export default function EditProfilePage() {
 
       {/* Form */}
       <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-[24px] p-8 shadow-[0_4px_12px_rgba(94,84,142,0.08)] border border-gray-100">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Avatar Upload */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">Profile Picture</label>
               <div className="flex items-center gap-4">
-                <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-emerald-300 to-blue-300 flex items-center justify-center text-white font-bold text-3xl">
+                <div className="w-24 h-24 rounded-[24px] bg-gradient-to-br from-emerald-300 to-blue-300 flex items-center justify-center text-white font-bold text-3xl">
                   {avatarPreview ? (
                     <Image
                       src={avatarPreview}
                       alt="Profile"
                       width={96}
                       height={96}
-                      className="w-24 h-24 rounded-xl object-cover"
+                      className="w-24 h-24 rounded-[24px] object-cover"
                     />
                   ) : (
                     formData.fullName.charAt(0)
                   )}
                 </div>
                 <div>
-                  <label className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition cursor-pointer">
+                  <label className="inline-flex items-center gap-2 px-4 py-2 bg-[#A78BFA] text-white rounded-[28px] font-medium hover:bg-emerald-700 transition cursor-pointer">
                     <Upload className="w-4 h-4" />
                     {avatarUploading ? 'Uploading...' : 'Upload Photo'}
                     <input
@@ -124,7 +124,7 @@ export default function EditProfilePage() {
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 placeholder="Your full name"
               />
             </div>
@@ -157,7 +157,7 @@ export default function EditProfilePage() {
                 name="email"
                 value={formData.email}
                 disabled
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 focus:outline-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-[28px] bg-gray-50 text-gray-600 focus:outline-none"
                 placeholder="your@email.com"
               />
               <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
@@ -172,7 +172,7 @@ export default function EditProfilePage() {
                 onChange={handleChange}
                 maxLength={160}
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
                 placeholder="Tell us about yourself..."
               />
               <p className="text-xs text-gray-500 mt-1">{formData.bio.length}/160 characters</p>
@@ -183,14 +183,14 @@ export default function EditProfilePage() {
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition"
+                className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-[28px] font-medium hover:bg-gray-50 transition"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50"
+                className="flex-1 px-6 py-3 bg-[#A78BFA] text-white rounded-[28px] font-medium hover:bg-emerald-700 transition disabled:opacity-50"
               >
                 {loading ? 'Saving...' : 'Save Changes'}
               </button>
@@ -199,10 +199,10 @@ export default function EditProfilePage() {
         </div>
 
         {/* Danger Zone */}
-        <div className="mt-8 bg-red-50 border border-red-200 rounded-2xl p-8">
+        <div className="mt-8 bg-red-50 border border-red-200 rounded-[24px] p-8">
           <h3 className="text-lg font-bold text-red-900 mb-4">Danger Zone</h3>
           <p className="text-red-800 text-sm mb-4">These actions cannot be undone</p>
-          <button className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition">
+          <button className="px-4 py-2 bg-red-600 text-white rounded-[28px] font-medium hover:bg-red-700 transition">
             Delete Account
           </button>
         </div>

@@ -51,7 +51,7 @@ export default function PactParticipants({ pactId, canViewParticipants = true }:
 
   if (!canViewParticipants) {
     return (
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+      <div className="bg-amber-50 border border-amber-200 rounded-[28px] p-4 flex items-start gap-3">
         <AlertCircle size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-medium text-amber-800">Private Pact</p>
@@ -62,12 +62,12 @@ export default function PactParticipants({ pactId, canViewParticipants = true }:
   }
 
   if (loading) {
-    return <div className="text-center py-8 text-slate-500">Loading participants...</div>;
+    return <div className="text-center py-8 text-[#9CA3AF]">Loading participants...</div>;
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div className="bg-red-50 border border-red-200 rounded-[28px] p-4">
         <p className="text-sm text-red-700">{error}</p>
       </div>
     );
@@ -76,24 +76,24 @@ export default function PactParticipants({ pactId, canViewParticipants = true }:
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
-        <Users size={20} className="text-slate-600" />
-        <h3 className="text-lg font-semibold text-slate-900">
+        <Users size={20} className="text-[#6B7280]" />
+        <h3 className="text-lg font-semibold text-[#14121F]">
           Participants ({participants.length})
         </h3>
       </div>
 
       {participants.length === 0 ? (
-        <p className="text-sm text-slate-500 text-center py-8">No participants yet</p>
+        <p className="text-sm text-[#9CA3AF] text-center py-8">No participants yet</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {participants.map((participant) => (
             <div
               key={participant.participant_id}
-              className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition"
+              className="flex items-center justify-between p-3 bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] rounded-[28px] hover:bg-[#FAF9FE] transition"
             >
               <div className="flex-1">
-                <p className="font-medium text-slate-900">{participant.full_name}</p>
-                <p className="text-xs text-slate-600">@{participant.username}</p>
+                <p className="font-medium text-[#14121F]">{participant.full_name}</p>
+                <p className="text-xs text-[#6B7280]">@{participant.username}</p>
               </div>
               <div className="text-right">
                 <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded capitalize">

@@ -522,7 +522,7 @@ export default function FeedPactCard({
                 </Link>
 
                 {activeProof && (
-                  <div className="mb-3 rounded-2xl border border-white/10 bg-black/20 px-3.5 py-2.5 backdrop-blur-md">
+                  <div className="mb-3 rounded-[24px] border border-white/10 bg-black/20 px-3.5 py-2.5 backdrop-blur-md">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/60">
@@ -576,7 +576,7 @@ export default function FeedPactCard({
                     type="button"
                     onClick={handleJoinPact}
                     disabled={isJoining}
-                    className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-50 disabled:opacity-60"
+                    className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-[#EDE9FE] disabled:opacity-60"
                   >
                     {isJoining ? 'joining...' : 'join pact'}
                   </button>
@@ -672,7 +672,7 @@ export default function FeedPactCard({
                     key={option.value}
                     type="button"
                     onClick={() => void handleReport(option.value)}
-                    className="flex w-full items-center justify-between gap-4 rounded-2xl border border-white/8 bg-white/5 px-4 py-4 text-left transition hover:border-red-400/40 hover:bg-white/8"
+                    className="flex w-full items-center justify-between gap-4 rounded-[24px] border border-white/8 bg-white/5 px-4 py-4 text-left transition hover:border-red-400/40 hover:bg-white/8"
                   >
                     <span className="min-w-0">
                       <span className="block text-sm font-bold text-white">{option.title}</span>

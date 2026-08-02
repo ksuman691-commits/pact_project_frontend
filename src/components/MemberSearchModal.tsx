@@ -34,7 +34,7 @@ export default function MemberSearchModal({ isOpen, onClose }: MemberSearchModal
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-start justify-center pt-20">
-        <div className="bg-white rounded-2xl w-full max-w-md shadow-lg border border-gray-200 mx-4 max-h-96 flex flex-col">
+        <div className="bg-white rounded-[24px] w-full max-w-md shadow-lg border border-gray-200 mx-4 max-h-96 flex flex-col">
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-100">
             <Search className="w-5 h-5 text-gray-400" />
@@ -48,7 +48,7 @@ export default function MemberSearchModal({ isOpen, onClose }: MemberSearchModal
             />
             <button
               onClick={onClose}
-              className="p-1 hover:bg-gray-100 rounded-lg transition"
+              className="p-1 hover:bg-gray-100 rounded-[28px] transition"
             >
               <X className="w-4 h-4 text-gray-600" />
             </button>
@@ -58,7 +58,7 @@ export default function MemberSearchModal({ isOpen, onClose }: MemberSearchModal
           <div className="flex-1 overflow-y-auto">
             {isLoading && searchQuery ? (
               <div className="flex items-center justify-center py-8">
-                <Loader className="w-5 h-5 text-emerald-600 animate-spin" />
+                <Loader className="w-5 h-5 text-[#A78BFA] animate-spin" />
               </div>
             ) : searchQuery.length === 0 ? (
               <div className="flex items-center justify-center py-8 text-gray-500">

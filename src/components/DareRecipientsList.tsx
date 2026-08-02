@@ -20,8 +20,8 @@ const STATUS_CONFIG = {
   accepted: {
     label: 'Accepted',
     icon: CheckCircle2,
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50',
+    color: 'text-[#A78BFA]',
+    bgColor: 'bg-[#EDE9FE]',
   },
   declined: {
     label: 'Declined',
@@ -32,8 +32,8 @@ const STATUS_CONFIG = {
   completed: {
     label: 'Completed',
     icon: CheckCircle2,
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50',
+    color: 'text-[#A78BFA]',
+    bgColor: 'bg-[#EDE9FE]',
   },
   failed: {
     label: 'Failed',
@@ -48,7 +48,7 @@ export default function DareRecipientsList({ recipients, isLoading }: DareRecipi
     return (
       <div className="space-y-3">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-12 bg-slate-200 rounded-lg animate-pulse" />
+          <div key={i} className="h-12 bg-slate-200 rounded-[28px] animate-pulse" />
         ))}
       </div>
     );
@@ -57,7 +57,7 @@ export default function DareRecipientsList({ recipients, isLoading }: DareRecipi
   if (!recipients || recipients.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-slate-600">No recipients yet</p>
+        <p className="text-[#6B7280]">No recipients yet</p>
       </div>
     );
   }
@@ -74,7 +74,7 @@ export default function DareRecipientsList({ recipients, isLoading }: DareRecipi
           : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || recipient.user_id}`;
 
         return (
-          <div key={recipient.id} className={`flex items-center gap-3 p-3 rounded-lg border border-slate-200 ${statusConfig.bgColor}`}>
+          <div key={recipient.id} className={`flex items-center gap-3 p-3 rounded-[28px] border border-[rgba(20,18,31,0.06)] ${statusConfig.bgColor}`}>
             <div className="relative w-10 h-10 rounded-full bg-slate-300 flex-shrink-0 overflow-hidden">
               <Image
                 src={avatarSrc}
@@ -87,17 +87,17 @@ export default function DareRecipientsList({ recipients, isLoading }: DareRecipi
                 }}
               />
               {!avatarSrc || avatarSrc.includes('dicebear') ? (
-                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-slate-600">
+                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-[#6B7280]">
                   {(user?.username || '?')[0].toUpperCase()}
                 </div>
               ) : null}
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-900 truncate">
+              <p className="text-sm font-semibold text-[#14121F] truncate">
                 {user?.full_name || user?.username || 'Unknown User'}
               </p>
-              <p className="text-xs text-slate-600">@{user?.username || 'user'}</p>
+              <p className="text-xs text-[#6B7280]">@{user?.username || 'user'}</p>
             </div>
 
             <div className="flex flex-col items-end gap-1">
@@ -106,7 +106,7 @@ export default function DareRecipientsList({ recipients, isLoading }: DareRecipi
                 {statusConfig.label}
               </div>
               {recipient.responded_at && (
-                <p className="text-xs text-slate-500">{new Date(recipient.responded_at).toLocaleDateString()}</p>
+                <p className="text-xs text-[#9CA3AF]">{new Date(recipient.responded_at).toLocaleDateString()}</p>
               )}
             </div>
           </div>

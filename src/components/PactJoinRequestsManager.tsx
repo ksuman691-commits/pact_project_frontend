@@ -71,12 +71,12 @@ export default function PactJoinRequestsManager({
   if (!isCreator || !user) return null;
 
   if (loading) {
-    return <div className="text-center py-4 text-slate-500">Loading requests...</div>;
+    return <div className="text-center py-4 text-[#9CA3AF]">Loading requests...</div>;
   }
 
   if (requests.length === 0) {
     return (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-blue-50 border border-blue-200 rounded-[28px] p-4">
         <p className="text-sm text-blue-700">✓ No pending join requests</p>
       </div>
     );
@@ -85,8 +85,8 @@ export default function PactJoinRequestsManager({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
-        <Clock size={20} className="text-slate-600" />
-        <h3 className="text-lg font-semibold text-slate-900">
+        <Clock size={20} className="text-[#6B7280]" />
+        <h3 className="text-lg font-semibold text-[#14121F]">
           Join Requests ({requests.length})
         </h3>
       </div>
@@ -95,10 +95,10 @@ export default function PactJoinRequestsManager({
         {requests.map((request) => (
           <div
             key={request.id}
-            className="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3"
+            className="p-4 bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] rounded-[28px] space-y-3"
           >
             <div>
-              <p className="font-medium text-slate-900">
+              <p className="font-medium text-[#14121F]">
                 {request.user?.full_name} (@{request.user?.username})
               </p>
               {request.request_message && (

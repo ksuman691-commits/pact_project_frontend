@@ -39,7 +39,7 @@ export default function PactWizardStep5() {
       {/* Summary Cards */}
       <div className="space-y-4">
         {/* Basic Info */}
-        <div className="p-6 border border-gray-200 rounded-lg bg-white">
+        <div className="p-6 border border-gray-200 rounded-[28px] bg-white">
           <div className="flex items-start gap-4">
             <div className="text-3xl">{data.categoryEmoji}</div>
             <div className="flex-1">
@@ -51,7 +51,7 @@ export default function PactWizardStep5() {
 
         {/* Duration & Stakes */}
         <div className="grid gap-4" style={{ gridTemplateColumns: '1fr' }}>
-          <div className="p-4 border border-gray-200 rounded-lg bg-white">
+          <div className="p-4 border border-gray-200 rounded-[28px] bg-white">
             <div className="flex items-center gap-2 text-gray-600 text-sm mb-1">
               <Calendar className="w-4 h-4" />
               Duration
@@ -64,7 +64,7 @@ export default function PactWizardStep5() {
         </div>
 
         {/* Participants */}
-        <div className="p-4 border border-gray-200 rounded-lg bg-white">
+        <div className="p-4 border border-gray-200 rounded-[28px] bg-white">
           <div className="flex items-center gap-2 text-gray-600 text-sm mb-2">
             <Users className="w-4 h-4" />
             Participants
@@ -75,7 +75,7 @@ export default function PactWizardStep5() {
         </div>
 
         {/* Verification */}
-        <div className="p-4 border border-gray-200 rounded-lg bg-white">
+        <div className="p-4 border border-gray-200 rounded-[28px] bg-white">
           <div className="flex items-center gap-2 text-gray-600 text-sm mb-3">
             <Check className="w-4 h-4" />
             Verification Method
@@ -97,7 +97,7 @@ export default function PactWizardStep5() {
         </div>
 
         {/* Visibility */}
-        <div className="p-4 border border-gray-200 rounded-lg bg-white">
+        <div className="p-4 border border-gray-200 rounded-[28px] bg-white">
           <div className="flex items-center gap-2 text-gray-600 text-sm mb-2">
             {data.visibility === 'public' ? (
               <Eye className="w-4 h-4" />
@@ -111,7 +111,7 @@ export default function PactWizardStep5() {
       </div>
 
       {/* Terms Agreement */}
-      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+      <div className="p-4 bg-blue-50 border border-blue-200 rounded-[28px] space-y-3">
         <p className="text-sm font-semibold text-blue-900">By creating this pact, you agree to:</p>
         <ul className="text-sm text-blue-800 space-y-2">
           <li className="flex gap-2">
@@ -126,7 +126,7 @@ export default function PactWizardStep5() {
       </div>
 
       {/* Ready to Create */}
-      <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
+      <div className="p-4 bg-[#EDE9FE] border border-emerald-200 rounded-[28px] text-center">
         <p className="text-sm text-emerald-800">
           You are ready to create your pact. Click the create button below to get started.
         </p>

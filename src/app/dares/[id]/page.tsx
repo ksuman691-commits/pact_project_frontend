@@ -59,7 +59,7 @@ export default function DareDetailPage() {
     return (
       <div className="min-h-screen bg-white">
         <div className="max-w-2xl mx-auto px-4 py-6">
-          <div className="h-96 bg-slate-200 rounded-lg animate-pulse" />
+          <div className="h-96 bg-slate-200 rounded-[28px] animate-pulse" />
         </div>
       </div>
     );
@@ -69,7 +69,7 @@ export default function DareDetailPage() {
     return (
       <div className="min-h-screen bg-white">
         <div className="max-w-2xl mx-auto px-4 py-6">
-          <p className="text-slate-600">Dare not found</p>
+          <p className="text-[#6B7280]">Dare not found</p>
         </div>
       </div>
     );
@@ -85,12 +85,12 @@ export default function DareDetailPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-white border-b border-slate-200">
+      <div className="sticky top-0 z-40 bg-white border-b border-[rgba(20,18,31,0.06)]">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/dares" className="p-2 hover:bg-slate-100 rounded-lg">
+          <Link href="/dares" className="p-2 hover:bg-[#FAF9FE] rounded-[28px]">
             <ChevronLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-lg font-bold text-slate-900">Dare Details</h1>
+          <h1 className="text-lg font-bold text-[#14121F]">Dare Details</h1>
         </div>
       </div>
 
@@ -111,50 +111,50 @@ export default function DareDetailPage() {
             />
           </div>
           <div>
-            <p className="font-semibold text-slate-900">{dare.creator_full_name || dare.creator_username}</p>
-            <p className="text-sm text-slate-600">@{dare.creator_username}</p>
+            <p className="font-semibold text-[#14121F]">{dare.creator_full_name || dare.creator_username}</p>
+            <p className="text-sm text-[#6B7280]">@{dare.creator_username}</p>
           </div>
         </div>
 
         {/* Dare Title and Description */}
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">{dare.title}</h2>
+          <h2 className="text-2xl font-bold text-[#14121F] mb-2">{dare.title}</h2>
           <p className="text-slate-700 leading-relaxed">{dare.description}</p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-emerald-50 rounded-lg p-4">
-            <p className="text-xs font-semibold text-slate-600 uppercase mb-1">Recipients</p>
-            <p className="text-2xl font-bold text-emerald-600">{dare.recipientCount || 0}</p>
+          <div className="bg-[#EDE9FE] rounded-[28px] p-4">
+            <p className="text-xs font-semibold text-[#6B7280] uppercase mb-1">Recipients</p>
+            <p className="text-2xl font-bold text-[#A78BFA]">{dare.recipientCount || 0}</p>
           </div>
-          <div className="bg-emerald-50 rounded-lg p-4">
-            <p className="text-xs font-semibold text-slate-600 uppercase mb-1">Accepted</p>
-            <p className="text-2xl font-bold text-emerald-600">{dare.acceptedCount || 0}</p>
+          <div className="bg-[#EDE9FE] rounded-[28px] p-4">
+            <p className="text-xs font-semibold text-[#6B7280] uppercase mb-1">Accepted</p>
+            <p className="text-2xl font-bold text-[#A78BFA]">{dare.acceptedCount || 0}</p>
           </div>
-          <div className="bg-emerald-50 rounded-lg p-4">
-            <p className="text-xs font-semibold text-slate-600 uppercase mb-1">Completed</p>
-            <p className="text-2xl font-bold text-emerald-600">{dare.completedCount || 0}</p>
+          <div className="bg-[#EDE9FE] rounded-[28px] p-4">
+            <p className="text-xs font-semibold text-[#6B7280] uppercase mb-1">Completed</p>
+            <p className="text-2xl font-bold text-[#A78BFA]">{dare.completedCount || 0}</p>
           </div>
-          <div className="bg-red-50 rounded-lg p-4">
-            <p className="text-xs font-semibold text-slate-600 uppercase mb-1">Failed</p>
+          <div className="bg-red-50 rounded-[28px] p-4">
+            <p className="text-xs font-semibold text-[#6B7280] uppercase mb-1">Failed</p>
             <p className="text-2xl font-bold text-red-600">{dare.failedCount || 0}</p>
           </div>
         </div>
 
         {/* Timeline Info */}
-        <div className="space-y-2 bg-slate-50 rounded-lg p-4">
+        <div className="space-y-2 bg-[#F4F2FB] rounded-[28px] p-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-slate-600">Respond By:</span>
-            <span className="text-sm text-slate-900">{new Date(dare.respond_by_date).toLocaleDateString()}</span>
+            <span className="text-sm font-semibold text-[#6B7280]">Respond By:</span>
+            <span className="text-sm text-[#14121F]">{new Date(dare.respond_by_date).toLocaleDateString()}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-slate-600">Complete By:</span>
-            <span className="text-sm text-slate-900">{new Date(dare.complete_by_date).toLocaleDateString()}</span>
+            <span className="text-sm font-semibold text-[#6B7280]">Complete By:</span>
+            <span className="text-sm text-[#14121F]">{new Date(dare.complete_by_date).toLocaleDateString()}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-slate-600">Verification:</span>
-            <span className="text-sm text-slate-900 capitalize">{dare.verification_method || 'photo'}</span>
+            <span className="text-sm font-semibold text-[#6B7280]">Verification:</span>
+            <span className="text-sm text-[#14121F] capitalize">{dare.verification_method || 'photo'}</span>
           </div>
         </div>
 
@@ -165,7 +165,7 @@ export default function DareDetailPage() {
               <button
                 onClick={handleClaim}
                 disabled={claimMutation.isPending}
-                className="col-span-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 font-semibold"
+                className="col-span-2 px-6 py-3 bg-[#A78BFA] text-white rounded-[28px] hover:bg-emerald-700 disabled:opacity-50 font-semibold"
               >
                 {claimMutation.isPending ? 'Claiming...' : 'Claim Dare'}
               </button>
@@ -173,14 +173,14 @@ export default function DareDetailPage() {
               <>
                 <button
                   onClick={() => setProofModalOpen(true)}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold"
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-[#A78BFA] text-white rounded-[28px] hover:bg-emerald-700 font-semibold"
                 >
                   <Upload className="w-4 h-4" />
                   Submit Proof
                 </button>
                 <button
                   onClick={() => setVerifyModalOpen(true)}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-[28px] hover:bg-blue-700 font-semibold"
                 >
                   <Shield className="w-4 h-4" />
                   Verify
@@ -191,14 +191,14 @@ export default function DareDetailPage() {
                 <button
                   onClick={handleAccept}
                   disabled={acceptMutation.isPending}
-                  className="px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 font-semibold"
+                  className="px-4 py-3 bg-[#A78BFA] text-white rounded-[28px] hover:bg-emerald-700 disabled:opacity-50 font-semibold"
                 >
                   {acceptMutation.isPending ? 'Accepting...' : 'Accept'}
                 </button>
                 <button
                   onClick={handleDecline}
                   disabled={declineMutation.isPending}
-                  className="px-4 py-3 border border-red-600 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50 font-semibold"
+                  className="px-4 py-3 border border-red-600 text-red-600 rounded-[28px] hover:bg-red-50 disabled:opacity-50 font-semibold"
                 >
                   {declineMutation.isPending ? 'Declining...' : 'Decline'}
                 </button>
@@ -209,7 +209,7 @@ export default function DareDetailPage() {
 
         {/* Recipients Section */}
         <div>
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Recipients</h3>
+          <h3 className="text-lg font-bold text-[#14121F] mb-4">Recipients</h3>
           <DareRecipientsList
             recipients={recipientsQuery.data?.data || []}
             isLoading={recipientsQuery.isLoading}
@@ -218,20 +218,20 @@ export default function DareDetailPage() {
 
         {/* Verification Stats */}
         {statsQuery.data && (
-          <div className="bg-blue-50 rounded-lg p-4">
-            <h3 className="text-sm font-bold text-slate-900 mb-3">Verification Stats</h3>
+          <div className="bg-blue-50 rounded-[28px] p-4">
+            <h3 className="text-sm font-bold text-[#14121F] mb-3">Verification Stats</h3>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <p className="text-xs text-slate-600 mb-1">Yes</p>
+                <p className="text-xs text-[#6B7280] mb-1">Yes</p>
                 <p className="text-lg font-bold text-blue-600">{statsQuery.data.data?.yes_count || 0}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-600 mb-1">No</p>
+                <p className="text-xs text-[#6B7280] mb-1">No</p>
                 <p className="text-lg font-bold text-red-600">{statsQuery.data.data?.no_count || 0}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-600 mb-1">Confidence</p>
-                <p className="text-lg font-bold text-emerald-600">
+                <p className="text-xs text-[#6B7280] mb-1">Confidence</p>
+                <p className="text-lg font-bold text-[#A78BFA]">
                   {(statsQuery.data.data?.confidence_avg || 0).toFixed(1)}%
                 </p>
               </div>

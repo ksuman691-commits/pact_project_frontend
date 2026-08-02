@@ -91,13 +91,13 @@ export default function NotificationsPage() {
   return (
     <>
       <TopNav showBack={true} showCategories={false} />
-      <div className="min-h-screen bg-slate-50 max-w-md mx-auto pb-20">
-        <div className="bg-white border-b border-slate-100 sticky top-24 z-30">
+      <div className="min-h-screen bg-[#F4F2FB] max-w-md mx-auto pb-20">
+        <div className="bg-white border-b border-[rgba(20,18,31,0.06)] sticky top-24 z-30">
           <div className="px-4 py-4 flex items-center justify-between">
-            <h1 className="text-xl font-bold text-slate-900">Notifications</h1>
+            <h1 className="text-xl font-bold text-[#14121F]">Notifications</h1>
             <button
               onClick={() => markAllAsRead.mutate()}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 transition"
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-full bg-[#FAF9FE] text-slate-700 hover:bg-slate-200 transition"
             >
               <CheckCheck className="w-4 h-4" />
               Mark all read
@@ -107,12 +107,12 @@ export default function NotificationsPage() {
 
         <div className="px-4 py-4 space-y-3">
           {isLoading ? (
-            <div className="text-slate-500 text-sm">Loading notifications...</div>
+            <div className="text-[#9CA3AF] text-sm">Loading notifications...</div>
           ) : notifications.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
+            <div className="rounded-[24px] border border-dashed border-slate-300 bg-white p-8 text-center">
               <Bell className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-              <p className="font-semibold text-slate-900">No notifications yet</p>
-              <p className="text-sm text-slate-500 mt-1">You will see join requests and activity updates here.</p>
+              <p className="font-semibold text-[#14121F]">No notifications yet</p>
+              <p className="text-sm text-[#9CA3AF] mt-1">You will see join requests and activity updates here.</p>
             </div>
           ) : (
             notifications.map((notification: any) => {
@@ -122,9 +122,9 @@ export default function NotificationsPage() {
               return (
               <div
                 key={notification.id}
-                className={`w-full text-left rounded-2xl border p-4 transition ${
+                className={`w-full text-left rounded-[24px] border p-4 transition ${
                   notification.is_read
-                    ? 'bg-white border-slate-200'
+                    ? 'bg-white border-[rgba(20,18,31,0.06)]'
                     : 'bg-blue-50 border-blue-200'
                 }`}
               >
@@ -134,8 +134,8 @@ export default function NotificationsPage() {
                 >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-900">{notification.title}</p>
-                    <p className="text-sm text-slate-600 mt-1">{notification.description}</p>
+                    <p className="text-sm font-bold text-[#14121F]">{notification.title}</p>
+                    <p className="text-sm text-[#6B7280] mt-1">{notification.description}</p>
                   </div>
                   {!notification.is_read && (
                     <span className="w-2.5 h-2.5 rounded-full bg-blue-600 mt-1" />
@@ -147,7 +147,7 @@ export default function NotificationsPage() {
                     <button
                       onClick={() => acceptFollow.mutate(pendingFollowId)}
                       disabled={acceptFollow.isPending || rejectFollow.isPending}
-                      className="px-3 py-1.5 text-xs rounded-md bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60"
+                      className="px-3 py-1.5 text-xs rounded-md bg-[#A78BFA] text-white hover:bg-emerald-700 disabled:opacity-60"
                     >
                       Accept
                     </button>
@@ -160,7 +160,7 @@ export default function NotificationsPage() {
                     </button>
                   </div>
                 ) : null}
-                <p className="text-xs text-slate-500 mt-3">{formatTimeAgo(notification.created_at)}</p>
+                <p className="text-xs text-[#9CA3AF] mt-3">{formatTimeAgo(notification.created_at)}</p>
               </div>
             )})
           )}
@@ -169,7 +169,7 @@ export default function NotificationsPage() {
             <button
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
-              className="w-full py-3 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold hover:bg-slate-50 disabled:opacity-60"
+              className="w-full py-3 rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-white text-slate-700 font-semibold hover:bg-[#F4F2FB] disabled:opacity-60"
             >
               {isFetchingNextPage ? 'Loading...' : 'Load more'}
             </button>

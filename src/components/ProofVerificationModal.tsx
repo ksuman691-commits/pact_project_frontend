@@ -171,17 +171,17 @@ export default function ProofVerificationModal({
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
       <div className="bg-white w-full max-h-[90vh] rounded-t-3xl flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-6 border-b border-slate-100 flex-shrink-0 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="flex items-center justify-between px-6 py-6 border-b border-[rgba(20,18,31,0.06)] flex-shrink-0 bg-gradient-to-r from-blue-50 to-indigo-50">
           <div>
-            <h2 className="text-2xl font-black text-slate-900">Verify Proof</h2>
-            <p className="text-sm text-slate-600 font-medium mt-1">Review and answer 4 verification questions</p>
+            <h2 className="text-2xl font-black text-[#14121F]">Verify Proof</h2>
+            <p className="text-sm text-[#6B7280] font-medium mt-1">Review and answer 4 verification questions</p>
           </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-slate-200 rounded-full transition-colors"
             aria-label="Close"
           >
-            <X className="w-6 h-6 text-slate-600" strokeWidth={2} />
+            <X className="w-6 h-6 text-[#6B7280]" strokeWidth={2} />
           </button>
         </div>
 
@@ -190,12 +190,12 @@ export default function ProofVerificationModal({
           <div className="px-6 py-6 space-y-6 pb-24">
             {/* Proof Preview */}
             <div>
-              <h3 className="text-sm font-semibold text-slate-900 mb-3">Proof Being Verified</h3>
+              <h3 className="text-sm font-semibold text-[#14121F] mb-3">Proof Being Verified</h3>
               <ProofDisplay proof={proof} />
             </div>
 
             {/* Questions */}
-            <div className="space-y-6 border-t border-slate-100 pt-6">
+            <div className="space-y-6 border-t border-[rgba(20,18,31,0.06)] pt-6">
               {QUESTIONS.map((q, idx) => (
                 <div key={q.id} className="space-y-3">
                   <div className="flex items-start gap-3">
@@ -203,8 +203,8 @@ export default function ProofVerificationModal({
                       <span className="text-sm font-bold text-indigo-600">{idx + 1}</span>
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-slate-900">{q.label}</p>
-                      <p className="text-sm text-slate-600 mt-1">{q.question}</p>
+                      <p className="font-semibold text-[#14121F]">{q.label}</p>
+                      <p className="text-sm text-[#6B7280] mt-1">{q.question}</p>
                     </div>
                   </div>
 
@@ -213,10 +213,10 @@ export default function ProofVerificationModal({
                     <button
                       type="button"
                       onClick={() => handleAnswerChange(q.id, 'yes')}
-                      className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+                      className={`flex-1 px-4 py-3 rounded-[28px] font-medium transition-all ${
                         answers[q.id + '_answer' as keyof VerificationAnswer] === 'yes'
                           ? 'bg-green-600 text-white shadow-md'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                          : 'bg-[#FAF9FE] text-slate-700 hover:bg-slate-200'
                       }`}
                     >
                       Yes
@@ -224,10 +224,10 @@ export default function ProofVerificationModal({
                     <button
                       type="button"
                       onClick={() => handleAnswerChange(q.id, 'no')}
-                      className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+                      className={`flex-1 px-4 py-3 rounded-[28px] font-medium transition-all ${
                         answers[q.id + '_answer' as keyof VerificationAnswer] === 'no'
                           ? 'bg-red-600 text-white shadow-md'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                          : 'bg-[#FAF9FE] text-slate-700 hover:bg-slate-200'
                       }`}
                     >
                       No
@@ -237,7 +237,7 @@ export default function ProofVerificationModal({
                   {/* Reason field - shown when answer is selected */}
                   {answers[q.id + '_answer' as keyof VerificationAnswer] && (
                     <div className="ml-11 space-y-2">
-                      <label className="text-sm font-medium text-slate-900">
+                      <label className="text-sm font-medium text-[#14121F]">
                         {answers[q.id + '_answer' as keyof VerificationAnswer] === 'no'
                           ? 'Reason (required)'
                           : 'Additional notes (optional)'}
@@ -250,7 +250,7 @@ export default function ProofVerificationModal({
                             ? 'Explain why...'
                             : 'Any additional context...'
                         }
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none text-sm"
+                        className="w-full px-4 py-3 border border-slate-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none text-sm"
                         rows={3}
                       />
                       {answers[q.id + '_answer' as keyof VerificationAnswer] === 'no' && !reasons[q.id + '_reason' as keyof VerificationReasons].trim() && (
@@ -268,18 +268,18 @@ export default function ProofVerificationModal({
         </form>
 
         {/* Footer - Submit Button */}
-        <div className="border-t border-slate-100 px-6 py-4 flex gap-3 flex-shrink-0 bg-white">
+        <div className="border-t border-[rgba(20,18,31,0.06)] px-6 py-4 flex gap-3 flex-shrink-0 bg-white">
           <button
             onClick={onClose}
             disabled={loading}
-            className="flex-1 px-4 py-3 rounded-lg border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-3 rounded-[28px] border border-slate-300 text-slate-700 font-semibold hover:bg-[#F4F2FB] transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="flex-1 px-4 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-3 rounded-[28px] bg-indigo-600 text-white font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {loading ? (
               <>

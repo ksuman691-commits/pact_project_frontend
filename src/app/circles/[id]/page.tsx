@@ -173,28 +173,28 @@ export default function CircleDetailPage() {
           <div className="card mb-8">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h1 className="text-4xl font-bold text-slate-900 mb-2">{circle.name}</h1>
-                <p className="text-slate-600 text-lg">{circle.description}</p>
+                <h1 className="text-4xl font-bold text-[#14121F] mb-2">{circle.name}</h1>
+                <p className="text-[#6B7280] text-lg">{circle.description}</p>
               </div>
               <span className="px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 bg-green-100 text-green-700">
                 <Globe className="w-4 h-4" /> Circle
               </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 py-4 border-t border-slate-200 border-b">
+            <div className="grid grid-cols-3 gap-4 py-4 border-t border-[rgba(20,18,31,0.06)] border-b">
               <div>
-                <p className="text-slate-600 text-sm">Members</p>
-                <p className="text-2xl font-bold text-slate-900">
+                <p className="text-[#6B7280] text-sm">Members</p>
+                <p className="text-2xl font-bold text-[#14121F]">
                   {circle.member_count ?? members.length}
                 </p>
               </div>
               <div>
-                <p className="text-slate-600 text-sm">Pacts</p>
-                <p className="text-2xl font-bold text-slate-900">{pacts.length}</p>
+                <p className="text-[#6B7280] text-sm">Pacts</p>
+                <p className="text-2xl font-bold text-[#14121F]">{pacts.length}</p>
               </div>
               <div>
-                <p className="text-slate-600 text-sm">Created</p>
-                <p className="text-lg font-bold text-slate-900">
+                <p className="text-[#6B7280] text-sm">Created</p>
+                <p className="text-lg font-bold text-[#14121F]">
                   {new Date(circle.created_at).toLocaleDateString()}
                 </p>
               </div>
@@ -240,7 +240,7 @@ export default function CircleDetailPage() {
 
           {/* Members Section */}
           <div className="card mb-8">
-            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-[#14121F] mb-6 flex items-center gap-2">
               <Users className="w-6 h-6 text-blue-600" />
               Members
             </h2>
@@ -249,23 +249,23 @@ export default function CircleDetailPage() {
                 {members.map((member: any) => (
                   <div
                     key={`${member.user_id}-${member.role}`}
-                    className="p-4 rounded-lg border border-slate-200 hover:border-blue-600 transition-colors"
+                    className="p-4 rounded-[28px] border border-[rgba(20,18,31,0.06)] hover:border-blue-600 transition-colors"
                   >
                     <div className="flex items-center gap-3 mb-2">
                       {member.avatar_url ? (
                         <img
                           src={member.avatar_url}
                           alt={member.username}
-                          className="h-10 w-10 rounded-full object-cover border border-slate-200"
+                          className="h-10 w-10 rounded-full object-cover border border-[rgba(20,18,31,0.06)]"
                         />
                       ) : (
-                        <div className="h-10 w-10 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center border border-slate-200">
+                        <div className="h-10 w-10 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center border border-[rgba(20,18,31,0.06)]">
                           {member.username?.charAt(0)?.toUpperCase() || 'U'}
                         </div>
                       )}
                       <div>
-                        <p className="font-bold text-slate-900">{member.full_name}</p>
-                        <p className="text-sm text-slate-600">@{member.username}</p>
+                        <p className="font-bold text-[#14121F]">{member.full_name}</p>
+                        <p className="text-sm text-[#6B7280]">@{member.username}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
@@ -276,7 +276,7 @@ export default function CircleDetailPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-slate-600">No members yet. Be the first to join this circle.</p>
+              <p className="text-[#6B7280]">No members yet. Be the first to join this circle.</p>
             )}
           </div>
 
@@ -319,14 +319,14 @@ export default function CircleDetailPage() {
 
           {/* Pacts Section */}
           <div className="card">
-            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-[#14121F] mb-6 flex items-center gap-2">
               <Target className="w-6 h-6 text-purple-600" />
               Pacts in This Circle
             </h2>
             {!canViewPacts ? (
               <div className="text-center py-8">
                 <Target className="w-12 h-12 text-slate-300 mx-auto mb-2" />
-                <p className="text-slate-600 mb-4">Join this circle to view and request its pacts.</p>
+                <p className="text-[#6B7280] mb-4">Join this circle to view and request its pacts.</p>
                 <button onClick={handleJoinCircle} className="btn-primary">
                   Join Circle
                 </button>
@@ -364,7 +364,7 @@ export default function CircleDetailPage() {
             ) : (
               <div className="text-center py-8">
                 <Target className="w-12 h-12 text-slate-300 mx-auto mb-2" />
-                <p className="text-slate-600 mb-4">No pacts in this circle yet</p>
+                <p className="text-[#6B7280] mb-4">No pacts in this circle yet</p>
                 {isMember && (
                   <button
                     onClick={() => router.push('/pacts/create')}

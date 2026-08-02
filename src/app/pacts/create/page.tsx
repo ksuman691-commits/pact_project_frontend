@@ -68,7 +68,7 @@ function WizardContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F4F2FB]">
       <TopNav showBack={true} />
 
       <div className="max-w-2xl mx-auto px-4 pt-32 pb-8">
@@ -85,7 +85,7 @@ function WizardContent() {
               <div
                 key={step}
                 className={`flex-1 h-2 rounded-full transition ${
-                  step <= currentStep ? 'bg-emerald-500' : 'bg-gray-200'
+                  step <= currentStep ? 'bg-[#EDE9FE]0' : 'bg-gray-200'
                 }`}
               />
             ))}
@@ -100,7 +100,7 @@ function WizardContent() {
         </div>
 
         {/* Step Content */}
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
+        <div className="bg-white rounded-[24px] p-8 shadow-[0_4px_12px_rgba(94,84,142,0.08)] border border-gray-100 mb-8">
           {currentStep === 1 && <PactWizardStep1 />}
           {currentStep === 2 && <PactWizardStep2 />}
           {currentStep === 3 && <PactWizardStep3 />}
@@ -115,7 +115,7 @@ function WizardContent() {
               if (currentStep > 1) prevStep();
               else router.back();
             }}
-            className="flex items-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition"
+            className="flex items-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-[28px] font-medium hover:bg-gray-50 transition"
           >
             <ArrowLeft className="w-4 h-4" />
             {currentStep === 1 ? 'Cancel' : 'Back'}
@@ -125,7 +125,7 @@ function WizardContent() {
             <button
               onClick={nextStep}
               disabled={!isStepValid()}
-              className="flex items-center gap-2 flex-1 px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 flex-1 px-6 py-3 bg-[#A78BFA] text-white rounded-[28px] font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
               <ArrowRight className="w-4 h-4" />
@@ -136,7 +136,7 @@ function WizardContent() {
             <button
               onClick={handleCreate}
               disabled={createMutation.isPending}
-              className="flex-1 px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50"
+              className="flex-1 px-6 py-3 bg-[#A78BFA] text-white rounded-[28px] font-medium hover:bg-emerald-700 transition disabled:opacity-50"
             >
               {createMutation.isPending ? 'Creating...' : 'Create Pact'}
             </button>

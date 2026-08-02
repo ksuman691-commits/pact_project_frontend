@@ -32,14 +32,14 @@ function formatEndsIn(endDateRaw?: string) {
 }
 
 function getUrgencyColor(endDate?: string): string {
-  if (!endDate) return 'text-emerald-600';
+  if (!endDate) return 'text-[#A78BFA]';
 
   const diffMs = new Date(endDate).getTime() - Date.now();
   const hours = diffMs / (1000 * 60 * 60);
 
   if (hours < 24) return 'text-red-600'; // Red for urgent
   if (hours < 72) return 'text-amber-600'; // Amber for medium
-  return 'text-emerald-600'; // Green for comfortable
+  return 'text-[#A78BFA]'; // Green for comfortable
 }
 
 export default function DareCard({ dare, onClick }: DareCardProps) {
@@ -60,10 +60,10 @@ export default function DareCard({ dare, onClick }: DareCardProps) {
   return (
     <div
       onClick={onClick}
-      className="bg-white border border-slate-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+      className="bg-white border border-[rgba(20,18,31,0.06)] rounded-[28px] overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
     >
       {/* Header */}
-      <div className="p-4 border-b border-slate-100">
+      <div className="p-4 border-b border-[rgba(20,18,31,0.06)]">
         <div className="flex items-center gap-3 mb-3">
           <div className="relative w-10 h-10 rounded-full bg-slate-200 overflow-hidden flex-shrink-0">
             {creatorAvatar && (
@@ -79,37 +79,37 @@ export default function DareCard({ dare, onClick }: DareCardProps) {
               />
             )}
             {!creatorAvatar || creatorAvatar.includes('dicebear') ? (
-              <div className="w-full h-full flex items-center justify-center text-xs font-bold text-slate-600">
+              <div className="w-full h-full flex items-center justify-center text-xs font-bold text-[#6B7280]">
                 {initials}
               </div>
             ) : null}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-900 truncate">
+            <p className="text-sm font-semibold text-[#14121F] truncate">
               {dare.creator_full_name || dare.creator_username || 'Anonymous'}
             </p>
-            <p className="text-xs text-slate-500">@{dare.creator_username || 'user'}</p>
+            <p className="text-xs text-[#9CA3AF]">@{dare.creator_username || 'user'}</p>
           </div>
         </div>
 
         {/* Title and Description */}
-        <h3 className="font-bold text-base text-slate-900 mb-1 line-clamp-2">{dare.title}</h3>
-        <p className="text-sm text-slate-600 line-clamp-2">{dare.description}</p>
+        <h3 className="font-bold text-base text-[#14121F] mb-1 line-clamp-2">{dare.title}</h3>
+        <p className="text-sm text-[#6B7280] line-clamp-2">{dare.description}</p>
       </div>
 
       {/* Stats */}
-      <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 grid grid-cols-3 gap-2">
+      <div className="px-4 py-3 bg-[#F4F2FB] border-b border-[rgba(20,18,31,0.06)] grid grid-cols-3 gap-2">
         <div className="text-center">
-          <p className="text-lg font-bold text-emerald-600">{dare.recipientCount || 0}</p>
-          <p className="text-xs text-slate-600">Recipients</p>
+          <p className="text-lg font-bold text-[#A78BFA]">{dare.recipientCount || 0}</p>
+          <p className="text-xs text-[#6B7280]">Recipients</p>
         </div>
         <div className="text-center">
-          <p className="text-lg font-bold text-emerald-600">{dare.acceptedCount || 0}</p>
-          <p className="text-xs text-slate-600">Accepted</p>
+          <p className="text-lg font-bold text-[#A78BFA]">{dare.acceptedCount || 0}</p>
+          <p className="text-xs text-[#6B7280]">Accepted</p>
         </div>
         <div className="text-center">
-          <p className="text-lg font-bold text-emerald-600">{dare.completedCount || 0}</p>
-          <p className="text-xs text-slate-600">Completed</p>
+          <p className="text-lg font-bold text-[#A78BFA]">{dare.completedCount || 0}</p>
+          <p className="text-xs text-[#6B7280]">Completed</p>
         </div>
       </div>
 

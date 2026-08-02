@@ -20,7 +20,7 @@ export default function TransactionHistory({ transactions, isLoading }: Transact
   const getIcon = (type: Transaction['type']) => {
     switch (type) {
       case 'deposit':
-        return <ArrowDownLeft className="w-4 h-4 text-emerald-600" />;
+        return <ArrowDownLeft className="w-4 h-4 text-[#A78BFA]" />;
       case 'withdraw':
         return <ArrowUpRight className="w-4 h-4 text-red-600" />;
       case 'lock':
@@ -38,7 +38,7 @@ export default function TransactionHistory({ transactions, isLoading }: Transact
     switch (type) {
       case 'deposit':
       case 'reward':
-        return 'text-emerald-600';
+        return 'text-[#A78BFA]';
       case 'withdraw':
       case 'penalty':
         return 'text-red-600';
@@ -59,7 +59,7 @@ export default function TransactionHistory({ transactions, isLoading }: Transact
       <PremiumCard>
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-12 bg-slate-100 rounded-lg animate-pulse" />
+            <div key={i} className="h-12 bg-[#FAF9FE] rounded-[28px] animate-pulse" />
           ))}
         </div>
       </PremiumCard>
@@ -70,8 +70,8 @@ export default function TransactionHistory({ transactions, isLoading }: Transact
     return (
       <PremiumCard>
         <div className="text-center py-8">
-          <p className="text-slate-600 font-medium">No wallet activity yet</p>
-          <p className="text-xs text-slate-500">Transactions will appear here once you start using your wallet</p>
+          <p className="text-[#6B7280] font-medium">No wallet activity yet</p>
+          <p className="text-xs text-[#9CA3AF]">Transactions will appear here once you start using your wallet</p>
         </div>
       </PremiumCard>
     );
@@ -79,20 +79,20 @@ export default function TransactionHistory({ transactions, isLoading }: Transact
 
   return (
     <PremiumCard>
-      <h3 className="font-bold text-slate-900 mb-4">Recent Transactions</h3>
+      <h3 className="font-bold text-[#14121F] mb-4">Recent Transactions</h3>
       <div className="space-y-3">
         {transactions.map((tx) => (
           <div
             key={tx.id}
-            className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-all"
+            className="flex items-center justify-between p-3 bg-[#F4F2FB] rounded-[28px] hover:bg-[#FAF9FE] transition-all"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-white border border-[rgba(20,18,31,0.06)] flex items-center justify-center">
                 {getIcon(tx.type)}
               </div>
               <div className="flex-1">
-                <p className="text-sm font-semibold text-slate-900">{tx.description}</p>
-                <p className="text-xs text-slate-500">{new Date(tx.date).toLocaleDateString()}</p>
+                <p className="text-sm font-semibold text-[#14121F]">{tx.description}</p>
+                <p className="text-xs text-[#9CA3AF]">{new Date(tx.date).toLocaleDateString()}</p>
               </div>
             </div>
 
@@ -102,7 +102,7 @@ export default function TransactionHistory({ transactions, isLoading }: Transact
               </p>
               <p className={`text-xs font-medium ${
                 tx.status === 'completed'
-                  ? 'text-emerald-600'
+                  ? 'text-[#A78BFA]'
                   : tx.status === 'pending'
                   ? 'text-orange-600'
                   : 'text-red-600'

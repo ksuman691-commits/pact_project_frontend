@@ -30,7 +30,7 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
   // Photo display
   if (proof.type === 'image' && proof.url) {
     return (
-      <div className="rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
+      <div className="rounded-[24px] overflow-hidden bg-[#FAF9FE] border border-[rgba(20,18,31,0.06)]">
         <div className="relative aspect-video w-full">
           <Image
             src={proof.url}
@@ -43,13 +43,13 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
         </div>
         <div className="p-4 bg-white">
           <div className="flex items-start justify-between mb-2">
-            <span className="text-sm font-semibold text-slate-900">{proof.timestamp}</span>
+            <span className="text-sm font-semibold text-[#14121F]">{proof.timestamp}</span>
             <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
               📷 Photo
             </span>
           </div>
           {proof.description && (
-            <p className="text-sm text-slate-600">{proof.description}</p>
+            <p className="text-sm text-[#6B7280]">{proof.description}</p>
           )}
         </div>
       </div>
@@ -59,7 +59,7 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
   // Video display
   if (proof.type === 'video' && proof.url) {
     return (
-      <div className="rounded-xl overflow-hidden bg-slate-900 border border-slate-200">
+      <div className="rounded-[24px] overflow-hidden bg-slate-900 border border-[rgba(20,18,31,0.06)]">
         <div className="relative aspect-video w-full bg-black flex items-center justify-center group cursor-pointer">
           <video
             src={proof.url}
@@ -74,13 +74,13 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
         </div>
         <div className="p-4 bg-white">
           <div className="flex items-start justify-between mb-2">
-            <span className="text-sm font-semibold text-slate-900">{proof.timestamp}</span>
+            <span className="text-sm font-semibold text-[#14121F]">{proof.timestamp}</span>
             <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium">
               🎥 Video
             </span>
           </div>
           {proof.description && (
-            <p className="text-sm text-slate-600">{proof.description}</p>
+            <p className="text-sm text-[#6B7280]">{proof.description}</p>
           )}
         </div>
       </div>
@@ -94,13 +94,13 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
     const completionPercent = Math.round((completedCount / totalCount) * 100);
 
     return (
-      <div className="rounded-xl bg-white border border-slate-200 overflow-hidden">
-        <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-slate-200">
+      <div className="rounded-[24px] bg-white border border-[rgba(20,18,31,0.06)] overflow-hidden">
+        <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-[rgba(20,18,31,0.06)]">
           <div className="flex items-start justify-between mb-3">
             <div>
-              <span className="text-sm font-semibold text-slate-900 block">{proof.timestamp}</span>
+              <span className="text-sm font-semibold text-[#14121F] block">{proof.timestamp}</span>
               {proof.description && (
-                <p className="text-sm text-slate-600 mt-1">{proof.description}</p>
+                <p className="text-sm text-[#6B7280] mt-1">{proof.description}</p>
               )}
             </div>
             <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium">
@@ -111,8 +111,8 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
           {/* Progress bar */}
           <div className="mb-2">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-slate-600">Progress</span>
-              <span className="text-sm font-bold text-emerald-600">
+              <span className="text-xs font-medium text-[#6B7280]">Progress</span>
+              <span className="text-sm font-bold text-[#A78BFA]">
                 {completedCount}/{totalCount}
               </span>
             </div>
@@ -123,16 +123,16 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
               />
             </div>
           </div>
-          <p className="text-xs text-slate-600">{completionPercent}% complete</p>
+          <p className="text-xs text-[#6B7280]">{completionPercent}% complete</p>
         </div>
 
         {/* Checklist items */}
         <div className="divide-y divide-slate-200">
           {proof.items.map((item) => (
-            <div key={item.id} className="p-4 flex items-start gap-3 hover:bg-slate-50 transition">
+            <div key={item.id} className="p-4 flex items-start gap-3 hover:bg-[#F4F2FB] transition">
               <div className="flex-shrink-0 mt-0.5">
                 {item.completed ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" strokeWidth={2} />
+                  <CheckCircle2 className="w-5 h-5 text-[#A78BFA]" strokeWidth={2} />
                 ) : (
                   <Circle className="w-5 h-5 text-slate-400" strokeWidth={2} />
                 )}
@@ -140,8 +140,8 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
               <span
                 className={`text-sm font-medium ${
                   item.completed
-                    ? 'text-slate-900 line-through opacity-60'
-                    : 'text-slate-900'
+                    ? 'text-[#14121F] line-through opacity-60'
+                    : 'text-[#14121F]'
                 }`}
               >
                 {item.label}
@@ -155,10 +155,10 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
 
   // Fallback: no proof data
   return (
-    <div className="rounded-xl bg-slate-50 border-2 border-dashed border-slate-300 p-6 flex flex-col items-center justify-center min-h-[200px]">
+    <div className="rounded-[24px] bg-[#F4F2FB] border-2 border-dashed border-slate-300 p-6 flex flex-col items-center justify-center min-h-[200px]">
       <AlertCircle className="w-8 h-8 text-slate-400 mb-2" />
-      <p className="text-sm font-medium text-slate-600">No proof submitted yet</p>
-      <p className="text-xs text-slate-500 mt-1">
+      <p className="text-sm font-medium text-[#6B7280]">No proof submitted yet</p>
+      <p className="text-xs text-[#9CA3AF] mt-1">
         The pact creator has not uploaded any proof yet.
       </p>
     </div>
