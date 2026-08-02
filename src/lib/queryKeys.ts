@@ -109,4 +109,21 @@ export const queryKeys = {
     feed: () => [...queryKeys.shorts.all, 'feed'],
     detail: (id: number) => [...queryKeys.shorts.all, 'detail', id],
   },
+
+  // Dares
+  dares: {
+    all: ['dares'],
+    lists: () => [...queryKeys.dares.all, 'list'],
+    list: (filters?: any) => [...queryKeys.dares.lists(), filters],
+    feed: () => [...queryKeys.dares.all, 'feed'],
+    mine: () => [...queryKeys.dares.all, 'mine'],
+    details: () => [...queryKeys.dares.all, 'detail'],
+    detail: (id: number) => [...queryKeys.dares.details(), id],
+    recipients: (dareId: number) => [...queryKeys.dares.detail(dareId), 'recipients'],
+    stats: (dareId: number) => [...queryKeys.dares.detail(dareId), 'stats'],
+    verification: (dareId: number) => [...queryKeys.dares.detail(dareId), 'verification'],
+    public: () => [...queryKeys.dares.all, 'public'],
+    active: () => [...queryKeys.dares.all, 'active'],
+    search: (query: string) => [...queryKeys.dares.all, 'search', query],
+  },
 };

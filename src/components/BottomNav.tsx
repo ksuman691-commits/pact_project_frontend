@@ -2,11 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, Sparkles, TrendingUp } from 'lucide-react'
+import { Home, Users, TrendingUp, Zap } from 'lucide-react'
 
 const authItems = [
   { href: '/feed', label: 'Feed', icon: Home },
-  { href: '/dares', label: 'Dares', icon: Sparkles },
+  { href: '/dares', label: 'Dares', icon: Zap },
   { href: '/circles', label: 'Circles', icon: Users },
   { href: '/leaderboard', label: 'Leaderboard', icon: TrendingUp },
 ]

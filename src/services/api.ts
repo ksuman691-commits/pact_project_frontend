@@ -540,6 +540,63 @@ export const pactAdvancedService = {
     api.get(`/api/pacts/${pactId}`),
 };
 
+// Dare Services
+const mapDare = (raw: any) => ({
+  ...raw,
+  dare_uuid: raw?.dare_uuid ?? String(raw?.id ?? ''),
+  recipientCount: raw?.recipient_count ?? raw?.recipients?.length ?? 0,
+  acceptedCount: raw?.accepted_count ?? 0,
+  completedCount: raw?.completed_count ?? 0,
+  failedCount: raw?.failed_count ?? 0,
+  isCreatedByMe: Boolean(raw?.is_created_by_me),
+  isAcceptedByMe: Boolean(raw?.is_accepted_by_me),
+  isCompletedByMe: Boolean(raw?.is_completed_by_me),
+  creatorAvatarUrl: raw?.creator_avatar_url ?? raw?.creator?.avatar_url ?? null,
+  timeRemaining: formatTimeRemaining(raw?.complete_by_date),
+});
+
+export const dareService = {
+  create: async (data: any) => {
+    const response = await api.post('/api/dares', data);
+    return { ...response, data: mapDare(response.data) };
+  },
+  list: async (skip = 0, limit = 20) => {
+    const response = await api.get('/api/dares', { params: { skip, limit } });
+    return normalizeListResponse(response, mapDare);
+  },
+  getFeed: async (skip = 0, limit = 20) => {
+    const response = await api.get('/api/dares/feed', { params: { skip, limit } });
+    return normalizeListResponse(response, mapDare);
+  },
+  getMine: async (skip = 0, limit = 20) => {
+    const response = await api.get('/api/dares/mine', { params: { skip, limit } });
+    return normalizeListResponse(response, mapDare);
+  },
+  getById: async (id: number) => {
+    const response = await api.get(`/api/dares/${id}`);
+    return { ...response, data: mapDare(response.data) };
+  },
+  claim: (id: number) => api.post(`/api/dares/${id}/claim`),
+  accept: (id: number) => api.post(`/api/dares/${id}/accept`),
+  decline: (id: number) => api.post(`/api/dares/${id}/decline`),
+  uploadProof: (id: number, file: File, proofType: 'photo' | 'video' | 'checklist' = 'photo', caption?: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('proof_type', proofType);
+    if (caption) formData.append('caption', caption);
+    return api.post(`/api/dares/${id}/upload-proof`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  verify: (id: number, data: any) => api.post(`/api/dares/${id}/verify`, data),
+  cancel: (id: number) => api.delete(`/api/dares/${id}`),
+  getRecipients: async (id: number, skip = 0, limit = 20) => {
+    const response = await api.get(`/api/dares/${id}/recipients`, { params: { skip, limit } });
+    return normalizeListResponse(response);
+  },
+  getStats: (id: number) => api.get(`/api/dares/${id}/verify/stats`),
+};
+
 // Verification Advanced Services
 export const verificationAdvancedService = {
   listByPact: (pactId: number) =>
