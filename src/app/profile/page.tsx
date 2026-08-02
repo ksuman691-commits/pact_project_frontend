@@ -30,7 +30,6 @@ export default function Profile() {
   const createdPacts = (createdPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[];
   const joinedPacts = (joinedPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[];
   const votedPacts = (votedPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[];
-  const rewards = 0;
   const followersQuery = useFollowers(userId || 0);
   const followingQuery = useFollowing(userId || 0);
   const followers = followersQuery.data?.data || [];
@@ -76,15 +75,6 @@ export default function Profile() {
       rarity: 'epic' as const,
       unlocked: false,
       progress: 70,
-    },
-    {
-      id: 'richest',
-      name: 'Richest',
-      description: 'Earn ₹5000',
-      icon: '💰',
-      rarity: 'epic' as const,
-      unlocked: rewards >= 5000,
-      unlockedAt: rewards >= 5000 ? new Date().toISOString() : undefined,
     },
     {
       id: 'legendary',
@@ -133,7 +123,6 @@ export default function Profile() {
     pactsCompleted: completedPacts,
     winRate,
     currentStreak: 12,
-    totalEarned: Math.round(rewards),
     reputation: Math.round(user.reputation_score || 0),
     followers: followers.length,
     following: following.length,

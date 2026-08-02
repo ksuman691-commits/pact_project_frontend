@@ -5,19 +5,16 @@ import { useRouter } from 'next/navigation';
 
 interface PactHeroProps {
   pact: Pact;
-  confidence?: number;
   daysCompleted?: number;
   daysRemaining?: number;
 }
 
 export default function PactHero({
   pact,
-  confidence = 78,
   daysCompleted = 12,
   daysRemaining = 18,
 }: PactHeroProps) {
   const router = useRouter();
-  const stakeAmount = pact.stake_amount ?? 0;
   const totalDays = daysCompleted + daysRemaining;
   const progressPercent = (daysCompleted / totalDays) * 100;
 
@@ -46,23 +43,6 @@ export default function PactHero({
         {/* Title */}
         <h1 className="text-3xl font-black mb-4 leading-tight">{pact.title}</h1>
 
-        {/* Money Pool - Huge */}
-        <div className="mb-6 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-          <p className="text-sm font-medium text-white/70 mb-2">Prize Pool</p>
-          <p className="text-5xl font-black text-white mb-4">${stakeAmount}</p>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs font-medium text-white/70">If You Win</p>
-              <p className="text-2xl font-bold text-emerald-400">${(stakeAmount * 1.5).toFixed(2)}</p>
-            </div>
-            <div>
-              <p className="text-xs font-medium text-white/70">If You Lose</p>
-              <p className="text-2xl font-bold text-red-400">-${stakeAmount}</p>
-            </div>
-          </div>
-        </div>
-
         {/* Timeline */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
@@ -75,10 +55,6 @@ export default function PactHero({
             <p className="text-2xl font-bold text-orange-400">{daysRemaining}</p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-            <p className="text-xs font-medium text-white/70">Confidence</p>
-            <p className="text-2xl font-bold text-blue-400">{confidence}%</p>
-          </div>
         </div>
 
         {/* Progress Ring */}

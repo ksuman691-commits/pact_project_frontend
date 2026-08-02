@@ -62,18 +62,6 @@ export const queryKeys = {
     analytics: (circleId: number) => [...queryKeys.circles.detail(circleId), 'analytics'],
   },
 
-  // Wallet
-  wallet: {
-    all: ['wallet'],
-    detail: () => [...queryKeys.wallet.all, 'detail'],
-    balance: () => [...queryKeys.wallet.all, 'balance'],
-    locked: () => [...queryKeys.wallet.all, 'locked'],
-    rewards: () => [...queryKeys.wallet.all, 'rewards'],
-    transactions: () => [...queryKeys.wallet.all, 'transactions'],
-    history: () => [...queryKeys.wallet.all, 'history'],
-    withdrawalRequests: () => [...queryKeys.wallet.all, 'withdrawal-requests'],
-  },
-
   // Verifications
   verifications: {
     all: ['verifications'],

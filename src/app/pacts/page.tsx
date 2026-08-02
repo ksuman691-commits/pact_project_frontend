@@ -57,7 +57,7 @@ export default function PactsPage() {
 
   const sortedPacts = [...pacts].sort((a, b) => {
     if (sortBy === 'value') {
-      return (b.stake_amount ?? 0) - (a.stake_amount ?? 0);
+      return 0;
     } else if (sortBy === 'deadline') {
       return new Date(a.deadline ?? a.end_date ?? '').getTime() - new Date(b.deadline ?? b.end_date ?? '').getTime();
     } else {

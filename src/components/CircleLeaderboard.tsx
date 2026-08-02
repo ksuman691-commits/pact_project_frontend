@@ -10,7 +10,6 @@ interface LeaderboardEntry {
   avatar: string;
   pactsCompleted: number;
   winRate: number;
-  rewardsEarned: number;
   streak: number;
 }
 
@@ -27,14 +26,12 @@ export default function CircleLeaderboard({
   onLoadMore,
   hasMore = false,
 }: CircleLeaderboardProps) {
-  const [sortBy, setSortBy] = useState<'pactsCompleted' | 'winRate' | 'rewards'>('pactsCompleted');
+  const [sortBy, setSortBy] = useState<'pactsCompleted' | 'winRate'>('pactsCompleted');
 
   const sortedEntries = [...entries].sort((a, b) => {
     switch (sortBy) {
       case 'winRate':
         return b.winRate - a.winRate;
-      case 'rewards':
-        return b.rewardsEarned - a.rewardsEarned;
       case 'pactsCompleted':
       default:
         return b.pactsCompleted - a.pactsCompleted;
@@ -67,7 +64,6 @@ export default function CircleLeaderboard({
           {[
             { key: 'pactsCompleted', label: 'Pacts', icon: '📋' },
             { key: 'winRate', label: 'Win Rate', icon: '🎯' },
-            { key: 'rewards', label: 'Rewards', icon: '💰' },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -100,9 +96,6 @@ export default function CircleLeaderboard({
               </th>
               <th className="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase">
                 Win Rate
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase">
-                Rewards
               </th>
               <th className="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase">
                 Streak
@@ -143,11 +136,6 @@ export default function CircleLeaderboard({
                     <TrendingUp className="w-4 h-4 text-emerald-600" />
                     <span className="font-bold text-gray-900">{entry.winRate}%</span>
                   </div>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <span className="font-bold text-emerald-600">
-                    ₹{entry.rewardsEarned.toLocaleString()}
-                  </span>
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2">

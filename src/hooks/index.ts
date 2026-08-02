@@ -50,23 +50,6 @@ export {
   useRemoveCircleMember,
 } from './useCircleMutations';
 
-// Wallet hooks
-export {
-  useWallet,
-  useWalletBalance,
-  useWalletLocked,
-  useWalletRewards,
-  useWalletTransactions,
-  useWalletHistory,
-  useWalletWithdrawalRequests,
-} from './useWallet';
-
-export {
-  useDeposit,
-  useWithdraw,
-  useInitiateWithdrawal,
-} from './useWalletMutations';
-
 // User hooks
 export {
   useUser,

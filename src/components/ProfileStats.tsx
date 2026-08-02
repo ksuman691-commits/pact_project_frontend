@@ -8,7 +8,6 @@ interface ProfileStatsProps {
     pactsCompleted: number;
     winRate: number;
     currentStreak: number;
-    totalEarned: number;
     reputation: number;
     followers?: number;
     following?: number;

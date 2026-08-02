@@ -34,7 +34,6 @@ export interface Pact {
   circle_id?: number;
   title: string;
   description: string;
-  stake_amount?: number;
   deadline?: string;
   end_date?: string;
   start_date?: string;
@@ -90,15 +89,6 @@ export interface Verification {
   q4_answer: string;
   confidence_score: number;
   created_at: string;
-}
-
-export interface Wallet {
-  id: number;
-  user_id: number;
-  balance: number;
-  escrow_locked: number;
-  rewards_earned: number;
-  total_transactions: number;
 }
 
 export interface Short {

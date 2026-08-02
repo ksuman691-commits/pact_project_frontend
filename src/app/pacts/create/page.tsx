@@ -51,7 +51,6 @@ function WizardContent() {
         category: data.category,
         start_date: data.startDate,
         end_date: data.endDate,
-        stake_amount: 0,
         deadline: data.endDate,
         verification_method: data.verificationType,
         proof_submission_frequency: mapProofFrequency(data.verificationFrequency),

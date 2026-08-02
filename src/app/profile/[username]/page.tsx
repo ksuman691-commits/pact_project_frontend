@@ -70,7 +70,6 @@ export default function PublicProfilePage() {
     pactsCompleted: userStatsQuery.data?.data?.pacts_completed ?? 0,
     winRate: userStatsQuery.data?.data?.win_rate ?? 0,
     currentStreak: userStatsQuery.data?.data?.current_streak ?? 0,
-    totalEarned: userStatsQuery.data?.data?.total_earned ?? 0,
     reputation: userStatsQuery.data?.data?.reputation ?? 0,
     followers: followers.length,
     following: following.length,

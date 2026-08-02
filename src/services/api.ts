@@ -105,7 +105,6 @@ const mapPact = (raw: any) => ({
   is_public: raw?.visibility === 'public',
   verification_type: raw?.verification_method,
   deadline: raw?.end_date,
-  stake_amount: Number(raw?.stake_amount ?? 0),
   creator: raw?.creator_username ?? raw?.creator?.username ?? 'unknown',
   avatar: raw?.creator_username?.charAt(0)?.toUpperCase?.() ?? raw?.creator?.username?.charAt(0)?.toUpperCase?.() ?? '🔥',
   creatorAvatarUrl: raw?.creator_avatar_url ?? raw?.creator?.avatar_url ?? null,
@@ -414,15 +413,6 @@ export const verificationService = {
     api.get(`/api/verifications/${pactId}/stats`),
 };
 
-// Wallet Services
-export const walletService = {
-  get: () => api.get('/api/wallet'),
-  deposit: (data: any) => api.post('/api/wallet/deposit', data),
-  withdraw: (amount: number) =>
-    api.post('/api/wallet/withdraw', { amount }),
-  getTransactions: () => api.get('/api/wallet/transactions'),
-};
-
 // Shorts Services (Feed, Reactions, Views)
 export const shortsService = {
   getFeed: (page?: number, limit?: number) =>
@@ -582,19 +572,6 @@ export const circleAdvancedService = {
     api.put(`/api/circles/${circleId}/members/${userId}`, data),
   getLeaderboard: (circleId: number) =>
     api.get(`/api/circles/${circleId}/leaderboard`),
-};
-
-// Wallet Advanced Services
-export const walletAdvancedService = {
-  getBalance: () => walletService.get(),
-  getLocked: () => walletService.get(),
-  getRewards: () => walletService.get(),
-  getHistory: (skip?: number, limit?: number) =>
-    api.get('/api/wallet/transactions', { params: { skip, limit } }),
-  initiateWithdrawal: (amount: number, method: string) =>
-    api.post('/api/wallet/withdraw-request', { amount, method }),
-  getWithdrawalRequests: () =>
-    api.get('/api/wallet/withdrawal-requests'),
 };
 
 // Analytics Services

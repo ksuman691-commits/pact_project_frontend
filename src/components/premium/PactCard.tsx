@@ -50,15 +50,6 @@ export default function PactCard({
           </div>
         </div>
 
-        {/* Money Section - Very Prominent */}
-        <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-3 border border-amber-200">
-          <p className="text-xs font-medium text-amber-700 mb-1">Money at Stake</p>
-          <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-black text-amber-900">${pact.stake_amount ?? 0}</p>
-            <p className="text-xs text-amber-700">USD</p>
-          </div>
-        </div>
-
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-3 gap-2">
           {/* Confidence */}

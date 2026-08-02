@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, ArrowLeft } from 'lucide-react'
+import { Home, ArrowLeft, Sparkles } from 'lucide-react'
 
 const CATEGORIES = [
   { id: 'all', name: 'All', emoji: '✨', color: 'from-slate-700 to-slate-900' },
@@ -66,7 +66,7 @@ export default function TopNav({
   return (
     <>
       {/* Top Navigation Bar */}
-      <nav className={`${fixed ? 'fixed inset-x-0 top-0 z-50 mx-auto max-w-md' : 'relative max-w-md mx-auto'} bg-white border-b border-slate-200 shadow-sm overflow-visible`}>
+      <nav className={`${fixed ? 'fixed inset-x-0 top-0 z-50 mx-auto max-w-md' : 'relative max-w-md mx-auto'} overflow-visible border-b border-slate-200/80 bg-white/95 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur`}>
         <div className={`px-4 ${compact ? 'py-2' : 'py-3'}`}>
           {/* Navigation Links */}
           <div className={`flex items-center ${compact ? 'mb-1' : 'mb-3'}`}>
@@ -95,6 +95,16 @@ export default function TopNav({
                   <span>Feed</span>
                 </Link>
               )}
+
+              {!isActive('/dares') && (
+                <Link
+                  href="/dares"
+                  className="flex flex-col items-center gap-1 py-1 text-xs font-medium text-slate-400 transition-colors hover:text-emerald-600"
+                >
+                  <Sparkles className="h-5 w-5" strokeWidth={2} />
+                  <span>Dares</span>
+                </Link>
+              )}
             </div>
           </div>
 
@@ -107,10 +117,10 @@ export default function TopNav({
                     key={category.id}
                     onClick={() => handleCategoryClick(category.id)}
                     disabled={isLoadingCategories}
-                    className={`flex-shrink-0 inline-flex items-center gap-1.5 ${compact ? 'px-3 py-1' : 'px-3 py-1.5'} rounded-lg text-xs font-semibold transition-all transform hover:scale-105 whitespace-nowrap ${
+                    className={`flex-shrink-0 inline-flex items-center gap-1.5 ${compact ? 'px-3 py-1' : 'px-3 py-1.5'} rounded-full text-xs font-semibold whitespace-nowrap transition-all hover:scale-[1.01] ${
                       currentCategory === category.id.toLowerCase()
-                        ? `bg-gradient-to-r ${category.color} text-white shadow-md`
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:shadow-sm'
+                        ? `bg-gradient-to-r ${category.color} text-white shadow-sm`
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                   >
                     <span className="text-sm">{category.emoji}</span>

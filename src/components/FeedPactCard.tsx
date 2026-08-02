@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ChevronRight, Flag, MessageCircle, Share2, FileImage, ArrowLeft, ArrowRight } from 'lucide-react';
 import ProofUploadModal from './ProofUploadModal';
 import ShareModal from './ShareModal';
+import ProofMediaCarousel from './ProofMediaCarousel';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useAuthStore } from '@/store/auth';
 import { pactService } from '@/services/api';
@@ -80,11 +81,49 @@ function formatCompactCount(count: number) {
   return `${count}`;
 }
 
+function getProofs(pact: any) {
+  const clips = Array.isArray(pact.proofClips) ? pact.proofClips : [];
+  const normalizedProofs = clips
+    .map((clip: any, index: number) => {
+      const url = clip?.url || clip?.file_url || clip?.fileUrl || '';
+      if (!url) return null;
+      const type = (clip?.proof_type || clip?.type || 'image').toString().toLowerCase();
+      return {
+        id: clip?.id ?? `${pact.id ?? 'proof'}-${index}`,
+        url,
+        type: type === 'video' ? 'video' : 'image',
+        description: clip?.caption || clip?.text || clip?.description || '',
+        uploadedAt: clip?.uploaded_at || clip?.created_at || null,
+        uploader: clip?.uploader || clip?.username || null,
+        day: clip?.day ?? index + 1,
+      };
+    })
+    .filter(Boolean);
+
+  if (normalizedProofs.length > 0) {
+    return normalizedProofs;
+  }
+
+  const fallbackUrl = typeof pact.proof_url === 'string' && pact.proof_url.trim().length > 0 ? pact.proof_url : '';
+  if (!fallbackUrl) return [];
+
+  return [{
+    id: pact.id ?? 'single-proof',
+    url: fallbackUrl,
+    type: (pact.proof_type || 'image').toString().toLowerCase() === 'video' ? 'video' : 'image',
+    description: pact.latest_proof_caption || '',
+    uploadedAt: pact.latest_proof_upload_date || null,
+    uploader: pact.creator || pact.creator_username || null,
+    day: 1,
+  }];
+}
+
 function getMedia(pact: any) {
-  const firstClip = Array.isArray(pact.proofClips) && pact.proofClips.length > 0 ? pact.proofClips[0] : null;
-  const proofUrl = pact.proof_url || firstClip?.url || firstClip?.file_url || '';
-  const proofType = pact.proof_type || firstClip?.proof_type || firstClip?.type || 'photo';
-  const caption = pact.latest_proof_caption || firstClip?.caption || firstClip?.text || '';
+  const proofs = getProofs(pact);
+  const firstProof = proofs[0];
+  const proofUrl = firstProof?.url || '';
+  const proofType = firstProof?.type || 'image';
+  const caption = firstProof?.description || '';
 
   return {
     proofUrl,
@@ -126,6 +165,7 @@ export default function FeedPactCard({
   const [displayVote, setDisplayVote] = useState<string | null>(null);
   const [displaySupportCount, setDisplaySupportCount] = useState(0);
   const [isJoining, setIsJoining] = useState(false);
+  const [activeProofIndex, setActiveProofIndex] = useState(0);
 
   useEffect(() => {
     setDragX(0);
@@ -136,6 +176,7 @@ export default function FeedPactCard({
     setIsVoting(false);
     setShowActionTag(false);
     committedRef.current = false;
+    setActiveProofIndex(0);
   }, [pact.id]);
 
   useEffect(() => {
@@ -157,7 +198,9 @@ export default function FeedPactCard({
   const proofCount = Number(pact.proof_count ?? pact.proofClips?.length ?? 0);
   const commentCount = Number(pact.comment_count ?? pact.comments?.length ?? 0);
   const timeRemaining = pact.timeRemaining || formatEndsIn(pact.end_date || pact.deadline);
+  const proofs = useMemo(() => getProofs(pact), [pact]);
   const media = useMemo(() => getMedia(pact), [pact]);
+  const activeProof = proofs[activeProofIndex] ?? proofs[0] ?? null;
   const isExiting = exitDirection !== null;
   const resolvedDetailHref = detailHref || `/pacts/${pact.id}`;
   const isParticipant = Array.isArray(pact.participants)
@@ -354,24 +397,13 @@ export default function FeedPactCard({
             onClick={handleMediaTap}
           >
             {media.hasMedia ? (
-              media.proofType === 'video' ? (
-                <video
-                  src={media.proofUrl}
-                  className="h-full w-full object-cover"
-                  muted
-                  playsInline
-                  preload="metadata"
-                />
-              ) : (
-                <Image
-                  src={media.proofUrl}
-                  alt={media.caption || `${creatorLabel} proof`}
-                  fill
-                  priority={false}
-                  sizes="(max-width: 768px) 100vw, 640px"
-                  className="object-cover"
-                />
-              )
+              <ProofMediaCarousel
+                proofs={proofs}
+                fallbackLabel={creatorLabel}
+                fallbackAvatarUrl={creatorAvatarUrl}
+                className="h-full w-full"
+                onIndexChange={setActiveProofIndex}
+              />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.28),transparent_35%),linear-gradient(180deg,#0f172a_0%,#020617_100%)]">
                 <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
@@ -488,6 +520,24 @@ export default function FeedPactCard({
                     {pact.title}
                   </h2>
                 </Link>
+
+                {activeProof && (
+                  <div className="mb-3 rounded-2xl border border-white/10 bg-black/20 px-3.5 py-2.5 backdrop-blur-md">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/60">
+                          {activeProof.day ? `Day ${activeProof.day}` : 'latest proof'}
+                        </p>
+                        <p className="mt-1 truncate text-sm font-semibold text-white">
+                          {activeProof.description || media.caption || 'Latest update'}
+                        </p>
+                      </div>
+                      <span className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80">
+                        {activeProof.type === 'video' ? 'video' : 'photo'}
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 <p className="text-lg font-black text-white">
                   {formatCompactCount(supportCount)} supporting this pact
