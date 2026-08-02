@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, TrendingUp } from 'lucide-react'
+import { Home, Users, TrendingUp, Zap } from 'lucide-react'
 
 const authItems = [
   { href: '/feed', label: 'Feed', icon: Home },
+  { href: '/dares', label: 'Dares', icon: Zap },
   { href: '/circles', label: 'Circles', icon: Users },
   { href: '/leaderboard', label: 'Leaderboard', icon: TrendingUp },
 ]
@@ -33,7 +34,7 @@ export default function BottomNav() {
               href={item.href}
               className={`flex flex-1 flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${
                 active
-                  ? 'text-blue-600 bg-blue-50'
+                  ? 'text-emerald-600 bg-emerald-50'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
