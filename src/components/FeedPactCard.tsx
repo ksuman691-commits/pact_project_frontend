@@ -57,23 +57,20 @@ const JOIN_MESSAGES: Record<string, string> = {
 };
 
 function formatEndsIn(endDateRaw?: string) {
-  if (!endDateRaw) return 'soon';
+  if (!endDateRaw) return 'Ends soon';
 
   const endDate = new Date(endDateRaw);
-  if (Number.isNaN(endDate.getTime())) return 'soon';
+  if (Number.isNaN(endDate.getTime())) return 'Ends soon';
 
   const diffMs = endDate.getTime() - Date.now();
-  if (diffMs <= 0) return 'ended';
+  if (diffMs <= 0) return 'Ended';
 
-  const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const days = Math.floor(totalHours / 24);
-  const hours = totalHours % 24;
+  const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-  if (days > 0) return `${days}d ${hours}h`;
-  if (totalHours > 0) return `${totalHours}h`;
-
-  const minutes = Math.max(Math.floor(diffMs / (1000 * 60)), 1);
-  return `${minutes}m`;
+  if (days < 1) return 'Ends today';
+  if (days <= 6) return `${days} day${days === 1 ? '' : 's'} left`;
+  if (days < 30) return `${Math.round(days / 7)} week${Math.round(days / 7) === 1 ? '' : 's'} left`;
+  return `${Math.round(days / 30)} month${Math.round(days / 30) === 1 ? '' : 's'} left`;
 }
 
 function formatCompactCount(count: number) {

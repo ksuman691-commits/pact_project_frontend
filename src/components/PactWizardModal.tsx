@@ -95,18 +95,6 @@ function WizardContent({ onClose }: { onClose: () => void }) {
           />
         </div>
 
-        {/* Step Indicator Dots */}
-        <div className="flex justify-center gap-2 px-6 py-4 bg-[#F4F2FB] border-b border-[rgba(20,18,31,0.06)] flex-shrink-0">
-          {[1, 2, 3, 4, 5].map((step) => (
-            <div
-              key={step}
-              className={`w-2.5 h-2.5 rounded-full transition-all ${
-                step < currentStep ? 'bg-blue-600' : step === currentStep ? 'bg-blue-600 w-8' : 'bg-slate-300'
-              }`}
-            />
-          ))}
-        </div>
-
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-6 py-8">
           {currentStep === 1 && <PactWizardStep1 />}
