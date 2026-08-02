@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronRight, Flag, MessageCircle, Share2, FileImage, ArrowLeft, ArrowRight } from 'lucide-react';
+import { ChevronRight, Flag, MessageCircle, Share2, FileImage, ArrowLeft, ArrowRight, Camera } from 'lucide-react';
 import ProofUploadModal from './ProofUploadModal';
 import ShareModal from './ShareModal';
 import ProofMediaCarousel from './ProofMediaCarousel';
@@ -200,6 +200,7 @@ export default function FeedPactCard({
   const timeRemaining = pact.timeRemaining || formatEndsIn(pact.end_date || pact.deadline);
   const proofs = useMemo(() => getProofs(pact), [pact]);
   const media = useMemo(() => getMedia(pact), [pact]);
+  const hasProof = proofs.length > 0;
   const activeProof = proofs[activeProofIndex] ?? proofs[0] ?? null;
   const isExiting = exitDirection !== null;
   const resolvedDetailHref = detailHref || `/pacts/${pact.id}`;
@@ -405,66 +406,68 @@ export default function FeedPactCard({
                 onIndexChange={setActiveProofIndex}
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.28),transparent_35%),linear-gradient(180deg,#0f172a_0%,#020617_100%)]">
+              <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#EDE9FE_0%,#C4B5FD_40%,#A78BFA_100%)]">
                 <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
-                  {creatorAvatarUrl ? (
-                    <div className="absolute inset-0 scale-110 opacity-25 blur-[1px]">
-                      <Image src={creatorAvatarUrl} alt={creatorLabel} fill sizes="100vw" className="object-cover" />
-                    </div>
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-[120px] font-black text-white/10">
-                      {creatorLabel.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  {/* Soft large letter watermark */}
+                  <div className="absolute inset-0 flex items-center justify-center text-[140px] font-black text-violet-300/20 select-none">
+                    {creatorLabel.charAt(0).toUpperCase()}
+                  </div>
                   <div className="relative z-10 flex flex-col items-center gap-4 px-8 text-center">
-                    <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/10 shadow-2xl shadow-black/20 backdrop-blur-sm">
+                    <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-white/60 bg-white/70 shadow-[0_8px_32px_rgba(139,92,246,0.20)] backdrop-blur-sm">
                       {creatorAvatarUrl ? (
                         <Image src={creatorAvatarUrl} alt={creatorLabel} fill sizes="112px" className="object-cover opacity-90" />
                       ) : (
-                        <span className="text-5xl font-black text-white/80">{creatorLabel.charAt(0).toUpperCase()}</span>
+                        <span className="text-5xl font-black text-violet-700">{creatorLabel.charAt(0).toUpperCase()}</span>
                       )}
                     </div>
-                    <p className="max-w-[240px] text-sm font-semibold uppercase tracking-[0.2em] text-white/80">
-                      no proof uploaded yet — be the first
-                    </p>
+                    <div className="flex flex-col items-center gap-2">
+                      <Camera className="h-5 w-5 text-violet-600" />
+                      <p className="max-w-[220px] text-sm font-semibold uppercase tracking-[0.18em] text-violet-900">
+                        no proof uploaded yet — be the first
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
-            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/15 to-black/85" />
+            {hasProof ? (
+              <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/15 to-black/85" />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-b from-violet-900/10 via-transparent to-violet-900/5" />
+            )}
 
             <div className="absolute left-4 top-4 right-4 z-10 flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3 rounded-full bg-black/15 px-3 py-2 backdrop-blur-md">
+              <div className={`flex items-center gap-3 rounded-full px-3 py-2 backdrop-blur-md ${hasProof ? 'bg-black/15' : 'bg-white/70 shadow-[0_2px_8px_rgba(139,92,246,0.12)]'}`}>
                 {creatorAvatarUrl ? (
-                  <div className="relative h-10 w-10 overflow-hidden rounded-full border border-white/20">
+                  <div className={`relative h-10 w-10 overflow-hidden rounded-full border ${hasProof ? 'border-white/20' : 'border-violet-200'}`}>
                     <Image src={creatorAvatarUrl} alt={creatorLabel} fill sizes="40px" className="object-cover" />
                   </div>
                 ) : (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-sm font-black text-white">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-black ${hasProof ? 'bg-white/15 text-white' : 'bg-violet-100 text-violet-700'}`}>
                     {creatorLabel.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     {creatorProfileHref ? (
-                      <Link href={creatorProfileHref} className="truncate text-sm font-bold text-white">
+                      <Link href={creatorProfileHref} className={`truncate text-sm font-bold ${hasProof ? 'text-white' : 'text-[#14121F]'}`}>
                         @{creatorLabel}
                       </Link>
                     ) : (
-                      <p className="truncate text-sm font-bold text-white">@{creatorLabel}</p>
+                      <p className={`truncate text-sm font-bold ${hasProof ? 'text-white' : 'text-[#14121F]'}`}>@{creatorLabel}</p>
                     )}
-                    <span className="rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80">
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] ${hasProof ? 'border border-white/20 bg-white/10 text-white/80' : 'bg-violet-100 text-violet-700'}`}>
                       {circleLabel}
                     </span>
                   </div>
-                  <p className="truncate text-xs text-white/70">
+                  <p className={`truncate text-xs ${hasProof ? 'text-white/70' : 'text-[#6B7280]'}`}>
                     {pact.category || circleLabel}
                   </p>
                 </div>
               </div>
 
-              <div className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur-md">
+              <div className={`rounded-full px-3 py-1 text-xs font-semibold backdrop-blur-md ${hasProof ? 'border border-white/15 bg-black/20 text-white/90' : 'bg-white/70 text-[#14121F] shadow-[0_2px_8px_rgba(139,92,246,0.12)]'}`}>
                 ends in {timeRemaining}
               </div>
             </div>
@@ -473,13 +476,16 @@ export default function FeedPactCard({
               <button
                 type="button"
                 onClick={() => setProofUploadModal(true)}
-                className="flex w-12 flex-col items-center gap-1 rounded-full border border-white/10 bg-black/25 px-2 py-3 text-white backdrop-blur-md transition hover:bg-black/40"
+                className={`flex w-12 flex-col items-center gap-1 rounded-full px-2 py-3 backdrop-blur-md transition ${hasProof ? 'border border-white/10 bg-black/25 text-white hover:bg-black/40' : 'border border-violet-200/80 bg-white/80 text-violet-700 shadow-[0_2px_8px_rgba(139,92,246,0.12)] hover:bg-white'}`}
               >
                 <FileImage className="h-4 w-4" />
                 <span className="text-[10px] font-semibold">{formatCompactCount(proofCount)}</span>
               </button>
 
-              <Link href={resolvedDetailHref} className="flex w-12 flex-col items-center gap-1 rounded-full border border-white/10 bg-black/25 px-2 py-3 text-white backdrop-blur-md transition hover:bg-black/40">
+              <Link
+                href={resolvedDetailHref}
+                className={`flex w-12 flex-col items-center gap-1 rounded-full px-2 py-3 backdrop-blur-md transition ${hasProof ? 'border border-white/10 bg-black/25 text-white hover:bg-black/40' : 'border border-violet-200/80 bg-white/80 text-violet-700 shadow-[0_2px_8px_rgba(139,92,246,0.12)] hover:bg-white'}`}
+              >
                 <MessageCircle className="h-4 w-4" />
                 <span className="text-[10px] font-semibold">{formatCompactCount(commentCount)}</span>
               </Link>
@@ -487,7 +493,7 @@ export default function FeedPactCard({
               <button
                 type="button"
                 onClick={() => setShareModal(true)}
-                className="flex w-12 items-center justify-center rounded-full border border-white/10 bg-black/25 px-2 py-3 text-white backdrop-blur-md transition hover:bg-black/40"
+                className={`flex w-12 items-center justify-center rounded-full px-2 py-3 backdrop-blur-md transition ${hasProof ? 'border border-white/10 bg-black/25 text-white hover:bg-black/40' : 'border border-violet-200/80 bg-white/80 text-violet-700 shadow-[0_2px_8px_rgba(139,92,246,0.12)] hover:bg-white'}`}
                 aria-label="share pact"
               >
                 <Share2 className="h-4 w-4" />
@@ -497,7 +503,7 @@ export default function FeedPactCard({
                 <button
                   type="button"
                   onClick={() => setReportSheetOpen(true)}
-                  className="flex w-12 items-center justify-center rounded-full border border-red-400/70 bg-black/20 px-2 py-3 text-red-300 backdrop-blur-md transition hover:bg-red-500/10"
+                  className={`flex w-12 items-center justify-center rounded-full px-2 py-3 backdrop-blur-md transition ${hasProof ? 'border border-red-400/70 bg-black/20 text-red-300 hover:bg-red-500/10' : 'border border-red-300/70 bg-white/80 text-red-500 shadow-[0_2px_8px_rgba(139,92,246,0.12)] hover:bg-red-50'}`}
                   aria-label="report pact"
                 >
                   <Flag className="h-4 w-4" />
@@ -513,10 +519,10 @@ export default function FeedPactCard({
               </div>
             )}
 
-            <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 via-black/65 to-transparent px-4 pb-4 pt-16">
+            <div className={`absolute inset-x-0 bottom-0 z-10 px-4 pb-4 pt-16 ${hasProof ? 'bg-gradient-to-t from-black/90 via-black/65 to-transparent' : 'bg-gradient-to-t from-violet-100/90 via-violet-50/60 to-transparent'}`}>
               <div className="space-y-3 pr-16">
                 <Link href={resolvedDetailHref} className="block">
-                  <h2 className="max-w-[85%] text-3xl font-black leading-[1.02] tracking-tight text-white sm:text-4xl">
+                  <h2 className={`max-w-[85%] text-3xl font-black leading-[1.02] tracking-tight sm:text-4xl ${hasProof ? 'text-white' : 'text-[#14121F]'}`}>
                     {pact.title}
                   </h2>
                 </Link>
@@ -539,7 +545,7 @@ export default function FeedPactCard({
                   </div>
                 )}
 
-                <p className="text-lg font-black text-white">
+                <p className={`text-lg font-black ${hasProof ? 'text-white' : 'text-[#14121F]'}`}>
                   {formatCompactCount(supportCount)} supporting this pact
                 </p>
 
