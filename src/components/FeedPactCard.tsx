@@ -412,21 +412,22 @@ export default function FeedPactCard({
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#EDE9FE_0%,#C4B5FD_40%,#A78BFA_100%)]">
-                <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
+                <div className="relative h-full w-full overflow-hidden">
                   {/* Soft large letter watermark */}
                   <div className="absolute inset-0 flex items-center justify-center text-[140px] font-black text-violet-300/20 select-none">
                     {creatorLabel.charAt(0).toUpperCase()}
                   </div>
-                  <div className="relative z-10 flex flex-col items-center gap-4 px-8 text-center">
-                    <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-white/60 bg-white/70 shadow-[0_8px_32px_rgba(139,92,246,0.20)] backdrop-blur-sm">
+                  {/* Anchored to the upper portion of the media area so it never collides with the title/stats block pinned to the bottom */}
+                  <div className="absolute inset-x-0 top-16 z-10 flex flex-col items-center gap-3 px-8 text-center">
+                    <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-white/60 bg-white/70 shadow-[0_8px_32px_rgba(139,92,246,0.20)] backdrop-blur-sm">
                       {creatorAvatarUrl ? (
-                        <Image src={creatorAvatarUrl} alt={creatorLabel} fill sizes="112px" className="object-cover opacity-90" />
+                        <Image src={creatorAvatarUrl} alt={creatorLabel} fill sizes="96px" className="object-cover opacity-90" />
                       ) : (
-                        <span className="text-5xl font-black text-violet-700">{creatorLabel.charAt(0).toUpperCase()}</span>
+                        <span className="text-4xl font-black text-violet-700">{creatorLabel.charAt(0).toUpperCase()}</span>
                       )}
                     </div>
                     <div className="flex flex-col items-center gap-2">
-                      <Camera className="h-5 w-5 text-violet-600" />
+                      <Camera className="h-4 w-4 text-violet-600" />
                       <p className="max-w-[220px] text-sm font-semibold uppercase tracking-[0.18em] text-violet-900">
                         no proof uploaded yet — be the first
                       </p>
