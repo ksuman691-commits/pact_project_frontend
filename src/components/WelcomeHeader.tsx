@@ -11,6 +11,7 @@ interface WelcomeHeaderProps {
   onCreatePact?: () => void
   onCreateDare?: () => void
   onSearch?: () => void
+  actionsDisabled?: boolean
 }
 
 export default function WelcomeHeader({
@@ -20,7 +21,8 @@ export default function WelcomeHeader({
   onNotificationsClick,
   onCreatePact,
   onCreateDare,
-  onSearch
+  onSearch,
+  actionsDisabled = false
 }: WelcomeHeaderProps) {
   return (
     <div className="border-b border-[rgba(20,18,31,0.06)]/80 bg-gradient-to-br from-slate-50 via-white to-emerald-50/60">
@@ -68,14 +70,16 @@ export default function WelcomeHeader({
         <div className="mt-3 flex gap-2">
           <button
             onClick={onCreatePact}
-            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            disabled={actionsDisabled}
+            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-slate-900"
           >
             <Plus className="h-4 w-4" strokeWidth={2.4} />
             New Pact
           </button>
           <button
             onClick={onCreateDare}
-            className="flex flex-1 items-center justify-center gap-2 rounded-full border border-emerald-200 bg-[#EDE9FE] px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+            disabled={actionsDisabled}
+            className="flex flex-1 items-center justify-center gap-2 rounded-full border border-emerald-200 bg-[#EDE9FE] px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#EDE9FE]"
           >
             <Sparkles className="h-4 w-4" strokeWidth={2.2} />
             New Dare

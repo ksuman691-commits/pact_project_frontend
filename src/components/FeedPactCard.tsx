@@ -584,7 +584,7 @@ export default function FeedPactCard({
                     type="button"
                     onClick={handleJoinPact}
                     disabled={isJoining}
-                    className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-[#EDE9FE] disabled:opacity-60"
+                    className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-[#EDE9FE] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-white"
                   >
                     {isJoining ? 'joining...' : 'join pact'}
                   </button>
@@ -612,7 +612,8 @@ export default function FeedPactCard({
                     <button
                       type="button"
                       onClick={() => void completeVote('skip')}
-                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${displayVote === 'skip' ? 'border-rose-400/70 bg-rose-500/15 text-rose-200' : 'border-white/12 bg-white/8 text-white hover:bg-white/12'}`}
+                      disabled={isVoting}
+                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${displayVote === 'skip' ? 'border-rose-400/70 bg-rose-500/15 text-rose-200' : 'border-white/12 bg-white/8 text-white hover:bg-white/12 disabled:hover:bg-white/8'}`}
                     >
                       <ArrowLeft className="h-4 w-4" />
                       skip
@@ -620,7 +621,8 @@ export default function FeedPactCard({
                     <button
                       type="button"
                       onClick={() => void completeVote('support')}
-                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${displayVote === 'support' ? 'border-emerald-400/70 bg-emerald-400/20 text-emerald-100' : 'border-emerald-400/50 bg-emerald-400/12 text-emerald-200 hover:bg-emerald-400/18'}`}
+                      disabled={isVoting}
+                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${displayVote === 'support' ? 'border-emerald-400/70 bg-emerald-400/20 text-emerald-100' : 'border-emerald-400/50 bg-emerald-400/12 text-emerald-200 hover:bg-emerald-400/18 disabled:hover:bg-emerald-400/12'}`}
                     >
                       support
                       <ArrowRight className="h-4 w-4" />

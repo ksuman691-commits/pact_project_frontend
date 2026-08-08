@@ -67,6 +67,7 @@ export default function FeedPageClient() {
         onCreatePact={handleCreatePact}
         onCreateDare={handleCreateDare}
         onSearch={() => setSearchModalOpen(true)}
+        actionsDisabled={!isInitialized}
       />
 
       <TopNav
