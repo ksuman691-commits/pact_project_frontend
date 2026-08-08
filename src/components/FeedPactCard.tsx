@@ -467,9 +467,6 @@ export default function FeedPactCard({
                       {circleLabel}
                     </span>
                   </div>
-                  <p className={`truncate text-xs ${hasProof ? 'text-white/70' : 'text-[#6B7280]'}`}>
-                    {pact.category || circleLabel}
-                  </p>
                 </div>
               </div>
 
