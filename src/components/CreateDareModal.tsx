@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, ChevronLeft, ChevronRight, Calendar, Users } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Clock, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCreateDare } from '@/hooks/useDareMutations';
 import { useAuthStore } from '@/store/auth';
@@ -14,19 +14,31 @@ interface CreateDareModalProps {
 interface DareFormData {
   title: string;
   description: string;
-  respondByDate: string;
-  completeByDate: string;
+  respondByHours: number;
+  completeByHours: number;
   recipients: string[];
   verification_method: 'photo' | 'video' | 'checklist';
   visibility: 'public' | 'private';
   circle_id?: number;
 }
 
+const RESPOND_BY_OPTIONS = [
+  { label: '1 hour', hours: 1 },
+  { label: '6 hours', hours: 6 },
+  { label: '12 hours', hours: 12 },
+  { label: '24 hours', hours: 24 },
+];
+
+const COMPLETE_BY_OPTIONS = [
+  { label: '24 hours', hours: 24 },
+  { label: '48 hours', hours: 48 },
+];
+
 const INITIAL_FORM: DareFormData = {
   title: '',
   description: '',
-  respondByDate: '',
-  completeByDate: '',
+  respondByHours: 12,
+  completeByHours: 24,
   recipients: [],
   verification_method: 'photo',
   visibility: 'public',
@@ -48,10 +60,6 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
   const handleNext = () => {
     if (step === 1 && (!form.title.trim() || !form.description.trim())) {
       toast.error('Please fill in title and description');
-      return;
-    }
-    if (step === 2 && (!form.respondByDate || !form.completeByDate)) {
-      toast.error('Please select both dates');
       return;
     }
     if (step < 5) {
@@ -90,11 +98,15 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
       return;
     }
 
+    const now = Date.now();
+    const respondByDate = new Date(now + form.respondByHours * 60 * 60 * 1000).toISOString();
+    const completeByDate = new Date(now + form.completeByHours * 60 * 60 * 1000).toISOString();
+
     const payload: any = {
       title: form.title,
       description: form.description,
-      respond_by_date: form.respondByDate,
-      complete_by_date: form.completeByDate,
+      respond_by_date: respondByDate,
+      complete_by_date: completeByDate,
       verification_method: form.verification_method,
       visibility: form.visibility,
     };
@@ -153,34 +165,54 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
             </div>
           )}
 
-          {/* Step 2: Dates */}
+          {/* Step 2: Durations */}
           {step === 2 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
                 <label className="block text-sm font-semibold text-[#14121F] mb-2 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Respond By Date
+                  <Clock className="w-4 h-4" />
+                  Respond By
                 </label>
-                <input
-                  type="datetime-local"
-                  value={form.respondByDate}
-                  onChange={(e) => setForm({ ...form, respondByDate: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-                <p className="text-xs text-[#9CA3AF] mt-1">Users have until this date to accept</p>
+                <div className="flex flex-wrap gap-2">
+                  {RESPOND_BY_OPTIONS.map((option) => (
+                    <button
+                      key={option.hours}
+                      type="button"
+                      onClick={() => setForm({ ...form, respondByHours: option.hours })}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                        form.respondByHours === option.hours
+                          ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-[0_4px_12px_rgba(94,84,142,0.08)]'
+                          : 'bg-[#FAF9FE] text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-[#9CA3AF] mt-2">Users have {form.respondByHours} hours to accept</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-[#14121F] mb-2 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Complete By Date
+                  <Clock className="w-4 h-4" />
+                  Complete By
                 </label>
-                <input
-                  type="datetime-local"
-                  value={form.completeByDate}
-                  onChange={(e) => setForm({ ...form, completeByDate: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-                <p className="text-xs text-[#9CA3AF] mt-1">Users must complete by this date</p>
+                <div className="flex flex-wrap gap-2">
+                  {COMPLETE_BY_OPTIONS.map((option) => (
+                    <button
+                      key={option.hours}
+                      type="button"
+                      onClick={() => setForm({ ...form, completeByHours: option.hours })}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                        form.completeByHours === option.hours
+                          ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-[0_4px_12px_rgba(94,84,142,0.08)]'
+                          : 'bg-[#FAF9FE] text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-[#9CA3AF] mt-2">Users must complete within {form.completeByHours} hours</p>
               </div>
             </div>
           )}
@@ -289,11 +321,11 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
                 <div className="grid grid-cols-2 gap-4 pt-3 border-t border-[rgba(20,18,31,0.06)]">
                   <div>
                     <p className="text-xs font-semibold text-[#6B7280] uppercase">Respond By</p>
-                    <p className="text-[#14121F]">{new Date(form.respondByDate).toLocaleDateString()}</p>
+                    <p className="text-[#14121F]">{form.respondByHours} hours</p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-[#6B7280] uppercase">Complete By</p>
-                    <p className="text-[#14121F]">{new Date(form.completeByDate).toLocaleDateString()}</p>
+                    <p className="text-[#14121F]">{form.completeByHours} hours</p>
                   </div>
                 </div>
                 <div>
