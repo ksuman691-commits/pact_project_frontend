@@ -552,10 +552,10 @@ export default function FeedPactCard({
                   {formatCompactCount(supportCount)} supporting this pact
                 </p>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex -space-x-2">
-                    {supporterStack.length > 0 ? (
-                      supporterStack.map((supporter: any) => (
+                {supporterStack.length > 0 && (
+                  <div className="flex items-center gap-3">
+                    <div className="flex -space-x-2">
+                      {supporterStack.map((supporter: any) => (
                         <div key={supporter.id} className="relative h-9 w-9 overflow-hidden rounded-full border border-white/20 bg-white/10">
                           {supporter.avatar_url ? (
                             <Image src={supporter.avatar_url} alt={supporter.username} fill sizes="36px" className="object-cover" />
@@ -565,20 +565,14 @@ export default function FeedPactCard({
                             </div>
                           )}
                         </div>
-                      ))
-                    ) : (
-                      <div className="flex -space-x-2">
-                        <div className="h-9 w-9 rounded-full border border-white/20 bg-white/12" />
-                        <div className="h-9 w-9 rounded-full border border-white/20 bg-white/10" />
-                        <div className="h-9 w-9 rounded-full border border-white/20 bg-white/8" />
-                      </div>
-                    )}
-                  </div>
+                      ))}
+                    </div>
 
-                  <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/65">
-                    recent supporters
-                  </p>
-                </div>
+                    <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/65">
+                      recent supporters
+                    </p>
+                  </div>
+                )}
 
                 {joinAllowed && (
                   <button
