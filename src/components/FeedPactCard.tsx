@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronRight, Flag, MessageCircle, Share2, FileImage, ArrowLeft, ArrowRight, Camera } from 'lucide-react';
@@ -385,7 +386,11 @@ export default function FeedPactCard({
 
   return (
     <>
-      <div className="mx-2 overflow-hidden rounded-[32px] border border-white/8 bg-slate-950 text-white shadow-[0_20px_70px_rgba(2,6,23,0.45)] sm:mx-0">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className="mx-2 overflow-hidden rounded-[32px] border border-white/8 bg-slate-950 text-white shadow-[0_20px_70px_rgba(2,6,23,0.45)] sm:mx-0">
         <div
           className="relative isolate overflow-hidden rounded-[32px] touch-pan-y"
           style={transformStyle}
@@ -626,7 +631,7 @@ export default function FeedPactCard({
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {uploadAllowed && (
         <ProofUploadModal
