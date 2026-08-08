@@ -511,7 +511,7 @@ export default function FeedPactCard({
                 <button
                   type="button"
                   onClick={() => setReportSheetOpen(true)}
-                  className={`flex w-12 items-center justify-center rounded-full px-2 py-3 backdrop-blur-md transition ${hasProof ? 'border border-red-400/70 bg-black/20 text-red-300 hover:bg-red-500/10' : 'border border-red-300/70 bg-white/80 text-red-500 shadow-[0_2px_8px_rgba(139,92,246,0.12)] hover:bg-red-50'}`}
+                  className={`flex w-12 items-center justify-center rounded-full px-2 py-3 backdrop-blur-md transition ${hasProof ? 'border border-red-400/70 bg-black/25 text-red-300 hover:bg-black/40' : 'border border-red-300/70 bg-white/80 text-red-500 shadow-[0_2px_8px_rgba(139,92,246,0.12)] hover:bg-red-50'}`}
                   aria-label="report pact"
                 >
                   <Flag className="h-4 w-4" />
