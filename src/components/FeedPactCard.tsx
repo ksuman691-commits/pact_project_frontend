@@ -471,7 +471,7 @@ export default function FeedPactCard({
               </div>
 
               <div className={`rounded-full px-3 py-1 text-xs font-semibold backdrop-blur-md ${hasProof ? 'border border-white/15 bg-black/20 text-white/90' : 'bg-white/70 text-[#14121F] shadow-[0_2px_8px_rgba(139,92,246,0.12)]'}`}>
-                ends in {timeRemaining}
+                {timeRemaining}
               </div>
             </div>
 
