@@ -359,6 +359,14 @@ export default function FeedPactCard({
     }
   };
 
+  const handleProofUploadClick = () => {
+    if (!uploadAllowed) {
+      toast.error('Join this pact to upload proof');
+      return;
+    }
+    setProofUploadModal(true);
+  };
+
   const handleJoinPact = async () => {
     if (isJoining || !joinAllowed) return;
     setIsJoining(true);
@@ -472,8 +480,8 @@ export default function FeedPactCard({
             <div className="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-2">
               <button
                 type="button"
-                onClick={() => setProofUploadModal(true)}
-                className={`flex w-12 flex-col items-center gap-1 rounded-full px-2 py-3 backdrop-blur-md transition ${hasProof ? 'border border-white/10 bg-black/25 text-white hover:bg-black/40' : 'border border-violet-200/80 bg-white/80 text-violet-700 shadow-[0_2px_8px_rgba(139,92,246,0.12)] hover:bg-white'}`}
+                onClick={handleProofUploadClick}
+                className={`flex w-12 flex-col items-center gap-1 rounded-full px-2 py-3 backdrop-blur-md transition ${hasProof ? 'border border-white/10 bg-black/25 text-white hover:bg-black/40' : 'border border-violet-200/80 bg-white/80 text-violet-700 shadow-[0_2px_8px_rgba(139,92,246,0.12)] hover:bg-white'} ${uploadAllowed ? '' : 'opacity-60'}`}
               >
                 <FileImage className="h-4 w-4" />
                 <span className="text-[10px] font-semibold">{formatCompactCount(proofCount)}</span>
@@ -516,10 +524,10 @@ export default function FeedPactCard({
               </div>
             )}
 
-            <div className={`absolute inset-x-0 bottom-0 z-10 px-4 pb-4 pt-16 ${hasProof ? 'bg-gradient-to-t from-black/90 via-black/65 to-transparent' : 'bg-gradient-to-t from-violet-100/90 via-violet-50/60 to-transparent'}`}>
+            <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 via-black/65 to-transparent px-4 pb-4 pt-16">
               <div className="space-y-3 pr-16">
                 <Link href={resolvedDetailHref} className="block">
-                  <h2 className={`max-w-[85%] text-3xl font-black leading-[1.02] tracking-tight sm:text-4xl ${hasProof ? 'text-white' : 'text-[#14121F]'}`}>
+                  <h2 className="max-w-[85%] text-3xl font-black leading-[1.02] tracking-tight text-white sm:text-4xl">
                     {pact.title}
                   </h2>
                 </Link>
@@ -542,7 +550,7 @@ export default function FeedPactCard({
                   </div>
                 )}
 
-                <p className={`text-lg font-black ${hasProof ? 'text-white' : 'text-[#14121F]'}`}>
+                <p className="text-lg font-black text-white">
                   {formatCompactCount(supportCount)} supporting this pact
                 </p>
 
@@ -550,11 +558,11 @@ export default function FeedPactCard({
                   <div className="flex -space-x-2">
                     {supporterStack.length > 0 ? (
                       supporterStack.map((supporter: any) => (
-                        <div key={supporter.id} className={`relative h-9 w-9 overflow-hidden rounded-full border ${hasProof ? 'border-white/20 bg-white/10' : 'border-white bg-violet-100'}`}>
+                        <div key={supporter.id} className="relative h-9 w-9 overflow-hidden rounded-full border border-white/20 bg-white/10">
                           {supporter.avatar_url ? (
                             <Image src={supporter.avatar_url} alt={supporter.username} fill sizes="36px" className="object-cover" />
                           ) : (
-                            <div className={`flex h-full w-full items-center justify-center text-xs font-black ${hasProof ? 'bg-white/10 text-white' : 'bg-violet-100 text-violet-700'}`}>
+                            <div className="flex h-full w-full items-center justify-center bg-white/10 text-xs font-black text-white">
                               {String(supporter.username || '?').charAt(0).toUpperCase()}
                             </div>
                           )}
@@ -562,14 +570,14 @@ export default function FeedPactCard({
                       ))
                     ) : (
                       <div className="flex -space-x-2">
-                        <div className={`h-9 w-9 rounded-full border ${hasProof ? 'border-white/20 bg-white/12' : 'border-white bg-violet-100/80'}`} />
-                        <div className={`h-9 w-9 rounded-full border ${hasProof ? 'border-white/20 bg-white/10' : 'border-white bg-violet-100/60'}`} />
-                        <div className={`h-9 w-9 rounded-full border ${hasProof ? 'border-white/20 bg-white/8' : 'border-white bg-violet-100/40'}`} />
+                        <div className="h-9 w-9 rounded-full border border-white/20 bg-white/12" />
+                        <div className="h-9 w-9 rounded-full border border-white/20 bg-white/10" />
+                        <div className="h-9 w-9 rounded-full border border-white/20 bg-white/8" />
                       </div>
                     )}
                   </div>
 
-                  <p className={`text-xs font-medium uppercase tracking-[0.24em] ${hasProof ? 'text-white/65' : 'text-[#6B7280]'}`}>
+                  <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/65">
                     recent supporters
                   </p>
                 </div>
@@ -579,14 +587,14 @@ export default function FeedPactCard({
                     type="button"
                     onClick={handleJoinPact}
                     disabled={isJoining}
-                    className={`inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition disabled:opacity-60 ${hasProof ? 'bg-white text-slate-950 hover:bg-[#EDE9FE]' : 'bg-[#14121F] text-white hover:bg-slate-800'}`}
+                    className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-[#EDE9FE] disabled:opacity-60"
                   >
                     {isJoining ? 'joining...' : 'join pact'}
                   </button>
                 )}
 
                 {!joinAllowed && pact.join_block_reason && (
-                  <p className={`text-xs font-medium uppercase tracking-[0.2em] ${hasProof ? 'text-white/50' : 'text-[#6B7280]'}`}>
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/50">
                     {JOIN_MESSAGES[pact.join_block_reason] ?? 'Joining is not available'}
                     {pact.join_block_reason === 'full' && pact.max_participants
                       ? ` — ${pact.max_participants}/${pact.max_participants} joined`
@@ -596,15 +604,7 @@ export default function FeedPactCard({
 
                 {voteStatusLabel && (
                   <div className="pt-2">
-                    <p className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] ${
-                      voteStatusLabel === 'supported'
-                        ? hasProof
-                          ? 'border-emerald-400/70 bg-emerald-400/18 text-emerald-100'
-                          : 'border-emerald-500 bg-emerald-50 text-emerald-700'
-                        : hasProof
-                          ? 'border-rose-400/70 bg-rose-500/15 text-rose-200'
-                          : 'border-rose-400 bg-rose-50 text-rose-600'
-                    }`}>
+                    <p className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] ${voteStatusLabel === 'supported' ? 'border-emerald-400/70 bg-emerald-400/18 text-emerald-100' : 'border-rose-400/70 bg-rose-500/15 text-rose-200'}`}>
                       {voteStatusLabel}
                     </p>
                   </div>
@@ -615,15 +615,7 @@ export default function FeedPactCard({
                     <button
                       type="button"
                       onClick={() => void completeVote('skip')}
-                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                        displayVote === 'skip'
-                          ? hasProof
-                            ? 'border-rose-400/70 bg-rose-500/15 text-rose-200'
-                            : 'border-rose-400 bg-rose-50 text-rose-600'
-                          : hasProof
-                            ? 'border-white/20 bg-white/10 text-white hover:bg-white/18'
-                            : 'border-[rgba(20,18,31,0.15)] bg-white text-[#14121F] hover:bg-[#F4F2FB]'
-                      }`}
+                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${displayVote === 'skip' ? 'border-rose-400/70 bg-rose-500/15 text-rose-200' : 'border-white/12 bg-white/8 text-white hover:bg-white/12'}`}
                     >
                       <ArrowLeft className="h-4 w-4" />
                       skip
@@ -631,15 +623,7 @@ export default function FeedPactCard({
                     <button
                       type="button"
                       onClick={() => void completeVote('support')}
-                      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                        displayVote === 'support'
-                          ? hasProof
-                            ? 'bg-emerald-500 text-white'
-                            : 'bg-violet-700 text-white'
-                          : hasProof
-                            ? 'bg-emerald-500 text-white hover:bg-emerald-400'
-                            : 'bg-[#6D28D9] text-white hover:bg-[#7C3AED]'
-                      }`}
+                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${displayVote === 'support' ? 'border-emerald-400/70 bg-emerald-400/20 text-emerald-100' : 'border-emerald-400/50 bg-emerald-400/12 text-emerald-200 hover:bg-emerald-400/18'}`}
                     >
                       support
                       <ArrowRight className="h-4 w-4" />
