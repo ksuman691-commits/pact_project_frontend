@@ -5,6 +5,7 @@ import { X, ChevronLeft, ChevronRight, Clock, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCreateDare } from '@/hooks/useDareMutations';
 import { useAuthStore } from '@/store/auth';
+import { userService } from '@/services/api';
 
 interface CreateDareModalProps {
   isOpen: boolean;
@@ -56,6 +57,7 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<DareFormData>(INITIAL_FORM);
   const [recipientEmail, setRecipientEmail] = useState('');
+  const [isResolvingRecipients, setIsResolvingRecipients] = useState(false);
 
   const handleNext = () => {
     if (step === 1 && (!form.title.trim() || !form.description.trim())) {
@@ -99,20 +101,48 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
     }
 
     const now = Date.now();
-    const respondByDate = new Date(now + form.respondByHours * 60 * 60 * 1000).toISOString();
-    const completeByDate = new Date(now + form.completeByHours * 60 * 60 * 1000).toISOString();
+    const respondBy = new Date(now + form.respondByHours * 60 * 60 * 1000).toISOString();
+    const completeBy = new Date(now + form.completeByHours * 60 * 60 * 1000).toISOString();
+
+    // Backend has no "circle" audience option surfaced in this UI yet, so
+    // private dares map to "individual" (recipient-based) audience.
+    const audience: 'public' | 'individual' = form.visibility === 'public' ? 'public' : 'individual';
+
+    let recipientUserIds: number[] = [];
+    if (form.recipients.length > 0) {
+      setIsResolvingRecipients(true);
+      const lookups = await Promise.all(
+        form.recipients.map((email) => userService.search(email, 1).catch(() => ({ data: [] })))
+      );
+      setIsResolvingRecipients(false);
+
+      const unresolved: string[] = [];
+      lookups.forEach((response, index) => {
+        const match = Array.isArray(response.data) ? response.data[0] : undefined;
+        if (match?.id) {
+          recipientUserIds.push(match.id);
+        } else {
+          unresolved.push(form.recipients[index]);
+        }
+      });
+
+      if (unresolved.length > 0) {
+        toast.error(`No account found for: ${unresolved.join(', ')}`);
+        return;
+      }
+    }
 
     const payload: any = {
       title: form.title,
       description: form.description,
-      respond_by_date: respondByDate,
-      complete_by_date: completeByDate,
+      respond_by: respondBy,
+      complete_by: completeBy,
       verification_method: form.verification_method,
-      visibility: form.visibility,
+      audience,
     };
 
-    if (form.recipients.length > 0) {
-      payload.recipient_emails = form.recipients;
+    if (recipientUserIds.length > 0) {
+      payload.recipient_user_ids = recipientUserIds;
     }
 
     createDareMutation.mutate(payload, {
@@ -369,11 +399,11 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
 
           <button
             onClick={step === 5 ? handleSubmit : handleNext}
-            disabled={createDareMutation.isPending}
+            disabled={createDareMutation.isPending || isResolvingRecipients}
             className="flex items-center gap-2 px-4 py-2.5 bg-[#A78BFA] text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-[28px]"
           >
             {step === 5 ? (
-              createDareMutation.isPending ? 'Creating...' : 'Create Dare'
+              isResolvingRecipients ? 'Checking recipients...' : createDareMutation.isPending ? 'Creating...' : 'Create Dare'
             ) : (
               <>
                 Next
