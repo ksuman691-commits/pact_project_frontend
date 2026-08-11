@@ -434,7 +434,7 @@ export default function FeedPactCard({
                     <div className="flex flex-col items-center gap-2">
                       <Camera className="h-4 w-4 text-violet-600" />
                       <p className="max-w-[220px] text-sm font-semibold uppercase tracking-[0.18em] text-violet-900">
-                        no proof uploaded yet — be the first
+                        {uploadAllowed ? 'no proof uploaded yet — be the first' : 'No proof uploaded yet'}
                       </p>
                     </div>
                   </div>
