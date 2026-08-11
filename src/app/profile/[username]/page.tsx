@@ -25,6 +25,7 @@ import {
   useUserByUsername,
   useUserStats,
 } from '@/hooks/useUserQueries';
+import { useAtRiskPact } from '@/hooks/useAtRiskPact';
 
 export default function PublicProfilePage() {
   const router = useRouter();
@@ -55,6 +56,7 @@ export default function PublicProfilePage() {
   const followersQuery = useFollowers(profileUserId);
   const followingQuery = useFollowing(profileUserId);
   const followStateQuery = useFollowState(profileUserId);
+  const isAtRisk = useAtRiskPact(isOwnProfile ? profileUserId : undefined);
 
   const requestFollow = useRequestFollow(profileUserId);
   const acceptFollow = useAcceptFollow(profileUserId);
@@ -239,6 +241,8 @@ export default function PublicProfilePage() {
         <ProfileHero
           user={heroUser}
           isOwnProfile={isOwnProfile}
+          streak={isOwnProfile ? stats.currentStreak : undefined}
+          atRisk={isOwnProfile ? isAtRisk : undefined}
           customActions={
             isOwnProfile ? null : (
               <div className="flex flex-col gap-2 w-full md:w-auto">

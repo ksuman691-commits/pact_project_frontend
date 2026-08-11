@@ -13,6 +13,7 @@ import AchievementsBadges from '@/components/AchievementsBadges';
 import { LogOut, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useFollowers, useFollowing } from '@/hooks/useFollows';
+import { useAtRiskPact } from '@/hooks/useAtRiskPact';
 
 export default function Profile() {
   const router = useRouter();
@@ -34,6 +35,7 @@ export default function Profile() {
   const followingQuery = useFollowing(userId || 0);
   const followers = followersQuery.data?.data || [];
   const following = followingQuery.data?.data || [];
+  const isAtRisk = useAtRiskPact(userId);
 
   const completedPacts = createdPacts.filter((p: any) => p.status === 'completed').length;
   const winRate = createdPacts.length > 0 ? Math.round((completedPacts / createdPacts.length) * 100) : 0;
@@ -162,6 +164,8 @@ export default function Profile() {
           user={profileUser}
           isOwnProfile={true}
           onEdit={handleEditProfile}
+          streak={stats.currentStreak}
+          atRisk={isAtRisk}
         />
 
         {/* Stats */}

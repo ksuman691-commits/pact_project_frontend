@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import StreakAvatarRing from '@/components/StreakAvatarRing'
 
 interface UserAvatarLinkProps {
   name?: string | null
@@ -10,6 +11,11 @@ interface UserAvatarLinkProps {
   sizeClassName?: string
   textClassName?: string
   className?: string
+  /** Current streak in days. When provided, wraps the avatar in a tier ring. */
+  streak?: number
+  /** Pulses the ring amber-red to signal an approaching deadline with no proof yet. */
+  atRisk?: boolean
+  showStreakBadge?: boolean
 }
 
 function getInitials(name?: string | null) {
@@ -30,10 +36,13 @@ export default function UserAvatarLink({
   sizeClassName = 'w-12 h-12',
   textClassName = 'text-sm',
   className = '',
+  streak,
+  atRisk = false,
+  showStreakBadge = true,
 }: UserAvatarLinkProps) {
   const initials = getInitials(name)
 
-  return (
+  const avatarLink = (
     <Link
       href={href}
       aria-label="Open profile"
@@ -51,5 +60,15 @@ export default function UserAvatarLink({
         <span>{initials}</span>
       )}
     </Link>
+  )
+
+  if (typeof streak !== 'number') {
+    return avatarLink
+  }
+
+  return (
+    <StreakAvatarRing streak={streak} atRisk={atRisk} showBadge={showStreakBadge}>
+      {avatarLink}
+    </StreakAvatarRing>
   )
 }

@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { Edit2, UserPlus, MessageCircle } from 'lucide-react';
+import StreakAvatarRing from '@/components/StreakAvatarRing';
 
 interface ProfileHeroProps {
   user: {
@@ -20,6 +21,10 @@ interface ProfileHeroProps {
   onMessage?: () => void;
   onEdit?: () => void;
   customActions?: React.ReactNode;
+  /** Current streak in days — only rendered as a ring when isOwnProfile is true. */
+  streak?: number;
+  /** Pulses the ring amber-red to signal an approaching deadline with no proof yet. */
+  atRisk?: boolean;
 }
 
 export default function ProfileHero({
@@ -30,7 +35,27 @@ export default function ProfileHero({
   onMessage,
   onEdit,
   customActions,
+  streak,
+  atRisk = false,
 }: ProfileHeroProps) {
+  const avatarContent = (
+    <div className="w-20 h-20 rounded-full bg-[#EDE9FE] p-0.5">
+      {user.avatar ? (
+        <Image
+          src={user.avatar}
+          alt={user.name}
+          width={80}
+          height={80}
+          className="w-full h-full rounded-full object-cover"
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-violet-400 to-[#A78BFA] rounded-full flex items-center justify-center text-2xl font-bold text-white">
+          {user.name.charAt(0)}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="mb-6">
       {/* Compact Header */}
@@ -40,21 +65,13 @@ export default function ProfileHero({
           className="relative flex-shrink-0 cursor-pointer hover:opacity-80 transition"
           onClick={isOwnProfile ? onEdit : undefined}
         >
-          <div className="w-20 h-20 rounded-full bg-[#EDE9FE] p-0.5">
-            {user.avatar ? (
-              <Image
-                src={user.avatar}
-                alt={user.name}
-                width={80}
-                height={80}
-                className="w-full h-full rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-violet-400 to-[#A78BFA] rounded-full flex items-center justify-center text-2xl font-bold text-white">
-                {user.name.charAt(0)}
-              </div>
-            )}
-          </div>
+          {isOwnProfile && typeof streak === 'number' ? (
+            <StreakAvatarRing streak={streak} atRisk={atRisk}>
+              {avatarContent}
+            </StreakAvatarRing>
+          ) : (
+            avatarContent
+          )}
         </div>
 
         {/* Info */}
