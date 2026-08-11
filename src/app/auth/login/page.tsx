@@ -50,31 +50,31 @@ export default function Login() {
               className="object-contain"
             />
           </div>
-          <h1 className="text-4xl font-black text-slate-900 mb-4">CirclePact</h1>
-          <p className="text-lg text-slate-600 mb-2">Real Commitments.</p>
-          <p className="text-lg text-slate-600 mb-8">Real Money.</p>
-          <p className="text-lg text-slate-600 mb-12">Real Accountability.</p>
+          <h1 className="text-4xl font-black text-[#14121F] mb-4">CirclePact</h1>
+          <p className="text-lg text-[#6B7280] mb-2">Real Commitments.</p>
+          <p className="text-lg text-[#6B7280] mb-8">Real Money.</p>
+          <p className="text-lg text-[#6B7280] mb-12">Real Accountability.</p>
 
           <div className="space-y-6 mt-12">
             <div className="flex items-start gap-4">
               <div className="text-2xl">🎯</div>
               <div className="text-left">
-                <p className="font-semibold text-slate-900">Set Goals with Stakes</p>
-                <p className="text-sm text-slate-600">Put real money behind your commitments</p>
+                <p className="font-semibold text-[#14121F]">Set Goals with Stakes</p>
+                <p className="text-sm text-[#6B7280]">Put real money behind your commitments</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
               <div className="text-2xl">👥</div>
               <div className="text-left">
-                <p className="font-semibold text-slate-900">Invite Your Circle</p>
-                <p className="text-sm text-slate-600">Get accountability from followers who care</p>
+                <p className="font-semibold text-[#14121F]">Invite Your Circle</p>
+                <p className="text-sm text-[#6B7280]">Get accountability from followers who care</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
               <div className="text-2xl">✅</div>
               <div className="text-left">
-                <p className="font-semibold text-slate-900">Prove. Vote. Win.</p>
-                <p className="text-sm text-slate-600">Upload proof daily and earn rewards</p>
+                <p className="font-semibold text-[#14121F]">Prove. Vote. Win.</p>
+                <p className="text-sm text-[#6B7280]">Upload proof daily and earn rewards</p>
               </div>
             </div>
           </div>
@@ -105,7 +105,7 @@ export default function Login() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400 text-sm placeholder:text-slate-400"
+                className="w-full px-4 py-2.5 bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] rounded-[28px] focus:outline-none focus:border-slate-400 text-sm placeholder:text-slate-400"
                 placeholder="Email or username"
               />
             </div>
@@ -117,7 +117,7 @@ export default function Login() {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400 text-sm placeholder:text-slate-400"
+                className="w-full px-4 py-2.5 bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] rounded-[28px] focus:outline-none focus:border-slate-400 text-sm placeholder:text-slate-400"
                 placeholder="Password"
               />
             </div>
@@ -125,7 +125,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-semibold rounded-lg transition-all disabled:cursor-not-allowed text-sm"
+              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-semibold rounded-[28px] transition-all disabled:cursor-not-allowed text-sm"
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
             </button>
@@ -134,26 +134,26 @@ export default function Login() {
           {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200"></div>
+              <div className="w-full border-t border-[rgba(20,18,31,0.06)]"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-slate-500">OR</span>
+              <span className="px-2 bg-white text-[#9CA3AF]">OR</span>
             </div>
           </div>
 
           {/* Demo credentials */}
-          <p className="text-center text-xs text-slate-600 mb-4">Demo credentials pre-filled</p>
+          <p className="text-center text-xs text-[#6B7280] mb-4">Demo credentials pre-filled</p>
 
           {/* Forgot password and register */}
           <div className="space-y-4 text-center">
             <p className="text-sm">
-              <a href="#" className="text-slate-600 hover:text-slate-900 font-medium">
+              <a href="#" className="text-[#6B7280] hover:text-[#14121F] font-medium">
                 Forgot password?
               </a>
             </p>
 
-            <div className="pt-4 border-t border-slate-200">
-              <p className="text-slate-600 text-sm mb-3">
+            <div className="pt-4 border-t border-[rgba(20,18,31,0.06)]">
+              <p className="text-[#6B7280] text-sm mb-3">
                 Don&apos;t have an account?{' '}
                 <Link href="/auth/register" className="text-blue-600 hover:text-blue-700 font-semibold">
                   Sign up

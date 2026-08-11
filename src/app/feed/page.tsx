@@ -3,7 +3,7 @@ import FeedPageClient from './FeedPageClient'
 
 export default function FeedPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-50" />}>
+    <Suspense fallback={<div className="min-h-screen bg-[#F4F2FB]" />}>
       <FeedPageClient />
     </Suspense>
   )

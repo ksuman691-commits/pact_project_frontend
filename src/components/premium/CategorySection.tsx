@@ -100,10 +100,10 @@ export default function CategorySection({ onCategorySelect, onCreatePact }: Cate
   return (
     <div className="px-4 py-6">
       <div className="mb-4">
-        <h2 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-4">
+        <h2 className="text-xs font-bold text-[#6B7280] uppercase tracking-wider mb-4">
           Create Pact by Category
         </h2>
-        <p className="text-xs text-slate-500 mb-4">Select a category to create your pact</p>
+        <p className="text-xs text-[#9CA3AF] mb-4">Select a category to create your pact</p>
       </div>
 
       {/* Horizontal scrollable categories */}
@@ -117,7 +117,7 @@ export default function CategorySection({ onCategorySelect, onCreatePact }: Cate
             }`}
           >
             <div
-              className={`bg-gradient-to-br ${category.color} rounded-2xl p-4 w-32 h-32 flex flex-col items-center justify-center text-white shadow-lg hover:shadow-xl transition-shadow`}
+              className={`bg-gradient-to-br ${category.color} rounded-[24px] p-4 w-32 h-32 flex flex-col items-center justify-center text-white shadow-lg hover:shadow-xl transition-shadow`}
             >
               <div className="mb-2 text-white">{category.icon}</div>
               <p className="text-sm font-semibold text-center">{category.name}</p>
@@ -134,7 +134,7 @@ export default function CategorySection({ onCategorySelect, onCreatePact }: Cate
             onCreatePact?.();
             setSelectedCategory(null);
           }}
-          className="w-full py-4 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:from-emerald-700 hover:to-emerald-800 transition-all active:scale-95 flex items-center justify-center gap-2"
+          className="w-full py-4 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-bold rounded-[24px] shadow-lg hover:shadow-xl hover:from-emerald-700 hover:to-emerald-800 transition-all active:scale-95 flex items-center justify-center gap-2"
         >
           <span>Create Pact in {CATEGORIES.find(c => c.id === selectedCategory)?.name || 'Category'}</span>
         </button>

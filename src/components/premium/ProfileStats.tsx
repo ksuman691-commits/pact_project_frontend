@@ -19,16 +19,16 @@ export default function ProfileStats({
   return (
     <div className="grid grid-cols-2 gap-3">
       {/* Completed */}
-      <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-200">
+      <div className="bg-[#EDE9FE] rounded-[24px] p-3 border border-emerald-200">
         <div className="flex items-center gap-2 mb-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          <CheckCircle2 className="w-4 h-4 text-[#A78BFA]" />
           <p className="text-xs font-semibold text-emerald-700">Completed</p>
         </div>
         <p className="text-2xl font-black text-emerald-900">{completed}</p>
       </div>
 
       {/* Failed */}
-      <div className="bg-red-50 rounded-xl p-3 border border-red-200">
+      <div className="bg-red-50 rounded-[24px] p-3 border border-red-200">
         <div className="flex items-center gap-2 mb-2">
           <XCircle className="w-4 h-4 text-red-600" />
           <p className="text-xs font-semibold text-red-700">Failed</p>
@@ -37,7 +37,7 @@ export default function ProfileStats({
       </div>
 
       {/* Win Rate */}
-      <div className="bg-blue-50 rounded-xl p-3 border border-blue-200">
+      <div className="bg-blue-50 rounded-[24px] p-3 border border-blue-200">
         <div className="flex items-center gap-2 mb-2">
           <TrendingUp className="w-4 h-4 text-blue-600" />
           <p className="text-xs font-semibold text-blue-700">Win Rate</p>
@@ -46,7 +46,7 @@ export default function ProfileStats({
       </div>
 
       {/* Streak */}
-      <div className="bg-orange-50 rounded-xl p-3 border border-orange-200">
+      <div className="bg-orange-50 rounded-[24px] p-3 border border-orange-200">
         <div className="flex items-center gap-2 mb-2">
           <Flame className="w-4 h-4 text-orange-600" />
           <p className="text-xs font-semibold text-orange-700">Streak</p>
@@ -55,7 +55,7 @@ export default function ProfileStats({
       </div>
 
       {/* Reputation */}
-      <div className="bg-purple-50 rounded-xl p-3 border border-purple-200">
+      <div className="bg-purple-50 rounded-[24px] p-3 border border-purple-200">
         <div className="flex items-center gap-2 mb-2">
           <Award className="w-4 h-4 text-purple-600" />
           <p className="text-xs font-semibold text-purple-700">Reputation</p>

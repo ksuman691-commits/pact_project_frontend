@@ -157,12 +157,12 @@ export default function ProofCarousel({
 
         {/* Thumbnail Strip */}
         {totalProofs > 1 && (
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10 bg-black/50 backdrop-blur-sm p-2 rounded-lg">
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10 bg-black/50 backdrop-blur-sm p-2 rounded-[28px]">
             {proofs.map((proof, index) => (
               <button
                 key={proof.id}
                 onClick={() => setCurrentIndex(index)}
-                className={`relative w-12 h-12 rounded-lg overflow-hidden border-2 transition ${
+                className={`relative w-12 h-12 rounded-[28px] overflow-hidden border-2 transition ${
                   index === currentIndex
                     ? 'border-white'
                     : 'border-transparent hover:border-gray-500'

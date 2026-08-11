@@ -46,7 +46,7 @@ export default function CircleLeaderboard({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-[24px] border border-gray-100 shadow-[0_4px_12px_rgba(94,84,142,0.08)] overflow-hidden">
       {/* Header */}
       <div className="px-6 py-6 border-b border-gray-100">
         <div className="flex items-center justify-between mb-4">
@@ -68,7 +68,7 @@ export default function CircleLeaderboard({
             <button
               key={tab.key}
               onClick={() => setSortBy(tab.key as any)}
-              className={`px-4 py-2 rounded-lg font-medium text-sm transition ${
+              className={`px-4 py-2 rounded-[28px] font-medium text-sm transition ${
                 sortBy === tab.key
                   ? 'bg-emerald-100 text-emerald-700'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -133,7 +133,7 @@ export default function CircleLeaderboard({
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2">
-                    <TrendingUp className="w-4 h-4 text-emerald-600" />
+                    <TrendingUp className="w-4 h-4 text-[#A78BFA]" />
                     <span className="font-bold text-gray-900">{entry.winRate}%</span>
                   </div>
                 </td>
@@ -155,7 +155,7 @@ export default function CircleLeaderboard({
           <button
             onClick={onLoadMore}
             disabled={loading}
-            className="px-6 py-2 text-emerald-600 font-medium hover:bg-emerald-50 rounded-lg transition disabled:opacity-50"
+            className="px-6 py-2 text-[#A78BFA] font-medium hover:bg-[#EDE9FE] rounded-[28px] transition disabled:opacity-50"
           >
             {loading ? 'Loading...' : 'Load More'}
           </button>

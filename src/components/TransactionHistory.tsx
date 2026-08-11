@@ -38,7 +38,7 @@ const getTransactionIcon = (type: string) => {
 const getTransactionColor = (type: string) => {
   switch (type) {
     case 'deposit':
-      return 'text-emerald-600 bg-emerald-50';
+      return 'text-[#A78BFA] bg-[#EDE9FE]';
     case 'withdraw':
       return 'text-red-600 bg-red-50';
     case 'stake':
@@ -122,7 +122,7 @@ export default function TransactionHistory({
   });
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+    <div className="bg-white rounded-[24px] p-6 border border-gray-100 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-bold text-gray-900">Transaction History</h3>
@@ -137,7 +137,7 @@ export default function TransactionHistory({
             onClick={() => setSelectedFilter(filter)}
             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
               selectedFilter === filter
-                ? 'bg-emerald-600 text-white shadow-md'
+                ? 'bg-[#A78BFA] text-white shadow-md'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -160,7 +160,7 @@ export default function TransactionHistory({
           filteredTransactions.map((transaction) => (
             <div
               key={transaction.id}
-              className="flex items-center justify-between p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition"
+              className="flex items-center justify-between p-4 border border-gray-100 rounded-[24px] hover:bg-gray-50 transition"
             >
               {/* Left: Icon & Description */}
               <div className="flex items-center gap-4 flex-1">
@@ -180,7 +180,7 @@ export default function TransactionHistory({
                 <div className="text-right">
                   <p className={`font-bold text-lg ${
                     transaction.type === 'deposit' || transaction.type === 'reward'
-                      ? 'text-emerald-600'
+                      ? 'text-[#A78BFA]'
                       : 'text-gray-900'
                   }`}>
                     {transaction.type === 'deposit' || transaction.type === 'reward' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
@@ -197,7 +197,7 @@ export default function TransactionHistory({
 
       {/* View More Button */}
       {filteredTransactions.length > 0 && (
-        <button className="w-full mt-6 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition">
+        <button className="w-full mt-6 px-4 py-3 border border-gray-300 rounded-[28px] text-gray-700 font-medium hover:bg-gray-50 transition">
           View More Transactions
         </button>
       )}

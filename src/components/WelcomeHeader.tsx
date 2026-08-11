@@ -11,6 +11,7 @@ interface WelcomeHeaderProps {
   onCreatePact?: () => void
   onCreateDare?: () => void
   onSearch?: () => void
+  actionsDisabled?: boolean
 }
 
 export default function WelcomeHeader({
@@ -20,12 +21,13 @@ export default function WelcomeHeader({
   onNotificationsClick,
   onCreatePact,
   onCreateDare,
-  onSearch
+  onSearch,
+  actionsDisabled = false
 }: WelcomeHeaderProps) {
   return (
-    <div className="border-b border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-emerald-50/60">
+    <div className="border-b border-[rgba(20,18,31,0.06)]/80 bg-gradient-to-br from-slate-50 via-white to-emerald-50/60">
       <div className="mx-auto max-w-md px-4 pb-4 pt-4">
-        <div className="flex items-center justify-between gap-4 rounded-[28px] border border-slate-200/80 bg-white/90 px-4 py-5 shadow-[0_12px_40px_rgba(15,23,42,0.06)] backdrop-blur sm:py-6">
+        <div className="flex items-center justify-between gap-4 rounded-[28px] border border-[rgba(20,18,31,0.06)]/80 bg-white px-4 py-5 shadow-[0_12px_40px_rgba(15,23,42,0.06)] backdrop-blur sm:py-6">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <UserAvatarLink
               name={userName}
@@ -36,15 +38,15 @@ export default function WelcomeHeader({
               className="flex-shrink-0"
             />
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Welcome back</p>
-              <p className="truncate text-lg font-bold text-slate-900">{userName}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#9CA3AF]">Welcome back</p>
+              <p className="truncate text-lg font-bold text-[#14121F]">{userName}</p>
             </div>
           </div>
 
           <div className="flex flex-shrink-0 items-center gap-2">
             <button
               onClick={onSearch}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200 hover:text-slate-900"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FAF9FE] text-[#6B7280] transition hover:bg-slate-200 hover:text-[#14121F]"
               aria-label="Search"
             >
               <Search className="h-5 w-5" strokeWidth={1.5} />
@@ -52,7 +54,7 @@ export default function WelcomeHeader({
 
             <button
               onClick={onNotificationsClick}
-              className="relative flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200 hover:text-slate-900"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#FAF9FE] text-[#6B7280] transition hover:bg-slate-200 hover:text-[#14121F]"
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" strokeWidth={1.5} />
@@ -68,14 +70,16 @@ export default function WelcomeHeader({
         <div className="mt-3 flex gap-2">
           <button
             onClick={onCreatePact}
-            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            disabled={actionsDisabled}
+            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-slate-900"
           >
             <Plus className="h-4 w-4" strokeWidth={2.4} />
             New Pact
           </button>
           <button
             onClick={onCreateDare}
-            className="flex flex-1 items-center justify-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+            disabled={actionsDisabled}
+            className="flex flex-1 items-center justify-center gap-2 rounded-full border border-emerald-200 bg-[#EDE9FE] px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#EDE9FE]"
           >
             <Sparkles className="h-4 w-4" strokeWidth={2.2} />
             New Dare

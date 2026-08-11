@@ -149,7 +149,7 @@ export default function ProofMediaCarousel({
     }
 
     return (
-      <div className="relative h-full w-full bg-slate-100">
+      <div className="relative h-full w-full bg-[#FAF9FE]">
         <Image
           src={currentProof.url}
           alt={currentProof.description || fallbackLabel}
@@ -172,7 +172,7 @@ export default function ProofMediaCarousel({
           {proofs.map((proof, index) => (
             <div
               key={proof.id}
-              className={`h-1 flex-1 rounded-full transition-all ${index <= currentIndex ? 'bg-white/90' : 'bg-white/25'}`}
+              className={`h-1 flex-1 rounded-full transition-all ${index <= currentIndex ? 'bg-white' : 'bg-white/25'}`}
             />
           ))}
         </div>

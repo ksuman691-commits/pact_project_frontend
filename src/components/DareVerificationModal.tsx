@@ -137,11 +137,11 @@ export default function DareVerificationModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white w-full max-w-md rounded-lg overflow-hidden">
+      <div className="bg-white w-full max-w-md rounded-[28px] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200">
-          <h2 className="text-lg font-bold text-slate-900">Verify Dare Completion</h2>
-          <button onClick={handleClose} disabled={verifyMutation.isPending} className="p-1.5 hover:bg-slate-100 rounded-lg">
+        <div className="flex items-center justify-between p-4 border-b border-[rgba(20,18,31,0.06)]">
+          <h2 className="text-lg font-bold text-[#14121F]">Verify Dare Completion</h2>
+          <button onClick={handleClose} disabled={verifyMutation.isPending} className="p-1.5 hover:bg-[#FAF9FE] rounded-[28px]">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -156,7 +156,7 @@ export default function DareVerificationModal({
                 className={`h-2 flex-1 rounded-full transition ${
                   idx < currentQuestion ||
                   (idx === currentQuestion && responses[(`q${idx + 1}` as unknown) as keyof VerificationResponse] !== null)
-                    ? 'bg-emerald-600'
+                    ? 'bg-[#A78BFA]'
                     : idx === currentQuestion
                       ? 'bg-emerald-300'
                       : 'bg-slate-300'
@@ -167,10 +167,10 @@ export default function DareVerificationModal({
 
           {/* Question */}
           <div>
-            <p className="text-xs font-semibold text-slate-600 uppercase mb-2">
+            <p className="text-xs font-semibold text-[#6B7280] uppercase mb-2">
               Question {currentQuestion + 1} of {questions.length}
             </p>
-            <p className="text-lg font-bold text-slate-900 leading-snug">{questions[currentQuestion]}</p>
+            <p className="text-lg font-bold text-[#14121F] leading-snug">{questions[currentQuestion]}</p>
           </div>
 
           {/* Answer Buttons */}
@@ -178,56 +178,56 @@ export default function DareVerificationModal({
             <button
               onClick={() => handleAnswer('yes')}
               disabled={verifyMutation.isPending}
-              className={`p-4 rounded-lg border-2 transition flex flex-col items-center gap-2 ${
+              className={`p-4 rounded-[28px] border-2 transition flex flex-col items-center gap-2 ${
                 currentAnswer === 'yes'
-                  ? 'border-emerald-600 bg-emerald-50'
-                  : 'border-slate-200 hover:border-slate-300'
+                  ? 'border-emerald-600 bg-[#EDE9FE]'
+                  : 'border-[rgba(20,18,31,0.06)] hover:border-slate-300'
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              <Check className="w-6 h-6 text-emerald-600" />
-              <span className="font-semibold text-slate-900">Yes</span>
+              <Check className="w-6 h-6 text-[#A78BFA]" />
+              <span className="font-semibold text-[#14121F]">Yes</span>
             </button>
             <button
               onClick={() => handleAnswer('no')}
               disabled={verifyMutation.isPending}
-              className={`p-4 rounded-lg border-2 transition flex flex-col items-center gap-2 ${
-                currentAnswer === 'no' ? 'border-red-600 bg-red-50' : 'border-slate-200 hover:border-slate-300'
+              className={`p-4 rounded-[28px] border-2 transition flex flex-col items-center gap-2 ${
+                currentAnswer === 'no' ? 'border-red-600 bg-red-50' : 'border-[rgba(20,18,31,0.06)] hover:border-slate-300'
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               <XIcon className="w-6 h-6 text-red-600" />
-              <span className="font-semibold text-slate-900">No</span>
+              <span className="font-semibold text-[#14121F]">No</span>
             </button>
           </div>
 
           {/* Optional Reason for "No" */}
           {showReasons[currentQuestion] && currentAnswer === 'no' && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <label className="block text-xs font-semibold text-slate-600 uppercase mb-2">Why not? (optional)</label>
+            <div className="bg-red-50 border border-red-200 rounded-[28px] p-4">
+              <label className="block text-xs font-semibold text-[#6B7280] uppercase mb-2">Why not? (optional)</label>
               <textarea
                 value={currentReason}
                 onChange={(e) => handleReasonChange(e.target.value)}
                 disabled={verifyMutation.isPending}
                 placeholder="Explain your reasoning..."
                 rows={3}
-                className="w-full px-3 py-2 border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 resize-none text-sm disabled:opacity-50"
+                className="w-full px-3 py-2 border border-red-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-red-500 resize-none text-sm disabled:opacity-50"
               />
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 p-4 border-t border-slate-200 bg-slate-50">
+        <div className="flex gap-3 p-4 border-t border-[rgba(20,18,31,0.06)] bg-[#F4F2FB]">
           <button
             onClick={handlePrevious}
             disabled={currentQuestion === 0 || verifyMutation.isPending}
-            className="flex-1 px-4 py-2.5 text-slate-900 hover:bg-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2.5 text-[#14121F] hover:bg-slate-200 rounded-[28px] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Previous
           </button>
           <button
             onClick={currentQuestion === questions.length - 1 ? handleSubmit : handleNext}
             disabled={verifyMutation.isPending || !canProceed()}
-            className="flex-1 px-4 py-2.5 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2.5 bg-[#A78BFA] text-white hover:bg-emerald-700 rounded-[28px] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {verifyMutation.isPending
               ? 'Submitting...'

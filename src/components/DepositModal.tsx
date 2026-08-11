@@ -70,7 +70,7 @@ export default function DepositModal({ isOpen, onClose, onDeposit }: DepositModa
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Enter amount"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
         </div>
 
@@ -82,9 +82,9 @@ export default function DepositModal({ isOpen, onClose, onDeposit }: DepositModa
               <button
                 key={quickAmount}
                 onClick={() => setAmount(quickAmount.toString())}
-                className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                className={`py-2 px-3 rounded-[28px] text-sm font-medium transition-all ${
                   amount === quickAmount.toString()
-                    ? 'bg-emerald-600 text-white shadow-md'
+                    ? 'bg-[#A78BFA] text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -104,18 +104,18 @@ export default function DepositModal({ isOpen, onClose, onDeposit }: DepositModa
               <button
                 key={id}
                 onClick={() => setMethod(id)}
-                className={`w-full flex items-center justify-between p-4 border-2 rounded-lg transition-all ${
+                className={`w-full flex items-center justify-between p-4 border-2 rounded-[28px] transition-all ${
                   method === id
-                    ? 'border-emerald-500 bg-emerald-50'
+                    ? 'border-emerald-500 bg-[#EDE9FE]'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className="w-5 h-5 text-emerald-600" />
+                  <Icon className="w-5 h-5 text-[#A78BFA]" />
                   <span className="font-medium text-gray-900">{label}</span>
                 </div>
                 {method === id && (
-                  <div className="w-5 h-5 rounded-full bg-emerald-600 flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-full bg-[#A78BFA] flex items-center justify-center">
                     <div className="w-2 h-2 rounded-full bg-white" />
                   </div>
                 )}
@@ -125,7 +125,7 @@ export default function DepositModal({ isOpen, onClose, onDeposit }: DepositModa
         </div>
 
         {/* Fee Information */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="bg-blue-50 border border-blue-200 rounded-[28px] p-4 mb-6">
           <p className="text-xs text-blue-900">
             <span className="font-medium">Processing Fee:</span> 0% for orders above ₹1000
           </p>
@@ -135,14 +135,14 @@ export default function DepositModal({ isOpen, onClose, onDeposit }: DepositModa
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+            className="flex-1 px-4 py-3 border border-gray-300 rounded-[28px] text-gray-700 font-medium hover:bg-gray-50 transition"
           >
             Cancel
           </button>
           <button
             onClick={handleDeposit}
             disabled={loading}
-            className="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+            className="flex-1 px-4 py-3 bg-[#A78BFA] text-white rounded-[28px] font-medium hover:bg-emerald-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading ? 'Processing...' : 'Add Funds'}
             {!loading && <ArrowRight className="w-4 h-4" />}

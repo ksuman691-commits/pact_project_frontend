@@ -139,14 +139,14 @@ export default function Profile() {
             <div className="flex gap-2">
               <button
                 onClick={handleEditProfile}
-                className="p-2 hover:bg-gray-100 rounded-lg transition"
+                className="p-2 hover:bg-gray-100 rounded-[28px] transition"
                 title="Edit settings"
               >
                 <Settings className="w-5 h-5 text-gray-600" />
               </button>
               <button
                 onClick={handleLogout}
-                className="p-2 hover:bg-red-50 rounded-lg transition text-red-600"
+                className="p-2 hover:bg-red-50 rounded-[28px] transition text-red-600"
                 title="Logout"
               >
                 <LogOut className="w-5 h-5" />
@@ -176,7 +176,7 @@ export default function Profile() {
         <ProfileTabs onTabChange={setActiveTab}>
           {activeTab === 'pacts' && (
             <div className="space-y-4">
-              <h2 className="text-lg font-black text-slate-900">Your pacts</h2>
+              <h2 className="text-lg font-black text-[#14121F]">Your pacts</h2>
               <PactsTab pacts={createdPacts} joinedPacts={joinedPacts} votedPacts={votedPacts} allowJoinedUploads={true} />
             </div>
           )}
@@ -184,16 +184,16 @@ export default function Profile() {
           {activeTab === 'followers' && (
             <div className="space-y-2">
               {followers.length === 0 ? (
-                <p className="text-sm text-slate-500">You do not have followers yet.</p>
+                <p className="text-sm text-[#9CA3AF]">You do not have followers yet.</p>
               ) : (
                 followers.map((row: any) => (
                   <button
                     key={row.id}
                     onClick={() => router.push(`/profile/${encodeURIComponent(row.username)}`)}
-                    className="w-full text-left p-3 bg-white border border-gray-100 rounded-xl hover:border-emerald-200 transition"
+                    className="w-full text-left p-3 bg-white border border-gray-100 rounded-[24px] hover:border-emerald-200 transition"
                   >
-                    <p className="font-semibold text-slate-900">{row.full_name || row.username}</p>
-                    <p className="text-xs text-slate-500">@{row.username}</p>
+                    <p className="font-semibold text-[#14121F]">{row.full_name || row.username}</p>
+                    <p className="text-xs text-[#9CA3AF]">@{row.username}</p>
                   </button>
                 ))
               )}
@@ -202,16 +202,16 @@ export default function Profile() {
           {activeTab === 'following' && (
             <div className="space-y-2">
               {following.length === 0 ? (
-                <p className="text-sm text-slate-500">You are not following anyone yet.</p>
+                <p className="text-sm text-[#9CA3AF]">You are not following anyone yet.</p>
               ) : (
                 following.map((row: any) => (
                   <button
                     key={row.id}
                     onClick={() => router.push(`/profile/${encodeURIComponent(row.username)}`)}
-                    className="w-full text-left p-3 bg-white border border-gray-100 rounded-xl hover:border-emerald-200 transition"
+                    className="w-full text-left p-3 bg-white border border-gray-100 rounded-[24px] hover:border-emerald-200 transition"
                   >
-                    <p className="font-semibold text-slate-900">{row.full_name || row.username}</p>
-                    <p className="text-xs text-slate-500">@{row.username}</p>
+                    <p className="font-semibold text-[#14121F]">{row.full_name || row.username}</p>
+                    <p className="text-xs text-[#9CA3AF]">@{row.username}</p>
                   </button>
                 ))
               )}
@@ -233,16 +233,16 @@ export default function Profile() {
           <div className="bg-white rounded-t-3xl md:rounded-3xl max-w-md w-full max-h-[70vh] overflow-y-auto md:max-h-96" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-3xl">
               <h2 className="font-bold text-lg">Followers</h2>
-              <button onClick={() => setShowFollowersModal(false)} className="p-1 hover:bg-gray-100 rounded-lg">✕</button>
+              <button onClick={() => setShowFollowersModal(false)} className="p-1 hover:bg-gray-100 rounded-[28px]">✕</button>
             </div>
             <div className="p-4 space-y-3">
               {followers.length === 0 ? (
-                <p className="text-center text-slate-500 py-8">You do not have followers yet.</p>
+                <p className="text-center text-[#9CA3AF] py-8">You do not have followers yet.</p>
               ) : (
                 followers.map((row: any) => (
-                  <button key={row.id} onClick={() => { router.push(`/profile/${encodeURIComponent(row.username)}`); setShowFollowersModal(false); }} className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
-                    <p className="font-medium text-slate-900">{row.full_name || row.username}</p>
-                    <p className="text-xs text-slate-500">@{row.username}</p>
+                  <button key={row.id} onClick={() => { router.push(`/profile/${encodeURIComponent(row.username)}`); setShowFollowersModal(false); }} className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-[28px] transition">
+                    <p className="font-medium text-[#14121F]">{row.full_name || row.username}</p>
+                    <p className="text-xs text-[#9CA3AF]">@{row.username}</p>
                   </button>
                 ))
               )}
@@ -257,16 +257,16 @@ export default function Profile() {
           <div className="bg-white rounded-t-3xl md:rounded-3xl max-w-md w-full max-h-[70vh] overflow-y-auto md:max-h-96" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-3xl">
               <h2 className="font-bold text-lg">Following</h2>
-              <button onClick={() => setShowFollowingModal(false)} className="p-1 hover:bg-gray-100 rounded-lg">✕</button>
+              <button onClick={() => setShowFollowingModal(false)} className="p-1 hover:bg-gray-100 rounded-[28px]">✕</button>
             </div>
             <div className="p-4 space-y-3">
               {following.length === 0 ? (
-                <p className="text-center text-slate-500 py-8">You are not following anyone yet.</p>
+                <p className="text-center text-[#9CA3AF] py-8">You are not following anyone yet.</p>
               ) : (
                 following.map((row: any) => (
-                  <button key={row.id} onClick={() => { router.push(`/profile/${encodeURIComponent(row.username)}`); setShowFollowingModal(false); }} className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
-                    <p className="font-medium text-slate-900">{row.full_name || row.username}</p>
-                    <p className="text-xs text-slate-500">@{row.username}</p>
+                  <button key={row.id} onClick={() => { router.push(`/profile/${encodeURIComponent(row.username)}`); setShowFollowingModal(false); }} className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-[28px] transition">
+                    <p className="font-medium text-[#14121F]">{row.full_name || row.username}</p>
+                    <p className="text-xs text-[#9CA3AF]">@{row.username}</p>
                   </button>
                 ))
               )}
@@ -281,16 +281,16 @@ export default function Profile() {
           <div className="bg-white rounded-t-3xl md:rounded-3xl max-w-md w-full max-h-[70vh] overflow-y-auto md:max-h-96" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-3xl">
               <h2 className="font-bold text-lg">My Pacts</h2>
-              <button onClick={() => setShowPactsModal(false)} className="p-1 hover:bg-gray-100 rounded-lg">✕</button>
+              <button onClick={() => setShowPactsModal(false)} className="p-1 hover:bg-gray-100 rounded-[28px]">✕</button>
             </div>
             <div className="p-4 space-y-3">
               {createdPacts.length === 0 ? (
-                <p className="text-center text-slate-500 py-8">You have not created any pacts yet.</p>
+                <p className="text-center text-[#9CA3AF] py-8">You have not created any pacts yet.</p>
               ) : (
                 createdPacts.map((pact: any) => (
-                  <button key={pact.id} onClick={() => { router.push(`/pacts/${pact.id}`); setShowPactsModal(false); }} className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition">
-                    <p className="font-medium text-slate-900">{pact.title}</p>
-                    <p className="text-xs text-slate-500">{pact.category}</p>
+                  <button key={pact.id} onClick={() => { router.push(`/pacts/${pact.id}`); setShowPactsModal(false); }} className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-[28px] transition">
+                    <p className="font-medium text-[#14121F]">{pact.title}</p>
+                    <p className="text-xs text-[#9CA3AF]">{pact.category}</p>
                   </button>
                 ))
               )}

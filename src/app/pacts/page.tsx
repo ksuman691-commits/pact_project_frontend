@@ -74,12 +74,12 @@ export default function PactsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F4F2FB]">
       <TopNav showBack={true} />
       <div className="pt-32 pb-8">
         <div className="max-w-2xl mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold text-slate-900">All Pacts</h1>
+            <h1 className="text-4xl font-bold text-[#14121F]">All Pacts</h1>
             <button
               onClick={() => router.push('/pacts/create')}
               className="btn-primary flex items-center gap-2"
@@ -97,10 +97,10 @@ export default function PactsPage() {
                 <button
                   key={status}
                   onClick={() => setFilterStatus(status)}
-                  className={`px-4 py-2 rounded-lg font-medium capitalize transition-colors ${
+                  className={`px-4 py-2 rounded-[28px] font-medium capitalize transition-colors ${
                     filterStatus === status
                       ? 'bg-blue-600 text-white'
-                      : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-600'
+                      : 'bg-white text-slate-700 border border-[rgba(20,18,31,0.06)] hover:border-blue-600'
                   }`}
                 >
                   {status}
@@ -112,10 +112,10 @@ export default function PactsPage() {
             <div className="flex gap-2 ml-auto">
               <button
                 onClick={() => setSortBy('value')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm flex items-center gap-1 ${
+                className={`px-4 py-2 rounded-[28px] font-medium transition-colors text-sm flex items-center gap-1 ${
                   sortBy === 'value'
                     ? 'bg-purple-600 text-white'
-                    : 'bg-white text-slate-700 border border-slate-200 hover:border-purple-600'
+                    : 'bg-white text-slate-700 border border-[rgba(20,18,31,0.06)] hover:border-purple-600'
                 }`}
               >
                 <TrendingUp className="w-4 h-4" />
@@ -123,20 +123,20 @@ export default function PactsPage() {
               </button>
               <button
                 onClick={() => setSortBy('deadline')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
+                className={`px-4 py-2 rounded-[28px] font-medium transition-colors text-sm ${
                   sortBy === 'deadline'
                     ? 'bg-purple-600 text-white'
-                    : 'bg-white text-slate-700 border border-slate-200 hover:border-purple-600'
+                    : 'bg-white text-slate-700 border border-[rgba(20,18,31,0.06)] hover:border-purple-600'
                 }`}
               >
                 By Deadline
               </button>
               <button
                 onClick={() => setSortBy('newest')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
+                className={`px-4 py-2 rounded-[28px] font-medium transition-colors text-sm ${
                   sortBy === 'newest'
                     ? 'bg-purple-600 text-white'
-                    : 'bg-white text-slate-700 border border-slate-200 hover:border-purple-600'
+                    : 'bg-white text-slate-700 border border-[rgba(20,18,31,0.06)] hover:border-purple-600'
                 }`}
               >
                 Newest
@@ -151,7 +151,7 @@ export default function PactsPage() {
             </div>
           ) : pacts.length === 0 ? (
             <div className="card text-center py-12">
-              <p className="text-slate-600 mb-4">No pacts found</p>
+              <p className="text-[#6B7280] mb-4">No pacts found</p>
               <button
                 onClick={() => router.push('/pacts/create')}
                 className="btn-primary"

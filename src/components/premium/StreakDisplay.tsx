@@ -13,10 +13,10 @@ export default function StreakDisplay({ streak, todayComplete, onUploadProof }: 
     <PremiumCard glass>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-600 mb-1">Today Streak</p>
+          <p className="text-sm font-medium text-[#6B7280] mb-1">Today Streak</p>
           <div className="flex items-baseline gap-2">
-            <p className="text-4xl font-black text-slate-900">{streak}</p>
-            <p className="text-lg text-slate-600">days</p>
+            <p className="text-4xl font-black text-[#14121F]">{streak}</p>
+            <p className="text-lg text-[#6B7280]">days</p>
           </div>
         </div>
 
@@ -27,14 +27,14 @@ export default function StreakDisplay({ streak, todayComplete, onUploadProof }: 
               : 'bg-gradient-to-br from-slate-100 to-slate-200'
           }`}>
             <Flame className={`w-8 h-8 ${
-              todayComplete ? 'text-emerald-600' : 'text-slate-400'
+              todayComplete ? 'text-[#A78BFA]' : 'text-slate-400'
             }`} />
           </div>
 
           {!todayComplete && (
             <button
               onClick={onUploadProof}
-              className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 px-2 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 transition-all"
+              className="text-xs font-semibold text-[#A78BFA] hover:text-emerald-700 px-2 py-1 rounded-full bg-[#EDE9FE] hover:bg-emerald-100 transition-all"
             >
               Upload today
             </button>
