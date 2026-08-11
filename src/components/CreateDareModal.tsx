@@ -1,15 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
-import { X, ChevronLeft, ChevronRight, Clock, Users } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { X, ChevronLeft, ChevronRight, Clock, Users, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCreateDare } from '@/hooks/useDareMutations';
+import { useSearchUsers } from '@/hooks/useUserQueries';
 import { useAuthStore } from '@/store/auth';
-import { userService } from '@/services/api';
 
 interface CreateDareModalProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+interface SelectedRecipient {
+  id: number;
+  username: string;
+  full_name?: string;
+  avatar_url?: string | null;
 }
 
 interface DareFormData {
@@ -17,7 +25,7 @@ interface DareFormData {
   description: string;
   respondByHours: number;
   completeByHours: number;
-  recipients: string[];
+  recipients: SelectedRecipient[];
   verification_method: 'photo' | 'video' | 'checklist';
   visibility: 'public' | 'private';
   circle_id?: number;
@@ -56,8 +64,18 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
   const createDareMutation = useCreateDare();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<DareFormData>(INITIAL_FORM);
-  const [recipientEmail, setRecipientEmail] = useState('');
-  const [isResolvingRecipients, setIsResolvingRecipients] = useState(false);
+  const [recipientQuery, setRecipientQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedQuery(recipientQuery.trim()), 300);
+    return () => clearTimeout(timeout);
+  }, [recipientQuery]);
+
+  const { data: recipientResults, isLoading: isSearchingRecipients } = useSearchUsers(debouncedQuery, 8);
+  const recipientSearchResults = (recipientResults?.data || []).filter(
+    (candidate: any) => !form.recipients.some((selected) => selected.id === candidate.id)
+  );
 
   const handleNext = () => {
     if (step === 1 && (!form.title.trim() || !form.description.trim())) {
@@ -75,26 +93,21 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
     }
   };
 
-  const handleAddRecipient = () => {
+  const handleSelectRecipient = (candidate: SelectedRecipient) => {
     if (form.visibility === 'public') {
       toast.error('Public dares cannot have specific recipients');
       return;
     }
-    if (!recipientEmail.trim()) {
-      toast.error('Please enter an email address');
-      return;
-    }
-    if (!form.recipients.includes(recipientEmail)) {
-      setForm({ ...form, recipients: [...form.recipients, recipientEmail] });
-      setRecipientEmail('');
-    }
+    setForm({ ...form, recipients: [...form.recipients, candidate] });
+    setRecipientQuery('');
+    setDebouncedQuery('');
   };
 
-  const handleRemoveRecipient = (email: string) => {
-    setForm({ ...form, recipients: form.recipients.filter((r) => r !== email) });
+  const handleRemoveRecipient = (id: number) => {
+    setForm({ ...form, recipients: form.recipients.filter((r) => r.id !== id) });
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (form.visibility !== 'public' && form.recipients.length === 0) {
       toast.error('Please add at least one recipient or make it public');
       return;
@@ -107,30 +120,7 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
     // Backend has no "circle" audience option surfaced in this UI yet, so
     // private dares map to "individual" (recipient-based) audience.
     const audience: 'public' | 'individual' = form.visibility === 'public' ? 'public' : 'individual';
-
-    let recipientUserIds: number[] = [];
-    if (form.recipients.length > 0) {
-      setIsResolvingRecipients(true);
-      const lookups = await Promise.all(
-        form.recipients.map((email) => userService.search(email, 1).catch(() => ({ data: [] })))
-      );
-      setIsResolvingRecipients(false);
-
-      const unresolved: string[] = [];
-      lookups.forEach((response, index) => {
-        const match = Array.isArray(response.data) ? response.data[0] : undefined;
-        if (match?.id) {
-          recipientUserIds.push(match.id);
-        } else {
-          unresolved.push(form.recipients[index]);
-        }
-      });
-
-      if (unresolved.length > 0) {
-        toast.error(`No account found for: ${unresolved.join(', ')}`);
-        return;
-      }
-    }
+    const recipientUserIds: number[] = form.recipients.map((recipient) => recipient.id);
 
     const payload: any = {
       title: form.title,
@@ -279,34 +269,102 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
                     <Users className="w-4 h-4" />
                     Add Recipients
                   </label>
-                  <div className="flex gap-2 mb-3">
-                    <input
-                      type="email"
-                      placeholder="recipient@example.com"
-                      value={recipientEmail}
-                      onChange={(e) => setRecipientEmail(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleAddRecipient()}
-                      className="flex-1 px-4 py-2.5 border border-slate-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                    <button
-                      onClick={handleAddRecipient}
-                      className="px-4 py-2.5 bg-[#A78BFA] text-white rounded-[28px] hover:bg-emerald-700"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="space-y-2">
-                    {form.recipients.map((email) => (
-                      <div key={email} className="flex items-center justify-between p-2.5 bg-[#F4F2FB] rounded-[28px]">
-                        <p className="text-sm text-slate-700">{email}</p>
-                        <button
-                          onClick={() => handleRemoveRecipient(email)}
-                          className="text-xs text-red-600 hover:text-red-700"
+
+                  {form.recipients.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {form.recipients.map((recipient) => (
+                        <div
+                          key={recipient.id}
+                          className="flex items-center gap-2 pl-1.5 pr-2 py-1.5 bg-[#F4F2FB] rounded-full"
                         >
-                          Remove
-                        </button>
+                          <div className="relative w-6 h-6 rounded-full bg-gradient-to-br from-emerald-300 to-blue-300 flex-shrink-0 overflow-hidden">
+                            {recipient.avatar_url ? (
+                              <Image
+                                src={recipient.avatar_url}
+                                alt={recipient.username}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-white">
+                                {(recipient.full_name || recipient.username)?.charAt(0).toUpperCase() || 'U'}
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-sm text-slate-700">@{recipient.username}</span>
+                          <button
+                            onClick={() => handleRemoveRecipient(recipient.id)}
+                            className="text-slate-400 hover:text-red-600"
+                            aria-label={`Remove @${recipient.username}`}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search by name or username"
+                      value={recipientQuery}
+                      onChange={(e) => setRecipientQuery(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-slate-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+
+                    {recipientQuery.trim().length > 0 && (
+                      <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-[20px] shadow-lg max-h-56 overflow-y-auto z-10">
+                        {isSearchingRecipients ? (
+                          <div className="flex items-center justify-center py-6">
+                            <Loader className="w-5 h-5 text-[#A78BFA] animate-spin" />
+                          </div>
+                        ) : recipientSearchResults.length === 0 ? (
+                          <div className="flex items-center justify-center py-6 text-gray-500">
+                            <p className="text-sm">No users found</p>
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-gray-100">
+                            {recipientSearchResults.map((candidate: any) => (
+                              <button
+                                key={candidate.id}
+                                type="button"
+                                onClick={() =>
+                                  handleSelectRecipient({
+                                    id: candidate.id,
+                                    username: candidate.username,
+                                    full_name: candidate.full_name,
+                                    avatar_url: candidate.avatar_url,
+                                  })
+                                }
+                                className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition text-left"
+                              >
+                                <div className="relative w-9 h-9 rounded-full bg-gradient-to-br from-emerald-300 to-blue-300 flex-shrink-0 overflow-hidden">
+                                  {candidate.avatar_url ? (
+                                    <Image
+                                      src={candidate.avatar_url}
+                                      alt={candidate.full_name || candidate.username}
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-sm font-bold text-white">
+                                      {(candidate.full_name || candidate.username)?.charAt(0).toUpperCase() || 'U'}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-gray-900 text-sm truncate">
+                                    {candidate.full_name || candidate.username}
+                                  </p>
+                                  <p className="text-xs text-gray-500 truncate">@{candidate.username}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               )}
@@ -365,7 +423,7 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
                 {form.recipients.length > 0 && (
                   <div>
                     <p className="text-xs font-semibold text-[#6B7280] uppercase">Recipients</p>
-                    <p className="text-[#14121F]">{form.recipients.join(', ')}</p>
+                    <p className="text-[#14121F]">{form.recipients.map((r) => `@${r.username}`).join(', ')}</p>
                   </div>
                 )}
                 <div>
@@ -399,11 +457,11 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
 
           <button
             onClick={step === 5 ? handleSubmit : handleNext}
-            disabled={createDareMutation.isPending || isResolvingRecipients}
+            disabled={createDareMutation.isPending}
             className="flex items-center gap-2 px-4 py-2.5 bg-[#A78BFA] text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-[28px]"
           >
             {step === 5 ? (
-              isResolvingRecipients ? 'Checking recipients...' : createDareMutation.isPending ? 'Creating...' : 'Create Dare'
+              createDareMutation.isPending ? 'Creating...' : 'Create Dare'
             ) : (
               <>
                 Next
