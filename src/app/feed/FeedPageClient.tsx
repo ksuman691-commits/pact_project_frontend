@@ -9,6 +9,8 @@ import PactFeed from '@/components/PactFeed'
 import MemberSearchModal from '@/components/MemberSearchModal'
 import { useAuthStore } from '@/store/auth'
 import { useUnreadNotificationCount } from '@/hooks/useNotifications'
+import { useUserStats } from '@/hooks/useUserQueries'
+import { useAtRiskPact } from '@/hooks/useAtRiskPact'
 import toast from 'react-hot-toast'
 
 export default function FeedPageClient() {
@@ -16,6 +18,9 @@ export default function FeedPageClient() {
   const searchParams = useSearchParams()
   const { user, isInitialized } = useAuthStore()
   const { data: unreadCountData } = useUnreadNotificationCount()
+  const { data: userStatsData } = useUserStats(user?.id || 0)
+  const currentStreak = userStatsData?.data?.current_streak ?? 0
+  const isAtRisk = useAtRiskPact(user?.id)
   const [pactModalOpen, setPactModalOpen] = useState(false)
   const [searchModalOpen, setSearchModalOpen] = useState(false)
   const [feedBusy, setFeedBusy] = useState(false)
@@ -68,6 +73,8 @@ export default function FeedPageClient() {
         onCreateDare={handleCreateDare}
         onSearch={() => setSearchModalOpen(true)}
         actionsDisabled={!isInitialized}
+        streak={currentStreak}
+        atRisk={isAtRisk}
       />
 
       <TopNav

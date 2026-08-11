@@ -12,6 +12,10 @@ interface WelcomeHeaderProps {
   onCreateDare?: () => void
   onSearch?: () => void
   actionsDisabled?: boolean
+  /** Current streak in days — wraps the avatar in a tier ring when provided. */
+  streak?: number
+  /** Pulses the ring amber-red to signal an approaching deadline with no proof yet. */
+  atRisk?: boolean
 }
 
 export default function WelcomeHeader({
@@ -22,7 +26,9 @@ export default function WelcomeHeader({
   onCreatePact,
   onCreateDare,
   onSearch,
-  actionsDisabled = false
+  actionsDisabled = false,
+  streak,
+  atRisk = false
 }: WelcomeHeaderProps) {
   return (
     <div className="border-b border-[rgba(20,18,31,0.06)]/80 bg-gradient-to-br from-slate-50 via-white to-emerald-50/60">
@@ -36,6 +42,8 @@ export default function WelcomeHeader({
               sizeClassName="w-12 h-12"
               textClassName="text-sm"
               className="flex-shrink-0"
+              streak={streak}
+              atRisk={atRisk}
             />
             <div className="min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#9CA3AF]">Welcome back</p>

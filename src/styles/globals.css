@@ -178,3 +178,39 @@ section + section {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Shared tier system: peak-tier shimmer sweep + at-risk pulse (see src/lib/tierStyles.ts) */
+@keyframes tier-shimmer-sweep {
+  0% {
+    transform: translateX(-60%) rotate(20deg);
+  }
+  100% {
+    transform: translateX(60%) rotate(20deg);
+  }
+}
+
+.tier-shimmer-sweep {
+  width: 50%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+  animation: tier-shimmer-sweep 3s linear infinite;
+}
+
+/* Masks the shimmer so only the ring band lights up, not the avatar center */
+.tier-shimmer-mask {
+  -webkit-mask-image: radial-gradient(circle, transparent 60%, black 64%, black 100%);
+  mask-image: radial-gradient(circle, transparent 60%, black 64%, black 100%);
+}
+
+@keyframes tier-ring-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.animate-tier-pulse {
+  animation: tier-ring-pulse 1.5s ease-in-out infinite;
+}

@@ -25,6 +25,7 @@ import {
   useUserByUsername,
   useUserStats,
 } from '@/hooks/useUserQueries';
+import { useAtRiskPact } from '@/hooks/useAtRiskPact';
 
 export default function PublicProfilePage() {
   const router = useRouter();
@@ -55,6 +56,7 @@ export default function PublicProfilePage() {
   const followersQuery = useFollowers(profileUserId);
   const followingQuery = useFollowing(profileUserId);
   const followStateQuery = useFollowState(profileUserId);
+  const isAtRisk = useAtRiskPact(isOwnProfile ? profileUserId : undefined);
 
   const requestFollow = useRequestFollow(profileUserId);
   const acceptFollow = useAcceptFollow(profileUserId);
@@ -203,10 +205,10 @@ export default function PublicProfilePage() {
 
   const primaryFollowClass =
     outgoingStatus === 'accepted'
-      ? 'bg-white/20 text-white border border-white/50 hover:bg-white/30'
+      ? 'bg-[#A78BFA] text-white hover:bg-[#9061F9]'
       : outgoingStatus === 'pending'
-      ? 'bg-white/20 text-white border border-white/40 hover:bg-white/30'
-      : 'bg-white text-[#A78BFA] hover:bg-gray-50';
+      ? 'bg-[#EDE9FE] text-[#A78BFA] border border-[#A78BFA]/30 hover:bg-[#E0D9FC]'
+      : 'bg-white text-[#A78BFA] border border-[#A78BFA]/20 hover:bg-gray-50';
 
   const profilePactsHeading = isOwnProfile
     ? 'Your pacts'
@@ -239,6 +241,8 @@ export default function PublicProfilePage() {
         <ProfileHero
           user={heroUser}
           isOwnProfile={isOwnProfile}
+          streak={isOwnProfile ? stats.currentStreak : undefined}
+          atRisk={isOwnProfile ? isAtRisk : undefined}
           customActions={
             isOwnProfile ? null : (
               <div className="flex flex-col gap-2 w-full md:w-auto">
@@ -253,7 +257,7 @@ export default function PublicProfilePage() {
                   <button
                     onClick={() => rejectFollow.mutate(incomingFollowId)}
                     disabled={isBusy}
-                    className="flex items-center justify-center gap-2 px-5 py-2 rounded-[24px] font-semibold transition bg-white/20 text-white border border-white/40 hover:bg-white/30 disabled:opacity-60"
+                    className="flex items-center justify-center gap-2 px-5 py-2 rounded-[24px] font-semibold transition bg-white text-red-600 border border-red-200 hover:bg-red-50 disabled:opacity-60"
                   >
                     Reject
                   </button>
@@ -263,24 +267,12 @@ export default function PublicProfilePage() {
           }
         />
 
-        <div className="bg-white rounded-[24px] p-4 border border-gray-100 mb-6">
-          <div className="flex items-center justify-center gap-3 text-sm font-semibold text-slate-700">
-            <button onClick={() => setActiveTab('followers')} className="hover:text-[#A78BFA] transition">
-              {followers.length} Followers
-            </button>
-            <span className="text-slate-300">·</span>
-            <button onClick={() => setActiveTab('following')} className="hover:text-[#A78BFA] transition">
-              {following.length} Following
-            </button>
-          </div>
-        </div>
-
         {/* Stats */}
         <ProfileStats 
           stats={stats}
-          onPactClick={() => setShowPactsModal(true)}
-          onFollowersClick={() => setShowFollowersModal(true)}
-          onFollowingClick={() => setShowFollowingModal(true)}
+          onPactClick={() => { setActiveTab('pacts'); setShowPactsModal(true); }}
+          onFollowersClick={() => { setActiveTab('followers'); setShowFollowersModal(true); }}
+          onFollowingClick={() => { setActiveTab('following'); setShowFollowingModal(true); }}
         />
 
         {/* Tabs */}
