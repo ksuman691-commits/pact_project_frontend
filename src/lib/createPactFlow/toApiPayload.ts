@@ -75,6 +75,13 @@ export interface CreatePactApiPayload {
   circle_id: number | null;
 }
 
+// Backend rejects datetimes with a non-zero time component ("Datetimes
+// provided to dates should have zero time - e.g. be exact dates"), so every
+// date we send must be normalized to UTC midnight before serializing.
+function toMidnightUtcIso(date: Date): string {
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())).toISOString();
+}
+
 export function toCreatePactApiPayload(draft: PactDraft, activity: Activity): CreatePactApiPayload {
   const durationDays = resolveDurationDays(draft);
   const startDate = draft.startDate ? new Date(draft.startDate) : new Date();
@@ -87,9 +94,9 @@ export function toCreatePactApiPayload(draft: PactDraft, activity: Activity): Cr
     title: generateTitle(draft, activity),
     description: generateDescription(draft),
     category: draft.vibeId ? VIBE_TO_CATEGORY[draft.vibeId] : 'habits',
-    start_date: startDate.toISOString(),
-    end_date: endDate.toISOString(),
-    deadline: endDate.toISOString(),
+    start_date: toMidnightUtcIso(startDate),
+    end_date: toMidnightUtcIso(endDate),
+    deadline: toMidnightUtcIso(endDate),
     verification_method: mapProofMethod(draft.proofMethod),
     proof_submission_frequency: proofFrequency,
     max_proof_uploads: computeMaxProofUploads(durationDays, proofFrequency, Boolean(activity.milestone)),
