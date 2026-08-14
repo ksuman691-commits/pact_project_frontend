@@ -214,3 +214,98 @@ section + section {
 .animate-tier-pulse {
   animation: tier-ring-pulse 1.5s ease-in-out infinite;
 }
+
+/* ==========================================================================
+   Create-a-Pact tap-flow — self-contained immersive theme.
+   Scoped entirely under .pact-flow so the rest of the app's light theme
+   (and global h1/h2/h3/p element rules above) is never affected.
+   ========================================================================== */
+.pact-flow {
+  --pact-bg: #14091f;
+  --pact-surface: #241537;
+  --pact-surface-raised: #2e1a44;
+  --pact-pink: #ff4f87;
+  --pact-gold: #ffc24b;
+  --pact-violet: #8b6bff;
+  --pact-text: #f6f1ff;
+  --pact-text-muted: #b8a9d6;
+  --pact-hairline: rgba(246, 241, 255, 0.1);
+
+  background: var(--pact-bg);
+  color: var(--pact-text);
+  font-family: var(--font-pact-body), sans-serif;
+  min-height: 100dvh;
+}
+
+.pact-flow h1,
+.pact-flow h2,
+.pact-flow h3,
+.pact-flow h4 {
+  font-family: var(--font-pact-display), sans-serif;
+  color: var(--pact-text);
+}
+
+.pact-flow p {
+  color: var(--pact-text-muted);
+}
+
+.pact-flow .pact-mono {
+  font-family: var(--font-pact-mono), monospace;
+}
+
+.pact-flow .pact-surface {
+  background: var(--pact-surface);
+  border: 1px solid var(--pact-hairline);
+}
+
+.pact-flow .pact-tile {
+  background: var(--pact-surface);
+  border: 1px solid var(--pact-hairline);
+  transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.pact-flow .pact-tile:active {
+  transform: scale(0.97);
+}
+
+.pact-flow .pact-tile.selected {
+  border-color: var(--pact-pink);
+  background: var(--pact-surface-raised);
+}
+
+@keyframes pact-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pact-flow .pact-step-enter {
+  animation: pact-fade-in 220ms ease both;
+}
+
+@keyframes pact-stamp-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pact-flow .pact-stamp-ring {
+  animation: pact-stamp-spin 6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pact-flow .pact-stamp-ring {
+    animation: none;
+  }
+  .pact-flow .pact-step-enter {
+    animation: none;
+  }
+}

@@ -14,7 +14,7 @@ const authItems = [
 export default function BottomNav() {
   const pathname = usePathname()
 
-  if (pathname?.startsWith('/auth')) {
+  if (pathname?.startsWith('/auth') || pathname?.startsWith('/pacts/create')) {
     return null
   }
 
