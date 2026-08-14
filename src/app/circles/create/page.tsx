@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import Navbar from '@/components/Navbar';
 import { useCreateCircle } from '@/hooks/useCircleMutations';
 import toast from 'react-hot-toast';
 import { ArrowLeft } from 'lucide-react';
@@ -59,8 +58,6 @@ export default function CreateCirclePage() {
   };
 
   return (
-    <>
-      <Navbar />
       <div className="pact-flow pact-page-enter min-h-screen py-8">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Back Button */}
@@ -159,6 +156,5 @@ export default function CreateCirclePage() {
           </div>
         </div>
       </div>
-    </>
   );
 }

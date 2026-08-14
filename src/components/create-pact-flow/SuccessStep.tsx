@@ -46,7 +46,7 @@ export default function SuccessStep() {
       <div className="mt-8 flex w-full flex-col gap-3">
         <button
           type="button"
-          onClick={() => router.push('/feed')}
+          onClick={() => router.push(`/feed?created=${createdPact.id}`)}
           className="w-full rounded-full px-6 py-3.5 text-sm font-semibold text-[var(--pact-bg)]"
           style={{ background: 'var(--pact-pink)' }}
         >

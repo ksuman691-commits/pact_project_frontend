@@ -73,6 +73,8 @@ interface PactFeedProps {
   category?: string
   onBusyChange?: (busy: boolean) => void
   onCreatePact?: () => void
+  /** Pact id to give a one-time glow entrance (e.g. just returned from Create Pact). */
+  highlightPactId?: string | number | null
   // Force rebuild v2
 }
 
@@ -100,6 +102,7 @@ export default function PactFeed({
   category = 'all',
   onBusyChange,
   onCreatePact,
+  highlightPactId = null,
 }: PactFeedProps) {
   const router = useRouter()
   const [pacts, setPacts] = useState(showMockData ? mockPacts : [])
@@ -202,8 +205,14 @@ export default function PactFeed({
           </button>
         </div>
       ) : (
-        pacts.map((pact, index) => (
-        <div key={pact.id} className="pact-list-item" style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}>
+        pacts.map((pact, index) => {
+        const isNew = highlightPactId != null && String(pact.id) === String(highlightPactId)
+        return (
+        <div
+          key={pact.id}
+          className={isNew ? 'pact-new-item' : 'pact-list-item'}
+          style={isNew ? undefined : { animationDelay: `${Math.min(index, 8) * 40}ms` }}
+        >
         <FeedPactCard
           pact={pact}
           userVote={pact.userVote || (pact as any).user_vote}
@@ -232,7 +241,8 @@ export default function PactFeed({
           }}
         />
         </div>
-        ))
+        )
+        })
       )}
 
       {/* Infinite scroll trigger */}

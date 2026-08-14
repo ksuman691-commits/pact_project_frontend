@@ -416,6 +416,36 @@ section + section {
   animation: pact-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* Distinct entrance for a just-created pact returning to the feed: rises in
+   like a normal list item but carries a violet/pink glow pulse that settles
+   after ~1.4s, so the user's own new post reads as "just landed" rather than
+   blending into the standard staggered fade. */
+@keyframes pact-new-glow {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+    box-shadow: 0 0 0 0 rgba(255, 79, 135, 0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 4px rgba(255, 79, 135, 0.3), 0 0 44px rgba(139, 107, 255, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 4px rgba(255, 79, 135, 0.16), 0 0 30px rgba(139, 107, 255, 0.22);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 79, 135, 0);
+  }
+}
+
+.pact-flow .pact-new-item {
+  animation: pact-new-glow 1400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  border-radius: 24px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pact-flow .pact-stamp-ring {
     animation: none;
@@ -426,7 +456,8 @@ section + section {
   .pact-flow .pact-page-enter,
   .pact-flow .pact-list-item,
   .pact-flow .pact-shimmer,
-  .pact-flow .pact-spring-pop {
+  .pact-flow .pact-spring-pop,
+  .pact-flow .pact-new-item {
     animation: none;
   }
   .pact-flow .pact-card,

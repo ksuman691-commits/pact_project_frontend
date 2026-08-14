@@ -27,6 +27,7 @@ export default function FeedPageClient() {
   const firstLoadRef = useRef(true)
   const unreadCount = unreadCountData?.unread_count ?? 0
   const category = (searchParams.get('category') || 'all').toLowerCase()
+  const highlightPactId = searchParams.get('created')
 
   useEffect(() => {
     if (!isInitialized) return
@@ -34,6 +35,19 @@ export default function FeedPageClient() {
       router.replace('/auth/register')
     }
   }, [isInitialized, user, router])
+
+  // Clear the `created` param from the URL once the glow has had a chance to
+  // play, so a later refresh of /feed doesn't keep re-highlighting the pact.
+  useEffect(() => {
+    if (!highlightPactId) return
+    const timeout = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete('created')
+      const query = params.toString()
+      router.replace(query ? `/feed?${query}` : '/feed')
+    }, 1600)
+    return () => clearTimeout(timeout)
+  }, [highlightPactId, router, searchParams])
 
   useEffect(() => {
     if (firstLoadRef.current) {
@@ -91,6 +105,7 @@ export default function FeedPageClient() {
           category={category}
           onBusyChange={setFeedBusy}
           onCreatePact={handleCreatePact}
+          highlightPactId={highlightPactId}
         />
       </div>
 
