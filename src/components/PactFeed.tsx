@@ -6,7 +6,6 @@ import { usePersonalizedFeed } from '@/hooks/useFeedQueries'
 import { useSkipPact, useSupportPact } from '@/hooks/usePactActions'
 import { useInView } from 'react-intersection-observer'
 import FeedPactCard from './FeedPactCard'
-import { pactService } from '@/services/api'
 import { useRouter } from 'next/navigation'
 
 const mockPacts = [
@@ -135,34 +134,22 @@ export default function PactFeed({
 
   // Use API data when available. Mock data is opt-in only for isolated UI previews.
   useEffect(() => {
-    if (data?.pages) {
-      const apiPacts = data.pages.flatMap((page) => page.data)
-      if (apiPacts.length > 0) {
-        Promise.all(
-          apiPacts.map(async (pact: any) => {
-            try {
-              const proofsRes = await pactService.listProofs(pact.id, 1).catch(() => ({ pagination: { total: 0 } }))
-              return {
-                ...pact,
-                proof_count: proofsRes.pagination?.total ?? proofsRes.data?.pagination?.total ?? 0,
-              }
-            } catch {
-              return {
-                ...pact,
-                proof_count: pact.proof_count ?? 0,
-              }
-            }
-          })
-        ).then((enrichedPacts) => {
-          const unvotedPacts = enrichedPacts.filter((pact: any) => {
-            const existingVote = normalizeVote(pact.user_vote ?? pact.userVote)
-            return existingVote !== 'support' && existingVote !== 'skip'
-          })
-          setPacts(unvotedPacts)
-        })
-      } else if (!showMockData) {
+    if (!data?.pages) {
+      if (!showMockData) {
         setPacts([])
       }
+      return
+    }
+
+    const apiPacts = data.pages.flatMap((page: any) => page.data ?? [])
+    if (apiPacts.length > 0) {
+      const unvotedPacts = apiPacts.filter((pact: any) => {
+        const existingVote = normalizeVote(pact.user_vote ?? pact.userVote)
+        return existingVote !== 'support' && existingVote !== 'skip'
+      })
+      setPacts(unvotedPacts)
+    } else if (!showMockData) {
+      setPacts([])
     }
   }, [data, showMockData])
 

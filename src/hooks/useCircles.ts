@@ -40,7 +40,7 @@ export function useCircleMembers(circleId: number) {
   });
 }
 
-export function usePublicCircles() {
+export function usePublicCircles(enabled = true) {
   return useInfiniteQuery({
     queryKey: queryKeys.circles.public(),
     queryFn: async ({ pageParam = 0 }) => {
@@ -50,7 +50,9 @@ export function usePublicCircles() {
     getNextPageParam: (lastPage, pages) =>
       lastPage.data?.length === ITEMS_PER_PAGE ? pages.length * ITEMS_PER_PAGE : undefined,
     initialPageParam: 0,
+    enabled,
     staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 }
 
