@@ -46,7 +46,9 @@ export default function StreakAvatarRing({
       className={`relative inline-flex rounded-full ${atRisk ? 'animate-tier-pulse' : ''} ${className}`.trim()}
       style={ringStyle}
     >
-      <div className="rounded-full bg-white p-[1px]">{children}</div>
+      <div className="rounded-full p-[1px]" style={{ background: 'var(--pact-bg, #ffffff)' }}>
+        {children}
+      </div>
 
       {shimmerActive && (
         <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-full tier-shimmer-mask">
