@@ -38,6 +38,7 @@ export default function ReviewStep() {
         privacy: draft.privacy ?? 'open',
         memberCount: created?.memberCount ?? 1,
       });
+      advanceToSuccess();
     } catch (error) {
       setSubmitError('Something went wrong creating your circle. Try again.');
     } finally {
