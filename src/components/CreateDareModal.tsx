@@ -253,7 +253,7 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
           {/* Step 3: Recipients */}
           {step === 3 && (
             <div className="pact-step-enter space-y-4">
-              <h1 className="text-2xl font-bold text-[var(--pact-text)]">Who's in?</h1>
+              <h1 className="text-2xl font-bold text-[var(--pact-text)]">Who&apos;s in?</h1>
               <div>
                 <label className="pact-mono block text-xs uppercase tracking-wide text-[var(--pact-text-dim)] mb-2">Visibility</label>
                 <div className="space-y-2">
