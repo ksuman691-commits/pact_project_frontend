@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import TopNav from '@/components/TopNav';
-import PactWizardModal from '@/components/PactWizardModal';
+import CreatePactFlowModal from '@/components/create-pact-flow/CreatePactFlowModal';
 
 interface PremiumLayoutProps {
   children: React.ReactNode;
@@ -42,7 +42,7 @@ export default function PremiumLayout({ children, showNav = true }: PremiumLayou
           {children}
         </main>
       </div>
-      <PactWizardModal isOpen={pactModalOpen} onClose={() => setPactModalOpen(false)} />
+      <CreatePactFlowModal isOpen={pactModalOpen} onClose={() => setPactModalOpen(false)} />
     </div>
   );
 }

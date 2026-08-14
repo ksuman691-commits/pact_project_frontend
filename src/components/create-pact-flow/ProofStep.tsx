@@ -6,7 +6,7 @@ import { useCreatePactFlow } from '@/context/CreatePactFlowContext';
 import { PROOF_FREQUENCIES } from '@/lib/createPactFlow/content';
 import type { ProofMethod } from '@/types/createPactFlow';
 
-const PROOF_ICONS: Record<ProofMethod, React.ComponentType<{ className?: string }>> = {
+const PROOF_ICONS: Record<ProofMethod, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
   Photo: Camera,
   Video: Video,
   'Check-in': CheckCircle2,

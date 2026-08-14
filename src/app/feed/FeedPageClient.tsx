@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import TopNav from '@/components/TopNav'
 import WelcomeHeader from '@/components/WelcomeHeader'
-import PactWizardModal from '@/components/PactWizardModal'
+import CreatePactFlowModal from '@/components/create-pact-flow/CreatePactFlowModal'
 import PactFeed from '@/components/PactFeed'
 import MemberSearchModal from '@/components/MemberSearchModal'
 import { useAuthStore } from '@/store/auth'
@@ -94,7 +94,7 @@ export default function FeedPageClient() {
         />
       </div>
 
-      <PactWizardModal isOpen={pactModalOpen} onClose={() => setPactModalOpen(false)} />
+      <CreatePactFlowModal isOpen={pactModalOpen} onClose={() => setPactModalOpen(false)} />
       <MemberSearchModal isOpen={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
     </div>
   )

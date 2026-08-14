@@ -72,15 +72,6 @@ export default function AudienceStep() {
           </div>
         </div>
       )}
-
-      <button
-        type="button"
-        disabled
-        className="mt-auto pt-6 text-left text-sm underline-offset-2"
-        style={{ color: 'var(--pact-text-muted)' }}
-      >
-        Invite friends → (coming soon)
-      </button>
     </div>
   );
 }
