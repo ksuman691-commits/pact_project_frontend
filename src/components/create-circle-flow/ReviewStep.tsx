@@ -8,7 +8,7 @@ import { toCreateCircleApiPayload } from '@/lib/createCircleFlow/toApiPayload';
 import CircleCard from './CircleCard';
 
 export default function ReviewStep() {
-  const { draft, setIsSubmitting, isSubmitting, setCreatedCircle } = useCreateCircleFlow();
+  const { draft, setIsSubmitting, isSubmitting, setCreatedCircle, advanceToSuccess } = useCreateCircleFlow();
   const createCircle = useCreateCircle();
   const [submitError, setSubmitError] = useState<string | null>(null);
 

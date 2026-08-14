@@ -26,6 +26,7 @@ interface CreateCircleFlowContextValue {
   toggleInvite: (userId: number) => void;
   confirmInvites: () => void;
   goToReview: () => void;
+  advanceToSuccess: () => void;
 
   reset: () => void;
   isSubmitting: boolean;
@@ -116,6 +117,13 @@ export function CreateCircleFlowProvider({ children }: { children: React.ReactNo
     setStepIndex(resolvedSteps.indexOf('review'));
   }, [resolvedSteps]);
 
+  // Called by ReviewStep once the circle has actually been created — moves
+  // the index-driven router to the 'success' step.
+  const advanceToSuccess = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setStepIndex(resolvedSteps.indexOf('success'));
+  }, [resolvedSteps]);
+
   const reset = useCallback(() => {
     setDraft(createEmptyCircleDraft());
     setStepIndex(0);
@@ -139,6 +147,7 @@ export function CreateCircleFlowProvider({ children }: { children: React.ReactNo
     toggleInvite,
     confirmInvites,
     goToReview,
+    advanceToSuccess,
     reset,
     isSubmitting,
     setIsSubmitting,
