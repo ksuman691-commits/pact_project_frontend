@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Copy, Check } from 'lucide-react';
+import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface JoinCircleModalProps {
@@ -24,7 +24,6 @@ export default function JoinCircleModal({
 }: JoinCircleModalProps) {
   const [message, setMessage] = useState('');
   const [inviteCode, setInviteCode] = useState('');
-  const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleJoin = async () => {
@@ -45,25 +44,20 @@ export default function JoinCircleModal({
     }
   };
 
-  const copyInviteLink = () => {
-    const link = `${window.location.origin}/circles/join/${inviteCode}`;
-    navigator.clipboard.writeText(link);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-    toast.success('Invite link copied!');
-  };
-
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-white rounded-[24px] max-w-md w-full shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div
+        className="rounded-[24px] max-w-md w-full shadow-xl"
+        style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-900">Join Circle</h2>
+        <div className="flex items-center justify-between p-6 border-b border-[var(--pact-hairline)]">
+          <h2 className="text-xl font-bold text-[var(--pact-text)]">Join Circle</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition"
+            className="text-[var(--pact-text-faint)] hover:text-[var(--pact-text)] transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -72,21 +66,29 @@ export default function JoinCircleModal({
         {/* Content */}
         <div className="p-6 space-y-6">
           {/* Circle Info */}
-          <div className="bg-[#EDE9FE] rounded-[28px] p-4 border border-emerald-200">
-            <h3 className="font-bold text-emerald-900 mb-1">{circle.name}</h3>
-            <p className="text-sm text-emerald-700">{circle.description}</p>
+          <div
+            className="rounded-[28px] p-4"
+            style={{ background: 'var(--pact-surface-2)', border: '1px solid var(--pact-violet)' }}
+          >
+            <h3 className="font-bold text-[var(--pact-text)] mb-1">{circle.name}</h3>
+            <p className="text-sm text-[var(--pact-text-dim)]">{circle.description}</p>
           </div>
 
           {/* Message Field */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-[var(--pact-text-dim)] mb-2">
               Message (Optional)
             </label>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Tell the circle admins why you want to join..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-[28px] focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 rounded-[28px] resize-none outline-none focus:ring-2 transition"
+              style={{
+                background: 'var(--pact-surface-2)',
+                border: '1px solid var(--pact-hairline)',
+                color: 'var(--pact-text)',
+              }}
               rows={3}
             />
           </div>
@@ -94,7 +96,7 @@ export default function JoinCircleModal({
           {/* Invite Code Field */}
           {circle.isPrivate && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[var(--pact-text-dim)] mb-2">
                 Invite Code
               </label>
               <input
@@ -102,15 +104,23 @@ export default function JoinCircleModal({
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value)}
                 placeholder="Enter the invite code from the admin"
-                className="w-full px-4 py-3 border border-gray-300 rounded-[28px] focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className="w-full px-4 py-3 rounded-[28px] outline-none focus:ring-2 transition"
+                style={{
+                  background: 'var(--pact-surface-2)',
+                  border: '1px solid var(--pact-hairline)',
+                  color: 'var(--pact-text)',
+                }}
               />
             </div>
           )}
 
           {/* Tips */}
-          <div className="bg-blue-50 border border-blue-200 rounded-[28px] p-4">
-            <p className="text-xs font-medium text-blue-900 mb-2">Tips:</p>
-            <ul className="text-xs text-blue-700 space-y-1">
+          <div
+            className="rounded-[28px] p-4"
+            style={{ background: 'var(--pact-surface-2)', border: '1px solid var(--pact-hairline)' }}
+          >
+            <p className="text-xs font-medium text-[var(--pact-text)] mb-2">Tips:</p>
+            <ul className="text-xs text-[var(--pact-text-faint)] space-y-1">
               <li>• Circle admins must approve your request</li>
               <li>• Your message helps get accepted faster</li>
               <li>• Once joined, you can participate in all pacts</li>
@@ -119,17 +129,23 @@ export default function JoinCircleModal({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 p-6 border-t border-gray-100">
+        <div className="flex gap-3 p-6 border-t border-[var(--pact-hairline)]">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-[28px] font-medium hover:bg-gray-50 transition"
+            className="flex-1 px-4 py-2.5 rounded-[28px] font-medium transition"
+            style={{
+              background: 'var(--pact-surface-2)',
+              border: '1px solid var(--pact-hairline)',
+              color: 'var(--pact-text-dim)',
+            }}
           >
             Cancel
           </button>
           <button
             onClick={handleJoin}
             disabled={loading}
-            className="flex-1 px-4 py-2.5 bg-[#A78BFA] text-white rounded-[28px] font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="pact-btn-glow flex-1 px-4 py-2.5 rounded-[28px] font-medium text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
           >
             {loading ? 'Joining...' : 'Request to Join'}
           </button>

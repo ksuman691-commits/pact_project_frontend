@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Trophy, TrendingUp, Zap } from 'lucide-react';
+import { useCountUp } from '@/components/pact-ui/useCountUp';
 
 interface LeaderboardEntry {
   rank: number;
@@ -38,23 +40,26 @@ export default function CircleLeaderboard({
     }
   });
 
-  const getMedalEmoji = (rank: number) => {
-    if (rank === 1) return '🥇';
-    if (rank === 2) return '🥈';
-    if (rank === 3) return '🥉';
+  const getRankBadge = (rank: number) => {
+    if (rank === 1) return { bg: 'linear-gradient(135deg, var(--pact-gold), #f5a623)', color: '#14121F' };
+    if (rank === 2) return { bg: 'var(--pact-surface-2)', color: 'var(--pact-text-dim)' };
+    if (rank === 3) return { bg: 'var(--pact-surface-2)', color: 'var(--pact-gold)' };
     return null;
   };
 
   return (
-    <div className="bg-white rounded-[24px] border border-gray-100 shadow-[0_4px_12px_rgba(94,84,142,0.08)] overflow-hidden">
+    <div
+      className="pact-card rounded-[28px] overflow-hidden"
+      style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}
+    >
       {/* Header */}
-      <div className="px-6 py-6 border-b border-gray-100">
+      <div className="px-6 py-6 border-b border-[var(--pact-hairline)]">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <Trophy className="w-6 h-6 text-orange-500" />
-            <h2 className="text-2xl font-bold text-gray-900">Leaderboard</h2>
+            <Trophy className="w-6 h-6" style={{ color: 'var(--pact-gold)' }} />
+            <h2 className="text-2xl font-bold text-[var(--pact-text)]">Leaderboard</h2>
           </div>
-          <span className="text-sm font-medium text-gray-600">
+          <span className="text-sm font-medium text-[var(--pact-text-faint)]">
             {entries.length} members
           </span>
         </div>
@@ -62,100 +67,41 @@ export default function CircleLeaderboard({
         {/* Sort Tabs */}
         <div className="flex gap-2">
           {[
-            { key: 'pactsCompleted', label: 'Pacts', icon: '📋' },
-            { key: 'winRate', label: 'Win Rate', icon: '🎯' },
+            { key: 'pactsCompleted', label: 'Pacts' },
+            { key: 'winRate', label: 'Win Rate' },
           ].map((tab) => (
             <button
               key={tab.key}
               onClick={() => setSortBy(tab.key as any)}
-              className={`px-4 py-2 rounded-[28px] font-medium text-sm transition ${
+              className="px-4 py-2 rounded-[28px] font-medium text-sm transition"
+              style={
                 sortBy === tab.key
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                  ? { background: 'var(--pact-violet)', color: '#ffffff' }
+                  : { background: 'var(--pact-surface-2)', color: 'var(--pact-text-dim)' }
+              }
             >
-              {tab.icon} {tab.label}
+              {tab.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Leaderboard Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-100 bg-gray-50">
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">
-                Rank
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">
-                Member
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase">
-                Pacts
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase">
-                Win Rate
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase">
-                Streak
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedEntries.map((entry, idx) => (
-              <tr
-                key={entry.userId}
-                className={`border-b border-gray-100 hover:bg-gray-50 transition ${
-                  idx === 0 ? 'bg-yellow-50' : idx === 1 ? 'bg-gray-50' : idx === 2 ? 'bg-orange-50' : ''
-                }`}
-              >
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">
-                      {getMedalEmoji(entry.rank) || `#${entry.rank}`}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-white font-bold text-sm">
-                      {entry.avatar || entry.username.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">@{entry.username}</p>
-                      <p className="text-xs text-gray-600">Member</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <span className="font-bold text-gray-900">{entry.pactsCompleted}</span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <TrendingUp className="w-4 h-4 text-[#A78BFA]" />
-                    <span className="font-bold text-gray-900">{entry.winRate}%</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Zap className="w-4 h-4 text-orange-500" />
-                    <span className="font-bold text-gray-900">{entry.streak}</span>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Leaderboard Rows */}
+      <div className="flex flex-col gap-1 p-3">
+        {sortedEntries.map((entry, idx) => {
+          const badge = getRankBadge(entry.rank);
+          return <LeaderboardRow key={entry.userId} entry={entry} badge={badge} index={idx} />;
+        })}
       </div>
 
       {/* Load More */}
       {hasMore && (
-        <div className="px-6 py-4 border-t border-gray-100 text-center">
+        <div className="px-6 py-4 border-t border-[var(--pact-hairline)] text-center">
           <button
             onClick={onLoadMore}
             disabled={loading}
-            className="px-6 py-2 text-[#A78BFA] font-medium hover:bg-[#EDE9FE] rounded-[28px] transition disabled:opacity-50"
+            className="px-6 py-2 font-medium rounded-[28px] transition disabled:opacity-50"
+            style={{ color: 'var(--pact-violet)' }}
           >
             {loading ? 'Loading...' : 'Load More'}
           </button>
@@ -165,11 +111,65 @@ export default function CircleLeaderboard({
       {/* Empty State */}
       {entries.length === 0 && !loading && (
         <div className="px-6 py-12 text-center">
-          <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">No leaderboard entries yet</p>
-          <p className="text-sm text-gray-500">Members will appear here once they start completing pacts.</p>
+          <Trophy className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--pact-text-faint)' }} />
+          <p className="text-[var(--pact-text-dim)] font-medium">No leaderboard entries yet</p>
+          <p className="text-sm text-[var(--pact-text-faint)]">Members will appear here once they start completing pacts.</p>
         </div>
       )}
     </div>
+  );
+}
+
+function LeaderboardRow({
+  entry,
+  badge,
+  index,
+}: {
+  entry: LeaderboardEntry;
+  badge: { bg: string; color: string } | null;
+  index: number;
+}) {
+  const pacts = useCountUp(entry.pactsCompleted);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -12 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.04, duration: 0.3, ease: 'easeOut' }}
+      className="pact-list-item flex items-center gap-3 px-3 py-3 rounded-2xl transition"
+    >
+      <div
+        className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
+        style={badge ? { background: badge.bg, color: badge.color } : { color: 'var(--pact-text-faint)' }}
+      >
+        {badge ? entry.rank : `#${entry.rank}`}
+      </div>
+
+      <div
+        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+        style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+      >
+        {entry.avatar || entry.username.charAt(0)}
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-[var(--pact-text)] truncate">@{entry.username}</p>
+        <p className="text-xs text-[var(--pact-text-faint)]">Member</p>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1.5">
+          <span className="font-bold text-[var(--pact-text)] tabular-nums">{pacts}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <TrendingUp className="w-3.5 h-3.5" style={{ color: 'var(--pact-violet)' }} />
+          <span className="text-sm font-semibold text-[var(--pact-text-dim)]">{entry.winRate}%</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Zap className="w-3.5 h-3.5" style={{ color: 'var(--pact-gold)' }} />
+          <span className="text-sm font-semibold text-[var(--pact-text-dim)]">{entry.streak}</span>
+        </div>
+      </div>
+    </motion.div>
   );
 }

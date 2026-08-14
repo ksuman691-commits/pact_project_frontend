@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, TrendingUp, Users } from 'lucide-react';
+import { Plus, Search, Users } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
 import { useCircles, usePublicCircles, useSearchCircles } from '@/hooks/useCircles';
 import { useJoinCircle } from '@/hooks/useCircleMutations';
 import TopNav from '@/components/TopNav';
 import CircleCard from '@/components/CircleCard';
 import MemberSearchModal from '@/components/MemberSearchModal';
-import toast from 'react-hot-toast';
+import AnimatedTabs from '@/components/pact-ui/AnimatedTabs';
 
 export default function CirclesPage() {
   const [search, setSearch] = useState('');
@@ -96,25 +96,29 @@ export default function CirclesPage() {
   };
 
   return (
-    <>
+    <div className="pact-flow pact-page-enter min-h-screen">
       <TopNav showBack={false} showCategories={false} />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 max-w-md mx-auto">
+      <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="bg-white/80 backdrop-blur-sm border-b border-white/70 sticky top-24 z-40">
+        <div
+          className="sticky top-24 z-40 backdrop-blur"
+          style={{ background: 'var(--pact-bg)', borderBottom: '1px solid var(--pact-hairline)' }}
+        >
           <div className="px-4 py-8 flex items-center justify-between gap-3">
-            <h1 className="text-4xl font-black leading-tight tracking-tight text-slate-950">Circles</h1>
+            <h1 className="text-4xl font-black leading-tight tracking-tight text-[var(--pact-text)]">Circles</h1>
 
             <div className="flex gap-2">
               <button
                 onClick={() => setMemberSearchOpen(true)}
-                className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#EDE9FE] hover:bg-emerald-100 text-[#A78BFA] transition"
+                className="inline-flex items-center justify-center w-10 h-10 rounded-full transition"
+                style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
                 aria-label="Search members"
               >
                 <Search className="h-5 w-5" />
               </button>
-              
+
               <Link href="/circles/create">
-                <button className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-[0_8px_20px_rgba(16,185,129,0.25)] transition hover:shadow-[0_12px_28px_rgba(16,185,129,0.35)] hover:-translate-y-0.5">
+                <button className="pact-btn-glow inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5" style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}>
                   <Plus className="h-4 w-4" />
                   Create Circle
                 </button>
@@ -129,69 +133,64 @@ export default function CirclesPage() {
         <div className="space-y-5 mb-8">
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-4 top-4 w-5 h-5 text-slate-400" />
+            <Search className="absolute left-4 top-4 w-5 h-5" style={{ color: 'var(--pact-text-faint)' }} />
             <input
               type="text"
               placeholder="Search circles..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 bg-white/80 backdrop-blur-sm border border-white/70 rounded-[24px] focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-300 text-[#14121F] placeholder-slate-400 transition shadow-[0_4px_12px_rgba(15,23,42,0.06)]"
+              className="w-full pl-12 pr-4 py-3.5 rounded-[24px] outline-none focus:ring-2 transition"
+              style={{
+                background: 'var(--pact-surface)',
+                border: '1px solid var(--pact-hairline)',
+                color: 'var(--pact-text)',
+              }}
             />
           </div>
 
           {/* Sort Tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory">
-            {[
-              { key: 'all', label: 'All Circles', icon: '🌐' },
-              { key: 'my', label: 'My Circles', icon: '👤' },
-                { key: 'public', label: 'Discover', icon: '🧭', action: () => setSortBy('public') },
-              { key: 'trending', label: 'Trending', icon: '🔥', action: () => setSortBy('trending') },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => {
-                  setSortBy(tab.key as any);
-                  // Trigger data fetch for public/trending
-                  if ((tab.key === 'public' || tab.key === 'trending') && publicCircles.data?.pages?.length === 0) {
-                    publicCircles.refetch();
-                  }
-                }}
-                className={`snap-start shrink-0 px-4 py-2.5 rounded-[24px] font-semibold text-sm whitespace-nowrap transition ${
-                  sortBy === tab.key
-                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-[0_8px_20px_rgba(16,185,129,0.25)]'
-                    : 'bg-white/80 text-slate-700 border border-white/70 hover:bg-white hover:border-[rgba(20,18,31,0.06)]'
-                }`}
-              >
-                {tab.icon} {tab.label}
-              </button>
-            ))}
-            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50/80 to-transparent pointer-events-none rounded-r-2xl" />
-          </div>
+          <AnimatedTabs
+            layoutId="circles-sort-tabs"
+            activeId={sortBy}
+            onChange={(id) => {
+              setSortBy(id as any);
+              if ((id === 'public' || id === 'trending') && publicCircles.data?.pages?.length === 0) {
+                publicCircles.refetch();
+              }
+            }}
+            tabs={[
+              { id: 'all', label: 'All Circles' },
+              { id: 'my', label: 'My Circles' },
+              { id: 'public', label: 'Discover' },
+              { id: 'trending', label: 'Trending' },
+            ]}
+          />
         </div>
 
         {/* Circles Grid */}
         {isLoading && displayCircles.length === 0 ? (
           <div className="space-y-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-48 bg-gray-200 rounded-[24px] animate-pulse" />
+              <div key={i} className="pact-shimmer h-48 rounded-[24px]" style={{ background: 'var(--pact-surface-2)' }} />
             ))}
           </div>
         ) : displayCircles.length === 0 ? (
-          <div className="text-center py-20">
-            <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg font-medium mb-2">No circles match your search</p>
-            <p className="text-gray-500 mb-6">
+          <div className="pact-card rounded-[24px] text-center py-20">
+            <Users className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--pact-text-faint)' }} />
+            <p className="text-[var(--pact-text-dim)] text-lg font-medium mb-2">No circles match your search</p>
+            <p className="text-[var(--pact-text-faint)] mb-6">
               {search ? 'Try a different search.' : 'Explore communities and join circles.'}
             </p>
           </div>
         ) : (
           <>
             <div className="space-y-4">
-              {displayCircles.map((circle) => (
+              {displayCircles.map((circle, index) => (
                 <CircleCard
                   key={circle.id}
                   circle={circle}
                   onJoin={handleJoin}
+                  index={index}
                 />
               ))}
             </div>
@@ -200,7 +199,7 @@ export default function CirclesPage() {
             {hasMore && (
               <div ref={ref} className="py-12 flex justify-center">
                 {isLoading ? (
-                  <div className="text-gray-600">Loading more circles...</div>
+                  <div className="text-[var(--pact-text-faint)]">Loading more circles...</div>
                 ) : (
                   <button
                     onClick={() => {
@@ -208,7 +207,8 @@ export default function CirclesPage() {
                       else if (sortBy === 'public' || sortBy === 'trending')
                         publicCircles.fetchNextPage();
                     }}
-                    className="px-6 py-2 text-[#A78BFA] font-medium hover:bg-[#EDE9FE] rounded-[28px] transition"
+                    className="px-6 py-2 font-medium rounded-[28px] transition"
+                    style={{ color: 'var(--pact-violet)' }}
                   >
                     Load More
                   </button>
@@ -222,6 +222,6 @@ export default function CirclesPage() {
 
       {/* Member Search Modal */}
       <MemberSearchModal isOpen={memberSearchOpen} onClose={() => setMemberSearchOpen(false)} />
-    </>
+    </div>
   );
 }

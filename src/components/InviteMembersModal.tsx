@@ -64,39 +64,44 @@ export default function InviteMembersModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-white rounded-[24px] max-w-md w-full shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div
+        className="rounded-[24px] max-w-md w-full shadow-xl"
+        style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-900">Invite Members</h2>
+        <div className="flex items-center justify-between p-6 border-b border-[var(--pact-hairline)]">
+          <h2 className="text-xl font-bold text-[var(--pact-text)]">Invite Members</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition"
+            className="text-[var(--pact-text-faint)] hover:text-[var(--pact-text)] transition"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-100">
+        <div className="flex border-b border-[var(--pact-hairline)]">
           <button
             onClick={() => setTab('email')}
-            className={`flex-1 px-4 py-3 font-medium text-sm border-b-2 transition ${
+            className="flex-1 px-4 py-3 font-medium text-sm border-b-2 transition"
+            style={
               tab === 'email'
-                ? 'text-[#A78BFA] border-emerald-600'
-                : 'text-gray-600 border-transparent hover:text-gray-900'
-            }`}
+                ? { color: 'var(--pact-violet)', borderColor: 'var(--pact-violet)' }
+                : { color: 'var(--pact-text-faint)', borderColor: 'transparent' }
+            }
           >
             <Mail className="w-4 h-4 inline mr-2" />
             Email
           </button>
           <button
             onClick={() => setTab('link')}
-            className={`flex-1 px-4 py-3 font-medium text-sm border-b-2 transition ${
+            className="flex-1 px-4 py-3 font-medium text-sm border-b-2 transition"
+            style={
               tab === 'link'
-                ? 'text-[#A78BFA] border-emerald-600'
-                : 'text-gray-600 border-transparent hover:text-gray-900'
-            }`}
+                ? { color: 'var(--pact-violet)', borderColor: 'var(--pact-violet)' }
+                : { color: 'var(--pact-text-faint)', borderColor: 'transparent' }
+            }
           >
             <LinkIcon className="w-4 h-4 inline mr-2" />
             Link
@@ -108,20 +113,28 @@ export default function InviteMembersModal({
           {tab === 'email' ? (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[var(--pact-text-dim)] mb-2">
                   Email Addresses
                 </label>
                 <textarea
                   value={emails}
                   onChange={(e) => setEmails(e.target.value)}
                   placeholder="Enter email addresses (one per line)&#10;user1@example.com&#10;user2@example.com"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-[28px] focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 rounded-[28px] resize-none outline-none focus:ring-2 transition"
+                  style={{
+                    background: 'var(--pact-surface-2)',
+                    border: '1px solid var(--pact-hairline)',
+                    color: 'var(--pact-text)',
+                  }}
                   rows={4}
                 />
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-[28px] p-3">
-                <p className="text-xs text-blue-900 font-medium">
+              <div
+                className="rounded-[28px] p-3"
+                style={{ background: 'var(--pact-surface-2)', border: '1px solid var(--pact-hairline)' }}
+              >
+                <p className="text-xs text-[var(--pact-text-dim)] font-medium">
                   Invites will be sent to {circleName}
                 </p>
               </div>
@@ -129,14 +142,20 @@ export default function InviteMembersModal({
               <div className="flex gap-3">
                 <button
                   onClick={onClose}
-                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-[28px] font-medium hover:bg-gray-50 transition"
+                  className="flex-1 px-4 py-2.5 rounded-[28px] font-medium transition"
+                  style={{
+                    background: 'var(--pact-surface-2)',
+                    border: '1px solid var(--pact-hairline)',
+                    color: 'var(--pact-text-dim)',
+                  }}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSendInvites}
                   disabled={loading || !emails.trim()}
-                  className="flex-1 px-4 py-2.5 bg-[#A78BFA] text-white rounded-[28px] font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="pact-btn-glow flex-1 px-4 py-2.5 rounded-[28px] font-medium text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
                 >
                   {loading ? 'Sending...' : 'Send Invites'}
                 </button>
@@ -145,13 +164,18 @@ export default function InviteMembersModal({
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[var(--pact-text-dim)] mb-2">
                   Invite Link
                 </label>
                 {!inviteLink ? (
                   <button
                     onClick={generateInviteLink}
-                    className="w-full px-4 py-3 border-2 border-dashed border-emerald-300 text-[#A78BFA] rounded-[28px] font-medium hover:bg-[#EDE9FE] transition"
+                    className="w-full px-4 py-3 rounded-[28px] font-medium transition"
+                    style={{
+                      background: 'var(--pact-surface-2)',
+                      border: '1px dashed var(--pact-violet)',
+                      color: 'var(--pact-violet)',
+                    }}
                   >
                     Generate Invite Link
                   </button>
@@ -161,11 +185,17 @@ export default function InviteMembersModal({
                       type="text"
                       value={inviteLink}
                       readOnly
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-[28px] bg-gray-50"
+                      className="flex-1 px-4 py-3 rounded-[28px]"
+                      style={{
+                        background: 'var(--pact-surface-2)',
+                        border: '1px solid var(--pact-hairline)',
+                        color: 'var(--pact-text-dim)',
+                      }}
                     />
                     <button
                       onClick={copyLink}
-                      className="px-4 py-3 bg-[#A78BFA] text-white rounded-[28px] hover:bg-emerald-700 transition"
+                      className="px-4 py-3 rounded-[28px] text-white transition"
+                      style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
                     >
                       {copied ? (
                         <Check className="w-5 h-5" />
@@ -177,9 +207,12 @@ export default function InviteMembersModal({
                 )}
               </div>
 
-              <div className="bg-green-50 border border-green-200 rounded-[28px] p-3 space-y-2">
-                <p className="text-xs text-green-900 font-medium">How it works:</p>
-                <ul className="text-xs text-green-800 space-y-1">
+              <div
+                className="rounded-[28px] p-3 space-y-2"
+                style={{ background: 'var(--pact-surface-2)', border: '1px solid var(--pact-hairline)' }}
+              >
+                <p className="text-xs text-[var(--pact-text)] font-medium">How it works:</p>
+                <ul className="text-xs text-[var(--pact-text-faint)] space-y-1">
                   <li>• Share the link with anyone</li>
                   <li>• They can join without requiring approval</li>
                   <li>• Link is valid for 30 days</li>
@@ -188,7 +221,12 @@ export default function InviteMembersModal({
 
               <button
                 onClick={onClose}
-                className="w-full px-4 py-2.5 border border-gray-300 text-gray-700 rounded-[28px] font-medium hover:bg-gray-50 transition"
+                className="w-full px-4 py-2.5 rounded-[28px] font-medium transition"
+                style={{
+                  background: 'var(--pact-surface-2)',
+                  border: '1px solid var(--pact-hairline)',
+                  color: 'var(--pact-text-dim)',
+                }}
               >
                 Done
               </button>

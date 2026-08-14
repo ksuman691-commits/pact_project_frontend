@@ -3,14 +3,16 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import Navbar from '@/components/Navbar';
+import TopNav from '@/components/TopNav';
 import { circleService, circleJoinRequestService, joinRequestService } from '@/services/api';
 import { Circle, Pact } from '@/types';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Users, Globe, Lock, Target, Plus, Trophy } from 'lucide-react';
+import { ArrowLeft, Users, Globe, Target, Plus } from 'lucide-react';
+import { motion } from 'framer-motion';
 import CircleLeaderboard from '@/components/CircleLeaderboard';
 import InviteMembersModal from '@/components/InviteMembersModal';
 import PactCard from '@/components/PactCard';
+import { useCountUp } from '@/components/pact-ui/useCountUp';
 
 export default function CircleDetailPage() {
   const router = useRouter();
@@ -60,8 +62,8 @@ export default function CircleDetailPage() {
 
   if (!isInitialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      <div className="pact-flow min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'var(--pact-violet)' }} />
       </div>
     );
   }
@@ -89,7 +91,7 @@ export default function CircleDetailPage() {
 
   const handleLeaveCircle = async () => {
     if (!window.confirm('Are you sure you want to leave this circle?')) return;
-    
+
     try {
       await circleService.leave(circleId);
       toast.success('Left circle');
@@ -115,268 +117,233 @@ export default function CircleDetailPage() {
 
   if (!circle || loading) {
     return (
-      <>
-        <Navbar />
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      </>
+      <div className="pact-flow min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'var(--pact-violet)' }} />
+      </div>
     );
   }
 
   // Mock leaderboard data for demo
   const mockLeaderboardEntries = [
-    {
-      rank: 1,
-      userId: 1,
-      username: 'alice_doe',
-      avatar: '👩',
-      pactsCompleted: 12,
-      winRate: 92,
-      streak: 12,
-    },
-    {
-      rank: 2,
-      userId: 2,
-      username: 'bob_smith',
-      avatar: '👨',
-      pactsCompleted: 8,
-      winRate: 85,
-      streak: 7,
-    },
-    {
-      rank: 3,
-      userId: 3,
-      username: 'charlie_brown',
-      avatar: '🧔',
-      pactsCompleted: 6,
-      winRate: 78,
-      streak: 5,
-    },
+    { rank: 1, userId: 1, username: 'alice_doe', avatar: '👩', pactsCompleted: 12, winRate: 92, streak: 12 },
+    { rank: 2, userId: 2, username: 'bob_smith', avatar: '👨', pactsCompleted: 8, winRate: 85, streak: 7 },
+    { rank: 3, userId: 3, username: 'charlie_brown', avatar: '🧔', pactsCompleted: 6, winRate: 78, streak: 5 },
   ];
 
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Back Button */}
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-8"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            Back to Circles
-          </button>
+    <div className="pact-flow pact-page-enter min-h-screen">
+      <TopNav showBack={false} showCategories={false} />
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Back Button */}
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 mb-8 transition"
+          style={{ color: 'var(--pact-violet)' }}
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to Circles
+        </button>
 
-          {/* Circle Header */}
-          <div className="card mb-8">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h1 className="text-4xl font-bold text-[#14121F] mb-2">{circle.name}</h1>
-                <p className="text-[#6B7280] text-lg">{circle.description}</p>
-              </div>
-              <span className="px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 bg-green-100 text-green-700">
-                <Globe className="w-4 h-4" /> Circle
-              </span>
+        {/* Circle Header */}
+        <div className="pact-card rounded-[28px] mb-8">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h1 className="text-4xl font-bold text-[var(--pact-text)] mb-2">{circle.name}</h1>
+              <p className="text-[var(--pact-text-dim)] text-lg">{circle.description}</p>
             </div>
+            <span
+              className="px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2"
+              style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
+            >
+              <Globe className="w-4 h-4" /> Circle
+            </span>
+          </div>
 
-            <div className="grid grid-cols-3 gap-4 py-4 border-t border-[rgba(20,18,31,0.06)] border-b">
-              <div>
-                <p className="text-[#6B7280] text-sm">Members</p>
-                <p className="text-2xl font-bold text-[#14121F]">
-                  {circle.member_count ?? members.length}
-                </p>
-              </div>
-              <div>
-                <p className="text-[#6B7280] text-sm">Pacts</p>
-                <p className="text-2xl font-bold text-[#14121F]">{pacts.length}</p>
-              </div>
-              <div>
-                <p className="text-[#6B7280] text-sm">Created</p>
-                <p className="text-lg font-bold text-[#14121F]">
-                  {new Date(circle.created_at).toLocaleDateString()}
-                </p>
-              </div>
+          <div className="grid grid-cols-3 gap-4 py-4 border-t border-b" style={{ borderColor: 'var(--pact-hairline)' }}>
+            <div>
+              <p className="text-[var(--pact-text-faint)] text-sm">Members</p>
+              <p className="text-2xl font-bold text-[var(--pact-text)] tabular-nums">
+                <StatCount value={circle.member_count ?? members.length} />
+              </p>
             </div>
+            <div>
+              <p className="text-[var(--pact-text-faint)] text-sm">Pacts</p>
+              <p className="text-2xl font-bold text-[var(--pact-text)] tabular-nums">
+                <StatCount value={pacts.length} />
+              </p>
+            </div>
+            <div>
+              <p className="text-[var(--pact-text-faint)] text-sm">Created</p>
+              <p className="text-lg font-bold text-[var(--pact-text)]">
+                {new Date(circle.created_at).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3 mt-6">
-              {isMember ? (
-                <>
-                  <button
-                    onClick={() => router.push('/pacts/create')}
-                    className="btn-primary flex items-center gap-2"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Create Pact
-                  </button>
-                  <button
-                    onClick={() => setInviteModal(true)}
-                    className="btn-primary flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Users className="w-5 h-5" />
-                    Invite Members
-                  </button>
-                  {!isOwner && (
-                    <button
-                      onClick={handleLeaveCircle}
-                      className="btn-secondary"
-                    >
-                      Leave Circle
-                    </button>
-                  )}
-                </>
-              ) : (
+          {/* Action Buttons */}
+          <div className="flex gap-3 mt-6">
+            {isMember ? (
+              <>
                 <button
-                  onClick={handleJoinCircle}
-                  className="btn-primary"
+                  onClick={() => router.push('/pacts/create')}
+                  className="pact-btn-glow flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-white transition"
+                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
                 >
-                  Join Circle
+                  <Plus className="w-5 h-5" />
+                  Create Pact
+                </button>
+                <button
+                  onClick={() => setInviteModal(true)}
+                  className="flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition"
+                  style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-text)', border: '1px solid var(--pact-hairline)' }}
+                >
+                  <Users className="w-5 h-5" />
+                  Invite Members
+                </button>
+                {!isOwner && (
+                  <button
+                    onClick={handleLeaveCircle}
+                    className="px-6 py-3 rounded-full font-semibold transition"
+                    style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-text-dim)', border: '1px solid var(--pact-hairline)' }}
+                  >
+                    Leave Circle
+                  </button>
+                )}
+              </>
+            ) : (
+              <button
+                onClick={handleJoinCircle}
+                className="pact-btn-glow px-6 py-3 rounded-full font-semibold text-white transition"
+                style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+              >
+                Join Circle
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Members Section */}
+        <div className="pact-card rounded-[28px] mb-8">
+          <h2 className="text-2xl font-bold text-[var(--pact-text)] mb-6 flex items-center gap-2">
+            <Users className="w-6 h-6" style={{ color: 'var(--pact-violet)' }} />
+            Members
+          </h2>
+          {members.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {members.map((member: any, index: number) => (
+                <motion.div
+                  key={`${member.user_id}-${member.role}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.04, duration: 0.3, ease: 'easeOut' }}
+                  className="p-4 rounded-[24px] transition-colors"
+                  style={{ background: 'var(--pact-surface-2)', border: '1px solid var(--pact-hairline)' }}
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    {member.avatar_url ? (
+                      <img
+                        src={member.avatar_url}
+                        alt={member.username}
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div
+                        className="h-10 w-10 rounded-full font-bold flex items-center justify-center"
+                        style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: '#ffffff' }}
+                      >
+                        {member.username?.charAt(0)?.toUpperCase() || 'U'}
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-bold text-[var(--pact-text)]">{member.full_name}</p>
+                      <p className="text-sm text-[var(--pact-text-faint)]">@{member.username}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span style={{ color: 'var(--pact-gold)' }}>★</span>
+                    <span className="font-medium capitalize text-[var(--pact-text-dim)]">{member.role}</span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[var(--pact-text-faint)]">No members yet. Be the first to join this circle.</p>
+          )}
+        </div>
+
+        {/* Leaderboard Section */}
+        {isMember && (
+          <div className="mb-8">
+            <CircleLeaderboard entries={mockLeaderboardEntries} />
+          </div>
+        )}
+
+        {/* Pacts Section */}
+        <div className="pact-card rounded-[28px]">
+          <h2 className="text-2xl font-bold text-[var(--pact-text)] mb-6 flex items-center gap-2">
+            <Target className="w-6 h-6" style={{ color: 'var(--pact-pink)' }} />
+            Pacts in This Circle
+          </h2>
+          {!canViewPacts ? (
+            <div className="text-center py-8">
+              <Target className="w-12 h-12 mx-auto mb-2" style={{ color: 'var(--pact-text-faint)' }} />
+              <p className="text-[var(--pact-text-faint)] mb-4">Join this circle to view and request its pacts.</p>
+              <button
+                onClick={handleJoinCircle}
+                className="pact-btn-glow px-6 py-3 rounded-full font-semibold text-white transition"
+                style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+              >
+                Join Circle
+              </button>
+            </div>
+          ) : pacts.length > 0 ? (
+            <div className="space-y-6">
+              {pacts.map((pact) => (
+                <div key={pact.id} className="space-y-3">
+                  <PactCard pact={pact} userVote={(pact as any).user_vote || (pact as any).userVote} />
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => router.push(`/pacts/${pact.id}`)}
+                      className="w-full px-4 py-2.5 rounded-full font-medium text-sm transition"
+                      style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-text-dim)', border: '1px solid var(--pact-hairline)' }}
+                      type="button"
+                    >
+                      View Pact
+                    </button>
+                    {pact.creator_id !== user?.id && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRequestJoinPact(pact.id);
+                        }}
+                        className="pact-btn-glow w-full px-4 py-2.5 rounded-full font-medium text-sm text-white transition disabled:opacity-50"
+                        style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+                        type="button"
+                        disabled={!isMember}
+                      >
+                        {!isMember ? 'Join Circle to join pact' : 'Join Pact'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Target className="w-12 h-12 mx-auto mb-2" style={{ color: 'var(--pact-text-faint)' }} />
+              <p className="text-[var(--pact-text-faint)] mb-4">No pacts in this circle yet</p>
+              {isMember && (
+                <button
+                  onClick={() => router.push('/pacts/create')}
+                  className="pact-btn-glow inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-white transition"
+                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+                >
+                  <Plus className="w-5 h-5" />
+                  Create First Pact
                 </button>
               )}
             </div>
-          </div>
-
-          {/* Members Section */}
-          <div className="card mb-8">
-            <h2 className="text-2xl font-bold text-[#14121F] mb-6 flex items-center gap-2">
-              <Users className="w-6 h-6 text-blue-600" />
-              Members
-            </h2>
-            {members.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {members.map((member: any) => (
-                  <div
-                    key={`${member.user_id}-${member.role}`}
-                    className="p-4 rounded-[28px] border border-[rgba(20,18,31,0.06)] hover:border-blue-600 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      {member.avatar_url ? (
-                        <img
-                          src={member.avatar_url}
-                          alt={member.username}
-                          className="h-10 w-10 rounded-full object-cover border border-[rgba(20,18,31,0.06)]"
-                        />
-                      ) : (
-                        <div className="h-10 w-10 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center border border-[rgba(20,18,31,0.06)]">
-                          {member.username?.charAt(0)?.toUpperCase() || 'U'}
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-bold text-[#14121F]">{member.full_name}</p>
-                        <p className="text-sm text-[#6B7280]">@{member.username}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-yellow-500">⭐</span>
-                      <span className="font-medium capitalize">{member.role}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-[#6B7280]">No members yet. Be the first to join this circle.</p>
-            )}
-          </div>
-
-          {/* Leaderboard Section */}
-          {isMember && (
-            <div className="card mb-8">
-              <CircleLeaderboard
-                entries={[
-                  {
-                    rank: 1,
-                    userId: 1,
-                    username: 'alice_doe',
-                    avatar: '👩',
-                    pactsCompleted: 12,
-                    winRate: 92,
-                    streak: 12,
-                  },
-                  {
-                    rank: 2,
-                    userId: 2,
-                    username: 'bob_smith',
-                    avatar: '👨',
-                    pactsCompleted: 8,
-                    winRate: 85,
-                    streak: 7,
-                  },
-                  {
-                    rank: 3,
-                    userId: 3,
-                    username: 'charlie_brown',
-                    avatar: '🧔',
-                    pactsCompleted: 6,
-                    winRate: 78,
-                    streak: 5,
-                  },
-                ]}
-              />
-            </div>
           )}
-
-          {/* Pacts Section */}
-          <div className="card">
-            <h2 className="text-2xl font-bold text-[#14121F] mb-6 flex items-center gap-2">
-              <Target className="w-6 h-6 text-purple-600" />
-              Pacts in This Circle
-            </h2>
-            {!canViewPacts ? (
-              <div className="text-center py-8">
-                <Target className="w-12 h-12 text-slate-300 mx-auto mb-2" />
-                <p className="text-[#6B7280] mb-4">Join this circle to view and request its pacts.</p>
-                <button onClick={handleJoinCircle} className="btn-primary">
-                  Join Circle
-                </button>
-              </div>
-            ) : pacts.length > 0 ? (
-              <div className="space-y-6">
-                {pacts.map((pact) => (
-                  <div key={pact.id} className="space-y-3">
-                    <PactCard pact={pact} userVote={(pact as any).user_vote || (pact as any).userVote} />
-                    <div className="flex flex-col gap-2">
-                      <button
-                        onClick={() => router.push(`/pacts/${pact.id}`)}
-                        className="w-full btn-secondary text-sm"
-                        type="button"
-                      >
-                        View Pact
-                      </button>
-                      {pact.creator_id !== user?.id && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRequestJoinPact(pact.id);
-                          }}
-                          className="w-full btn-primary text-sm"
-                          type="button"
-                          disabled={!isMember}
-                        >
-                          {!isMember ? 'Join Circle to join pact' : 'Join Pact'}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Target className="w-12 h-12 text-slate-300 mx-auto mb-2" />
-                <p className="text-[#6B7280] mb-4">No pacts in this circle yet</p>
-                {isMember && (
-                  <button
-                    onClick={() => router.push('/pacts/create')}
-                    className="btn-primary inline-flex items-center gap-2"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Create First Pact
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
@@ -389,6 +356,11 @@ export default function CircleDetailPage() {
           circleName={circle.name}
         />
       )}
-    </>
+    </div>
   );
+}
+
+function StatCount({ value }: { value: number }) {
+  const count = useCountUp(value);
+  return <>{count}</>;
 }

@@ -34,23 +34,28 @@ export default function MemberSearchModal({ isOpen, onClose }: MemberSearchModal
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-start justify-center pt-20">
-        <div className="bg-white rounded-[24px] w-full max-w-md shadow-lg border border-gray-200 mx-4 max-h-96 flex flex-col">
+        <div
+          className="rounded-[24px] w-full max-w-md shadow-lg mx-4 max-h-96 flex flex-col"
+          style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}
+        >
           {/* Header */}
-          <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-100">
-            <Search className="w-5 h-5 text-gray-400" />
+          <div className="flex items-center gap-3 px-4 py-4 border-b border-[var(--pact-hairline)]">
+            <Search className="w-5 h-5" style={{ color: 'var(--pact-text-faint)' }} />
             <input
               autoFocus
               type="text"
               placeholder="Search members..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 outline-none text-sm text-gray-900 placeholder-gray-500"
+              className="flex-1 outline-none text-sm bg-transparent"
+              style={{ color: 'var(--pact-text)' }}
             />
             <button
               onClick={onClose}
-              className="p-1 hover:bg-gray-100 rounded-[28px] transition"
+              className="p-1 rounded-[28px] transition"
+              style={{ background: 'var(--pact-surface-2)' }}
             >
-              <X className="w-4 h-4 text-gray-600" />
+              <X className="w-4 h-4" style={{ color: 'var(--pact-text-dim)' }} />
             </button>
           </div>
 
@@ -58,26 +63,29 @@ export default function MemberSearchModal({ isOpen, onClose }: MemberSearchModal
           <div className="flex-1 overflow-y-auto">
             {isLoading && searchQuery ? (
               <div className="flex items-center justify-center py-8">
-                <Loader className="w-5 h-5 text-[#A78BFA] animate-spin" />
+                <Loader className="w-5 h-5 animate-spin" style={{ color: 'var(--pact-violet)' }} />
               </div>
             ) : searchQuery.length === 0 ? (
-              <div className="flex items-center justify-center py-8 text-gray-500">
+              <div className="flex items-center justify-center py-8" style={{ color: 'var(--pact-text-faint)' }}>
                 <p className="text-sm">Search by name or username</p>
               </div>
             ) : results.length === 0 ? (
-              <div className="flex items-center justify-center py-8 text-gray-500">
+              <div className="flex items-center justify-center py-8" style={{ color: 'var(--pact-text-faint)' }}>
                 <p className="text-sm">No members match your search</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y" style={{ borderColor: 'var(--pact-hairline)' }}>
                 {results.map((member: any) => (
                   <button
                     key={member.id}
                     onClick={() => handleSelectMember(member.username)}
-                    className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition text-left"
+                    className="pact-list-item w-full flex items-center gap-3 p-3 transition text-left"
                   >
                     {/* Avatar */}
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-300 to-blue-300 flex-shrink-0 overflow-hidden">
+                    <div
+                      className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden"
+                      style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+                    >
                       {member.avatar_url ? (
                         <Image
                           src={member.avatar_url}
@@ -95,8 +103,8 @@ export default function MemberSearchModal({ isOpen, onClose }: MemberSearchModal
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 text-sm truncate">{member.full_name}</p>
-                      <p className="text-xs text-gray-500 truncate">@{member.username}</p>
+                      <p className="font-medium text-[var(--pact-text)] text-sm truncate">{member.full_name}</p>
+                      <p className="text-xs text-[var(--pact-text-faint)] truncate">@{member.username}</p>
                     </div>
                   </button>
                 ))}
