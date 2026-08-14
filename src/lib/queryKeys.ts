@@ -77,6 +77,7 @@ export const queryKeys = {
     trending: () => [...queryKeys.feed.all, 'trending'],
     discover: () => [...queryKeys.feed.all, 'discover'],
     following: () => [...queryKeys.feed.all, 'following'],
+    suggestions: () => [...queryKeys.feed.all, 'suggestions'],
   },
 
   // Leaderboards

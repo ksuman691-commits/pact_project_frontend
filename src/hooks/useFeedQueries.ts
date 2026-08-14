@@ -42,6 +42,14 @@ export function useDiscoverFeed() {
   });
 }
 
+export function useSuggestedPacts(limit = 3) {
+  return useQuery({
+    queryKey: queryKeys.feed.suggestions(),
+    queryFn: () => feedService.getDiscover(0, limit * 4),
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
 export function useFollowingFeed() {
   return useInfiniteQuery({
     queryKey: queryKeys.feed.following(),

@@ -80,24 +80,6 @@ export type FlowStep =
   | 'review'
   | 'success';
 
-export interface SuggestedPactCreator {
-  id: string;
-  displayName: string;
-  avatarEmoji: string;
-  isInMyCircle: boolean;
-}
-
-export interface SuggestedPact {
-  pactId: string;
-  creator: SuggestedPactCreator;
-  title: string;
-  vibeId: VibeId;
-  memberCount: number;
-  mutualCount: number;
-  trending: boolean;
-  audience: 'My Circle' | 'Everyone';
-}
-
 export function createEmptyDraft(): PactDraft {
   return {
     vibeId: null,
