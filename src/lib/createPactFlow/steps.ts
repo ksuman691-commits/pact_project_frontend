@@ -11,7 +11,11 @@ import type { Activity, FlowStep, PactDraft } from '@/types/createPactFlow';
 export function resolveSteps(draft: PactDraft, activity: Activity | null): FlowStep[] {
   const steps: FlowStep[] = ['vibe', 'activity'];
   if (!activity?.milestone) steps.push('target');
-  steps.push('duration', 'proof', 'audience', 'review', 'success');
+  steps.push('duration', 'proof');
+  // Audience is pre-set (and the question skipped) when the flow was
+  // launched from a Circle's "Start a Pact for this Circle" CTA.
+  if (!draft.audiencePreset) steps.push('audience');
+  steps.push('review', 'success');
   return steps;
 }
 

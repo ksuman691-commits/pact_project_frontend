@@ -47,6 +47,7 @@ export interface PactDraft {
   audience: AudienceLabel | null;
   visibility: VisibilityLabel; // auto-derived, editable only in Customize
   circleId?: number | null; // bridging field: which circle when audience === 'My Circle'
+  audiencePreset?: boolean; // true when arriving from a Circle's "Start a Pact" CTA — skips the audience step
   descriptionOverride?: string; // set only if user edits generated description
   remindersEnabled: boolean; // default true
   startDate?: string; // ISO, editable only in Customize

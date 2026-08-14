@@ -2,27 +2,49 @@
 
 import React from 'react';
 import { ChevronLeft, X } from 'lucide-react';
-import { useCreatePactFlow } from '@/context/CreatePactFlowContext';
 import ProgressDots from './ProgressDots';
 import LiveTitleStrip from './LiveTitleStrip';
 
 interface FlowShellProps {
   children: React.ReactNode;
   onExit?: () => void;
+  /** Current step index within resolvedSteps (0-based). */
+  stepIndex: number;
+  /** Total number of steps minus 1 (i.e. the index of the last step). */
+  totalSteps: number;
+  canGoBack: boolean;
+  onBack: () => void;
+  /** false on the terminal "success" screen — hides header + title strip. */
+  showChrome: boolean;
+  /** Live-building summary text for this step (e.g. generated pact/circle title). */
+  titleStripText: string;
+  titleStripPlaceholder: string;
 }
 
-export default function FlowShell({ children, onExit }: FlowShellProps) {
-  const { stepIndex, resolvedSteps, canGoBack, goBack, currentStep } = useCreatePactFlow();
-
-  const showChrome = currentStep !== 'success';
-
+/**
+ * Shared immersive tap-flow shell — back button, progress dots, live-title
+ * strip, main content well. Used by Create Pact, Create Circle, and Create
+ * Dare so all three flows share one visual/motion language instead of each
+ * building its own one-off chrome.
+ */
+export default function FlowShell({
+  children,
+  onExit,
+  stepIndex,
+  totalSteps,
+  canGoBack,
+  onBack,
+  showChrome,
+  titleStripText,
+  titleStripPlaceholder,
+}: FlowShellProps) {
   return (
     <div className="pact-flow flex min-h-dvh flex-col">
       {showChrome && (
         <header className="flex items-center gap-3 px-5 pt-5">
           <button
             type="button"
-            onClick={goBack}
+            onClick={onBack}
             disabled={!canGoBack}
             aria-label="Back"
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[color:var(--pact-text)] disabled:opacity-0"
@@ -31,7 +53,7 @@ export default function FlowShell({ children, onExit }: FlowShellProps) {
             <ChevronLeft className="h-5 w-5" />
           </button>
           <div className="flex-1">
-            <ProgressDots current={stepIndex} total={resolvedSteps.length - 1} />
+            <ProgressDots current={stepIndex} total={totalSteps} />
           </div>
           {onExit && (
             <button
@@ -49,7 +71,7 @@ export default function FlowShell({ children, onExit }: FlowShellProps) {
 
       {showChrome && (
         <div className="px-5 pt-6">
-          <LiveTitleStrip />
+          <LiveTitleStrip text={titleStripText} placeholder={titleStripPlaceholder} />
         </div>
       )}
 

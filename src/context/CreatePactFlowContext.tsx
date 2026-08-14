@@ -53,8 +53,27 @@ function makeIdempotencyKey() {
   return `pact-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-export function CreatePactFlowProvider({ children }: { children: React.ReactNode }) {
-  const [draft, setDraft] = useState<PactDraft>(createEmptyDraft());
+export function CreatePactFlowProvider({
+  children,
+  initialCircleId,
+}: {
+  children: React.ReactNode;
+  /** Pre-set circle audience — skips the audience question entirely. */
+  initialCircleId?: number | null;
+}) {
+  const [draft, setDraft] = useState<PactDraft>(() => {
+    const base = createEmptyDraft();
+    if (initialCircleId != null) {
+      return {
+        ...base,
+        audience: 'My Circle',
+        visibility: 'My Circle',
+        circleId: initialCircleId,
+        audiencePreset: true,
+      };
+    }
+    return base;
+  });
   const [stepIndex, setStepIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdPact, setCreatedPact] = useState<CreatedPact | null>(null);
