@@ -55,17 +55,17 @@ export default function UserFollowModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-[24px] shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <Icon className="w-5 h-5 text-emerald-600" />
+            <Icon className="w-5 h-5 text-[#A78BFA]" />
             <h2 className="text-xl font-bold text-gray-900">{title}</h2>
             <span className="text-gray-600">({users.length})</span>
           </div>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-lg transition"
+            className="p-1 hover:bg-gray-100 rounded-[28px] transition"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -82,7 +82,7 @@ export default function UserFollowModal({
               {users.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition"
+                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-[28px] transition"
                 >
                   <div className="flex items-center gap-3 flex-1">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-blue-400 flex items-center justify-center text-white font-bold text-sm">
@@ -97,7 +97,7 @@ export default function UserFollowModal({
                   {type === 'following' && (
                     <button
                       onClick={() => handleFollowClick(user.id)}
-                      className={`px-3 py-1 rounded-lg text-sm font-medium transition whitespace-nowrap ${
+                      className={`px-3 py-1 rounded-[28px] text-sm font-medium transition whitespace-nowrap ${
                         followingState[user.id]
                           ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                           : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
@@ -110,7 +110,7 @@ export default function UserFollowModal({
                   {type === 'followers' && (
                     <button
                       onClick={() => handleFollowClick(user.id)}
-                      className={`px-3 py-1 rounded-lg text-sm font-medium transition whitespace-nowrap ${
+                      className={`px-3 py-1 rounded-[28px] text-sm font-medium transition whitespace-nowrap ${
                         followingState[user.id]
                           ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -131,7 +131,7 @@ export default function UserFollowModal({
             <button
               onClick={onLoadMore}
               disabled={loading}
-              className="w-full px-4 py-2 text-emerald-600 font-medium hover:bg-emerald-50 rounded-lg transition disabled:opacity-50"
+              className="w-full px-4 py-2 text-[#A78BFA] font-medium hover:bg-[#EDE9FE] rounded-[28px] transition disabled:opacity-50"
             >
               {loading ? 'Loading...' : 'Load More'}
             </button>

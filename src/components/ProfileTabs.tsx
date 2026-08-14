@@ -38,7 +38,7 @@ export default function ProfileTabs({ children, onTabChange }: ProfileTabsProps)
               onClick={() => handleTabChange(tab.id)}
               className={`flex items-center gap-2 px-4 py-3 font-medium text-sm whitespace-nowrap border-b-2 transition ${
                 activeTab === tab.id
-                  ? 'border-emerald-500 text-emerald-600'
+                  ? 'border-emerald-500 text-[#A78BFA]'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -79,12 +79,12 @@ export function PactsTab({
   const renderEmptyState = (sectionId: 'created' | 'joined' | 'voted') => {
     if (sectionId === 'created') {
       return (
-        <div className="rounded-3xl border border-dashed border-emerald-200 bg-emerald-50/70 px-6 py-10 text-center">
-          <p className="text-base font-semibold text-slate-900">You haven&apos;t created any pacts yet</p>
-          <p className="mt-2 text-sm text-slate-600">Create a pact to start tracking progress with your circles.</p>
+        <div className="rounded-3xl border border-dashed border-emerald-200 bg-[#EDE9FE]/70 px-6 py-10 text-center">
+          <p className="text-base font-semibold text-[#14121F]">You haven&apos;t created any pacts yet</p>
+          <p className="mt-2 text-sm text-[#6B7280]">Create a pact to start tracking progress with your circles.</p>
           <button
             onClick={() => router.push('/pacts/create')}
-            className="mt-5 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+            className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#A78BFA] px-4 py-2 text-sm font-semibold text-white shadow-[0_4px_12px_rgba(94,84,142,0.08)] transition hover:bg-emerald-700"
           >
             <Plus className="h-4 w-4" />
             Create Pact
@@ -94,9 +94,9 @@ export function PactsTab({
     }
 
     return (
-      <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center">
-        <p className="text-base font-semibold text-slate-900">Nothing here yet</p>
-        <p className="mt-2 text-sm text-slate-600">
+      <div className="rounded-3xl border border-dashed border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] px-6 py-10 text-center">
+        <p className="text-base font-semibold text-[#14121F]">Nothing here yet</p>
+        <p className="mt-2 text-sm text-[#6B7280]">
           {sectionId === 'joined'
             ? 'You have not joined any pacts yet.'
             : 'You have not voted on any pacts yet.'}
@@ -119,12 +119,12 @@ export function PactsTab({
               onClick={() => setActiveSection(section.id)}
               className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition ${
                 isActive
-                  ? 'bg-slate-900 text-white shadow-sm'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  ? 'bg-slate-900 text-white shadow-[0_4px_12px_rgba(94,84,142,0.08)]'
+                  : 'bg-white text-[#6B7280] border border-[rgba(20,18,31,0.06)] hover:bg-[#F4F2FB]'
               }`}
             >
               <span>{section.label}</span>
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isActive ? 'bg-white/15' : 'bg-slate-100 text-slate-500'}`}>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isActive ? 'bg-white/15' : 'bg-[#FAF9FE] text-[#9CA3AF]'}`}>
                 {section.count}
               </span>
             </button>
@@ -157,7 +157,7 @@ export function AchievementsTab({ achievements }: { achievements: any[] }) {
         achievements.map((achievement) => (
           <div
             key={achievement.id}
-            className={`p-4 rounded-lg border-2 text-center transition ${
+            className={`p-4 rounded-[28px] border-2 text-center transition ${
               achievement.unlocked
                 ? 'bg-white border-emerald-200 hover:shadow-md'
                 : 'bg-gray-50 border-gray-200 opacity-50'
@@ -180,7 +180,7 @@ export function FollowersTab({ followers }: { followers: any[] }) {
     <div className="space-y-3">
       {followers && followers.length > 0 ? (
         followers.map((follower) => (
-          <div key={follower.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100">
+          <div key={follower.id} className="flex items-center justify-between p-3 bg-white rounded-[28px] border border-gray-100">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center font-bold">
                 {follower.name.charAt(0)}

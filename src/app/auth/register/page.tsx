@@ -47,7 +47,7 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-white">
       {/* Mobile header with logo */}
-      <div className="lg:hidden p-4 border-b border-slate-200">
+      <div className="lg:hidden p-4 border-b border-[rgba(20,18,31,0.06)]">
         <div className="flex justify-center mb-4">
           <Image
             src="/logo.png"
@@ -58,7 +58,7 @@ export default function Register() {
             className="object-contain"
           />
         </div>
-        <h1 className="text-2xl font-bold text-slate-900 text-center">Join CirclePact</h1>
+        <h1 className="text-2xl font-bold text-[#14121F] text-center">Join CirclePact</h1>
       </div>
 
       <div className="flex flex-col lg:flex-row min-h-screen lg:min-h-auto">
@@ -75,21 +75,21 @@ export default function Register() {
                 className="object-contain"
               />
             </div>
-            <h1 className="text-3xl font-black text-slate-900 mb-4">Join CirclePact</h1>
-            <p className="text-slate-600 mb-8">Turn your goals into reality with real stakes and real accountability.</p>
+            <h1 className="text-3xl font-black text-[#14121F] mb-4">Join CirclePact</h1>
+            <p className="text-[#6B7280] mb-8">Turn your goals into reality with real stakes and real accountability.</p>
 
             <div className="space-y-4 mt-12 text-left">
               <div>
-                <p className="font-semibold text-slate-900">💰 Your Money Matters</p>
-                <p className="text-sm text-slate-600">Stake real money on your commitments</p>
+                <p className="font-semibold text-[#14121F]">💰 Your Money Matters</p>
+                <p className="text-sm text-[#6B7280]">Stake real money on your commitments</p>
               </div>
               <div>
-                <p className="font-semibold text-slate-900">👥 Build Your Circle</p>
-                <p className="text-sm text-slate-600">Get verified by people you trust</p>
+                <p className="font-semibold text-[#14121F]">👥 Build Your Circle</p>
+                <p className="text-sm text-[#6B7280]">Get verified by people you trust</p>
               </div>
               <div>
-                <p className="font-semibold text-slate-900">🔥 Earn Your Streak</p>
-                <p className="text-sm text-slate-600">Win money and build your reputation</p>
+                <p className="font-semibold text-[#14121F]">🔥 Earn Your Streak</p>
+                <p className="text-sm text-[#6B7280]">Win money and build your reputation</p>
               </div>
             </div>
           </div>
@@ -106,7 +106,7 @@ export default function Register() {
                   value={formData.full_name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400 text-sm placeholder:text-slate-400"
+                  className="w-full px-4 py-2.5 bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] rounded-[28px] focus:outline-none focus:border-slate-400 text-sm placeholder:text-slate-400"
                   placeholder="Full name"
                 />
               </div>
@@ -118,7 +118,7 @@ export default function Register() {
                   value={formData.username}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400 text-sm placeholder:text-slate-400"
+                  className="w-full px-4 py-2.5 bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] rounded-[28px] focus:outline-none focus:border-slate-400 text-sm placeholder:text-slate-400"
                   placeholder="Username"
                 />
               </div>
@@ -130,7 +130,7 @@ export default function Register() {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400 text-sm placeholder:text-slate-400"
+                  className="w-full px-4 py-2.5 bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] rounded-[28px] focus:outline-none focus:border-slate-400 text-sm placeholder:text-slate-400"
                   placeholder="Email"
                 />
               </div>
@@ -142,7 +142,7 @@ export default function Register() {
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400 text-sm placeholder:text-slate-400"
+                  className="w-full px-4 py-2.5 bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] rounded-[28px] focus:outline-none focus:border-slate-400 text-sm placeholder:text-slate-400"
                   placeholder="Password"
                 />
               </div>
@@ -154,7 +154,7 @@ export default function Register() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400 text-sm placeholder:text-slate-400"
+                  className="w-full px-4 py-2.5 bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] rounded-[28px] focus:outline-none focus:border-slate-400 text-sm placeholder:text-slate-400"
                   placeholder="Confirm password"
                 />
               </div>
@@ -162,7 +162,7 @@ export default function Register() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-semibold rounded-lg transition-all disabled:cursor-not-allowed text-sm mt-4"
+                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-semibold rounded-[28px] transition-all disabled:cursor-not-allowed text-sm mt-4"
               >
                 {isLoading ? 'Creating account...' : 'Sign Up'}
               </button>
@@ -170,14 +170,14 @@ export default function Register() {
 
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200"></div>
+                <div className="w-full border-t border-[rgba(20,18,31,0.06)]"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-slate-500">OR</span>
+                <span className="px-2 bg-white text-[#9CA3AF]">OR</span>
               </div>
             </div>
 
-            <p className="text-center text-slate-600 text-sm">
+            <p className="text-center text-[#6B7280] text-sm">
               Already have an account?{' '}
               <Link href="/auth/login" className="text-blue-600 hover:text-blue-700 font-semibold">
                 Sign In

@@ -65,9 +65,9 @@ export default function PactWizardStep4() {
                 key={option.id}
                 onClick={() => handleVisibilitySelect(option.id as any)}
                 disabled={isDisabled}
-                className={`w-full p-4 border-2 rounded-lg transition text-left ${
+                className={`w-full p-4 border-2 rounded-[28px] transition text-left ${
                   data.visibility === option.id
-                    ? 'border-emerald-500 bg-emerald-50'
+                    ? 'border-emerald-500 bg-[#EDE9FE]'
                     : isDisabled
                     ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
                     : 'border-gray-200 bg-white hover:border-emerald-300'
@@ -98,13 +98,13 @@ export default function PactWizardStep4() {
           </label>
 
           {!hasMemberCircles ? (
-            <div className="p-4 border border-amber-200 bg-amber-50 rounded-lg space-y-3">
+            <div className="p-4 border border-amber-200 bg-amber-50 rounded-[28px] space-y-3">
               <p className="text-sm text-amber-800">
                 Join or create a circle first to make circle-only pacts.
               </p>
               <button
                 onClick={() => router.push('/circles/create')}
-                className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition"
+                className="px-4 py-2 rounded-[28px] bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition"
               >
                 Create Circle
               </button>
@@ -115,9 +115,9 @@ export default function PactWizardStep4() {
                 <button
                   key={circle.id}
                   onClick={() => updateData({ selectedCircleId: circle.id })}
-                  className={`w-full p-4 border-2 rounded-lg transition text-left ${
+                  className={`w-full p-4 border-2 rounded-[28px] transition text-left ${
                     data.selectedCircleId === circle.id
-                      ? 'border-emerald-500 bg-emerald-50'
+                      ? 'border-emerald-500 bg-[#EDE9FE]'
                       : 'border-gray-200 bg-white hover:border-emerald-300'
                   }`}
                 >
@@ -140,7 +140,7 @@ export default function PactWizardStep4() {
       )}
 
       {/* Info Box */}
-      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="p-4 bg-blue-50 border border-blue-200 rounded-[28px]">
         <p className="text-sm font-medium text-blue-900 mb-2">Visibility Info:</p>
         {data.visibility === 'public' && (
           <p className="text-sm text-blue-800">

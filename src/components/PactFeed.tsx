@@ -178,21 +178,21 @@ export default function PactFeed({
       {isLoading ? (
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, idx) => (
-            <div key={idx} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-pulse">
-              <div className="h-24 bg-slate-100" />
+            <div key={idx} className="bg-white rounded-[24px] border border-[rgba(20,18,31,0.06)] shadow-[0_4px_12px_rgba(94,84,142,0.08)] overflow-hidden animate-pulse">
+              <div className="h-24 bg-[#FAF9FE]" />
               <div className="p-4 space-y-3">
                 <div className="h-5 w-2/3 bg-slate-200 rounded" />
                 <div className="h-4 w-1/2 bg-slate-200 rounded" />
-                <div className="h-32 bg-slate-100 rounded-xl" />
-                <div className="h-10 bg-slate-100 rounded-full" />
+                <div className="h-32 bg-[#FAF9FE] rounded-[24px]" />
+                <div className="h-10 bg-[#FAF9FE] rounded-full" />
               </div>
             </div>
           ))}
         </div>
       ) : pacts.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-10 text-center">
-          <p className="text-lg font-bold text-slate-900">{emptyStateTitle}</p>
-          <p className="mt-2 text-sm text-slate-600">{emptyStateMessage}</p>
+        <div className="bg-white rounded-[24px] border border-[rgba(20,18,31,0.06)] shadow-[0_4px_12px_rgba(94,84,142,0.08)] px-5 py-10 text-center">
+          <p className="text-lg font-bold text-[#14121F]">{emptyStateTitle}</p>
+          <p className="mt-2 text-sm text-[#6B7280]">{emptyStateMessage}</p>
           <button
             onClick={() => onCreatePact ? onCreatePact() : router.push('/pacts/create')}
             className="mt-6 inline-flex items-center justify-center px-5 py-3 rounded-full bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors"
@@ -235,9 +235,9 @@ export default function PactFeed({
 
       {/* Infinite scroll trigger */}
       <div ref={ref} className="py-4 text-center">
-        {isFetchingNextPage && !isLoading && <p className="text-slate-600">Loading more...</p>}
+        {isFetchingNextPage && !isLoading && <p className="text-[#6B7280]">Loading more...</p>}
         {!hasNextPage && pacts.length > 0 && (
-          <p className="text-slate-500 text-sm">No more pacts to load</p>
+          <p className="text-[#9CA3AF] text-sm">No more pacts to load</p>
         )}
       </div>
     </div>

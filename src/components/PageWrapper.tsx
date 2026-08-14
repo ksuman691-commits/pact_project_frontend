@@ -17,7 +17,7 @@ export default function PageWrapper({
   onCreatePactClick,
 }: PageWrapperProps) {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F4F2FB]">
       <TopNav
         showBack={showBack}
         showCategories={showCategories}

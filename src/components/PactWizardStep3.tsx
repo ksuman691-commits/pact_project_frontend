@@ -48,7 +48,7 @@ export default function PactWizardStep3() {
               <button
                 key={method.id}
                 onClick={() => updateData({ verificationType: method.id as any })}
-                className={`w-full p-4 border-2 rounded-lg transition text-left ${
+                className={`w-full p-4 border-2 rounded-[28px] transition text-left ${
                   data.verificationType === method.id
                     ? `${method.color} border-2 border-current`
                     : 'border-gray-200 bg-white hover:border-gray-300'
@@ -75,7 +75,7 @@ export default function PactWizardStep3() {
         <select
           value={data.verificationFrequency}
           onChange={(e) => updateData({ verificationFrequency: e.target.value as any })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-full px-4 py-3 border border-gray-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
           <option value="daily">Daily</option>
           <option value="every-3-days">Every 3 days</option>
@@ -93,13 +93,13 @@ export default function PactWizardStep3() {
           value={data.maxProofUploads}
           onChange={(e) => updateData({ maxProofUploads: Math.max(1, parseInt(e.target.value) || 1) })}
           min="1"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-full px-4 py-3 border border-gray-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
         <p className="text-xs text-gray-500 mt-1">Total number of proofs you will submit</p>
       </div>
 
       {/* Info Box */}
-      <div className="flex gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="flex gap-3 p-4 bg-blue-50 border border-blue-200 rounded-[28px]">
         <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-medium text-blue-900 mb-1">About Verification</p>
@@ -109,7 +109,7 @@ export default function PactWizardStep3() {
 
       {/* Method Details */}
       {selectedMethod && (
-        <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg space-y-2">
+        <div className="p-4 bg-gray-50 border border-gray-200 rounded-[28px] space-y-2">
           <p className="text-sm font-semibold text-gray-900">About {selectedMethod.name}:</p>
           {selectedMethod.id === 'video' && (
             <ul className="text-sm text-gray-700 space-y-1 list-disc list-inside">

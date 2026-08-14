@@ -38,7 +38,7 @@ export default function CircleStats({
       {/* Total Wins */}
       <PremiumCard glass className="bg-gradient-to-br from-emerald-50/80 to-emerald-100/80 border-emerald-200">
         <div className="flex items-start justify-between mb-2">
-          <TrendingUp className="w-5 h-5 text-emerald-600" />
+          <TrendingUp className="w-5 h-5 text-[#A78BFA]" />
           <span className="text-xs font-bold text-emerald-700">Wins</span>
         </div>
         <p className="text-3xl font-black text-emerald-900">{totalWins}</p>

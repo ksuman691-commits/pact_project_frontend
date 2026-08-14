@@ -42,19 +42,17 @@ const formatTimeRemaining = (endDateRaw: string | undefined) => {
   if (!endDateRaw) return null;
 
   const endDate = new Date(endDateRaw);
-  const diffMs = endDate.getTime() - Date.now();
-
   if (Number.isNaN(endDate.getTime())) return null;
+
+  const diffMs = endDate.getTime() - Date.now();
   if (diffMs <= 0) return 'Ended';
 
-  const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const days = Math.floor(totalHours / 24);
-  const hours = totalHours % 24;
-  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-  if (days > 0) return `${days}d ${hours}h`;
-  if (totalHours > 0) return `${totalHours}h ${minutes}m`;
-  return `${Math.max(minutes, 1)}m`;
+  if (days < 1) return 'Ends today';
+  if (days <= 6) return `${days} day${days === 1 ? '' : 's'} left`;
+  if (days < 30) return `${Math.round(days / 7)} week${Math.round(days / 7) === 1 ? '' : 's'} left`;
+  return `${Math.round(days / 30)} month${Math.round(days / 30) === 1 ? '' : 's'} left`;
 };
 
 const calculateCurrentDay = (startDateRaw: string | undefined, durationDaysRaw: number | undefined) => {
@@ -538,6 +536,63 @@ export const pactAdvancedService = {
     })),
   getProofHistory: (pactId: number) =>
     api.get(`/api/pacts/${pactId}`),
+};
+
+// Dare Services
+const mapDare = (raw: any) => ({
+  ...raw,
+  dare_uuid: raw?.dare_uuid ?? String(raw?.id ?? ''),
+  recipientCount: raw?.recipient_count ?? raw?.recipients?.length ?? 0,
+  acceptedCount: raw?.accepted_count ?? 0,
+  completedCount: raw?.completed_count ?? 0,
+  failedCount: raw?.failed_count ?? 0,
+  isCreatedByMe: Boolean(raw?.is_created_by_me),
+  isAcceptedByMe: Boolean(raw?.is_accepted_by_me),
+  isCompletedByMe: Boolean(raw?.is_completed_by_me),
+  creatorAvatarUrl: raw?.creator_avatar_url ?? raw?.creator?.avatar_url ?? null,
+  timeRemaining: formatTimeRemaining(raw?.complete_by_date),
+});
+
+export const dareService = {
+  create: async (data: any) => {
+    const response = await api.post('/api/dares', data);
+    return { ...response, data: mapDare(response.data) };
+  },
+  list: async (skip = 0, limit = 20) => {
+    const response = await api.get('/api/dares', { params: { skip, limit } });
+    return normalizeListResponse(response, mapDare);
+  },
+  getFeed: async (skip = 0, limit = 20) => {
+    const response = await api.get('/api/dares/feed', { params: { skip, limit } });
+    return normalizeListResponse(response, mapDare);
+  },
+  getMine: async (skip = 0, limit = 20) => {
+    const response = await api.get('/api/dares/mine', { params: { skip, limit } });
+    return normalizeListResponse(response, mapDare);
+  },
+  getById: async (id: number) => {
+    const response = await api.get(`/api/dares/${id}`);
+    return { ...response, data: mapDare(response.data) };
+  },
+  claim: (id: number) => api.post(`/api/dares/${id}/claim`),
+  accept: (id: number) => api.post(`/api/dares/${id}/accept`),
+  decline: (id: number) => api.post(`/api/dares/${id}/decline`),
+  uploadProof: (id: number, file: File, proofType: 'photo' | 'video' | 'checklist' = 'photo', caption?: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('proof_type', proofType);
+    if (caption) formData.append('caption', caption);
+    return api.post(`/api/dares/${id}/upload-proof`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  verify: (id: number, data: any) => api.post(`/api/dares/${id}/verify`, data),
+  cancel: (id: number) => api.delete(`/api/dares/${id}`),
+  getRecipients: async (id: number, skip = 0, limit = 20) => {
+    const response = await api.get(`/api/dares/${id}/recipients`, { params: { skip, limit } });
+    return normalizeListResponse(response);
+  },
+  getStats: (id: number) => api.get(`/api/dares/${id}/verify/stats`),
 };
 
 // Verification Advanced Services

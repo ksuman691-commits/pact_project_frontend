@@ -103,6 +103,92 @@ export interface Short {
   pact?: Pact;
 }
 
+export interface DareRecipient {
+  id: number;
+  user_id: number;
+  dare_id: number;
+  status: 'pending' | 'accepted' | 'declined' | 'completed' | 'failed';
+  responded_at?: string;
+  completed_at?: string;
+  user?: User;
+}
+
+export interface DareProof {
+  id: number;
+  dare_id: number;
+  user_id: number;
+  proof_type: 'photo' | 'video' | 'checklist';
+  proof_url?: string;
+  caption?: string;
+  uploaded_at: string;
+  user?: User;
+}
+
+export interface DareVerification {
+  id: number;
+  dare_id: number;
+  verifier_id: number;
+  q1_answer: 'yes' | 'no';
+  q2_answer: 'yes' | 'no';
+  q3_answer: 'yes' | 'no';
+  q4_answer: 'yes' | 'no';
+  q1_reason?: string;
+  q2_reason?: string;
+  q3_reason?: string;
+  q4_reason?: string;
+  confidence_score: number;
+  created_at: string;
+  verifier?: User;
+}
+
+export interface Dare {
+  id: number;
+  dare_uuid?: string;
+  creator_id: number;
+  title: string;
+  description: string;
+  deadline: string;
+  respond_by_date: string;
+  complete_by_date: string;
+  recipients?: DareRecipient[];
+  status: 'active' | 'completed' | 'failed' | 'cancelled';
+  visibility: 'public' | 'private' | 'circle_only';
+  circle_id?: number;
+  verification_method?: string;
+  verification_questions?: string[];
+  proof_url?: string;
+  proof_type?: string;
+  created_at: string;
+  updated_at?: string;
+  creator?: User;
+  creator_username?: string;
+  creator_full_name?: string;
+  creator_avatar_url?: string;
+  circle_name?: string;
+  recipientCount?: number;
+  acceptedCount?: number;
+  completedCount?: number;
+  failedCount?: number;
+  isCreatedByMe?: boolean;
+  isAcceptedByMe?: boolean;
+  isCompletedByMe?: boolean;
+  acceptanceStats?: {
+    accepted: number;
+    declined: number;
+    pending: number;
+  };
+  completionStats?: {
+    completed: number;
+    failed: number;
+    inProgress: number;
+  };
+  verificationStats?: {
+    yes_count: number;
+    no_count: number;
+    confidence_avg: number;
+  };
+}
+
 export interface AuthToken {
   access_token: string;
   refresh_token?: string;

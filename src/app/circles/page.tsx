@@ -107,7 +107,7 @@ export default function CirclesPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => setMemberSearchOpen(true)}
-                className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition"
+                className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#EDE9FE] hover:bg-emerald-100 text-[#A78BFA] transition"
                 aria-label="Search members"
               >
                 <Search className="h-5 w-5" />
@@ -135,7 +135,7 @@ export default function CirclesPage() {
               placeholder="Search circles..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 bg-white/80 backdrop-blur-sm border border-white/70 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-300 text-slate-900 placeholder-slate-400 transition shadow-[0_4px_12px_rgba(15,23,42,0.06)]"
+              className="w-full pl-12 pr-4 py-3.5 bg-white/80 backdrop-blur-sm border border-white/70 rounded-[24px] focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-300 text-[#14121F] placeholder-slate-400 transition shadow-[0_4px_12px_rgba(15,23,42,0.06)]"
             />
           </div>
 
@@ -156,10 +156,10 @@ export default function CirclesPage() {
                     publicCircles.refetch();
                   }
                 }}
-                className={`snap-start shrink-0 px-4 py-2.5 rounded-xl font-semibold text-sm whitespace-nowrap transition ${
+                className={`snap-start shrink-0 px-4 py-2.5 rounded-[24px] font-semibold text-sm whitespace-nowrap transition ${
                   sortBy === tab.key
                     ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-[0_8px_20px_rgba(16,185,129,0.25)]'
-                    : 'bg-white/80 text-slate-700 border border-white/70 hover:bg-white/90 hover:border-slate-200'
+                    : 'bg-white/80 text-slate-700 border border-white/70 hover:bg-white hover:border-[rgba(20,18,31,0.06)]'
                 }`}
               >
                 {tab.icon} {tab.label}
@@ -173,7 +173,7 @@ export default function CirclesPage() {
         {isLoading && displayCircles.length === 0 ? (
           <div className="space-y-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-48 bg-gray-200 rounded-2xl animate-pulse" />
+              <div key={i} className="h-48 bg-gray-200 rounded-[24px] animate-pulse" />
             ))}
           </div>
         ) : displayCircles.length === 0 ? (
@@ -208,7 +208,7 @@ export default function CirclesPage() {
                       else if (sortBy === 'public' || sortBy === 'trending')
                         publicCircles.fetchNextPage();
                     }}
-                    className="px-6 py-2 text-emerald-600 font-medium hover:bg-emerald-50 rounded-lg transition"
+                    className="px-6 py-2 text-[#A78BFA] font-medium hover:bg-[#EDE9FE] rounded-[28px] transition"
                   >
                     Load More
                   </button>

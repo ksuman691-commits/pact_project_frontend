@@ -41,7 +41,7 @@ export default function ProofsSection({
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <ImageIcon className="w-5 h-5 text-slate-700" />
-          <h2 className="font-bold text-slate-900">
+          <h2 className="font-bold text-[#14121F]">
             {title} ({proofs.length})
           </h2>
         </div>
@@ -52,9 +52,9 @@ export default function ProofsSection({
               <button
                 key={proof.id}
                 onClick={() => handleProofClick(index)}
-                className="group w-full overflow-hidden rounded-[28px] border border-slate-200 bg-white text-left shadow-sm transition hover:shadow-md"
+                className="group w-full overflow-hidden rounded-[28px] border border-[rgba(20,18,31,0.06)] bg-white text-left shadow-[0_4px_12px_rgba(94,84,142,0.08)] transition hover:shadow-md"
               >
-                <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100">
+                <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#FAF9FE]">
                   {proof.type === 'image' ? (
                     <Image
                       src={proof.url}
@@ -97,7 +97,7 @@ export default function ProofsSection({
               <button
                 key={proof.id}
                 onClick={() => handleProofClick(index)}
-                className="group relative aspect-square rounded-lg overflow-hidden cursor-pointer bg-slate-100"
+                className="group relative aspect-square rounded-[28px] overflow-hidden cursor-pointer bg-[#FAF9FE]"
               >
                 {/* Media Display */}
                 {proof.type === 'image' ? (
@@ -132,7 +132,7 @@ export default function ProofsSection({
 
                 {/* Day Badge */}
                 {proof.day && (
-                  <div className="absolute top-2 left-2 bg-emerald-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                  <div className="absolute top-2 left-2 bg-[#A78BFA] text-white text-xs font-bold px-2 py-1 rounded-full">
                     Day {proof.day}
                   </div>
                 )}
@@ -155,9 +155,9 @@ export default function ProofsSection({
                 <button
                   key={proof.id}
                   onClick={() => handleProofClick(index)}
-                  className="w-full flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg transition group"
+                  className="w-full flex items-center gap-3 p-2 hover:bg-[#F4F2FB] rounded-[28px] transition group"
                 >
-                  <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100">
+                  <div className="relative w-12 h-12 rounded-[28px] overflow-hidden flex-shrink-0 bg-[#FAF9FE]">
                     {proof.type === 'image' ? (
                       <Image
                         src={proof.url}
@@ -173,21 +173,21 @@ export default function ProofsSection({
                     )}
                   </div>
                   <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-slate-900">
+                    <p className="text-sm font-medium text-[#14121F]">
                       {proof.day ? `Day ${proof.day}` : 'Update'}
                     </p>
                     {proof.description && (
-                      <p className="text-xs text-slate-600 line-clamp-1">
+                      <p className="text-xs text-[#6B7280] line-clamp-1">
                         {proof.description}
                       </p>
                     )}
                     {proof.uploadedAt && (
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-[#9CA3AF]">
                         {new Date(proof.uploadedAt).toLocaleDateString()}
                       </p>
                     )}
                   </div>
-                  <div className="text-xs text-slate-500 flex-shrink-0">
+                  <div className="text-xs text-[#9CA3AF] flex-shrink-0">
                     {proof.type === 'video' ? '🎥' : '📷'}
                   </div>
                 </button>

@@ -33,7 +33,7 @@ function CommentRow({ comment, pactId, currentUserId }: { comment: Comment; pact
   const timestamp = comment.timestamp || comment.created_at || 'just now';
 
   return (
-    <div className="hover:bg-gray-50 p-4 rounded-xl transition border border-gray-100 hover:border-gray-200">
+    <div className="hover:bg-gray-50 p-4 rounded-[24px] transition border border-gray-100 hover:border-gray-200">
       <div className="flex gap-3">
         <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
           {avatarUrl ? (
@@ -91,7 +91,7 @@ export default function CommentSection({
   return (
     <div className="space-y-4 w-full">
       {/* Comment Input */}
-      <form onSubmit={handleAddComment} className="border border-gray-200 rounded-2xl p-4 w-full">
+      <form onSubmit={handleAddComment} className="border border-gray-200 rounded-[24px] p-4 w-full">
         <div className="flex gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
             {(user?.username || 'U').charAt(0).toUpperCase()}

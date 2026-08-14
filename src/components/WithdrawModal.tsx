@@ -71,7 +71,7 @@ export default function WithdrawModal({
         </div>
 
         {/* Available Balance */}
-        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-6">
+        <div className="bg-[#EDE9FE] border border-emerald-200 rounded-[28px] p-4 mb-6">
           <p className="text-sm text-emerald-900">
             <span className="font-medium">Available Balance:</span> ₹{maxAmount.toLocaleString()}
           </p>
@@ -88,7 +88,7 @@ export default function WithdrawModal({
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Enter amount"
             max={maxAmount}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
           <p className="text-xs text-gray-600 mt-2">
             Minimum: ₹100 | Maximum: ₹{maxAmount.toLocaleString()}
@@ -105,9 +105,9 @@ export default function WithdrawModal({
               <button
                 key={id}
                 onClick={() => setMethod(id)}
-                className={`w-full flex items-start justify-between p-4 border-2 rounded-lg transition-all ${
+                className={`w-full flex items-start justify-between p-4 border-2 rounded-[28px] transition-all ${
                   method === id
-                    ? 'border-emerald-500 bg-emerald-50'
+                    ? 'border-emerald-500 bg-[#EDE9FE]'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
@@ -116,7 +116,7 @@ export default function WithdrawModal({
                   <p className="text-xs text-gray-600">{description}</p>
                 </div>
                 {method === id && (
-                  <div className="w-5 h-5 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0 ml-3">
+                  <div className="w-5 h-5 rounded-full bg-[#A78BFA] flex items-center justify-center flex-shrink-0 ml-3">
                     <div className="w-2 h-2 rounded-full bg-white" />
                   </div>
                 )}
@@ -126,7 +126,7 @@ export default function WithdrawModal({
         </div>
 
         {/* Important Notes */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 flex gap-3">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-[28px] p-4 mb-6 flex gap-3">
           <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-yellow-900 mb-1">Processing Time</p>
@@ -140,14 +140,14 @@ export default function WithdrawModal({
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+            className="flex-1 px-4 py-3 border border-gray-300 rounded-[28px] text-gray-700 font-medium hover:bg-gray-50 transition"
           >
             Cancel
           </button>
           <button
             onClick={handleWithdraw}
             disabled={loading || !amount}
-            className="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+            className="flex-1 px-4 py-3 bg-[#A78BFA] text-white rounded-[28px] font-medium hover:bg-emerald-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading ? 'Processing...' : 'Withdraw'}
             {!loading && <ArrowRight className="w-4 h-4" />}

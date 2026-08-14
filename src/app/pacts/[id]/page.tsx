@@ -34,30 +34,30 @@ function PactDetailSkeleton() {
         <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
           <div className="h-4 w-32 animate-pulse rounded-full bg-white/10" />
           <div className="mt-4 grid grid-cols-3 gap-3">
-            <div className="h-16 animate-pulse rounded-2xl bg-white/10" />
-            <div className="h-16 animate-pulse rounded-2xl bg-white/10" />
-            <div className="h-16 animate-pulse rounded-2xl bg-white/10" />
+            <div className="h-16 animate-pulse rounded-[24px] bg-white/10" />
+            <div className="h-16 animate-pulse rounded-[24px] bg-white/10" />
+            <div className="h-16 animate-pulse rounded-[24px] bg-white/10" />
           </div>
         </div>
 
         <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
           <div className="h-4 w-40 animate-pulse rounded-full bg-white/10" />
           <div className="mt-4 space-y-3">
-            <div className="h-28 animate-pulse rounded-2xl bg-white/10" />
-            <div className="h-28 animate-pulse rounded-2xl bg-white/10" />
+            <div className="h-28 animate-pulse rounded-[24px] bg-white/10" />
+            <div className="h-28 animate-pulse rounded-[24px] bg-white/10" />
           </div>
         </div>
 
         <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
           <div className="h-4 w-36 animate-pulse rounded-full bg-white/10" />
-          <div className="mt-4 h-44 animate-pulse rounded-2xl bg-white/10" />
+          <div className="mt-4 h-44 animate-pulse rounded-[24px] bg-white/10" />
         </div>
 
         <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
           <div className="h-4 w-32 animate-pulse rounded-full bg-white/10" />
           <div className="mt-4 space-y-3">
-            <div className="h-14 animate-pulse rounded-2xl bg-white/10" />
-            <div className="h-14 animate-pulse rounded-2xl bg-white/10" />
+            <div className="h-14 animate-pulse rounded-[24px] bg-white/10" />
+            <div className="h-14 animate-pulse rounded-[24px] bg-white/10" />
           </div>
         </div>
       </div>
@@ -104,9 +104,9 @@ function DetailTabButton({
 function ProofTimeline({ proofs }: { proofs: any[] }) {
   if (proofs.length === 0) {
     return (
-      <div className="rounded-[24px] border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center">
-        <p className="text-sm font-semibold text-slate-900">No proof updates yet</p>
-        <p className="mt-2 text-sm text-slate-600">Proof updates will appear here as soon as members start posting them.</p>
+      <div className="rounded-[24px] border border-dashed border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] px-6 py-10 text-center">
+        <p className="text-sm font-semibold text-[#14121F]">No proof updates yet</p>
+        <p className="mt-2 text-sm text-[#6B7280]">Proof updates will appear here as soon as members start posting them.</p>
       </div>
     );
   }
@@ -114,19 +114,19 @@ function ProofTimeline({ proofs }: { proofs: any[] }) {
   return (
     <div className="space-y-3">
       {proofs.map((proof) => (
-        <div key={proof.id} className="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
+        <div key={proof.id} className="rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] p-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-slate-900">
+              <p className="text-sm font-semibold text-[#14121F]">
                 {proof.day ? `Day ${proof.day}` : 'Proof update'}
               </p>
-              <p className="mt-1 text-sm text-slate-600">{proof.description || 'Proof submission'}</p>
+              <p className="mt-1 text-sm text-[#6B7280]">{proof.description || 'Proof submission'}</p>
             </div>
             <span className="rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
               {proof.type === 'video' ? 'video' : 'photo'}
             </span>
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[#9CA3AF]">
             <span>{proof.uploader ? `Uploaded by ${proof.uploader}` : 'Uploaded by a member'}</span>
             {proof.uploadedAt && <span>{new Date(proof.uploadedAt).toLocaleString()}</span>}
           </div>
@@ -198,7 +198,7 @@ export default function PactDetailPage() {
           <p className="mt-2 text-sm text-white/70">This pact could not be loaded or is no longer available.</p>
           <button
             onClick={() => router.push('/feed')}
-            className="mt-6 rounded-full bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+            className="mt-6 rounded-full bg-[#EDE9FE]0 px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#A78BFA]"
           >
             Back to feed
           </button>
@@ -240,7 +240,7 @@ export default function PactDetailPage() {
                   <p className="mt-2 text-sm text-white/75">Join this pact to upload proof updates from the camera or your gallery.</p>
                   <button
                     onClick={handleJoinRequest}
-                    className="mt-4 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                    className="mt-4 rounded-full bg-[#EDE9FE]0 px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#A78BFA]"
                   >
                     Join pact
                   </button>
@@ -320,18 +320,18 @@ export default function PactDetailPage() {
                     transition={{ duration: 0.22 }}
                     className="space-y-5"
                   >
-                    <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-sm">
+                    <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
                       <div className="mb-4 flex items-center gap-2">
                         <CheckCircle2 className="h-5 w-5 text-slate-700" />
-                        <h2 className="text-lg font-black text-slate-900">Verification status</h2>
+                        <h2 className="text-lg font-black text-[#14121F]">Verification status</h2>
                       </div>
                       <VerificationResults pactId={pact.id} />
                     </section>
 
-                    <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-sm">
+                    <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
                       <div className="mb-4 flex items-center gap-2">
                         <Clock3 className="h-5 w-5 text-slate-700" />
-                        <h2 className="text-lg font-black text-slate-900">Proof timeline</h2>
+                        <h2 className="text-lg font-black text-[#14121F]">Proof timeline</h2>
                       </div>
                       <ProofTimeline proofs={proofs} />
                     </section>
@@ -346,28 +346,28 @@ export default function PactDetailPage() {
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.22 }}
                   >
-                    <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-sm">
+                    <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
                       <div className="mb-4 flex items-center gap-2">
                         <Users className="h-5 w-5 text-slate-700" />
-                        <h2 className="text-lg font-black text-slate-900">Pact members</h2>
+                        <h2 className="text-lg font-black text-[#14121F]">Pact members</h2>
                       </div>
                       <div className="flex flex-wrap gap-3">
                         {participants.length > 0 ? (
                           participants.map((participant: any) => (
-                            <div key={participant.id || participant.user_id} className="flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-3 py-2">
+                            <div key={participant.id || participant.user_id} className="flex items-center gap-3 rounded-full border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] px-3 py-2">
                               <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-200">
                                 <div className="flex h-full w-full items-center justify-center text-sm font-black text-slate-700">
                                   {String(participant.username || '?').charAt(0).toUpperCase()}
                                 </div>
                               </div>
                               <div>
-                                <p className="text-sm font-semibold text-slate-900">@{participant.username}</p>
-                                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{participant.status || 'active'}</p>
+                                <p className="text-sm font-semibold text-[#14121F]">@{participant.username}</p>
+                                <p className="text-xs uppercase tracking-[0.18em] text-[#9CA3AF]">{participant.status || 'active'}</p>
                               </div>
                             </div>
                           ))
                         ) : (
-                          <p className="text-sm text-slate-500">No participant data yet.</p>
+                          <p className="text-sm text-[#9CA3AF]">No participant data yet.</p>
                         )}
                       </div>
                     </section>
@@ -382,8 +382,8 @@ export default function PactDetailPage() {
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.22 }}
                   >
-                    <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-sm">
-                      <h2 className="mb-4 text-lg font-black text-slate-900">Discussion</h2>
+                    <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
+                      <h2 className="mb-4 text-lg font-black text-[#14121F]">Discussion</h2>
                       <CommentSection pactId={pact.id} />
                     </section>
                   </motion.div>

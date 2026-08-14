@@ -36,15 +36,15 @@ export default function PactCard({
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h3 className="font-bold text-slate-900 text-base leading-tight mb-1">
+            <h3 className="font-bold text-[#14121F] text-base leading-tight mb-1">
               {pact.title}
             </h3>
-            <p className="text-xs text-slate-600">{pact.description}</p>
+            <p className="text-xs text-[#6B7280]">{pact.description}</p>
           </div>
           <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
             pact.status === 'active'
               ? 'bg-emerald-100 text-emerald-700'
-              : 'bg-slate-100 text-slate-700'
+              : 'bg-[#FAF9FE] text-slate-700'
           }`}>
             {pact.status}
           </div>
@@ -53,13 +53,13 @@ export default function PactCard({
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-3 gap-2">
           {/* Confidence */}
-          <div className="bg-blue-50 rounded-lg p-2.5 border border-blue-100">
+          <div className="bg-blue-50 rounded-[28px] p-2.5 border border-blue-100">
             <p className="text-xs font-medium text-blue-700 mb-0.5">Confidence</p>
             <p className="text-lg font-bold text-blue-900">{confidence}%</p>
           </div>
 
           {/* Time Remaining */}
-          <div className="bg-orange-50 rounded-lg p-2.5 border border-orange-100">
+          <div className="bg-orange-50 rounded-[28px] p-2.5 border border-orange-100">
             <div className="flex items-center gap-1 mb-0.5">
               <Clock className="w-3 h-3 text-orange-700" />
               <p className="text-xs font-medium text-orange-700">Days</p>
@@ -68,7 +68,7 @@ export default function PactCard({
           </div>
 
           {/* Participants */}
-          <div className="bg-purple-50 rounded-lg p-2.5 border border-purple-100">
+          <div className="bg-purple-50 rounded-[28px] p-2.5 border border-purple-100">
             <div className="flex items-center gap-1 mb-0.5">
               <Users className="w-3 h-3 text-purple-700" />
               <p className="text-xs font-medium text-purple-700">People</p>
@@ -79,11 +79,11 @@ export default function PactCard({
 
         {/* Support / Skip */}
         <div className="flex gap-2">
-          <div className="flex-1 bg-emerald-50 rounded-lg p-2 border border-emerald-100 text-center">
+          <div className="flex-1 bg-[#EDE9FE] rounded-[28px] p-2 border border-emerald-100 text-center">
             <p className="text-xs text-emerald-700 font-medium">Supporters</p>
             <p className="text-sm font-bold text-emerald-900">{supporters}</p>
           </div>
-          <div className="flex-1 bg-red-50 rounded-lg p-2 border border-red-100 text-center">
+          <div className="flex-1 bg-red-50 rounded-[28px] p-2 border border-red-100 text-center">
             <p className="text-xs text-red-700 font-medium">Skipped</p>
             <p className="text-sm font-bold text-red-900">{skipped}</p>
           </div>
@@ -93,7 +93,7 @@ export default function PactCard({
         <div>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold text-slate-700">Progress</p>
-            <p className="text-xs font-bold text-slate-900">{progressPercent}%</p>
+            <p className="text-xs font-bold text-[#14121F]">{progressPercent}%</p>
           </div>
           <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
             <div
@@ -104,7 +104,7 @@ export default function PactCard({
         </div>
 
         {/* CTA Buttons */}
-        <button className="w-full py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-sm transition-all">
+        <button className="w-full py-2.5 rounded-[28px] bg-[#EDE9FE]0 hover:bg-[#A78BFA] text-white font-semibold text-sm transition-all">
           {proofToday ? 'View Proof' : 'Upload Proof'}
         </button>
       </div>

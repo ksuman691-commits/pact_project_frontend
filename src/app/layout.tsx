@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#059669',
+  themeColor: '#A78BFA',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -25,8 +25,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="bg-slate-50">
-      <body className="bg-slate-50 text-slate-900 antialiased">
+    <html lang="en" className="bg-[#F4F2FB]">
+      <body className="bg-[#F4F2FB] text-[#14121F] antialiased">
         <QueryProvider>
           <AuthInitializer />
           <NotificationRealtimeBridge />
