@@ -16,10 +16,11 @@ export default function CirclesPage() {
   const [sortBy, setSortBy] = useState<'all' | 'my' | 'public' | 'trending'>('all');
   const [memberSearchOpen, setMemberSearchOpen] = useState(false);
   const { ref, inView } = useInView();
+  const shouldFetchPublic = sortBy === 'all' || sortBy === 'public' || sortBy === 'trending';
 
   // Fetch different circle lists based on sort
   const myCircles = useCircles();
-  const publicCircles = usePublicCircles();
+  const publicCircles = usePublicCircles(shouldFetchPublic);
   const searchResults = useSearchCircles(search);
   const joinMutation = useJoinCircle();
   const publicHasNextPage = publicCircles.hasNextPage;

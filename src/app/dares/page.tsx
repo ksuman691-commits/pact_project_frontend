@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import TopNav from '@/components/TopNav';
 import { useAuthStore } from '@/store/auth';
 import api from '@/services/api';
@@ -9,19 +10,24 @@ import api from '@/services/api';
 export default function DaresPage() {
   const router = useRouter();
   const { user, isInitialized } = useAuthStore();
-  const [dares, setDares] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!isInitialized) return;
-    if (!user) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['dares', 'mine'],
+    queryFn: async () => {
+      const response = await api.get('/api/dares/mine', { params: { skip: 0, limit: 20 } });
+      return response?.data ?? { data: [], pagination: { total: 0 } };
+    },
+    enabled: isInitialized && !!user,
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: false,
+  });
+
+  const dares = useMemo(() => data?.data ?? [], [data]);
+
+  React.useEffect(() => {
+    if (isInitialized && !user) {
       router.replace('/auth/login');
-      return;
     }
-
-    api.get('/api/dares/mine').then((response) => {
-      setDares(response?.data?.data ?? []);
-    }).finally(() => setLoading(false));
   }, [isInitialized, router, user]);
 
   return (
@@ -33,8 +39,12 @@ export default function DaresPage() {
           <p className="text-sm text-slate-600">Short challenge prompts you can send to a person, a circle, or the public.</p>
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">Loading your dares…</div>
+        ) : isError ? (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">
+            We couldn’t load your dares right now. Please try again in a moment.
+          </div>
         ) : dares.length === 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
             No dares yet. Create one from the backend API or add a dedicated creator UI later.
