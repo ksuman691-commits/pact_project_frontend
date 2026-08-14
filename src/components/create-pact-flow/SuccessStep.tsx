@@ -17,7 +17,7 @@ export default function SuccessStep() {
   if (!createdPact) return null;
 
   return (
-    <div className="pact-step-enter flex flex-1 flex-col items-center px-6 pb-10 pt-10 text-center">
+    <div className="pact-step-enter flex flex-1 flex-col items-center pt-4 text-center">
       {/* Decorative stamp — spins via conic-gradient ring, respects prefers-reduced-motion (pop-in always plays) */}
       <div className="pact-stamp-ring relative flex h-24 w-24 items-center justify-center rounded-full">
         <div

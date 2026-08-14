@@ -51,7 +51,7 @@ export default function ReviewStep() {
   const durationDays = resolveDurationDays(draft);
 
   return (
-    <div className="pact-step-enter flex flex-1 flex-col px-6 pb-8 pt-4">
+    <div className="pact-step-enter flex flex-1 flex-col">
       <h1 className="text-2xl font-bold">Review your pact</h1>
       <p className="mt-1 text-sm">{durationDays} days of showing up. Ready?</p>
 
