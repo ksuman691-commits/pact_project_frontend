@@ -136,13 +136,17 @@ export default function DareVerificationModal({
   const currentReason = reasons[currentQuestion] || '';
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white w-full max-w-md rounded-[28px] overflow-hidden">
+    <div className="pact-flow fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <div className="pact-card w-full max-w-md rounded-[28px] overflow-hidden" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[rgba(20,18,31,0.06)]">
-          <h2 className="text-lg font-bold text-[#14121F]">Verify Dare Completion</h2>
-          <button onClick={handleClose} disabled={verifyMutation.isPending} className="p-1.5 hover:bg-[#FAF9FE] rounded-[28px]">
-            <X className="w-5 h-5" />
+        <div className="flex items-center justify-between p-4 border-b border-[var(--pact-hairline)]">
+          <h2 className="text-lg font-bold text-[var(--pact-text)]">Verify Dare Completion</h2>
+          <button
+            onClick={handleClose}
+            disabled={verifyMutation.isPending}
+            className="p-1.5 rounded-[28px] transition hover:bg-[var(--pact-surface-2)]"
+          >
+            <X className="w-5 h-5 text-[var(--pact-text)]" />
           </button>
         </div>
 
@@ -150,27 +154,32 @@ export default function DareVerificationModal({
         <div className="p-6 space-y-6">
           {/* Progress Indicators */}
           <div className="flex gap-1">
-            {questions.map((_, idx) => (
-              <div
-                key={idx}
-                className={`h-2 flex-1 rounded-full transition ${
-                  idx < currentQuestion ||
-                  (idx === currentQuestion && responses[(`q${idx + 1}` as unknown) as keyof VerificationResponse] !== null)
-                    ? 'bg-[#A78BFA]'
-                    : idx === currentQuestion
-                      ? 'bg-emerald-300'
-                      : 'bg-slate-300'
-                }`}
-              />
-            ))}
+            {questions.map((_, idx) => {
+              const answered =
+                idx < currentQuestion ||
+                (idx === currentQuestion && responses[(`q${idx + 1}` as unknown) as keyof VerificationResponse] !== null);
+              return (
+                <div
+                  key={idx}
+                  className="h-2 flex-1 rounded-full transition"
+                  style={{
+                    background: answered
+                      ? 'var(--pact-violet)'
+                      : idx === currentQuestion
+                        ? 'var(--pact-surface-raised)'
+                        : 'var(--pact-hairline)',
+                  }}
+                />
+              );
+            })}
           </div>
 
           {/* Question */}
           <div>
-            <p className="text-xs font-semibold text-[#6B7280] uppercase mb-2">
+            <p className="text-xs font-semibold text-[var(--pact-text-faint)] uppercase mb-2">
               Question {currentQuestion + 1} of {questions.length}
             </p>
-            <p className="text-lg font-bold text-[#14121F] leading-snug">{questions[currentQuestion]}</p>
+            <p className="text-lg font-bold text-[var(--pact-text)] leading-snug">{questions[currentQuestion]}</p>
           </div>
 
           {/* Answer Buttons */}
@@ -178,56 +187,68 @@ export default function DareVerificationModal({
             <button
               onClick={() => handleAnswer('yes')}
               disabled={verifyMutation.isPending}
-              className={`p-4 rounded-[28px] border-2 transition flex flex-col items-center gap-2 ${
+              className="p-4 rounded-[28px] border-2 transition flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={
                 currentAnswer === 'yes'
-                  ? 'border-emerald-600 bg-[#EDE9FE]'
-                  : 'border-[rgba(20,18,31,0.06)] hover:border-slate-300'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  ? { borderColor: 'var(--pact-violet)', background: 'var(--pact-surface-raised)' }
+                  : { borderColor: 'var(--pact-hairline)' }
+              }
             >
-              <Check className="w-6 h-6 text-[#A78BFA]" />
-              <span className="font-semibold text-[#14121F]">Yes</span>
+              <Check className="w-6 h-6 text-[var(--pact-violet)]" />
+              <span className="font-semibold text-[var(--pact-text)]">Yes</span>
             </button>
             <button
               onClick={() => handleAnswer('no')}
               disabled={verifyMutation.isPending}
-              className={`p-4 rounded-[28px] border-2 transition flex flex-col items-center gap-2 ${
-                currentAnswer === 'no' ? 'border-red-600 bg-red-50' : 'border-[rgba(20,18,31,0.06)] hover:border-slate-300'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              className="p-4 rounded-[28px] border-2 transition flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={
+                currentAnswer === 'no'
+                  ? { borderColor: 'var(--pact-pink)', background: 'var(--pact-surface-raised)' }
+                  : { borderColor: 'var(--pact-hairline)' }
+              }
             >
-              <XIcon className="w-6 h-6 text-red-600" />
-              <span className="font-semibold text-[#14121F]">No</span>
+              <XIcon className="w-6 h-6 text-[var(--pact-pink)]" />
+              <span className="font-semibold text-[var(--pact-text)]">No</span>
             </button>
           </div>
 
           {/* Optional Reason for "No" */}
           {showReasons[currentQuestion] && currentAnswer === 'no' && (
-            <div className="bg-red-50 border border-red-200 rounded-[28px] p-4">
-              <label className="block text-xs font-semibold text-[#6B7280] uppercase mb-2">Why not? (optional)</label>
+            <div className="rounded-[28px] p-4 border" style={{ background: 'var(--pact-surface-2)', borderColor: 'var(--pact-pink)' }}>
+              <label className="block text-xs font-semibold text-[var(--pact-text-faint)] uppercase mb-2">Why not? (optional)</label>
               <textarea
                 value={currentReason}
                 onChange={(e) => handleReasonChange(e.target.value)}
                 disabled={verifyMutation.isPending}
                 placeholder="Explain your reasoning..."
                 rows={3}
-                className="w-full px-3 py-2 border border-red-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-red-500 resize-none text-sm disabled:opacity-50"
+                className="w-full px-3 py-2 rounded-[28px] resize-none text-sm disabled:opacity-50 focus:outline-none focus:ring-2"
+                style={{
+                  background: 'var(--pact-surface-raised)',
+                  border: '1px solid var(--pact-pink)',
+                  color: 'var(--pact-text)',
+                  ['--tw-ring-color' as any]: 'var(--pact-pink)',
+                }}
               />
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 p-4 border-t border-[rgba(20,18,31,0.06)] bg-[#F4F2FB]">
+        <div className="flex gap-3 p-4 border-t border-[var(--pact-hairline)]" style={{ background: 'var(--pact-surface-2)' }}>
           <button
             onClick={handlePrevious}
             disabled={currentQuestion === 0 || verifyMutation.isPending}
-            className="flex-1 px-4 py-2.5 text-[#14121F] hover:bg-slate-200 rounded-[28px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2.5 rounded-[28px] transition disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--pact-surface-raised)]"
+            style={{ color: 'var(--pact-text)' }}
           >
             Previous
           </button>
           <button
             onClick={currentQuestion === questions.length - 1 ? handleSubmit : handleNext}
             disabled={verifyMutation.isPending || !canProceed()}
-            className="flex-1 px-4 py-2.5 bg-[#A78BFA] text-white hover:bg-emerald-700 rounded-[28px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="pact-btn-glow flex-1 px-4 py-2.5 rounded-[28px] disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
           >
             {verifyMutation.isPending
               ? 'Submitting...'
