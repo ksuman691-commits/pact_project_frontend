@@ -7,6 +7,15 @@ import TopNav from '@/components/TopNav';
 import { useAuthStore } from '@/store/auth';
 import api from '@/services/api';
 
+interface DareListItem {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  audience: string;
+  respond_by: string;
+}
+
 export default function DaresPage() {
   const router = useRouter();
   const { user, isInitialized } = useAuthStore();
@@ -22,7 +31,7 @@ export default function DaresPage() {
     refetchOnWindowFocus: false,
   });
 
-  const dares = useMemo(() => data?.data ?? [], [data]);
+  const dares: DareListItem[] = useMemo(() => data?.data ?? [], [data]);
 
   React.useEffect(() => {
     if (isInitialized && !user) {
@@ -51,7 +60,7 @@ export default function DaresPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {dares.map((dare) => (
+            {dares.map((dare: DareListItem) => (
               <div key={dare.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="flex items-center justify-between gap-2">
                   <h2 className="font-semibold text-slate-900">{dare.title}</h2>
