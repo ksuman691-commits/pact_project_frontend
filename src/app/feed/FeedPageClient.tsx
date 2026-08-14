@@ -63,7 +63,7 @@ export default function FeedPageClient() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F2FB]">
+    <div className="pact-flow pact-page-enter min-h-screen">
       <WelcomeHeader
         userName={user?.full_name || 'Test User'}
         avatarUrl={user?.avatar_url || null}
@@ -85,7 +85,7 @@ export default function FeedPageClient() {
         activeCategory={category}
       />
 
-      <div className="max-w-md mx-auto bg-[#F4F2FB] pb-20 px-4" id="pact-feed-shell">
+      <div className="max-w-md mx-auto pb-20 px-4" id="pact-feed-shell">
         <PactFeed
           showMockData={false}
           category={category}

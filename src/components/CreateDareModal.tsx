@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { useCreateDare } from '@/hooks/useDareMutations';
 import { useSearchUsers } from '@/hooks/useUserQueries';
 import { useAuthStore } from '@/store/auth';
+import ProgressDots from '@/components/create-pact-flow/ProgressDots';
 
 interface CreateDareModalProps {
   isOpen: boolean;
@@ -147,39 +148,48 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-      <div className="bg-white w-full max-w-2xl rounded-t-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="pact-flow fixed inset-0 bg-black/60 flex items-end z-50">
+      <div
+        className="pact-page-enter w-full max-w-2xl rounded-t-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        style={{ background: 'var(--pact-bg)', border: '1px solid var(--pact-hairline)', borderBottom: 'none' }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[rgba(20,18,31,0.06)] sticky top-0 bg-white">
-          <h2 className="text-lg font-bold text-[#14121F]">Create Dare</h2>
-          <button onClick={onClose} className="p-1.5 hover:bg-[#FAF9FE] rounded-[28px]">
-            <X className="w-5 h-5" />
+        <div className="flex items-center justify-between p-4 border-b border-[var(--pact-hairline)] sticky top-0" style={{ background: 'var(--pact-bg)' }}>
+          <h2 className="text-lg font-bold text-[var(--pact-text)]">Create Dare</h2>
+          <button onClick={onClose} aria-label="Close" className="flex h-10 w-10 items-center justify-center rounded-full" style={{ background: 'var(--pact-surface)' }}>
+            <X className="w-5 h-5 text-[var(--pact-text)]" />
           </button>
+        </div>
+
+        <div className="px-6 pt-5">
+          <ProgressDots current={step - 1} total={4} />
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {/* Step 1: Title & Description */}
           {step === 1 && (
-            <div className="space-y-4">
+            <div className="pact-step-enter space-y-4">
+              <h1 className="text-2xl font-bold text-[var(--pact-text)]">Dare someone</h1>
+              <p className="text-sm text-[var(--pact-text-dim)]">Set the challenge — the details come next.</p>
               <div>
-                <label className="block text-sm font-semibold text-[#14121F] mb-2">Dare Title</label>
+                <label className="pact-mono block text-xs uppercase tracking-wide text-[var(--pact-text-dim)] mb-2">Dare Title</label>
                 <input
                   type="text"
                   placeholder="e.g., Run 5k in under 30 minutes"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-2.5 rounded-[28px] border border-[var(--pact-hairline)] bg-[var(--pact-surface)] text-[var(--pact-text)] placeholder:text-[var(--pact-text-faint)] focus:outline-none focus:border-[var(--pact-pink)]"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-[#14121F] mb-2">Description</label>
+                <label className="pact-mono block text-xs uppercase tracking-wide text-[var(--pact-text-dim)] mb-2">Description</label>
                 <textarea
                   placeholder="Tell them more about the dare..."
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   rows={5}
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                  className="w-full px-4 py-2.5 rounded-[28px] border border-[var(--pact-hairline)] bg-[var(--pact-surface)] text-[var(--pact-text)] placeholder:text-[var(--pact-text-faint)] focus:outline-none focus:border-[var(--pact-pink)] resize-none"
                 />
               </div>
             </div>
@@ -187,9 +197,10 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
 
           {/* Step 2: Durations */}
           {step === 2 && (
-            <div className="space-y-6">
+            <div className="pact-step-enter space-y-6">
+              <h1 className="text-2xl font-bold text-[var(--pact-text)]">Set the clock</h1>
               <div>
-                <label className="block text-sm font-semibold text-[#14121F] mb-2 flex items-center gap-2">
+                <label className="pact-mono text-xs uppercase tracking-wide text-[var(--pact-text-dim)] mb-2 flex items-center gap-2">
                   <Clock className="w-4 h-4" />
                   Respond By
                 </label>
@@ -201,18 +212,19 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
                       onClick={() => setForm({ ...form, respondByHours: option.hours })}
                       className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                         form.respondByHours === option.hours
-                          ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-[0_4px_12px_rgba(94,84,142,0.08)]'
-                          : 'bg-[#FAF9FE] text-slate-700 hover:bg-slate-200'
+                          ? ''
+                          : 'bg-[var(--pact-surface)] text-[var(--pact-text-dim)] hover:bg-[var(--pact-surface-2)]'
                       }`}
+                      style={form.respondByHours === option.hours ? { background: 'var(--pact-pink)', color: 'var(--pact-bg)' } : undefined}
                     >
                       {option.label}
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-[#9CA3AF] mt-2">Users have {form.respondByHours} hours to accept</p>
+                <p className="pact-mono text-xs text-[var(--pact-text-faint)] mt-2">Users have {form.respondByHours} hours to accept</p>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-[#14121F] mb-2 flex items-center gap-2">
+                <label className="pact-mono text-xs uppercase tracking-wide text-[var(--pact-text-dim)] mb-2 flex items-center gap-2">
                   <Clock className="w-4 h-4" />
                   Complete By
                 </label>
@@ -224,24 +236,26 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
                       onClick={() => setForm({ ...form, completeByHours: option.hours })}
                       className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                         form.completeByHours === option.hours
-                          ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-[0_4px_12px_rgba(94,84,142,0.08)]'
-                          : 'bg-[#FAF9FE] text-slate-700 hover:bg-slate-200'
+                          ? ''
+                          : 'bg-[var(--pact-surface)] text-[var(--pact-text-dim)] hover:bg-[var(--pact-surface-2)]'
                       }`}
+                      style={form.completeByHours === option.hours ? { background: 'var(--pact-pink)', color: 'var(--pact-bg)' } : undefined}
                     >
                       {option.label}
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-[#9CA3AF] mt-2">Users must complete within {form.completeByHours} hours</p>
+                <p className="pact-mono text-xs text-[var(--pact-text-faint)] mt-2">Users must complete within {form.completeByHours} hours</p>
               </div>
             </div>
           )}
 
           {/* Step 3: Recipients */}
           {step === 3 && (
-            <div className="space-y-4">
+            <div className="pact-step-enter space-y-4">
+              <h1 className="text-2xl font-bold text-[var(--pact-text)]">Who's in?</h1>
               <div>
-                <label className="block text-sm font-semibold text-[#14121F] mb-2">Visibility</label>
+                <label className="pact-mono block text-xs uppercase tracking-wide text-[var(--pact-text-dim)] mb-2">Visibility</label>
                 <div className="space-y-2">
                   {[
                     { id: 'public', label: 'Public', desc: 'Anyone can see and claim' },
@@ -250,22 +264,20 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
                     <button
                       key={opt.id}
                       onClick={() => setForm({ ...form, visibility: opt.id as 'public' | 'private' })}
-                      className={`w-full p-3 rounded-[28px] border-2 text-left transition ${
-                        form.visibility === opt.id
-                          ? 'border-emerald-600 bg-[#EDE9FE]'
-                          : 'border-[rgba(20,18,31,0.06)] hover:border-slate-300'
+                      className={`pact-tile w-full p-3 rounded-[28px] text-left ${
+                        form.visibility === opt.id ? 'selected' : ''
                       }`}
                     >
-                      <p className="font-semibold text-[#14121F]">{opt.label}</p>
-                      <p className="text-sm text-[#6B7280]">{opt.desc}</p>
+                      <p className="font-semibold text-[var(--pact-text)]">{opt.label}</p>
+                      <p className="text-sm text-[var(--pact-text-dim)]">{opt.desc}</p>
                     </button>
                   ))}
                 </div>
               </div>
 
               {form.visibility === 'private' && (
-                <div>
-                  <label className="block text-sm font-semibold text-[#14121F] mb-2 flex items-center gap-2">
+                <div className="pact-step-enter">
+                  <label className="pact-mono block text-xs uppercase tracking-wide text-[var(--pact-text-dim)] mb-2 flex items-center gap-2">
                     <Users className="w-4 h-4" />
                     Add Recipients
                   </label>
@@ -275,9 +287,10 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
                       {form.recipients.map((recipient) => (
                         <div
                           key={recipient.id}
-                          className="flex items-center gap-2 pl-1.5 pr-2 py-1.5 bg-[#F4F2FB] rounded-full"
+                          className="flex items-center gap-2 pl-1.5 pr-2 py-1.5 rounded-full"
+                          style={{ background: 'var(--pact-surface-2)' }}
                         >
-                          <div className="relative w-6 h-6 rounded-full bg-gradient-to-br from-emerald-300 to-blue-300 flex-shrink-0 overflow-hidden">
+                          <div className="relative w-6 h-6 rounded-full bg-gradient-to-br from-[var(--pact-violet)] to-[var(--pact-pink)] flex-shrink-0 overflow-hidden">
                             {recipient.avatar_url ? (
                               <Image
                                 src={recipient.avatar_url}
@@ -291,10 +304,10 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
                               </div>
                             )}
                           </div>
-                          <span className="text-sm text-slate-700">@{recipient.username}</span>
+                          <span className="text-sm text-[var(--pact-text-dim)]">@{recipient.username}</span>
                           <button
                             onClick={() => handleRemoveRecipient(recipient.id)}
-                            className="text-slate-400 hover:text-red-600"
+                            className="text-[var(--pact-text-faint)] hover:text-[var(--pact-pink)]"
                             aria-label={`Remove @${recipient.username}`}
                           >
                             <X className="w-3.5 h-3.5" />
@@ -310,21 +323,24 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
                       placeholder="Search by name or username"
                       value={recipientQuery}
                       onChange={(e) => setRecipientQuery(e.target.value)}
-                      className="w-full px-4 py-2.5 border border-slate-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2.5 rounded-[28px] border border-[var(--pact-hairline)] bg-[var(--pact-surface)] text-[var(--pact-text)] placeholder:text-[var(--pact-text-faint)] focus:outline-none focus:border-[var(--pact-pink)]"
                     />
 
                     {recipientQuery.trim().length > 0 && (
-                      <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-[20px] shadow-lg max-h-56 overflow-y-auto z-10">
+                      <div
+                        className="absolute left-0 right-0 mt-1 rounded-[20px] max-h-56 overflow-y-auto z-10"
+                        style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)', boxShadow: '0 12px 28px var(--pact-shadow-violet)' }}
+                      >
                         {isSearchingRecipients ? (
                           <div className="flex items-center justify-center py-6">
-                            <Loader className="w-5 h-5 text-[#A78BFA] animate-spin" />
+                            <Loader className="w-5 h-5 text-[var(--pact-violet)] animate-spin" />
                           </div>
                         ) : recipientSearchResults.length === 0 ? (
-                          <div className="flex items-center justify-center py-6 text-gray-500">
+                          <div className="flex items-center justify-center py-6 text-[var(--pact-text-faint)]">
                             <p className="text-sm">No users found</p>
                           </div>
                         ) : (
-                          <div className="divide-y divide-gray-100">
+                          <div className="divide-y divide-[var(--pact-hairline)]">
                             {recipientSearchResults.map((candidate: any) => (
                               <button
                                 key={candidate.id}
@@ -337,9 +353,9 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
                                     avatar_url: candidate.avatar_url,
                                   })
                                 }
-                                className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition text-left"
+                                className="w-full flex items-center gap-3 p-3 hover:bg-[var(--pact-surface-2)] transition text-left"
                               >
-                                <div className="relative w-9 h-9 rounded-full bg-gradient-to-br from-emerald-300 to-blue-300 flex-shrink-0 overflow-hidden">
+                                <div className="relative w-9 h-9 rounded-full bg-gradient-to-br from-[var(--pact-violet)] to-[var(--pact-pink)] flex-shrink-0 overflow-hidden">
                                   {candidate.avatar_url ? (
                                     <Image
                                       src={candidate.avatar_url}
@@ -354,10 +370,10 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-gray-900 text-sm truncate">
+                                  <p className="font-medium text-[var(--pact-text)] text-sm truncate">
                                     {candidate.full_name || candidate.username}
                                   </p>
-                                  <p className="text-xs text-gray-500 truncate">@{candidate.username}</p>
+                                  <p className="text-xs text-[var(--pact-text-faint)] truncate">@{candidate.username}</p>
                                 </div>
                               </button>
                             ))}
@@ -373,21 +389,19 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
 
           {/* Step 4: Verification Method */}
           {step === 4 && (
-            <div className="space-y-4">
-              <label className="block text-sm font-semibold text-[#14121F] mb-4">How should they prove it?</label>
+            <div className="pact-step-enter space-y-4">
+              <h1 className="text-2xl font-bold text-[var(--pact-text)]">How should they prove it?</h1>
               <div className="space-y-2">
                 {VERIFICATION_METHODS.map((method) => (
                   <button
                     key={method.id}
                     onClick={() => setForm({ ...form, verification_method: method.id as any })}
-                    className={`w-full p-3 rounded-[28px] border-2 text-left transition ${
-                      form.verification_method === method.id
-                        ? 'border-emerald-600 bg-[#EDE9FE]'
-                        : 'border-[rgba(20,18,31,0.06)] hover:border-slate-300'
+                    className={`pact-tile w-full p-3 rounded-[28px] text-left ${
+                      form.verification_method === method.id ? 'selected' : ''
                     }`}
                   >
-                    <p className="font-semibold text-[#14121F]">{method.label}</p>
-                    <p className="text-sm text-[#6B7280]">{method.description}</p>
+                    <p className="font-semibold text-[var(--pact-text)]">{method.label}</p>
+                    <p className="text-sm text-[var(--pact-text-dim)]">{method.description}</p>
                   </button>
                 ))}
               </div>
@@ -396,39 +410,40 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
 
           {/* Step 5: Review */}
           {step === 5 && (
-            <div className="space-y-4">
-              <div className="bg-[#F4F2FB] rounded-[28px] p-4 space-y-3">
+            <div className="pact-step-enter space-y-4">
+              <h1 className="text-2xl font-bold text-[var(--pact-text)]">Review the dare</h1>
+              <div className="rounded-[28px] p-4 space-y-3" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
                 <div>
-                  <p className="text-xs font-semibold text-[#6B7280] uppercase">Title</p>
-                  <p className="text-[#14121F] font-semibold">{form.title}</p>
+                  <p className="pact-mono text-xs font-semibold text-[var(--pact-text-faint)] uppercase">Title</p>
+                  <p className="text-[var(--pact-text)] font-semibold">{form.title}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-[#6B7280] uppercase">Description</p>
-                  <p className="text-slate-700">{form.description}</p>
+                  <p className="pact-mono text-xs font-semibold text-[var(--pact-text-faint)] uppercase">Description</p>
+                  <p className="text-[var(--pact-text-dim)]">{form.description}</p>
                 </div>
-                <div className="grid grid-cols-2 gap-4 pt-3 border-t border-[rgba(20,18,31,0.06)]">
+                <div className="grid grid-cols-2 gap-4 pt-3 border-t border-[var(--pact-hairline)]">
                   <div>
-                    <p className="text-xs font-semibold text-[#6B7280] uppercase">Respond By</p>
-                    <p className="text-[#14121F]">{form.respondByHours} hours</p>
+                    <p className="pact-mono text-xs font-semibold text-[var(--pact-text-faint)] uppercase">Respond By</p>
+                    <p className="pact-mono text-[var(--pact-text)]">{form.respondByHours} hours</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-[#6B7280] uppercase">Complete By</p>
-                    <p className="text-[#14121F]">{form.completeByHours} hours</p>
+                    <p className="pact-mono text-xs font-semibold text-[var(--pact-text-faint)] uppercase">Complete By</p>
+                    <p className="pact-mono text-[var(--pact-text)]">{form.completeByHours} hours</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-[#6B7280] uppercase">Visibility</p>
-                  <p className="text-[#14121F] capitalize">{form.visibility}</p>
+                  <p className="pact-mono text-xs font-semibold text-[var(--pact-text-faint)] uppercase">Visibility</p>
+                  <p className="text-[var(--pact-text)] capitalize">{form.visibility}</p>
                 </div>
                 {form.recipients.length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-[#6B7280] uppercase">Recipients</p>
-                    <p className="text-[#14121F]">{form.recipients.map((r) => `@${r.username}`).join(', ')}</p>
+                    <p className="pact-mono text-xs font-semibold text-[var(--pact-text-faint)] uppercase">Recipients</p>
+                    <p className="text-[var(--pact-text)]">{form.recipients.map((r) => `@${r.username}`).join(', ')}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-xs font-semibold text-[#6B7280] uppercase">Verification</p>
-                  <p className="text-[#14121F] capitalize">{form.verification_method}</p>
+                  <p className="pact-mono text-xs font-semibold text-[var(--pact-text-faint)] uppercase">Verification</p>
+                  <p className="text-[var(--pact-text)] capitalize">{form.verification_method}</p>
                 </div>
               </div>
             </div>
@@ -436,29 +451,21 @@ export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProp
         </div>
 
         {/* Footer with navigation */}
-        <div className="flex items-center justify-between p-4 border-t border-[rgba(20,18,31,0.06)] bg-white sticky bottom-0">
+        <div className="flex items-center justify-between p-4 border-t border-[var(--pact-hairline)] sticky bottom-0" style={{ background: 'var(--pact-bg)' }}>
           <button
             onClick={handlePrevious}
             disabled={step === 1}
-            className="flex items-center gap-2 px-4 py-2.5 text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#FAF9FE] rounded-[28px]"
+            className="pact-btn-glow flex items-center gap-2 px-4 py-2.5 text-[var(--pact-text-dim)] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--pact-surface)] rounded-[28px]"
           >
             <ChevronLeft className="w-4 h-4" />
             Previous
           </button>
 
-          <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <div
-                key={s}
-                className={`h-2 rounded-full transition ${s <= step ? 'bg-[#A78BFA] w-4' : 'bg-slate-300 w-2'}`}
-              />
-            ))}
-          </div>
-
           <button
             onClick={step === 5 ? handleSubmit : handleNext}
             disabled={createDareMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#A78BFA] text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-[28px]"
+            className="pact-btn-glow flex items-center gap-2 px-4 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed rounded-[28px]"
+            style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
           >
             {step === 5 ? (
               createDareMutation.isPending ? 'Creating...' : 'Create Dare'

@@ -66,7 +66,9 @@ export default function TopNav({
   return (
     <>
       {/* Top Navigation Bar */}
-      <nav className={`${fixed ? 'fixed inset-x-0 top-0 z-50 mx-auto max-w-md' : 'relative max-w-md mx-auto'} overflow-visible border-b border-[rgba(20,18,31,0.06)]/80 bg-white/95 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur`}>
+      {/* Falls back to the original light-theme values so pages other than
+          Feed (which don't wrap this in .pact-flow) render unchanged. */}
+      <nav className={`${fixed ? 'fixed inset-x-0 top-0 z-50 mx-auto max-w-md' : 'relative max-w-md mx-auto'} overflow-visible border-b border-[var(--pact-hairline,rgba(20,18,31,0.06))]/80 bg-[var(--pact-bg,#ffffff)]/95 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur`}>
         <div className={`px-4 ${compact ? 'py-2' : 'py-3'}`}>
           {/* Navigation Links */}
           <div className={`flex items-center ${compact ? 'mb-1' : 'mb-3'}`}>
@@ -75,7 +77,7 @@ export default function TopNav({
               {showBack && (
                 <button
                   onClick={handleBack}
-                  className="flex flex-col items-center gap-1 py-1 text-xs font-medium text-slate-400 hover:text-[#6B7280] transition-colors"
+                  className="flex flex-col items-center gap-1 py-1 text-xs font-medium text-[var(--pact-text-faint,#94a3b8)] hover:text-[var(--pact-text-dim,#6B7280)] transition-colors"
                   aria-label="Go back"
                 >
                   <ArrowLeft className="h-6 w-6" strokeWidth={2} />
@@ -88,7 +90,7 @@ export default function TopNav({
                 <Link
                   href="/feed"
                   className={`flex flex-col items-center gap-1 py-1 text-xs font-medium transition-colors ${
-                    isActive('/') ? 'text-[#A78BFA]' : 'text-slate-400 hover:text-[#6B7280]'
+                    isActive('/') ? 'text-[var(--pact-pink,#A78BFA)]' : 'text-[var(--pact-text-faint,#94a3b8)] hover:text-[var(--pact-text-dim,#6B7280)]'
                   }`}
                 >
                   <Home className="h-6 w-6" strokeWidth={isActive('/') ? 2.4 : 2} />
@@ -102,17 +104,17 @@ export default function TopNav({
 
           {/* Category Strip - Only show when showCategories is true */}
           {showCategories && (
-            <div className={`${compact ? 'pt-2' : 'pt-4'} border-t border-[rgba(20,18,31,0.06)] -mx-4 px-4 bg-white`}>
+            <div className={`${compact ? 'pt-2' : 'pt-4'} border-t border-[var(--pact-hairline,rgba(20,18,31,0.06))] -mx-4 px-4 bg-[var(--pact-bg,#ffffff)]`}>
               <div className={`flex overflow-x-auto gap-2 ${compact ? 'pb-2' : 'pb-4'} scrollbar-hide scroll-smooth`}>
                 {CATEGORIES.map((category) => (
                   <button
                     key={category.id}
                     onClick={() => handleCategoryClick(category.id)}
                     disabled={isLoadingCategories}
-                    className={`flex-shrink-0 inline-flex items-center gap-1.5 ${compact ? 'px-3 py-1' : 'px-3 py-1.5'} rounded-full text-xs font-semibold whitespace-nowrap transition-all hover:scale-[1.01] ${
+                    className={`pact-btn-glow flex-shrink-0 inline-flex items-center gap-1.5 ${compact ? 'px-3 py-1' : 'px-3 py-1.5'} rounded-full text-xs font-semibold whitespace-nowrap transition-all hover:scale-[1.01] ${
                       currentCategory === category.id.toLowerCase()
                         ? `bg-gradient-to-r ${category.color} text-white shadow-[0_4px_12px_rgba(94,84,142,0.08)]`
-                        : 'bg-[#FAF9FE] text-slate-700 hover:bg-slate-200'
+                        : 'bg-[var(--pact-surface-2,#FAF9FE)] text-[var(--pact-text-dim,#334155)] hover:bg-[var(--pact-surface-3,#e2e8f0)]'
                     }`}
                   >
                     <span className="text-sm">{category.emoji}</span>

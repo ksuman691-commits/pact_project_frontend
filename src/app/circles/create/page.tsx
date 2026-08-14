@@ -23,8 +23,8 @@ export default function CreateCirclePage() {
 
   if (!isInitialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      <div className="pact-flow min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--pact-pink)]" />
       </div>
     );
   }
@@ -61,25 +61,25 @@ export default function CreateCirclePage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8">
+      <div className="pact-flow pact-page-enter min-h-screen py-8">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Back Button */}
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-8"
+            className="flex items-center gap-2 text-[var(--pact-violet)] hover:text-[var(--pact-pink)] transition-colors mb-8"
           >
             <ArrowLeft className="w-5 h-5" />
             Back
           </button>
 
           {/* Form Card */}
-          <div className="card">
-            <h1 className="text-3xl font-bold text-[#14121F] mb-8">Create a New Circle</h1>
+          <div className="pact-card rounded-[28px] p-6">
+            <h1 className="text-3xl font-bold text-[var(--pact-text)] mb-8">Create a New Circle</h1>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Circle Name */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="pact-mono block text-xs uppercase tracking-wide text-[var(--pact-text-dim)] mb-2">
                   Circle Name *
                 </label>
                 <input
@@ -89,14 +89,14 @@ export default function CreateCirclePage() {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   placeholder="e.g., Early Morning Runners"
-                  className="w-full px-4 py-3 border border-slate-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-4 py-3 rounded-[28px] border border-[var(--pact-hairline)] bg-[var(--pact-bg)] text-[var(--pact-text)] placeholder:text-[var(--pact-text-faint)] focus:outline-none focus:border-[var(--pact-pink)]"
                   required
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="pact-mono block text-xs uppercase tracking-wide text-[var(--pact-text-dim)] mb-2">
                   Description
                 </label>
                 <textarea
@@ -106,13 +106,13 @@ export default function CreateCirclePage() {
                   }
                   placeholder="Describe your circle..."
                   rows={4}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-4 py-3 rounded-[28px] border border-[var(--pact-hairline)] bg-[var(--pact-bg)] text-[var(--pact-text)] placeholder:text-[var(--pact-text-faint)] focus:outline-none focus:border-[var(--pact-pink)]"
                 />
               </div>
 
               {/* Icon */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="pact-mono block text-xs uppercase tracking-wide text-[var(--pact-text-dim)] mb-2">
                   Circle Icon / Emoji
                 </label>
                 <div className="grid grid-cols-5 gap-2">
@@ -121,10 +121,8 @@ export default function CreateCirclePage() {
                       key={emoji}
                       type="button"
                       onClick={() => setFormData({ ...formData, icon_emoji: emoji })}
-                      className={`rounded-[24px] border px-0 py-3 text-xl transition ${
-                        formData.icon_emoji === emoji
-                          ? 'border-emerald-500 bg-[#EDE9FE] shadow-[0_4px_12px_rgba(94,84,142,0.08)]'
-                          : 'border-[rgba(20,18,31,0.06)] bg-white hover:bg-[#F4F2FB]'
+                      className={`pact-tile rounded-2xl px-0 py-3 text-xl ${
+                        formData.icon_emoji === emoji ? 'selected' : ''
                       }`}
                       aria-label={`Choose ${emoji}`}
                     >
@@ -134,7 +132,7 @@ export default function CreateCirclePage() {
                 </div>
               </div>
 
-              <div className="rounded-[24px] border border-emerald-100 bg-[#EDE9FE] px-4 py-3 text-sm text-emerald-900">
+              <div className="rounded-[24px] border border-[var(--pact-violet)]/40 bg-[var(--pact-surface-2)] px-4 py-3 text-sm text-[var(--pact-text-dim)]">
                 Every circle is joinable. Circle pacts stay visible only to members of that circle.
               </div>
 
@@ -143,14 +141,16 @@ export default function CreateCirclePage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 btn-primary py-3 font-bold disabled:opacity-50"
+                  className="pact-btn-glow flex-1 rounded-full py-3 font-bold transition-opacity disabled:opacity-50"
+                  style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
                 >
                   {loading ? 'Creating...' : 'Create Circle'}
                 </button>
                 <button
                   type="button"
                   onClick={() => router.back()}
-                  className="flex-1 btn-secondary py-3 font-bold"
+                  className="pact-btn-glow flex-1 rounded-full py-3 font-bold border"
+                  style={{ borderColor: 'var(--pact-violet)', background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
                 >
                   Cancel
                 </button>

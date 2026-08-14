@@ -389,6 +389,8 @@ export default function FeedPactCard({
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
+        whileHover={{ y: -2, boxShadow: '0 20px 70px rgba(2,6,23,0.45), 0 12px 28px rgba(139,107,255,0.25)' }}
+        whileTap={{ scale: 0.98 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
         className="mx-2 overflow-hidden rounded-[32px] border border-white/8 bg-slate-950 text-white shadow-[0_20px_70px_rgba(2,6,23,0.45)] sm:mx-0">
         <div
