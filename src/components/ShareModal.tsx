@@ -79,22 +79,22 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, pact }) => {
 
       {/* Modal */}
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="rounded-3xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto bg-slate-950 border border-white/10">
           {/* Header */}
-          <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-3xl">
-            <h2 className="text-lg font-bold text-gray-900">Share Your Pact</h2>
+          <div className="sticky top-0 px-6 py-4 flex items-center justify-between rounded-t-3xl bg-slate-950 border-b border-white/10">
+            <h2 className="text-lg font-bold text-white">Share Your Pact</h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full transition"
+              className="p-2 rounded-full bg-white/10 hover:bg-white/15 transition"
             >
-              <X className="w-5 h-5 text-gray-600" />
+              <X className="w-5 h-5 text-white/70" />
             </button>
           </div>
 
           {/* Preview */}
           <div className="px-6 py-6">
             <div className="mb-4 text-center">
-              <p className="text-sm text-gray-600 font-medium mb-3">Preview</p>
+              <p className="text-sm font-medium mb-3 text-white/50">Preview</p>
               
               {/* Share Image Preview */}
               <div 
@@ -171,7 +171,7 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, pact }) => {
                   link.click();
                 }
               }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#EDE9FE]0 hover:bg-[#A78BFA] text-white font-semibold rounded-[24px] transition-all shadow-md hover:shadow-lg mb-4"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 text-white font-semibold rounded-[24px] transition-all mb-4 bg-gradient-to-r from-pink-500 to-violet-500 hover:brightness-110"
             >
               <Download className="w-4 h-4" />
               Download Image
@@ -179,7 +179,7 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, pact }) => {
 
             {/* Social Share Options */}
             <div className="mb-4">
-              <p className="text-xs text-gray-600 font-medium text-center mb-3">Share to</p>
+              <p className="text-xs font-medium text-center mb-3 text-white/50">Share to</p>
               <div className="flex justify-center gap-3">
                 {/* Instagram */}
                 <button
@@ -217,7 +217,7 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, pact }) => {
             </div>
 
             {/* Info */}
-            <p className="text-xs text-gray-500 text-center">
+            <p className="text-xs text-center text-white/50">
               Download the image and share it manually, or click social icons to share directly
             </p>
           </div>
