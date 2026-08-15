@@ -1,9 +1,8 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { Edit2, UserPlus, MessageCircle } from 'lucide-react';
-import StreakAvatarRing from '@/components/StreakAvatarRing';
+import Avatar from '@/components/Avatar';
 
 interface ProfileHeroProps {
   user: {
@@ -38,33 +37,6 @@ export default function ProfileHero({
   streak,
   atRisk = false,
 }: ProfileHeroProps) {
-  const avatarContent = (
-    <div
-      className="w-20 h-20 rounded-full p-0.5"
-      style={{ background: 'var(--pact-surface-2)' }}
-    >
-      {user.avatar ? (
-        <Image
-          src={user.avatar}
-          alt={user.name}
-          width={80}
-          height={80}
-          className="w-full h-full rounded-full object-cover"
-        />
-      ) : (
-        <div
-          className="w-full h-full rounded-full flex items-center justify-center text-2xl font-bold"
-          style={{
-            background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))',
-            color: 'var(--pact-text)',
-          }}
-        >
-          {user.name.charAt(0)}
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <div className="pact-card rounded-3xl p-5 mb-6">
       {/* Compact Header */}
@@ -74,13 +46,12 @@ export default function ProfileHero({
           className="relative flex-shrink-0 cursor-pointer hover:opacity-80 transition"
           onClick={isOwnProfile ? onEdit : undefined}
         >
-          {isOwnProfile && typeof streak === 'number' ? (
-            <StreakAvatarRing streak={streak} atRisk={atRisk}>
-              {avatarContent}
-            </StreakAvatarRing>
-          ) : (
-            avatarContent
-          )}
+          <Avatar
+            name={user.name}
+            avatarUrl={user.avatar}
+            size={80}
+            ring={isOwnProfile && typeof streak === 'number' ? { percent: Math.min(100, (streak / 30) * 100), atRisk } : undefined}
+          />
         </div>
 
         {/* Info */}

@@ -215,6 +215,38 @@ section + section {
   animation: tier-ring-pulse 1.5s ease-in-out infinite;
 }
 
+/* Global Avatar ring (see src/components/Avatar.tsx): a rotating multi-hue
+   conic-gradient band with a separate, independently-timed breathing glow
+   layer underneath. Two distinct animated layers, not one static ring. */
+@keyframes avatar-ring-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.avatar-ring-spin {
+  animation: avatar-ring-spin 15s linear infinite;
+}
+
+@keyframes avatar-ring-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+.avatar-ring-breathe {
+  animation: avatar-ring-breathe 3.5s ease-in-out infinite;
+}
+
 /* ==========================================================================
    Create-a-Pact tap-flow — self-contained immersive theme.
    Scoped entirely under .pact-flow so the rest of the app's light theme

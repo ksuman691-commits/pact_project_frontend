@@ -2,11 +2,11 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronRight, Flag, MessageCircle, Share2, FileImage, ArrowLeft, ArrowRight, Camera } from 'lucide-react';
 import ProofUploadModal from './ProofUploadModal';
 import ProofMediaCarousel from './ProofMediaCarousel';
+import Avatar from './Avatar';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useAuthStore } from '@/store/auth';
 import { pactService } from '@/services/api';
@@ -456,11 +456,7 @@ export default function FeedPactCard({
                   {/* Anchored to the upper portion of the media area so it never collides with the title/stats block pinned to the bottom */}
                   <div className="absolute inset-x-0 top-16 z-10 flex flex-col items-center gap-3 px-8 text-center">
                     <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-white/60 bg-white/70 shadow-[0_8px_32px_rgba(139,92,246,0.20)] backdrop-blur-sm">
-                      {creatorAvatarUrl ? (
-                        <Image src={creatorAvatarUrl} alt={creatorLabel} fill sizes="96px" className="object-cover opacity-90" />
-                      ) : (
-                        <span className="text-4xl font-black text-violet-700">{creatorLabel.charAt(0).toUpperCase()}</span>
-                      )}
+                      <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={96} />
                     </div>
                     <div className="flex flex-col items-center gap-2">
                       <Camera className="h-4 w-4 text-violet-600" />
@@ -481,15 +477,9 @@ export default function FeedPactCard({
 
             <div className="absolute left-4 top-4 right-4 z-10 flex items-start justify-between gap-3">
               <div className={`flex items-center gap-3 rounded-full px-3 py-2 backdrop-blur-md ${hasProof ? 'bg-black/15' : 'bg-white/70 shadow-[0_2px_8px_rgba(139,92,246,0.12)]'}`}>
-                {creatorAvatarUrl ? (
-                  <div className={`relative h-10 w-10 overflow-hidden rounded-full border ${hasProof ? 'border-white/20' : 'border-violet-200'}`}>
-                    <Image src={creatorAvatarUrl} alt={creatorLabel} fill sizes="40px" className="object-cover" />
-                  </div>
-                ) : (
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-black ${hasProof ? 'bg-white/15 text-white' : 'bg-violet-100 text-violet-700'}`}>
-                    {creatorLabel.charAt(0).toUpperCase()}
-                  </div>
-                )}
+                <div className={`h-10 w-10 overflow-hidden rounded-full border ${hasProof ? 'border-white/20' : 'border-violet-200'}`}>
+                  <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={40} />
+                </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     {creatorProfileHref ? (
@@ -594,17 +584,11 @@ export default function FeedPactCard({
                 {supporterStack.length > 0 && (
                   <div className="flex items-center gap-3">
                     <div className="flex -space-x-2">
-                      {supporterStack.map((supporter: any) => (
-                        <div key={supporter.id} className="relative h-9 w-9 overflow-hidden rounded-full border border-white/20 bg-white/10">
-                          {supporter.avatar_url ? (
-                            <Image src={supporter.avatar_url} alt={supporter.username} fill sizes="36px" className="object-cover" />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-white/10 text-xs font-black text-white">
-                              {String(supporter.username || '?').charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                  {supporterStack.map((supporter: any) => (
+                    <div key={supporter.id} className="h-9 w-9 overflow-hidden rounded-full border border-white/20">
+                      <Avatar name={supporter.username} avatarUrl={supporter.avatar_url} size={36} />
+                    </div>
+                  ))}
                     </div>
 
                     <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/65">

@@ -39,8 +39,7 @@ export default function WelcomeHeader({
               name={userName}
               avatarUrl={avatarUrl}
               href="/profile"
-              sizeClassName="w-12 h-12"
-              textClassName="text-sm"
+              size={48}
               className="flex-shrink-0"
               streak={streak}
               atRisk={atRisk}

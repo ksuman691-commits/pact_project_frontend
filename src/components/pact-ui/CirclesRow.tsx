@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Users } from 'lucide-react';
+import Avatar from '@/components/Avatar';
 
 interface CircleSummary {
   id: number;
@@ -38,20 +39,7 @@ export default function CirclesRow({ circles, className = '' }: CirclesRowProps)
           onClick={() => router.push(`/circles/${circle.id}`)}
           className="pact-card pact-btn-glow flex flex-shrink-0 flex-col items-center gap-1.5 rounded-2xl px-3 py-2.5"
         >
-          <div
-            className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold"
-            style={{
-              background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))',
-              color: 'var(--pact-text)',
-            }}
-          >
-            {circle.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={circle.avatar_url} alt={circle.name} className="h-full w-full rounded-full object-cover" />
-            ) : (
-              circle.name.charAt(0).toUpperCase()
-            )}
-          </div>
+          <Avatar name={circle.name} avatarUrl={circle.avatar_url} size={40} />
           <span className="max-w-[72px] truncate text-xs font-medium text-[var(--pact-text-dim)]">
             {circle.name}
           </span>
