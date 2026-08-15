@@ -4,12 +4,13 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, TrendingUp, Zap } from 'lucide-react';
 import { useCountUp } from '@/components/pact-ui/useCountUp';
+import Avatar from '@/components/Avatar';
 
 interface LeaderboardEntry {
   rank: number;
   userId: number;
   username: string;
-  avatar: string;
+  avatarUrl?: string | null;
   pactsCompleted: number;
   winRate: number;
   streak: number;
@@ -145,12 +146,7 @@ function LeaderboardRow({
         {badge ? entry.rank : `#${entry.rank}`}
       </div>
 
-      <div
-        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-        style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
-      >
-        {entry.avatar || entry.username.charAt(0)}
-      </div>
+      <Avatar name={entry.username} avatarUrl={entry.avatarUrl} size={40} />
 
       <div className="flex-1 min-w-0">
         <p className="font-medium text-[var(--pact-text)] truncate">@{entry.username}</p>

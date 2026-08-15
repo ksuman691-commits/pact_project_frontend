@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useCircleLeaderboard } from '@/hooks';
 import TopNav from '@/components/TopNav';
 import { circleService, circleJoinRequestService, joinRequestService } from '@/services/api';
 import { Circle, Pact } from '@/types';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Users, Globe, Target, Plus } from 'lucide-react';
+import { ArrowLeft, Users, Globe, Target, Plus, Trophy } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CircleLeaderboard from '@/components/CircleLeaderboard';
 import InviteMembersModal from '@/components/InviteMembersModal';
@@ -27,6 +28,23 @@ export default function CircleDetailPage() {
   const [inviteModal, setInviteModal] = useState(false);
 
   const circleId = parseInt(params.id as string);
+
+  // Real leaderboard data for this circle's actual members — no fallback to
+  // placeholder/demo entries. Called unconditionally (before any early
+  // returns below) so hook order stays stable across renders. If the
+  // backend has nothing yet (e.g. a brand-new circle with no completed
+  // pacts), leaderboardEntries is empty and the low-population empty state
+  // further down takes over.
+  const { data: leaderboardData, isLoading: leaderboardLoading } = useCircleLeaderboard(circleId);
+  const leaderboardEntries = (leaderboardData || []).map((entry: any, index: number) => ({
+    rank: entry.rank ?? index + 1,
+    userId: entry.user_id ?? entry.userId ?? entry.id,
+    username: entry.username ?? entry.user?.username ?? 'unknown',
+    avatarUrl: entry.avatar_url ?? entry.user?.avatar_url ?? null,
+    pactsCompleted: entry.pacts_completed ?? entry.pactsCompleted ?? 0,
+    winRate: entry.win_rate ?? entry.winRate ?? 0,
+    streak: entry.current_streak ?? entry.streak ?? 0,
+  }));
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -123,13 +141,6 @@ export default function CircleDetailPage() {
       </div>
     );
   }
-
-  // Mock leaderboard data for demo
-  const mockLeaderboardEntries = [
-    { rank: 1, userId: 1, username: 'alice_doe', avatar: '👩', pactsCompleted: 12, winRate: 92, streak: 12 },
-    { rank: 2, userId: 2, username: 'bob_smith', avatar: '👨', pactsCompleted: 8, winRate: 85, streak: 7 },
-    { rank: 3, userId: 3, username: 'charlie_brown', avatar: '🧔', pactsCompleted: 6, winRate: 78, streak: 5 },
-  ];
 
   return (
     <div className="pact-flow pact-page-enter min-h-screen">
@@ -259,10 +270,22 @@ export default function CircleDetailPage() {
           )}
         </div>
 
-        {/* Leaderboard Section */}
-        {isMember && (
+        {/* Leaderboard Section — real data only, no fabricated entries.
+            A circle with too few active members to produce a meaningful
+            leaderboard (e.g. a brand-new circle) gets a dedicated empty
+            state instead of an empty-looking table. */}
+        {isMember && !leaderboardLoading && members.length < 2 && leaderboardEntries.length === 0 && (
+          <div className="pact-card rounded-[28px] mb-8 px-6 py-12 text-center">
+            <Trophy className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--pact-text-faint)' }} />
+            <p className="text-[var(--pact-text-dim)] font-medium">Leaderboard unlocks once your circle gets moving</p>
+            <p className="text-sm text-[var(--pact-text-faint)] mt-1">
+              Invite a few friends and start completing pacts together to see rankings here.
+            </p>
+          </div>
+        )}
+        {isMember && (leaderboardLoading || members.length >= 2 || leaderboardEntries.length > 0) && (
           <div className="mb-8">
-            <CircleLeaderboard entries={mockLeaderboardEntries} />
+            <CircleLeaderboard entries={leaderboardEntries} loading={leaderboardLoading} />
           </div>
         )}
 
