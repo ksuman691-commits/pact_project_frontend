@@ -16,7 +16,7 @@ import CheerGallery from '@/components/CheerGallery';
 import PremiumJoinButton from '@/components/PremiumJoinButton';
 import PactDetailCarousel, { type DetailCarouselPanel } from '@/components/PactDetailCarousel';
 import { usePact, usePactProofs, usePactCheers } from '@/hooks/usePacts';
-import { useSkipPact, useSupportPact } from '@/hooks/usePactActions';
+import { useSkipPact } from '@/hooks/usePactActions';
 import { useAuthStore } from '@/store/auth';
 import { joinRequestService, pactService } from '@/services/api';
 
@@ -114,7 +114,6 @@ export default function PactDetailPage() {
   const { data: pactData, isLoading, isError, refetch: refetchPact } = usePact(pactId);
   const { data: proofsData, refetch: refetchProofs } = usePactProofs(pactId, 50);
   const { data: cheersData } = usePactCheers(pactId, 50);
-  const supportMutation = useSupportPact();
   const skipMutation = useSkipPact();
 
   const pact = pactData?.data;
@@ -149,11 +148,7 @@ export default function PactDetailPage() {
   // this as the real fix.
   const hasCheered = Boolean(user && cheers.some((cheer: any) => cheer.sender_id === user.id));
 
-  const handleVote = async (_pactId: number, vote: 'support' | 'skip') => {
-    if (vote === 'support') {
-      await supportMutation.mutateAsync(pactId);
-      return;
-    }
+  const handleVote = async (_pactId: number, _vote: 'skip') => {
     await skipMutation.mutateAsync(pactId);
   };
 
@@ -301,6 +296,7 @@ export default function PactDetailPage() {
             canUploadProof={isParticipant}
             detailHref={`/pacts/${pact.id}`}
             canReport={pact.creator_id !== user?.id}
+            hasCheered={hasCheered}
           />
 
           {canCheer && (

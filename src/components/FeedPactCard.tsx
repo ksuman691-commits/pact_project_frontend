@@ -34,6 +34,13 @@ interface FeedPactCardProps {
   showVoteActions?: boolean;
   canUploadProof?: boolean;
   canReport?: boolean;
+  /**
+   * Pages that render their own dedicated cheer widget alongside this card
+   * (e.g. the pact detail page) should pass this through so swipe-right's
+   * cheer shortcut respects the same "already cheered" gate as that widget,
+   * instead of offering a second way to double-post a cheer.
+   */
+  hasCheered?: boolean;
 }
 
 const REPORT_OPTIONS = [
@@ -149,6 +156,7 @@ export default function FeedPactCard({
   showVoteActions,
   canUploadProof,
   canReport = true,
+  hasCheered = false,
 }: FeedPactCardProps) {
   const { user } = useAuthStore();
   const reportMutation = useReportPact(pact.id);
@@ -236,7 +244,13 @@ export default function FeedPactCard({
   // `onVote` or hits the backend to find out — membership is already known
   // client-side, so the join case can be shown immediately rather than
   // waiting on a failed request.
-  const rightAction: RightAction = isCreator ? null : isParticipant ? 'cheer' : joinAllowed ? 'join' : null;
+  const rightAction: RightAction = isCreator
+    ? null
+    : isParticipant
+      ? (hasCheered ? null : 'cheer')
+      : joinAllowed
+        ? 'join'
+        : null;
   const canSkip = Boolean(onVote) && !isCreator && displayVote !== 'skip';
   const gesturesEnabled = (enableGestures ?? true) && (canSkip || rightAction !== null);
   const voteActionsVisible = (showVoteActions ?? Boolean(onVote)) && !isCreator;
@@ -474,8 +488,6 @@ export default function FeedPactCard({
     }
   };
 
-  const supporterStack = recentSupporters.slice(0, 3);
-
   return (
     <>
       <motion.div
@@ -661,25 +673,10 @@ export default function FeedPactCard({
                   </div>
                 )}
 
-                <p className="text-lg font-black text-white">
-                  {formatCompactCount(supportCount)} supporting this pact
+                <p className="flex items-center gap-1.5 text-lg font-black text-white">
+                  <PartyPopper className="h-4 w-4 text-[var(--pact-gold)]" />
+                  {formatCompactCount(cheerCount)} cheering this pact
                 </p>
-
-                {supporterStack.length > 0 && (
-                  <div className="flex items-center gap-3">
-                    <div className="flex -space-x-2">
-                  {supporterStack.map((supporter: any) => (
-                    <div key={supporter.id} className="h-9 w-9 overflow-hidden rounded-full border border-white/20">
-                      <Avatar name={supporter.username} avatarUrl={supporter.avatar_url} size={36} />
-                    </div>
-                  ))}
-                    </div>
-
-                    <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/65">
-                      recent supporters
-                    </p>
-                  </div>
-                )}
 
                 {joinAllowed && (
                   <PremiumJoinButton onClick={handleJoinPact} loading={isJoining} size="sm" />
@@ -696,7 +693,7 @@ export default function FeedPactCard({
 
                 {voteStatusLabel && (
                   <div className="pt-2">
-                    <p className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] ${voteStatusLabel === 'supported' ? 'border-emerald-400/70 bg-emerald-400/18 text-emerald-100' : 'border-rose-400/70 bg-rose-500/15 text-rose-200'}`}>
+                    <p className="inline-flex items-center rounded-full border border-rose-400/70 bg-rose-500/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-rose-200">
                       {voteStatusLabel}
                     </p>
                   </div>
@@ -704,34 +701,41 @@ export default function FeedPactCard({
 
                 {voteActionsVisible && !voteStatusLabel && (
                   <div className="flex gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => void completeVote('skip')}
-                      disabled={isVoting}
-                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${displayVote === 'skip' ? 'border-rose-400/70 bg-rose-500/15 text-rose-200' : 'border-white/12 bg-white/8 text-white hover:bg-white/12 disabled:hover:bg-white/8'}`}
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      skip
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void completeVote('support')}
-                      disabled={isVoting}
-                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${displayVote === 'support' ? 'border-emerald-400/70 bg-emerald-400/20 text-emerald-100' : 'border-emerald-400/50 bg-emerald-400/12 text-emerald-200 hover:bg-emerald-400/18 disabled:hover:bg-emerald-400/12'}`}
-                    >
-                      support
-                      <ArrowRight className="h-4 w-4" />
-                    </button>
+                    {canSkip && (
+                      <button
+                        type="button"
+                        onClick={() => void completeVote('skip')}
+                        disabled={isVoting}
+                        className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/12 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white/8"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                        skip
+                      </button>
+                    )}
+                    {rightAction && (
+                      <button
+                        type="button"
+                        onClick={triggerRightAction}
+                        disabled={isCheering}
+                        className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                          rightAction === 'join'
+                            ? 'border-emerald-400/50 bg-emerald-400/12 text-emerald-200 hover:bg-emerald-400/18'
+                            : 'border-[var(--pact-gold)]/50 bg-[var(--pact-gold)]/12 text-[var(--pact-gold)] hover:bg-[var(--pact-gold)]/18'
+                        }`}
+                      >
+                        {isCheering ? <Loader2 className="h-4 w-4 animate-spin" /> : rightAction === 'join' ? 'join' : 'cheer'}
+                        <ArrowRight className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Swipe-right (or the support button) on a pact the user hasn't
-                joined used to bounce them out to a blocking error toast —
-                killing momentum right when they showed positive intent.
-                This slides up over the card instead, keeping the gesture's
-                context intact. */}
+            {/* Swipe-right on a pact the user hasn't joined used to bounce
+                them out to a blocking "must be a participant" error toast —
+                a dead end right when they showed positive intent. This
+                slides up an inline join prompt over the card instead. */}
             <AnimatePresence>
               {showJoinNudge && (
                 <motion.div
@@ -745,15 +749,18 @@ export default function FeedPactCard({
                     <ArrowRight className="h-6 w-6 text-emerald-300" />
                   </div>
                   <div>
-                    <p className="text-lg font-black text-white">Join to support this pact</p>
+                    <p className="text-lg font-black text-white">Join to cheer this pact</p>
                     <p className="mt-1.5 text-sm text-white/65">
-                      Only members can vote support/skip — join {creatorLabel ? `@${creatorLabel}'s` : 'this'} pact to back it.
+                      Only members can cheer — join {creatorLabel ? `@${creatorLabel}'s` : 'this'} pact to back it.
                     </p>
                   </div>
                   <PremiumJoinButton onClick={handleJoinPact} loading={isJoining} size="md" />
                   <button
                     type="button"
-                    onClick={() => setShowJoinNudge(false)}
+                    onClick={() => {
+                      setShowJoinNudge(false);
+                      committedRef.current = false;
+                    }}
                     className="text-sm font-semibold text-white/50 transition hover:text-white/80"
                   >
                     Not now
@@ -764,6 +771,17 @@ export default function FeedPactCard({
           </div>
         </div>
       </motion.div>
+
+      {/* Hidden file input backing the fast single-photo cheer flow
+          triggered by swipe-right / double-tap / the cheer button. */}
+      <input
+        ref={cheerInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleCheerFileChange}
+      />
 
       {uploadAllowed && (
         <ProofUploadModal

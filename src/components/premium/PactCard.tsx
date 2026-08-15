@@ -7,7 +7,7 @@ import PremiumCard from './PremiumCard';
 interface PactCardProps {
   pact: Pact;
   confidence?: number;
-  supporters?: number;
+  cheers?: number;
   skipped?: number;
   proofToday?: boolean;
 }
@@ -15,7 +15,7 @@ interface PactCardProps {
 export default function PactCard({
   pact,
   confidence = 75,
-  supporters = 342,
+  cheers = 342,
   skipped = 28,
   proofToday = false,
 }: PactCardProps) {
@@ -77,11 +77,11 @@ export default function PactCard({
           </div>
         </div>
 
-        {/* Support / Skip */}
+        {/* Cheer / Skip */}
         <div className="flex gap-2">
           <div className="flex-1 bg-[#EDE9FE] rounded-[28px] p-2 border border-emerald-100 text-center">
-            <p className="text-xs text-emerald-700 font-medium">Supporters</p>
-            <p className="text-sm font-bold text-emerald-900">{supporters}</p>
+            <p className="text-xs text-emerald-700 font-medium">Cheers</p>
+            <p className="text-sm font-bold text-emerald-900">{cheers}</p>
           </div>
           <div className="flex-1 bg-red-50 rounded-[28px] p-2 border border-red-100 text-center">
             <p className="text-xs text-red-700 font-medium">Skipped</p>

@@ -3,7 +3,7 @@
 // Cache bust: 2024-07-07 08:40
 import React, { useEffect, useMemo, useState } from 'react'
 import { usePersonalizedFeed } from '@/hooks/useFeedQueries'
-import { useSkipPact, useSupportPact } from '@/hooks/usePactActions'
+import { useSkipPact } from '@/hooks/usePactActions'
 import { useInView } from 'react-intersection-observer'
 import FeedPactCard from './FeedPactCard'
 import { useRouter } from 'next/navigation'
@@ -45,7 +45,9 @@ const mockPacts = [
       { day: 3, type: 'scale', text: '68kg (down 0.8kg)' },
       { day: 11, type: 'scale', text: '67.1kg (down 1.7kg)' },
     ],
-    userVote: 'support',
+    userVote: null,
+    is_joined_by_me: true,
+    active_cheer_count: 214,
   },
   {
     id: 3,
@@ -80,7 +82,6 @@ interface PactFeedProps {
 
 const normalizeVote = (vote: unknown): string | null => {
   if (typeof vote !== 'string') return null
-  if (vote === 'believe') return 'support'
   if (vote === 'doubt') return 'skip'
   return vote
 }
@@ -125,7 +126,6 @@ export default function PactFeed({
     }
   }, [normalizedCategory, showMockData])
 
-  const supportMutation = useSupportPact()
   const skipMutation = useSkipPact()
 
   // Trigger load more when near bottom
@@ -146,11 +146,11 @@ export default function PactFeed({
 
     const apiPacts = data.pages.flatMap((page: any) => page.data ?? [])
     if (apiPacts.length > 0) {
-      const unvotedPacts = apiPacts.filter((pact: any) => {
+      const unskippedPacts = apiPacts.filter((pact: any) => {
         const existingVote = normalizeVote(pact.user_vote ?? pact.userVote)
-        return existingVote !== 'support' && existingVote !== 'skip'
+        return existingVote !== 'skip'
       })
-      setPacts(unvotedPacts)
+      setPacts(unskippedPacts)
     } else if (!showMockData) {
       setPacts([])
     }
@@ -164,12 +164,8 @@ export default function PactFeed({
 
   const emptyStateMessage = useMemo(() => 'Be the first to create one!', [])
 
-  const handleVote = async (pactId: number, voteType: 'support' | 'skip') => {
-    if (voteType === 'support') {
-      await supportMutation.mutateAsync(pactId)
-    } else {
-      await skipMutation.mutateAsync(pactId)
-    }
+  const handleVote = async (pactId: number, _voteType: 'skip') => {
+    await skipMutation.mutateAsync(pactId)
   }
 
   const removePact = (pactId: number) => {

@@ -38,34 +38,14 @@ function toErrorMessage(error: any, fallback: string) {
 }
 
 /**
- * The vote endpoints (/vote-support, /vote-skip) return 403 with this
- * message for anyone who hasn't joined the pact yet. FeedPactCard uses this
- * to swap the swipe-right/support gesture from a dead-end error into an
- * inline "Join to support this pact" nudge instead — so the generic toast
- * below must stay silent for this one case and let the caller render that
- * nudge instead of a competing/duplicate error toast.
+ * The vote-skip endpoint returns 403 with this message for anyone who
+ * hasn't joined the pact yet.
  */
 export function isNotParticipantError(error: any): boolean {
   const status = error?.response?.status;
   const detail = error?.response?.data?.detail;
   const message = typeof detail === 'string' ? detail : '';
   return status === 403 && /participant/i.test(message);
-}
-
-export function useSupportPact() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (pactId: number) => pactService.support(pactId),
-    onSuccess: (_response, pactId) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.pacts.detail(pactId) });
-    },
-    onError: (error: any) => {
-      if (isNotParticipantError(error)) return;
-      toast.error(toErrorMessage(error, 'Failed to support pact'));
-    },
-  });
 }
 
 export function useSkipPact() {
