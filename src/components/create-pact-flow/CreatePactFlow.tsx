@@ -18,6 +18,8 @@ interface CreatePactFlowProps {
   onExit?: () => void;
   /** Pre-set circle audience (arriving from a Circle's "Start a Pact for this Circle" CTA) — skips the audience step. */
   initialCircleId?: number | null;
+  /** Free text carried over from another flow (e.g. Dare's "switch to a Pact" nudge). */
+  initialDescription?: string | null;
 }
 
 function StepRouter({ onExit }: CreatePactFlowProps) {
@@ -50,9 +52,9 @@ function StepRouter({ onExit }: CreatePactFlowProps) {
  * Entry point for the "Create a Pact" immersive tap-flow.
  * Wrap in the flow's own provider so each mount starts a fresh draft.
  */
-export default function CreatePactFlow({ onExit, initialCircleId }: CreatePactFlowProps) {
+export default function CreatePactFlow({ onExit, initialCircleId, initialDescription }: CreatePactFlowProps) {
   return (
-    <CreatePactFlowProvider initialCircleId={initialCircleId}>
+    <CreatePactFlowProvider initialCircleId={initialCircleId} initialDescription={initialDescription}>
       <StepRouter onExit={onExit} />
     </CreatePactFlowProvider>
   );

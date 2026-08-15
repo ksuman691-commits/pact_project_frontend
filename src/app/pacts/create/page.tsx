@@ -9,11 +9,14 @@ function CreatePactPageContent() {
   const searchParams = useSearchParams();
   const circleIdParam = searchParams.get('circleId');
   const initialCircleId = circleIdParam ? Number(circleIdParam) : null;
+  // Carries over free text from the Dare flow's "switch to a Pact" nudge.
+  const initialDescription = searchParams.get('note');
 
   return (
     <CreatePactFlow
       onExit={() => router.back()}
       initialCircleId={Number.isFinite(initialCircleId) ? initialCircleId : null}
+      initialDescription={initialDescription}
     />
   );
 }
