@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import TopNav from '@/components/TopNav';
-import { circleService, circleJoinRequestService, joinRequestService } from '@/services/api';
+import { circleService, circleJoinRequestService, joinRequestService, userService } from '@/services/api';
 import { Circle, Pact } from '@/types';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Users, Globe, Target, Plus } from 'lucide-react';
+import { ArrowLeft, Users, Globe, Target, Plus, Trophy } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CircleLeaderboard from '@/components/CircleLeaderboard';
 import InviteMembersModal from '@/components/InviteMembersModal';
@@ -25,6 +25,15 @@ export default function CircleDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isMember, setIsMember] = useState(false);
   const [inviteModal, setInviteModal] = useState(false);
+  // Real per-member stats for this circle — no fallback to placeholder/demo
+  // entries. The backend has no dedicated circle-leaderboard endpoint (both
+  // /api/circles/{id}/leaderboard and /api/leaderboards/circles/{id} 404),
+  // so this is built client-side from each member's real
+  // /api/users/{id}/stats response, fetched alongside the member list.
+  const [leaderboardEntries, setLeaderboardEntries] = useState<
+    { rank: number; userId: number; username: string; avatarUrl: string | null; pactsCompleted: number; winRate: number; streak: number }[]
+  >([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(true);
 
   const circleId = parseInt(params.id as string);
 
@@ -60,6 +69,51 @@ export default function CircleDetailPage() {
 
     fetchData();
   }, [isInitialized, user, router, circleId]);
+
+  // Build the leaderboard from each real member's real stats. There is no
+  // dedicated circle-leaderboard endpoint on the backend, so this fetches
+  // /api/users/{id}/stats per member (the same endpoint the profile page
+  // uses) and ranks them client-side — Promise.allSettled so one member's
+  // failed request doesn't blank out the whole leaderboard.
+  useEffect(() => {
+    if (members.length === 0) {
+      setLeaderboardEntries([]);
+      setLeaderboardLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLeaderboardLoading(true);
+
+    Promise.allSettled(members.map((member: any) => userService.getStats(member.user_id))).then((results) => {
+      if (cancelled) return;
+
+      const entries = results
+        .map((result, index) => {
+          if (result.status !== 'fulfilled') return null;
+          const member = members[index];
+          const stats = result.value.data;
+          return {
+            userId: member.user_id,
+            username: member.username,
+            avatarUrl: member.avatar_url ?? null,
+            pactsCompleted: stats?.pacts_completed ?? 0,
+            winRate: stats?.win_rate ?? 0,
+            streak: stats?.current_streak ?? 0,
+          };
+        })
+        .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+        .sort((a, b) => b.pactsCompleted - a.pactsCompleted || b.winRate - a.winRate)
+        .map((entry, index) => ({ ...entry, rank: index + 1 }));
+
+      setLeaderboardEntries(entries);
+      setLeaderboardLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [members]);
 
   if (!isInitialized) {
     return (
@@ -123,13 +177,6 @@ export default function CircleDetailPage() {
       </div>
     );
   }
-
-  // Mock leaderboard data for demo
-  const mockLeaderboardEntries = [
-    { rank: 1, userId: 1, username: 'alice_doe', avatar: '👩', pactsCompleted: 12, winRate: 92, streak: 12 },
-    { rank: 2, userId: 2, username: 'bob_smith', avatar: '👨', pactsCompleted: 8, winRate: 85, streak: 7 },
-    { rank: 3, userId: 3, username: 'charlie_brown', avatar: '🧔', pactsCompleted: 6, winRate: 78, streak: 5 },
-  ];
 
   return (
     <div className="pact-flow pact-page-enter min-h-screen">
@@ -259,10 +306,22 @@ export default function CircleDetailPage() {
           )}
         </div>
 
-        {/* Leaderboard Section */}
-        {isMember && (
+        {/* Leaderboard Section — real data only, no fabricated entries.
+            A circle with too few active members to produce a meaningful
+            leaderboard (e.g. a brand-new circle) gets a dedicated empty
+            state instead of an empty-looking table. */}
+        {isMember && !leaderboardLoading && members.length < 2 && leaderboardEntries.length === 0 && (
+          <div className="pact-card rounded-[28px] mb-8 px-6 py-12 text-center">
+            <Trophy className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--pact-text-faint)' }} />
+            <p className="text-[var(--pact-text-dim)] font-medium">Leaderboard unlocks once your circle gets moving</p>
+            <p className="text-sm text-[var(--pact-text-faint)] mt-1">
+              Invite a few friends and start completing pacts together to see rankings here.
+            </p>
+          </div>
+        )}
+        {isMember && (leaderboardLoading || members.length >= 2 || leaderboardEntries.length > 0) && (
           <div className="mb-8">
-            <CircleLeaderboard entries={mockLeaderboardEntries} />
+            <CircleLeaderboard entries={leaderboardEntries} loading={leaderboardLoading} />
           </div>
         )}
 

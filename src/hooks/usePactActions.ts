@@ -37,19 +37,15 @@ function toErrorMessage(error: any, fallback: string) {
   return fallback;
 }
 
-export function useSupportPact() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (pactId: number) => pactService.support(pactId),
-    onSuccess: (_response, pactId) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.pacts.detail(pactId) });
-    },
-    onError: (error: any) => {
-      toast.error(toErrorMessage(error, 'Failed to support pact'));
-    },
-  });
+/**
+ * The vote-skip endpoint returns 403 with this message for anyone who
+ * hasn't joined the pact yet.
+ */
+export function isNotParticipantError(error: any): boolean {
+  const status = error?.response?.status;
+  const detail = error?.response?.data?.detail;
+  const message = typeof detail === 'string' ? detail : '';
+  return status === 403 && /participant/i.test(message);
 }
 
 export function useSkipPact() {
@@ -62,6 +58,7 @@ export function useSkipPact() {
       queryClient.invalidateQueries({ queryKey: queryKeys.pacts.detail(pactId) });
     },
     onError: (error: any) => {
+      if (isNotParticipantError(error)) return;
       toast.error(toErrorMessage(error, 'Failed to skip pact'));
     },
   });

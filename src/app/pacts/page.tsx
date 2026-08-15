@@ -9,7 +9,7 @@ import { Pact } from '@/types';
 import toast from 'react-hot-toast';
 import { Plus, TrendingUp } from 'lucide-react';
 import PactCard from '@/components/PactCard';
-import { useSkipPact, useSupportPact } from '@/hooks/usePactActions';
+import { useSkipPact } from '@/hooks/usePactActions';
 
 export default function PactsPage() {
   const router = useRouter();
@@ -18,7 +18,6 @@ export default function PactsPage() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'value' | 'deadline' | 'newest'>('value');
-  const supportMutation = useSupportPact();
   const skipMutation = useSkipPact();
 
   useEffect(() => {
@@ -65,11 +64,7 @@ export default function PactsPage() {
     }
   });
 
-  const handleVote = async (pactId: number, vote: string) => {
-    if (vote === 'support') {
-      await supportMutation.mutateAsync(pactId);
-      return;
-    }
+  const handleVote = async (pactId: number, _vote: string) => {
     await skipMutation.mutateAsync(pactId);
   };
 

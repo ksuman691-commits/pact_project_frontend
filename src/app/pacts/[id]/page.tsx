@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { AlertCircle, Camera, CheckCircle2, Clock3, MessageSquare, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import TopNav from '@/components/TopNav';
@@ -13,8 +13,10 @@ import VerificationResults from '@/components/VerificationResults';
 import Avatar from '@/components/Avatar';
 import CheerButton from '@/components/CheerButton';
 import CheerGallery from '@/components/CheerGallery';
+import PremiumJoinButton from '@/components/PremiumJoinButton';
+import PactDetailCarousel, { type DetailCarouselPanel } from '@/components/PactDetailCarousel';
 import { usePact, usePactProofs, usePactCheers } from '@/hooks/usePacts';
-import { useSkipPact, useSupportPact } from '@/hooks/usePactActions';
+import { useSkipPact } from '@/hooks/usePactActions';
 import { useAuthStore } from '@/store/auth';
 import { joinRequestService, pactService } from '@/services/api';
 
@@ -68,42 +70,6 @@ function PactDetailSkeleton() {
   );
 }
 
-type DetailTab = 'proofs' | 'timeline' | 'participants' | 'comments';
-
-function DetailTabButton({
-  active,
-  icon: Icon,
-  label,
-  count,
-  onClick,
-}: {
-  active: boolean;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  count?: number;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition ${
-        active
-          ? 'bg-white text-slate-950 shadow-[0_12px_30px_rgba(15,23,42,0.12)]'
-          : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
-      }`}
-    >
-      <Icon className="h-4 w-4" />
-      <span>{label}</span>
-      {typeof count === 'number' && (
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${active ? 'bg-slate-950/10 text-slate-700' : 'bg-white/10 text-white/60'}`}>
-          {count}
-        </span>
-      )}
-    </button>
-  );
-}
-
 function ProofTimeline({ proofs }: { proofs: any[] }) {
   if (proofs.length === 0) {
     return (
@@ -143,12 +109,11 @@ export default function PactDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<DetailTab>('proofs');
+  const [activeIndex, setActiveIndex] = useState(0);
   const pactId = Number(params.id);
   const { data: pactData, isLoading, isError, refetch: refetchPact } = usePact(pactId);
   const { data: proofsData, refetch: refetchProofs } = usePactProofs(pactId, 50);
   const { data: cheersData } = usePactCheers(pactId, 50);
-  const supportMutation = useSupportPact();
   const skipMutation = useSkipPact();
 
   const pact = pactData?.data;
@@ -173,15 +138,17 @@ export default function PactDetailPage() {
   );
   // UI-side gating only: hides the action for non-members/creators. The real
   // authorization must happen server-side once a backend-owned route exists
-  // to enforce it — see project notes for the handoff spec.
+  // to enforce it — see BACKEND_HANDOFF_CHEER_DEDUP.md for the handoff spec.
   const canCheer = isParticipant && !isCreator;
   const cheers = useMemo(() => cheersData?.data || [], [cheersData?.data]);
+  // UI-side guard only: the backend currently has no per-user-per-pact
+  // uniqueness constraint on cheers (see BACKEND_HANDOFF_CHEER_DEDUP.md), so
+  // this only stops honest double-taps from this client — it does not stop
+  // a second device, a replayed request, or a modified client. Do not treat
+  // this as the real fix.
+  const hasCheered = Boolean(user && cheers.some((cheer: any) => cheer.sender_id === user.id));
 
-  const handleVote = async (_pactId: number, vote: 'support' | 'skip') => {
-    if (vote === 'support') {
-      await supportMutation.mutateAsync(pactId);
-      return;
-    }
+  const handleVote = async (_pactId: number, _vote: 'skip') => {
     await skipMutation.mutateAsync(pactId);
   };
 
@@ -194,6 +161,95 @@ export default function PactDetailPage() {
       toast.error(error?.response?.data?.detail || 'Failed to join pact');
     }
   };
+
+  const detailPanels: DetailCarouselPanel[] = pact
+    ? [
+        {
+          key: 'proofs',
+          label: 'Proofs',
+          icon: Camera,
+          count: proofs.length,
+          content: (
+            <>
+              <ProofsSection proofs={proofs} title="Proof gallery" variant="immersive" />
+              {cheers.length > 0 && (
+                <div className="mt-6">
+                  <CheerGallery cheers={cheers} />
+                </div>
+              )}
+            </>
+          ),
+        },
+        {
+          key: 'timeline',
+          label: 'Timeline',
+          icon: Clock3,
+          count: proofs.length,
+          content: (
+            <div className="space-y-5">
+              <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
+                <div className="mb-4 flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-slate-700" />
+                  <h2 className="text-lg font-black text-[#14121F]">Verification status</h2>
+                </div>
+                <VerificationResults pactId={pact.id} />
+              </section>
+
+              <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
+                <div className="mb-4 flex items-center gap-2">
+                  <Clock3 className="h-5 w-5 text-slate-700" />
+                  <h2 className="text-lg font-black text-[#14121F]">Proof timeline</h2>
+                </div>
+                <ProofTimeline proofs={proofs} />
+              </section>
+            </div>
+          ),
+        },
+        {
+          key: 'participants',
+          label: 'Participants',
+          icon: Users,
+          count: participants.length,
+          content: (
+            <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
+              <div className="mb-4 flex items-center gap-2">
+                <Users className="h-5 w-5 text-slate-700" />
+                <h2 className="text-lg font-black text-[#14121F]">Pact members</h2>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {participants.length > 0 ? (
+                  participants.map((participant: any) => (
+                    <div
+                      key={participant.id || participant.user_id}
+                      className="flex items-center gap-3 rounded-full border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] px-3 py-2"
+                    >
+                      <Avatar name={participant.username} avatarUrl={participant.avatar_url} size={40} />
+                      <div>
+                        <p className="text-sm font-semibold text-[#14121F]">@{participant.username}</p>
+                        <p className="text-xs uppercase tracking-[0.18em] text-[#9CA3AF]">{participant.status || 'active'}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-[#9CA3AF]">No participant data yet.</p>
+                )}
+              </div>
+            </section>
+          ),
+        },
+        {
+          key: 'comments',
+          label: 'Comments',
+          icon: MessageSquare,
+          content: (
+            <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
+              <h2 className="mb-4 text-lg font-black text-[#14121F]">Discussion</h2>
+              <CommentSection pactId={pact.id} />
+            </section>
+          ),
+        },
+      ]
+    : [];
 
   if (isLoading) {
     return <PactDetailSkeleton />;
@@ -240,15 +296,20 @@ export default function PactDetailPage() {
             canUploadProof={isParticipant}
             detailHref={`/pacts/${pact.id}`}
             canReport={pact.creator_id !== user?.id}
+            hasCheered={hasCheered}
           />
 
           {canCheer && (
             <div className="flex items-center justify-between gap-3 rounded-[24px] border border-white/10 bg-white/5 px-5 py-4 backdrop-blur-sm">
               <div>
                 <p className="text-sm font-semibold text-white">Cheer this pact on</p>
-                <p className="text-xs text-white/60">Post an encouragement photo for {pact.creator_username || 'the creator'}.</p>
+                <p className="text-xs text-white/60">
+                  {hasCheered
+                    ? "You've already sent a cheer for this pact."
+                    : `Post an encouragement photo for ${pact.creator_username || 'the creator'}.`}
+                </p>
               </div>
-              <CheerButton pactId={pact.id} canCheer={canCheer} />
+              <CheerButton pactId={pact.id} canCheer={canCheer} hasCheered={hasCheered} />
             </div>
           )}
 
@@ -258,12 +319,9 @@ export default function PactDetailPage() {
               {pact.can_join ? (
                 <>
                   <p className="mt-2 text-sm text-white/75">Join this pact to upload proof updates from the camera or your gallery.</p>
-                  <button
-                    onClick={handleJoinRequest}
-                    className="mt-4 rounded-full bg-[#EDE9FE]0 px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#A78BFA]"
-                  >
-                    Join pact
-                  </button>
+                  <div className="mt-4">
+                    <PremiumJoinButton onClick={handleJoinRequest} size="md" />
+                  </div>
                 </>
               ) : (
                 <p className="mt-2 text-sm text-white/75">
@@ -282,135 +340,13 @@ export default function PactDetailPage() {
           )}
 
           <section className="overflow-hidden rounded-[32px] border border-white/10 bg-white/5 shadow-[0_20px_70px_rgba(2,6,23,0.45)] backdrop-blur-sm">
-            <div className="border-b border-white/10 px-4 py-4">
+            <div className="border-b border-white/10 px-4 pt-4">
               <div className="mb-3 flex items-center gap-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/50">Pact detail</p>
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                <DetailTabButton
-                  active={activeTab === 'proofs'}
-                  icon={Camera}
-                  label="Proofs"
-                  count={proofs.length}
-                  onClick={() => setActiveTab('proofs')}
-                />
-                <DetailTabButton
-                  active={activeTab === 'timeline'}
-                  icon={Clock3}
-                  label="Timeline"
-                  count={proofs.length}
-                  onClick={() => setActiveTab('timeline')}
-                />
-                <DetailTabButton
-                  active={activeTab === 'participants'}
-                  icon={Users}
-                  label="Participants"
-                  count={participants.length}
-                  onClick={() => setActiveTab('participants')}
-                />
-                <DetailTabButton
-                  active={activeTab === 'comments'}
-                  icon={MessageSquare}
-                  label="Comments"
-                  onClick={() => setActiveTab('comments')}
-                />
+                <span className="text-xs text-white/30">· swipe to browse</span>
               </div>
             </div>
-
-            <div className="px-4 py-5">
-              <AnimatePresence mode="wait">
-                {activeTab === 'proofs' && (
-                  <motion.div
-                    key="proofs"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.22 }}
-                  >
-                    <ProofsSection proofs={proofs} title="Proof gallery" variant="immersive" />
-                    {cheers.length > 0 && (
-                      <div className="mt-6">
-                        <CheerGallery cheers={cheers} />
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-
-                {activeTab === 'timeline' && (
-                  <motion.div
-                    key="timeline"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.22 }}
-                    className="space-y-5"
-                  >
-                    <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
-                      <div className="mb-4 flex items-center gap-2">
-                        <CheckCircle2 className="h-5 w-5 text-slate-700" />
-                        <h2 className="text-lg font-black text-[#14121F]">Verification status</h2>
-                      </div>
-                      <VerificationResults pactId={pact.id} />
-                    </section>
-
-                    <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
-                      <div className="mb-4 flex items-center gap-2">
-                        <Clock3 className="h-5 w-5 text-slate-700" />
-                        <h2 className="text-lg font-black text-[#14121F]">Proof timeline</h2>
-                      </div>
-                      <ProofTimeline proofs={proofs} />
-                    </section>
-                  </motion.div>
-                )}
-
-                {activeTab === 'participants' && (
-                  <motion.div
-                    key="participants"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.22 }}
-                  >
-                    <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
-                      <div className="mb-4 flex items-center gap-2">
-                        <Users className="h-5 w-5 text-slate-700" />
-                        <h2 className="text-lg font-black text-[#14121F]">Pact members</h2>
-                      </div>
-                      <div className="flex flex-wrap gap-3">
-                        {participants.length > 0 ? (
-                          participants.map((participant: any) => (
-                            <div key={participant.id || participant.user_id} className="flex items-center gap-3 rounded-full border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] px-3 py-2">
-                  <Avatar name={participant.username} avatarUrl={participant.avatar_url} size={40} />
-                              <div>
-                                <p className="text-sm font-semibold text-[#14121F]">@{participant.username}</p>
-                                <p className="text-xs uppercase tracking-[0.18em] text-[#9CA3AF]">{participant.status || 'active'}</p>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-sm text-[#9CA3AF]">No participant data yet.</p>
-                        )}
-                      </div>
-                    </section>
-                  </motion.div>
-                )}
-
-                {activeTab === 'comments' && (
-                  <motion.div
-                    key="comments"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.22 }}
-                  >
-                    <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
-                      <h2 className="mb-4 text-lg font-black text-[#14121F]">Discussion</h2>
-                      <CommentSection pactId={pact.id} />
-                    </section>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            <PactDetailCarousel panels={detailPanels} activeIndex={activeIndex} onIndexChange={setActiveIndex} />
           </section>
         </motion.div>
       </div>

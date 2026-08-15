@@ -128,7 +128,9 @@ export default function CirclesPage() {
         </div>
 
         {/* Main Content */}
-        <div className="px-4 py-6">
+        {/* pb-28: clearance for the floating pill BottomNav so the last card
+            in the list (or the first, on short lists) isn't covered. */}
+        <div className="px-4 py-6 pb-28">
         {/* Search and Filters */}
         <div className="space-y-5 mb-8">
           {/* Search Bar */}

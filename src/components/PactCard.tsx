@@ -24,7 +24,7 @@ export default function PactCard({
     <FeedPactCard
       pact={pact}
       userVote={userVote ?? pact.user_vote ?? pact.userVote ?? null}
-      onVote={onVote as ((pactId: number, vote: 'support' | 'skip') => Promise<void> | void) | undefined}
+      onVote={onVote as ((pactId: number, vote: 'skip') => Promise<void> | void) | undefined}
       onProofUpload={onProofUpload}
       canUploadProof={canUploadProof}
       canReport={canReport}

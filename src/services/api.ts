@@ -379,7 +379,6 @@ export const pactService = {
     const path = vote === 'support' || vote === 'believe' ? 'vote-support' : 'vote-skip';
     return api.post(`/api/pacts/${id}/${path}`);
   },
-  support: (id: number) => api.post(`/api/pacts/${id}/vote-support`),
   skip: (id: number) => api.post(`/api/pacts/${id}/vote-skip`),
   join: (id: number) => api.post(`/api/pacts/${id}/join`),
   report: (id: number, reason: 'fake_or_ai' | 'spam' | 'offensive') =>

@@ -57,21 +57,32 @@ function makeIdempotencyKey() {
 export function CreatePactFlowProvider({
   children,
   initialCircleId,
+  initialDescription,
 }: {
   children: React.ReactNode;
   /** Pre-set circle audience — skips the audience question entirely. */
   initialCircleId?: number | null;
+  /**
+   * Carries over free text typed elsewhere (e.g. the Dare flow's "switch to
+   * a Pact" nudge) so it isn't lost when bridging flows. Seeds
+   * descriptionOverride, which generate.ts already prefers over the
+   * auto-generated description.
+   */
+  initialDescription?: string | null;
 }) {
   const [draft, setDraft] = useState<PactDraft>(() => {
-    const base = createEmptyDraft();
+    let base = createEmptyDraft();
     if (initialCircleId != null) {
-      return {
+      base = {
         ...base,
         audience: 'My Circle',
         visibility: 'My Circle',
         circleId: initialCircleId,
         audiencePreset: true,
       };
+    }
+    if (initialDescription?.trim()) {
+      base = { ...base, descriptionOverride: initialDescription.trim() };
     }
     return base;
   });

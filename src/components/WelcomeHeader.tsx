@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, Plus, Search, Sparkles } from 'lucide-react'
+import { Bell, Plus, Search, Users } from 'lucide-react'
 import UserAvatarLink from '@/components/UserAvatarLink'
 
 interface WelcomeHeaderProps {
@@ -9,7 +9,13 @@ interface WelcomeHeaderProps {
   notificationCount?: number
   onNotificationsClick?: () => void
   onCreatePact?: () => void
-  onCreateDare?: () => void
+  /**
+   * "My Circles" is now the home page's primary action — Dare has been
+   * deliberately dropped from this row entirely (still reachable via the
+   * bottom nav) and Circles takes over the pink primary slot New Pact used
+   * to occupy. Don't add Dare back here without checking first.
+   */
+  onNavigateCircles?: () => void
   onSearch?: () => void
   actionsDisabled?: boolean
   /** Current streak in days — wraps the avatar in a tier ring when provided. */
@@ -24,7 +30,7 @@ export default function WelcomeHeader({
   notificationCount = 3,
   onNotificationsClick,
   onCreatePact,
-  onCreateDare,
+  onNavigateCircles,
   onSearch,
   actionsDisabled = false,
   streak,
@@ -75,23 +81,25 @@ export default function WelcomeHeader({
         </div>
 
         <div className="mt-3 flex gap-2">
+          {/* Primary slot: My Circles — the most prominent home page action. */}
           <button
-            onClick={onCreatePact}
+            onClick={onNavigateCircles}
             disabled={actionsDisabled}
             className="pact-btn-glow flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
             style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
           >
-            <Plus className="h-4 w-4" strokeWidth={2.4} />
-            New Pact
+            <Users className="h-4 w-4" strokeWidth={2.4} />
+            My Circles
           </button>
+          {/* Secondary slot: + New Pact — same action as before, moved here. */}
           <button
-            onClick={onCreateDare}
+            onClick={onCreatePact}
             disabled={actionsDisabled}
             className="pact-btn-glow flex flex-1 items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
             style={{ borderColor: 'var(--pact-violet)', background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
           >
-            <Sparkles className="h-4 w-4" strokeWidth={2.2} />
-            New Dare
+            <Plus className="h-4 w-4" strokeWidth={2.2} />
+            New Pact
           </button>
         </div>
       </div>
