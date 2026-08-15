@@ -247,6 +247,25 @@ section + section {
   animation: avatar-ring-breathe 3.5s ease-in-out infinite;
 }
 
+/* PremiumJoinButton's signature aura glow (see src/components/PremiumJoinButton.tsx).
+   Same breathing technique as the Avatar ring glow above, but on its own
+   faster ~2.2s cycle so the Join button reads as its own motif. */
+@keyframes join-btn-breathe {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.join-btn-breathe {
+  animation: join-btn-breathe 2.2s ease-in-out infinite;
+}
+
 /* ==========================================================================
    Create-a-Pact tap-flow — self-contained immersive theme.
    Scoped entirely under .pact-flow so the rest of the app's light theme

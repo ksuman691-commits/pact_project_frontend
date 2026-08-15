@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
 import { ChevronRight, Flag, MessageCircle, Share2, FileImage, ArrowLeft, ArrowRight, Camera, PartyPopper } from 'lucide-react';
 import ProofUploadModal from './ProofUploadModal';
 import ProofMediaCarousel from './ProofMediaCarousel';
 import Avatar from './Avatar';
-import { useReportPact } from '@/hooks/usePactActions';
+import PremiumJoinButton from './PremiumJoinButton';
+import { useReportPact, isNotParticipantError } from '@/hooks/usePactActions';
 import { useAuthStore } from '@/store/auth';
 import { pactService } from '@/services/api';
 import toast from 'react-hot-toast';
@@ -162,6 +163,11 @@ export default function FeedPactCard({
   const [displaySupportCount, setDisplaySupportCount] = useState(0);
   const [isJoining, setIsJoining] = useState(false);
   const [activeProofIndex, setActiveProofIndex] = useState(0);
+  // Swipe-right (or the support button) on a pact the user hasn't joined
+  // used to bounce them out to a blocking "must be a participant" error
+  // toast — a dead end right when they showed positive intent. This instead
+  // slides up an inline "Join to support this pact" prompt over the card.
+  const [showJoinNudge, setShowJoinNudge] = useState(false);
 
   useEffect(() => {
     setDragX(0);
@@ -173,6 +179,7 @@ export default function FeedPactCard({
     setShowActionTag(false);
     committedRef.current = false;
     setActiveProofIndex(0);
+    setShowJoinNudge(false);
   }, [pact.id]);
 
   useEffect(() => {
@@ -273,12 +280,22 @@ export default function FeedPactCard({
 
       setIsVoting(false);
       resetDrag();
-    } catch {
+    } catch (error) {
       setDisplayVote(previousVote);
       setDisplaySupportCount(Number(pact.support_count ?? pact.supportPool ?? 0));
       committedRef.current = false;
       setIsVoting(false);
       resetDrag();
+
+      // Swiping "support" on a pact the user hasn't joined fails server-side
+      // with this specific error. Rather than a dead-end toast, keep the
+      // gesture's momentum: slide up an inline "Join to support this pact"
+      // prompt instead. Only do this when joining is actually possible —
+      // otherwise (pact full/inactive/etc.) there's nothing the nudge could
+      // offer, so fall back to the normal error toast.
+      if (direction === 'support' && isNotParticipantError(error) && joinAllowed) {
+        setShowJoinNudge(true);
+      }
     }
   };
 
@@ -614,14 +631,7 @@ export default function FeedPactCard({
                 )}
 
                 {joinAllowed && (
-                  <button
-                    type="button"
-                    onClick={handleJoinPact}
-                    disabled={isJoining}
-                    className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-[#EDE9FE] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-white"
-                  >
-                    {isJoining ? 'joining...' : 'join pact'}
-                  </button>
+                  <PremiumJoinButton onClick={handleJoinPact} loading={isJoining} size="sm" />
                 )}
 
                 {!joinAllowed && pact.join_block_reason && (
@@ -665,6 +675,41 @@ export default function FeedPactCard({
                 )}
               </div>
             </div>
+
+            {/* Swipe-right (or the support button) on a pact the user hasn't
+                joined used to bounce them out to a blocking error toast —
+                killing momentum right when they showed positive intent.
+                This slides up over the card instead, keeping the gesture's
+                context intact. */}
+            <AnimatePresence>
+              {showJoinNudge && (
+                <motion.div
+                  initial={{ y: '100%' }}
+                  animate={{ y: 0 }}
+                  exit={{ y: '100%' }}
+                  transition={{ duration: 0.28, ease: 'easeOut' }}
+                  className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-slate-950/92 px-6 text-center backdrop-blur-sm"
+                >
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full border border-emerald-400/40 bg-emerald-400/15">
+                    <ArrowRight className="h-6 w-6 text-emerald-300" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-black text-white">Join to support this pact</p>
+                    <p className="mt-1.5 text-sm text-white/65">
+                      Only members can vote support/skip — join {creatorLabel ? `@${creatorLabel}'s` : 'this'} pact to back it.
+                    </p>
+                  </div>
+                  <PremiumJoinButton onClick={handleJoinPact} loading={isJoining} size="md" />
+                  <button
+                    type="button"
+                    onClick={() => setShowJoinNudge(false)}
+                    className="text-sm font-semibold text-white/50 transition hover:text-white/80"
+                  >
+                    Not now
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </motion.div>
