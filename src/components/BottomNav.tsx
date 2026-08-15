@@ -38,6 +38,19 @@ export default function BottomNav() {
           so a thin rotating rainbow border shows all the way around it —
           same ring-band technique as Avatar's decorative ring. */}
       <div className="relative w-full max-w-[280px] rounded-full">
+        {/* Glow layer: same breathing technique as Avatar's ring glow (Layer 1
+            in Avatar.tsx) — a blurred, oversized copy of the rainbow gradient
+            sitting behind the ring band so the stripe itself appears to glow,
+            not just spin. Independently timed from the rotation below. */}
+        <div
+          aria-hidden="true"
+          className="avatar-ring-breathe pointer-events-none absolute -inset-1.5 rounded-full blur-md"
+          style={{
+            background:
+              'conic-gradient(from 0deg, var(--pact-pink), var(--pact-gold), var(--pact-mint), var(--pact-violet), var(--pact-pink))',
+            opacity: 0.8,
+          }}
+        />
         <div
           aria-hidden="true"
           className="avatar-ring-spin pointer-events-none absolute inset-0 rounded-full"
