@@ -80,8 +80,8 @@ export default function FeedPageClient() {
     router.push('/notifications')
   }
 
-  const handleCreateDare = () => {
-    router.push('/dares')
+  const handleNavigateCircles = () => {
+    router.push('/circles')
   }
 
   return (
@@ -92,7 +92,7 @@ export default function FeedPageClient() {
         notificationCount={unreadCount}
         onNotificationsClick={handleNotificationsClick}
         onCreatePact={handleCreatePact}
-        onCreateDare={handleCreateDare}
+        onNavigateCircles={handleNavigateCircles}
         onSearch={() => setSearchModalOpen(true)}
         actionsDisabled={!isInitialized}
         streak={currentStreak}

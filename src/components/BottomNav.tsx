@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, TrendingUp, Zap } from 'lucide-react'
+import { Home, Users, Zap } from 'lucide-react'
 
+// Leaderboard was dropped from the nav deliberately (it 404s and we're not
+// fixing that route here) — exactly 3 items, Home → Circles → Dares.
 const authItems = [
-  { href: '/feed', label: 'Feed', icon: Home },
-  { href: '/dares', label: 'Dares', icon: Zap },
+  { href: '/feed', label: 'Home', icon: Home },
   { href: '/circles', label: 'Circles', icon: Users },
-  { href: '/leaderboard', label: 'Leaderboard', icon: TrendingUp },
+  { href: '/dares', label: 'Dares', icon: Zap },
 ]
 
 export default function BottomNav() {
@@ -25,38 +26,73 @@ export default function BottomNav() {
   const isActive = (href: string) => pathname === href || pathname?.startsWith(href + '/')
 
   return (
-    <nav
-      className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md border-t backdrop-blur-xl"
-      style={{
-        background: 'var(--pact-surface, #F4F2FB)',
-        borderColor: 'var(--pact-hairline, rgba(20,18,31,0.06))',
-        boxShadow: '0 -8px 24px var(--pact-shadow-violet, rgba(94,84,142,0.08))',
-      }}
-    >
-      <div className="flex items-center justify-around px-4 py-4 pb-safe gap-2">
+    // Floating pill, not an edge-to-edge strip — the dark page background
+    // (each route's own .pact-flow wrapper) shows through around and beneath
+    // it instead of the old light strip. See globals.css: --pact-* tokens
+    // were previously scoped to .pact-flow only, so this nav (rendered in
+    // the root layout, outside any page's .pact-flow div) fell back to the
+    // hardcoded light defaults baked into the old inline styles below.
+    <nav className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+      <div
+        className="flex w-full max-w-[280px] items-center gap-1 rounded-full border px-2 py-2 backdrop-blur-xl"
+        style={{
+          background: 'var(--pact-surface)',
+          borderColor: 'var(--pact-hairline)',
+          boxShadow: '0 12px 32px var(--pact-shadow-violet)',
+        }}
+      >
         {authItems.map((item) => {
           const Icon = item.icon
           const active = isActive(item.href)
+          const isDares = item.href === '/dares'
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="pact-btn-glow relative w-12 h-12 rounded-full flex items-center justify-center transition-all"
-              style={
-                active
-                  ? {
-                      background: 'linear-gradient(135deg, var(--pact-pink, #14121F), var(--pact-violet, #14121F))',
-                      color: 'var(--pact-text, #ffffff)',
-                      boxShadow: '0 4px 16px var(--pact-shadow-violet, rgba(20,18,31,0.15))',
-                    }
-                  : {
-                      background: 'var(--pact-surface-2, #ffffff)',
-                      color: 'var(--pact-text-faint, #6B7280)',
-                    }
-              }
+              className="relative flex flex-1 items-center justify-center py-1"
               title={item.label}
+              aria-label={item.label}
+              aria-current={active ? 'page' : undefined}
             >
-              <Icon className="w-5 h-5" strokeWidth={2} />
+              <span className="relative flex h-11 w-11 items-center justify-center rounded-full transition-transform active:scale-90">
+                {/* Active-tab illumination: soft violet/pink aura behind the
+                    icon, breathing at the same cadence as PremiumJoinButton's
+                    aura so "you are here" reads consistently across the app. */}
+                {active && (
+                  <span
+                    aria-hidden="true"
+                    className="pact-bottomnav-active-glow pointer-events-none absolute inset-0 rounded-full blur-md"
+                    style={{ background: 'radial-gradient(circle, rgba(139,107,255,0.55), rgba(255,79,135,0.4) 55%, transparent 78%)' }}
+                  />
+                )}
+                <span
+                  className="relative z-10 flex h-full w-full items-center justify-center rounded-full transition-colors"
+                  style={
+                    active
+                      ? {
+                          background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))',
+                          color: 'var(--pact-text)',
+                          boxShadow: '0 4px 14px var(--pact-shadow-violet)',
+                        }
+                      : { color: 'var(--pact-text-faint)' }
+                  }
+                >
+                  <Icon className="h-5 w-5" strokeWidth={2} />
+                </span>
+                {/* Dares "live" indicator: a small ambient pulsing dot, not an
+                    unread badge — always-on decorative pulse (no active/recent
+                    dares count exists anywhere in the app yet to drive it off
+                    real data; revisit if one gets added). Corner-positioned so
+                    it stays visually distinct from the active-tab glow above
+                    even when Dares is the active tab. */}
+                {isDares && (
+                  <span
+                    aria-hidden="true"
+                    className="pact-bottomnav-live-dot pointer-events-none absolute -top-0.5 right-0 z-20 h-2 w-2 rounded-full"
+                    style={{ background: 'var(--pact-mint)', boxShadow: '0 0 6px var(--pact-mint)' }}
+                  />
+                )}
+              </span>
             </Link>
           )
         })}

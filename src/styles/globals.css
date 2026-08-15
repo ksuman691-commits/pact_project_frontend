@@ -31,6 +31,29 @@
   
   /* Borders */
   --border-hairline: rgba(20, 18, 31, 0.06);
+
+  /* Dark "pact" palette — was previously declared only inside .pact-flow,
+     which meant anything rendered outside a page's .pact-flow wrapper (like
+     BottomNav, which lives at the root layout level as a sibling of
+     {children}) fell through to hardcoded light fallback values instead of
+     this palette. Promoted to :root so it's available everywhere; .pact-flow
+     below keeps its own structural rules (background-image, font, min-height)
+     which still just reference these same variables. */
+  --pact-bg: #14091f;
+  --pact-surface: #241537;
+  --pact-surface-raised: #2e1a44;
+  --pact-surface-2: #2f1c47;
+  --pact-surface-3: #3a2359;
+  --pact-pink: #ff4f87;
+  --pact-gold: #ffc24b;
+  --pact-violet: #8b6bff;
+  --pact-mint: #4fe0c0;
+  --pact-text: #f6f1ff;
+  --pact-text-muted: #b8a9d6;
+  --pact-text-dim: #b9a9d6;
+  --pact-text-faint: #7a6693;
+  --pact-hairline: rgba(246, 241, 255, 0.1);
+  --pact-shadow-violet: rgba(139, 107, 255, 0.25);
 }
 
 * {
@@ -266,28 +289,39 @@ section + section {
   animation: join-btn-breathe 2.2s ease-in-out infinite;
 }
 
+/* BottomNav (see src/components/BottomNav.tsx): active-tab illumination and
+   the Dares live-indicator dot both reuse the breathing keyframes above
+   rather than inventing new motion — the active glow borrows join-btn-breathe's
+   faster cadence (reads as a deliberate "you are here" highlight), the Dares
+   dot borrows avatar-ring-breathe's slower, subtler cadence (reads as ambient
+   "things are happening" rather than an unread badge). Defined as their own
+   classes (not reused directly) so reduced-motion can be scoped to just the
+   nav without touching Avatar/PremiumJoinButton. */
+.pact-bottomnav-active-glow {
+  animation: join-btn-breathe 2.2s ease-in-out infinite;
+}
+
+.pact-bottomnav-live-dot {
+  animation: avatar-ring-breathe 3.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pact-bottomnav-active-glow,
+  .pact-bottomnav-live-dot {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* ==========================================================================
    Create-a-Pact tap-flow — self-contained immersive theme.
    Scoped entirely under .pact-flow so the rest of the app's light theme
    (and global h1/h2/h3/p element rules above) is never affected.
    ========================================================================== */
 .pact-flow {
-  --pact-bg: #14091f;
-  --pact-surface: #241537;
-  --pact-surface-raised: #2e1a44;
-  --pact-surface-2: #2f1c47;
-  --pact-surface-3: #3a2359;
-  --pact-pink: #ff4f87;
-  --pact-gold: #ffc24b;
-  --pact-violet: #8b6bff;
-  --pact-mint: #4fe0c0;
-  --pact-text: #f6f1ff;
-  --pact-text-muted: #b8a9d6;
-  --pact-text-dim: #b9a9d6;
-  --pact-text-faint: #7a6693;
-  --pact-hairline: rgba(246, 241, 255, 0.1);
-  --pact-shadow-violet: rgba(139, 107, 255, 0.25);
-
+  /* Color tokens now live in :root (see above) — this block keeps only the
+     structural rules specific to the full-page immersive flow. */
   background: var(--pact-bg);
   background-image:
     radial-gradient(60% 50% at 15% 0%, rgba(139, 107, 255, 0.12), transparent 60%),
