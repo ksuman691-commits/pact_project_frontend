@@ -330,10 +330,17 @@ export default function PublicProfilePage() {
             </div>
           )}
           {activeTab === 'circles' && (
+            // Deliberately not wired to real data: the backend has no
+            // "circles for user X" endpoint (only `/api/circles`, which is
+            // scoped to the authenticated caller). Rendering `myCircles`
+            // here would silently show the *viewer's* circles under the
+            // profile owner's name. See BACKEND_HANDOFF_USER_CIRCLES.md.
             <div className="text-center py-12 text-[var(--pact-text-faint)]">
               <p className="font-medium mb-2">{isOwnProfile ? 'Your circles' : `Circles for @${profileUser.username}`}</p>
               <p className="text-sm">
-                {isOwnProfile ? 'Circle data will appear here.' : 'Circle membership data will appear here.'}
+                {isOwnProfile
+                  ? 'Circle data will appear here.'
+                  : "This isn't available yet — viewing another member's circle memberships requires a backend endpoint that doesn't exist yet."}
               </p>
             </div>
           )}
