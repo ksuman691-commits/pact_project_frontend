@@ -11,7 +11,6 @@ import ProfileStats from '@/components/ProfileStats';
 import ProfileTabs, { PactsTab } from '@/components/ProfileTabs';
 import AchievementsBadges from '@/components/AchievementsBadges';
 import ActivityStrip from '@/components/pact-ui/ActivityStrip';
-import CirclesRow from '@/components/pact-ui/CirclesRow';
 import { LogOut, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useFollowers, useFollowing } from '@/hooks/useFollows';
@@ -176,26 +175,8 @@ export default function Profile() {
           atRisk={isAtRisk}
         />
 
-        {/* Activity strip */}
-        <div className="pact-card rounded-2xl p-4 mb-6">
-          <ActivityStrip activityDates={activityDates} />
-        </div>
-
-        {/* Circles row */}
-        <div className="mb-6">
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-[var(--pact-text-dim)]">Your circles</h2>
-            <button
-              onClick={() => router.push('/circles')}
-              className="text-xs font-medium text-[var(--pact-violet)] hover:underline"
-            >
-              Browse all
-            </button>
-          </div>
-          <CirclesRow circles={myCircles} />
-        </div>
-
-        {/* Stats */}
+        {/* Stats — surfaced immediately after the Hero (name/avatar) so the
+            most important numbers aren't buried below secondary content. */}
         <ProfileStats
           stats={stats}
           onPactClick={() => setShowPactsModal(true)}
@@ -207,6 +188,12 @@ export default function Profile() {
         <ProfileTabs onTabChange={setActiveTab}>
           {activeTab === 'pacts' && (
             <div className="space-y-4">
+              {/* Moved from the top of the page — activity heat is most
+                  relevant right next to the pacts it reflects, and this
+                  keeps Stats + Tabs visible immediately below the Hero. */}
+              <div className="pact-card rounded-2xl p-4">
+                <ActivityStrip activityDates={activityDates} />
+              </div>
               <h2 className="text-lg font-black text-[var(--pact-text)]">Your pacts</h2>
               <PactsTab pacts={createdPacts} joinedPacts={joinedPacts} votedPacts={votedPacts} allowJoinedUploads={true} />
             </div>
