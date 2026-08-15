@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Users, Star, ChevronRight } from 'lucide-react';
 import { cardHoverTap } from '@/components/pact-ui/cardMotion';
 import Avatar from '@/components/Avatar';
+import UserAvatarLink from '@/components/UserAvatarLink';
 
 interface CircleCardProps {
   circle: {
@@ -52,7 +53,17 @@ export default function CircleCard({ circle, onJoin, index = 0 }: CircleCardProp
                 </p>
                 {circle.ownerUsername && (
                   <div className="mt-2 flex items-center gap-2">
-                    <Avatar name={circle.ownerUsername} avatarUrl={circle.ownerAvatarUrl} size={24} />
+                    {/* stopPropagation: this whole card is wrapped in a Link
+                        to the circle page, so without it tapping the owner's
+                        avatar would just navigate there instead of to their
+                        profile. */}
+                    <UserAvatarLink
+                      name={circle.ownerUsername}
+                      avatarUrl={circle.ownerAvatarUrl}
+                      username={circle.ownerUsername}
+                      size={24}
+                      stopPropagation
+                    />
                     <p className="text-xs font-medium text-[var(--pact-text-faint)]">Owner @{circle.ownerUsername}</p>
                   </div>
                 )}

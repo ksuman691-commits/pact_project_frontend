@@ -7,6 +7,7 @@ import { ChevronRight, Flag, MessageCircle, Share2, FileImage, ArrowLeft, ArrowR
 import ProofUploadModal from './ProofUploadModal';
 import ProofMediaCarousel from './ProofMediaCarousel';
 import Avatar from './Avatar';
+import UserAvatarLink from './UserAvatarLink';
 import PremiumJoinButton from './PremiumJoinButton';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useCreateCheer } from '@/hooks/usePactMutations';
@@ -496,7 +497,7 @@ export default function FeedPactCard({
         whileHover={{ y: -2, boxShadow: '0 20px 70px rgba(2,6,23,0.45), 0 12px 28px rgba(139,107,255,0.25)' }}
         whileTap={{ scale: 0.98 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className="mx-2 overflow-hidden rounded-[32px] border border-white/8 bg-slate-950 text-white shadow-[0_20px_70px_rgba(2,6,23,0.45)] sm:mx-0">
+        className="mx-2 overflow-hidden rounded-[32px] border border-white/20 bg-slate-950 text-white shadow-[0_20px_70px_rgba(2,6,23,0.45)] sm:mx-0">
         <div
           className="relative isolate overflow-hidden rounded-[32px] touch-pan-y"
           style={transformStyle}
@@ -553,7 +554,17 @@ export default function FeedPactCard({
             <div className="absolute left-4 top-4 right-4 z-10 flex items-start justify-between gap-3">
               <div className={`flex items-center gap-3 rounded-full px-3 py-2 backdrop-blur-md ${hasProof ? 'bg-black/15' : 'bg-white/70 shadow-[0_2px_8px_rgba(139,92,246,0.12)]'}`}>
                 <div className={`h-10 w-10 overflow-hidden rounded-full border ${hasProof ? 'border-white/20' : 'border-violet-200'}`}>
-                  <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={40} />
+                  {creatorProfileHref ? (
+                    <UserAvatarLink
+                      name={creatorLabel}
+                      avatarUrl={creatorAvatarUrl}
+                      username={creatorUsername}
+                      size={40}
+                      stopPropagation
+                    />
+                  ) : (
+                    <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={40} />
+                  )}
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
@@ -650,7 +661,10 @@ export default function FeedPactCard({
             <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 via-black/65 to-transparent px-4 pb-4 pt-16">
               <div className="space-y-3 pr-16">
                 <Link href={resolvedDetailHref} className="block">
-                  <h2 className="max-w-[85%] text-3xl font-black leading-[1.02] tracking-tight text-white sm:text-4xl">
+                  <h2
+                    className="max-w-[85%] text-3xl font-black leading-[1.02] tracking-tight text-white sm:text-4xl"
+                    style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}
+                  >
                     {pact.title}
                   </h2>
                 </Link>
@@ -709,21 +723,26 @@ export default function FeedPactCard({
                         className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/12 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white/8"
                       >
                         <ArrowLeft className="h-4 w-4" />
-                        skip
+                        Skip
                       </button>
                     )}
-                    {rightAction && (
+                    {/*
+                      Only render this pill for "cheer" — when rightAction is
+                      "join" the bling PremiumJoinButton below the title is
+                      already the join CTA, and rendering both put two
+                      differently-styled "join" affordances on screen at
+                      once. Swipe-right/double-tap still work either way:
+                      they call triggerRightAction directly and don't depend
+                      on this button being rendered.
+                    */}
+                    {rightAction === 'cheer' && (
                       <button
                         type="button"
                         onClick={triggerRightAction}
                         disabled={isCheering}
-                        className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                          rightAction === 'join'
-                            ? 'border-emerald-400/50 bg-emerald-400/12 text-emerald-200 hover:bg-emerald-400/18'
-                            : 'border-[var(--pact-gold)]/50 bg-[var(--pact-gold)]/12 text-[var(--pact-gold)] hover:bg-[var(--pact-gold)]/18'
-                        }`}
+                        className="inline-flex items-center gap-2 rounded-full border border-[var(--pact-gold)]/50 bg-[var(--pact-gold)]/12 px-4 py-2 text-sm font-semibold text-[var(--pact-gold)] transition hover:bg-[var(--pact-gold)]/18 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {isCheering ? <Loader2 className="h-4 w-4 animate-spin" /> : rightAction === 'join' ? 'join' : 'cheer'}
+                        {isCheering ? <Loader2 className="h-4 w-4 animate-spin" /> : 'cheer'}
                         <ArrowRight className="h-4 w-4" />
                       </button>
                     )}

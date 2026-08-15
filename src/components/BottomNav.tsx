@@ -33,15 +33,42 @@ export default function BottomNav() {
     // the root layout, outside any page's .pact-flow div) fell back to the
     // hardcoded light defaults baked into the old inline styles below.
     <nav className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-      <div
-        className="flex w-full max-w-[280px] items-center gap-1 rounded-full border px-2 py-2 backdrop-blur-xl"
-        style={{
-          background: 'var(--pact-surface)',
-          borderColor: 'var(--pact-hairline)',
-          boxShadow: '0 12px 32px var(--pact-shadow-violet)',
-        }}
-      >
-        {authItems.map((item) => {
+      {/* Rainbow ring wrapper: a rotating multi-hue conic-gradient layer
+          fills this outer box, and the pill below sits inset by `margin`
+          so a thin rotating rainbow border shows all the way around it —
+          same ring-band technique as Avatar's decorative ring. */}
+      <div className="relative w-full max-w-[280px] rounded-full">
+        {/* Glow layer: same breathing technique as Avatar's ring glow (Layer 1
+            in Avatar.tsx) — a blurred, oversized copy of the rainbow gradient
+            sitting behind the ring band so the stripe itself appears to glow,
+            not just spin. Independently timed from the rotation below. */}
+        <div
+          aria-hidden="true"
+          className="avatar-ring-breathe pointer-events-none absolute -inset-1.5 rounded-full blur-md"
+          style={{
+            background:
+              'conic-gradient(from 0deg, var(--pact-pink), var(--pact-gold), var(--pact-mint), var(--pact-violet), var(--pact-pink))',
+            opacity: 0.8,
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="avatar-ring-spin pointer-events-none absolute inset-0 rounded-full"
+          style={{
+            background:
+              'conic-gradient(from 0deg, var(--pact-pink), var(--pact-gold), var(--pact-mint), var(--pact-violet), var(--pact-pink))',
+          }}
+        />
+        <div
+          className="relative flex items-center gap-1 rounded-full border px-2 py-2 backdrop-blur-xl"
+          style={{
+            margin: 2,
+            background: 'var(--pact-surface)',
+            borderColor: 'var(--pact-hairline)',
+            boxShadow: '0 12px 32px var(--pact-shadow-violet)',
+          }}
+        >
+          {authItems.map((item) => {
           const Icon = item.icon
           const active = isActive(item.href)
           const isDares = item.href === '/dares'
@@ -95,7 +122,8 @@ export default function BottomNav() {
               </span>
             </Link>
           )
-        })}
+          })}
+        </div>
       </div>
     </nav>
   )

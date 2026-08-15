@@ -1,19 +1,20 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { AlertCircle, Camera, CheckCircle2, Clock3, MessageSquare, Users } from 'lucide-react';
+import { AlertCircle, Camera, CheckCircle2, Clock3, Inbox, MessageSquare, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import TopNav from '@/components/TopNav';
 import FeedPactCard from '@/components/FeedPactCard';
 import ProofsSection from '@/components/ProofsSection';
 import CommentSection from '@/components/CommentSection';
 import VerificationResults from '@/components/VerificationResults';
-import Avatar from '@/components/Avatar';
+import UserAvatarLink from '@/components/UserAvatarLink';
 import CheerButton from '@/components/CheerButton';
 import CheerGallery from '@/components/CheerGallery';
 import PremiumJoinButton from '@/components/PremiumJoinButton';
+import PactJoinRequestsModal from '@/components/PactJoinRequestsModal';
 import PactDetailCarousel, { type DetailCarouselPanel } from '@/components/PactDetailCarousel';
 import { usePact, usePactProofs, usePactCheers } from '@/hooks/usePacts';
 import { useSkipPact } from '@/hooks/usePactActions';
@@ -108,8 +109,10 @@ function ProofTimeline({ proofs }: { proofs: any[] }) {
 export default function PactDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showJoinRequestsModal, setShowJoinRequestsModal] = useState(false);
   const pactId = Number(params.id);
   const { data: pactData, isLoading, isError, refetch: refetchPact } = usePact(pactId);
   const { data: proofsData, refetch: refetchProofs } = usePactProofs(pactId, 50);
@@ -133,6 +136,16 @@ export default function PactDetailPage() {
 
   const participants = useMemo(() => pact?.participants || [], [pact?.participants]);
   const isCreator = Boolean(user && pact?.creator_id === user.id);
+
+  // Deep-linked from a "so-and-so wants to join" notification
+  // (?joinRequests=1) — opens the requests modal automatically once the
+  // pact has loaded and confirmed the current user is the creator.
+  useEffect(() => {
+    if (!pact || !isCreator) return;
+    if (searchParams.get('joinRequests') === '1') {
+      setShowJoinRequestsModal(true);
+    }
+  }, [pact, isCreator, searchParams]);
   const isParticipant = Boolean(
     user && (isCreator || participants.some((participant: any) => participant.id === user.id || participant.user_id === user.id))
   );
@@ -223,7 +236,7 @@ export default function PactDetailPage() {
                       key={participant.id || participant.user_id}
                       className="flex items-center gap-3 rounded-full border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] px-3 py-2"
                     >
-                      <Avatar name={participant.username} avatarUrl={participant.avatar_url} size={40} />
+                      <UserAvatarLink name={participant.username} avatarUrl={participant.avatar_url} username={participant.username} size={40} />
                       <div>
                         <p className="text-sm font-semibold text-[#14121F]">@{participant.username}</p>
                         <p className="text-xs uppercase tracking-[0.18em] text-[#9CA3AF]">{participant.status || 'active'}</p>
@@ -299,6 +312,23 @@ export default function PactDetailPage() {
             hasCheered={hasCheered}
           />
 
+          {isCreator && (
+            <button
+              type="button"
+              onClick={() => setShowJoinRequestsModal(true)}
+              className="flex w-full items-center justify-between gap-3 rounded-[24px] border border-white/10 bg-white/5 px-5 py-4 text-left backdrop-blur-sm transition hover:bg-white/8"
+            >
+              <div className="flex items-center gap-3">
+                <Inbox className="h-5 w-5 text-white/70" />
+                <div>
+                  <p className="text-sm font-semibold text-white">Join requests</p>
+                  <p className="text-xs text-white/60">Review who&apos;s asked to join this pact.</p>
+                </div>
+              </div>
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40">Manage</span>
+            </button>
+          )}
+
           {canCheer && (
             <div className="flex items-center justify-between gap-3 rounded-[24px] border border-white/10 bg-white/5 px-5 py-4 backdrop-blur-sm">
               <div>
@@ -350,6 +380,17 @@ export default function PactDetailPage() {
           </section>
         </motion.div>
       </div>
+
+      {isCreator && (
+        <PactJoinRequestsModal
+          pactId={pact.id}
+          isOpen={showJoinRequestsModal}
+          onClose={() => setShowJoinRequestsModal(false)}
+          onRequestHandled={() => {
+            void Promise.all([refetchPact()]);
+          }}
+        />
+      )}
     </>
   );
 }

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Target, Award, Users, Heart, Circle, Plus } from 'lucide-react';
 import PactCard from './PactCard';
 import AnimatedTabs from '@/components/pact-ui/AnimatedTabs';
-import Avatar from '@/components/Avatar';
+import UserAvatarLink from '@/components/UserAvatarLink';
 
 interface ProfileTabsProps {
   children: React.ReactNode;
@@ -178,7 +178,7 @@ export function FollowersTab({ followers }: { followers: any[] }) {
         followers.map((follower) => (
           <div key={follower.id} className="pact-card flex items-center justify-between p-3 rounded-3xl">
             <div className="flex items-center gap-3">
-              <Avatar name={follower.name} avatarUrl={follower.avatar} size={40} />
+              <UserAvatarLink name={follower.name} avatarUrl={follower.avatar} username={follower.username} size={40} />
               <div>
                 <p className="font-medium text-[var(--pact-text)]">{follower.name}</p>
                 <p className="text-xs text-[var(--pact-text-faint)]">@{follower.username}</p>

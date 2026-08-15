@@ -13,7 +13,7 @@ import CircleLeaderboard from '@/components/CircleLeaderboard';
 import InviteMembersModal from '@/components/InviteMembersModal';
 import PactCard from '@/components/PactCard';
 import { useCountUp } from '@/components/pact-ui/useCountUp';
-import Avatar from '@/components/Avatar';
+import UserAvatarLink from '@/components/UserAvatarLink';
 
 export default function CircleDetailPage() {
   const router = useRouter();
@@ -288,7 +288,7 @@ export default function CircleDetailPage() {
                   style={{ background: 'var(--pact-surface-2)', border: '1px solid var(--pact-hairline)' }}
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    <Avatar name={member.username} avatarUrl={member.avatar_url} size={40} />
+                    <UserAvatarLink name={member.username} avatarUrl={member.avatar_url} username={member.username} size={40} />
                     <div>
                       <p className="font-bold text-[var(--pact-text)]">{member.full_name}</p>
                       <p className="text-sm text-[var(--pact-text-faint)]">@{member.username}</p>

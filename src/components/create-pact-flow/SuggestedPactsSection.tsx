@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useSuggestedPacts } from '@/hooks/useFeedQueries';
 import { pactService } from '@/services/api';
 import type { VibeId } from '@/types/createPactFlow';
-import Avatar from '@/components/Avatar';
+import UserAvatarLink from '@/components/UserAvatarLink';
 
 interface SuggestedPactsSectionProps {
   justPickedVibeId: VibeId | null;
@@ -105,9 +105,17 @@ function SuggestedPactCard({
 }) {
   return (
     <div className="pact-surface flex items-center gap-3 rounded-2xl p-4">
-      <button type="button" onClick={onOpen} aria-hidden="true" className="shrink-0">
-        <Avatar name={pact?.creator} avatarUrl={pact.creatorAvatarUrl} size={40} />
-      </button>
+      {/* A Link can't legally nest inside a <button> (used for the rest of
+          the row's onOpen tap target), so the avatar gets its own div
+          rather than reusing that button like the other fields below. */}
+      <div className="shrink-0">
+        <UserAvatarLink
+          name={pact?.creator || pact?.creator_username}
+          avatarUrl={pact.creatorAvatarUrl}
+          username={pact?.creator_username || null}
+          size={40}
+        />
+      </div>
       <button type="button" onClick={onOpen} className="min-w-0 flex-1 text-left">
         <p className="truncate text-sm font-semibold text-[var(--pact-text)]">{pact.title}</p>
         <p className="pact-mono mt-0.5 text-xs text-[var(--pact-text-muted)]">
