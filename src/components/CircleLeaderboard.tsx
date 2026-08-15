@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, TrendingUp, Zap } from 'lucide-react';
 import { useCountUp } from '@/components/pact-ui/useCountUp';
-import Avatar from '@/components/Avatar';
+import UserAvatarLink from '@/components/UserAvatarLink';
 
 interface LeaderboardEntry {
   rank: number;
@@ -146,7 +146,7 @@ function LeaderboardRow({
         {badge ? entry.rank : `#${entry.rank}`}
       </div>
 
-      <Avatar name={entry.username} avatarUrl={entry.avatarUrl} size={40} />
+      <UserAvatarLink name={entry.username} avatarUrl={entry.avatarUrl} username={entry.username} size={40} />
 
       <div className="flex-1 min-w-0">
         <p className="font-medium text-[var(--pact-text)] truncate">@{entry.username}</p>

@@ -10,7 +10,7 @@ import FeedPactCard from '@/components/FeedPactCard';
 import ProofsSection from '@/components/ProofsSection';
 import CommentSection from '@/components/CommentSection';
 import VerificationResults from '@/components/VerificationResults';
-import Avatar from '@/components/Avatar';
+import UserAvatarLink from '@/components/UserAvatarLink';
 import CheerButton from '@/components/CheerButton';
 import CheerGallery from '@/components/CheerGallery';
 import PremiumJoinButton from '@/components/PremiumJoinButton';
@@ -236,7 +236,7 @@ export default function PactDetailPage() {
                       key={participant.id || participant.user_id}
                       className="flex items-center gap-3 rounded-full border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] px-3 py-2"
                     >
-                      <Avatar name={participant.username} avatarUrl={participant.avatar_url} size={40} />
+                      <UserAvatarLink name={participant.username} avatarUrl={participant.avatar_url} username={participant.username} size={40} />
                       <div>
                         <p className="text-sm font-semibold text-[#14121F]">@{participant.username}</p>
                         <p className="text-xs uppercase tracking-[0.18em] text-[#9CA3AF]">{participant.status || 'active'}</p>

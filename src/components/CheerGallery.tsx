@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { PartyPopper } from 'lucide-react';
-import Avatar from '@/components/Avatar';
+import UserAvatarLink from '@/components/UserAvatarLink';
 
 export interface CheerItem {
   id: number;
@@ -57,7 +57,12 @@ export default function CheerGallery({ cheers }: CheerGalleryProps) {
               </span>
             </div>
             <div className="flex items-center gap-1.5 bg-white px-2 py-1.5">
-              <Avatar name={cheer.sender_username} avatarUrl={cheer.sender_avatar_url} size={18} />
+              <UserAvatarLink
+                name={cheer.sender_username}
+                avatarUrl={cheer.sender_avatar_url}
+                username={cheer.sender_username}
+                size={18}
+              />
               <span className="truncate text-xs font-semibold text-[#14121F]">
                 @{cheer.sender_username || 'member'}
               </span>

@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
 import { usePactComments } from '@/hooks/useFeedQueries';
 import { useAddComment, useDeleteComment } from '@/hooks/usePactMutations';
-import Avatar from '@/components/Avatar';
+import UserAvatarLink from '@/components/UserAvatarLink';
 
 interface Comment {
   id: number;
@@ -37,7 +37,7 @@ function CommentRow({ comment, pactId, currentUserId }: { comment: Comment; pact
     <div className="hover:bg-gray-50 p-4 rounded-[24px] transition border border-gray-100 hover:border-gray-200">
       <div className="flex gap-3">
           <div className="flex-shrink-0">
-            <Avatar name={displayName} avatarUrl={avatarUrl} size={32} />
+            <UserAvatarLink name={displayName} avatarUrl={avatarUrl} username={comment.username} size={32} />
           </div>
 
         <div className="flex-1 min-w-0">
@@ -91,7 +91,7 @@ export default function CommentSection({
       <form onSubmit={handleAddComment} className="border border-gray-200 rounded-[24px] p-4 w-full">
         <div className="flex gap-3">
           <div className="flex-shrink-0">
-            <Avatar name={user?.username} avatarUrl={user?.avatar_url} size={32} />
+            <UserAvatarLink name={user?.username} avatarUrl={user?.avatar_url} size={32} />
           </div>
           <div className="flex-1">
             <input

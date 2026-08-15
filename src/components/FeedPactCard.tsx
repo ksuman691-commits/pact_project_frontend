@@ -7,6 +7,7 @@ import { ChevronRight, Flag, MessageCircle, Share2, FileImage, ArrowLeft, ArrowR
 import ProofUploadModal from './ProofUploadModal';
 import ProofMediaCarousel from './ProofMediaCarousel';
 import Avatar from './Avatar';
+import UserAvatarLink from './UserAvatarLink';
 import PremiumJoinButton from './PremiumJoinButton';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useCreateCheer } from '@/hooks/usePactMutations';
@@ -553,7 +554,17 @@ export default function FeedPactCard({
             <div className="absolute left-4 top-4 right-4 z-10 flex items-start justify-between gap-3">
               <div className={`flex items-center gap-3 rounded-full px-3 py-2 backdrop-blur-md ${hasProof ? 'bg-black/15' : 'bg-white/70 shadow-[0_2px_8px_rgba(139,92,246,0.12)]'}`}>
                 <div className={`h-10 w-10 overflow-hidden rounded-full border ${hasProof ? 'border-white/20' : 'border-violet-200'}`}>
-                  <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={40} />
+                  {creatorProfileHref ? (
+                    <UserAvatarLink
+                      name={creatorLabel}
+                      avatarUrl={creatorAvatarUrl}
+                      username={creatorUsername}
+                      size={40}
+                      stopPropagation
+                    />
+                  ) : (
+                    <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={40} />
+                  )}
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
