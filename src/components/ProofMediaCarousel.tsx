@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { Volume2, VolumeX } from 'lucide-react';
+import Avatar from '@/components/Avatar';
 
 interface ProofMedia {
   id: number | string;
@@ -105,12 +106,8 @@ export default function ProofMediaCarousel({
               </div>
             )}
             <div className="relative z-10 flex flex-col items-center gap-4 px-8 text-center">
-              <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/10 shadow-2xl shadow-black/20 backdrop-blur-sm">
-                {fallbackAvatarUrl ? (
-                  <Image src={fallbackAvatarUrl} alt={fallbackLabel} fill sizes="112px" className="object-cover opacity-90" />
-                ) : (
-                  <span className="text-5xl font-black text-white/80">{fallbackLabel.charAt(0).toUpperCase()}</span>
-                )}
+              <div className="rounded-full border border-white/15 shadow-2xl shadow-black/20 backdrop-blur-sm">
+                <Avatar name={fallbackLabel} avatarUrl={fallbackAvatarUrl} size={112} />
               </div>
               <p className="max-w-[240px] text-sm font-semibold uppercase tracking-[0.2em] text-white/80">
                 no proof uploaded yet — be the first

@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { CheckCircle2, Clock, XCircle } from 'lucide-react';
-import type { DareRecipient, User } from '@/types';
+import type { DareRecipient } from '@/types';
 
 interface DareRecipientsListProps {
   recipients: DareRecipient[];
@@ -14,32 +14,27 @@ const STATUS_CONFIG = {
   pending: {
     label: 'Pending',
     icon: Clock,
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50',
+    color: 'text-[var(--pact-gold)]',
   },
   accepted: {
     label: 'Accepted',
     icon: CheckCircle2,
-    color: 'text-[#A78BFA]',
-    bgColor: 'bg-[#EDE9FE]',
+    color: 'text-[var(--pact-violet)]',
   },
   declined: {
     label: 'Declined',
     icon: XCircle,
-    color: 'text-red-600',
-    bgColor: 'bg-red-50',
+    color: 'text-[var(--pact-pink)]',
   },
   completed: {
     label: 'Completed',
     icon: CheckCircle2,
-    color: 'text-[#A78BFA]',
-    bgColor: 'bg-[#EDE9FE]',
+    color: 'text-[var(--pact-violet)]',
   },
   failed: {
     label: 'Failed',
     icon: XCircle,
-    color: 'text-red-600',
-    bgColor: 'bg-red-50',
+    color: 'text-[var(--pact-pink)]',
   },
 };
 
@@ -48,7 +43,7 @@ export default function DareRecipientsList({ recipients, isLoading }: DareRecipi
     return (
       <div className="space-y-3">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-12 bg-slate-200 rounded-[28px] animate-pulse" />
+          <div key={i} className="pact-shimmer h-12 rounded-[28px]" />
         ))}
       </div>
     );
@@ -57,7 +52,7 @@ export default function DareRecipientsList({ recipients, isLoading }: DareRecipi
   if (!recipients || recipients.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-[#6B7280]">No recipients yet</p>
+        <p className="text-[var(--pact-text-dim)]">No recipients yet</p>
       </div>
     );
   }
@@ -74,8 +69,12 @@ export default function DareRecipientsList({ recipients, isLoading }: DareRecipi
           : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || recipient.user_id}`;
 
         return (
-          <div key={recipient.id} className={`flex items-center gap-3 p-3 rounded-[28px] border border-[rgba(20,18,31,0.06)] ${statusConfig.bgColor}`}>
-            <div className="relative w-10 h-10 rounded-full bg-slate-300 flex-shrink-0 overflow-hidden">
+          <div
+            key={recipient.id}
+            className="flex items-center gap-3 p-3 rounded-[28px] border border-[var(--pact-hairline)]"
+            style={{ background: 'var(--pact-surface)' }}
+          >
+            <div className="relative w-10 h-10 rounded-full flex-shrink-0 overflow-hidden" style={{ background: 'var(--pact-surface-2)' }}>
               <Image
                 src={avatarSrc}
                 alt={user?.username || 'user'}
@@ -87,17 +86,17 @@ export default function DareRecipientsList({ recipients, isLoading }: DareRecipi
                 }}
               />
               {!avatarSrc || avatarSrc.includes('dicebear') ? (
-                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-[#6B7280]">
+                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-[var(--pact-text-muted)]">
                   {(user?.username || '?')[0].toUpperCase()}
                 </div>
               ) : null}
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#14121F] truncate">
+              <p className="text-sm font-semibold text-[var(--pact-text)] truncate">
                 {user?.full_name || user?.username || 'Unknown User'}
               </p>
-              <p className="text-xs text-[#6B7280]">@{user?.username || 'user'}</p>
+              <p className="text-xs text-[var(--pact-text-faint)]">@{user?.username || 'user'}</p>
             </div>
 
             <div className="flex flex-col items-end gap-1">
@@ -106,7 +105,7 @@ export default function DareRecipientsList({ recipients, isLoading }: DareRecipi
                 {statusConfig.label}
               </div>
               {recipient.responded_at && (
-                <p className="text-xs text-[#9CA3AF]">{new Date(recipient.responded_at).toLocaleDateString()}</p>
+                <p className="text-xs text-[var(--pact-text-faint)]">{new Date(recipient.responded_at).toLocaleDateString()}</p>
               )}
             </div>
           </div>

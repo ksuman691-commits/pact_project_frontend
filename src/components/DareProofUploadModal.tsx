@@ -104,13 +104,17 @@ export default function DareProofUploadModal({ isOpen, onClose, dareId }: DarePr
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white w-full max-w-md rounded-[28px] overflow-hidden">
+    <div className="pact-flow fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <div className="pact-card w-full max-w-md rounded-[28px] overflow-hidden" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[rgba(20,18,31,0.06)]">
-          <h2 className="text-lg font-bold text-[#14121F]">Submit Proof</h2>
-          <button onClick={handleClose} disabled={uploadMutation.isPending} className="p-1.5 hover:bg-[#FAF9FE] rounded-[28px]">
-            <X className="w-5 h-5" />
+        <div className="flex items-center justify-between p-4 border-b border-[var(--pact-hairline)]">
+          <h2 className="text-lg font-bold text-[var(--pact-text)]">Submit Proof</h2>
+          <button
+            onClick={handleClose}
+            disabled={uploadMutation.isPending}
+            className="p-1.5 rounded-[28px] transition hover:bg-[var(--pact-surface-2)]"
+          >
+            <X className="w-5 h-5 text-[var(--pact-text)]" />
           </button>
         </div>
 
@@ -118,7 +122,7 @@ export default function DareProofUploadModal({ isOpen, onClose, dareId }: DarePr
         <div className="p-6 space-y-6">
           {/* Proof Type Selection */}
           <div>
-            <label className="block text-sm font-semibold text-[#14121F] mb-3">Proof Type</label>
+            <label className="block text-sm font-semibold text-[var(--pact-text)] mb-3">Proof Type</label>
             <div className="grid grid-cols-3 gap-3">
               {PROOF_TYPES.map(({ id, label, icon: Icon }) => (
                 <button
@@ -129,11 +133,12 @@ export default function DareProofUploadModal({ isOpen, onClose, dareId }: DarePr
                     setPreview(null);
                   }}
                   disabled={uploadMutation.isPending}
-                  className={`p-3 rounded-[28px] border-2 transition flex flex-col items-center gap-2 ${
+                  className="p-3 rounded-[28px] border-2 transition flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={
                     proofType === id
-                      ? 'border-emerald-600 bg-[#EDE9FE]'
-                      : 'border-[rgba(20,18,31,0.06)] hover:border-slate-300'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      ? { borderColor: 'var(--pact-pink)', background: 'var(--pact-surface-raised)', color: 'var(--pact-text)' }
+                      : { borderColor: 'var(--pact-hairline)', color: 'var(--pact-text-dim)' }
+                  }
                 >
                   <Icon className="w-5 h-5" />
                   <span className="text-xs font-semibold">{label}</span>
@@ -145,13 +150,16 @@ export default function DareProofUploadModal({ isOpen, onClose, dareId }: DarePr
           {/* File Upload */}
           {proofType !== 'checklist' && (
             <div>
-              <label className="block text-sm font-semibold text-[#14121F] mb-3">
+              <label className="block text-sm font-semibold text-[var(--pact-text)] mb-3">
                 {proofType === 'photo' ? 'Select Photo' : 'Select Video'}
               </label>
-              <label className="border-2 border-dashed border-slate-300 rounded-[28px] p-6 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 hover:bg-[#EDE9FE] transition">
-                <Upload className="w-8 h-8 text-slate-400 mb-2" />
-                <p className="text-sm font-semibold text-[#14121F]">Click to upload</p>
-                <p className="text-xs text-[#9CA3AF]">or drag and drop</p>
+              <label
+                className="rounded-[28px] p-6 flex flex-col items-center justify-center cursor-pointer transition border-2 border-dashed"
+                style={{ borderColor: 'var(--pact-hairline)', background: 'var(--pact-surface-2)' }}
+              >
+                <Upload className="w-8 h-8 mb-2 text-[var(--pact-text-faint)]" />
+                <p className="text-sm font-semibold text-[var(--pact-text)]">Click to upload</p>
+                <p className="text-xs text-[var(--pact-text-faint)]">or drag and drop</p>
                 <input
                   type="file"
                   accept={proofType === 'photo' ? 'image/*' : 'video/*'}
@@ -163,13 +171,13 @@ export default function DareProofUploadModal({ isOpen, onClose, dareId }: DarePr
 
               {preview && (
                 <div className="mt-3">
-                  <p className="text-xs text-[#6B7280] mb-2">Preview:</p>
+                  <p className="text-xs text-[var(--pact-text-faint)] mb-2">Preview:</p>
                   {proofType === 'photo' ? (
                     <img src={preview} alt="Preview" className="w-full rounded-[28px] max-h-40 object-cover" />
                   ) : (
                     <video src={preview} className="w-full rounded-[28px] max-h-40" controls />
                   )}
-                  {file && <p className="text-xs text-[#6B7280] mt-2">📦 {file.name}</p>}
+                  {file && <p className="text-xs text-[var(--pact-text-faint)] mt-2">{file.name}</p>}
                 </div>
               )}
             </div>
@@ -177,7 +185,7 @@ export default function DareProofUploadModal({ isOpen, onClose, dareId }: DarePr
 
           {/* Caption / Status */}
           <div>
-            <label className="block text-sm font-semibold text-[#14121F] mb-3">
+            <label className="block text-sm font-semibold text-[var(--pact-text)] mb-3">
               {proofType === 'checklist' ? 'Completion Status' : 'Optional Caption'}
             </label>
             <textarea
@@ -186,24 +194,32 @@ export default function DareProofUploadModal({ isOpen, onClose, dareId }: DarePr
               disabled={uploadMutation.isPending}
               placeholder={proofType === 'checklist' ? 'Describe your completion...' : 'Add a caption (optional)'}
               rows={4}
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none disabled:opacity-50"
+              className="w-full px-4 py-2.5 rounded-[28px] resize-none disabled:opacity-50 focus:outline-none focus:ring-2"
+              style={{
+                background: 'var(--pact-surface-2)',
+                border: '1px solid var(--pact-hairline)',
+                color: 'var(--pact-text)',
+                ['--tw-ring-color' as any]: 'var(--pact-violet)',
+              }}
             />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 p-4 border-t border-[rgba(20,18,31,0.06)] bg-[#F4F2FB]">
+        <div className="flex gap-3 p-4 border-t border-[var(--pact-hairline)]" style={{ background: 'var(--pact-surface-2)' }}>
           <button
             onClick={handleClose}
             disabled={uploadMutation.isPending}
-            className="flex-1 px-4 py-2.5 text-[#14121F] hover:bg-slate-200 rounded-[28px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2.5 rounded-[28px] transition disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--pact-surface-raised)]"
+            style={{ color: 'var(--pact-text)' }}
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={uploadMutation.isPending || (proofType !== 'checklist' && !file)}
-            className="flex-1 px-4 py-2.5 bg-[#A78BFA] text-white hover:bg-emerald-700 rounded-[28px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="pact-btn-glow flex-1 px-4 py-2.5 rounded-[28px] disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
           >
             {uploadMutation.isPending ? 'Uploading...' : 'Submit Proof'}
           </button>

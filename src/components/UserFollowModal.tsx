@@ -54,27 +54,27 @@ export default function UserFollowModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-[24px] shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+      <div className="pact-card rounded-3xl shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+        <div className="flex items-center justify-between p-6 border-b" style={{ borderColor: 'var(--pact-hairline)' }}>
           <div className="flex items-center gap-2">
-            <Icon className="w-5 h-5 text-[#A78BFA]" />
-            <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-            <span className="text-gray-600">({users.length})</span>
+            <Icon className="w-5 h-5 text-[var(--pact-violet)]" />
+            <h2 className="text-xl font-bold text-[var(--pact-text)]">{title}</h2>
+            <span className="text-[var(--pact-text-faint)]">({users.length})</span>
           </div>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-[28px] transition"
+            className="p-1 rounded-full transition hover:bg-[var(--pact-surface-2)]"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-[var(--pact-text-faint)]" />
           </button>
         </div>
 
         {/* User List */}
         <div className="overflow-y-auto flex-1">
           {users.length === 0 ? (
-            <div className="flex items-center justify-center py-12 text-gray-500">
+            <div className="flex items-center justify-center py-12 text-[var(--pact-text-faint)]">
               <p>No {type} yet</p>
             </div>
           ) : (
@@ -82,39 +82,30 @@ export default function UserFollowModal({
               {users.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-[28px] transition"
+                  className="flex items-center justify-between p-3 rounded-2xl transition hover:bg-[var(--pact-surface-2)]"
                 >
                   <div className="flex items-center gap-3 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-blue-400 flex items-center justify-center text-white font-bold text-sm">
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm"
+                      style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
+                    >
                       {user.avatar ? user.avatar : user.name.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{user.name}</p>
-                      <p className="text-xs text-gray-500 truncate">@{user.username}</p>
+                      <p className="font-medium text-[var(--pact-text)] truncate">{user.name}</p>
+                      <p className="text-xs text-[var(--pact-text-faint)] truncate">@{user.username}</p>
                     </div>
                   </div>
 
-                  {type === 'following' && (
+                  {(type === 'following' || type === 'followers') && (
                     <button
                       onClick={() => handleFollowClick(user.id)}
-                      className={`px-3 py-1 rounded-[28px] text-sm font-medium transition whitespace-nowrap ${
+                      className="px-3 py-1 rounded-full text-sm font-medium transition whitespace-nowrap"
+                      style={
                         followingState[user.id]
-                          ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                      }`}
-                    >
-                      {followingState[user.id] ? 'Unfollow' : 'Follow'}
-                    </button>
-                  )}
-
-                  {type === 'followers' && (
-                    <button
-                      onClick={() => handleFollowClick(user.id)}
-                      className={`px-3 py-1 rounded-[28px] text-sm font-medium transition whitespace-nowrap ${
-                        followingState[user.id]
-                          ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                          ? { background: 'var(--pact-surface-2)', color: 'var(--pact-text-dim)' }
+                          : { background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }
+                      }
                     >
                       {followingState[user.id] ? 'Following' : 'Follow'}
                     </button>
@@ -127,11 +118,11 @@ export default function UserFollowModal({
 
         {/* Load More */}
         {hasMore && (
-          <div className="border-t border-gray-100 p-4">
+          <div className="border-t p-4" style={{ borderColor: 'var(--pact-hairline)' }}>
             <button
               onClick={onLoadMore}
               disabled={loading}
-              className="w-full px-4 py-2 text-[#A78BFA] font-medium hover:bg-[#EDE9FE] rounded-[28px] transition disabled:opacity-50"
+              className="w-full px-4 py-2 text-[var(--pact-violet)] font-medium rounded-full transition disabled:opacity-50 hover:bg-[var(--pact-surface-2)]"
             >
               {loading ? 'Loading...' : 'Load More'}
             </button>

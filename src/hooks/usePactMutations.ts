@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { pactService, joinRequestService, socialService, verificationService } from '@/services/api';
+import { pactService, joinRequestService, socialService, verificationService, cheerService } from '@/services/api';
 import { queryKeys } from '@/lib/queryKeys';
 import toast from 'react-hot-toast';
 
@@ -46,7 +46,10 @@ export function useCreatePact() {
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.pacts.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
-      toast.success('Pact created successfully!');
+      // No success toast here — the create-pact flow transitions to its own
+      // SuccessStep screen (stamp + title + suggestions) on success, so a
+      // toast on top of that would be a redundant leftover from the old
+      // form-based flow.
       return response.data;
     },
     onError: (error: any) => {
@@ -102,6 +105,23 @@ export function useUploadPactProof(pactId: number) {
     },
     onError: (error: any) => {
       toast.error(toErrorMessage(error, 'Failed to upload proof'));
+    },
+  });
+}
+
+export function useCreateCheer(pactId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (file: File) => cheerService.create(pactId, file),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.pacts.cheers(pactId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pacts.detail(pactId) });
+      toast.success('Cheer posted!');
+      return response.data;
+    },
+    onError: (error: any) => {
+      toast.error(toErrorMessage(error, 'Failed to post cheer'));
     },
   });
 }

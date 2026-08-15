@@ -1,8 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { Users, Star, ChevronRight } from 'lucide-react';
+import { cardHoverTap } from '@/components/pact-ui/cardMotion';
+import Avatar from '@/components/Avatar';
 
 interface CircleCardProps {
   circle: {
@@ -19,85 +22,89 @@ interface CircleCardProps {
     winRate?: number;
   };
   onJoin?: (circleId: number) => void;
+  index?: number;
 }
 
-export default function CircleCard({ circle, onJoin }: CircleCardProps) {
+export default function CircleCard({ circle, onJoin, index = 0 }: CircleCardProps) {
   return (
-    <Link href={`/circles/${circle.id}`}>
-        <div className="bg-white rounded-[24px] border border-gray-100 shadow-[0_4px_12px_rgba(94,84,142,0.08)] hover:shadow-md hover:border-emerald-200 transition-all cursor-pointer h-full">
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.32, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
+      {...cardHoverTap}
+    >
+      <Link href={`/circles/${circle.id}`}>
+        <div className="pact-card rounded-3xl cursor-pointer h-full">
           {/* Circle Header */}
-          <div className="p-6 border-b border-gray-100">
+          <div className="p-6 border-b" style={{ borderColor: 'var(--pact-hairline)' }}>
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-lg font-bold text-gray-900 line-clamp-2">
+                  <h3 className="text-lg font-bold text-[var(--pact-text)] line-clamp-2">
                     {circle.name}
                   </h3>
                   {circle.isTrending && (
-                    <Star className="w-4 h-4 text-orange-500 flex-shrink-0" />
+                    <Star className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--pact-gold)' }} />
                   )}
                 </div>
-                <p className="text-sm text-gray-600 line-clamp-2">
+                <p className="text-sm text-[var(--pact-text-dim)] line-clamp-2">
                   {circle.description}
                 </p>
                 {circle.ownerUsername && (
                   <div className="mt-2 flex items-center gap-2">
-                    {circle.ownerAvatarUrl ? (
-                      <img
-                        src={circle.ownerAvatarUrl}
-                        alt={circle.ownerUsername}
-                        className="h-6 w-6 rounded-full object-cover border border-gray-200"
-                      />
-                    ) : (
-                      <div className="h-6 w-6 rounded-full bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center border border-gray-200">
-                        {circle.ownerUsername.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <p className="text-xs font-medium text-[#6B7280]">Owner @{circle.ownerUsername}</p>
+                    <Avatar name={circle.ownerUsername} avatarUrl={circle.ownerAvatarUrl} size={24} />
+                    <p className="text-xs font-medium text-[var(--pact-text-faint)]">Owner @{circle.ownerUsername}</p>
                   </div>
                 )}
               </div>
-              <div className="flex-shrink-0 w-12 h-12 rounded-[28px] bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
+              <div
+                className="flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg"
+                style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
+              >
                 {circle.avatar || circle.name.charAt(0)}
               </div>
             </div>
           </div>
 
           {/* Circle Stats */}
-          <div className="px-6 py-4 grid grid-cols-2 gap-6 border-b border-gray-100">
+          <div className="px-6 py-4 grid grid-cols-2 gap-6 border-b" style={{ borderColor: 'var(--pact-hairline)' }}>
             <div className="flex flex-col min-w-0">
-              <p className="text-xs text-gray-600 font-medium mb-2 uppercase tracking-wide">Members</p>
+              <p className="text-xs text-[var(--pact-text-faint)] font-medium mb-2 uppercase tracking-wide">Members</p>
               <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-[#A78BFA] flex-shrink-0" />
-                <span className="text-lg font-bold text-gray-900">
+                <Users className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--pact-violet)' }} />
+                <span className="text-lg font-bold text-[var(--pact-text)]">
                   {circle.memberCount}
                 </span>
               </div>
             </div>
             <div className="flex flex-col min-w-0">
-              <p className="text-xs text-gray-600 font-medium mb-2 uppercase tracking-wide">Circle</p>
+              <p className="text-xs text-[var(--pact-text-faint)] font-medium mb-2 uppercase tracking-wide">Circle</p>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-900 whitespace-nowrap">Joinable</span>
+                <span className="text-sm font-medium text-[var(--pact-text)] whitespace-nowrap">Joinable</span>
               </div>
             </div>
           </div>
 
           {/* Member Avatars */}
           {circle.memberList && circle.memberList.length > 0 && (
-            <div className="px-6 py-4 border-b border-gray-100">
-              <p className="text-xs text-gray-600 font-medium mb-3">Recent Members</p>
+            <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--pact-hairline)' }}>
+              <p className="text-xs text-[var(--pact-text-faint)] font-medium mb-3">Recent Members</p>
               <div className="flex -space-x-2">
                 {circle.memberList.slice(0, 5).map((member, idx) => (
                   <div
                     key={idx}
-                    className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-white text-xs font-bold border-2 border-white"
+                    className="rounded-full border-2"
+                    style={{ borderColor: 'var(--pact-surface)' }}
                     title={member}
                   >
-                    {member.charAt(0)}
+                    <Avatar name={member} size={32} />
                   </div>
                 ))}
                 {circle.memberList.length > 5 && (
-                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-bold border-2 border-white">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2"
+                    style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-text-faint)', borderColor: 'var(--pact-surface)' }}
+                  >
                     +{circle.memberList.length - 5}
                   </div>
                 )}
@@ -108,7 +115,10 @@ export default function CircleCard({ circle, onJoin }: CircleCardProps) {
           {/* Footer Action */}
           <div className="px-6 py-4">
             {circle.isJoined ? (
-              <button className="w-full flex items-center justify-between px-4 py-2 bg-[#EDE9FE] text-emerald-700 rounded-[28px] font-medium text-sm hover:bg-emerald-100 transition">
+              <button
+                className="pact-btn-glow w-full flex items-center justify-between px-4 py-2 rounded-full font-medium text-sm transition"
+                style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
+              >
                 <span>Joined</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -118,7 +128,8 @@ export default function CircleCard({ circle, onJoin }: CircleCardProps) {
                   e.preventDefault();
                   onJoin?.(circle.id);
                 }}
-                className="w-full px-4 py-2 bg-[#A78BFA] text-white rounded-[28px] font-medium text-sm hover:bg-emerald-700 transition"
+                className="pact-btn-glow w-full px-4 py-2 rounded-full font-medium text-sm transition"
+                style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
               >
                 Join Circle
               </button>
@@ -126,5 +137,6 @@ export default function CircleCard({ circle, onJoin }: CircleCardProps) {
           </div>
         </div>
       </Link>
+    </motion.div>
   );
 }

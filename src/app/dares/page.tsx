@@ -18,15 +18,16 @@ export default function DaresPage() {
   const dares = currentQuery.data?.pages?.flatMap((page) => page.data) || [];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="pact-flow pact-page-enter min-h-screen">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-white border-b border-[rgba(20,18,31,0.06)]">
+      <div className="sticky top-0 z-40 border-b border-[var(--pact-hairline)]" style={{ background: 'var(--pact-bg)' }}>
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-[#14121F]">Dares</h1>
+            <h1 className="text-2xl font-bold text-[var(--pact-text)]">Dares</h1>
             <button
               onClick={() => setCreateModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-[#A78BFA] text-white rounded-[28px] hover:bg-emerald-700 transition"
+              className="pact-btn-glow flex items-center gap-2 px-4 py-2 rounded-[28px] transition"
+              style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
             >
               <Plus className="w-5 h-5" />
               Create Dare
@@ -34,7 +35,7 @@ export default function DaresPage() {
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex gap-4 border-b border-[rgba(20,18,31,0.06)] mb-4">
+          <div className="flex gap-4 border-b border-[var(--pact-hairline)] mb-4">
             {[
               { id: 'discover', label: 'Discover' },
               { id: 'mine', label: 'My Dares' },
@@ -44,8 +45,8 @@ export default function DaresPage() {
                 onClick={() => setTab(t.id as 'discover' | 'mine')}
                 className={`px-4 py-2 font-semibold border-b-2 transition ${
                   tab === t.id
-                    ? 'text-[#A78BFA] border-emerald-600'
-                    : 'text-[#6B7280] border-transparent hover:text-[#14121F]'
+                    ? 'text-[var(--pact-pink)] border-[var(--pact-pink)]'
+                    : 'text-[var(--pact-text-faint)] border-transparent hover:text-[var(--pact-text-dim)]'
                 }`}
               >
                 {t.label}
@@ -61,22 +62,23 @@ export default function DaresPage() {
         {currentQuery.isLoading && (
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-48 bg-slate-200 rounded-[28px] animate-pulse" />
+              <div key={i} className="pact-shimmer h-48 rounded-[28px]" />
             ))}
           </div>
         )}
 
         {/* Empty State */}
         {!currentQuery.isLoading && dares.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-[#6B7280] mb-4">
+          <div className="pact-card rounded-[28px] text-center py-12">
+            <p className="text-[var(--pact-text-dim)] mb-4">
               {tab === 'discover'
                 ? 'No dares available yet. Create one to get started!'
                 : 'You haven&apos;t created any dares yet.'}
             </p>
             <button
               onClick={() => setCreateModalOpen(true)}
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#A78BFA] text-white rounded-[28px] hover:bg-emerald-700"
+              className="pact-btn-glow inline-flex items-center gap-2 px-6 py-2.5 rounded-[28px]"
+              style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
             >
               <Plus className="w-5 h-5" />
               Create Your First Dare
@@ -87,10 +89,12 @@ export default function DaresPage() {
         {/* Dares Grid */}
         {dares.length > 0 && (
           <div className="space-y-4">
-            {dares.map((dare) => (
-              <Link key={dare.id} href={`/dares/${dare.id}`}>
-                <DareCard dare={dare} />
-              </Link>
+            {dares.map((dare, index) => (
+              <div key={dare.id} className="pact-list-item" style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}>
+                <Link href={`/dares/${dare.id}`}>
+                  <DareCard dare={dare} />
+                </Link>
+              </div>
             ))}
           </div>
         )}
@@ -101,7 +105,8 @@ export default function DaresPage() {
             <button
               onClick={() => currentQuery.fetchNextPage()}
               disabled={currentQuery.isFetchingNextPage}
-              className="px-6 py-2.5 border border-emerald-600 text-[#A78BFA] rounded-[28px] hover:bg-[#EDE9FE] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="pact-btn-glow px-6 py-2.5 rounded-[28px] border disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ borderColor: 'var(--pact-violet)', background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
             >
               {currentQuery.isFetchingNextPage ? 'Loading...' : 'Load More'}
             </button>
@@ -111,10 +116,10 @@ export default function DaresPage() {
         {/* Error State */}
         {currentQuery.isError && (
           <div className="text-center py-8">
-            <p className="text-red-600 mb-4">Failed to load dares</p>
+            <p className="mb-4" style={{ color: 'var(--pact-pink)' }}>Failed to load dares</p>
             <button
               onClick={() => currentQuery.refetch()}
-              className="px-4 py-2 text-[#14121F] border border-slate-300 rounded-[28px] hover:bg-[#F4F2FB]"
+              className="pact-btn-glow px-4 py-2 rounded-[28px] border border-[var(--pact-hairline)] text-[var(--pact-text)] hover:bg-[var(--pact-surface)]"
             >
               Try Again
             </button>

@@ -2,12 +2,11 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronRight, Flag, MessageCircle, Share2, FileImage, ArrowLeft, ArrowRight, Camera } from 'lucide-react';
+import { ChevronRight, Flag, MessageCircle, Share2, FileImage, ArrowLeft, ArrowRight, Camera, PartyPopper } from 'lucide-react';
 import ProofUploadModal from './ProofUploadModal';
-import ShareModal from './ShareModal';
 import ProofMediaCarousel from './ProofMediaCarousel';
+import Avatar from './Avatar';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useAuthStore } from '@/store/auth';
 import { pactService } from '@/services/api';
@@ -147,7 +146,6 @@ export default function FeedPactCard({
   const { user } = useAuthStore();
   const reportMutation = useReportPact(pact.id);
   const [proofUploadModal, setProofUploadModal] = useState(false);
-  const [shareModal, setShareModal] = useState(false);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
@@ -195,6 +193,7 @@ export default function FeedPactCard({
   const recentSupporters = Array.isArray(pact.recent_supporters) ? pact.recent_supporters : [];
   const proofCount = Number(pact.proof_count ?? pact.proofClips?.length ?? 0);
   const commentCount = Number(pact.comment_count ?? pact.comments?.length ?? 0);
+  const cheerCount = Number(pact.active_cheer_count ?? 0);
   const timeRemaining = pact.timeRemaining || formatEndsIn(pact.end_date || pact.deadline);
   const proofs = useMemo(() => getProofs(pact), [pact]);
   const media = useMemo(() => getMedia(pact), [pact]);
@@ -202,9 +201,13 @@ export default function FeedPactCard({
   const activeProof = proofs[activeProofIndex] ?? proofs[0] ?? null;
   const isExiting = exitDirection !== null;
   const resolvedDetailHref = detailHref || `/pacts/${pact.id}`;
+  // The feed-list endpoint (/api/pacts) never returns a participants array,
+  // only an is_joined_by_me flag, unlike the pact detail endpoint. Fall back
+  // to that flag here so membership-gated actions (e.g. proof upload) work
+  // correctly on feed cards.
   const isParticipant = Array.isArray(pact.participants)
     ? pact.participants.some((participant: any) => participant.id === user?.id || participant.user_id === user?.id)
-    : false;
+    : Boolean(pact.is_joined_by_me);
   const isCreator = Boolean(
     user && (
       pact.creator_id === user.id ||
@@ -360,6 +363,37 @@ export default function FeedPactCard({
     }
   };
 
+  const handleCopyShareLink = async () => {
+    const url = `${window.location.origin}${resolvedDetailHref}`;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        // Fallback for browsers/contexts without the Clipboard API.
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+
+      // Pact visibility is enforced (or not) entirely by the backend when the
+      // link is opened, not by anything on this button — warn the creator so
+      // a "Just me"/private pact link isn't shared assuming it's locked down.
+      if (pact.visibility === 'private') {
+        toast('Link copied — heads up, this pact is private so only people with access can open it', { icon: '🔒' });
+      } else {
+        toast.success('Link copied');
+      }
+    } catch {
+      toast.error('Could not copy link');
+    }
+  };
+
   const handleProofUploadClick = () => {
     if (!uploadAllowed) {
       toast.error('Join this pact to upload proof');
@@ -389,6 +423,8 @@ export default function FeedPactCard({
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
+        whileHover={{ y: -2, boxShadow: '0 20px 70px rgba(2,6,23,0.45), 0 12px 28px rgba(139,107,255,0.25)' }}
+        whileTap={{ scale: 0.98 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
         className="mx-2 overflow-hidden rounded-[32px] border border-white/8 bg-slate-950 text-white shadow-[0_20px_70px_rgba(2,6,23,0.45)] sm:mx-0">
         <div
@@ -425,11 +461,7 @@ export default function FeedPactCard({
                   {/* Anchored to the upper portion of the media area so it never collides with the title/stats block pinned to the bottom */}
                   <div className="absolute inset-x-0 top-16 z-10 flex flex-col items-center gap-3 px-8 text-center">
                     <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-white/60 bg-white/70 shadow-[0_8px_32px_rgba(139,92,246,0.20)] backdrop-blur-sm">
-                      {creatorAvatarUrl ? (
-                        <Image src={creatorAvatarUrl} alt={creatorLabel} fill sizes="96px" className="object-cover opacity-90" />
-                      ) : (
-                        <span className="text-4xl font-black text-violet-700">{creatorLabel.charAt(0).toUpperCase()}</span>
-                      )}
+                      <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={96} />
                     </div>
                     <div className="flex flex-col items-center gap-2">
                       <Camera className="h-4 w-4 text-violet-600" />
@@ -450,15 +482,9 @@ export default function FeedPactCard({
 
             <div className="absolute left-4 top-4 right-4 z-10 flex items-start justify-between gap-3">
               <div className={`flex items-center gap-3 rounded-full px-3 py-2 backdrop-blur-md ${hasProof ? 'bg-black/15' : 'bg-white/70 shadow-[0_2px_8px_rgba(139,92,246,0.12)]'}`}>
-                {creatorAvatarUrl ? (
-                  <div className={`relative h-10 w-10 overflow-hidden rounded-full border ${hasProof ? 'border-white/20' : 'border-violet-200'}`}>
-                    <Image src={creatorAvatarUrl} alt={creatorLabel} fill sizes="40px" className="object-cover" />
-                  </div>
-                ) : (
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-black ${hasProof ? 'bg-white/15 text-white' : 'bg-violet-100 text-violet-700'}`}>
-                    {creatorLabel.charAt(0).toUpperCase()}
-                  </div>
-                )}
+                <div className={`h-10 w-10 overflow-hidden rounded-full border ${hasProof ? 'border-white/20' : 'border-violet-200'}`}>
+                  <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={40} />
+                </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     {creatorProfileHref ? (
@@ -480,7 +506,10 @@ export default function FeedPactCard({
               </div>
             </div>
 
-            <div className="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-2">
+            {/* z-20: must stay above the bottom title/caption overlay (z-10) below,
+                which renders later in the DOM and would otherwise swallow clicks
+                on these buttons in the overlapping bottom-right region. */}
+            <div className="absolute right-3 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-2">
               <button
                 type="button"
                 onClick={handleProofUploadClick}
@@ -498,11 +527,22 @@ export default function FeedPactCard({
                 <span className="text-[10px] font-semibold">{formatCompactCount(commentCount)}</span>
               </Link>
 
+              {cheerCount > 0 && (
+                <Link
+                  href={resolvedDetailHref}
+                  className="flex w-12 flex-col items-center gap-1 rounded-full border border-[var(--pact-gold)]/50 bg-[var(--pact-gold)]/15 px-2 py-3 text-[var(--pact-gold)] backdrop-blur-md transition hover:bg-[var(--pact-gold)]/25"
+                  aria-label={`${cheerCount} cheers`}
+                >
+                  <PartyPopper className="h-4 w-4" />
+                  <span className="text-[10px] font-semibold">{formatCompactCount(cheerCount)}</span>
+                </Link>
+              )}
+
               <button
                 type="button"
-                onClick={() => setShareModal(true)}
+                onClick={() => void handleCopyShareLink()}
                 className={`flex w-12 items-center justify-center rounded-full px-2 py-3 backdrop-blur-md transition ${hasProof ? 'border border-white/10 bg-black/25 text-white hover:bg-black/40' : 'border border-violet-200/80 bg-white/80 text-violet-700 shadow-[0_2px_8px_rgba(139,92,246,0.12)] hover:bg-white'}`}
-                aria-label="share pact"
+                aria-label="copy pact link"
               >
                 <Share2 className="h-4 w-4" />
               </button>
@@ -560,17 +600,11 @@ export default function FeedPactCard({
                 {supporterStack.length > 0 && (
                   <div className="flex items-center gap-3">
                     <div className="flex -space-x-2">
-                      {supporterStack.map((supporter: any) => (
-                        <div key={supporter.id} className="relative h-9 w-9 overflow-hidden rounded-full border border-white/20 bg-white/10">
-                          {supporter.avatar_url ? (
-                            <Image src={supporter.avatar_url} alt={supporter.username} fill sizes="36px" className="object-cover" />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-white/10 text-xs font-black text-white">
-                              {String(supporter.username || '?').charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                  {supporterStack.map((supporter: any) => (
+                    <div key={supporter.id} className="h-9 w-9 overflow-hidden rounded-full border border-white/20">
+                      <Avatar name={supporter.username} avatarUrl={supporter.avatar_url} size={36} />
+                    </div>
+                  ))}
                     </div>
 
                     <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/65">
@@ -643,12 +677,6 @@ export default function FeedPactCard({
           onUpload={(pactId, proof) => onProofUpload?.(pactId, proof)}
         />
       )}
-
-      <ShareModal
-        isOpen={shareModal}
-        onClose={() => setShareModal(false)}
-        pact={pact}
-      />
 
       {reportSheetOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 px-3 pb-3 backdrop-blur-sm">

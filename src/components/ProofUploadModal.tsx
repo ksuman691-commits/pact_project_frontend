@@ -20,14 +20,17 @@ export default function ProofUploadModal({
   onUpload,
 }: ProofUploadModalProps) {
   const [description, setDescription] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string>('');
+  // Multiple photos can be queued and posted together — the backend only
+  // accepts one file per request (POST /api/pacts/:id/upload-proof-file),
+  // so on submit we loop this list and fire one request per file.
+  // `file` and `preview` are kept on a single item so they can never drift
+  // out of sync (e.g. if FileReaders for several files resolve out of order).
+  const [items, setItems] = useState<{ id: string; file: File; preview: string }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [cameraMode, setCameraMode] = useState<'photo' | 'video' | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
   const genericInputRef = useRef<HTMLInputElement>(null);
   const liveVideoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -106,8 +109,10 @@ export default function ProofUploadModal({
           return;
         }
         const capturedFile = new File([blob], `proof-${Date.now()}.jpg`, { type: 'image/jpeg' });
-        setFile(capturedFile);
-        setPreview(URL.createObjectURL(blob));
+        setItems((prev) => [
+          ...prev,
+          { id: `${capturedFile.name}-${Date.now()}`, file: capturedFile, preview: URL.createObjectURL(blob) },
+        ]);
         stopCamera();
       },
       'image/jpeg',
@@ -137,8 +142,10 @@ export default function ProofUploadModal({
       recorder.onstop = () => {
         const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
         const recordedFile = new File([blob], `proof-${Date.now()}.webm`, { type: 'video/webm' });
-        setFile(recordedFile);
-        setPreview(URL.createObjectURL(blob));
+        setItems((prev) => [
+          ...prev,
+          { id: `${recordedFile.name}-${Date.now()}`, file: recordedFile, preview: URL.createObjectURL(blob) },
+        ]);
         stopCamera();
       };
 
@@ -172,70 +179,102 @@ export default function ProofUploadModal({
   if (!isOpen) return null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
+    const selectedFiles = Array.from(e.target.files ?? []);
+    if (selectedFiles.length === 0) return;
+
+    selectedFiles.forEach((selectedFile) => {
+      const id = `${selectedFile.name}-${selectedFile.lastModified}-${Math.random().toString(36).slice(2)}`;
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
+
+      reader.onerror = () => {
+        // FileReader can fail (e.g. NotFoundError on some file-picker/OS combos).
+        // Skip this file rather than pushing a null preview, which would crash
+        // the <Image> preview below.
+        toast.error(`Could not read ${selectedFile.name}`);
       };
+
+      reader.onloadend = () => {
+        if (typeof reader.result !== 'string') return;
+        setItems((prev) => [...prev, { id, file: selectedFile, preview: reader.result as string }]);
+      };
+
       reader.readAsDataURL(selectedFile);
-    }
+    });
+
+    // Allow re-selecting the same file(s) again after removing them.
+    e.target.value = '';
+  };
+
+  const handleRemoveFile = (id: string) => {
+    setItems((prev) => prev.filter((item) => item.id !== id));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!description.trim()) {
       toast.error('Please add a description for your proof');
       return;
     }
 
-    if (!file) {
-      toast.error('Please select an image or video');
+    if (items.length === 0) {
+      toast.error('Please select at least one image or video');
       return;
     }
 
     setIsUploading(true);
-    try {
-      const proofType = file.type.startsWith('video/') ? 'video' : 'photo';
-      const response = await pactService.uploadProofFile(pactId, file, proofType, description);
-      
-      toast.success('Proof uploaded successfully!');
-      onUpload?.(pactId, {
-        id: response.data?.proof_id ?? Date.now(),
-        file_url: response.data?.file_url || preview,
-        proof_type: proofType,
-        caption: description,
-        created_at: new Date().toISOString(),
-      });
+    setUploadProgress({ done: 0, total: items.length });
+
+    let successCount = 0;
+    for (let i = 0; i < items.length; i += 1) {
+      const currentItem = items[i];
+      const proofType = currentItem.file.type.startsWith('video/') ? 'video' : 'photo';
+      try {
+        // The backend only accepts one file per request, so each queued
+        // photo/video is posted as its own proof entry with the shared caption.
+        const response = await pactService.uploadProofFile(pactId, currentItem.file, proofType, description);
+        onUpload?.(pactId, {
+          id: response.data?.proof_id ?? Date.now() + i,
+          file_url: response.data?.file_url || currentItem.preview,
+          proof_type: proofType,
+          caption: description,
+          created_at: new Date().toISOString(),
+        });
+        successCount += 1;
+      } catch (error) {
+        toast.error(`Failed to upload ${currentItem.file.name}`);
+      } finally {
+        setUploadProgress({ done: i + 1, total: items.length });
+      }
+    }
+
+    setIsUploading(false);
+    setUploadProgress(null);
+
+    if (successCount > 0) {
+      toast.success(successCount === 1 ? 'Proof uploaded successfully!' : `${successCount} photos uploaded successfully!`);
       resetForm();
       onClose();
-    } catch (error) {
-      toast.error('Failed to upload proof');
-    } finally {
-      setIsUploading(false);
     }
   };
 
   const resetForm = () => {
     stopCamera();
     setDescription('');
-    setFile(null);
-    setPreview('');
+    setItems([]);
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50">
-      <div className="bg-white w-full sm:max-w-md sm:rounded-[24px] rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50">
+      <div className="w-full sm:max-w-md sm:rounded-[24px] rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto bg-slate-950 border border-white/10">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Upload Proof</h2>
+          <h2 className="text-xl font-bold text-white">Upload Proof Photos</h2>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition"
+            className="p-2 rounded-full bg-white/10 hover:bg-white/15 transition"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-white/70" />
           </button>
         </div>
 
@@ -243,161 +282,164 @@ export default function ProofUploadModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Description */}
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
+            <label className="block text-sm font-semibold text-white mb-2">
               What did you accomplish today?
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe your progress..."
-              className="w-full px-4 py-3 border border-gray-200 rounded-[24px] focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
+              className="w-full px-4 py-3 rounded-[24px] outline-none focus:ring-2 focus:ring-violet-500 text-sm resize-none bg-white/5 border border-white/10 text-white placeholder:text-white/40"
               rows={4}
             />
           </div>
 
           {/* File Upload */}
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-3">
-              Upload Evidence
+            <label className="block text-sm font-semibold text-white mb-3">
+              Upload Evidence {items.length > 0 && `(${items.length} selected)`}
             </label>
-            
-            {!preview ? (
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => startCamera('photo')}
-                    className="px-3 py-2 rounded-[28px] bg-emerald-100 text-emerald-800 hover:bg-emerald-200 text-sm font-semibold transition"
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <ImageIcon className="w-4 h-4" />
-                      Take Photo
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => startCamera('video')}
-                    className="px-3 py-2 rounded-[28px] bg-blue-100 text-blue-800 hover:bg-blue-200 text-sm font-semibold transition"
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <Video className="w-4 h-4" />
-                      Record Video
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => genericInputRef.current?.click()}
-                    className="px-3 py-2 rounded-[28px] bg-[#FAF9FE] text-slate-800 hover:bg-slate-200 text-sm font-semibold transition"
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <Upload className="w-4 h-4" />
-                      Choose File
-                    </span>
-                  </button>
-                </div>
 
-                {cameraMode && cameraReady && (
-                  <div className="rounded-[24px] border border-[rgba(20,18,31,0.06)] p-3 space-y-3 bg-[#F4F2FB]">
-                    <div className="w-full aspect-video bg-black rounded-[28px] overflow-hidden">
-                      <video ref={liveVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex gap-2">
-                      {cameraMode === 'photo' ? (
-                        <button
-                          type="button"
-                          onClick={capturePhoto}
-                          className="flex-1 px-3 py-2 rounded-[28px] bg-[#A78BFA] text-white text-sm font-semibold hover:bg-emerald-700 transition"
-                        >
-                          Capture Photo
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={isRecording ? stopRecording : startRecording}
-                          className={`flex-1 px-3 py-2 rounded-[28px] text-white text-sm font-semibold transition ${
-                            isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'
-                          }`}
-                        >
-                          {isRecording ? 'Stop Recording' : 'Start Recording'}
-                        </button>
-                      )}
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => startCamera('photo')}
+                  className="px-3 py-2 rounded-[28px] text-sm font-semibold transition bg-white/5 hover:bg-white/10 text-violet-300"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4" />
+                    Take Photo
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => startCamera('video')}
+                  className="px-3 py-2 rounded-[28px] text-sm font-semibold transition bg-white/5 hover:bg-white/10 text-pink-300"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Video className="w-4 h-4" />
+                    Record Video
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => genericInputRef.current?.click()}
+                  className="px-3 py-2 rounded-[28px] text-sm font-semibold transition bg-white/5 hover:bg-white/10 text-white/70"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    Choose Files
+                  </span>
+                </button>
+              </div>
+
+              {cameraMode && cameraReady && (
+                <div className="rounded-[24px] p-3 space-y-3 border border-white/10 bg-white/5">
+                  <div className="w-full aspect-video bg-black rounded-[28px] overflow-hidden">
+                    <video ref={liveVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex gap-2">
+                    {cameraMode === 'photo' ? (
                       <button
                         type="button"
-                        onClick={stopCamera}
-                        className="px-3 py-2 rounded-[28px] border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-[#FAF9FE] transition"
+                        onClick={capturePhoto}
+                        className="flex-1 px-3 py-2 rounded-[28px] text-white text-sm font-semibold transition bg-gradient-to-r from-pink-500 to-violet-500 hover:brightness-110"
                       >
-                        Cancel
+                        Capture Photo
                       </button>
-                    </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={isRecording ? stopRecording : startRecording}
+                        className={`flex-1 px-3 py-2 rounded-[28px] text-white text-sm font-semibold transition ${
+                          isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-violet-600 hover:bg-violet-700'
+                        }`}
+                      >
+                        {isRecording ? 'Stop Recording' : 'Start Recording'}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={stopCamera}
+                      className="px-3 py-2 rounded-[28px] text-sm font-semibold transition border border-white/10 text-white/70 hover:bg-white/5"
+                    >
+                      Cancel
+                    </button>
                   </div>
-                )}
+                </div>
+              )}
 
-                <label className="border-2 border-dashed border-gray-300 rounded-[24px] p-6 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition block">
+              {items.length === 0 ? (
+                <label className="rounded-[24px] p-6 text-center cursor-pointer transition block border-2 border-dashed border-white/15 hover:border-violet-400/50 hover:bg-white/5">
                   <input
                     ref={genericInputRef}
                     type="file"
                     accept="image/*,video/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  <input
-                    ref={imageInputRef}
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  <input
-                    ref={videoInputRef}
-                    type="file"
-                    accept="video/*"
-                    capture="environment"
+                    multiple
                     onChange={handleFileChange}
                     className="hidden"
                   />
                   <div className="flex flex-col items-center gap-2">
-                    <Upload className="w-8 h-8 text-gray-400" />
+                    <Upload className="w-8 h-8 text-white/40" />
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">
+                      <p className="text-sm font-semibold text-white">
                         Click to upload or drag and drop
                       </p>
-                      <p className="text-xs text-gray-500">
-                        PNG, JPG, GIF, MP4 (max 50MB)
+                      <p className="text-xs text-white/50">
+                        Select multiple photos at once — PNG, JPG, GIF, MP4 (max 50MB each)
                       </p>
                     </div>
                   </div>
                 </label>
-              </div>
-            ) : (
-              <div className="relative">
-                <div className="w-full aspect-square bg-gray-100 rounded-[24px] overflow-hidden">
-                  {file?.type.startsWith('image/') ? (
-                    <Image
-                      src={preview}
-                      alt="Proof preview"
-                      width={800}
-                      height={800}
-                      className="w-full h-full object-cover"
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-3 gap-2">
+                    {items.map((item, index) => {
+                      const isImage = item.file.type.startsWith('image/');
+                      return (
+                        <div key={item.id} className="relative aspect-square overflow-hidden rounded-[16px] bg-white/5">
+                          {isImage ? (
+                            <Image src={item.preview} alt={`Proof preview ${index + 1}`} fill sizes="120px" className="object-cover" />
+                          ) : (
+                            <video src={item.preview} className="h-full w-full object-cover" />
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFile(item.id)}
+                            className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full transition"
+                            aria-label={`Remove file ${index + 1}`}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <input
+                      ref={genericInputRef}
+                      type="file"
+                      accept="image/*,video/*"
+                      multiple
+                      onChange={handleFileChange}
+                      className="hidden"
                     />
-                  ) : (
-                    <video src={preview} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => genericInputRef.current?.click()}
+                      className="flex aspect-square items-center justify-center rounded-[16px] border-2 border-dashed border-white/15 text-white/50 transition hover:border-violet-400/50 hover:bg-white/5"
+                      aria-label="Add more files"
+                    >
+                      <Upload className="w-5 h-5" />
+                    </button>
+                  </div>
+                  {isUploading && uploadProgress && (
+                    <p className="text-xs text-white/50">
+                      Uploading {uploadProgress.done}/{uploadProgress.total}...
+                    </p>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    stopCamera();
-                    setFile(null);
-                    setPreview('');
-                  }}
-                  className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                <p className="text-xs text-gray-600 mt-2">{file?.name}</p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -405,17 +447,17 @@ export default function ProofUploadModal({
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 px-4 py-3 border border-gray-300 text-gray-900 font-semibold rounded-[24px] hover:bg-gray-50 transition"
+              className="flex-1 px-4 py-3 font-semibold rounded-[24px] transition border border-white/10 text-white hover:bg-white/5"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isUploading}
-              className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold rounded-[24px] transition flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 text-white font-semibold rounded-[24px] transition flex items-center justify-center gap-2 disabled:opacity-50 bg-gradient-to-r from-pink-500 to-violet-500 hover:brightness-110"
             >
               {isUploading && <Loader className="w-4 h-4 animate-spin" />}
-              {isUploading ? 'Uploading...' : 'Submit Proof'}
+              {isUploading ? 'Uploading...' : items.length > 1 ? `Submit ${items.length} Photos` : 'Submit Proof'}
             </button>
           </div>
         </form>

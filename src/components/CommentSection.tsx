@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
 import { usePactComments } from '@/hooks/useFeedQueries';
 import { useAddComment, useDeleteComment } from '@/hooks/usePactMutations';
+import Avatar from '@/components/Avatar';
 
 interface Comment {
   id: number;
@@ -35,13 +36,9 @@ function CommentRow({ comment, pactId, currentUserId }: { comment: Comment; pact
   return (
     <div className="hover:bg-gray-50 p-4 rounded-[24px] transition border border-gray-100 hover:border-gray-200">
       <div className="flex gap-3">
-        <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
-          ) : (
-            <span>{displayName.charAt(0).toUpperCase()}</span>
-          )}
-        </div>
+          <div className="flex-shrink-0">
+            <Avatar name={displayName} avatarUrl={avatarUrl} size={32} />
+          </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-3">
@@ -93,8 +90,8 @@ export default function CommentSection({
       {/* Comment Input */}
       <form onSubmit={handleAddComment} className="border border-gray-200 rounded-[24px] p-4 w-full">
         <div className="flex gap-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-            {(user?.username || 'U').charAt(0).toUpperCase()}
+          <div className="flex-shrink-0">
+            <Avatar name={user?.username} avatarUrl={user?.avatar_url} size={32} />
           </div>
           <div className="flex-1">
             <input

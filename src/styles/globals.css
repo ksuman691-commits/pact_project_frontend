@@ -214,3 +214,286 @@ section + section {
 .animate-tier-pulse {
   animation: tier-ring-pulse 1.5s ease-in-out infinite;
 }
+
+/* Global Avatar ring (see src/components/Avatar.tsx): a rotating multi-hue
+   conic-gradient band with a separate, independently-timed breathing glow
+   layer underneath. Two distinct animated layers, not one static ring. */
+@keyframes avatar-ring-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.avatar-ring-spin {
+  animation: avatar-ring-spin 15s linear infinite;
+}
+
+@keyframes avatar-ring-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+.avatar-ring-breathe {
+  animation: avatar-ring-breathe 3.5s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   Create-a-Pact tap-flow — self-contained immersive theme.
+   Scoped entirely under .pact-flow so the rest of the app's light theme
+   (and global h1/h2/h3/p element rules above) is never affected.
+   ========================================================================== */
+.pact-flow {
+  --pact-bg: #14091f;
+  --pact-surface: #241537;
+  --pact-surface-raised: #2e1a44;
+  --pact-surface-2: #2f1c47;
+  --pact-surface-3: #3a2359;
+  --pact-pink: #ff4f87;
+  --pact-gold: #ffc24b;
+  --pact-violet: #8b6bff;
+  --pact-mint: #4fe0c0;
+  --pact-text: #f6f1ff;
+  --pact-text-muted: #b8a9d6;
+  --pact-text-dim: #b9a9d6;
+  --pact-text-faint: #7a6693;
+  --pact-hairline: rgba(246, 241, 255, 0.1);
+  --pact-shadow-violet: rgba(139, 107, 255, 0.25);
+
+  background: var(--pact-bg);
+  background-image:
+    radial-gradient(60% 50% at 15% 0%, rgba(139, 107, 255, 0.12), transparent 60%),
+    radial-gradient(50% 40% at 100% 20%, rgba(255, 79, 135, 0.08), transparent 60%);
+  background-attachment: fixed;
+  color: var(--pact-text);
+  font-family: var(--font-pact-body), sans-serif;
+  min-height: 100dvh;
+}
+
+.pact-flow h1,
+.pact-flow h2,
+.pact-flow h3,
+.pact-flow h4 {
+  font-family: var(--font-pact-display), sans-serif;
+  color: var(--pact-text);
+}
+
+.pact-flow p {
+  color: var(--pact-text-muted);
+}
+
+.pact-flow .pact-mono {
+  font-family: var(--font-pact-mono), monospace;
+}
+
+.pact-flow .pact-surface {
+  background: var(--pact-surface);
+  border: 1px solid var(--pact-hairline);
+}
+
+.pact-flow .pact-tile {
+  background: var(--pact-surface);
+  border: 1px solid var(--pact-hairline);
+  transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.pact-flow .pact-tile:active {
+  transform: scale(0.97);
+}
+
+.pact-flow .pact-tile.selected {
+  border-color: var(--pact-pink);
+  background: var(--pact-surface-raised);
+}
+
+@keyframes pact-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pact-flow .pact-step-enter {
+  animation: pact-fade-in 220ms ease both;
+}
+
+@keyframes pact-stamp-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pact-flow .pact-stamp-ring {
+  animation: pact-stamp-spin 6s linear infinite;
+}
+
+/* ---- Shared motion system (Feed / Circles / Dares re-theme) ----
+   Reuses the .pact-flow scope so Feed, Create Circle, and Create Dare can
+   opt into the exact same dark, purplish, "one hand built it" language as
+   the Create Pact flow, without touching any component logic. */
+
+/* Page/route transition: soft fade + 8px slide */
+@keyframes pact-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pact-flow .pact-page-enter {
+  animation: pact-page-in 250ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* List entrance: staggered fade-up, applied per-item via inline animation-delay */
+@keyframes pact-list-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pact-flow .pact-list-item {
+  animation: pact-list-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Glass-morphic surface card with hover lift + tap scale, shared physics
+   with .pact-tile above. */
+.pact-flow .pact-card {
+  background: rgba(36, 21, 55, 0.72);
+  border: 1px solid var(--pact-hairline);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+}
+
+.pact-flow .pact-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px var(--pact-shadow-violet);
+}
+
+.pact-flow .pact-card:active {
+  transform: scale(0.98);
+}
+
+/* Buttons/CTAs: subtle glow-on-hover using currentColor, spring press */
+.pact-flow .pact-btn-glow {
+  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 150ms ease, filter 150ms ease;
+}
+
+.pact-flow .pact-btn-glow:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 0 0 1px currentColor, 0 8px 20px -4px currentColor;
+}
+
+.pact-flow .pact-btn-glow:active {
+  transform: scale(0.96);
+}
+
+/* Shimmer skeleton loading state, sweeping across the surface palette */
+@keyframes pact-shimmer-sweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.pact-flow .pact-shimmer {
+  background: linear-gradient(90deg, var(--pact-surface) 25%, var(--pact-surface-2) 50%, var(--pact-surface) 75%);
+  background-size: 200% 100%;
+  animation: pact-shimmer-sweep 1.8s ease-in-out infinite;
+}
+
+/* Rewarded micro-action: spring pop with a soft glow burst. Applied
+   conditionally alongside classes already driven by existing component
+   state (e.g. a "liked"/"joined" flag) — never introduces new state. */
+@keyframes pact-pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.pact-flow .pact-spring-pop {
+  animation: pact-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Distinct entrance for a just-created pact returning to the feed: rises in
+   like a normal list item but carries a violet/pink glow pulse that settles
+   after ~1.4s, so the user's own new post reads as "just landed" rather than
+   blending into the standard staggered fade. */
+@keyframes pact-new-glow {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+    box-shadow: 0 0 0 0 rgba(255, 79, 135, 0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 4px rgba(255, 79, 135, 0.3), 0 0 44px rgba(139, 107, 255, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 4px rgba(255, 79, 135, 0.16), 0 0 30px rgba(139, 107, 255, 0.22);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 79, 135, 0);
+  }
+}
+
+.pact-flow .pact-new-item {
+  animation: pact-new-glow 1400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  border-radius: 24px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pact-flow .pact-stamp-ring {
+    animation: none;
+  }
+  .pact-flow .pact-step-enter {
+    animation: none;
+  }
+  .pact-flow .pact-page-enter,
+  .pact-flow .pact-list-item,
+  .pact-flow .pact-shimmer,
+  .pact-flow .pact-spring-pop,
+  .pact-flow .pact-new-item {
+    animation: none;
+  }
+  .pact-flow .pact-card,
+  .pact-flow .pact-btn-glow {
+    transition: none;
+  }
+}

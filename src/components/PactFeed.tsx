@@ -73,6 +73,8 @@ interface PactFeedProps {
   category?: string
   onBusyChange?: (busy: boolean) => void
   onCreatePact?: () => void
+  /** Pact id to give a one-time glow entrance (e.g. just returned from Create Pact). */
+  highlightPactId?: string | number | null
   // Force rebuild v2
 }
 
@@ -100,6 +102,7 @@ export default function PactFeed({
   category = 'all',
   onBusyChange,
   onCreatePact,
+  highlightPactId = null,
 }: PactFeedProps) {
   const router = useRouter()
   const [pacts, setPacts] = useState(showMockData ? mockPacts : [])
@@ -178,32 +181,39 @@ export default function PactFeed({
       {isLoading ? (
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, idx) => (
-            <div key={idx} className="bg-white rounded-[24px] border border-[rgba(20,18,31,0.06)] shadow-[0_4px_12px_rgba(94,84,142,0.08)] overflow-hidden animate-pulse">
-              <div className="h-24 bg-[#FAF9FE]" />
+            <div key={idx} className="pact-card rounded-[24px] overflow-hidden">
+              <div className="pact-shimmer h-24" />
               <div className="p-4 space-y-3">
-                <div className="h-5 w-2/3 bg-slate-200 rounded" />
-                <div className="h-4 w-1/2 bg-slate-200 rounded" />
-                <div className="h-32 bg-[#FAF9FE] rounded-[24px]" />
-                <div className="h-10 bg-[#FAF9FE] rounded-full" />
+                <div className="pact-shimmer h-5 w-2/3 rounded" />
+                <div className="pact-shimmer h-4 w-1/2 rounded" />
+                <div className="pact-shimmer h-32 rounded-[24px]" />
+                <div className="pact-shimmer h-10 rounded-full" />
               </div>
             </div>
           ))}
         </div>
       ) : pacts.length === 0 ? (
-        <div className="bg-white rounded-[24px] border border-[rgba(20,18,31,0.06)] shadow-[0_4px_12px_rgba(94,84,142,0.08)] px-5 py-10 text-center">
-          <p className="text-lg font-bold text-[#14121F]">{emptyStateTitle}</p>
-          <p className="mt-2 text-sm text-[#6B7280]">{emptyStateMessage}</p>
+        <div className="pact-card rounded-[24px] px-5 py-10 text-center">
+          <p className="text-lg font-bold text-[var(--pact-text)]">{emptyStateTitle}</p>
+          <p className="mt-2 text-sm text-[var(--pact-text-dim)]">{emptyStateMessage}</p>
           <button
             onClick={() => onCreatePact ? onCreatePact() : router.push('/pacts/create')}
-            className="mt-6 inline-flex items-center justify-center px-5 py-3 rounded-full bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors"
+            className="pact-btn-glow mt-6 inline-flex items-center justify-center px-5 py-3 rounded-full font-bold transition-colors"
+            style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
           >
             Create Pact
           </button>
         </div>
       ) : (
-        pacts.map((pact) => (
-        <FeedPactCard
+        pacts.map((pact, index) => {
+        const isNew = highlightPactId != null && String(pact.id) === String(highlightPactId)
+        return (
+        <div
           key={pact.id}
+          className={isNew ? 'pact-new-item' : 'pact-list-item'}
+          style={isNew ? undefined : { animationDelay: `${Math.min(index, 8) * 40}ms` }}
+        >
+        <FeedPactCard
           pact={pact}
           userVote={pact.userVote || (pact as any).user_vote}
           onVote={handleVote}
@@ -230,14 +240,16 @@ export default function PactFeed({
             )
           }}
         />
-        ))
+        </div>
+        )
+        })
       )}
 
       {/* Infinite scroll trigger */}
       <div ref={ref} className="py-4 text-center">
-        {isFetchingNextPage && !isLoading && <p className="text-[#6B7280]">Loading more...</p>}
+        {isFetchingNextPage && !isLoading && <p className="text-[var(--pact-text-dim)]">Loading more...</p>}
         {!hasNextPage && pacts.length > 0 && (
-          <p className="text-[#9CA3AF] text-sm">No more pacts to load</p>
+          <p className="text-[var(--pact-text-faint)] text-sm">No more pacts to load</p>
         )}
       </div>
     </div>

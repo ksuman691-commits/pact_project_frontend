@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import { useCountUp } from '@/components/pact-ui/useCountUp';
+import StatBar from '@/components/pact-ui/StatBar';
 
 interface ProfileStatsProps {
   stats: {
@@ -17,42 +19,49 @@ interface ProfileStatsProps {
   onFollowingClick?: () => void;
 }
 
-export default function ProfileStats({ 
+function StatTile({
+  label,
+  value,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  onClick?: () => void;
+}) {
+  const animated = useCountUp(value);
+  return (
+    <button
+      onClick={onClick}
+      className="flex-1 px-4 py-4 text-left transition hover:bg-[var(--pact-surface-2)]"
+    >
+      <p className="pact-mono text-2xl font-bold text-[var(--pact-text)]">{animated}</p>
+      <p className="mt-1 text-xs font-medium text-[var(--pact-text-faint)]">{label}</p>
+    </button>
+  );
+}
+
+export default function ProfileStats({
   stats,
   onPactClick,
   onFollowersClick,
-  onFollowingClick
+  onFollowingClick,
 }: ProfileStatsProps) {
-  const statConfigs = [
-    {
-      label: 'Pact',
-      value: stats.pactsCreated,
-      onClick: onPactClick,
-    },
-    {
-      label: 'Followers',
-      value: stats.followers ?? 0,
-      onClick: onFollowersClick,
-    },
-    {
-      label: 'Following',
-      value: stats.following ?? 0,
-      onClick: onFollowingClick,
-    },
-  ];
-
   return (
-    <div className="flex gap-3 mb-6">
-      {statConfigs.map((config, idx) => (
-        <button
-          key={idx}
-          onClick={config.onClick}
-          className="flex-1 p-4 bg-white border border-emerald-100 rounded-[24px] hover:border-emerald-300 hover:bg-[#EDE9FE] transition group"
-        >
-          <p className="text-2xl font-bold text-[#A78BFA] group-hover:text-emerald-700">{config.value}</p>
-          <p className="text-xs font-medium text-[#6B7280] mt-1">{config.label}</p>
-        </button>
-      ))}
+    <div className="mb-6 space-y-3">
+      <div className="pact-card flex divide-x overflow-hidden rounded-2xl" style={{ borderColor: 'var(--pact-hairline)' }}>
+        <StatTile label="Pacts" value={stats.pactsCreated} onClick={onPactClick} />
+        <StatTile label="Followers" value={stats.followers ?? 0} onClick={onFollowersClick} />
+        <StatTile label="Following" value={stats.following ?? 0} onClick={onFollowingClick} />
+      </div>
+      <div className="pact-card grid grid-cols-2 gap-4 rounded-2xl p-4">
+        <StatBar label="Win rate" percent={stats.winRate} color="var(--pact-mint)" />
+        <StatBar
+          label="Streak"
+          percent={Math.min(100, (stats.currentStreak / 30) * 100)}
+          displayValue={`${stats.currentStreak}d`}
+          color="var(--pact-gold)"
+        />
+      </div>
     </div>
   );
 }

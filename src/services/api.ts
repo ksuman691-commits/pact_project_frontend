@@ -85,6 +85,17 @@ const mapProof = (raw: any) => ({
   uploaded_at: raw?.uploaded_at ?? raw?.created_at ?? null,
 });
 
+const mapCheer = (raw: any) => ({
+  id: raw?.id,
+  pact_id: raw?.pact_id,
+  sender_id: raw?.sender_id,
+  sender_username: raw?.sender_username ?? raw?.username ?? null,
+  sender_avatar_url: raw?.sender_avatar_url ?? raw?.avatar_url ?? null,
+  photo_url: raw?.photo_url ?? raw?.file_url ?? null,
+  created_at: raw?.created_at ?? null,
+  expires_at: raw?.expires_at ?? null,
+});
+
 const normalizeListResponse = <T,>(response: any, mapper: (item: any) => T = (item) => item): any => {
   const payload = response.data;
   const rows = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
@@ -261,8 +272,14 @@ export const authService = {
   uploadAvatar: async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
+    // Do not hardcode Content-Type here: the api instance's default
+    // 'application/json' header must be explicitly cleared (not just
+    // omitted) or it leaks onto this FormData request and the backend
+    // rejects it with no CORS headers, which axios surfaces as an opaque
+    // Network Error. Setting it to undefined lets the browser generate the
+    // correct multipart boundary itself.
     const response = await api.post('/api/auth/avatar', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { 'Content-Type': undefined },
     });
     return { ...response, data: mapUser(response.data) };
   },
@@ -347,8 +364,11 @@ export const pactService = {
     formData.append('file', file);
     if (caption) formData.append('caption', caption);
     if (typeof dayNumber === 'number') formData.append('day_number', String(dayNumber));
+    // See uploadAvatar above: Content-Type must be explicitly cleared, not
+    // hardcoded to 'multipart/form-data', or the request 400s silently and
+    // surfaces to the user as an opaque Network Error.
     return api.post(`/api/pacts/${id}/upload-proof-file`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { 'Content-Type': undefined },
     });
   },
   listProofs: async (id: number, limit = 20, skip = 0) => {
@@ -370,6 +390,26 @@ export const pactService = {
     api.get('/api/pacts/my-reports', { params: { skip, limit } }),
   getVotes: (id: number) => api.get(`/api/pacts/${id}/votes`),
   personalized: (skip = 0, limit = 20) => api.get('/api/pacts/feed/personalized', { params: { skip, limit } }),
+};
+
+// Cheers (photo-only encouragement posts from non-creator members)
+export const cheerService = {
+  create: (pactId: number, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    // The api instance sets a default 'Content-Type: application/json'
+    // header. That default must be explicitly cleared here (not just
+    // omitted) or it leaks onto this FormData request and the backend
+    // rejects it. Setting it to undefined lets the browser generate the
+    // correct multipart boundary itself.
+    return api.post(`/api/pacts/${pactId}/cheers`, formData, {
+      headers: { 'Content-Type': undefined },
+    });
+  },
+  list: async (pactId: number, skip = 0, limit = 50) => {
+    const response = await api.get(`/api/pacts/${pactId}/cheers`, { params: { skip, limit } });
+    return normalizeListResponse(response, mapCheer);
+  },
 };
 
 // Pact Join Requests (NEW)
@@ -582,8 +622,11 @@ export const dareService = {
     formData.append('file', file);
     formData.append('proof_type', proofType);
     if (caption) formData.append('caption', caption);
+    // See uploadAvatar above: Content-Type must be explicitly cleared, not
+    // hardcoded to 'multipart/form-data', or the request 400s silently and
+    // surfaces to the user as an opaque Network Error.
     return api.post(`/api/dares/${id}/upload-proof`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { 'Content-Type': undefined },
     });
   },
   verify: (id: number, data: any) => api.post(`/api/dares/${id}/verify`, data),

@@ -31,30 +31,29 @@ export default function WelcomeHeader({
   atRisk = false
 }: WelcomeHeaderProps) {
   return (
-    <div className="border-b border-[rgba(20,18,31,0.06)]/80 bg-gradient-to-br from-slate-50 via-white to-emerald-50/60">
+    <div className="border-b border-[var(--pact-hairline)]">
       <div className="mx-auto max-w-md px-4 pb-4 pt-4">
-        <div className="flex items-center justify-between gap-4 rounded-[28px] border border-[rgba(20,18,31,0.06)]/80 bg-white px-4 py-5 shadow-[0_12px_40px_rgba(15,23,42,0.06)] backdrop-blur sm:py-6">
+        <div className="pact-card flex items-center justify-between gap-4 rounded-[28px] px-4 py-5 sm:py-6">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <UserAvatarLink
               name={userName}
               avatarUrl={avatarUrl}
               href="/profile"
-              sizeClassName="w-12 h-12"
-              textClassName="text-sm"
+              size={48}
               className="flex-shrink-0"
               streak={streak}
               atRisk={atRisk}
             />
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#9CA3AF]">Welcome back</p>
-              <p className="truncate text-lg font-bold text-[#14121F]">{userName}</p>
+              <p className="pact-mono text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--pact-text-faint)]">Welcome back</p>
+              <p className="truncate text-lg font-bold text-[var(--pact-text)]">{userName}</p>
             </div>
           </div>
 
           <div className="flex flex-shrink-0 items-center gap-2">
             <button
               onClick={onSearch}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FAF9FE] text-[#6B7280] transition hover:bg-slate-200 hover:text-[#14121F]"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--pact-surface-2)] text-[var(--pact-text-dim)] transition hover:bg-[var(--pact-surface-3)] hover:text-[var(--pact-text)]"
               aria-label="Search"
             >
               <Search className="h-5 w-5" strokeWidth={1.5} />
@@ -62,12 +61,12 @@ export default function WelcomeHeader({
 
             <button
               onClick={onNotificationsClick}
-              className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#FAF9FE] text-[#6B7280] transition hover:bg-slate-200 hover:text-[#14121F]"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[var(--pact-surface-2)] text-[var(--pact-text-dim)] transition hover:bg-[var(--pact-surface-3)] hover:text-[var(--pact-text)]"
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" strokeWidth={1.5} />
               {notificationCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white">
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--pact-pink)] text-[10px] font-bold text-[var(--pact-bg)]">
                   {notificationCount > 9 ? '9+' : notificationCount}
                 </span>
               )}
@@ -79,7 +78,8 @@ export default function WelcomeHeader({
           <button
             onClick={onCreatePact}
             disabled={actionsDisabled}
-            className="flex flex-1 items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-slate-900"
+            className="pact-btn-glow flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
           >
             <Plus className="h-4 w-4" strokeWidth={2.4} />
             New Pact
@@ -87,7 +87,8 @@ export default function WelcomeHeader({
           <button
             onClick={onCreateDare}
             disabled={actionsDisabled}
-            className="flex flex-1 items-center justify-center gap-2 rounded-full border border-emerald-200 bg-[#EDE9FE] px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#EDE9FE]"
+            className="pact-btn-glow flex flex-1 items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ borderColor: 'var(--pact-violet)', background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
           >
             <Sparkles className="h-4 w-4" strokeWidth={2.2} />
             New Dare

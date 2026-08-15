@@ -48,7 +48,9 @@ export function useCreateDare() {
       queryClient.invalidateQueries({ queryKey: queryKeys.dares.feed() });
       queryClient.invalidateQueries({ queryKey: queryKeys.dares.mine() });
       queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
-      toast.success('Dare created successfully!');
+      // No success toast here — the create-dare flow transitions to its own
+      // stamp-style SuccessStep screen, so a toast on top of that would be a
+      // redundant leftover from before the tap-flow conversion.
     },
     onError: (error: any) => {
       toast.error(toErrorMessage(error, 'Failed to create dare'));

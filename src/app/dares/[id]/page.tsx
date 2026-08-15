@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { ChevronLeft, Clock, Users, CheckCircle2, Upload, Shield } from 'lucide-react';
+import { ChevronLeft, Upload, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useDareDetail, useDareRecipients, useDareStats } from '@/hooks/useDareQueries';
 import { useAcceptDare, useDeclineDare, useClaimDare } from '@/hooks/useDareMutations';
@@ -11,7 +11,6 @@ import DareRecipientsList from '@/components/DareRecipientsList';
 import DareProofUploadModal from '@/components/DareProofUploadModal';
 import DareVerificationModal from '@/components/DareVerificationModal';
 import { useAuthStore } from '@/store/auth';
-import toast from 'react-hot-toast';
 
 export default function DareDetailPage() {
   const params = useParams();
@@ -57,9 +56,9 @@ export default function DareDetailPage() {
 
   if (dareQuery.isLoading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="pact-flow min-h-screen">
         <div className="max-w-2xl mx-auto px-4 py-6">
-          <div className="h-96 bg-slate-200 rounded-[28px] animate-pulse" />
+          <div className="pact-shimmer h-96 rounded-[28px]" />
         </div>
       </div>
     );
@@ -67,9 +66,9 @@ export default function DareDetailPage() {
 
   if (!dare) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="pact-flow min-h-screen">
         <div className="max-w-2xl mx-auto px-4 py-6">
-          <p className="text-[#6B7280]">Dare not found</p>
+          <p className="text-[var(--pact-text-dim)]">Dare not found</p>
         </div>
       </div>
     );
@@ -83,14 +82,14 @@ export default function DareDetailPage() {
   const isAccepted = dare.isAcceptedByMe;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="pact-flow pact-page-enter min-h-screen">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-white border-b border-[rgba(20,18,31,0.06)]">
+      <div className="sticky top-0 z-40 border-b border-[var(--pact-hairline)]" style={{ background: 'var(--pact-bg)' }}>
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/dares" className="p-2 hover:bg-[#FAF9FE] rounded-[28px]">
-            <ChevronLeft className="w-5 h-5" />
+          <Link href="/dares" className="p-2 rounded-[28px] transition hover:bg-[var(--pact-surface)]">
+            <ChevronLeft className="w-5 h-5 text-[var(--pact-text)]" />
           </Link>
-          <h1 className="text-lg font-bold text-[#14121F]">Dare Details</h1>
+          <h1 className="text-lg font-bold text-[var(--pact-text)]">Dare Details</h1>
         </div>
       </div>
 
@@ -98,7 +97,10 @@ export default function DareDetailPage() {
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* Creator Info */}
         <div className="flex items-center gap-4">
-          <div className="relative w-14 h-14 rounded-full bg-slate-300 overflow-hidden flex-shrink-0">
+          <div
+            className="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0"
+            style={{ background: 'var(--pact-surface-2)' }}
+          >
             <Image
               src={creatorAvatar}
               alt={dare.creator_username || 'creator'}
@@ -111,50 +113,50 @@ export default function DareDetailPage() {
             />
           </div>
           <div>
-            <p className="font-semibold text-[#14121F]">{dare.creator_full_name || dare.creator_username}</p>
-            <p className="text-sm text-[#6B7280]">@{dare.creator_username}</p>
+            <p className="font-semibold text-[var(--pact-text)]">{dare.creator_full_name || dare.creator_username}</p>
+            <p className="text-sm text-[var(--pact-text-faint)]">@{dare.creator_username}</p>
           </div>
         </div>
 
         {/* Dare Title and Description */}
         <div>
-          <h2 className="text-2xl font-bold text-[#14121F] mb-2">{dare.title}</h2>
-          <p className="text-slate-700 leading-relaxed">{dare.description}</p>
+          <h2 className="text-2xl font-bold text-[var(--pact-text)] mb-2">{dare.title}</h2>
+          <p className="text-[var(--pact-text-dim)] leading-relaxed">{dare.description}</p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-[#EDE9FE] rounded-[28px] p-4">
-            <p className="text-xs font-semibold text-[#6B7280] uppercase mb-1">Recipients</p>
-            <p className="text-2xl font-bold text-[#A78BFA]">{dare.recipientCount || 0}</p>
+          <div className="pact-card rounded-[28px] p-4" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
+            <p className="text-xs font-semibold text-[var(--pact-text-faint)] uppercase mb-1">Recipients</p>
+            <p className="text-2xl font-bold text-[var(--pact-violet)]">{dare.recipientCount || 0}</p>
           </div>
-          <div className="bg-[#EDE9FE] rounded-[28px] p-4">
-            <p className="text-xs font-semibold text-[#6B7280] uppercase mb-1">Accepted</p>
-            <p className="text-2xl font-bold text-[#A78BFA]">{dare.acceptedCount || 0}</p>
+          <div className="pact-card rounded-[28px] p-4" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
+            <p className="text-xs font-semibold text-[var(--pact-text-faint)] uppercase mb-1">Accepted</p>
+            <p className="text-2xl font-bold text-[var(--pact-violet)]">{dare.acceptedCount || 0}</p>
           </div>
-          <div className="bg-[#EDE9FE] rounded-[28px] p-4">
-            <p className="text-xs font-semibold text-[#6B7280] uppercase mb-1">Completed</p>
-            <p className="text-2xl font-bold text-[#A78BFA]">{dare.completedCount || 0}</p>
+          <div className="pact-card rounded-[28px] p-4" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
+            <p className="text-xs font-semibold text-[var(--pact-text-faint)] uppercase mb-1">Completed</p>
+            <p className="text-2xl font-bold text-[var(--pact-violet)]">{dare.completedCount || 0}</p>
           </div>
-          <div className="bg-red-50 rounded-[28px] p-4">
-            <p className="text-xs font-semibold text-[#6B7280] uppercase mb-1">Failed</p>
-            <p className="text-2xl font-bold text-red-600">{dare.failedCount || 0}</p>
+          <div className="pact-card rounded-[28px] p-4" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
+            <p className="text-xs font-semibold text-[var(--pact-text-faint)] uppercase mb-1">Failed</p>
+            <p className="text-2xl font-bold text-[var(--pact-pink)]">{dare.failedCount || 0}</p>
           </div>
         </div>
 
         {/* Timeline Info */}
-        <div className="space-y-2 bg-[#F4F2FB] rounded-[28px] p-4">
+        <div className="space-y-2 rounded-[28px] p-4" style={{ background: 'var(--pact-surface-2)' }}>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-[#6B7280]">Respond By:</span>
-            <span className="text-sm text-[#14121F]">{new Date(dare.respond_by_date).toLocaleDateString()}</span>
+            <span className="text-sm font-semibold text-[var(--pact-text-faint)]">Respond By:</span>
+            <span className="text-sm text-[var(--pact-text)]">{new Date(dare.respond_by_date).toLocaleDateString()}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-[#6B7280]">Complete By:</span>
-            <span className="text-sm text-[#14121F]">{new Date(dare.complete_by_date).toLocaleDateString()}</span>
+            <span className="text-sm font-semibold text-[var(--pact-text-faint)]">Complete By:</span>
+            <span className="text-sm text-[var(--pact-text)]">{new Date(dare.complete_by_date).toLocaleDateString()}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-[#6B7280]">Verification:</span>
-            <span className="text-sm text-[#14121F] capitalize">{dare.verification_method || 'photo'}</span>
+            <span className="text-sm font-semibold text-[var(--pact-text-faint)]">Verification:</span>
+            <span className="text-sm text-[var(--pact-text)] capitalize">{dare.verification_method || 'photo'}</span>
           </div>
         </div>
 
@@ -165,7 +167,8 @@ export default function DareDetailPage() {
               <button
                 onClick={handleClaim}
                 disabled={claimMutation.isPending}
-                className="col-span-2 px-6 py-3 bg-[#A78BFA] text-white rounded-[28px] hover:bg-emerald-700 disabled:opacity-50 font-semibold"
+                className="pact-btn-glow col-span-2 px-6 py-3 rounded-[28px] disabled:opacity-50 font-semibold"
+                style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
               >
                 {claimMutation.isPending ? 'Claiming...' : 'Claim Dare'}
               </button>
@@ -173,14 +176,16 @@ export default function DareDetailPage() {
               <>
                 <button
                   onClick={() => setProofModalOpen(true)}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-[#A78BFA] text-white rounded-[28px] hover:bg-emerald-700 font-semibold"
+                  className="pact-btn-glow flex items-center justify-center gap-2 px-4 py-3 rounded-[28px] font-semibold"
+                  style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
                 >
                   <Upload className="w-4 h-4" />
                   Submit Proof
                 </button>
                 <button
                   onClick={() => setVerifyModalOpen(true)}
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-[28px] hover:bg-blue-700 font-semibold"
+                  className="pact-btn-glow flex items-center justify-center gap-2 px-4 py-3 rounded-[28px] font-semibold border"
+                  style={{ borderColor: 'var(--pact-violet)', background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
                 >
                   <Shield className="w-4 h-4" />
                   Verify
@@ -191,14 +196,16 @@ export default function DareDetailPage() {
                 <button
                   onClick={handleAccept}
                   disabled={acceptMutation.isPending}
-                  className="px-4 py-3 bg-[#A78BFA] text-white rounded-[28px] hover:bg-emerald-700 disabled:opacity-50 font-semibold"
+                  className="pact-btn-glow px-4 py-3 rounded-[28px] disabled:opacity-50 font-semibold"
+                  style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
                 >
                   {acceptMutation.isPending ? 'Accepting...' : 'Accept'}
                 </button>
                 <button
                   onClick={handleDecline}
                   disabled={declineMutation.isPending}
-                  className="px-4 py-3 border border-red-600 text-red-600 rounded-[28px] hover:bg-red-50 disabled:opacity-50 font-semibold"
+                  className="px-4 py-3 rounded-[28px] border disabled:opacity-50 font-semibold transition"
+                  style={{ borderColor: 'var(--pact-pink)', color: 'var(--pact-pink)' }}
                 >
                   {declineMutation.isPending ? 'Declining...' : 'Decline'}
                 </button>
@@ -209,7 +216,7 @@ export default function DareDetailPage() {
 
         {/* Recipients Section */}
         <div>
-          <h3 className="text-lg font-bold text-[#14121F] mb-4">Recipients</h3>
+          <h3 className="text-lg font-bold text-[var(--pact-text)] mb-4">Recipients</h3>
           <DareRecipientsList
             recipients={recipientsQuery.data?.data || []}
             isLoading={recipientsQuery.isLoading}
@@ -218,20 +225,20 @@ export default function DareDetailPage() {
 
         {/* Verification Stats */}
         {statsQuery.data && (
-          <div className="bg-blue-50 rounded-[28px] p-4">
-            <h3 className="text-sm font-bold text-[#14121F] mb-3">Verification Stats</h3>
+          <div className="rounded-[28px] p-4" style={{ background: 'var(--pact-surface-2)' }}>
+            <h3 className="text-sm font-bold text-[var(--pact-text)] mb-3">Verification Stats</h3>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <p className="text-xs text-[#6B7280] mb-1">Yes</p>
-                <p className="text-lg font-bold text-blue-600">{statsQuery.data.data?.yes_count || 0}</p>
+                <p className="text-xs text-[var(--pact-text-faint)] mb-1">Yes</p>
+                <p className="text-lg font-bold text-[var(--pact-violet)]">{statsQuery.data.data?.yes_count || 0}</p>
               </div>
               <div>
-                <p className="text-xs text-[#6B7280] mb-1">No</p>
-                <p className="text-lg font-bold text-red-600">{statsQuery.data.data?.no_count || 0}</p>
+                <p className="text-xs text-[var(--pact-text-faint)] mb-1">No</p>
+                <p className="text-lg font-bold text-[var(--pact-pink)]">{statsQuery.data.data?.no_count || 0}</p>
               </div>
               <div>
-                <p className="text-xs text-[#6B7280] mb-1">Confidence</p>
-                <p className="text-lg font-bold text-[#A78BFA]">
+                <p className="text-xs text-[var(--pact-text-faint)] mb-1">Confidence</p>
+                <p className="text-lg font-bold text-[var(--pact-gold)]">
                   {(statsQuery.data.data?.confidence_avg || 0).toFixed(1)}%
                 </p>
               </div>

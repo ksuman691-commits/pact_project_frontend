@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import TopNav from '@/components/TopNav'
 import WelcomeHeader from '@/components/WelcomeHeader'
-import PactWizardModal from '@/components/PactWizardModal'
+import CreatePactFlowModal from '@/components/create-pact-flow/CreatePactFlowModal'
 import PactFeed from '@/components/PactFeed'
 import MemberSearchModal from '@/components/MemberSearchModal'
 import { useAuthStore } from '@/store/auth'
@@ -27,6 +27,7 @@ export default function FeedPageClient() {
   const firstLoadRef = useRef(true)
   const unreadCount = unreadCountData?.unread_count ?? 0
   const category = (searchParams.get('category') || 'all').toLowerCase()
+  const highlightPactId = searchParams.get('created')
 
   useEffect(() => {
     if (!isInitialized) return
@@ -34,6 +35,27 @@ export default function FeedPageClient() {
       router.replace('/auth/register')
     }
   }, [isInitialized, user, router])
+
+  // "Back to Feed" on the create-pact success screen pushes /feed?created=id.
+  // When the modal was opened from this same page (Feed's own "New Pact"
+  // button), that's a shallow same-route navigation, so pactModalOpen would
+  // otherwise stay true and the modal would linger open over the feed.
+  useEffect(() => {
+    if (highlightPactId) setPactModalOpen(false)
+  }, [highlightPactId])
+
+  // Clear the `created` param from the URL once the glow has had a chance to
+  // play, so a later refresh of /feed doesn't keep re-highlighting the pact.
+  useEffect(() => {
+    if (!highlightPactId) return
+    const timeout = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete('created')
+      const query = params.toString()
+      router.replace(query ? `/feed?${query}` : '/feed')
+    }, 1600)
+    return () => clearTimeout(timeout)
+  }, [highlightPactId, router, searchParams])
 
   useEffect(() => {
     if (firstLoadRef.current) {
@@ -63,7 +85,7 @@ export default function FeedPageClient() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F2FB]">
+    <div className="pact-flow pact-page-enter min-h-screen">
       <WelcomeHeader
         userName={user?.full_name || 'Test User'}
         avatarUrl={user?.avatar_url || null}
@@ -85,16 +107,17 @@ export default function FeedPageClient() {
         activeCategory={category}
       />
 
-      <div className="max-w-md mx-auto bg-[#F4F2FB] pb-20 px-4" id="pact-feed-shell">
+      <div className="max-w-md mx-auto pb-20 px-4" id="pact-feed-shell">
         <PactFeed
           showMockData={false}
           category={category}
           onBusyChange={setFeedBusy}
           onCreatePact={handleCreatePact}
+          highlightPactId={highlightPactId}
         />
       </div>
 
-      <PactWizardModal isOpen={pactModalOpen} onClose={() => setPactModalOpen(false)} />
+      <CreatePactFlowModal isOpen={pactModalOpen} onClose={() => setPactModalOpen(false)} />
       <MemberSearchModal isOpen={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
     </div>
   )
