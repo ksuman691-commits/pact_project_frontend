@@ -201,9 +201,13 @@ export default function FeedPactCard({
   const activeProof = proofs[activeProofIndex] ?? proofs[0] ?? null;
   const isExiting = exitDirection !== null;
   const resolvedDetailHref = detailHref || `/pacts/${pact.id}`;
+  // The feed-list endpoint (/api/pacts) never returns a participants array,
+  // only an is_joined_by_me flag, unlike the pact detail endpoint. Fall back
+  // to that flag here so membership-gated actions (e.g. proof upload) work
+  // correctly on feed cards.
   const isParticipant = Array.isArray(pact.participants)
     ? pact.participants.some((participant: any) => participant.id === user?.id || participant.user_id === user?.id)
-    : false;
+    : Boolean(pact.is_joined_by_me);
   const isCreator = Boolean(
     user && (
       pact.creator_id === user.id ||
