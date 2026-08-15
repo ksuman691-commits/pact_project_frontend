@@ -3,17 +3,23 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
-import { ChevronRight, Flag, MessageCircle, Share2, FileImage, ArrowLeft, ArrowRight, Camera, PartyPopper } from 'lucide-react';
+import { ChevronRight, Flag, MessageCircle, Share2, FileImage, ArrowLeft, ArrowRight, Camera, PartyPopper, Loader2 } from 'lucide-react';
 import ProofUploadModal from './ProofUploadModal';
 import ProofMediaCarousel from './ProofMediaCarousel';
 import Avatar from './Avatar';
 import PremiumJoinButton from './PremiumJoinButton';
-import { useReportPact, isNotParticipantError } from '@/hooks/usePactActions';
+import { useReportPact } from '@/hooks/usePactActions';
+import { useCreateCheer } from '@/hooks/usePactMutations';
 import { useAuthStore } from '@/store/auth';
 import { pactService } from '@/services/api';
 import toast from 'react-hot-toast';
 
-type VoteDirection = 'support' | 'skip';
+// Support (the old swipe-right vote-support action) has been removed —
+// Cheer and Join now cover that ground, so "skip" is the only remaining
+// vote direction. Swipe-right/double-tap is repurposed below to open the
+// Cheer flow (participants) or the Join nudge (non-participants) instead.
+type VoteDirection = 'skip';
+type RightAction = 'cheer' | 'join' | null;
 type DragAxis = 'horizontal' | 'vertical' | null;
 
 interface FeedPactCardProps {
@@ -146,6 +152,7 @@ export default function FeedPactCard({
 }: FeedPactCardProps) {
   const { user } = useAuthStore();
   const reportMutation = useReportPact(pact.id);
+  const createCheer = useCreateCheer(pact.id);
   const [proofUploadModal, setProofUploadModal] = useState(false);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
   const [dragX, setDragX] = useState(0);
@@ -160,13 +167,15 @@ export default function FeedPactCard({
   const lastTapAt = useRef(0);
   const committedRef = useRef(false);
   const [displayVote, setDisplayVote] = useState<string | null>(null);
-  const [displaySupportCount, setDisplaySupportCount] = useState(0);
+  const [displayCheerCount, setDisplayCheerCount] = useState(0);
   const [isJoining, setIsJoining] = useState(false);
+  const [isCheering, setIsCheering] = useState(false);
   const [activeProofIndex, setActiveProofIndex] = useState(0);
-  // Swipe-right (or the support button) on a pact the user hasn't joined
-  // used to bounce them out to a blocking "must be a participant" error
-  // toast — a dead end right when they showed positive intent. This instead
-  // slides up an inline "Join to support this pact" prompt over the card.
+  const cheerInputRef = useRef<HTMLInputElement>(null);
+  // Swipe-right on a pact the user hasn't joined slides up an inline
+  // "Join to cheer this pact" prompt over the card, instead of a dead-end
+  // gesture — membership is already known client-side, so this shows
+  // immediately rather than waiting on a failed API call.
   const [showJoinNudge, setShowJoinNudge] = useState(false);
 
   useEffect(() => {
@@ -183,24 +192,21 @@ export default function FeedPactCard({
   }, [pact.id]);
 
   useEffect(() => {
-    const normalizedVote = userVote === 'believe' ? 'support' : userVote === 'doubt' ? 'skip' : userVote ?? null;
-    setDisplayVote(normalizedVote);
+    setDisplayVote(userVote === 'doubt' ? 'skip' : userVote ?? null);
   }, [userVote]);
 
   useEffect(() => {
-    setDisplaySupportCount(Number(pact.support_count ?? pact.supportPool ?? 0));
-  }, [pact.supportPool, pact.support_count]);
+    setDisplayCheerCount(Number(pact.active_cheer_count ?? 0));
+  }, [pact.active_cheer_count, pact.id]);
 
   const creatorLabel = pact.creator || pact.creator_username || 'creator';
   const creatorUsername = pact.creator_username || null;
   const creatorProfileHref = creatorUsername ? `/profile/${encodeURIComponent(creatorUsername)}` : null;
   const creatorAvatarUrl = pact.creatorAvatarUrl || pact.creator_avatar_url || null;
   const circleLabel = pact.circle || pact.circle_name || pact.category || null;
-  const supportCount = displaySupportCount;
-  const recentSupporters = Array.isArray(pact.recent_supporters) ? pact.recent_supporters : [];
+  const cheerCount = displayCheerCount;
   const proofCount = Number(pact.proof_count ?? pact.proofClips?.length ?? 0);
   const commentCount = Number(pact.comment_count ?? pact.comments?.length ?? 0);
-  const cheerCount = Number(pact.active_cheer_count ?? 0);
   const timeRemaining = pact.timeRemaining || formatEndsIn(pact.end_date || pact.deadline);
   const proofs = useMemo(() => getProofs(pact), [pact]);
   const media = useMemo(() => getMedia(pact), [pact]);
@@ -224,15 +230,23 @@ export default function FeedPactCard({
   );
   const uploadAllowed = canUploadProof ?? Boolean(user && (pact.creator_id === user.id || isParticipant));
   const joinAllowed = Boolean(pact.can_join);
-  const canVote = Boolean(onVote) && !isCreator && !displayVote;
-  const gesturesEnabled = (enableGestures ?? Boolean(onVote)) && canVote;
+  // Swipe-right (and its double-tap shortcut) now branches on membership
+  // instead of performing a vote: participants get the fast single-photo
+  // Cheer flow, non-participants get the Join nudge. Neither goes through
+  // `onVote` or hits the backend to find out — membership is already known
+  // client-side, so the join case can be shown immediately rather than
+  // waiting on a failed request.
+  const rightAction: RightAction = isCreator ? null : isParticipant ? 'cheer' : joinAllowed ? 'join' : null;
+  const canSkip = Boolean(onVote) && !isCreator && displayVote !== 'skip';
+  const gesturesEnabled = (enableGestures ?? true) && (canSkip || rightAction !== null);
   const voteActionsVisible = (showVoteActions ?? Boolean(onVote)) && !isCreator;
-  const voteStatusLabel = displayVote === 'support' ? 'supported' : displayVote === 'skip' ? 'skipped' : null;
+  const voteStatusLabel = displayVote === 'skip' ? 'skipped' : null;
 
   const transformStyle = useMemo(() => {
     if (isExiting) {
-      const exitX = exitDirection === 'support' ? '115%' : '-115%';
-      return { transform: `translateX(${exitX}) rotate(${exitDirection === 'support' ? 12 : -12}deg)`, opacity: 0, transition: 'transform 260ms ease, opacity 260ms ease' };
+      // Only "skip" ever exits the card off-screen — cheering or getting
+      // nudged to join both leave the card in place in the feed.
+      return { transform: 'translateX(-115%) rotate(-12deg)', opacity: 0, transition: 'transform 260ms ease, opacity 260ms ease' };
     }
 
     if (isDragging) {
@@ -254,21 +268,12 @@ export default function FeedPactCard({
   };
 
   const completeVote = async (direction: VoteDirection) => {
-    if (!canVote || !onVote || isVoting || committedRef.current) return;
+    if (!canSkip || !onVote || isVoting || committedRef.current) return;
     committedRef.current = true;
     setIsVoting(true);
 
     const previousVote = displayVote;
     setDisplayVote(direction);
-    setDisplaySupportCount((currentCount) => {
-      if (direction === 'support') {
-        return previousVote === 'support' ? currentCount : currentCount + 1;
-      }
-      if (previousVote === 'support' && currentCount > 0) {
-        return currentCount - 1;
-      }
-      return currentCount;
-    });
 
     try {
       await onVote(pact.id, direction);
@@ -280,22 +285,50 @@ export default function FeedPactCard({
 
       setIsVoting(false);
       resetDrag();
-    } catch (error) {
+    } catch {
       setDisplayVote(previousVote);
-      setDisplaySupportCount(Number(pact.support_count ?? pact.supportPool ?? 0));
       committedRef.current = false;
       setIsVoting(false);
       resetDrag();
+    }
+  };
 
-      // Swiping "support" on a pact the user hasn't joined fails server-side
-      // with this specific error. Rather than a dead-end toast, keep the
-      // gesture's momentum: slide up an inline "Join to support this pact"
-      // prompt instead. Only do this when joining is actually possible —
-      // otherwise (pact full/inactive/etc.) there's nothing the nudge could
-      // offer, so fall back to the normal error toast.
-      if (direction === 'support' && isNotParticipantError(error) && joinAllowed) {
-        setShowJoinNudge(true);
-      }
+  // Snaps the card back to center without touching committedRef — used by
+  // the cheer/join branch of the swipe-right gesture, which (unlike skip)
+  // never exits/dismisses the card, so the drag visuals just need to reset.
+  const snapBack = () => {
+    setDragX(0);
+    setDragY(0);
+    setDragAxis(null);
+    setIsDragging(false);
+    setShowActionTag(false);
+  };
+
+  const triggerRightAction = () => {
+    if (!rightAction || committedRef.current) return;
+    committedRef.current = true;
+    snapBack();
+    if (rightAction === 'cheer') {
+      cheerInputRef.current?.click();
+    } else {
+      setShowJoinNudge(true);
+    }
+  };
+
+  const handleCheerFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    committedRef.current = false;
+    if (!file) return;
+
+    setIsCheering(true);
+    try {
+      await createCheer.mutateAsync(file);
+      setDisplayCheerCount((count) => count + 1);
+    } catch {
+      // useCreateCheer already surfaces a toast on failure.
+    } finally {
+      setIsCheering(false);
     }
   };
 
@@ -337,8 +370,10 @@ export default function FeedPactCard({
       setDragY(0);
       setShowActionTag(Math.abs(dx) >= 40);
 
-      if (Math.abs(dx) >= 90) {
-        void completeVote(dx > 0 ? 'support' : 'skip');
+      if (dx <= -90 && canSkip) {
+        void completeVote('skip');
+      } else if (dx >= 90 && rightAction) {
+        triggerRightAction();
       }
     }
   };
@@ -351,8 +386,14 @@ export default function FeedPactCard({
     if (isVoting || isExiting) return;
 
     if (dragAxis === 'horizontal' && Math.abs(dragX) >= 90) {
-      void completeVote(dragX > 0 ? 'support' : 'skip');
-      return;
+      if (dragX < 0 && canSkip) {
+        void completeVote('skip');
+        return;
+      }
+      if (dragX > 0 && rightAction) {
+        triggerRightAction();
+        return;
+      }
     }
 
     resetDrag();
@@ -366,8 +407,8 @@ export default function FeedPactCard({
     const tappedTwice = now - lastTapAt.current < 300;
     lastTapAt.current = now;
 
-    if (tappedTwice) {
-      void completeVote('support');
+    if (tappedTwice && rightAction) {
+      triggerRightAction();
     }
   };
 
@@ -456,7 +497,7 @@ export default function FeedPactCard({
             onPointerCancel={resetDrag}
             onDoubleClick={(event) => {
               if ((event.target as HTMLElement | null)?.closest('button,a')) return;
-              void completeVote('support');
+              if (rightAction) triggerRightAction();
             }}
             onClick={handleMediaTap}
           >
@@ -576,13 +617,23 @@ export default function FeedPactCard({
               )}
             </div>
 
-            {gesturesEnabled && dragAxis === 'horizontal' && showActionTag && !isExiting && (
-              <div className="absolute inset-x-0 top-24 z-10 flex px-4">
-                <div className={`rounded-full border px-4 py-1 text-xs font-black uppercase tracking-[0.25em] ${dragX > 0 ? 'ml-auto border-emerald-400 text-emerald-300' : 'mr-auto border-rose-400 text-rose-300'}`}>
-                  {dragX > 0 ? 'support' : 'skip'}
+            {gesturesEnabled &&
+              dragAxis === 'horizontal' &&
+              showActionTag &&
+              !isExiting &&
+              (dragX < 0 ? canSkip : Boolean(rightAction)) && (
+                <div className="absolute inset-x-0 top-24 z-10 flex px-4">
+                  <div
+                    className={`rounded-full border px-4 py-1 text-xs font-black uppercase tracking-[0.25em] ${
+                      dragX > 0
+                        ? `ml-auto ${rightAction === 'join' ? 'border-emerald-400 text-emerald-300' : 'border-[var(--pact-gold)] text-[var(--pact-gold)]'}`
+                        : 'mr-auto border-rose-400 text-rose-300'
+                    }`}
+                  >
+                    {dragX > 0 ? (rightAction === 'join' ? 'join' : 'cheer') : 'skip'}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 via-black/65 to-transparent px-4 pb-4 pt-16">
               <div className="space-y-3 pr-16">
