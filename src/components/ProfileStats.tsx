@@ -32,7 +32,7 @@ function StatTile({
   return (
     <button
       onClick={onClick}
-      className="pact-card pact-btn-glow flex-1 rounded-2xl p-4 text-left transition"
+      className="flex-1 px-4 py-4 text-left transition hover:bg-[var(--pact-surface-2)]"
     >
       <p className="pact-mono text-2xl font-bold text-[var(--pact-text)]">{animated}</p>
       <p className="mt-1 text-xs font-medium text-[var(--pact-text-faint)]">{label}</p>
@@ -48,7 +48,7 @@ export default function ProfileStats({
 }: ProfileStatsProps) {
   return (
     <div className="mb-6 space-y-3">
-      <div className="flex gap-3">
+      <div className="pact-card flex divide-x overflow-hidden rounded-2xl" style={{ borderColor: 'var(--pact-hairline)' }}>
         <StatTile label="Pacts" value={stats.pactsCreated} onClick={onPactClick} />
         <StatTile label="Followers" value={stats.followers ?? 0} onClick={onFollowersClick} />
         <StatTile label="Following" value={stats.following ?? 0} onClick={onFollowingClick} />

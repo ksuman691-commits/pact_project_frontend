@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Users, Star, ChevronRight } from 'lucide-react';
 import { cardHoverTap } from '@/components/pact-ui/cardMotion';
+import Avatar from '@/components/Avatar';
 
 interface CircleCardProps {
   circle: {
@@ -51,21 +52,7 @@ export default function CircleCard({ circle, onJoin, index = 0 }: CircleCardProp
                 </p>
                 {circle.ownerUsername && (
                   <div className="mt-2 flex items-center gap-2">
-                    {circle.ownerAvatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={circle.ownerAvatarUrl}
-                        alt={circle.ownerUsername}
-                        className="h-6 w-6 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div
-                        className="h-6 w-6 rounded-full text-xs font-bold flex items-center justify-center"
-                        style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-text-dim)' }}
-                      >
-                        {circle.ownerUsername.charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                    <Avatar name={circle.ownerUsername} avatarUrl={circle.ownerAvatarUrl} size={24} />
                     <p className="text-xs font-medium text-[var(--pact-text-faint)]">Owner @{circle.ownerUsername}</p>
                   </div>
                 )}
@@ -106,15 +93,11 @@ export default function CircleCard({ circle, onJoin, index = 0 }: CircleCardProp
                 {circle.memberList.slice(0, 5).map((member, idx) => (
                   <div
                     key={idx}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2"
-                    style={{
-                      background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))',
-                      color: 'var(--pact-text)',
-                      borderColor: 'var(--pact-surface)',
-                    }}
+                    className="rounded-full border-2"
+                    style={{ borderColor: 'var(--pact-surface)' }}
                     title={member}
                   >
-                    {member.charAt(0)}
+                    <Avatar name={member} size={32} />
                   </div>
                 ))}
                 {circle.memberList.length > 5 && (

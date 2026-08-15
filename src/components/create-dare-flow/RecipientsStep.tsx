@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Image from 'next/image';
 import { Loader, Users, X } from 'lucide-react';
 import { useCreateDareFlow } from '@/context/CreateDareFlowContext';
 import { useSearchUsers } from '@/hooks/useUserQueries';
 import type { DareRecipientPick } from '@/types/createDareFlow';
+import Avatar from '@/components/Avatar';
 
 export default function RecipientsStep() {
   const { draft, updateDraft, goNext } = useCreateDareFlow();
@@ -44,15 +44,7 @@ export default function RecipientsStep() {
         <div className="mt-4 flex flex-wrap gap-2">
           {draft.recipients.map((recipient) => (
             <div key={recipient.id} className="flex items-center gap-2 rounded-full pl-1.5 pr-2 py-1.5" style={{ background: 'var(--pact-surface-2)' }}>
-              <div className="relative h-6 w-6 flex-shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-[var(--pact-violet)] to-[var(--pact-pink)]">
-                {recipient.avatar_url ? (
-                  <Image src={recipient.avatar_url} alt={recipient.username} fill className="object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-white">
-                    {(recipient.full_name || recipient.username)?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                )}
-              </div>
+              <Avatar name={recipient.full_name || recipient.username} avatarUrl={recipient.avatar_url} size={24} />
               <span className="text-sm text-[var(--pact-text-dim)]">@{recipient.username}</span>
               <button type="button" onClick={() => removeRecipient(recipient.id)} aria-label={`Remove @${recipient.username}`} className="text-[var(--pact-text-faint)] hover:text-[var(--pact-pink)]">
                 <X className="h-3.5 w-3.5" />
@@ -101,15 +93,7 @@ export default function RecipientsStep() {
                     }
                     className="flex w-full items-center gap-3 p-3 text-left transition hover:bg-[var(--pact-surface-2)]"
                   >
-                    <div className="relative h-9 w-9 flex-shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-[var(--pact-violet)] to-[var(--pact-pink)]">
-                      {candidate.avatar_url ? (
-                        <Image src={candidate.avatar_url} alt={candidate.full_name || candidate.username} fill className="object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm font-bold text-white">
-                          {(candidate.full_name || candidate.username)?.charAt(0).toUpperCase() || 'U'}
-                        </div>
-                      )}
-                    </div>
+                <Avatar name={candidate.full_name || candidate.username} avatarUrl={candidate.avatar_url} size={36} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-[var(--pact-text)]">{candidate.full_name || candidate.username}</p>
                       <p className="truncate text-xs text-[var(--pact-text-faint)]">@{candidate.username}</p>

@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
 import { useFollowing } from '@/hooks/useFollows';
 import { circleAdvancedService } from '@/services/api';
+import Avatar from '@/components/Avatar';
 
 /**
  * "People you might want to invite" tray on the Circle Success screen —
@@ -51,20 +52,9 @@ export default function SuggestedPeopleSection({
       <div className="mt-3 flex flex-col gap-3">
         {suggestions.map((person) => {
           const invited = Boolean(invitedIds[person.id]);
-          const initial = String(person.username ?? 'U').charAt(0).toUpperCase();
           return (
             <div key={person.id} className="pact-surface flex items-center gap-3 rounded-2xl p-4">
-              <span
-                className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full text-sm font-semibold"
-                style={{ background: 'var(--pact-surface-raised)', color: 'var(--pact-text)' }}
-              >
-                {person.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={person.avatar_url} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  initial
-                )}
-              </span>
+              <Avatar name={person.username} avatarUrl={person.avatar_url} size={40} />
               <span className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-[var(--pact-text)]">
                   {person.full_name || person.username}

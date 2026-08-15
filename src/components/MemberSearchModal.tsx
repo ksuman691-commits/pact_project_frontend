@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Search, X, Loader } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useSearchUsers } from '@/hooks/useUserQueries';
-import Image from 'next/image';
+import Avatar from '@/components/Avatar';
 
 interface MemberSearchModalProps {
   isOpen: boolean;
@@ -82,24 +82,7 @@ export default function MemberSearchModal({ isOpen, onClose }: MemberSearchModal
                     className="pact-list-item w-full flex items-center gap-3 p-3 transition text-left"
                   >
                     {/* Avatar */}
-                    <div
-                      className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden"
-                      style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
-                    >
-                      {member.avatar_url ? (
-                        <Image
-                          src={member.avatar_url}
-                          alt={member.full_name}
-                          width={40}
-                          height={40}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white font-bold">
-                          {member.full_name?.charAt(0) || 'U'}
-                        </div>
-                      )}
-                    </div>
+                <Avatar name={member.full_name} avatarUrl={member.avatar_url} size={40} />
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">

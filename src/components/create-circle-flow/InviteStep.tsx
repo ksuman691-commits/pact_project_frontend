@@ -4,6 +4,7 @@ import React from 'react';
 import { useCreateCircleFlow } from '@/context/CreateCircleFlowContext';
 import { useAuthStore } from '@/store/auth';
 import { useFollowing } from '@/hooks/useFollows';
+import Avatar from '@/components/Avatar';
 
 /**
  * Reuses the existing "who you follow" list as the invite pool rather than
@@ -35,7 +36,6 @@ export default function InviteStep() {
         )}
         {people.map((person: any) => {
           const selected = draft.inviteUserIds.includes(person.id);
-          const initial = String(person.username ?? person.full_name ?? 'U').charAt(0).toUpperCase();
           return (
             <button
               key={person.id}
@@ -43,17 +43,7 @@ export default function InviteStep() {
               onClick={() => toggleInvite(person.id)}
               className={`pact-tile flex w-full items-center gap-3 rounded-2xl p-3 text-left ${selected ? 'selected' : ''}`}
             >
-              <span
-                className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-sm font-semibold"
-                style={{ background: 'var(--pact-surface-raised)', color: 'var(--pact-text)' }}
-              >
-                {person.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={person.avatar_url} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  initial
-                )}
-              </span>
+              <Avatar name={person.username || person.full_name} avatarUrl={person.avatar_url} size={36} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-semibold">{person.full_name || person.username}</span>
                 <span className="pact-mono block truncate text-xs" style={{ color: 'var(--pact-text-muted)' }}>

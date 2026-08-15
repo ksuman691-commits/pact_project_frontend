@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useSuggestedPacts } from '@/hooks/useFeedQueries';
 import { pactService } from '@/services/api';
 import type { VibeId } from '@/types/createPactFlow';
+import Avatar from '@/components/Avatar';
 
 interface SuggestedPactsSectionProps {
   justPickedVibeId: VibeId | null;
@@ -102,23 +103,10 @@ function SuggestedPactCard({
   onToggle: () => void;
   onOpen: () => void;
 }) {
-  const initial = String(pact?.creator ?? 'U').charAt(0).toUpperCase();
-
   return (
     <div className="pact-surface flex items-center gap-3 rounded-2xl p-4">
-      <button
-        type="button"
-        onClick={onOpen}
-        aria-hidden="true"
-        className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full text-sm font-semibold"
-        style={{ background: 'var(--pact-surface-raised)', color: 'var(--pact-text)' }}
-      >
-        {pact.creatorAvatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={pact.creatorAvatarUrl} alt="" className="h-full w-full object-cover" />
-        ) : (
-          initial
-        )}
+      <button type="button" onClick={onOpen} aria-hidden="true" className="shrink-0">
+        <Avatar name={pact?.creator} avatarUrl={pact.creatorAvatarUrl} size={40} />
       </button>
       <button type="button" onClick={onOpen} className="min-w-0 flex-1 text-left">
         <p className="truncate text-sm font-semibold text-[var(--pact-text)]">{pact.title}</p>

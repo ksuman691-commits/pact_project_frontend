@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Target, Award, Users, Heart, Circle, Plus } from 'lucide-react';
 import PactCard from './PactCard';
 import AnimatedTabs from '@/components/pact-ui/AnimatedTabs';
+import Avatar from '@/components/Avatar';
 
 interface ProfileTabsProps {
   children: React.ReactNode;
@@ -15,9 +16,9 @@ export default function ProfileTabs({ children, onTabChange }: ProfileTabsProps)
   const [activeTab, setActiveTab] = useState('pacts');
 
   const tabs = [
+    { id: 'circles', label: 'Circles', icon: Circle },
     { id: 'pacts', label: 'Pacts', icon: Target },
     { id: 'achievements', label: 'Achievements', icon: Award },
-    { id: 'circles', label: 'Circles', icon: Circle },
     { id: 'followers', label: 'Followers', icon: Users },
     { id: 'following', label: 'Following', icon: Heart },
   ];
@@ -177,12 +178,7 @@ export function FollowersTab({ followers }: { followers: any[] }) {
         followers.map((follower) => (
           <div key={follower.id} className="pact-card flex items-center justify-between p-3 rounded-3xl">
             <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center font-bold"
-                style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-text)' }}
-              >
-                {follower.name.charAt(0)}
-              </div>
+              <Avatar name={follower.name} avatarUrl={follower.avatar} size={40} />
               <div>
                 <p className="font-medium text-[var(--pact-text)]">{follower.name}</p>
                 <p className="text-xs text-[var(--pact-text-faint)]">@{follower.username}</p>
