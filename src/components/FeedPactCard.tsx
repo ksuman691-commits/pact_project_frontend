@@ -6,7 +6,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronRight, Flag, MessageCircle, Share2, FileImage, ArrowLeft, ArrowRight, Camera } from 'lucide-react';
 import ProofUploadModal from './ProofUploadModal';
-import ShareModal from './ShareModal';
 import ProofMediaCarousel from './ProofMediaCarousel';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useAuthStore } from '@/store/auth';
@@ -147,7 +146,6 @@ export default function FeedPactCard({
   const { user } = useAuthStore();
   const reportMutation = useReportPact(pact.id);
   const [proofUploadModal, setProofUploadModal] = useState(false);
-  const [shareModal, setShareModal] = useState(false);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
@@ -360,6 +358,37 @@ export default function FeedPactCard({
     }
   };
 
+  const handleCopyShareLink = async () => {
+    const url = `${window.location.origin}${resolvedDetailHref}`;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        // Fallback for browsers/contexts without the Clipboard API.
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+
+      // Pact visibility is enforced (or not) entirely by the backend when the
+      // link is opened, not by anything on this button — warn the creator so
+      // a "Just me"/private pact link isn't shared assuming it's locked down.
+      if (pact.visibility === 'private') {
+        toast('Link copied — heads up, this pact is private so only people with access can open it', { icon: '🔒' });
+      } else {
+        toast.success('Link copied');
+      }
+    } catch {
+      toast.error('Could not copy link');
+    }
+  };
+
   const handleProofUploadClick = () => {
     if (!uploadAllowed) {
       toast.error('Join this pact to upload proof');
@@ -502,9 +531,9 @@ export default function FeedPactCard({
 
               <button
                 type="button"
-                onClick={() => setShareModal(true)}
+                onClick={() => void handleCopyShareLink()}
                 className={`flex w-12 items-center justify-center rounded-full px-2 py-3 backdrop-blur-md transition ${hasProof ? 'border border-white/10 bg-black/25 text-white hover:bg-black/40' : 'border border-violet-200/80 bg-white/80 text-violet-700 shadow-[0_2px_8px_rgba(139,92,246,0.12)] hover:bg-white'}`}
-                aria-label="share pact"
+                aria-label="copy pact link"
               >
                 <Share2 className="h-4 w-4" />
               </button>
@@ -645,12 +674,6 @@ export default function FeedPactCard({
           onUpload={(pactId, proof) => onProofUpload?.(pactId, proof)}
         />
       )}
-
-      <ShareModal
-        isOpen={shareModal}
-        onClose={() => setShareModal(false)}
-        pact={pact}
-      />
 
       {reportSheetOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 px-3 pb-3 backdrop-blur-sm">
