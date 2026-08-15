@@ -109,8 +109,10 @@ export default function ProofUploadModal({
           return;
         }
         const capturedFile = new File([blob], `proof-${Date.now()}.jpg`, { type: 'image/jpeg' });
-        setFiles((prev) => [...prev, capturedFile]);
-        setPreviews((prev) => [...prev, URL.createObjectURL(blob)]);
+        setItems((prev) => [
+          ...prev,
+          { id: `${capturedFile.name}-${Date.now()}`, file: capturedFile, preview: URL.createObjectURL(blob) },
+        ]);
         stopCamera();
       },
       'image/jpeg',
@@ -140,8 +142,10 @@ export default function ProofUploadModal({
       recorder.onstop = () => {
         const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
         const recordedFile = new File([blob], `proof-${Date.now()}.webm`, { type: 'video/webm' });
-        setFiles((prev) => [...prev, recordedFile]);
-        setPreviews((prev) => [...prev, URL.createObjectURL(blob)]);
+        setItems((prev) => [
+          ...prev,
+          { id: `${recordedFile.name}-${Date.now()}`, file: recordedFile, preview: URL.createObjectURL(blob) },
+        ]);
         stopCamera();
       };
 
@@ -178,13 +182,22 @@ export default function ProofUploadModal({
     const selectedFiles = Array.from(e.target.files ?? []);
     if (selectedFiles.length === 0) return;
 
-    setFiles((prev) => [...prev, ...selectedFiles]);
     selectedFiles.forEach((selectedFile) => {
+      const id = `${selectedFile.name}-${selectedFile.lastModified}-${Math.random().toString(36).slice(2)}`;
       const reader = new FileReader();
-      reader.onloadend = () => {
-        console.log('[v0] reader.onloadend result:', reader.result === null ? 'NULL' : typeof reader.result, reader.error);
-        setPreviews((prev) => [...prev, reader.result as string]);
+
+      reader.onerror = () => {
+        // FileReader can fail (e.g. NotFoundError on some file-picker/OS combos).
+        // Skip this file rather than pushing a null preview, which would crash
+        // the <Image> preview below.
+        toast.error(`Could not read ${selectedFile.name}`);
       };
+
+      reader.onloadend = () => {
+        if (typeof reader.result !== 'string') return;
+        setItems((prev) => [...prev, { id, file: selectedFile, preview: reader.result as string }]);
+      };
+
       reader.readAsDataURL(selectedFile);
     });
 
@@ -192,9 +205,8 @@ export default function ProofUploadModal({
     e.target.value = '';
   };
 
-  const handleRemoveFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-    setPreviews((prev) => prev.filter((_, i) => i !== index));
+  const handleRemoveFile = (id: string) => {
+    setItems((prev) => prev.filter((item) => item.id !== id));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -205,34 +217,34 @@ export default function ProofUploadModal({
       return;
     }
 
-    if (files.length === 0) {
+    if (items.length === 0) {
       toast.error('Please select at least one image or video');
       return;
     }
 
     setIsUploading(true);
-    setUploadProgress({ done: 0, total: files.length });
+    setUploadProgress({ done: 0, total: items.length });
 
     let successCount = 0;
-    for (let i = 0; i < files.length; i += 1) {
-      const currentFile = files[i];
-      const proofType = currentFile.type.startsWith('video/') ? 'video' : 'photo';
+    for (let i = 0; i < items.length; i += 1) {
+      const currentItem = items[i];
+      const proofType = currentItem.file.type.startsWith('video/') ? 'video' : 'photo';
       try {
         // The backend only accepts one file per request, so each queued
         // photo/video is posted as its own proof entry with the shared caption.
-        const response = await pactService.uploadProofFile(pactId, currentFile, proofType, description);
+        const response = await pactService.uploadProofFile(pactId, currentItem.file, proofType, description);
         onUpload?.(pactId, {
           id: response.data?.proof_id ?? Date.now() + i,
-          file_url: response.data?.file_url || previews[i],
+          file_url: response.data?.file_url || currentItem.preview,
           proof_type: proofType,
           caption: description,
           created_at: new Date().toISOString(),
         });
         successCount += 1;
       } catch (error) {
-        toast.error(`Failed to upload ${currentFile.name}`);
+        toast.error(`Failed to upload ${currentItem.file.name}`);
       } finally {
-        setUploadProgress({ done: i + 1, total: files.length });
+        setUploadProgress({ done: i + 1, total: items.length });
       }
     }
 
@@ -249,8 +261,7 @@ export default function ProofUploadModal({
   const resetForm = () => {
     stopCamera();
     setDescription('');
-    setFiles([]);
-    setPreviews([]);
+    setItems([]);
   };
 
   return (
@@ -286,7 +297,7 @@ export default function ProofUploadModal({
           {/* File Upload */}
           <div>
             <label className="block text-sm font-semibold text-white mb-3">
-              Upload Evidence {files.length > 0 && `(${files.length} selected)`}
+              Upload Evidence {items.length > 0 && `(${items.length} selected)`}
             </label>
 
             <div className="space-y-3">
@@ -359,7 +370,7 @@ export default function ProofUploadModal({
                 </div>
               )}
 
-              {files.length === 0 ? (
+              {items.length === 0 ? (
                 <label className="rounded-[24px] p-6 text-center cursor-pointer transition block border-2 border-dashed border-white/15 hover:border-violet-400/50 hover:bg-white/5">
                   <input
                     ref={genericInputRef}
@@ -384,20 +395,18 @@ export default function ProofUploadModal({
               ) : (
                 <div className="space-y-3">
                   <div className="grid grid-cols-3 gap-2">
-                    {console.log('[v0] render previews:', previews.map((p) => (p === null ? 'NULL' : p === undefined ? 'UNDEF' : typeof p)), 'files.length:', files.length)}
-                    {previews.map((previewSrc, index) => {
-                      const currentFile = files[index];
-                      const isImage = currentFile?.type.startsWith('image/');
+                    {items.map((item, index) => {
+                      const isImage = item.file.type.startsWith('image/');
                       return (
-                        <div key={`${currentFile?.name ?? 'file'}-${index}`} className="relative aspect-square overflow-hidden rounded-[16px] bg-white/5">
+                        <div key={item.id} className="relative aspect-square overflow-hidden rounded-[16px] bg-white/5">
                           {isImage ? (
-                            <Image src={previewSrc} alt={`Proof preview ${index + 1}`} fill sizes="120px" className="object-cover" />
+                            <Image src={item.preview} alt={`Proof preview ${index + 1}`} fill sizes="120px" className="object-cover" />
                           ) : (
-                            <video src={previewSrc} className="h-full w-full object-cover" />
+                            <video src={item.preview} className="h-full w-full object-cover" />
                           )}
                           <button
                             type="button"
-                            onClick={() => handleRemoveFile(index)}
+                            onClick={() => handleRemoveFile(item.id)}
                             className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full transition"
                             aria-label={`Remove file ${index + 1}`}
                           >
@@ -448,7 +457,7 @@ export default function ProofUploadModal({
               className="flex-1 px-4 py-3 text-white font-semibold rounded-[24px] transition flex items-center justify-center gap-2 disabled:opacity-50 bg-gradient-to-r from-pink-500 to-violet-500 hover:brightness-110"
             >
               {isUploading && <Loader className="w-4 h-4 animate-spin" />}
-              {isUploading ? 'Uploading...' : files.length > 1 ? `Submit ${files.length} Photos` : 'Submit Proof'}
+              {isUploading ? 'Uploading...' : items.length > 1 ? `Submit ${items.length} Photos` : 'Submit Proof'}
             </button>
           </div>
         </form>
