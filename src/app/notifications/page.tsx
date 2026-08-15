@@ -25,8 +25,20 @@ const formatTimeAgo = (isoTimestamp: string) => {
   return `${Math.floor(diffMs / day)}d ago`;
 };
 
+const isJoinRequestNotification = (notification: any) => {
+  const text = `${notification?.title || ''} ${notification?.description || ''}`.toLowerCase();
+  return text.includes('join request') || text.includes('wants to join') || text.includes('requested to join');
+};
+
 const notificationTarget = (notification: any) => {
-  if (notification.related_pact_id) return `/pact-details/${notification.related_pact_id}`;
+  if (notification.related_pact_id) {
+    // Join-request notifications land the creator directly in the pact's
+    // Accept/Reject window (see PactJoinRequestsModal) instead of just the
+    // pact page — previously the notification navigated here with no way
+    // to actually act on the request once you arrived.
+    const suffix = isJoinRequestNotification(notification) ? '?joinRequests=1' : '';
+    return `/pact-details/${notification.related_pact_id}${suffix}`;
+  }
   if (notification.related_circle_id) return `/circles/${notification.related_circle_id}`;
   return '/feed';
 };

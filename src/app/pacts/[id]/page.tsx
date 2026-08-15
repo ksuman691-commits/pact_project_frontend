@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { AlertCircle, Camera, CheckCircle2, Clock3, MessageSquare, Users } from 'lucide-react';
+import { AlertCircle, Camera, CheckCircle2, Clock3, Inbox, MessageSquare, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import TopNav from '@/components/TopNav';
 import FeedPactCard from '@/components/FeedPactCard';
@@ -14,6 +14,7 @@ import Avatar from '@/components/Avatar';
 import CheerButton from '@/components/CheerButton';
 import CheerGallery from '@/components/CheerGallery';
 import PremiumJoinButton from '@/components/PremiumJoinButton';
+import PactJoinRequestsModal from '@/components/PactJoinRequestsModal';
 import PactDetailCarousel, { type DetailCarouselPanel } from '@/components/PactDetailCarousel';
 import { usePact, usePactProofs, usePactCheers } from '@/hooks/usePacts';
 import { useSkipPact } from '@/hooks/usePactActions';
@@ -108,8 +109,10 @@ function ProofTimeline({ proofs }: { proofs: any[] }) {
 export default function PactDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showJoinRequestsModal, setShowJoinRequestsModal] = useState(false);
   const pactId = Number(params.id);
   const { data: pactData, isLoading, isError, refetch: refetchPact } = usePact(pactId);
   const { data: proofsData, refetch: refetchProofs } = usePactProofs(pactId, 50);
