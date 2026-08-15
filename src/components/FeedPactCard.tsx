@@ -511,7 +511,10 @@ export default function FeedPactCard({
               </div>
             </div>
 
-            <div className="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-2">
+            {/* z-20: must stay above the bottom title/caption overlay (z-10) below,
+                which renders later in the DOM and would otherwise swallow clicks
+                on these buttons in the overlapping bottom-right region. */}
+            <div className="absolute right-3 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-2">
               <button
                 type="button"
                 onClick={handleProofUploadClick}

@@ -23,8 +23,9 @@ export default function ProofUploadModal({
   // Multiple photos can be queued and posted together — the backend only
   // accepts one file per request (POST /api/pacts/:id/upload-proof-file),
   // so on submit we loop this list and fire one request per file.
-  const [files, setFiles] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
+  // `file` and `preview` are kept on a single item so they can never drift
+  // out of sync (e.g. if FileReaders for several files resolve out of order).
+  const [items, setItems] = useState<{ id: string; file: File; preview: string }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [cameraMode, setCameraMode] = useState<'photo' | 'video' | null>(null);
@@ -181,6 +182,7 @@ export default function ProofUploadModal({
     selectedFiles.forEach((selectedFile) => {
       const reader = new FileReader();
       reader.onloadend = () => {
+        console.log('[v0] reader.onloadend result:', reader.result === null ? 'NULL' : typeof reader.result, reader.error);
         setPreviews((prev) => [...prev, reader.result as string]);
       };
       reader.readAsDataURL(selectedFile);
@@ -382,6 +384,7 @@ export default function ProofUploadModal({
               ) : (
                 <div className="space-y-3">
                   <div className="grid grid-cols-3 gap-2">
+                    {console.log('[v0] render previews:', previews.map((p) => (p === null ? 'NULL' : p === undefined ? 'UNDEF' : typeof p)), 'files.length:', files.length)}
                     {previews.map((previewSrc, index) => {
                       const currentFile = files[index];
                       const isImage = currentFile?.type.startsWith('image/');
