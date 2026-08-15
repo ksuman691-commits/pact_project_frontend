@@ -388,8 +388,13 @@ export const cheerService = {
   create: (pactId: number, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
+    // The api instance sets a default 'Content-Type: application/json'
+    // header. That default must be explicitly cleared here (not just
+    // omitted) or it leaks onto this FormData request and the backend
+    // rejects it. Setting it to undefined lets the browser generate the
+    // correct multipart boundary itself.
     return api.post(`/api/pacts/${pactId}/cheers`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { 'Content-Type': undefined },
     });
   },
   list: async (pactId: number, skip = 0, limit = 50) => {

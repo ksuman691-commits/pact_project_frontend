@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ChevronRight, Flag, MessageCircle, Share2, FileImage, ArrowLeft, ArrowRight, Camera } from 'lucide-react';
+import { ChevronRight, Flag, MessageCircle, Share2, FileImage, ArrowLeft, ArrowRight, Camera, PartyPopper } from 'lucide-react';
 import ProofUploadModal from './ProofUploadModal';
 import ProofMediaCarousel from './ProofMediaCarousel';
 import Avatar from './Avatar';
@@ -193,6 +193,7 @@ export default function FeedPactCard({
   const recentSupporters = Array.isArray(pact.recent_supporters) ? pact.recent_supporters : [];
   const proofCount = Number(pact.proof_count ?? pact.proofClips?.length ?? 0);
   const commentCount = Number(pact.comment_count ?? pact.comments?.length ?? 0);
+  const cheerCount = Number(pact.active_cheer_count ?? 0);
   const timeRemaining = pact.timeRemaining || formatEndsIn(pact.end_date || pact.deadline);
   const proofs = useMemo(() => getProofs(pact), [pact]);
   const media = useMemo(() => getMedia(pact), [pact]);
@@ -521,6 +522,17 @@ export default function FeedPactCard({
                 <MessageCircle className="h-4 w-4" />
                 <span className="text-[10px] font-semibold">{formatCompactCount(commentCount)}</span>
               </Link>
+
+              {cheerCount > 0 && (
+                <Link
+                  href={resolvedDetailHref}
+                  className="flex w-12 flex-col items-center gap-1 rounded-full border border-[var(--pact-gold)]/50 bg-[var(--pact-gold)]/15 px-2 py-3 text-[var(--pact-gold)] backdrop-blur-md transition hover:bg-[var(--pact-gold)]/25"
+                  aria-label={`${cheerCount} cheers`}
+                >
+                  <PartyPopper className="h-4 w-4" />
+                  <span className="text-[10px] font-semibold">{formatCompactCount(cheerCount)}</span>
+                </Link>
+              )}
 
               <button
                 type="button"
