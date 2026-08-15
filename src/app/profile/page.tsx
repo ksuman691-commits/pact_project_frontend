@@ -165,7 +165,11 @@ export default function Profile() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-md mx-auto px-4 py-6 pb-24">
+      {/* pb-36: extra clearance for the floating pill BottomNav — on
+          low-activity accounts (few/no pacts) this page is short enough that
+          it doesn't scroll, so the fixed nav can sit directly over the tabs
+          row unless we reserve enough space here. */}
+      <div className="max-w-md mx-auto px-4 py-6 pb-36">
         {/* Profile Hero */}
         <ProfileHero
           user={profileUser}
