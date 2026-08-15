@@ -173,9 +173,15 @@ export default function PactDetailPage() {
   );
   // UI-side gating only: hides the action for non-members/creators. The real
   // authorization must happen server-side once a backend-owned route exists
-  // to enforce it — see project notes for the handoff spec.
+  // to enforce it — see BACKEND_HANDOFF_CHEER_DEDUP.md for the handoff spec.
   const canCheer = isParticipant && !isCreator;
   const cheers = useMemo(() => cheersData?.data || [], [cheersData?.data]);
+  // UI-side guard only: the backend currently has no per-user-per-pact
+  // uniqueness constraint on cheers (see BACKEND_HANDOFF_CHEER_DEDUP.md), so
+  // this only stops honest double-taps from this client — it does not stop
+  // a second device, a replayed request, or a modified client. Do not treat
+  // this as the real fix.
+  const hasCheered = Boolean(user && cheers.some((cheer: any) => cheer.sender_id === user.id));
 
   const handleVote = async (_pactId: number, vote: 'support' | 'skip') => {
     if (vote === 'support') {
@@ -246,9 +252,13 @@ export default function PactDetailPage() {
             <div className="flex items-center justify-between gap-3 rounded-[24px] border border-white/10 bg-white/5 px-5 py-4 backdrop-blur-sm">
               <div>
                 <p className="text-sm font-semibold text-white">Cheer this pact on</p>
-                <p className="text-xs text-white/60">Post an encouragement photo for {pact.creator_username || 'the creator'}.</p>
+                <p className="text-xs text-white/60">
+                  {hasCheered
+                    ? "You've already sent a cheer for this pact."
+                    : `Post an encouragement photo for ${pact.creator_username || 'the creator'}.`}
+                </p>
               </div>
-              <CheerButton pactId={pact.id} canCheer={canCheer} />
+              <CheerButton pactId={pact.id} canCheer={canCheer} hasCheered={hasCheered} />
             </div>
           )}
 
