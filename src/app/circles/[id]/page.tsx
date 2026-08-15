@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { useCircleLeaderboard } from '@/hooks';
 import TopNav from '@/components/TopNav';
-import { circleService, circleJoinRequestService, joinRequestService } from '@/services/api';
+import { circleService, circleJoinRequestService, joinRequestService, userService } from '@/services/api';
 import { Circle, Pact } from '@/types';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Users, Globe, Target, Plus, Trophy } from 'lucide-react';
@@ -26,25 +25,17 @@ export default function CircleDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isMember, setIsMember] = useState(false);
   const [inviteModal, setInviteModal] = useState(false);
+  // Real per-member stats for this circle — no fallback to placeholder/demo
+  // entries. The backend has no dedicated circle-leaderboard endpoint (both
+  // /api/circles/{id}/leaderboard and /api/leaderboards/circles/{id} 404),
+  // so this is built client-side from each member's real
+  // /api/users/{id}/stats response, fetched alongside the member list.
+  const [leaderboardEntries, setLeaderboardEntries] = useState<
+    { rank: number; userId: number; username: string; avatarUrl: string | null; pactsCompleted: number; winRate: number; streak: number }[]
+  >([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(true);
 
   const circleId = parseInt(params.id as string);
-
-  // Real leaderboard data for this circle's actual members — no fallback to
-  // placeholder/demo entries. Called unconditionally (before any early
-  // returns below) so hook order stays stable across renders. If the
-  // backend has nothing yet (e.g. a brand-new circle with no completed
-  // pacts), leaderboardEntries is empty and the low-population empty state
-  // further down takes over.
-  const { data: leaderboardData, isLoading: leaderboardLoading } = useCircleLeaderboard(circleId);
-  const leaderboardEntries = (leaderboardData || []).map((entry: any, index: number) => ({
-    rank: entry.rank ?? index + 1,
-    userId: entry.user_id ?? entry.userId ?? entry.id,
-    username: entry.username ?? entry.user?.username ?? 'unknown',
-    avatarUrl: entry.avatar_url ?? entry.user?.avatar_url ?? null,
-    pactsCompleted: entry.pacts_completed ?? entry.pactsCompleted ?? 0,
-    winRate: entry.win_rate ?? entry.winRate ?? 0,
-    streak: entry.current_streak ?? entry.streak ?? 0,
-  }));
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -78,6 +69,51 @@ export default function CircleDetailPage() {
 
     fetchData();
   }, [isInitialized, user, router, circleId]);
+
+  // Build the leaderboard from each real member's real stats. There is no
+  // dedicated circle-leaderboard endpoint on the backend, so this fetches
+  // /api/users/{id}/stats per member (the same endpoint the profile page
+  // uses) and ranks them client-side — Promise.allSettled so one member's
+  // failed request doesn't blank out the whole leaderboard.
+  useEffect(() => {
+    if (members.length === 0) {
+      setLeaderboardEntries([]);
+      setLeaderboardLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLeaderboardLoading(true);
+
+    Promise.allSettled(members.map((member: any) => userService.getStats(member.user_id))).then((results) => {
+      if (cancelled) return;
+
+      const entries = results
+        .map((result, index) => {
+          if (result.status !== 'fulfilled') return null;
+          const member = members[index];
+          const stats = result.value.data;
+          return {
+            userId: member.user_id,
+            username: member.username,
+            avatarUrl: member.avatar_url ?? null,
+            pactsCompleted: stats?.pacts_completed ?? 0,
+            winRate: stats?.win_rate ?? 0,
+            streak: stats?.current_streak ?? 0,
+          };
+        })
+        .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+        .sort((a, b) => b.pactsCompleted - a.pactsCompleted || b.winRate - a.winRate)
+        .map((entry, index) => ({ ...entry, rank: index + 1 }));
+
+      setLeaderboardEntries(entries);
+      setLeaderboardLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [members]);
 
   if (!isInitialized) {
     return (
