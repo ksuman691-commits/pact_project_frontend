@@ -85,6 +85,17 @@ const mapProof = (raw: any) => ({
   uploaded_at: raw?.uploaded_at ?? raw?.created_at ?? null,
 });
 
+const mapCheer = (raw: any) => ({
+  id: raw?.id,
+  pact_id: raw?.pact_id,
+  sender_id: raw?.sender_id,
+  sender_username: raw?.sender_username ?? raw?.username ?? null,
+  sender_avatar_url: raw?.sender_avatar_url ?? raw?.avatar_url ?? null,
+  photo_url: raw?.photo_url ?? raw?.file_url ?? null,
+  created_at: raw?.created_at ?? null,
+  expires_at: raw?.expires_at ?? null,
+});
+
 const normalizeListResponse = <T,>(response: any, mapper: (item: any) => T = (item) => item): any => {
   const payload = response.data;
   const rows = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
@@ -370,6 +381,21 @@ export const pactService = {
     api.get('/api/pacts/my-reports', { params: { skip, limit } }),
   getVotes: (id: number) => api.get(`/api/pacts/${id}/votes`),
   personalized: (skip = 0, limit = 20) => api.get('/api/pacts/feed/personalized', { params: { skip, limit } }),
+};
+
+// Cheers (photo-only encouragement posts from non-creator members)
+export const cheerService = {
+  create: (pactId: number, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/api/pacts/${pactId}/cheers`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  list: async (pactId: number, skip = 0, limit = 50) => {
+    const response = await api.get(`/api/pacts/${pactId}/cheers`, { params: { skip, limit } });
+    return normalizeListResponse(response, mapCheer);
+  },
 };
 
 // Pact Join Requests (NEW)

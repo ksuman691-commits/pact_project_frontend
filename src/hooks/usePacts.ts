@@ -1,5 +1,5 @@
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
-import { pactService, pactAdvancedService, shortsService } from '@/services/api';
+import { pactService, pactAdvancedService, shortsService, cheerService } from '@/services/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { Pact } from '@/types';
 
@@ -35,6 +35,15 @@ export function usePactProofs(pactId: number, limit = 20) {
   return useQuery({
     queryKey: [...queryKeys.pacts.proofHistory(pactId), limit],
     queryFn: () => pactService.listProofs(pactId, limit),
+    enabled: !!pactId,
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
+export function usePactCheers(pactId: number, limit = 50) {
+  return useQuery({
+    queryKey: [...queryKeys.pacts.cheers(pactId), limit],
+    queryFn: () => cheerService.list(pactId, 0, limit),
     enabled: !!pactId,
     staleTime: 1000 * 60 * 2,
   });

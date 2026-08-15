@@ -11,7 +11,9 @@ import ProofsSection from '@/components/ProofsSection';
 import CommentSection from '@/components/CommentSection';
 import VerificationResults from '@/components/VerificationResults';
 import Avatar from '@/components/Avatar';
-import { usePact, usePactProofs } from '@/hooks/usePacts';
+import CheerButton from '@/components/CheerButton';
+import CheerGallery from '@/components/CheerGallery';
+import { usePact, usePactProofs, usePactCheers } from '@/hooks/usePacts';
 import { useSkipPact, useSupportPact } from '@/hooks/usePactActions';
 import { useAuthStore } from '@/store/auth';
 import { joinRequestService, pactService } from '@/services/api';
@@ -145,6 +147,7 @@ export default function PactDetailPage() {
   const pactId = Number(params.id);
   const { data: pactData, isLoading, isError, refetch: refetchPact } = usePact(pactId);
   const { data: proofsData, refetch: refetchProofs } = usePactProofs(pactId, 50);
+  const { data: cheersData } = usePactCheers(pactId, 50);
   const supportMutation = useSupportPact();
   const skipMutation = useSkipPact();
 
@@ -164,9 +167,15 @@ export default function PactDetailPage() {
   );
 
   const participants = useMemo(() => pact?.participants || [], [pact?.participants]);
+  const isCreator = Boolean(user && pact?.creator_id === user.id);
   const isParticipant = Boolean(
-    user && (pact?.creator_id === user.id || participants.some((participant: any) => participant.id === user.id || participant.user_id === user.id))
+    user && (isCreator || participants.some((participant: any) => participant.id === user.id || participant.user_id === user.id))
   );
+  // UI-side gating only: hides the action for non-members/creators. The real
+  // authorization must happen server-side once a backend-owned route exists
+  // to enforce it — see project notes for the handoff spec.
+  const canCheer = isParticipant && !isCreator;
+  const cheers = useMemo(() => cheersData?.data || [], [cheersData?.data]);
 
   const handleVote = async (_pactId: number, vote: 'support' | 'skip') => {
     if (vote === 'support') {
@@ -232,6 +241,16 @@ export default function PactDetailPage() {
             detailHref={`/pacts/${pact.id}`}
             canReport={pact.creator_id !== user?.id}
           />
+
+          {canCheer && (
+            <div className="flex items-center justify-between gap-3 rounded-[24px] border border-white/10 bg-white/5 px-5 py-4 backdrop-blur-sm">
+              <div>
+                <p className="text-sm font-semibold text-white">Cheer this pact on</p>
+                <p className="text-xs text-white/60">Post an encouragement photo for {pact.creator_username || 'the creator'}.</p>
+              </div>
+              <CheerButton pactId={pact.id} canCheer={canCheer} />
+            </div>
+          )}
 
           {!isParticipant && (
             <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 text-white backdrop-blur-sm">
@@ -309,6 +328,11 @@ export default function PactDetailPage() {
                     transition={{ duration: 0.22 }}
                   >
                     <ProofsSection proofs={proofs} title="Proof gallery" variant="immersive" />
+                    {cheers.length > 0 && (
+                      <div className="mt-6">
+                        <CheerGallery cheers={cheers} />
+                      </div>
+                    )}
                   </motion.div>
                 )}
 

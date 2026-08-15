@@ -45,6 +45,7 @@ export const queryKeys = {
     likes: (pactId: number) => [...queryKeys.pacts.detail(pactId), 'likes'],
     comments: (pactId: number) => [...queryKeys.pacts.detail(pactId), 'comments'],
     shares: (pactId: number) => [...queryKeys.pacts.detail(pactId), 'shares'],
+    cheers: (pactId: number) => [...queryKeys.pacts.detail(pactId), 'cheers'],
   },
 
   // Circles
