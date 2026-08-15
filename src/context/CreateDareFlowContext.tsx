@@ -19,6 +19,7 @@ interface CreateDareFlowContextValue {
   isSubmitting: boolean;
   submit: () => Promise<void>;
   createdDare: CreatedDare | null;
+  reset: () => void;
 }
 
 const CreateDareFlowContext = createContext<CreateDareFlowContextValue | null>(null);
@@ -65,6 +66,14 @@ export function CreateDareFlowProvider({ children }: { children: React.ReactNode
     }
   };
 
+  // "Create another" on the success screen — start a fresh dare draft
+  // without closing the surrounding modal/page.
+  const reset = () => {
+    setDraft(createEmptyDareDraft());
+    setStepIndex(0);
+    setCreatedDare(null);
+  };
+
   const value: CreateDareFlowContextValue = {
     draft,
     updateDraft,
@@ -77,6 +86,7 @@ export function CreateDareFlowProvider({ children }: { children: React.ReactNode
     isSubmitting: createDareMutation.isPending,
     submit,
     createdDare,
+    reset,
   };
 
   return <CreateDareFlowContext.Provider value={value}>{children}</CreateDareFlowContext.Provider>;

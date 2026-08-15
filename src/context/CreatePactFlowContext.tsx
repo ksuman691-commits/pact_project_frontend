@@ -38,6 +38,7 @@ interface CreatePactFlowContextValue {
   selectProofFrequency: (frequency: ProofFrequency) => void;
   selectAudience: (label: AudienceLabel, circleId?: number | null) => void;
   goToReview: () => void;
+  goToSuccess: () => void;
 
   reset: () => void;
   isSubmitting: boolean;
@@ -258,6 +259,14 @@ export function CreatePactFlowProvider({
     });
   }, [resolvedSteps]);
 
+  // Called after the create-pact API call succeeds so the flow actually
+  // transitions to the SuccessStep screen. 'success' is always the last
+  // resolved step (see resolveSteps).
+  const goToSuccess = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setStepIndex(resolvedSteps.length - 1);
+  }, [resolvedSteps]);
+
   const reset = useCallback(() => {
     setDraft(createEmptyDraft());
     setStepIndex(0);
@@ -285,6 +294,7 @@ export function CreatePactFlowProvider({
     selectProofFrequency,
     selectAudience,
     goToReview,
+    goToSuccess,
     reset,
     isSubmitting,
     setIsSubmitting,

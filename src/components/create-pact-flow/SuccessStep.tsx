@@ -50,7 +50,7 @@ export default function SuccessStep() {
           className="w-full rounded-full px-6 py-3.5 text-sm font-semibold text-[var(--pact-bg)]"
           style={{ background: 'var(--pact-pink)' }}
         >
-          View pact
+          Back to Feed
         </button>
         <button
           type="button"

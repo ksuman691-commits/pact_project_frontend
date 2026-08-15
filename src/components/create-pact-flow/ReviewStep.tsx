@@ -9,7 +9,7 @@ import PactCard from './PactCard';
 import CustomizePanel from './CustomizePanel';
 
 export default function ReviewStep() {
-  const { draft, activity, setIsSubmitting, isSubmitting, setCreatedPact } = useCreatePactFlow();
+  const { draft, activity, setIsSubmitting, isSubmitting, setCreatedPact, goToSuccess } = useCreatePactFlow();
   const createPact = useCreatePact();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -39,6 +39,10 @@ export default function ReviewStep() {
         createdBy: '',
         createdAt: new Date().toISOString(),
       });
+      // Transition the flow to the real success step (stamp + title +
+      // suggestions). Without this the draft is created but the user is
+      // left staring at this same review screen with no visible change.
+      goToSuccess();
     } catch (error) {
       // useCreatePact already toasts the error; keep a local message too so
       // the button re-enables and the user sees inline feedback.

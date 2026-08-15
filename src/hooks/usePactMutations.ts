@@ -46,7 +46,10 @@ export function useCreatePact() {
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.pacts.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
-      toast.success('Pact created successfully!');
+      // No success toast here — the create-pact flow transitions to its own
+      // SuccessStep screen (stamp + title + suggestions) on success, so a
+      // toast on top of that would be a redundant leftover from the old
+      // form-based flow.
       return response.data;
     },
     onError: (error: any) => {

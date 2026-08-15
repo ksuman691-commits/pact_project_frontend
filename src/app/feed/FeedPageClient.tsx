@@ -36,6 +36,14 @@ export default function FeedPageClient() {
     }
   }, [isInitialized, user, router])
 
+  // "Back to Feed" on the create-pact success screen pushes /feed?created=id.
+  // When the modal was opened from this same page (Feed's own "New Pact"
+  // button), that's a shallow same-route navigation, so pactModalOpen would
+  // otherwise stay true and the modal would linger open over the feed.
+  useEffect(() => {
+    if (highlightPactId) setPactModalOpen(false)
+  }, [highlightPactId])
+
   // Clear the `created` param from the URL once the glow has had a chance to
   // play, so a later refresh of /feed doesn't keep re-highlighting the pact.
   useEffect(() => {
