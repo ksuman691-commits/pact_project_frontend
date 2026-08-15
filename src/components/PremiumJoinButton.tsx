@@ -61,7 +61,7 @@ export default function PremiumJoinButton({
         disabled={isDisabled}
         whileTap={isDisabled ? undefined : { scale: 0.95 }}
         transition={{ duration: 0.15 }}
-        className={`relative z-10 inline-flex items-center justify-center rounded-full font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${fullWidth ? 'w-full' : ''}`}
+        className={`relative z-10 inline-flex items-center justify-center overflow-hidden rounded-full font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${fullWidth ? 'w-full' : ''}`}
         style={{
           padding: s.padding,
           gap: s.gap,
@@ -71,13 +71,22 @@ export default function PremiumJoinButton({
           boxShadow: isDisabled ? 'none' : '0 8px 20px rgba(139,107,255,0.35)',
         }}
       >
+        {/* Diagonal light sweep looping across the pill — the "bling" motif
+            layered on top of the breathing aura outside this button. */}
+        {!isDisabled && (
+          <span
+            aria-hidden="true"
+            className="join-btn-shine pointer-events-none absolute inset-y-0 left-0 w-1/3"
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent)' }}
+          />
+        )}
         <span
-          className="flex flex-shrink-0 items-center justify-center rounded-full bg-white/90"
+          className="relative flex flex-shrink-0 items-center justify-center rounded-full bg-white/90"
           style={{ width: s.badge, height: s.badge }}
         >
           <Plus className="text-[var(--pact-violet)]" style={{ width: s.badge * 0.6, height: s.badge * 0.6 }} strokeWidth={3} />
         </span>
-        {loading ? loadingLabel : label}
+        <span className="relative">{loading ? loadingLabel : label}</span>
       </motion.button>
     </span>
   );

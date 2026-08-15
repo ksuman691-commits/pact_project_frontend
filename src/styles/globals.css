@@ -289,6 +289,31 @@ section + section {
   animation: join-btn-breathe 2.2s ease-in-out infinite;
 }
 
+/* PremiumJoinButton's "bling" shine sweep — a diagonal highlight that slides
+   across the gradient pill on a loop, layered on top of join-btn-breathe's
+   aura glow so the button reads as genuinely premium rather than just a
+   static gradient. The button clips this with overflow-hidden. */
+@keyframes join-btn-shine {
+  0% {
+    transform: translateX(-150%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(250%) skewX(-20deg);
+  }
+}
+
+.join-btn-shine {
+  animation: join-btn-shine 2.6s ease-in-out infinite;
+  animation-delay: 0.6s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .join-btn-breathe,
+  .join-btn-shine {
+    animation: none;
+  }
+}
+
 /* BottomNav (see src/components/BottomNav.tsx): active-tab illumination and
    the Dares live-indicator dot both reuse the breathing keyframes above
    rather than inventing new motion — the active glow borrows join-btn-breathe's

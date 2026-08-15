@@ -136,6 +136,16 @@ export default function PactDetailPage() {
 
   const participants = useMemo(() => pact?.participants || [], [pact?.participants]);
   const isCreator = Boolean(user && pact?.creator_id === user.id);
+
+  // Deep-linked from a "so-and-so wants to join" notification
+  // (?joinRequests=1) — opens the requests modal automatically once the
+  // pact has loaded and confirmed the current user is the creator.
+  useEffect(() => {
+    if (!pact || !isCreator) return;
+    if (searchParams.get('joinRequests') === '1') {
+      setShowJoinRequestsModal(true);
+    }
+  }, [pact, isCreator, searchParams]);
   const isParticipant = Boolean(
     user && (isCreator || participants.some((participant: any) => participant.id === user.id || participant.user_id === user.id))
   );
@@ -302,6 +312,23 @@ export default function PactDetailPage() {
             hasCheered={hasCheered}
           />
 
+          {isCreator && (
+            <button
+              type="button"
+              onClick={() => setShowJoinRequestsModal(true)}
+              className="flex w-full items-center justify-between gap-3 rounded-[24px] border border-white/10 bg-white/5 px-5 py-4 text-left backdrop-blur-sm transition hover:bg-white/8"
+            >
+              <div className="flex items-center gap-3">
+                <Inbox className="h-5 w-5 text-white/70" />
+                <div>
+                  <p className="text-sm font-semibold text-white">Join requests</p>
+                  <p className="text-xs text-white/60">Review who&apos;s asked to join this pact.</p>
+                </div>
+              </div>
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40">Manage</span>
+            </button>
+          )}
+
           {canCheer && (
             <div className="flex items-center justify-between gap-3 rounded-[24px] border border-white/10 bg-white/5 px-5 py-4 backdrop-blur-sm">
               <div>
@@ -353,6 +380,17 @@ export default function PactDetailPage() {
           </section>
         </motion.div>
       </div>
+
+      {isCreator && (
+        <PactJoinRequestsModal
+          pactId={pact.id}
+          isOpen={showJoinRequestsModal}
+          onClose={() => setShowJoinRequestsModal(false)}
+          onRequestHandled={() => {
+            void Promise.all([refetchPact()]);
+          }}
+        />
+      )}
     </>
   );
 }

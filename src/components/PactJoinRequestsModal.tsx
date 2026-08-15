@@ -5,7 +5,7 @@ import { X, CheckCircle2, XCircle, Clock3, Inbox } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { joinRequestService } from '@/services/api';
 import { PactJoinRequest } from '@/types';
-import Avatar from '@/components/Avatar';
+import UserAvatarLink from '@/components/UserAvatarLink';
 
 interface PactJoinRequestsModalProps {
   pactId: number;
@@ -130,11 +130,12 @@ export default function PactJoinRequestsModal({ pactId, isOpen, onClose, onReque
                 style={{ background: 'var(--pact-surface-2)', border: '1px solid var(--pact-hairline)' }}
               >
                 <div className="flex items-center gap-3">
-                  <Avatar
+                  <UserAvatarLink
                     name={request.user?.full_name || request.user?.username}
                     avatarUrl={request.user?.avatar_url}
                     username={request.user?.username}
                     size={40}
+                    stopPropagation
                   />
                   <div className="min-w-0">
                     <p className="truncate font-semibold" style={{ color: 'var(--pact-text)' }}>
