@@ -54,7 +54,8 @@ export default function DareCard({ dare }: DareCardProps) {
   const statusPill = dare.my_recipient_status ? STATUS_PILL[dare.my_recipient_status] : null;
 
   return (
-    <div
+    <>
+      <div
       onClick={() => router.push(`/dares/${dare.id}`)}
       role="link"
       tabIndex={0}
@@ -173,11 +174,19 @@ export default function DareCard({ dare }: DareCardProps) {
         </div>
       )}
 
+    </div>
+
+      {/* Rendered as a sibling of the card, not a descendant — the card
+          carries backdrop-filter (for the frosted-glass look), which per
+          spec creates a containing block for `position: fixed` children.
+          A modal nested inside would be clipped/positioned relative to the
+          card's box instead of the viewport (see FeedPactCard for the same
+          pattern with ProofUploadModal). */}
       {isRecipient && isAccepted && (
         <div onClick={(e) => e.stopPropagation()}>
           <DareProofUploadModal isOpen={proofModalOpen} onClose={() => setProofModalOpen(false)} dareId={dare.id} />
         </div>
       )}
-    </div>
+    </>
   );
 }
