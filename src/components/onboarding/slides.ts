@@ -10,16 +10,16 @@ export interface OnboardingSlide {
 }
 
 /**
- * The three onboarding beats — stake it, get verified, get rewarded. Mirrors
- * the shorthand pitch already used on the register page's marketing rail,
- * but as full-bleed swipeable moments instead of a static bullet list.
+ * The three onboarding beats — commit to it, get verified, build your streak.
+ * CirclePact has no wagering or financial-stakes mechanic — accountability
+ * comes from your Circle seeing your progress and proof, not money at risk.
  */
 export const onboardingSlides: OnboardingSlide[] = [
   {
     icon: Target,
     emoji: '🎯',
-    headline: 'Put real stakes on it.',
-    body: 'Turn a goal into a Pact, stake money on finishing it, and give yourself a reason that actually holds.',
+    headline: 'Make it a Pact.',
+    body: 'Turn a goal — a savings target, a workout streak, anything — into a Pact with a deadline, so it actually holds you to it.',
     accent: 'var(--pact-pink)',
   },
   {
@@ -32,8 +32,8 @@ export const onboardingSlides: OnboardingSlide[] = [
   {
     icon: Flame,
     emoji: '🔥',
-    headline: 'Win money. Build your streak.',
-    body: 'Follow through and your stake grows. Your streak and reputation build with every Pact you keep.',
+    headline: 'Show up. Build your streak.',
+    body: 'Follow through and your reputation grows. Your streak builds with every Pact you keep, cheered on by the people who believed in you.',
     accent: 'var(--pact-mint)',
   },
 ];

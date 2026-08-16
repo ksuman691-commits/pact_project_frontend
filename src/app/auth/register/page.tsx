@@ -76,12 +76,12 @@ export default function Register() {
               />
             </div>
             <h1 className="text-3xl font-black text-[#14121F] mb-4">Join CirclePact</h1>
-            <p className="text-[#6B7280] mb-8">Turn your goals into reality with real stakes and real accountability.</p>
+            <p className="text-[#6B7280] mb-8">Turn your goals into reality with real commitments and real accountability.</p>
 
             <div className="space-y-4 mt-12 text-left">
               <div>
-                <p className="font-semibold text-[#14121F]">💰 Your Money Matters</p>
-                <p className="text-sm text-[#6B7280]">Stake real money on your commitments</p>
+                <p className="font-semibold text-[#14121F]">🎯 Make It a Pact</p>
+                <p className="text-sm text-[#6B7280]">Commit to a goal with a deadline that holds you to it</p>
               </div>
               <div>
                 <p className="font-semibold text-[#14121F]">👥 Build Your Circle</p>
@@ -89,7 +89,7 @@ export default function Register() {
               </div>
               <div>
                 <p className="font-semibold text-[#14121F]">🔥 Earn Your Streak</p>
-                <p className="text-sm text-[#6B7280]">Win money and build your reputation</p>
+                <p className="text-sm text-[#6B7280]">Build your reputation with every Pact you keep</p>
               </div>
             </div>
           </div>

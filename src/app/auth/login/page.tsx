@@ -52,15 +52,15 @@ export default function Login() {
           </div>
           <h1 className="text-4xl font-black text-[#14121F] mb-4">CirclePact</h1>
           <p className="text-lg text-[#6B7280] mb-2">Real Commitments.</p>
-          <p className="text-lg text-[#6B7280] mb-8">Real Money.</p>
+          <p className="text-lg text-[#6B7280] mb-8">Real Circles.</p>
           <p className="text-lg text-[#6B7280] mb-12">Real Accountability.</p>
 
           <div className="space-y-6 mt-12">
             <div className="flex items-start gap-4">
               <div className="text-2xl">🎯</div>
               <div className="text-left">
-                <p className="font-semibold text-[#14121F]">Set Goals with Stakes</p>
-                <p className="text-sm text-[#6B7280]">Put real money behind your commitments</p>
+                <p className="font-semibold text-[#14121F]">Set Goals with Deadlines</p>
+                <p className="text-sm text-[#6B7280]">Turn a goal into a Pact that holds you to it</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
