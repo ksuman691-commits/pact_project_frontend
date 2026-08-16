@@ -270,6 +270,9 @@ export default function FeedPactCard({
   const committedRef = useRef(false);
   const [displayVote, setDisplayVote] = useState<string | null>(null);
   const [displayCheerCount, setDisplayCheerCount] = useState(0);
+  const [optimisticCheer, setOptimisticCheer] = useState(false);
+  const [cheerError, setCheerError] = useState<string | null>(null);
+  const [isCheerBouncing, setIsCheerBouncing] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [isCheering, setIsCheering] = useState(false);
   const [activeProofIndex, setActiveProofIndex] = useState(0);
@@ -425,18 +428,34 @@ export default function FeedPactCard({
     }
   };
 
+  const handleCheerTap = () => {
+    if (isCheering || optimisticCheer) return;
+    setCheerError(null);
+    setOptimisticCheer(true);
+    setDisplayCheerCount((count) => count + 1);
+    setIsCheerBouncing(true);
+    window.setTimeout(() => setIsCheerBouncing(false), 150);
+    cheerInputRef.current?.click();
+  };
+
   const handleCheerFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     committedRef.current = false;
-    if (!file) return;
+    if (!file) {
+      setOptimisticCheer(false);
+      setDisplayCheerCount((count) => Math.max(0, count - 1));
+      return;
+    }
 
     setIsCheering(true);
     try {
       await createCheer.mutateAsync(file);
-      setDisplayCheerCount((count) => count + 1);
+      setOptimisticCheer(false);
     } catch {
-      // useCreateCheer already surfaces a toast on failure.
+      setOptimisticCheer(false);
+      setDisplayCheerCount((count) => Math.max(0, count - 1));
+      setCheerError('Could not send cheer. Try again.');
     } finally {
       setIsCheering(false);
     }
@@ -897,16 +916,22 @@ export default function FeedPactCard({
           <div className="mt-4 flex items-center gap-6" onClick={(event) => event.stopPropagation()}>
             <button
               type="button"
-              onClick={handleCheerIconClick}
-              disabled={isCheering}
+              onClick={handleCheerTap}
+              disabled={isCheering || optimisticCheer}
               aria-label="cheer this pact"
-              className="flex items-center gap-1.5 text-[var(--pact-text-dim)] transition hover:text-[var(--pact-gold)] disabled:opacity-60"
+              className={`flex items-center gap-1.5 text-[var(--pact-text-dim)] transition hover:text-[var(--pact-gold)] disabled:opacity-60 ${isCheerBouncing ? 'scale-125' : 'scale-100'}`}
+              style={{ transitionDuration: '150ms' }}
             >
-              {isCheering ? <Loader2 className="h-5 w-5 animate-spin" /> : <PartyPopper className="h-5 w-5" />}
+              {isCheering ? <Loader2 className="h-5 w-5 animate-spin" /> : <PartyPopper className={`h-5 w-5 ${optimisticCheer ? 'text-[var(--pact-gold)]' : ''}`} />}
               <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>
                 {formatCompactCount(cheerCount)}
               </span>
             </button>
+            {cheerError && (
+              <span role="status" className="text-xs text-rose-300" aria-live="polite">
+                {cheerError}
+              </span>
+            )}
 
             <button
               type="button"
