@@ -63,9 +63,9 @@ export default function DareRecipientsList({ recipients, isLoading }: DareRecipi
   // one-off implementation, so both surfaces stay visually consistent.
   const stackMembers = recipients.map((recipient) => ({
     userId: recipient.user_id,
-    name: recipient.user?.full_name || recipient.user?.username,
-    username: recipient.user?.username,
-    avatarUrl: recipient.user?.avatar_url,
+    name: recipient.full_name || recipient.username,
+    username: recipient.username,
+    avatarUrl: recipient.avatar_url,
   }));
 
   return (
@@ -74,7 +74,6 @@ export default function DareRecipientsList({ recipients, isLoading }: DareRecipi
 
       <div className="space-y-2">
         {recipients.map((recipient) => {
-          const user = recipient.user;
           const statusConfig = STATUS_CONFIG[recipient.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
           const StatusIcon = statusConfig.icon;
 
@@ -84,13 +83,13 @@ export default function DareRecipientsList({ recipients, isLoading }: DareRecipi
               className="flex items-center gap-3 p-3 rounded-[28px] border border-[var(--pact-hairline)]"
               style={{ background: 'var(--pact-surface)' }}
             >
-              <Avatar name={user?.full_name || user?.username} avatarUrl={user?.avatar_url} size={40} />
+              <Avatar name={recipient.full_name || recipient.username} avatarUrl={recipient.avatar_url} size={40} />
 
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-[var(--pact-text)] truncate">
-                  {user?.full_name || user?.username || 'Unknown User'}
+                  {recipient.full_name || recipient.username || 'Unknown User'}
                 </p>
-                <p className="text-xs text-[var(--pact-text-faint)]">@{user?.username || 'user'}</p>
+                <p className="text-xs text-[var(--pact-text-faint)]">@{recipient.username || 'user'}</p>
               </div>
 
               <div className="flex flex-col items-end gap-1">

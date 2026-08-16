@@ -163,14 +163,14 @@ export default function DareDetailPage() {
         {recipients.length === 1 && (
           <div className="flex items-center gap-3 rounded-2xl px-5 py-3" style={{ background: 'var(--pact-surface-2)' }}>
             <Avatar
-              name={recipients[0].user?.full_name || recipients[0].user?.username}
-              avatarUrl={recipients[0].user?.avatar_url}
+              name={recipients[0].full_name || recipients[0].username}
+              avatarUrl={recipients[0].avatar_url}
               size={36}
             />
             <div className="min-w-0">
               <p className="text-xs font-medium text-[var(--pact-text-faint)]">Dared</p>
               <p className="truncate text-sm font-semibold text-[var(--pact-text)]">
-                {recipients[0].user?.full_name || recipients[0].user?.username || 'Unknown user'}
+                {recipients[0].full_name || recipients[0].username || 'Unknown user'}
               </p>
             </div>
           </div>

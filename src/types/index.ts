@@ -103,14 +103,18 @@ export interface Short {
   pact?: Pact;
 }
 
+// The live API (GET /api/dares/{id}/recipients) returns username/avatar_url
+// as flat fields on the recipient record, not a nested `user` object — this
+// mirrors that actual response shape instead of a guessed/nested one.
 export interface DareRecipient {
   id: number;
   user_id: number;
-  dare_id: number;
+  username: string;
+  avatar_url?: string | null;
+  full_name?: string | null;
   status: 'pending' | 'accepted' | 'declined' | 'completed' | 'failed';
   responded_at?: string;
   completed_at?: string;
-  user?: User;
 }
 
 export interface DareProof {
