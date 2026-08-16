@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Target, Award, Users, Heart, Circle, Plus } from 'lucide-react';
 import PactCard from './PactCard';
 import AnimatedTabs from '@/components/pact-ui/AnimatedTabs';
+import ScrollableRow from '@/components/pact-ui/ScrollableRow';
 import UserAvatarLink from '@/components/UserAvatarLink';
 
 interface ProfileTabsProps {
@@ -32,12 +33,14 @@ export default function ProfileTabs({ children, onTabChange }: ProfileTabsProps)
     <div className="mb-8">
       {/* Tab Navigation */}
       <div className="mb-6 pb-2">
-        <AnimatedTabs
-          tabs={tabs}
-          activeId={activeTab}
-          onChange={handleTabChange}
-          layoutId="profile-tabs-indicator"
-        />
+        <ScrollableRow ariaLabel="Profile sections">
+          <AnimatedTabs
+            tabs={tabs}
+            activeId={activeTab}
+            onChange={handleTabChange}
+            layoutId="profile-tabs-indicator"
+          />
+        </ScrollableRow>
       </div>
 
       {/* Tab Content */}
@@ -52,11 +55,15 @@ export function PactsTab({
   joinedPacts,
   votedPacts,
   allowJoinedUploads = false,
+  isOwnProfile = true,
+  hasSharedCircle = false,
 }: {
   pacts: any[];
   joinedPacts: any[];
   votedPacts: any[];
   allowJoinedUploads?: boolean;
+  isOwnProfile?: boolean;
+  hasSharedCircle?: boolean;
 }) {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState<'created' | 'joined' | 'voted'>('created');
@@ -71,15 +78,23 @@ export function PactsTab({
     if (sectionId === 'created') {
       return (
         <div className="pact-card rounded-3xl border border-dashed px-6 py-10 text-center" style={{ borderColor: 'var(--pact-hairline)' }}>
-          <p className="text-base font-semibold text-[var(--pact-text)]">You haven&apos;t created any pacts yet</p>
-          <p className="mt-2 text-sm text-[var(--pact-text-dim)]">Create a pact to start tracking progress with your circles.</p>
+          <p className="text-base font-semibold text-[var(--pact-text)]">
+            {isOwnProfile ? 'Your pact space is ready' : hasSharedCircle ? 'No shared pacts yet' : 'This pact space is quiet'}
+          </p>
+          <p className="mt-2 text-sm text-[var(--pact-text-dim)]">
+            {isOwnProfile
+              ? 'Create your first pact to start tracking progress with your circles.'
+              : hasSharedCircle
+                ? 'Join or create a pact together to make progress visible here.'
+                : 'Follow their journey or invite them into one of your circles.'}
+          </p>
           <button
-            onClick={() => router.push('/pacts/create')}
+            onClick={() => router.push(isOwnProfile ? '/pacts/create' : '/circles')}
             className="pact-btn-glow mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
             style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
           >
             <Plus className="h-4 w-4" />
-            Create Pact
+            {isOwnProfile ? 'Create Pact' : 'Open Circles'}
           </button>
         </div>
       );
@@ -102,7 +117,7 @@ export function PactsTab({
 
   return (
     <div className="space-y-5">
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      <ScrollableRow ariaLabel="Pact filters">
         {sections.map((section) => {
           const isActive = activeSection === section.id;
           return (
@@ -128,7 +143,7 @@ export function PactsTab({
             </button>
           );
         })}
-      </div>
+      </ScrollableRow>
 
       <div className="grid gap-4">
         {currentPacts.length > 0 ? (

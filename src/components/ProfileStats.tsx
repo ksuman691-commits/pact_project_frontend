@@ -74,11 +74,12 @@ export default function ProfileStats({
                 {stats.pactsCompleted}/{WIN_RATE_UNLOCK_THRESHOLD}
               </span>
             </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--pact-surface-2)]">
+            <div className="relative h-2 w-full overflow-hidden rounded-full border border-dashed bg-[var(--pact-surface-2)]" style={{ borderColor: 'var(--pact-hairline)' }}>
               <div
                 className="h-full rounded-full transition-[width] duration-700 ease-out"
-                style={{ width: `${Math.min(100, (stats.pactsCompleted / WIN_RATE_UNLOCK_THRESHOLD) * 100)}%`, background: 'var(--pact-text-faint)' }}
+                style={{ width: `${Math.min(100, (stats.pactsCompleted / WIN_RATE_UNLOCK_THRESHOLD) * 100)}%`, background: 'repeating-linear-gradient(135deg, var(--pact-text-faint) 0 4px, transparent 4px 8px)' }}
               />
+              <Lock className="absolute right-1/2 top-1/2 h-3 w-3 -translate-y-1/2 translate-x-1/2 text-[var(--pact-text-faint)]" />
             </div>
             <p className="mt-1.5 text-[11px] text-[var(--pact-text-faint)]">
               Complete {WIN_RATE_UNLOCK_THRESHOLD - stats.pactsCompleted} more pact{WIN_RATE_UNLOCK_THRESHOLD - stats.pactsCompleted === 1 ? '' : 's'} to unlock
