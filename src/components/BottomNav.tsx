@@ -51,29 +51,17 @@ export default function BottomNav() {
     // the root layout, outside any page's .pact-flow div) fell back to the
     // hardcoded light defaults baked into the old inline styles below.
     <nav className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-      {/* Rainbow ring wrapper: a rotating multi-hue conic-gradient layer
-          fills this outer box, and the pill below sits inset by `margin`
-          so a thin rotating rainbow border shows all the way around it —
-          same ring-band technique as Avatar's decorative ring. Unlike
-          Avatar's ring (a square box, so rotation doesn't change its
-          silhouette), this wrapper is a wide rectangle: rotating a
-          rectangle swings its corners out past its own bounds, which
-          without clipping rendered as a huge rainbow blob bleeding into
-          page content below the nav. `overflow-hidden` clips the spin/
-          breathe layers to the pill's rounded silhouette so only the thin
-          border band is ever visible. */}
-      <div className="relative w-full max-w-[280px] rounded-full overflow-hidden">
-        {/* Glow layer: same breathing technique as Avatar's ring glow (Layer 1
-            in Avatar.tsx) — a blurred, oversized copy of the rainbow gradient
-            sitting behind the ring band so the stripe itself appears to glow,
-            not just spin. Independently timed from the rotation below. */}
+      {/* Static rainbow border matching the supplied reference: the gradient
+          stays fixed around the pill instead of rotating or breathing like
+          the Avatar ring. The inner surface is inset by `margin` so only the
+          narrow purple/pink/gold outline remains visible. */}
+      <div className="relative w-full max-w-[280px] overflow-hidden rounded-full">
         <div
           aria-hidden="true"
-          className="avatar-ring-breathe pointer-events-none absolute -inset-1.5 rounded-full blur-md"
+          className="pointer-events-none absolute inset-0 rounded-full"
           style={{
             background:
-              'conic-gradient(from 0deg, var(--pact-pink), var(--pact-gold), var(--pact-mint), var(--pact-violet), var(--pact-pink))',
-            opacity: 0.8,
+              'conic-gradient(from 0deg, var(--pact-violet), var(--pact-pink), var(--pact-gold), var(--pact-violet))',
           }}
         />
         <div
