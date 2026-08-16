@@ -1,5 +1,6 @@
 'use client';
 
+import type { ComponentType, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -299,16 +300,22 @@ export default function CircleDetailPage() {
                   className="p-4 rounded-[24px] transition-colors"
                   style={{ background: 'var(--pact-surface-2)', border: '1px solid var(--pact-hairline)' }}
                 >
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-3">
                     <UserAvatarLink name={member.username} avatarUrl={member.avatar_url} username={member.username} size={40} />
-                    <div>
-                      <p className="font-bold text-[var(--pact-text)]">{member.full_name}</p>
-                      <p className="text-sm text-[var(--pact-text-faint)]">@{member.username}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-bold leading-snug text-[var(--pact-text)]">{member.full_name}</p>
+                      <p className="truncate text-sm leading-snug text-[var(--pact-text-faint)]">@{member.username}</p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span style={{ color: 'var(--pact-gold)' }}>★</span>
-                    <span className="font-medium capitalize text-[var(--pact-text-dim)]">{member.role}</span>
+                    {member.role === 'owner' ? (
+                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-400/40 bg-amber-400/15 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em] text-amber-300">
+                        <Crown className="h-3 w-3" />
+                        Owner
+                      </span>
+                    ) : (
+                      <span className="shrink-0 text-[11px] font-medium uppercase tracking-[0.1em] text-[var(--pact-text-faint)]">
+                        {member.role}
+                      </span>
+                    )}
                   </div>
                 </motion.div>
               ))}
@@ -422,4 +429,31 @@ export default function CircleDetailPage() {
 function StatCount({ value }: { value: number }) {
   const count = useCountUp(value);
   return <>{count}</>;
+}
+
+function StatPill({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  value: ReactNode;
+}) {
+  return (
+    <div className="flex flex-1 items-center gap-2.5 rounded-xl px-3 py-2.5">
+      <div
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+        style={{ background: 'var(--pact-surface)', color: 'var(--pact-violet)' }}
+      >
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0 leading-tight">
+        <p className="text-base font-bold leading-tight text-[var(--pact-text)]">{value}</p>
+        <p className="text-[11px] font-medium uppercase tracking-[0.08em] leading-tight text-[var(--pact-text-faint)]">
+          {label}
+        </p>
+      </div>
+    </div>
+  );
 }
