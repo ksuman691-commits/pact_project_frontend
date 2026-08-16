@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { AlertCircle, Camera, CheckCircle2, Clock3, Inbox, MessageSquare, Users } from 'lucide-react';
+import { AlertCircle, Camera, CheckCircle2, Clock3, Crown, Inbox, MessageSquare, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import TopNav from '@/components/TopNav';
 import FeedPactCard from '@/components/FeedPactCard';
@@ -353,6 +353,11 @@ export default function PactDetailPage() {
                     <PremiumJoinButton onClick={handleJoinRequest} size="md" />
                   </div>
                 </>
+              ) : pact.join_block_reason === 'already_joined' ? (
+                <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-400/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-emerald-300">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Joined
+                </span>
               ) : (
                 <p className="mt-2 text-sm text-white/75">
                   {pact.join_block_reason === 'full'
@@ -361,9 +366,7 @@ export default function PactDetailPage() {
                       ? 'This pact is no longer active.'
                       : pact.join_block_reason === 'creator'
                         ? 'You created this pact.'
-                        : pact.join_block_reason === 'already_joined'
-                          ? "You're already part of this pact."
-                          : "Joining isn't available right now."}
+                        : "Joining isn't available right now."}
                 </p>
               )}
             </div>

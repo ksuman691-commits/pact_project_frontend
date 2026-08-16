@@ -97,7 +97,7 @@ export const VIBE_DESCRIPTIONS: Record<VibeId, string> = {
 };
 
 export const PROOF_METHODS = ['Photo', 'Video', 'Check-in', 'Activity data'] as const;
-export const PROOF_FREQUENCIES = ['Every day', 'Every 2 days', 'Every week'] as const;
+export const PROOF_FREQUENCIES = ['Every day', 'Every 2 days', 'Every week', 'At the end of the Pact'] as const;
 
 export const AUDIENCES: {
   emoji: string;

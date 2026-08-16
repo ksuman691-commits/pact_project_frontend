@@ -35,9 +35,10 @@ function mapProofMethod(proofMethod: PactDraft['proofMethod']): 'photo' | 'video
   }
 }
 
-// Backend proof_submission_frequency only supports 'daily' | 'weekly'.
-function mapProofFrequency(proofFrequency: PactDraft['proofFrequency']): 'daily' | 'weekly' {
+// Backend proof_submission_frequency supports 'daily' | 'weekly' | 'on_completion'.
+function mapProofFrequency(proofFrequency: PactDraft['proofFrequency']): 'daily' | 'weekly' | 'on_completion' {
   if (proofFrequency === 'Every day') return 'daily';
+  if (proofFrequency === 'At the end of the Pact') return 'on_completion';
   return 'weekly'; // "Every 2 days" and "Every week" both round to weekly
 }
 
@@ -47,8 +48,12 @@ function mapVisibility(visibility: PactDraft['visibility']): 'public' | 'private
   return 'public';
 }
 
-function computeMaxProofUploads(durationDays: number, frequency: 'daily' | 'weekly', isMilestone: boolean): number {
-  if (isMilestone) return 1;
+function computeMaxProofUploads(
+  durationDays: number,
+  frequency: 'daily' | 'weekly' | 'on_completion',
+  isMilestone: boolean,
+): number {
+  if (isMilestone || frequency === 'on_completion') return 1;
   if (frequency === 'daily') return Math.max(1, durationDays);
   return Math.max(1, Math.ceil(durationDays / 7));
 }
@@ -67,7 +72,7 @@ export interface CreatePactApiPayload {
   end_date: string;
   deadline: string;
   verification_method: 'photo' | 'video' | 'checklist';
-  proof_submission_frequency: 'daily' | 'weekly';
+  proof_submission_frequency: 'daily' | 'weekly' | 'on_completion';
   max_proof_uploads: number;
   min_participants: number;
   max_participants: number;

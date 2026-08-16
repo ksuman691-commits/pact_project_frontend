@@ -7,7 +7,7 @@ import TopNav from '@/components/TopNav';
 import { circleService, circleJoinRequestService, joinRequestService, userService } from '@/services/api';
 import { Circle, Pact } from '@/types';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Users, Globe, Target, Plus, Trophy } from 'lucide-react';
+import { ArrowLeft, Users, Globe, Target, Plus, Trophy, Calendar, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CircleLeaderboard from '@/components/CircleLeaderboard';
 import InviteMembersModal from '@/components/InviteMembersModal';
@@ -193,66 +193,78 @@ export default function CircleDetailPage() {
         </button>
 
         {/* Circle Header */}
-        <div className="pact-card rounded-[28px] mb-8">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-4xl font-bold text-[var(--pact-text)] mb-2">{circle.name}</h1>
-              <p className="text-[var(--pact-text-dim)] text-lg">{circle.description}</p>
+        <div className="pact-card relative overflow-hidden rounded-[28px] p-6 sm:p-8 mb-8">
+          {/* Ambient accent glow, matching the app's pink/violet identity */}
+          <div
+            className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full opacity-40 blur-3xl"
+            style={{ background: 'radial-gradient(circle, var(--pact-pink), transparent 70%)' }}
+          />
+
+          <div className="relative flex items-start justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div
+                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-xl font-bold text-white"
+                style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+              >
+                {circle.name?.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold leading-snug text-[var(--pact-text)]">{circle.name}</h1>
+                {circle.description && (
+                  <p className="mt-1.5 text-sm leading-relaxed text-[var(--pact-text-dim)]">{circle.description}</p>
+                )}
+              </div>
             </div>
             <span
-              className="px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2"
+              className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold"
               style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
             >
-              <Globe className="w-4 h-4" /> Circle
+              <Globe className="w-3.5 h-3.5" /> Circle
             </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 py-4 border-t border-b" style={{ borderColor: 'var(--pact-hairline)' }}>
-            <div>
-              <p className="text-[var(--pact-text-faint)] text-sm">Members</p>
-              <p className="text-2xl font-bold text-[var(--pact-text)] tabular-nums">
-                <StatCount value={circle.member_count ?? members.length} />
-              </p>
-            </div>
-            <div>
-              <p className="text-[var(--pact-text-faint)] text-sm">Pacts</p>
-              <p className="text-2xl font-bold text-[var(--pact-text)] tabular-nums">
-                <StatCount value={pacts.length} />
-              </p>
-            </div>
-            <div>
-              <p className="text-[var(--pact-text-faint)] text-sm">Created</p>
-              <p className="text-lg font-bold text-[var(--pact-text)]">
-                {new Date(circle.created_at).toLocaleDateString()}
-              </p>
-            </div>
+          {/* Stats row — connected as a single unified surface with icon chips
+              instead of a bare grid, so it reads as part of the card rather
+              than a disconnected data table. */}
+          <div
+            className="relative mt-6 flex items-stretch gap-1 rounded-2xl p-1.5"
+            style={{ background: 'var(--pact-surface-2)', border: '1px solid var(--pact-hairline)' }}
+          >
+            <StatPill icon={Users} label="Members" value={<StatCount value={circle.member_count ?? members.length} />} />
+            <div className="w-px self-center h-8" style={{ background: 'var(--pact-hairline)' }} />
+            <StatPill icon={Target} label="Pacts" value={<StatCount value={pacts.length} />} />
+            <div className="w-px self-center h-8" style={{ background: 'var(--pact-hairline)' }} />
+            <StatPill
+              icon={Calendar}
+              label="Created"
+              value={new Date(circle.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+            />
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 mt-6">
+          <div className="relative mt-6 flex flex-wrap items-center gap-3">
             {isMember ? (
               <>
                 <button
                   onClick={() => router.push('/pacts/create')}
-                  className="pact-btn-glow flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-white transition"
+                  className="pact-btn-glow flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition"
                   style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
                 >
-                  <Plus className="w-5 h-5" />
+                  <Plus className="w-4 h-4" />
                   Create Pact
                 </button>
                 <button
                   onClick={() => setInviteModal(true)}
-                  className="flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition"
                   style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-text)', border: '1px solid var(--pact-hairline)' }}
                 >
-                  <Users className="w-5 h-5" />
+                  <Users className="w-4 h-4" />
                   Invite Members
                 </button>
                 {!isOwner && (
                   <button
                     onClick={handleLeaveCircle}
-                    className="px-6 py-3 rounded-full font-semibold transition"
-                    style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-text-dim)', border: '1px solid var(--pact-hairline)' }}
+                    className="ml-auto text-sm font-medium text-[var(--pact-text-faint)] transition hover:text-[var(--pact-pink)]"
                   >
                     Leave Circle
                   </button>
@@ -261,7 +273,7 @@ export default function CircleDetailPage() {
             ) : (
               <button
                 onClick={handleJoinCircle}
-                className="pact-btn-glow px-6 py-3 rounded-full font-semibold text-white transition"
+                className="pact-btn-glow px-6 py-2.5 rounded-full text-sm font-semibold text-white transition"
                 style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
               >
                 Join Circle

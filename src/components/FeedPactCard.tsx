@@ -16,6 +16,7 @@ import {
   PartyPopper,
   Loader2,
   MoreVertical,
+  Check,
 } from 'lucide-react';
 import ProofUploadModal from './ProofUploadModal';
 import ProofMediaCarousel from './ProofMediaCarousel';
@@ -873,7 +874,17 @@ export default function FeedPactCard({
 
             {joinAllowed && <PremiumJoinButton onClick={handleJoinPact} loading={isJoining} size="sm" />}
 
-            {!joinAllowed && pact.join_block_reason && (
+            {!joinAllowed && pact.join_block_reason === 'already_joined' && (
+              <span
+                title="You're already part of this pact"
+                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-400/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-emerald-300"
+              >
+                <Check className="h-3.5 w-3.5" />
+                Joined
+              </span>
+            )}
+
+            {!joinAllowed && pact.join_block_reason && pact.join_block_reason !== 'already_joined' && (
               <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--pact-text-faint)]">
                 {JOIN_MESSAGES[pact.join_block_reason] ?? 'Joining is not available'}
                 {pact.join_block_reason === 'full' && pact.max_participants
@@ -908,7 +919,7 @@ export default function FeedPactCard({
                     disabled={isCheering}
                     className="inline-flex items-center gap-2 rounded-full border border-[var(--pact-gold)]/50 bg-[var(--pact-gold)]/12 px-4 py-2 text-sm font-semibold text-[var(--pact-gold)] transition hover:bg-[var(--pact-gold)]/18 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {isCheering ? <Loader2 className="h-4 w-4 animate-spin" /> : 'cheer'}
+                    {isCheering ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Cheer'}
                     <ArrowRight className="h-4 w-4" />
                   </button>
                 )}
