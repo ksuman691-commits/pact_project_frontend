@@ -97,9 +97,11 @@ export default function OnboardingCarousel() {
           type="button"
           onClick={() => (isLast ? finish() : goTo(index + 1))}
           className="pact-btn-glow rounded-full py-4 text-base font-semibold text-[color:var(--pact-bg)]"
-          style={{ background: slide.accent }}
+          style={{ background: slide.accent, color: slide.accent }}
         >
-          {isLast ? "Let's go →" : 'Next'}
+          {/* Text color above sets up .pact-btn-glow's currentColor-based glow;
+              the label itself is repainted to --pact-bg here so it stays legible. */}
+          <span style={{ color: 'var(--pact-bg)' }}>{isLast ? "Let's go →" : 'Next'}</span>
         </button>
         {index > 0 && (
           <button

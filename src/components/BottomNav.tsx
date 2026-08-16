@@ -19,6 +19,7 @@ export default function BottomNav() {
   const { user, isInitialized } = useAuthStore()
   const isHiddenRoute =
     pathname?.startsWith('/auth') ||
+    pathname?.startsWith('/onboarding') ||
     pathname?.startsWith('/pacts/create') ||
     pathname?.startsWith('/circles/create')
 
