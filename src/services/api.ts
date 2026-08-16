@@ -578,18 +578,22 @@ export const pactAdvancedService = {
 };
 
 // Dare Services
+// The backend's real field names are respond_by/complete_by/audience/
+// recipient_count/my_recipient_status — NOT the respond_by_date/
+// complete_by_date/visibility/*Count names an earlier pass assumed. Reading
+// the wrong (always-undefined) fields is what produced "Invalid Date" and a
+// permanently unreachable Claim flow. See src/types/index.ts for the full
+// real Dare shape.
 const mapDare = (raw: any) => ({
   ...raw,
   dare_uuid: raw?.dare_uuid ?? String(raw?.id ?? ''),
   recipientCount: raw?.recipient_count ?? raw?.recipients?.length ?? 0,
-  acceptedCount: raw?.accepted_count ?? 0,
-  completedCount: raw?.completed_count ?? 0,
-  failedCount: raw?.failed_count ?? 0,
-  isCreatedByMe: Boolean(raw?.is_created_by_me),
-  isAcceptedByMe: Boolean(raw?.is_accepted_by_me),
-  isCompletedByMe: Boolean(raw?.is_completed_by_me),
+  isPendingForMe: raw?.my_recipient_status === 'pending',
+  isAcceptedByMe: raw?.my_recipient_status === 'accepted',
+  isCompletedByMe: raw?.my_recipient_status === 'completed',
+  isDeclinedByMe: raw?.my_recipient_status === 'declined',
   creatorAvatarUrl: raw?.creator_avatar_url ?? raw?.creator?.avatar_url ?? null,
-  timeRemaining: formatTimeRemaining(raw?.complete_by_date),
+  timeRemaining: formatTimeRemaining(raw?.complete_by),
 });
 
 export const dareService = {

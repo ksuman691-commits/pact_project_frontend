@@ -91,9 +91,7 @@ export default function DaresPage() {
           <div className="space-y-4">
             {dares.map((dare, index) => (
               <div key={dare.id} className="pact-list-item" style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}>
-                <Link href={`/dares/${dare.id}`}>
-                  <DareCard dare={dare} />
-                </Link>
+                <DareCard dare={dare} />
               </div>
             ))}
           </div>

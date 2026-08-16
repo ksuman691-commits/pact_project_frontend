@@ -1,130 +1,183 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { ChevronRight, Clock, Users, CheckCircle2, XCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Clock, CheckCircle2, XCircle, Upload, Zap } from 'lucide-react';
 import type { Dare } from '@/types';
+import UserAvatarLink from '@/components/UserAvatarLink';
+import { useAuthStore } from '@/store/auth';
+import { useAcceptDare, useDeclineDare, useClaimDare } from '@/hooks/useDareMutations';
+import { formatCountdown, urgencyColor } from '@/lib/dareCountdown';
+import DareProofUploadModal from '@/components/DareProofUploadModal';
 
 interface DareCardProps {
   dare: Dare;
-  onClick?: () => void;
 }
 
-function formatEndsIn(endDateRaw?: string) {
-  if (!endDateRaw) return 'Ends soon';
+const STATUS_PILL: Record<string, { label: string; color: string }> = {
+  pending: { label: 'Pending', color: 'var(--pact-gold)' },
+  accepted: { label: 'Accepted', color: 'var(--pact-violet)' },
+  declined: { label: 'Declined', color: 'var(--pact-text-faint)' },
+  completed: { label: 'Completed', color: 'var(--pact-mint)' },
+  failed: { label: 'Failed', color: 'var(--pact-pink)' },
+};
 
-  const endDate = new Date(endDateRaw);
-  if (Number.isNaN(endDate.getTime())) return 'Ends soon';
+/**
+ * Whole card navigates to the dare detail page, but it also hosts direct
+ * Accept/Decline/Upload Proof/Claim actions and a nested profile link — so
+ * this uses a plain div + router.push (same pattern as FeedPactCard)
+ * rather than wrapping everything in a <Link>. A modal opened from inside
+ * an anchor tag would have every click inside it bubble up and navigate,
+ * which a nested-<a> approach can't avoid.
+ */
+export default function DareCard({ dare }: DareCardProps) {
+  const router = useRouter();
+  const { user } = useAuthStore();
+  const [proofModalOpen, setProofModalOpen] = useState(false);
+  const acceptMutation = useAcceptDare();
+  const declineMutation = useDeclineDare();
+  const claimMutation = useClaimDare();
 
-  const diffMs = endDate.getTime() - Date.now();
-  if (diffMs <= 0) return 'Ended';
+  const isCreator = user?.id === dare.creator_id;
+  const isRecipient = !isCreator && Boolean(dare.my_recipient_status);
+  const isPending = dare.my_recipient_status === 'pending';
+  const isAccepted = dare.my_recipient_status === 'accepted';
+  const isPublicUnclaimed = dare.audience === 'public' && !isCreator && !dare.my_recipient_status;
 
-  const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  // Pending recipients count down to the response deadline; accepted
+  // recipients (or anyone just browsing) count down to the completion
+  // deadline — matches how the deadline actually applies to the viewer.
+  const countdown = isPending
+    ? formatCountdown(dare.respond_by, 'Respond')
+    : formatCountdown(dare.complete_by, 'Complete');
 
-  if (days < 1) return 'Ends today';
-  if (days <= 6) return `${days} day${days === 1 ? '' : 's'} left`;
-  if (days < 30) return `${Math.round(days / 7)} week${Math.round(days / 7) === 1 ? '' : 's'} left`;
-  return `${Math.round(days / 30)} month${Math.round(days / 30) === 1 ? '' : 's'} left`;
-}
-
-function getUrgencyColor(endDate?: string): string {
-  if (!endDate) return 'text-[var(--pact-violet)]';
-
-  const diffMs = new Date(endDate).getTime() - Date.now();
-  const hours = diffMs / (1000 * 60 * 60);
-
-  if (hours < 24) return 'text-[var(--pact-pink)]'; // Urgent
-  if (hours < 72) return 'text-[var(--pact-gold)]'; // Medium
-  return 'text-[var(--pact-violet)]'; // Comfortable
-}
-
-export default function DareCard({ dare, onClick }: DareCardProps) {
-  const creatorAvatar = dare.creator_avatar_url?.trim()
-    ? dare.creator_avatar_url
-    : `https://api.dicebear.com/7.x/avataaars/svg?seed=${dare.creator_username || dare.creator_id}`;
-
-  const initials = (dare.creator_full_name || dare.creator_username || '?')
-    .split(' ')
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase();
-
-  const timeRemaining = formatEndsIn(dare.complete_by_date);
-  const urgencyClass = getUrgencyColor(dare.complete_by_date);
+  const statusPill = dare.my_recipient_status ? STATUS_PILL[dare.my_recipient_status] : null;
 
   return (
     <div
-      onClick={onClick}
-      className="pact-card rounded-[28px] overflow-hidden cursor-pointer transition"
+      onClick={() => router.push(`/dares/${dare.id}`)}
+      role="link"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') router.push(`/dares/${dare.id}`);
+      }}
+      className="pact-card cursor-pointer overflow-hidden rounded-[28px] transition"
       style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}
     >
       {/* Header */}
-      <div className="p-4 border-b border-[var(--pact-hairline)]">
-        <div className="flex items-center gap-3 mb-3">
-          <div
-            className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0"
-            style={{ background: 'var(--pact-surface-2)' }}
-          >
-            {creatorAvatar && (
-              <Image
-                src={creatorAvatar}
-                alt={dare.creator_username || 'creator'}
-                fill
-                className="object-cover"
-                onError={(e) => {
-                  const img = e.currentTarget as HTMLImageElement;
-                  img.style.display = 'none';
-                }}
-              />
-            )}
-            {!creatorAvatar || creatorAvatar.includes('dicebear') ? (
-              <div className="w-full h-full flex items-center justify-center text-xs font-bold text-[var(--pact-text-muted)]">
-                {initials}
-              </div>
-            ) : null}
+      <div className="p-4">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <UserAvatarLink
+              name={dare.creator_full_name || dare.creator_username}
+              avatarUrl={dare.creator_avatar_url}
+              username={dare.creator_username}
+              size={40}
+              stopPropagation
+            />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[var(--pact-text)] truncate">
+                {isCreator ? 'You' : dare.creator_full_name || dare.creator_username || 'Anonymous'}
+              </p>
+              <p className="text-xs text-[var(--pact-text-faint)] truncate">@{dare.creator_username || 'user'}</p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-[var(--pact-text)] truncate">
-              {dare.creator_full_name || dare.creator_username || 'Anonymous'}
-            </p>
-            <p className="text-xs text-[var(--pact-text-faint)]">@{dare.creator_username || 'user'}</p>
+
+          <div className="flex flex-shrink-0 items-center gap-2">
+            {statusPill && (
+              <span
+                className="rounded-full px-2.5 py-1 text-xs font-bold"
+                style={{ background: 'var(--pact-surface-2)', color: statusPill.color }}
+              >
+                {statusPill.label}
+              </span>
+            )}
+            <span
+              className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold"
+              style={{ background: 'var(--pact-surface-2)', color: urgencyColor(countdown.urgency) }}
+            >
+              <Clock className="h-3 w-3" />
+              {countdown.label}
+            </span>
           </div>
         </div>
 
-        {/* Title and Description */}
-        <h3 className="font-bold text-base text-[var(--pact-text)] mb-1 line-clamp-2">{dare.title}</h3>
+        <h3 className="mb-1 font-bold text-base text-[var(--pact-text)] line-clamp-2">{dare.title}</h3>
         <p className="text-sm text-[var(--pact-text-dim)] line-clamp-2">{dare.description}</p>
       </div>
 
-      {/* Stats */}
-      <div
-        className="px-4 py-3 border-b border-[var(--pact-hairline)] grid grid-cols-3 gap-2"
-        style={{ background: 'var(--pact-surface-2)' }}
-      >
-        <div className="text-center">
-          <p className="text-lg font-bold text-[var(--pact-violet)]">{dare.recipientCount || 0}</p>
-          <p className="text-xs text-[var(--pact-text-faint)]">Recipients</p>
-        </div>
-        <div className="text-center">
-          <p className="text-lg font-bold text-[var(--pact-violet)]">{dare.acceptedCount || 0}</p>
-          <p className="text-xs text-[var(--pact-text-faint)]">Accepted</p>
-        </div>
-        <div className="text-center">
-          <p className="text-lg font-bold text-[var(--pact-violet)]">{dare.completedCount || 0}</p>
-          <p className="text-xs text-[var(--pact-text-faint)]">Completed</p>
-        </div>
-      </div>
+      {/* Fast inline actions — no need to open the detail page for these */}
+      {(isPending || isAccepted || isPublicUnclaimed) && (
+        <div className="flex gap-2 border-t px-4 py-3" style={{ borderColor: 'var(--pact-hairline)' }}>
+          {isPending && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  acceptMutation.mutate(dare.id);
+                }}
+                disabled={acceptMutation.isPending}
+                className="pact-btn-glow flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold disabled:opacity-50"
+                style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Accept
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  declineMutation.mutate(dare.id);
+                }}
+                disabled={declineMutation.isPending}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-full border py-2 text-sm font-semibold transition disabled:opacity-50"
+                style={{ borderColor: 'var(--pact-hairline)', color: 'var(--pact-text-dim)' }}
+              >
+                <XCircle className="h-4 w-4" />
+                Decline
+              </button>
+            </>
+          )}
 
-      {/* Footer with deadline */}
-      <div className="px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <Clock className={`w-4 h-4 ${urgencyClass}`} />
-          <span className={`text-sm font-semibold ${urgencyClass}`}>{timeRemaining}</span>
+          {isAccepted && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setProofModalOpen(true);
+              }}
+              className="pact-btn-glow flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold"
+              style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
+            >
+              <Upload className="h-4 w-4" />
+              Upload Proof
+            </button>
+          )}
+
+          {isPublicUnclaimed && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                claimMutation.mutate(dare.id);
+              }}
+              disabled={claimMutation.isPending}
+              className="pact-btn-glow flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold disabled:opacity-50"
+              style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
+            >
+              <Zap className="h-4 w-4" />
+              {claimMutation.isPending ? 'Claiming...' : 'Claim Dare'}
+            </button>
+          )}
         </div>
-        <ChevronRight className="w-5 h-5 text-[var(--pact-text-faint)]" />
-      </div>
+      )}
+
+      {isRecipient && isAccepted && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <DareProofUploadModal isOpen={proofModalOpen} onClose={() => setProofModalOpen(false)} dareId={dare.id} />
+        </div>
+      )}
     </div>
   );
 }
