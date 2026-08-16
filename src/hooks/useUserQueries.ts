@@ -49,6 +49,25 @@ export function useUserFollowing(userId: number) {
   });
 }
 
+export function useUserRelationship(userId: number) {
+  return useQuery({
+    queryKey: queryKeys.users.relationship(userId),
+    queryFn: () => userService.getRelationship(userId),
+    enabled: !!userId,
+    staleTime: 0,
+    gcTime: 1000 * 60 * 5,
+  });
+}
+
+export function useUserCircles(userId: number) {
+  return useQuery({
+    queryKey: queryKeys.users.circles(userId),
+    queryFn: () => userService.getCircles(userId),
+    enabled: !!userId,
+    staleTime: 0,
+  });
+}
+
 export function useUserAnalytics(userId: number) {
   return useQuery({
     queryKey: queryKeys.users.analytics(userId),

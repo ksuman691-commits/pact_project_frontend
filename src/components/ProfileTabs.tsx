@@ -57,6 +57,10 @@ export function PactsTab({
   allowJoinedUploads = false,
   isOwnProfile = true,
   hasSharedCircle = false,
+  profileName = 'this person',
+  profileUserId,
+  sharedCircleId,
+  hasOwnCircles = true,
 }: {
   pacts: any[];
   joinedPacts: any[];
@@ -64,6 +68,10 @@ export function PactsTab({
   allowJoinedUploads?: boolean;
   isOwnProfile?: boolean;
   hasSharedCircle?: boolean;
+  profileName?: string;
+  profileUserId?: number;
+  sharedCircleId?: number;
+  hasOwnCircles?: boolean;
 }) {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState<'created' | 'joined' | 'voted'>('created');
@@ -79,22 +87,29 @@ export function PactsTab({
       return (
         <div className="pact-card rounded-3xl border border-dashed px-6 py-10 text-center" style={{ borderColor: 'var(--pact-hairline)' }}>
           <p className="text-base font-semibold text-[var(--pact-text)]">
-            {isOwnProfile ? 'Your pact space is ready' : hasSharedCircle ? 'No shared pacts yet' : 'This pact space is quiet'}
+            {isOwnProfile ? 'Your pact space is ready' : hasSharedCircle ? `You and ${profileName} haven't made a pact yet` : 'This pact space is quiet'}
           </p>
           <p className="mt-2 text-sm text-[var(--pact-text-dim)]">
             {isOwnProfile
-              ? 'Create your first pact to start tracking progress with your circles.'
+              ? 'Create a pact to start tracking progress with your circles.'
               : hasSharedCircle
-                ? 'Join or create a pact together to make progress visible here.'
-                : 'Follow their journey or invite them into one of your circles.'}
+                ? `You and ${profileName} haven't made a pact yet. Start one together.`
+                : `Add ${profileName} to a circle to start creating pacts together.`}
           </p>
           <button
-            onClick={() => router.push(isOwnProfile ? '/pacts/create' : '/circles')}
+            onClick={() => {
+              if (isOwnProfile && !hasOwnCircles) return router.push('/circles/create');
+              if (isOwnProfile) return router.push('/pacts/create');
+              if (hasSharedCircle && sharedCircleId) {
+                return router.push(`/pacts/create?circleId=${sharedCircleId}${profileUserId ? `&participantId=${profileUserId}` : ''}`);
+              }
+              return router.push(`/circles/create?inviteUserId=${profileUserId ?? ''}`);
+            }}
             className="pact-btn-glow mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
             style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
           >
             <Plus className="h-4 w-4" />
-            {isOwnProfile ? 'Create Pact' : 'Open Circles'}
+            {isOwnProfile ? (hasOwnCircles ? 'Create Pact' : 'Create a Circle') : hasSharedCircle ? `Create a Pact with ${profileName}` : `Add ${profileName} to a Circle`}
           </button>
         </div>
       );
