@@ -1,5 +1,6 @@
 'use client';
 
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import CommentSection from './CommentSection';
@@ -16,9 +17,18 @@ interface CommentsBottomSheetProps {
  * instead of navigating to the pact detail page's Comments tab. Reuses
  * CommentSection's real data/mutations as-is — this component only owns
  * the sheet chrome (backdrop, handle, header, close) around it.
+ *
+ * Portalled straight to document.body. Rendering this inline where the feed
+ * card lives isn't enough to guarantee `fixed inset-0` covers the real
+ * viewport: the `.pact-list-item` wrapper every list card sits in leaves a
+ * non-"none" transform behind after its mount-in animation, which creates
+ * its own containing block and silently traps this sheet inside the card
+ * instead of the viewport (see DareProofUploadModal for the same fix).
  */
 export default function CommentsBottomSheet({ pactId, commentCount, isOpen, onClose }: CommentsBottomSheetProps) {
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
@@ -66,6 +76,7 @@ export default function CommentsBottomSheet({ pactId, commentCount, isOpen, onCl
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
