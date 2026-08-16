@@ -4,16 +4,32 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, ArrowLeft } from 'lucide-react'
 
+// IMPORTANT: these ids are the backend's `category` column values, and the
+// backend enforces a hard server-side enum of exactly these 7 strings
+// (confirmed live: POST /api/pacts with any other value, including a raw
+// vibe id like "adventure" or "money", is rejected with 422). The Create
+// Pact flow's 10-vibe taxonomy (src/lib/createPactFlow/content.ts) maps
+// many-to-few onto these 7 buckets via VIBE_TO_CATEGORY in
+// src/lib/createPactFlow/toApiPayload.ts — e.g. adventure/love/social all
+// collapse to "social". Rather than showing 10 filter chips where several
+// visually-different ones would silently return identical result sets, we
+// show exactly one chip per REAL filterable bucket, with a friendlier
+// vibe-inspired name where one vibe maps cleanly (dare→Dare Yourself,
+// create→Create, levelup→Level Up), or a combined name where multiple
+// vibes collapse into the same bucket (fitness, startup, social). "Coding"
+// has no vibe mapped to it at all in the current create flow — it's a
+// legacy-only bucket kept so older pacts created before the vibe flow
+// existed remain filterable.
 const CATEGORIES = [
   { id: 'all', name: 'All', emoji: '✨', color: 'from-slate-700 to-slate-900' },
   { id: 'Trending', name: 'Trending', emoji: '🔥', color: 'from-red-500 to-orange-500' },
-  { id: 'Fitness', name: 'Fitness', emoji: '💪', color: 'from-green-500 to-emerald-600' },
-  { id: 'Coding', name: 'Coding', emoji: '💻', color: 'from-purple-500 to-indigo-600' },
-  { id: 'Study', name: 'Study', emoji: '📚', color: 'from-amber-500 to-orange-600' },
-  { id: 'Startup', name: 'Startup', emoji: '🚀', color: 'from-blue-500 to-cyan-600' },
-  { id: 'Habits', name: 'Habits', emoji: '⚡', color: 'from-yellow-500 to-amber-600' },
-  { id: 'Creator', name: 'Creator', emoji: '🎨', color: 'from-pink-500 to-rose-500' },
-  { id: 'Social', name: 'Social', emoji: '👥', color: 'from-cyan-500 to-blue-600' },
+  { id: 'fitness', name: 'Glow Up & Wellbeing', emoji: '💪', color: 'from-green-500 to-emerald-600' },
+  { id: 'startup', name: 'Build & Earn', emoji: '🚀', color: 'from-blue-500 to-cyan-600' },
+  { id: 'habits', name: 'Dare Yourself', emoji: '🔥', color: 'from-yellow-500 to-amber-600' },
+  { id: 'social', name: 'Social & Adventure', emoji: '🎉', color: 'from-cyan-500 to-blue-600' },
+  { id: 'creator', name: 'Create', emoji: '🎨', color: 'from-pink-500 to-rose-500' },
+  { id: 'study', name: 'Level Up', emoji: '🧠', color: 'from-amber-500 to-orange-600' },
+  { id: 'coding', name: 'Coding', emoji: '💻', color: 'from-purple-500 to-indigo-600' },
 ]
 
 interface TopNavProps {
