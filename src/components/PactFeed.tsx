@@ -159,12 +159,18 @@ export default function PactFeed({
   }, [data, showMockData])
 
   const emptyStateTitle = useMemo(() => {
-    return normalizedCategory === 'all' || normalizedCategory === 'trending'
-      ? 'No pacts found yet.'
-      : 'No pacts found for this category.'
+    if (normalizedCategory === 'trending') return 'Your Trending Pact Space'
+    if (normalizedCategory === 'all') return 'Your Pact Feed'
+    return `${categoryLabelMap[normalizedCategory] ?? 'Your Pact'} Space`
   }, [normalizedCategory])
 
-  const emptyStateMessage = useMemo(() => 'Be the first to create one!', [])
+  const emptyStateMessage = useMemo(
+    () =>
+      normalizedCategory === 'trending'
+        ? 'Create a pact and give your circles something new to rally around.'
+        : 'Create a pact to start your next accountability journey with your circles.',
+    [normalizedCategory],
+  )
 
   const handleVote = async (pactId: number, _voteType: 'skip') => {
     await skipMutation.mutateAsync(pactId)
@@ -193,7 +199,7 @@ export default function PactFeed({
       ) : pacts.length === 0 ? (
         <div className="pact-card rounded-[24px] px-5 py-10 text-center">
           <p className="text-lg font-bold text-[var(--pact-text)]">{emptyStateTitle}</p>
-          <p className="mt-2 text-sm text-[var(--pact-text-dim)]">{emptyStateMessage}</p>
+          <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-[var(--pact-text-dim)]">{emptyStateMessage}</p>
           <button
             onClick={() => onCreatePact ? onCreatePact() : router.push('/pacts/create')}
             className="pact-btn-glow mt-6 inline-flex items-center justify-center px-5 py-3 rounded-full font-bold transition-colors"
