@@ -103,7 +103,7 @@ export default function CheerButton({
           {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <PartyPopper className="h-4 w-4" />}
           <span className="text-[10px] font-semibold">{cheerCount}</span>
         </button>
-        <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+        <input ref={inputRef} type="file" accept="image/*" capture="user" className="hidden" onChange={handleFileChange} />
       </>
     );
   }

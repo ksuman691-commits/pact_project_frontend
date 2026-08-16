@@ -952,7 +952,7 @@ export default function FeedPactCard({
         ref={cheerInputRef}
         type="file"
         accept="image/*"
-        capture="environment"
+        capture="user"
         className="hidden"
         onChange={handleCheerFileChange}
       />
