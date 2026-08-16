@@ -38,8 +38,10 @@ export default function CirclesPage() {
     memberCount: circle.member_count ?? circle.memberCount ?? 0,
     isJoined: circle.isJoined || circle.is_member || circle.is_joined || false,
     isTrending: false,
-    memberList: circle.memberList || [],
-    winRate: circle.winRate,
+    // pact_count isn't returned by the circles list/public endpoints yet
+    // (needs the backend addition described in the task) — omit rather
+    // than render a fake 0.
+    pactCount: typeof circle.pact_count === 'number' ? circle.pact_count : undefined,
   });
 
   // Determine which hook to use

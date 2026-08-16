@@ -270,7 +270,7 @@ export default function PactDetailPage() {
 
   if (isError || !pact) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 text-white">
+      <div className="pact-flow min-h-screen bg-slate-950 flex items-center justify-center px-4 text-white">
         <div className="max-w-sm rounded-[28px] border border-white/10 bg-white/5 p-8 text-center backdrop-blur-sm">
           <AlertCircle className="mx-auto h-10 w-10 text-rose-400" />
           <h2 className="mt-4 text-xl font-black">Pact not found</h2>
@@ -289,7 +289,7 @@ export default function PactDetailPage() {
   return (
     <>
       <TopNav showBack={true} showCategories={false} />
-      <div className="min-h-screen bg-slate-950 pb-16 pt-24">
+      <div className="pact-flow min-h-screen bg-slate-950 pb-16 pt-24">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

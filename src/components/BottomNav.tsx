@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Home, Users, Zap } from 'lucide-react'
+import { useMyDares } from '@/hooks/useDareQueries'
+import { useAuthStore } from '@/store/auth'
 
 // Leaderboard was dropped from the nav deliberately (it 404s and we're not
 // fixing that route here) — exactly 3 items, Home → Circles → Dares.
@@ -14,12 +16,27 @@ const authItems = [
 
 export default function BottomNav() {
   const pathname = usePathname()
-
-  if (
+  const { user, isInitialized } = useAuthStore()
+  const isHiddenRoute =
     pathname?.startsWith('/auth') ||
     pathname?.startsWith('/pacts/create') ||
     pathname?.startsWith('/circles/create')
-  ) {
+
+  // Same getMine() result the /dares "For You" tab filters — cached under
+  // the same query key, so this doesn't add an extra request beyond what
+  // that page already fetches once visited. Must stay disabled until the
+  // auth store has actually hydrated a session: this component lives in
+  // the root layout and mounts on every route (including /auth/login)
+  // before the pathname check below can bail out, so firing it while
+  // logged out 401s, which triggers the API client's hard redirect to
+  // /auth/login, which remounts this component and fires again — an
+  // infinite reload loop.
+  const myDaresQuery = useMyDares({ enabled: isInitialized && !!user && !isHiddenRoute })
+  const pendingForYouCount = (myDaresQuery.data?.pages?.flatMap((page) => page.data) || []).filter(
+    (d: any) => d.my_recipient_status === 'pending' && d.creator_id !== user?.id,
+  ).length
+
+  if (isHiddenRoute) {
     return null
   }
 
@@ -106,13 +123,14 @@ export default function BottomNav() {
                 >
                   <Icon className="h-5 w-5" strokeWidth={2} />
                 </span>
-                {/* Dares "live" indicator: a small ambient pulsing dot, not an
-                    unread badge — always-on decorative pulse (no active/recent
-                    dares count exists anywhere in the app yet to drive it off
-                    real data; revisit if one gets added). Corner-positioned so
-                    it stays visually distinct from the active-tab glow above
-                    even when Dares is the active tab. */}
-                {isDares && (
+                {/* Dares "live" indicator: a small pulsing dot that now only
+                    shows when the viewer actually has a pending dare waiting
+                    on their response (getMine() filtered client-side, same
+                    as the /dares "For You" tab) — no longer a purely
+                    decorative always-on pulse. Corner-positioned so it stays
+                    visually distinct from the active-tab glow above even
+                    when Dares is the active tab. */}
+                {isDares && pendingForYouCount > 0 && (
                   <span
                     aria-hidden="true"
                     className="pact-bottomnav-live-dot pointer-events-none absolute -top-0.5 right-0 z-20 h-2 w-2 rounded-full"

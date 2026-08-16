@@ -145,7 +145,7 @@ export default function PactsPage() {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
           ) : pacts.length === 0 ? (
-            <div className="card text-center py-12">
+            <div className="legacy-light-card text-center py-12">
               <p className="text-[#6B7280] mb-4">No pacts found</p>
               <button
                 onClick={() => router.push('/pacts/create')}
@@ -155,7 +155,9 @@ export default function PactsPage() {
               </button>
             </div>
           ) : (
-            <div className="space-y-6">
+            // PactCard renders FeedPactCard, whose dark glass surface (.pact-card)
+            // only resolves correctly inside a .pact-flow scope — see globals.css.
+            <div className="pact-flow space-y-6">
               {sortedPacts.map((pact) => (
                 <PactCard
                   key={pact.id}

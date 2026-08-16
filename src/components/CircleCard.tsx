@@ -1,12 +1,13 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Users, Star, ChevronRight } from 'lucide-react';
+import { Users, Star, Flame, ChevronRight } from 'lucide-react';
 import { cardHoverTap } from '@/components/pact-ui/cardMotion';
-import Avatar from '@/components/Avatar';
 import UserAvatarLink from '@/components/UserAvatarLink';
+import PremiumJoinButton from '@/components/PremiumJoinButton';
+import { useCircleMembers } from '@/hooks/useCircles';
 
 interface CircleCardProps {
   circle: {
@@ -19,14 +20,28 @@ interface CircleCardProps {
     memberCount: number;
     isJoined: boolean;
     isTrending?: boolean;
-    memberList?: string[];
-    winRate?: number;
+    /** Active pact count for this circle. Omitted (not 0) when the backend
+     * hasn't shipped this field yet — see the pact_count note below. */
+    pactCount?: number;
   };
   onJoin?: (circleId: number) => void;
   index?: number;
 }
 
+const MAX_AVATARS = 5;
+
 export default function CircleCard({ circle, onJoin, index = 0 }: CircleCardProps) {
+  const router = useRouter();
+  // Real per-member avatars/usernames aren't included on the circle
+  // list/public endpoints — only member_count is. Fetching them here (one
+  // cheap, cached-by-id request per card) is what makes the avatar row
+  // real data instead of placeholder initials.
+  const { data: members } = useCircleMembers(circle.id);
+  const visibleMembers = (members || []).slice(0, MAX_AVATARS);
+  const overflowCount = Math.max(0, circle.memberCount - visibleMembers.length);
+
+  const handleCardClick = () => router.push(`/circles/${circle.id}`);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -34,120 +49,129 @@ export default function CircleCard({ circle, onJoin, index = 0 }: CircleCardProp
       transition={{ duration: 0.32, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
       {...cardHoverTap}
     >
-      <Link href={`/circles/${circle.id}`}>
-        <div className="pact-card rounded-3xl cursor-pointer h-full">
-          {/* Circle Header */}
-          <div className="p-6 border-b" style={{ borderColor: 'var(--pact-hairline)' }}>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-lg font-bold text-[var(--pact-text)] line-clamp-2">
-                    {circle.name}
-                  </h3>
-                  {circle.isTrending && (
-                    <Star className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--pact-gold)' }} />
-                  )}
-                </div>
-                <p className="text-sm text-[var(--pact-text-dim)] line-clamp-2">
-                  {circle.description}
-                </p>
-                {circle.ownerUsername && (
-                  <div className="mt-2 flex items-center gap-2">
-                    {/* stopPropagation: this whole card is wrapped in a Link
-                        to the circle page, so without it tapping the owner's
-                        avatar would just navigate there instead of to their
-                        profile. */}
-                    <UserAvatarLink
-                      name={circle.ownerUsername}
-                      avatarUrl={circle.ownerAvatarUrl}
-                      username={circle.ownerUsername}
-                      size={24}
-                      stopPropagation
-                    />
-                    <p className="text-xs font-medium text-[var(--pact-text-faint)]">Owner @{circle.ownerUsername}</p>
-                  </div>
-                )}
-              </div>
-              <div
-                className="flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg"
-                style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
-              >
-                {circle.avatar || circle.name.charAt(0)}
-              </div>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={handleCardClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleCardClick();
+          }
+        }}
+        className="pact-card cursor-pointer rounded-3xl p-6"
+      >
+        {/* Header: icon + name + vibe tag */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-bold text-[var(--pact-text)] line-clamp-2">{circle.name}</h3>
+              {circle.isTrending && (
+                <Star className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--pact-gold)' }} />
+              )}
             </div>
-          </div>
-
-          {/* Circle Stats */}
-          <div className="px-6 py-4 grid grid-cols-2 gap-6 border-b" style={{ borderColor: 'var(--pact-hairline)' }}>
-            <div className="flex flex-col min-w-0">
-              <p className="text-xs text-[var(--pact-text-faint)] font-medium mb-2 uppercase tracking-wide">Members</p>
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--pact-violet)' }} />
-                <span className="text-lg font-bold text-[var(--pact-text)]">
-                  {circle.memberCount}
-                </span>
-              </div>
-            </div>
-            <div className="flex flex-col min-w-0">
-              <p className="text-xs text-[var(--pact-text-faint)] font-medium mb-2 uppercase tracking-wide">Circle</p>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-[var(--pact-text)] whitespace-nowrap">Joinable</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Member Avatars */}
-          {circle.memberList && circle.memberList.length > 0 && (
-            <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--pact-hairline)' }}>
-              <p className="text-xs text-[var(--pact-text-faint)] font-medium mb-3">Recent Members</p>
-              <div className="flex -space-x-2">
-                {circle.memberList.slice(0, 5).map((member, idx) => (
-                  <div
-                    key={idx}
-                    className="rounded-full border-2"
-                    style={{ borderColor: 'var(--pact-surface)' }}
-                    title={member}
-                  >
-                    <Avatar name={member} size={32} />
-                  </div>
-                ))}
-                {circle.memberList.length > 5 && (
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2"
-                    style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-text-faint)', borderColor: 'var(--pact-surface)' }}
-                  >
-                    +{circle.memberList.length - 5}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Footer Action */}
-          <div className="px-6 py-4">
-            {circle.isJoined ? (
-              <button
-                className="pact-btn-glow w-full flex items-center justify-between px-4 py-2 rounded-full font-medium text-sm transition"
-                style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
-              >
-                <span>Joined</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            ) : (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  onJoin?.(circle.id);
-                }}
-                className="pact-btn-glow w-full px-4 py-2 rounded-full font-medium text-sm transition"
-                style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
-              >
-                Join Circle
-              </button>
+            {circle.description && (
+              <p className="mt-1 text-sm text-[var(--pact-text-dim)] line-clamp-2">{circle.description}</p>
             )}
           </div>
+          <div
+            className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white"
+            style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+          >
+            {circle.avatar || circle.name.charAt(0)}
+          </div>
         </div>
-      </Link>
+
+        {/* Overlapping member avatars — each independently clickable to
+            that member's profile. stopPropagation keeps taps on an avatar
+            from also firing the card's own click-to-navigate. */}
+        {visibleMembers.length > 0 && (
+          <div className="mt-4 flex -space-x-2">
+            {visibleMembers.map((member: any) => (
+              <div
+                key={member.user_id}
+                className="rounded-full border-2"
+                style={{ borderColor: 'var(--pact-surface)' }}
+              >
+                <UserAvatarLink
+                  name={member.full_name || member.username}
+                  avatarUrl={member.avatar_url}
+                  username={member.username}
+                  size={32}
+                  stopPropagation
+                />
+              </div>
+            ))}
+            {overflowCount > 0 && (
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold"
+                style={{
+                  background: 'var(--pact-surface-2)',
+                  color: 'var(--pact-text-faint)',
+                  borderColor: 'var(--pact-surface)',
+                }}
+              >
+                +{overflowCount}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Icon-led stat row — replaces the old boxed MEMBERS / CIRCLE pairs */}
+        <div className="mt-4 flex items-center gap-5 text-sm">
+          <div className="flex items-center gap-1.5 text-[var(--pact-text-dim)]">
+            <Users className="h-4 w-4" style={{ color: 'var(--pact-violet)' }} />
+            <span className="font-semibold text-[var(--pact-text)]">{circle.memberCount}</span>
+            <span className="text-[var(--pact-text-faint)]">member{circle.memberCount === 1 ? '' : 's'}</span>
+          </div>
+          {typeof circle.pactCount === 'number' && (
+            <div className="flex items-center gap-1.5 text-[var(--pact-text-dim)]">
+              <Flame className="h-4 w-4" style={{ color: 'var(--pact-pink)' }} />
+              <span className="font-semibold text-[var(--pact-text)]">{circle.pactCount}</span>
+              <span className="text-[var(--pact-text-faint)]">active pact{circle.pactCount === 1 ? '' : 's'}</span>
+            </div>
+          )}
+        </div>
+
+        {circle.ownerUsername && (
+          <div className="mt-3 flex items-center gap-2">
+            <UserAvatarLink
+              name={circle.ownerUsername}
+              avatarUrl={circle.ownerAvatarUrl}
+              username={circle.ownerUsername}
+              size={20}
+              stopPropagation
+            />
+            <p className="text-xs font-medium text-[var(--pact-text-faint)]">Owner @{circle.ownerUsername}</p>
+          </div>
+        )}
+
+        {/* Footer action */}
+        <div className="mt-5">
+          {circle.isJoined ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCardClick();
+              }}
+              className="pact-btn-glow flex w-full items-center justify-between rounded-full px-4 py-2 text-sm font-medium transition"
+              style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
+            >
+              <span>View Circle</span>
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          ) : (
+            <PremiumJoinButton
+              label="Join Circle"
+              fullWidth
+              onClick={(e) => {
+                e.stopPropagation();
+                onJoin?.(circle.id);
+              }}
+            />
+          )}
+        </div>
+      </div>
     </motion.div>
   );
 }

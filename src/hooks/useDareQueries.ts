@@ -19,7 +19,7 @@ export function useDareFeed() {
   });
 }
 
-export function useMyDares() {
+export function useMyDares(options?: { enabled?: boolean }) {
   return useInfiniteQuery({
     queryKey: queryKeys.dares.mine(),
     queryFn: ({ pageParam = 0 }) => dareService.getMine(pageParam * 20, 20),
@@ -31,6 +31,11 @@ export function useMyDares() {
       return undefined;
     },
     initialPageParam: 0,
+    // Callers that mount unconditionally (e.g. BottomNav in the root
+    // layout) must pass `enabled: false` until a session actually exists —
+    // firing this while logged out 401s, which triggers the API client's
+    // hard-redirect-to-login, which remounts the caller and fires again.
+    enabled: options?.enabled ?? true,
   });
 }
 

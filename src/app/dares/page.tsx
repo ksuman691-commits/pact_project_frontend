@@ -1,21 +1,47 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Plus, ChevronRight } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Plus } from 'lucide-react';
 import DareCard from '@/components/DareCard';
 import CreateDareModal from '@/components/CreateDareModal';
 import { useDareFeed, useMyDares } from '@/hooks/useDareQueries';
-import Link from 'next/link';
+import { useAuthStore } from '@/store/auth';
+
+type Tab = 'for-you' | 'sent' | 'discover';
 
 export default function DaresPage() {
-  const [tab, setTab] = useState<'discover' | 'mine'>('discover');
+  const [tab, setTab] = useState<Tab>('for-you');
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const { user } = useAuthStore();
 
   const feedQuery = useDareFeed();
+  // GET /api/dares/mine already returns dares where the viewer is either
+  // the creator or a recipient — "For You" and "Sent by You" are both
+  // client-side filters over this single result, not separate endpoints.
   const myDaresQuery = useMyDares();
+  const mineAll = useMemo(
+    () => myDaresQuery.data?.pages?.flatMap((page) => page.data) || [],
+    [myDaresQuery.data],
+  );
+
+  const forYou = useMemo(
+    () => mineAll.filter((d: any) => d.my_recipient_status === 'pending' && d.creator_id !== user?.id),
+    [mineAll, user?.id],
+  );
+  const sentByYou = useMemo(() => mineAll.filter((d: any) => d.creator_id === user?.id), [mineAll, user?.id]);
+  const discover = feedQuery.data?.pages?.flatMap((page) => page.data) || [];
+
+  const forYouCount = forYou.length;
 
   const currentQuery = tab === 'discover' ? feedQuery : myDaresQuery;
-  const dares = currentQuery.data?.pages?.flatMap((page) => page.data) || [];
+  const dares = tab === 'for-you' ? forYou : tab === 'sent' ? sentByYou : discover;
+  const isLoading = tab === 'discover' ? feedQuery.isLoading : myDaresQuery.isLoading;
+
+  const emptyCopy: Record<Tab, string> = {
+    'for-you': 'No dares waiting on your response.',
+    sent: "You haven't sent any dares yet.",
+    discover: 'No dares available yet. Create one to get started!',
+  };
 
   return (
     <div className="pact-flow pact-page-enter min-h-screen">
@@ -30,26 +56,35 @@ export default function DaresPage() {
               style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
             >
               <Plus className="w-5 h-5" />
-              Create Dare
+              Send a Dare
             </button>
           </div>
 
           {/* Tab Navigation */}
           <div className="flex gap-4 border-b border-[var(--pact-hairline)] mb-4">
             {[
-              { id: 'discover', label: 'Discover' },
-              { id: 'mine', label: 'My Dares' },
+              { id: 'for-you' as Tab, label: 'For You', count: forYouCount },
+              { id: 'sent' as Tab, label: 'Sent by You' },
+              { id: 'discover' as Tab, label: 'Discover' },
             ].map((t) => (
               <button
                 key={t.id}
-                onClick={() => setTab(t.id as 'discover' | 'mine')}
-                className={`px-4 py-2 font-semibold border-b-2 transition ${
+                onClick={() => setTab(t.id)}
+                className={`flex items-center gap-1.5 px-4 py-2 font-semibold border-b-2 transition ${
                   tab === t.id
                     ? 'text-[var(--pact-pink)] border-[var(--pact-pink)]'
                     : 'text-[var(--pact-text-faint)] border-transparent hover:text-[var(--pact-text-dim)]'
                 }`}
               >
                 {t.label}
+                {!!t.count && (
+                  <span
+                    className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-bold"
+                    style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
+                  >
+                    {t.count}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -59,7 +94,7 @@ export default function DaresPage() {
       {/* Content */}
       <div className="max-w-2xl mx-auto px-4 py-6">
         {/* Loading State */}
-        {currentQuery.isLoading && (
+        {isLoading && (
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="pact-shimmer h-48 rounded-[28px]" />
@@ -68,39 +103,35 @@ export default function DaresPage() {
         )}
 
         {/* Empty State */}
-        {!currentQuery.isLoading && dares.length === 0 && (
+        {!isLoading && dares.length === 0 && (
           <div className="pact-card rounded-[28px] text-center py-12">
-            <p className="text-[var(--pact-text-dim)] mb-4">
-              {tab === 'discover'
-                ? 'No dares available yet. Create one to get started!'
-                : 'You haven&apos;t created any dares yet.'}
-            </p>
+            <p className="text-[var(--pact-text-dim)] mb-4">{emptyCopy[tab]}</p>
             <button
               onClick={() => setCreateModalOpen(true)}
               className="pact-btn-glow inline-flex items-center gap-2 px-6 py-2.5 rounded-[28px]"
               style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
             >
               <Plus className="w-5 h-5" />
-              Create Your First Dare
+              Send Your First Dare
             </button>
           </div>
         )}
 
-        {/* Dares Grid */}
+        {/* Dares List */}
         {dares.length > 0 && (
           <div className="space-y-4">
-            {dares.map((dare, index) => (
+            {dares.map((dare: any, index: number) => (
               <div key={dare.id} className="pact-list-item" style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}>
-                <Link href={`/dares/${dare.id}`}>
-                  <DareCard dare={dare} />
-                </Link>
+                <DareCard dare={dare} />
               </div>
             ))}
           </div>
         )}
 
-        {/* Load More Button */}
-        {currentQuery.hasNextPage && !currentQuery.isLoading && (
+        {/* Load More Button — only meaningful for Discover, which is
+            server-paginated; For You / Sent by You are client-side filters
+            over the single getMine() page set. */}
+        {tab === 'discover' && currentQuery.hasNextPage && !isLoading && (
           <div className="flex justify-center mt-8">
             <button
               onClick={() => currentQuery.fetchNextPage()}

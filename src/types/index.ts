@@ -147,12 +147,20 @@ export interface Dare {
   creator_id: number;
   title: string;
   description: string;
-  deadline: string;
-  respond_by_date: string;
-  complete_by_date: string;
+  deadline?: string;
+  // Real backend field names (confirmed against the live API — the
+  // earlier `respond_by_date`/`complete_by_date` names never existed on
+  // any dare response and were the root cause of the "Invalid Date" bug).
+  respond_by: string;
+  complete_by: string;
   recipients?: DareRecipient[];
-  status: 'active' | 'completed' | 'failed' | 'cancelled';
-  visibility: 'public' | 'private' | 'circle_only';
+  // Only 'pending' has been observed live; kept loose since the backend
+  // doesn't document a closed enum here.
+  status: string;
+  // Real backend field is "audience", not "visibility" — the old
+  // `dare.visibility === 'public'` check on the detail page never matched
+  // anything, so the Claim flow was unreachable for public dares.
+  audience: 'public' | 'individual' | string;
   circle_id?: number;
   verification_method?: string;
   verification_questions?: string[];
@@ -165,28 +173,20 @@ export interface Dare {
   creator_full_name?: string;
   creator_avatar_url?: string;
   circle_name?: string;
+  // Real field from the backend — total recipients on the dare.
+  recipient_count?: number;
+  // Real field: the viewer's own recipient status on this dare, or null if
+  // the viewer isn't a recipient (e.g. they're the creator, or it's a
+  // public dare they haven't claimed). Drives Accept/Decline/Upload Proof
+  // affordances — see mapDare's derived isPendingForMe/isAcceptedByMe/etc.
+  my_recipient_status?: 'pending' | 'accepted' | 'declined' | 'completed' | 'failed' | null;
+  // Derived client-side in mapDare from my_recipient_status, since the
+  // backend has no is_accepted_by_me/is_completed_by_me fields.
   recipientCount?: number;
-  acceptedCount?: number;
-  completedCount?: number;
-  failedCount?: number;
-  isCreatedByMe?: boolean;
   isAcceptedByMe?: boolean;
   isCompletedByMe?: boolean;
-  acceptanceStats?: {
-    accepted: number;
-    declined: number;
-    pending: number;
-  };
-  completionStats?: {
-    completed: number;
-    failed: number;
-    inProgress: number;
-  };
-  verificationStats?: {
-    yes_count: number;
-    no_count: number;
-    confidence_avg: number;
-  };
+  isPendingForMe?: boolean;
+  isDeclinedByMe?: boolean;
 }
 
 export interface AuthToken {
