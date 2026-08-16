@@ -1,7 +1,7 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
+import LogoMark from '@/components/LogoMark';
 import { Compass } from 'lucide-react';
 
 /**
@@ -13,14 +13,8 @@ import { Compass } from 'lucide-react';
 export default function NotFound() {
   return (
     <div className="pact-flow flex min-h-dvh flex-col items-center justify-center px-6 py-16 text-center">
-      {/* logo.png is a flat RGB asset with a baked-in white background (no
-          alpha channel) — it blends in on the light auth pages that use it
-          elsewhere, but floats as a jarring rectangle on this dark theme.
-          Wrapping it in its own white badge card makes that intentional. */}
-      <div className="mb-8 flex justify-center">
-        <div className="flex items-center justify-center rounded-2xl bg-white px-4 py-3 shadow-lg">
-          <Image src="/logo.png" alt="CirclePact" width={64} height={38} />
-        </div>
+      <div className="mb-8 flex justify-center text-[var(--pact-text)]">
+        <LogoMark size={48} withWordmark wordmarkPlacement="below" />
       </div>
 
       <div

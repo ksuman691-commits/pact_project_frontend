@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
+import LogoMark from '@/components/LogoMark';
 import { RotateCw, AlertTriangle } from 'lucide-react';
 
 /**
@@ -24,12 +24,8 @@ export default function ErrorBoundary({
 
   return (
     <div className="pact-flow flex min-h-dvh flex-col items-center justify-center px-6 py-16 text-center">
-      {/* See not-found.tsx for why this is wrapped in a white badge card
-          rather than placed directly on the dark background. */}
-      <div className="mb-8 flex justify-center">
-        <div className="flex items-center justify-center rounded-2xl bg-white px-4 py-3 shadow-lg">
-          <Image src="/logo.png" alt="CirclePact" width={64} height={38} />
-        </div>
+      <div className="mb-8 flex justify-center text-[var(--pact-text)]">
+        <LogoMark size={48} withWordmark wordmarkPlacement="below" />
       </div>
 
       <div

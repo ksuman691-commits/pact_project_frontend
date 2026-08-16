@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import Image from 'next/image';
+import LogoMark from '@/components/LogoMark';
 
 export default function Login() {
   const router = useRouter();
@@ -18,151 +18,79 @@ export default function Login() {
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await login(formData.email, formData.password);
-      toast.success('Login successful!');
+      toast.success('login successful');
       router.push('/');
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Login failed');
+      toast.error(error.response?.data?.detail || 'login failed');
     }
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col lg:flex-row">
-      {/* Left side - Logo and branding (hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-50 to-slate-100 flex-col items-center justify-center p-8">
-        <div className="text-center">
-          <div className="mb-8 flex justify-center">
-            <Image
-              src="/logo.png"
-              alt="CirclePact"
-              width={200}
-              height={120}
-              priority
-              className="object-contain"
-            />
-          </div>
-          <h1 className="text-4xl font-black text-[#14121F] mb-4">CirclePact</h1>
-          <p className="text-lg text-[#6B7280] mb-2">Real Commitments.</p>
-          <p className="text-lg text-[#6B7280] mb-8">Real Circles.</p>
-          <p className="text-lg text-[#6B7280] mb-12">Real Accountability.</p>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#FAF6F0] px-5 py-12 text-[#2F211D]">
+      <div aria-hidden="true" className="pointer-events-none absolute -right-28 -top-32 h-80 w-80 rounded-full bg-[rgba(127,119,221,0.20)]" />
+      <div aria-hidden="true" className="pointer-events-none absolute -bottom-40 -left-32 h-96 w-96 rounded-full bg-[rgba(127,119,221,0.13)]" />
 
-          <div className="space-y-6 mt-12">
-            <div className="flex items-start gap-4">
-              <div className="text-2xl">🎯</div>
-              <div className="text-left">
-                <p className="font-semibold text-[#14121F]">Set Goals with Deadlines</p>
-                <p className="text-sm text-[#6B7280]">Turn a goal into a Pact that holds you to it</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="text-2xl">👥</div>
-              <div className="text-left">
-                <p className="font-semibold text-[#14121F]">Invite Your Circle</p>
-                <p className="text-sm text-[#6B7280]">Get accountability from followers who care</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="text-2xl">✅</div>
-              <div className="text-left">
-                <p className="font-semibold text-[#14121F]">Prove. Vote. Win.</p>
-                <p className="text-sm text-[#6B7280]">Upload proof daily and earn rewards</p>
-              </div>
-            </div>
-          </div>
+      <section className="relative w-full max-w-md rounded-[30px] bg-white px-7 py-9 shadow-[0_24px_70px_rgba(75,53,42,0.12)] sm:px-10 sm:py-11">
+        <div className="flex flex-col items-center text-center">
+          <LogoMark size={52} />
+          <h1 className="mt-7 text-4xl font-bold lowercase tracking-[-0.05em] text-[#2F211D]">welcome back</h1>
+          <p className="mt-2 text-sm text-[#8E7C73]">sign in to your circles</p>
         </div>
-      </div>
 
-      {/* Right side - Login form */}
-      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-4 sm:p-8">
-        {/* Mobile logo */}
-        <div className="lg:hidden mb-8 flex justify-center">
-          <Image
-            src="/logo.png"
-            alt="CirclePact"
-            width={120}
-            height={72}
-            priority
-            className="object-contain"
+        <form onSubmit={handleSubmit} className="mt-8 space-y-3">
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            aria-label="email"
+            className="w-full rounded-[18px] border border-[#E8DED7] bg-white px-5 py-3.5 text-sm text-[#2F211D] outline-none placeholder:text-[#B4A59D] focus:border-[#E5373B]"
+            placeholder="email"
           />
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            aria-label="password"
+            className="w-full rounded-[18px] border border-[#E8DED7] bg-white px-5 py-3.5 text-sm text-[#2F211D] outline-none placeholder:text-[#B4A59D] focus:border-[#E5373B]"
+            placeholder="password"
+          />
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full rounded-[18px] bg-[#E5373B] py-3.5 text-sm font-semibold lowercase text-white transition hover:bg-[#C92F34] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isLoading ? 'continuing...' : 'continue'}
+          </button>
+        </form>
+
+        <div className="my-7 flex items-center gap-3 text-xs text-[#B4A59D]">
+          <span className="h-px flex-1 bg-[#EEE5DF]" />
+          <span>or</span>
+          <span className="h-px flex-1 bg-[#EEE5DF]" />
         </div>
 
-        <div className="w-full max-w-sm">
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2.5 bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] rounded-[28px] focus:outline-none focus:border-slate-400 text-sm placeholder:text-slate-400"
-                placeholder="Email or username"
-              />
-            </div>
-
-            <div>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2.5 bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] rounded-[28px] focus:outline-none focus:border-slate-400 text-sm placeholder:text-slate-400"
-                placeholder="Password"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-semibold rounded-[28px] transition-all disabled:cursor-not-allowed text-sm"
-            >
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[rgba(20,18,31,0.06)]"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-[#9CA3AF]">OR</span>
-            </div>
-          </div>
-
-          {/* Demo credentials */}
-          <p className="text-center text-xs text-[#6B7280] mb-4">Demo credentials pre-filled</p>
-
-          {/* Forgot password and register */}
-          <div className="space-y-4 text-center">
-            <p className="text-sm">
-              <a href="#" className="text-[#6B7280] hover:text-[#14121F] font-medium">
-                Forgot password?
-              </a>
-            </p>
-
-            <div className="pt-4 border-t border-[rgba(20,18,31,0.06)]">
-              <p className="text-[#6B7280] text-sm mb-3">
-                Don&apos;t have an account?{' '}
-                <Link href="/auth/register" className="text-blue-600 hover:text-blue-700 font-semibold">
-                  Sign up
-                </Link>
-              </p>
-            </div>
-          </div>
+        <div className="grid grid-cols-2 gap-3">
+          <button type="button" className="rounded-[18px] border border-[#E8DED7] bg-white py-3 text-sm lowercase text-[#5E4C45] transition hover:bg-[#FAF6F0]">google</button>
+          <button type="button" className="rounded-[18px] border border-[#E8DED7] bg-white py-3 text-sm lowercase text-[#5E4C45] transition hover:bg-[#FAF6F0]">apple</button>
         </div>
-      </div>
-    </div>
+
+        <p className="mt-7 text-center text-xs text-[#A99991]">by continuing you agree to our terms</p>
+        <p className="mt-4 text-center text-sm text-[#8E7C73]">
+          new here?{' '}
+          <Link href="/auth/register" className="font-semibold text-[#E5373B] hover:underline">sign up</Link>
+        </p>
+      </section>
+    </main>
   );
 }

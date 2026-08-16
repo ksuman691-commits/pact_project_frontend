@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useAuthStore } from '@/store/auth';
 import { authService } from '@/services/api';
 import { Upload, ArrowLeft } from 'lucide-react';
+import LogoMark from '@/components/LogoMark';
 import toast from 'react-hot-toast';
 
 const inputClass =
@@ -105,7 +106,7 @@ export default function EditProfilePage() {
                       className="w-24 h-24 rounded-3xl object-cover"
                     />
                   ) : (
-                    formData.fullName.charAt(0)
+                    <LogoMark size={40} />
                   )}
                 </div>
                 <div>
