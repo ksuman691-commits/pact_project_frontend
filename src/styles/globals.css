@@ -68,8 +68,13 @@ body {
   @apply font-sans bg-[#F4F2FB] text-[#14121F] antialiased;
 }
 
-/* Card Elevation - Core Design Element */
-.card, [class*="card"] {
+/* Legacy light-theme card surface. Exact class only — do NOT use a
+   [class*="card"] substring selector here. This app mixes a light legacy
+   theme with a dark ".pact-flow" re-theme, and a wildcard on "card" will
+   silently repaint any dark pact-card/CircleCard/DareCard surface white
+   the moment it renders outside a .pact-flow-wrapped page. Opt in
+   explicitly with this class instead. */
+.legacy-light-card {
   @apply bg-white rounded-[28px] shadow-[0_8px_24px_rgba(94,84,142,0.08),0_2px_6px_rgba(94,84,142,0.04)] p-6;
 }
 

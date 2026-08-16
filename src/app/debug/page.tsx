@@ -22,7 +22,7 @@ export default function DebugPage() {
           <h1 className="text-3xl font-bold text-[#14121F] mb-8">Debug Auth State</h1>
 
           <div className="space-y-6">
-            <div className="card">
+            <div className="legacy-light-card">
               <h2 className="text-xl font-bold text-[#14121F] mb-4">Auth Store State</h2>
               <div className="space-y-3 text-sm font-mono bg-[#FAF9FE] p-4 rounded">
                 <p><span className="font-bold">isInitialized:</span> {String(isInitialized)}</p>
@@ -31,7 +31,7 @@ export default function DebugPage() {
               </div>
             </div>
 
-            <div className="card">
+            <div className="legacy-light-card">
               <h2 className="text-xl font-bold text-[#14121F] mb-4">localStorage Token</h2>
               <div className="space-y-3 text-sm font-mono bg-[#FAF9FE] p-4 rounded">
                 <p><span className="font-bold">access_token:</span> {localToken ? '✓ Stored' : '✗ Not stored'}</p>
@@ -43,7 +43,7 @@ export default function DebugPage() {
               </div>
             </div>
 
-            <div className="card">
+            <div className="legacy-light-card">
               <h2 className="text-xl font-bold text-[#14121F] mb-4">Authorization Header</h2>
               <p className="text-sm text-[#6B7280] mb-4">
                 Should be sent as: <code className="bg-[#FAF9FE] px-2 py-1">Authorization: Bearer {'{token}'}</code>
@@ -57,7 +57,7 @@ export default function DebugPage() {
               </div>
             </div>
 
-            <div className="card">
+            <div className="legacy-light-card">
               <h2 className="text-xl font-bold text-[#14121F] mb-4">Quick Test</h2>
               <button
                 onClick={async () => {
