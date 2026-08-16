@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Users, Star, Flame, ChevronRight } from 'lucide-react';
 import { cardHoverTap } from '@/components/pact-ui/cardMotion';
 import UserAvatarLink from '@/components/UserAvatarLink';
+import MemberAvatarStack from '@/components/MemberAvatarStack';
 import PremiumJoinButton from '@/components/PremiumJoinButton';
 import { useCircleMembers } from '@/hooks/useCircles';
 
@@ -28,8 +29,6 @@ interface CircleCardProps {
   index?: number;
 }
 
-const MAX_AVATARS = 5;
-
 export default function CircleCard({ circle, onJoin, index = 0 }: CircleCardProps) {
   const router = useRouter();
   // Real per-member avatars/usernames aren't included on the circle
@@ -37,8 +36,12 @@ export default function CircleCard({ circle, onJoin, index = 0 }: CircleCardProp
   // cheap, cached-by-id request per card) is what makes the avatar row
   // real data instead of placeholder initials.
   const { data: members } = useCircleMembers(circle.id);
-  const visibleMembers = (members || []).slice(0, MAX_AVATARS);
-  const overflowCount = Math.max(0, circle.memberCount - visibleMembers.length);
+  const avatarStackMembers = (members || []).map((member: any) => ({
+    userId: member.user_id,
+    name: member.full_name || member.username,
+    username: member.username,
+    avatarUrl: member.avatar_url,
+  }));
 
   const handleCardClick = () => router.push(`/circles/${circle.id}`);
 
@@ -82,39 +85,12 @@ export default function CircleCard({ circle, onJoin, index = 0 }: CircleCardProp
           </div>
         </div>
 
-        {/* Overlapping member avatars — each independently clickable to
-            that member's profile. stopPropagation keeps taps on an avatar
-            from also firing the card's own click-to-navigate. */}
-        {visibleMembers.length > 0 && (
-          <div className="mt-4 flex -space-x-2">
-            {visibleMembers.map((member: any) => (
-              <div
-                key={member.user_id}
-                className="rounded-full border-2"
-                style={{ borderColor: 'var(--pact-surface)' }}
-              >
-                <UserAvatarLink
-                  name={member.full_name || member.username}
-                  avatarUrl={member.avatar_url}
-                  username={member.username}
-                  size={32}
-                  stopPropagation
-                />
-              </div>
-            ))}
-            {overflowCount > 0 && (
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold"
-                style={{
-                  background: 'var(--pact-surface-2)',
-                  color: 'var(--pact-text-faint)',
-                  borderColor: 'var(--pact-surface)',
-                }}
-              >
-                +{overflowCount}
-              </div>
-            )}
-          </div>
+        {/* Overlapping member avatars — WHO is in the circle. Each avatar
+            is independently clickable to that member's profile via
+            stopPropagation, separate from the "N member(s)" stat below
+            which covers the count. */}
+        {avatarStackMembers.length > 0 && (
+          <MemberAvatarStack members={avatarStackMembers} totalCount={circle.memberCount} className="mt-4" />
         )}
 
         {/* Icon-led stat row — replaces the old boxed MEMBERS / CIRCLE pairs */}
