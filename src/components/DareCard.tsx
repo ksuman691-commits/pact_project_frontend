@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Clock, CheckCircle2, XCircle, Upload, Zap } from 'lucide-react';
+import { Clock, CheckCircle2, XCircle, Upload, Zap, Eye, Lock } from 'lucide-react';
 import type { Dare } from '@/types';
 import UserAvatarLink from '@/components/UserAvatarLink';
 import { useAuthStore } from '@/store/auth';
@@ -21,6 +21,31 @@ const STATUS_PILL: Record<string, { label: string; color: string }> = {
   completed: { label: 'Completed', color: 'var(--pact-mint)' },
   failed: { label: 'Failed', color: 'var(--pact-pink)' },
 };
+
+function PieClock({ progress, expired }: { progress: number; expired: boolean }) {
+  const size = 34;
+  const center = size / 2;
+  const radius = 13;
+  const startAngle = -90;
+  const endAngle = startAngle + progress * 360;
+  const start = {
+    x: center + radius * Math.cos((startAngle * Math.PI) / 180),
+    y: center + radius * Math.sin((startAngle * Math.PI) / 180),
+  };
+  const end = {
+    x: center + radius * Math.cos((endAngle * Math.PI) / 180),
+    y: center + radius * Math.sin((endAngle * Math.PI) / 180),
+  };
+  const largeArc = progress > 0.5 ? 1 : 0;
+  const wedge = progress > 0 ? `M ${center} ${center} L ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArc} 1 ${end.x} ${end.y} Z` : '';
+
+  return (
+    <svg aria-hidden="true" viewBox={`0 0 ${size} ${size}`} className="h-8 w-8 shrink-0">
+      <circle cx={center} cy={center} r={radius} fill="none" stroke="var(--pact-hairline)" strokeWidth="3" />
+      {!expired && <path d={wedge} fill="var(--pact-gold)" opacity="0.9" />}
+    </svg>
+  );
+}
 
 /**
  * Whole card navigates to the dare detail page, but it also hosts direct
@@ -43,15 +68,33 @@ export default function DareCard({ dare }: DareCardProps) {
   const isPending = dare.my_recipient_status === 'pending';
   const isAccepted = dare.my_recipient_status === 'accepted';
   const isPublicUnclaimed = dare.audience === 'public' && !isCreator && !dare.my_recipient_status;
+  const isPrivate = dare.audience !== 'public';
+  const expiresAt = dare.expires_at ?? (isPending ? dare.respond_by : dare.complete_by);
+  const expiresAtMs = Date.parse(expiresAt);
+  const createdAtMs = Date.parse(dare.created_at);
+  const [now, setNow] = useState(() => Date.now());
+  const remainingMs = Number.isFinite(expiresAtMs) ? expiresAtMs - now : 0;
+  const isExpired = remainingMs <= 0;
 
-  // Pending recipients count down to the response deadline; accepted
-  // recipients (or anyone just browsing) count down to the completion
-  // deadline — matches how the deadline actually applies to the viewer.
+  // The server timestamp remains the source of truth. This interval only
+  // triggers a render so the displayed value can be recomputed from now().
+  useEffect(() => {
+    if (isExpired || !Number.isFinite(expiresAtMs)) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [expiresAtMs, isExpired]);
+
   const countdown = isPending
-    ? formatCountdown(dare.respond_by, 'Respond')
-    : formatCountdown(dare.complete_by, 'Complete');
-
-  const statusPill = dare.my_recipient_status ? STATUS_PILL[dare.my_recipient_status] : null;
+    ? formatCountdown(expiresAt, 'Respond')
+    : formatCountdown(expiresAt, 'Complete');
+  const statusPill = isExpired
+    ? STATUS_PILL[dare.status] ?? { label: 'Expired', color: 'var(--pact-text-faint)' }
+    : dare.my_recipient_status ? STATUS_PILL[dare.my_recipient_status] : null;
+  const totalMs = Number.isFinite(createdAtMs) && Number.isFinite(expiresAtMs)
+    ? Math.max(1, expiresAtMs - createdAtMs)
+    : 1;
+  const progress = isExpired ? 0 : Math.max(0, Math.min(1, remainingMs / totalMs));
+  const countdownLabel = isExpired ? statusPill?.label ?? 'Expired' : countdown.label;
 
   return (
     <>
@@ -95,10 +138,18 @@ export default function DareCard({ dare }: DareCardProps) {
             )}
             <span
               className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold"
-              style={{ background: 'var(--pact-surface-2)', color: urgencyColor(countdown.urgency) }}
+              style={{ background: 'var(--pact-surface-2)', color: isExpired ? statusPill?.color : urgencyColor(countdown.urgency) }}
             >
-              <Clock className="h-3 w-3" />
-              {countdown.label}
+              {isExpired ? <Clock className="h-3 w-3" /> : <PieClock progress={progress} expired={isExpired} />}
+              {countdownLabel}
+            </span>
+            <span
+              className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
+              style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-text-faint)' }}
+              title={isPrivate ? 'Private Dare' : 'Public Dare'}
+            >
+              {isPrivate ? <Lock className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+
             </span>
           </div>
         </div>
@@ -108,7 +159,7 @@ export default function DareCard({ dare }: DareCardProps) {
       </div>
 
       {/* Fast inline actions — no need to open the detail page for these */}
-      {(isPending || isAccepted || isPublicUnclaimed) && (
+      {!isExpired && (isPending || isAccepted || isPublicUnclaimed) && (
         <div className="flex gap-2 border-t px-4 py-3" style={{ borderColor: 'var(--pact-hairline)' }}>
           {isPending && (
             <>

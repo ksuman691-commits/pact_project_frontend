@@ -157,6 +157,8 @@ export interface Dare {
   // any dare response and were the root cause of the "Invalid Date" bug).
   respond_by: string;
   complete_by: string;
+  // Server-provided absolute expiry used by the card countdown when present.
+  expires_at?: string;
   recipients?: DareRecipient[];
   // Only 'pending' has been observed live; kept loose since the backend
   // doesn't document a closed enum here.
