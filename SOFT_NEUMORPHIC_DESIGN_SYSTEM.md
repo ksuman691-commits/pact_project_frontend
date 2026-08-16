@@ -1,4 +1,11 @@
-# Soft Neumorphic Design System Implementation
+> **⚠️ DEPRECATED / HISTORICAL — DO NOT USE AS A REFERENCE.**
+> This lavender/white neumorphic system was superseded by the violet dark
+> system (`--pact-*` tokens defined in `globals.css`). The `DesignTokens.tsx`
+> file that once hardcoded this palette as exported Tailwind classes has
+> been deleted (it had zero remaining imports). Kept only as a historical
+> record. For current design guidance, use the `--pact-*` tokens directly.
+
+# Soft Neumorphic Design System Implementation (DEPRECATED)
 
 ## Overview
 CirclePact has been completely redesigned with a modern "soft neumorphic SaaS" design language. This document outlines all design system changes, color palette, and implementation details.

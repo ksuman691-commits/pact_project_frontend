@@ -6,11 +6,12 @@ import Link from 'next/link';
 import { ChevronLeft, Upload, Users, CheckCircle2, XCircle, Clock, CalendarClock, ShieldCheck, Zap } from 'lucide-react';
 import { useDareDetail, useDareRecipients, useDareStats } from '@/hooks/useDareQueries';
 import { useAcceptDare, useDeclineDare, useClaimDare } from '@/hooks/useDareMutations';
-import DareRecipientsList from '@/components/DareRecipientsList';
+import DareRecipientsModal from '@/components/DareRecipientsModal';
 import DareProofUploadModal from '@/components/DareProofUploadModal';
 import DareVerificationModal from '@/components/DareVerificationModal';
 import UserAvatarLink from '@/components/UserAvatarLink';
-import { formatCountdown, urgencyColor } from '@/lib/dareCountdown';
+import Avatar from '@/components/Avatar';
+import { formatCountdown, formatRelativeTime, urgencyColor } from '@/lib/dareCountdown';
 import { useAuthStore } from '@/store/auth';
 
 const STATUS_PILL: Record<string, { label: string; color: string }> = {
@@ -46,6 +47,7 @@ export default function DareDetailPage() {
 
   const [proofModalOpen, setProofModalOpen] = useState(false);
   const [verifyModalOpen, setVerifyModalOpen] = useState(false);
+  const [recipientsModalOpen, setRecipientsModalOpen] = useState(false);
 
   const dare = dareQuery.data?.data;
 
@@ -154,28 +156,72 @@ export default function DareDetailPage() {
           <p className="text-[var(--pact-text-dim)] leading-relaxed">{dare.description}</p>
         </div>
 
-        {/* Compact icon-led stat row — one merged panel instead of 4 boxes */}
+        {/* Single recipient: show them directly, no tap required — with
+            only one person dared, hiding their identity behind an
+            interaction is unnecessary friction for information that
+            should just be visible on the page. */}
+        {recipients.length === 1 && (
+          <div className="flex items-center gap-3 rounded-2xl px-5 py-3" style={{ background: 'var(--pact-surface-2)' }}>
+            <Avatar
+              name={recipients[0].user?.full_name || recipients[0].user?.username}
+              avatarUrl={recipients[0].user?.avatar_url}
+              size={36}
+            />
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-[var(--pact-text-faint)]">Dared</p>
+              <p className="truncate text-sm font-semibold text-[var(--pact-text)]">
+                {recipients[0].user?.full_name || recipients[0].user?.username || 'Unknown user'}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Compact icon-led stat row — one merged panel instead of 4 boxes.
+            Recipients is tappable whenever there's more than one, opening
+            a modal with the full who-was-dared list (DareRecipientsList,
+            re-themed) instead of building a separate component. */}
         <div className="pact-card flex flex-wrap items-center gap-5 rounded-2xl px-5 py-4">
-          <StatGroup icon={Users} value={dare.recipientCount || 0} label="recipients" color="var(--pact-violet)" />
+          {recipients.length > 1 ? (
+            <button
+              onClick={() => setRecipientsModalOpen(true)}
+              className="flex items-center gap-1.5 rounded-full transition hover:opacity-75"
+              aria-label="View who was dared"
+            >
+              <Users className="h-4 w-4" style={{ color: 'var(--pact-violet)' }} />
+              <span className="font-bold text-[var(--pact-text)]">{dare.recipientCount || 0}</span>
+              <span className="text-xs font-medium underline decoration-dotted text-[var(--pact-text-faint)]">recipients</span>
+            </button>
+          ) : (
+            <StatGroup icon={Users} value={dare.recipientCount || 0} label="recipients" color="var(--pact-violet)" />
+          )}
           <StatGroup icon={CheckCircle2} value={acceptedCount} label="accepted" color="var(--pact-violet)" />
           <StatGroup icon={ShieldCheck} value={completedCount} label="completed" color="var(--pact-mint)" />
           <StatGroup icon={XCircle} value={failedCount} label="failed" color="var(--pact-pink)" />
         </div>
 
-        {/* Timeline — lighter weight than the stat row above it */}
+        {/* Timeline — relative labels ("in 5h" / "2h ago") instead of raw
+            absolute datetimes, which are harder to parse at a glance for a
+            time-boxed feature. Exact datetime is still available via the
+            title attribute on hover/tap. */}
         <div className="space-y-2 rounded-2xl px-5 py-3" style={{ background: 'var(--pact-surface-2)' }}>
           <div className="flex items-center gap-2 text-sm">
             <CalendarClock className="h-3.5 w-3.5 flex-shrink-0" style={{ color: 'var(--pact-text-faint)' }} />
             <span className="text-[var(--pact-text-faint)]">Respond by</span>
-            <span className="ml-auto font-medium text-[var(--pact-text-dim)]">
-              {dare.respond_by ? new Date(dare.respond_by).toLocaleString() : 'No deadline'}
+            <span
+              className="ml-auto font-medium text-[var(--pact-text-dim)]"
+              title={dare.respond_by ? new Date(dare.respond_by).toLocaleString() : undefined}
+            >
+              {formatRelativeTime(dare.respond_by)}
             </span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <CalendarClock className="h-3.5 w-3.5 flex-shrink-0" style={{ color: 'var(--pact-text-faint)' }} />
             <span className="text-[var(--pact-text-faint)]">Complete by</span>
-            <span className="ml-auto font-medium text-[var(--pact-text-dim)]">
-              {dare.complete_by ? new Date(dare.complete_by).toLocaleString() : 'No deadline'}
+            <span
+              className="ml-auto font-medium text-[var(--pact-text-dim)]"
+              title={dare.complete_by ? new Date(dare.complete_by).toLocaleString() : undefined}
+            >
+              {formatRelativeTime(dare.complete_by)}
             </span>
           </div>
           <div className="flex items-center gap-2 text-sm">
@@ -242,14 +288,6 @@ export default function DareDetailPage() {
           </div>
         )}
 
-        {/* Recipients — only shown when there's more than one */}
-        {(recipientsQuery.data?.data?.length || 0) > 1 && (
-          <div>
-            <h3 className="mb-4 text-lg font-bold text-[var(--pact-text)]">Recipients</h3>
-            <DareRecipientsList recipients={recipientsQuery.data?.data || []} isLoading={recipientsQuery.isLoading} />
-          </div>
-        )}
-
         {/* Verification stats */}
         {stats && (stats.yes_count || stats.no_count) ? (
           <div className="rounded-2xl px-5 py-4" style={{ background: 'var(--pact-surface-2)' }}>
@@ -269,6 +307,12 @@ export default function DareDetailPage() {
 
       <DareProofUploadModal isOpen={proofModalOpen} onClose={() => setProofModalOpen(false)} dareId={dareId} />
       <DareVerificationModal isOpen={verifyModalOpen} onClose={() => setVerifyModalOpen(false)} dareId={dareId} />
+      <DareRecipientsModal
+        isOpen={recipientsModalOpen}
+        onClose={() => setRecipientsModalOpen(false)}
+        recipients={recipients}
+        isLoading={recipientsQuery.isLoading}
+      />
     </div>
   );
 }
