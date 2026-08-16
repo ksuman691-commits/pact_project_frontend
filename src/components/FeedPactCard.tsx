@@ -26,6 +26,7 @@ import PremiumJoinButton from './PremiumJoinButton';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useCreateCheer } from '@/hooks/usePactMutations';
 import { useAuthStore } from '@/store/auth';
+import { getDisplayName } from '@/lib/displayName';
 import { pactService } from '@/services/api';
 import toast from 'react-hot-toast';
 
@@ -305,7 +306,10 @@ export default function FeedPactCard({
     setDisplayCheerCount(Number(pact.active_cheer_count ?? 0));
   }, [pact.active_cheer_count, pact.id]);
 
-  const creatorLabel = pact.creator || pact.creator_username || 'creator';
+  const creatorLabel = getDisplayName(
+    pact.creator_id ?? pact.user_id ?? pact.creator?.id,
+    pact.creator || pact.creator_username || 'creator',
+  );
   const creatorUsername = pact.creator_username || null;
   const creatorProfileHref = creatorUsername ? `/profile/${encodeURIComponent(creatorUsername)}` : null;
   const creatorAvatarUrl = pact.creatorAvatarUrl || pact.creator_avatar_url || null;
@@ -652,7 +656,7 @@ export default function FeedPactCard({
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold text-[var(--pact-text)]">@{creatorLabel}</p>
+              <p className="truncate text-sm font-bold text-[var(--pact-text)]">{creatorLabel === 'You' ? 'You' : `@${creatorLabel}`}</p>
             {circleLabel && (
               <span className="mt-1 inline-flex max-w-full truncate rounded-full bg-[var(--pact-surface-3)] px-2 py-0.5 text-[10px] font-semibold text-[var(--pact-text-dim)]">
                 {circleLabel}

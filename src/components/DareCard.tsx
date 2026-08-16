@@ -8,6 +8,7 @@ import UserAvatarLink from '@/components/UserAvatarLink';
 import { useAuthStore } from '@/store/auth';
 import { useAcceptDare, useDeclineDare, useClaimDare } from '@/hooks/useDareMutations';
 import { formatCountdown, urgencyColor } from '@/lib/dareCountdown';
+import { getDisplayName } from '@/lib/displayName';
 import DareProofUploadModal from '@/components/DareProofUploadModal';
 
 interface DareCardProps {
@@ -113,7 +114,7 @@ export default function DareCard({ dare }: DareCardProps) {
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <UserAvatarLink
-              name={dare.creator_full_name || dare.creator_username}
+              name={getDisplayName(dare.creator_id, dare.creator_full_name || dare.creator_username)}
               avatarUrl={dare.creator_avatar_url}
               username={dare.creator_username}
               size={40}
@@ -121,7 +122,7 @@ export default function DareCard({ dare }: DareCardProps) {
             />
             <div className="min-w-0">
               <p className="text-sm font-semibold text-[var(--pact-text)] truncate">
-                {isCreator ? 'You' : dare.creator_full_name || dare.creator_username || 'Anonymous'}
+                {getDisplayName(dare.creator_id, dare.creator_full_name || dare.creator_username)}
               </p>
               <p className="text-xs text-[var(--pact-text-faint)] truncate">@{dare.creator_username || 'user'}</p>
             </div>
