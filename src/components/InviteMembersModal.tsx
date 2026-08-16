@@ -1,12 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { X, Copy, Check, Search, Loader, Link as LinkIcon, UserPlus } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Copy, Check, Link as LinkIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
-import Avatar from '@/components/Avatar';
-import { useSearchUsers } from '@/hooks/useUserQueries';
-import { useCircleMembers } from '@/hooks/useCircles';
-import { useInviteUserToCircle } from '@/hooks/useCircleMutations';
 
 interface InviteMembersModalProps {
   isOpen: boolean;
@@ -16,35 +12,18 @@ interface InviteMembersModalProps {
 }
 
 export default function InviteMembersModal({ isOpen, onClose, circleId, circleName }: InviteMembersModalProps) {
-  const [tab, setTab] = useState<'search' | 'link'>('search');
-  const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [invitedIds, setInvitedIds] = useState<Record<number, boolean>>({});
   const [inviteLink, setInviteLink] = useState('');
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => setDebouncedQuery(query.trim()), 300);
-    return () => clearTimeout(timeout);
-  }, [query]);
-
-  const { data: searchData, isLoading } = useSearchUsers(debouncedQuery, 15);
-  const { data: existingMembers } = useCircleMembers(circleId);
-  const inviteMutation = useInviteUserToCircle(circleId);
-
-  const existingMemberIds = new Set((existingMembers || []).map((m: any) => m.user_id));
-  const results = (searchData?.data || []).filter((candidate: any) => !existingMemberIds.has(candidate.id));
-
-  const handleInvite = (person: any) => {
-    if (invitedIds[person.id] || inviteMutation.isPending) return;
-    inviteMutation.mutate(
-      { userId: person.id },
-      {
-        onSuccess: () => setInvitedIds((prev) => ({ ...prev, [person.id]: true })),
-      }
-    );
-  };
-
+  // NOTE: the backend has no invite-code/invite-link endpoint either
+  // (confirmed against the live OpenAPI schema — only /join and
+  // /join-request exist, neither of which issues a shareable code). This
+  // link and code are still client-generated placeholders, same gap as
+  // the removed "Search people" tab, just not addressed in this pass per
+  // explicit instruction to only pull that tab and leave Link as-is.
+  // The generated /circles/join/{code} route does not resolve to anything
+  // real yet — needs its own backend endpoint before this tab is genuinely
+  // functional.
   const generateInviteLink = () => {
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
     setInviteLink(`${window.location.origin}/circles/join/${code}`);
@@ -73,125 +52,20 @@ export default function InviteMembersModal({ isOpen, onClose, circleId, circleNa
           </button>
         </div>
 
-        {/* Tabs — Search is the default/primary invite path since the
-            people being invited already have real accounts on this
-            social app. Link stays as the secondary path for reaching
-            people outside the app who aren't searchable yet. The old
-            email-textarea tab has been removed rather than demoted:
-            Link already covers "invite someone without an account here",
-            so keeping Email too would just leave a redundant, weaker
-            version of the same problem this change is meant to fix. */}
-        <div className="flex border-b border-[var(--pact-hairline)] flex-shrink-0">
-          <button
-            onClick={() => setTab('search')}
-            className="flex-1 px-4 py-3 font-medium text-sm border-b-2 transition"
-            style={
-              tab === 'search'
-                ? { color: 'var(--pact-violet)', borderColor: 'var(--pact-violet)' }
-                : { color: 'var(--pact-text-faint)', borderColor: 'transparent' }
-            }
-          >
-            <Search className="w-4 h-4 inline mr-2" />
-            Search people
-          </button>
-          <button
-            onClick={() => setTab('link')}
-            className="flex-1 px-4 py-3 font-medium text-sm border-b-2 transition"
-            style={
-              tab === 'link'
-                ? { color: 'var(--pact-violet)', borderColor: 'var(--pact-violet)' }
-                : { color: 'var(--pact-text-faint)', borderColor: 'transparent' }
-            }
-          >
-            <LinkIcon className="w-4 h-4 inline mr-2" />
-            Link
-          </button>
+        {/* "Search people" was removed: it depended on a direct-invite
+            endpoint (POST /api/circles/{id}/invite) that returns 404 on
+            the live backend — confirmed against the OpenAPI schema, which
+            only exposes /join and /join-request (self-service, not
+            something an owner can trigger for someone else). Link is the
+            only invite path that stays until that endpoint exists. */}
+        <div className="px-6 pt-4 pb-2 flex items-center gap-2 text-sm font-medium flex-shrink-0" style={{ color: 'var(--pact-violet)' }}>
+          <LinkIcon className="w-4 h-4" />
+          Shareable link
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto flex-1">
-          {tab === 'search' ? (
-            <div className="space-y-4">
-              <div className="relative">
-                <Search
-                  className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4"
-                  style={{ color: 'var(--pact-text-faint)' }}
-                />
-                <input
-                  autoFocus
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search by name or username"
-                  className="w-full pl-11 pr-4 py-3 rounded-[28px] outline-none focus:ring-2 transition"
-                  style={{
-                    background: 'var(--pact-surface-2)',
-                    border: '1px solid var(--pact-hairline)',
-                    color: 'var(--pact-text)',
-                  }}
-                />
-              </div>
-
-              <div className="min-h-[120px]">
-                {query.trim().length === 0 ? (
-                  <p className="text-center text-sm py-6" style={{ color: 'var(--pact-text-faint)' }}>
-                    Search for someone to invite to {circleName}
-                  </p>
-                ) : isLoading ? (
-                  <div className="flex items-center justify-center py-6">
-                    <Loader className="w-5 h-5 animate-spin" style={{ color: 'var(--pact-violet)' }} />
-                  </div>
-                ) : results.length === 0 ? (
-                  <p className="text-center text-sm py-6" style={{ color: 'var(--pact-text-faint)' }}>
-                    No matching people found
-                  </p>
-                ) : (
-                  <div className="space-y-1">
-                    {results.map((person: any) => {
-                      const invited = Boolean(invitedIds[person.id]);
-                      return (
-                        <div
-                          key={person.id}
-                          className="flex items-center gap-3 p-2.5 rounded-[20px]"
-                          style={{ background: 'var(--pact-surface-2)' }}
-                        >
-                          <Avatar name={person.full_name || person.username} avatarUrl={person.avatar_url} size={40} />
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-[var(--pact-text)]">
-                              {person.full_name || person.username}
-                            </p>
-                            <p className="truncate text-xs text-[var(--pact-text-faint)]">@{person.username}</p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleInvite(person)}
-                            disabled={invited || inviteMutation.isPending}
-                            className="flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition disabled:opacity-60"
-                            style={
-                              invited
-                                ? { background: 'transparent', border: '1px solid var(--pact-hairline)', color: 'var(--pact-text-muted)' }
-                                : { background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'white' }
-                            }
-                          >
-                            {invited ? (
-                              <>
-                                <Check className="w-3.5 h-3.5" /> Invited
-                              </>
-                            ) : (
-                              <>
-                                <UserPlus className="w-3.5 h-3.5" /> Invite
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
+        <div className="p-6 pt-2 overflow-y-auto flex-1">
+          <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[var(--pact-text-dim)] mb-2">Invite Link</label>
                 {!inviteLink ? (
@@ -254,7 +128,6 @@ export default function InviteMembersModal({ isOpen, onClose, circleId, circleNa
                 Done
               </button>
             </div>
-          )}
         </div>
       </div>
     </div>
