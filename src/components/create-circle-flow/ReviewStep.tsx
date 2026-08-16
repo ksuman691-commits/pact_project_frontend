@@ -56,7 +56,7 @@ export default function ReviewStep() {
       </div>
 
       {submitError && (
-        <p role="alert" className="mt-4 text-sm" style={{ color: 'var(--pact-pink)' }}>
+        <p role="alert" className="mt-4 text-sm" style={{ color: 'var(--flow-accent)' }}>
           {submitError}
         </p>
       )}
@@ -66,7 +66,7 @@ export default function ReviewStep() {
         onClick={handleCreate}
         disabled={isSubmitting}
         className="mt-8 w-full rounded-full px-6 py-4 text-center text-base font-semibold text-[var(--pact-bg)] transition-opacity disabled:opacity-60"
-        style={{ background: 'var(--pact-pink)' }}
+        style={{ background: 'linear-gradient(135deg, var(--flow-accent), var(--flow-accent-2))' }}
       >
         {isSubmitting ? 'Creating…' : '👯 Create Circle →'}
       </button>

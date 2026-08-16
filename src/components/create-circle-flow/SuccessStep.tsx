@@ -12,13 +12,15 @@ export default function SuccessStep() {
 
   return (
     <div className="pact-step-enter flex flex-1 flex-col items-center pt-4 text-center">
-      {/* Decorative stamp — matches Pact flow's success stamp exactly. */}
+      {/* Decorative stamp — same ring motion as the Pact flow's success
+          stamp, but recolored to Circle's violet→mint accent so it reads
+          as a distinct flow even on this terminal screen. */}
       <div className="pact-stamp-ring relative flex h-24 w-24 items-center justify-center rounded-full">
         <div
           className="absolute inset-0 rounded-full"
           style={{
             background:
-              'conic-gradient(from 0deg, var(--pact-pink), var(--pact-gold), var(--pact-violet), var(--pact-pink))',
+              'conic-gradient(from 0deg, var(--flow-accent), var(--pact-gold), var(--flow-accent-2), var(--flow-accent))',
           }}
         />
         <div
@@ -40,7 +42,7 @@ export default function SuccessStep() {
           type="button"
           onClick={() => router.push(`/pacts/create?circleId=${createdCircle.id}`)}
           className="w-full rounded-full px-6 py-3.5 text-sm font-semibold text-[var(--pact-bg)]"
-          style={{ background: 'var(--pact-pink)' }}
+          style={{ background: 'linear-gradient(135deg, var(--flow-accent), var(--flow-accent-2))' }}
         >
           🔥 Start a Pact for this Circle
         </button>

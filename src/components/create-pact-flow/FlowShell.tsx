@@ -19,6 +19,17 @@ interface FlowShellProps {
   /** Live-building summary text for this step (e.g. generated pact/circle title). */
   titleStripText: string;
   titleStripPlaceholder: string;
+  /**
+   * Which flow's chrome accent to use. Defaults to the Pact flow's
+   * pink→violet pairing (via the CSS defaults on .pact-flow) — pass
+   * "circle" to switch progress dots / title strip / CTA gradients to
+   * Circle's violet→mint pairing instead. Create Dare never sets this,
+   * so it keeps the default pink→violet chrome unchanged.
+   */
+  accent?: 'pact' | 'circle';
+  /** Small icon shown in the live-title strip to hint at the flow's own
+   * visual language (e.g. a target for Pact, people for Circle). */
+  titleStripIcon?: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
 }
 
 /**
@@ -37,9 +48,18 @@ export default function FlowShell({
   showChrome,
   titleStripText,
   titleStripPlaceholder,
+  accent,
+  titleStripIcon,
 }: FlowShellProps) {
   return (
-    <div className="pact-flow flex min-h-dvh flex-col">
+    <div
+      className="pact-flow flex min-h-dvh flex-col"
+      style={
+        accent === 'circle'
+          ? ({ '--flow-accent': 'var(--pact-violet)', '--flow-accent-2': 'var(--pact-mint)' } as React.CSSProperties)
+          : undefined
+      }
+    >
       {showChrome && (
         <header className="flex items-center gap-3 px-5 pt-5">
           <button
@@ -71,7 +91,7 @@ export default function FlowShell({
 
       {showChrome && (
         <div className="px-5 pt-6">
-          <LiveTitleStrip text={titleStripText} placeholder={titleStripPlaceholder} />
+          <LiveTitleStrip text={titleStripText} placeholder={titleStripPlaceholder} icon={titleStripIcon} />
         </div>
       )}
 

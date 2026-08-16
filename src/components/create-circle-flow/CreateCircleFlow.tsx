@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Users } from 'lucide-react';
 import { CreateCircleFlowProvider, useCreateCircleFlow } from '@/context/CreateCircleFlowContext';
 import { generateCircleSummary, LIVE_SUMMARY_PLACEHOLDER } from '@/lib/createCircleFlow/generate';
 import FlowShell from '@/components/create-pact-flow/FlowShell';
@@ -29,6 +30,8 @@ function StepRouter({ onExit }: CreateCircleFlowProps) {
       showChrome={currentStep !== 'success'}
       titleStripText={generateCircleSummary(draft)}
       titleStripPlaceholder={LIVE_SUMMARY_PLACEHOLDER}
+      accent="circle"
+      titleStripIcon={Users}
     >
       {currentStep === 'vibe' && <VibeStep />}
       {currentStep === 'identity' && <IdentityStep />}

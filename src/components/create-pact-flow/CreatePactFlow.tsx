@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Target } from 'lucide-react';
 import { CreatePactFlowProvider, useCreatePactFlow } from '@/context/CreatePactFlowContext';
 import { generateTitle, LIVE_TITLE_PLACEHOLDER } from '@/lib/createPactFlow/generate';
 import FlowShell from './FlowShell';
@@ -35,6 +36,7 @@ function StepRouter({ onExit }: CreatePactFlowProps) {
       showChrome={currentStep !== 'success'}
       titleStripText={generateTitle(draft, activity)}
       titleStripPlaceholder={LIVE_TITLE_PLACEHOLDER}
+      titleStripIcon={Target}
     >
       {currentStep === 'vibe' && <VibeStep />}
       {currentStep === 'activity' && <ActivityStep />}

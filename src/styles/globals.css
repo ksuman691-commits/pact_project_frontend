@@ -352,6 +352,13 @@ section + section {
 .pact-flow {
   /* Color tokens now live in :root (see above) — this block keeps only the
      structural rules specific to the full-page immersive flow. */
+  /* Per-flow chrome accent — defaults to the Pact flow's pink→violet
+     pairing. CreateCircleFlow overrides both on its own root wrapper so
+     its chrome (progress dots, live-title strip, CTA gradients) reads as
+     a distinct violet→mint flow without touching the shared vibe-tile
+     grid or any other flow (e.g. Create Dare) that never overrides these. */
+  --flow-accent: var(--pact-pink);
+  --flow-accent-2: var(--pact-violet);
   background: var(--pact-bg);
   background-image:
     radial-gradient(60% 50% at 15% 0%, rgba(139, 107, 255, 0.12), transparent 60%),
