@@ -401,7 +401,10 @@ section + section {
 }
 
 .pact-flow .pact-tile.selected {
-  border-color: var(--pact-pink);
+  /* Shared across Pact/Circle/Dare tap-tiles — reads --flow-accent so the
+     selection ring matches whichever flow's chrome is active instead of
+     always defaulting to Pact's pink. */
+  border-color: var(--flow-accent, var(--pact-pink));
   background: var(--pact-surface-raised);
 }
 
