@@ -3,9 +3,23 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
-import { ChevronRight, Flag, MessageCircle, Share2, FileImage, ArrowLeft, ArrowRight, Camera, PartyPopper, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import {
+  ChevronRight,
+  Flag,
+  MessageCircle,
+  Share2,
+  FileImage,
+  ArrowLeft,
+  ArrowRight,
+  Camera,
+  PartyPopper,
+  Loader2,
+  MoreVertical,
+} from 'lucide-react';
 import ProofUploadModal from './ProofUploadModal';
 import ProofMediaCarousel from './ProofMediaCarousel';
+import CommentsBottomSheet from './CommentsBottomSheet';
 import Avatar from './Avatar';
 import UserAvatarLink from './UserAvatarLink';
 import PremiumJoinButton from './PremiumJoinButton';
@@ -145,6 +159,82 @@ function getMedia(pact: any) {
   };
 }
 
+/**
+ * Days-elapsed-vs-pact-duration progress, used as the hero visual whenever
+ * a pact has no proof photo yet. Falls back to null (rendering the older
+ * avatar/camera placeholder instead) when the pact is missing the dates
+ * needed to compute a meaningful percentage.
+ */
+function getDurationProgress(pact: any) {
+  const startRaw = pact.start_date || pact.created_at;
+  const endRaw = pact.end_date || pact.deadline;
+  if (!startRaw || !endRaw) return null;
+
+  const startMs = new Date(startRaw).getTime();
+  const endMs = new Date(endRaw).getTime();
+  if (Number.isNaN(startMs) || Number.isNaN(endMs) || endMs <= startMs) return null;
+
+  const totalDays = Math.max(1, Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)));
+  const elapsedDays = Math.max(0, Math.min(totalDays, Math.round((Date.now() - startMs) / (1000 * 60 * 60 * 24))));
+  const percent = Math.max(0, Math.min(100, Math.round((elapsedDays / totalDays) * 100)));
+
+  return { percent, elapsedDays, totalDays };
+}
+
+/** Gradient-stroke circular progress ring — the hero visual for pacts with no proof photo yet. */
+function PactProgressRing({
+  percent,
+  elapsedDays,
+  totalDays,
+  gradientId,
+}: {
+  percent: number;
+  elapsedDays: number;
+  totalDays: number;
+  gradientId: string;
+}) {
+  const radius = 60;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - percent / 100);
+
+  return (
+    <div className="relative flex h-[150px] w-[150px] items-center justify-center">
+      <svg viewBox="0 0 130 130" className="h-full w-full -rotate-90">
+        <defs>
+          <linearGradient id={gradientId}>
+            <stop offset="0%" stopColor="var(--pact-pink)" />
+            <stop offset="100%" stopColor="var(--pact-violet)" />
+          </linearGradient>
+        </defs>
+        <circle cx="65" cy="65" r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={9} />
+        <circle
+          cx="65"
+          cy="65"
+          r={radius}
+          fill="none"
+          stroke={`url(#${gradientId})`}
+          strokeWidth={9}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          style={{ transition: 'stroke-dashoffset 900ms ease-out' }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span
+          className="text-2xl font-bold text-[var(--pact-text)]"
+          style={{ fontFamily: 'var(--font-pact-mono), monospace' }}
+        >
+          {percent}%
+        </span>
+        <span className="mt-0.5 text-[10.5px] text-[var(--pact-text-faint)]">
+          {elapsedDays}/{totalDays} days
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function FeedPactCard({
   pact,
   userVote,
@@ -159,11 +249,14 @@ export default function FeedPactCard({
   canReport = true,
   hasCheered = false,
 }: FeedPactCardProps) {
+  const router = useRouter();
   const { user } = useAuthStore();
   const reportMutation = useReportPact(pact.id);
   const createCheer = useCreateCheer(pact.id);
   const [proofUploadModal, setProofUploadModal] = useState(false);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [commentSheetOpen, setCommentSheetOpen] = useState(false);
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
   const [dragAxis, setDragAxis] = useState<DragAxis>(null);
@@ -198,6 +291,7 @@ export default function FeedPactCard({
     committedRef.current = false;
     setActiveProofIndex(0);
     setShowJoinNudge(false);
+    setMoreMenuOpen(false);
   }, [pact.id]);
 
   useEffect(() => {
@@ -219,6 +313,7 @@ export default function FeedPactCard({
   const timeRemaining = pact.timeRemaining || formatEndsIn(pact.end_date || pact.deadline);
   const proofs = useMemo(() => getProofs(pact), [pact]);
   const media = useMemo(() => getMedia(pact), [pact]);
+  const progressInfo = useMemo(() => getDurationProgress(pact), [pact]);
   const hasProof = proofs.length > 0;
   const activeProof = proofs[activeProofIndex] ?? proofs[0] ?? null;
   const isExiting = exitDirection !== null;
@@ -489,310 +584,370 @@ export default function FeedPactCard({
     }
   };
 
+  // Card-wide navigation: everything outside the hero (header text, title,
+  // description, and blank space) bubbles up to this. Avatar, overflow menu,
+  // the hero itself, the action row, and "view all comments" each stop
+  // propagation and handle their own tap instead — same pattern already used
+  // for avatar links elsewhere in the app.
+  const handleCardNavigate = () => {
+    router.push(resolvedDetailHref);
+  };
+
+  // Unified action-row Cheer icon: unchanged from the existing Cheer feature.
+  // Eligible members trigger the same fast single-photo flow as swipe-right /
+  // double-tap; everyone else (creator, already-cheered, non-participants)
+  // gets a "view cheers" tap-through to the detail page, matching the old
+  // rail icon's passive count+link behavior.
+  const handleCheerIconClick = () => {
+    if (rightAction === 'cheer') {
+      triggerRightAction();
+    } else {
+      router.push(resolvedDetailHref);
+    }
+  };
+
   return (
     <>
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        whileHover={{ y: -2, boxShadow: '0 20px 70px rgba(2,6,23,0.45), 0 12px 28px rgba(139,107,255,0.25)' }}
-        whileTap={{ scale: 0.98 }}
+        whileTap={{ scale: 0.99 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
-        className="mx-2 overflow-hidden rounded-[32px] border border-white/20 bg-slate-950 text-white shadow-[0_20px_70px_rgba(2,6,23,0.45)] sm:mx-0">
-        <div
-          className="relative isolate overflow-hidden rounded-[32px] touch-pan-y"
-          style={transformStyle}
-        >
-          <div
-            className="relative aspect-[4/5] min-h-[560px] w-full select-none"
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={resetDrag}
-            onDoubleClick={(event) => {
-              if ((event.target as HTMLElement | null)?.closest('button,a')) return;
-              if (rightAction) triggerRightAction();
-            }}
-            onClick={handleMediaTap}
-          >
-            {media.hasMedia ? (
-              <ProofMediaCarousel
-                proofs={proofs}
-                fallbackLabel={creatorLabel}
-                fallbackAvatarUrl={creatorAvatarUrl}
-                className="h-full w-full"
-                onIndexChange={setActiveProofIndex}
+        onClick={handleCardNavigate}
+        className="pact-card group relative mx-2 cursor-pointer overflow-hidden rounded-[28px] transition-colors hover:border-[var(--pact-violet)]/60 sm:mx-0"
+      >
+        {/* Header row: avatar + creator name + category tag + time-left badge + overflow menu */}
+        <div className="flex items-center gap-3 px-4 py-3.5">
+          <div className="flex-shrink-0" onClick={(event) => event.stopPropagation()}>
+            {creatorProfileHref ? (
+              <UserAvatarLink
+                name={creatorLabel}
+                avatarUrl={creatorAvatarUrl}
+                username={creatorUsername}
+                size={40}
+                stopPropagation
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#EDE9FE_0%,#C4B5FD_40%,#A78BFA_100%)]">
-                <div className="relative h-full w-full overflow-hidden">
-                  {/* Soft large letter watermark */}
-                  <div className="absolute inset-0 flex items-center justify-center text-[140px] font-black text-violet-300/20 select-none">
-                    {creatorLabel.charAt(0).toUpperCase()}
-                  </div>
-                  {/* Anchored to the upper portion of the media area so it never collides with the title/stats block pinned to the bottom */}
-                  <div className="absolute inset-x-0 top-16 z-10 flex flex-col items-center gap-3 px-8 text-center">
-                    <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-white/60 bg-white/70 shadow-[0_8px_32px_rgba(139,92,246,0.20)] backdrop-blur-sm">
-                      <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={96} />
-                    </div>
-                    <div className="flex flex-col items-center gap-2">
-                      <Camera className="h-4 w-4 text-violet-600" />
-                      <p className="max-w-[220px] text-sm font-semibold uppercase tracking-[0.18em] text-violet-900">
-                        {uploadAllowed ? 'no proof uploaded yet — be the first' : 'No proof uploaded yet'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={40} />
             )}
+          </div>
 
-            {hasProof ? (
-              <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/15 to-black/85" />
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-b from-violet-900/10 via-transparent to-violet-900/5" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-bold text-[var(--pact-text)]">@{creatorLabel}</p>
+            {circleLabel && (
+              <span className="mt-1 inline-flex max-w-full truncate rounded-full bg-[var(--pact-surface-3)] px-2 py-0.5 text-[10px] font-semibold text-[var(--pact-text-dim)]">
+                {circleLabel}
+              </span>
             )}
+          </div>
 
-            <div className="absolute left-4 top-4 right-4 z-10 flex items-start justify-between gap-3">
-              <div className={`flex items-center gap-3 rounded-full px-3 py-2 backdrop-blur-md ${hasProof ? 'bg-black/15' : 'bg-white/70 shadow-[0_2px_8px_rgba(139,92,246,0.12)]'}`}>
-                <div className={`h-10 w-10 overflow-hidden rounded-full border ${hasProof ? 'border-white/20' : 'border-violet-200'}`}>
-                  {creatorProfileHref ? (
-                    <UserAvatarLink
-                      name={creatorLabel}
-                      avatarUrl={creatorAvatarUrl}
-                      username={creatorUsername}
-                      size={40}
-                      stopPropagation
-                    />
-                  ) : (
-                    <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={40} />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    {creatorProfileHref ? (
-                      <Link href={creatorProfileHref} className={`truncate text-sm font-bold ${hasProof ? 'text-white' : 'text-[#14121F]'}`}>
-                        @{creatorLabel}
-                      </Link>
-                    ) : (
-                      <p className={`truncate text-sm font-bold ${hasProof ? 'text-white' : 'text-[#14121F]'}`}>@{creatorLabel}</p>
-                    )}
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] ${hasProof ? 'border border-white/20 bg-white/10 text-white/80' : 'bg-violet-100 text-violet-700'}`}>
-                      {circleLabel}
-                    </span>
-                  </div>
-                </div>
-              </div>
+          <span
+            className="flex-shrink-0 rounded-full bg-[var(--pact-surface-3)] px-2.5 py-1 text-[10.5px] font-semibold text-[var(--pact-gold)]"
+            style={{ fontFamily: 'var(--font-pact-mono), monospace' }}
+          >
+            {timeRemaining}
+          </span>
 
-              <div className={`rounded-full px-3 py-1 text-xs font-semibold backdrop-blur-md ${hasProof ? 'border border-white/15 bg-black/20 text-white/90' : 'bg-white/70 text-[#14121F] shadow-[0_2px_8px_rgba(139,92,246,0.12)]'}`}>
-                {timeRemaining}
-              </div>
-            </div>
+          <div className="relative flex-shrink-0" onClick={(event) => event.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setMoreMenuOpen((open) => !open)}
+              aria-label="more options"
+              aria-haspopup="menu"
+              aria-expanded={moreMenuOpen}
+              className="rounded-full p-1.5 text-[var(--pact-text-faint)] transition hover:bg-white/5 hover:text-[var(--pact-text)]"
+            >
+              <MoreVertical className="h-[18px] w-[18px]" />
+            </button>
 
-            {/* z-20: must stay above the bottom title/caption overlay (z-10) below,
-                which renders later in the DOM and would otherwise swallow clicks
-                on these buttons in the overlapping bottom-right region. */}
-            <div className="absolute right-3 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-2">
-              <button
-                type="button"
-                onClick={handleProofUploadClick}
-                className={`flex w-12 flex-col items-center gap-1 rounded-full px-2 py-3 backdrop-blur-md transition ${hasProof ? 'border border-white/10 bg-black/25 text-white hover:bg-black/40' : 'border border-violet-200/80 bg-white/80 text-violet-700 shadow-[0_2px_8px_rgba(139,92,246,0.12)] hover:bg-white'} ${uploadAllowed ? '' : 'opacity-60'}`}
-              >
-                <FileImage className="h-4 w-4" />
-                <span className="text-[10px] font-semibold">{formatCompactCount(proofCount)}</span>
-              </button>
-
-              <Link
-                href={resolvedDetailHref}
-                className={`flex w-12 flex-col items-center gap-1 rounded-full px-2 py-3 backdrop-blur-md transition ${hasProof ? 'border border-white/10 bg-black/25 text-white hover:bg-black/40' : 'border border-violet-200/80 bg-white/80 text-violet-700 shadow-[0_2px_8px_rgba(139,92,246,0.12)] hover:bg-white'}`}
-              >
-                <MessageCircle className="h-4 w-4" />
-                <span className="text-[10px] font-semibold">{formatCompactCount(commentCount)}</span>
-              </Link>
-
-              {cheerCount > 0 && (
-                <Link
-                  href={resolvedDetailHref}
-                  className="flex w-12 flex-col items-center gap-1 rounded-full border border-[var(--pact-gold)]/50 bg-[var(--pact-gold)]/15 px-2 py-3 text-[var(--pact-gold)] backdrop-blur-md transition hover:bg-[var(--pact-gold)]/25"
-                  aria-label={`${cheerCount} cheers`}
-                >
-                  <PartyPopper className="h-4 w-4" />
-                  <span className="text-[10px] font-semibold">{formatCompactCount(cheerCount)}</span>
-                </Link>
-              )}
-
-              <button
-                type="button"
-                onClick={() => void handleCopyShareLink()}
-                className={`flex w-12 items-center justify-center rounded-full px-2 py-3 backdrop-blur-md transition ${hasProof ? 'border border-white/10 bg-black/25 text-white hover:bg-black/40' : 'border border-violet-200/80 bg-white/80 text-violet-700 shadow-[0_2px_8px_rgba(139,92,246,0.12)] hover:bg-white'}`}
-                aria-label="copy pact link"
-              >
-                <Share2 className="h-4 w-4" />
-              </button>
-
-              {canReport && (
+            {moreMenuOpen && (
+              <>
                 <button
                   type="button"
-                  onClick={() => setReportSheetOpen(true)}
-                  className={`flex w-12 items-center justify-center rounded-full px-2 py-3 backdrop-blur-md transition ${hasProof ? 'border border-red-400/70 bg-black/25 text-red-300 hover:bg-black/40' : 'border border-red-300/70 bg-white/80 text-red-500 shadow-[0_2px_8px_rgba(139,92,246,0.12)] hover:bg-red-50'}`}
-                  aria-label="report pact"
+                  aria-label="close more options menu"
+                  onClick={() => setMoreMenuOpen(false)}
+                  className="fixed inset-0 z-40 cursor-default"
+                />
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)] py-1.5 shadow-[0_12px_28px_rgba(2,6,23,0.5)]"
                 >
-                  <Flag className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            {gesturesEnabled &&
-              dragAxis === 'horizontal' &&
-              showActionTag &&
-              !isExiting &&
-              (dragX < 0 ? canSkip : Boolean(rightAction)) && (
-                <div className="absolute inset-x-0 top-24 z-10 flex px-4">
-                  <div
-                    className={`rounded-full border px-4 py-1 text-xs font-black uppercase tracking-[0.25em] ${
-                      dragX > 0
-                        ? `ml-auto ${rightAction === 'join' ? 'border-emerald-400 text-emerald-300' : 'border-[var(--pact-gold)] text-[var(--pact-gold)]'}`
-                        : 'mr-auto border-rose-400 text-rose-300'
-                    }`}
-                  >
-                    {dragX > 0 ? (rightAction === 'join' ? 'join' : 'cheer') : 'skip'}
-                  </div>
+                  {uploadAllowed && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setMoreMenuOpen(false);
+                        handleProofUploadClick();
+                      }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--pact-text)] transition hover:bg-white/5"
+                    >
+                      <FileImage className="h-4 w-4" />
+                      Upload proof
+                      {proofCount > 0 && (
+                        <span className="ml-auto text-xs text-[var(--pact-text-faint)]">{formatCompactCount(proofCount)}</span>
+                      )}
+                    </button>
+                  )}
+                  {canReport && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setMoreMenuOpen(false);
+                        setReportSheetOpen(true);
+                      }}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-rose-300 transition hover:bg-white/5"
+                    >
+                      <Flag className="h-4 w-4" />
+                      Report pact
+                    </button>
+                  )}
                 </div>
-              )}
-
-            <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 via-black/65 to-transparent px-4 pb-4 pt-16">
-              <div className="space-y-3 pr-16">
-                <Link href={resolvedDetailHref} className="block">
-                  <h2
-                    className="max-w-[85%] text-3xl font-black leading-[1.02] tracking-tight text-white sm:text-4xl"
-                    style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}
-                  >
-                    {pact.title}
-                  </h2>
-                </Link>
-
-                {activeProof && (
-                  <div className="mb-3 rounded-[24px] border border-white/10 bg-black/20 px-3.5 py-2.5 backdrop-blur-md">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/60">
-                          {activeProof.day ? `Day ${activeProof.day}` : 'latest proof'}
-                        </p>
-                        <p className="mt-1 truncate text-sm font-semibold text-white">
-                          {activeProof.description || media.caption || 'Latest update'}
-                        </p>
-                      </div>
-                      <span className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80">
-                        {activeProof.type === 'video' ? 'video' : 'photo'}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                <p className="flex items-center gap-1.5 text-lg font-black text-white">
-                  <PartyPopper className="h-4 w-4 text-[var(--pact-gold)]" />
-                  {formatCompactCount(cheerCount)} cheering this pact
-                </p>
-
-                {joinAllowed && (
-                  <PremiumJoinButton onClick={handleJoinPact} loading={isJoining} size="sm" />
-                )}
-
-                {!joinAllowed && pact.join_block_reason && (
-                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/50">
-                    {JOIN_MESSAGES[pact.join_block_reason] ?? 'Joining is not available'}
-                    {pact.join_block_reason === 'full' && pact.max_participants
-                      ? ` — ${pact.max_participants}/${pact.max_participants} joined`
-                      : ''}
-                  </p>
-                )}
-
-                {voteStatusLabel && (
-                  <div className="pt-2">
-                    <p className="inline-flex items-center rounded-full border border-rose-400/70 bg-rose-500/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-rose-200">
-                      {voteStatusLabel}
-                    </p>
-                  </div>
-                )}
-
-                {voteActionsVisible && !voteStatusLabel && (
-                  <div className="flex gap-2 pt-2">
-                    {canSkip && (
-                      <button
-                        type="button"
-                        onClick={() => void completeVote('skip')}
-                        disabled={isVoting}
-                        className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/12 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white/8"
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                        Skip
-                      </button>
-                    )}
-                    {/*
-                      Only render this pill for "cheer" — when rightAction is
-                      "join" the bling PremiumJoinButton below the title is
-                      already the join CTA, and rendering both put two
-                      differently-styled "join" affordances on screen at
-                      once. Swipe-right/double-tap still work either way:
-                      they call triggerRightAction directly and don't depend
-                      on this button being rendered.
-                    */}
-                    {rightAction === 'cheer' && (
-                      <button
-                        type="button"
-                        onClick={triggerRightAction}
-                        disabled={isCheering}
-                        className="inline-flex items-center gap-2 rounded-full border border-[var(--pact-gold)]/50 bg-[var(--pact-gold)]/12 px-4 py-2 text-sm font-semibold text-[var(--pact-gold)] transition hover:bg-[var(--pact-gold)]/18 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {isCheering ? <Loader2 className="h-4 w-4 animate-spin" /> : 'cheer'}
-                        <ArrowRight className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Swipe-right on a pact the user hasn't joined used to bounce
-                them out to a blocking "must be a participant" error toast —
-                a dead end right when they showed positive intent. This
-                slides up an inline join prompt over the card instead. */}
-            <AnimatePresence>
-              {showJoinNudge && (
-                <motion.div
-                  initial={{ y: '100%' }}
-                  animate={{ y: 0 }}
-                  exit={{ y: '100%' }}
-                  transition={{ duration: 0.28, ease: 'easeOut' }}
-                  className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-slate-950/92 px-6 text-center backdrop-blur-sm"
-                >
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full border border-emerald-400/40 bg-emerald-400/15">
-                    <ArrowRight className="h-6 w-6 text-emerald-300" />
-                  </div>
-                  <div>
-                    <p className="text-lg font-black text-white">Join to cheer this pact</p>
-                    <p className="mt-1.5 text-sm text-white/65">
-                      Only members can cheer — join {creatorLabel ? `@${creatorLabel}'s` : 'this'} pact to back it.
-                    </p>
-                  </div>
-                  <PremiumJoinButton onClick={handleJoinPact} loading={isJoining} size="md" />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowJoinNudge(false);
-                      committedRef.current = false;
-                    }}
-                    className="text-sm font-semibold text-white/50 transition hover:text-white/80"
-                  >
-                    Not now
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+              </>
+            )}
           </div>
         </div>
+
+        {/* Hero: proof photo carousel, else a duration-progress ring, else the old empty-state placeholder. Swipe-left (skip) / swipe-right (cheer or join) / double-tap-cheer all live only here, unchanged from before. */}
+        <div
+          className="relative isolate aspect-[4/5] w-full select-none touch-pan-y"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={resetDrag}
+          onDoubleClick={(event) => {
+            if ((event.target as HTMLElement | null)?.closest('button,a')) return;
+            if (rightAction) triggerRightAction();
+          }}
+          onClick={(event) => {
+            handleMediaTap(event);
+            event.stopPropagation();
+          }}
+          style={transformStyle}
+        >
+          {media.hasMedia ? (
+            <ProofMediaCarousel
+              proofs={proofs}
+              fallbackLabel={creatorLabel}
+              fallbackAvatarUrl={creatorAvatarUrl}
+              className="h-full w-full"
+              onIndexChange={setActiveProofIndex}
+            />
+          ) : progressInfo ? (
+            <div className="relative flex h-full w-full items-center justify-center bg-[linear-gradient(160deg,var(--pact-surface-3),var(--pact-surface-2))]">
+              <div
+                className="pointer-events-none absolute inset-0"
+                style={{ background: 'radial-gradient(circle at 30% 20%, rgba(255,79,135,0.18), transparent 55%)' }}
+              />
+              <PactProgressRing
+                percent={progressInfo.percent}
+                elapsedDays={progressInfo.elapsedDays}
+                totalDays={progressInfo.totalDays}
+                gradientId={`pact-ring-gradient-${pact.id}`}
+              />
+            </div>
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#EDE9FE_0%,#C4B5FD_40%,#A78BFA_100%)]">
+              <div className="relative h-full w-full overflow-hidden">
+                {/* Soft large letter watermark */}
+                <div className="absolute inset-0 flex items-center justify-center text-[140px] font-black text-violet-300/20 select-none">
+                  {creatorLabel.charAt(0).toUpperCase()}
+                </div>
+                {/* Anchored to the upper portion of the media area so it never collides with content below */}
+                <div className="absolute inset-x-0 top-16 z-10 flex flex-col items-center gap-3 px-8 text-center">
+                  <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-white/60 bg-white/70 shadow-[0_8px_32px_rgba(139,92,246,0.20)] backdrop-blur-sm">
+                    <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={96} />
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                    <Camera className="h-4 w-4 text-violet-600" />
+                    <p className="max-w-[220px] text-sm font-semibold uppercase tracking-[0.18em] text-violet-900">
+                      {uploadAllowed ? 'no proof uploaded yet — be the first' : 'No proof uploaded yet'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {gesturesEnabled &&
+            dragAxis === 'horizontal' &&
+            showActionTag &&
+            !isExiting &&
+            (dragX < 0 ? canSkip : Boolean(rightAction)) && (
+              <div className="absolute inset-x-0 top-6 z-10 flex px-4">
+                <div
+                  className={`rounded-full border px-4 py-1 text-xs font-black uppercase tracking-[0.25em] ${
+                    dragX > 0
+                      ? `ml-auto ${rightAction === 'join' ? 'border-emerald-400 text-emerald-300' : 'border-[var(--pact-gold)] text-[var(--pact-gold)]'}`
+                      : 'mr-auto border-rose-400 text-rose-300'
+                  }`}
+                >
+                  {dragX > 0 ? (rightAction === 'join' ? 'join' : 'cheer') : 'skip'}
+                </div>
+              </div>
+            )}
+
+          {/* Swipe-right on a pact the user hasn't joined used to bounce
+              them out to a blocking "must be a participant" error toast —
+              a dead end right when they showed positive intent. This
+              slides up an inline join prompt over the hero instead. */}
+          <AnimatePresence>
+            {showJoinNudge && (
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ duration: 0.28, ease: 'easeOut' }}
+                className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-slate-950/92 px-6 text-center backdrop-blur-sm"
+              >
+                <div className="flex h-14 w-14 items-center justify-center rounded-full border border-emerald-400/40 bg-emerald-400/15">
+                  <ArrowRight className="h-6 w-6 text-emerald-300" />
+                </div>
+                <div>
+                  <p className="text-lg font-black text-white">Join to cheer this pact</p>
+                  <p className="mt-1.5 text-sm text-white/65">
+                    Only members can cheer — join {creatorLabel ? `@${creatorLabel}'s` : 'this'} pact to back it.
+                  </p>
+                </div>
+                <PremiumJoinButton onClick={handleJoinPact} loading={isJoining} size="md" />
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setShowJoinNudge(false);
+                    committedRef.current = false;
+                  }}
+                  className="text-sm font-semibold text-white/50 transition hover:text-white/80"
+                >
+                  Not now
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Body: title + description, then the join/cheer/skip CTAs, then the unified action row */}
+        <div className="px-4 py-4">
+          <h2
+            className="text-lg font-black leading-snug text-[var(--pact-text)]"
+            style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}
+          >
+            {pact.title}
+          </h2>
+
+          {(activeProof?.description || media.caption) && (
+            <p className="mt-1.5 text-[13px] italic leading-relaxed text-[var(--pact-text-dim)]">
+              &ldquo;{activeProof?.description || media.caption}&rdquo;
+            </p>
+          )}
+
+          <div className="mt-3 space-y-2.5" onClick={(event) => event.stopPropagation()}>
+            <p className="flex items-center gap-1.5 text-sm font-bold text-[var(--pact-text)]">
+              <PartyPopper className="h-3.5 w-3.5 text-[var(--pact-gold)]" />
+              {formatCompactCount(cheerCount)} cheering this pact
+            </p>
+
+            {joinAllowed && <PremiumJoinButton onClick={handleJoinPact} loading={isJoining} size="sm" />}
+
+            {!joinAllowed && pact.join_block_reason && (
+              <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--pact-text-faint)]">
+                {JOIN_MESSAGES[pact.join_block_reason] ?? 'Joining is not available'}
+                {pact.join_block_reason === 'full' && pact.max_participants
+                  ? ` — ${pact.max_participants}/${pact.max_participants} joined`
+                  : ''}
+              </p>
+            )}
+
+            {voteStatusLabel && (
+              <p className="inline-flex items-center rounded-full border border-rose-400/70 bg-rose-500/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-rose-200">
+                {voteStatusLabel}
+              </p>
+            )}
+
+            {voteActionsVisible && !voteStatusLabel && (
+              <div className="flex gap-2">
+                {canSkip && (
+                  <button
+                    type="button"
+                    onClick={() => void completeVote('skip')}
+                    disabled={isVoting}
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--pact-hairline)] bg-white/5 px-4 py-2 text-sm font-semibold text-[var(--pact-text)] transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Skip
+                  </button>
+                )}
+                {rightAction === 'cheer' && (
+                  <button
+                    type="button"
+                    onClick={triggerRightAction}
+                    disabled={isCheering}
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--pact-gold)]/50 bg-[var(--pact-gold)]/12 px-4 py-2 text-sm font-semibold text-[var(--pact-gold)] transition hover:bg-[var(--pact-gold)]/18 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isCheering ? <Loader2 className="h-4 w-4 animate-spin" /> : 'cheer'}
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Unified action row: same stroke-icon size/style for all three, muted at rest, accented only on hover/active */}
+          <div className="mt-4 flex items-center gap-6" onClick={(event) => event.stopPropagation()}>
+            <button
+              type="button"
+              onClick={handleCheerIconClick}
+              disabled={isCheering}
+              aria-label="cheer this pact"
+              className="flex items-center gap-1.5 text-[var(--pact-text-dim)] transition hover:text-[var(--pact-gold)] disabled:opacity-60"
+            >
+              {isCheering ? <Loader2 className="h-5 w-5 animate-spin" /> : <PartyPopper className="h-5 w-5" />}
+              <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>
+                {formatCompactCount(cheerCount)}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCommentSheetOpen(true)}
+              aria-label="view comments"
+              className="flex items-center gap-1.5 text-[var(--pact-text-dim)] transition hover:text-[var(--pact-violet)]"
+            >
+              <MessageCircle className="h-5 w-5" />
+              <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>
+                {formatCompactCount(commentCount)}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void handleCopyShareLink()}
+              aria-label="share pact"
+              className="flex items-center gap-1.5 text-[var(--pact-text-dim)] transition hover:text-[var(--pact-mint)]"
+            >
+              <Share2 className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* "View all N comments" — opens the same comment sheet as the comment icon */}
+        {commentCount > 0 && (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setCommentSheetOpen(true);
+            }}
+            className="block w-full px-4 pb-4 text-left text-xs text-[var(--pact-text-faint)] transition hover:text-[var(--pact-text-dim)]"
+          >
+            View all {formatCompactCount(commentCount)} comments
+          </button>
+        )}
       </motion.div>
 
       {/* Hidden file input backing the fast single-photo cheer flow
-          triggered by swipe-right / double-tap / the cheer button. */}
+          triggered by swipe-right / double-tap / the cheer icon. */}
       <input
         ref={cheerInputRef}
         type="file"
@@ -810,6 +965,13 @@ export default function FeedPactCard({
           onUpload={(pactId, proof) => onProofUpload?.(pactId, proof)}
         />
       )}
+
+      <CommentsBottomSheet
+        pactId={pact.id}
+        commentCount={commentCount}
+        isOpen={commentSheetOpen}
+        onClose={() => setCommentSheetOpen(false)}
+      />
 
       {reportSheetOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 px-3 pb-3 backdrop-blur-sm">

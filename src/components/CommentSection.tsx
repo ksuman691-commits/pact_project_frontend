@@ -34,7 +34,7 @@ function CommentRow({ comment, pactId, currentUserId }: { comment: Comment; pact
   const timestamp = comment.timestamp || comment.created_at || 'just now';
 
   return (
-    <div className="hover:bg-gray-50 p-4 rounded-[24px] transition border border-gray-100 hover:border-gray-200">
+    <div className="rounded-[24px] border border-white/5 p-4 transition hover:border-[var(--pact-hairline)] hover:bg-white/5">
       <div className="flex gap-3">
           <div className="flex-shrink-0">
             <UserAvatarLink name={displayName} avatarUrl={avatarUrl} username={comment.username} size={32} />
@@ -42,20 +42,20 @@ function CommentRow({ comment, pactId, currentUserId }: { comment: Comment; pact
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-gray-900">{displayName}</p>
+            <p className="text-sm font-semibold text-[var(--pact-text)]">{displayName}</p>
             {isOwnComment && (
               <button
                 type="button"
                 onClick={() => deleteMutation.mutate()}
-                className="text-gray-400 transition hover:text-gray-700"
+                className="text-[var(--pact-text-faint)] transition hover:text-[var(--pact-text)]"
                 aria-label="Delete comment"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
             )}
           </div>
-          <p className="text-sm text-gray-700 break-words">{comment.text}</p>
-          <p className="text-xs text-gray-500 mt-1">{timestamp}</p>
+          <p className="text-sm text-[var(--pact-text-dim)] break-words">{comment.text}</p>
+          <p className="text-xs text-[var(--pact-text-faint)] mt-1">{timestamp}</p>
         </div>
       </div>
     </div>
@@ -88,7 +88,7 @@ export default function CommentSection({
   return (
     <div className="space-y-4 w-full">
       {/* Comment Input */}
-      <form onSubmit={handleAddComment} className="border border-gray-200 rounded-[24px] p-4 w-full">
+      <form onSubmit={handleAddComment} className="border border-[var(--pact-hairline)] rounded-[24px] p-4 w-full">
         <div className="flex gap-3">
           <div className="flex-shrink-0">
             <UserAvatarLink name={user?.username} avatarUrl={user?.avatar_url} size={32} />
@@ -99,14 +99,14 @@ export default function CommentSection({
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Add a comment..."
-              className="w-full bg-transparent text-sm text-gray-900 placeholder-gray-500 focus:outline-none"
+              className="w-full bg-transparent text-sm text-[var(--pact-text)] placeholder-[var(--pact-text-faint)] focus:outline-none"
               disabled={addCommentMutation.isPending}
             />
           </div>
           <button
             type="submit"
             disabled={addCommentMutation.isPending || !newComment.trim()}
-            className="text-blue-600 hover:text-blue-700 disabled:text-gray-400 transition flex-shrink-0"
+            className="text-[var(--pact-violet)] hover:text-[var(--pact-pink)] disabled:text-[var(--pact-text-faint)] transition flex-shrink-0"
           >
             {addCommentMutation.isPending ? (
               <Loader className="w-4 h-4 animate-spin" />
@@ -120,9 +120,9 @@ export default function CommentSection({
       {/* Comments List */}
       <div className="space-y-4 w-full">
         {commentsQuery.isLoading ? (
-          <p className="text-sm text-gray-500 text-center py-8">Loading comments...</p>
+          <p className="text-sm text-[var(--pact-text-faint)] text-center py-8">Loading comments...</p>
         ) : comments.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-8">No comments yet. Be the first!</p>
+          <p className="text-sm text-[var(--pact-text-faint)] text-center py-8">No comments yet. Be the first!</p>
         ) : (
           comments.map((comment: Comment) => (
             <CommentRow key={comment.id} comment={comment} pactId={pactId} currentUserId={user?.id} />
