@@ -17,6 +17,14 @@ interface AnimatedTabsProps {
   /** Unique layoutId namespace so multiple tab bars on one page don't collide. */
   layoutId?: string;
   className?: string;
+  /**
+   * Whether this component owns its own horizontal scroll container.
+   * Set to false when already wrapped in a scroll container (e.g.
+   * ScrollableRow) so there is only one scrolling element — otherwise the
+   * wrapper's edge-fade overlays measure the wrong element and never
+   * activate. Defaults to true for standalone usage.
+   */
+  scrollable?: boolean;
 }
 
 /**
@@ -30,9 +38,10 @@ export default function AnimatedTabs({
   onChange,
   layoutId = 'animated-tabs-indicator',
   className = '',
+  scrollable = true,
 }: AnimatedTabsProps) {
   return (
-    <div className={`flex gap-1 overflow-x-auto scrollbar-hide ${className}`}>
+    <div className={`flex gap-1 ${scrollable ? 'overflow-x-auto scrollbar-hide' : ''} ${className}`}>
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = tab.id === activeId;
