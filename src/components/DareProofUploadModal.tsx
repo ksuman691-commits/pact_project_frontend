@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Upload, Image as ImageIcon, Video, CheckSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useUploadDareProof } from '@/hooks/useDareMutations';
@@ -73,10 +74,20 @@ export default function DareProofUploadModal({ isOpen, onClose, dareId }: DarePr
       return;
     }
 
-    if (file) {
+    // Checklist proofs don't collect a file (there's no file-picker step for
+    // them above), but the upload-proof endpoint's FormData contract always
+    // requires a `file` part. Without this, `file` stays null and the guard
+    // below used to silently no-op on submit — no request, no error, no
+    // feedback. Synthesize a small text file from the completion status so
+    // the request actually fires and the existing onError toast can report
+    // any real failure.
+    const proofFile =
+      file ?? (proofType === 'checklist' ? new File([caption], 'checklist.txt', { type: 'text/plain' }) : null);
+
+    if (proofFile) {
       uploadMutation.mutate(
         {
-          proof_file: file,
+          proof_file: proofFile,
           proof_type: proofType,
           caption,
         },
@@ -103,7 +114,15 @@ export default function DareProofUploadModal({ isOpen, onClose, dareId }: DarePr
 
   if (!isOpen) return null;
 
-  return (
+  // Portalled straight to document.body. Rendering this inline where the
+  // card lives isn't enough to guarantee `fixed inset-0` covers the real
+  // viewport: any ancestor card — even ones with no explicit z-index — can
+  // create its own CSS stacking context (backdrop-filter, or a lingering
+  // non-"none" transform left behind by a mount-in animation, like the
+  // .pact-list-item wrapper every list card sits in here) and silently cap
+  // this modal's z-50 below feed-wide chrome like the bottom nav (z-40).
+  // A portal sidesteps the whole class of ancestor-stacking-context bugs.
+  return createPortal(
     <div className="pact-flow fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div className="pact-card w-full max-w-md rounded-[28px] overflow-hidden" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
         {/* Header */}
@@ -225,6 +244,7 @@ export default function DareProofUploadModal({ isOpen, onClose, dareId }: DarePr
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
