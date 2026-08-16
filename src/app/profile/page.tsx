@@ -11,6 +11,7 @@ import ProfileStats from '@/components/ProfileStats';
 import ProfileTabs, { PactsTab } from '@/components/ProfileTabs';
 import AchievementsBadges from '@/components/AchievementsBadges';
 import ActivityStrip from '@/components/pact-ui/ActivityStrip';
+import CirclesRow from '@/components/pact-ui/CirclesRow';
 import { LogOut, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useFollowers, useFollowing } from '@/hooks/useFollows';
@@ -178,6 +179,11 @@ export default function Profile() {
           streak={stats.currentStreak}
           atRisk={isAtRisk}
         />
+
+        {/* Circles strip — quick jump to circles this account belongs to,
+            right below the Hero so identity + community context load
+            together before the numbers. */}
+        {myCircles.length > 0 && <CirclesRow circles={myCircles} className="mb-6" />}
 
         {/* Stats — surfaced immediately after the Hero (name/avatar) so the
             most important numbers aren't buried below secondary content. */}

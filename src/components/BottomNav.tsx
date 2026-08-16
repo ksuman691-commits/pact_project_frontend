@@ -54,8 +54,15 @@ export default function BottomNav() {
       {/* Rainbow ring wrapper: a rotating multi-hue conic-gradient layer
           fills this outer box, and the pill below sits inset by `margin`
           so a thin rotating rainbow border shows all the way around it —
-          same ring-band technique as Avatar's decorative ring. */}
-      <div className="relative w-full max-w-[280px] rounded-full">
+          same ring-band technique as Avatar's decorative ring. Unlike
+          Avatar's ring (a square box, so rotation doesn't change its
+          silhouette), this wrapper is a wide rectangle: rotating a
+          rectangle swings its corners out past its own bounds, which
+          without clipping rendered as a huge rainbow blob bleeding into
+          page content below the nav. `overflow-hidden` clips the spin/
+          breathe layers to the pill's rounded silhouette so only the thin
+          border band is ever visible. */}
+      <div className="relative w-full max-w-[280px] rounded-full overflow-hidden">
         {/* Glow layer: same breathing technique as Avatar's ring glow (Layer 1
             in Avatar.tsx) — a blurred, oversized copy of the rainbow gradient
             sitting behind the ring band so the stripe itself appears to glow,
