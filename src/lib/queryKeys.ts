@@ -23,6 +23,8 @@ export const queryKeys = {
     stats: (userId: number) => [...queryKeys.users.detail(userId), 'stats'],
     followers: (userId: number) => [...queryKeys.users.detail(userId), 'followers'],
     following: (userId: number) => [...queryKeys.users.detail(userId), 'following'],
+    relationship: (userId: number) => [...queryKeys.users.detail(userId), 'relationship'],
+    circles: (userId: number) => [...queryKeys.users.detail(userId), 'circles'],
     analytics: (userId: number) => [...queryKeys.users.detail(userId), 'analytics'],
     search: (query: string) => [...queryKeys.users.all, 'search', query],
   },

@@ -1,11 +1,15 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import CreateCircleFlow from '@/components/create-circle-flow/CreateCircleFlow';
 
-export default function CreateCirclePage() {
+function CreateCirclePageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteUserIdParam = searchParams.get('inviteUserId');
+  const inviteUserId = inviteUserIdParam ? Number(inviteUserIdParam) : null;
   const { user, isInitialized } = useRequireAuth();
 
   if (!isInitialized) {
@@ -21,5 +25,13 @@ export default function CreateCirclePage() {
     return null;
   }
 
-  return <CreateCircleFlow onExit={() => router.back()} />;
+  return <CreateCircleFlow onExit={() => router.back()} initialInviteUserId={Number.isFinite(inviteUserId) ? inviteUserId : null} />;
+}
+
+export default function CreateCirclePage() {
+  return (
+    <Suspense fallback={null}>
+      <CreateCirclePageContent />
+    </Suspense>
+  );
 }

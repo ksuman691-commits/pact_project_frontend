@@ -26,6 +26,7 @@ import PremiumJoinButton from './PremiumJoinButton';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useCreateCheer } from '@/hooks/usePactMutations';
 import { useAuthStore } from '@/store/auth';
+import { getDisplayName } from '@/lib/displayName';
 import { pactService } from '@/services/api';
 import toast from 'react-hot-toast';
 
@@ -270,6 +271,9 @@ export default function FeedPactCard({
   const committedRef = useRef(false);
   const [displayVote, setDisplayVote] = useState<string | null>(null);
   const [displayCheerCount, setDisplayCheerCount] = useState(0);
+  const [optimisticCheer, setOptimisticCheer] = useState(false);
+  const [cheerError, setCheerError] = useState<string | null>(null);
+  const [isCheerBouncing, setIsCheerBouncing] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [isCheering, setIsCheering] = useState(false);
   const [activeProofIndex, setActiveProofIndex] = useState(0);
@@ -302,7 +306,10 @@ export default function FeedPactCard({
     setDisplayCheerCount(Number(pact.active_cheer_count ?? 0));
   }, [pact.active_cheer_count, pact.id]);
 
-  const creatorLabel = pact.creator || pact.creator_username || 'creator';
+  const creatorLabel = getDisplayName(
+    pact.creator_id ?? pact.user_id ?? pact.creator?.id,
+    pact.creator || pact.creator_username || 'creator',
+  );
   const creatorUsername = pact.creator_username || null;
   const creatorProfileHref = creatorUsername ? `/profile/${encodeURIComponent(creatorUsername)}` : null;
   const creatorAvatarUrl = pact.creatorAvatarUrl || pact.creator_avatar_url || null;
@@ -425,18 +432,34 @@ export default function FeedPactCard({
     }
   };
 
+  const handleCheerTap = () => {
+    if (isCheering || optimisticCheer) return;
+    setCheerError(null);
+    setOptimisticCheer(true);
+    setDisplayCheerCount((count) => count + 1);
+    setIsCheerBouncing(true);
+    window.setTimeout(() => setIsCheerBouncing(false), 150);
+    cheerInputRef.current?.click();
+  };
+
   const handleCheerFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     committedRef.current = false;
-    if (!file) return;
+    if (!file) {
+      setOptimisticCheer(false);
+      setDisplayCheerCount((count) => Math.max(0, count - 1));
+      return;
+    }
 
     setIsCheering(true);
     try {
       await createCheer.mutateAsync(file);
-      setDisplayCheerCount((count) => count + 1);
+      setOptimisticCheer(false);
     } catch {
-      // useCreateCheer already surfaces a toast on failure.
+      setOptimisticCheer(false);
+      setDisplayCheerCount((count) => Math.max(0, count - 1));
+      setCheerError('Could not send cheer. Try again.');
     } finally {
       setIsCheering(false);
     }
@@ -633,7 +656,7 @@ export default function FeedPactCard({
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold text-[var(--pact-text)]">@{creatorLabel}</p>
+              <p className="truncate text-sm font-bold text-[var(--pact-text)]">{creatorLabel === 'You' ? 'You' : `@${creatorLabel}`}</p>
             {circleLabel && (
               <span className="mt-1 inline-flex max-w-full truncate rounded-full bg-[var(--pact-surface-3)] px-2 py-0.5 text-[10px] font-semibold text-[var(--pact-text-dim)]">
                 {circleLabel}
@@ -897,16 +920,22 @@ export default function FeedPactCard({
           <div className="mt-4 flex items-center gap-6" onClick={(event) => event.stopPropagation()}>
             <button
               type="button"
-              onClick={handleCheerIconClick}
-              disabled={isCheering}
+              onClick={handleCheerTap}
+              disabled={isCheering || optimisticCheer}
               aria-label="cheer this pact"
-              className="flex items-center gap-1.5 text-[var(--pact-text-dim)] transition hover:text-[var(--pact-gold)] disabled:opacity-60"
+              className={`flex items-center gap-1.5 text-[var(--pact-text-dim)] transition hover:text-[var(--pact-gold)] disabled:opacity-60 ${isCheerBouncing ? 'scale-125' : 'scale-100'}`}
+              style={{ transitionDuration: '150ms' }}
             >
-              {isCheering ? <Loader2 className="h-5 w-5 animate-spin" /> : <PartyPopper className="h-5 w-5" />}
+              {isCheering ? <Loader2 className="h-5 w-5 animate-spin" /> : <PartyPopper className={`h-5 w-5 ${optimisticCheer ? 'text-[var(--pact-gold)]' : ''}`} />}
               <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>
                 {formatCompactCount(cheerCount)}
               </span>
             </button>
+            {cheerError && (
+              <span role="status" className="text-xs text-rose-300" aria-live="polite">
+                {cheerError}
+              </span>
+            )}
 
             <button
               type="button"
@@ -952,7 +981,7 @@ export default function FeedPactCard({
         ref={cheerInputRef}
         type="file"
         accept="image/*"
-        capture="environment"
+        capture="user"
         className="hidden"
         onChange={handleCheerFileChange}
       />

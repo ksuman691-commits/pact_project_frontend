@@ -1,8 +1,15 @@
 'use client';
 
 import React from 'react';
+import { Lock } from 'lucide-react';
 import { useCountUp } from '@/components/pact-ui/useCountUp';
 import StatBar from '@/components/pact-ui/StatBar';
+
+// Below this many completed pacts, a win rate percentage is statistically
+// meaningless (e.g. 1/1 reads as a misleading "100%") — show a locked
+// placeholder instead, mirroring the circle leaderboard's own "unlocks
+// once your circle gets moving" empty state (src/app/circles/[id]/page.tsx).
+const WIN_RATE_UNLOCK_THRESHOLD = 3;
 
 interface ProfileStatsProps {
   stats: {
@@ -54,7 +61,31 @@ export default function ProfileStats({
         <StatTile label="Following" value={stats.following ?? 0} onClick={onFollowingClick} />
       </div>
       <div className="pact-card grid grid-cols-2 gap-4 rounded-2xl p-4">
-        <StatBar label="Win rate" percent={stats.winRate} color="var(--pact-mint)" />
+        {stats.pactsCompleted >= WIN_RATE_UNLOCK_THRESHOLD ? (
+          <StatBar label="Win rate" percent={stats.winRate} color="var(--pact-mint)" />
+        ) : (
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="flex items-center gap-1 text-xs font-medium text-[var(--pact-text-faint)]">
+                <Lock className="h-3 w-3" />
+                Win rate
+              </span>
+              <span className="pact-mono text-xs font-semibold text-[var(--pact-text-faint)]">
+                {stats.pactsCompleted}/{WIN_RATE_UNLOCK_THRESHOLD}
+              </span>
+            </div>
+            <div className="relative h-2 w-full overflow-hidden rounded-full border border-dashed bg-[var(--pact-surface-2)]" style={{ borderColor: 'var(--pact-hairline)' }}>
+              <div
+                className="h-full rounded-full transition-[width] duration-700 ease-out"
+                style={{ width: `${Math.min(100, (stats.pactsCompleted / WIN_RATE_UNLOCK_THRESHOLD) * 100)}%`, background: 'repeating-linear-gradient(135deg, var(--pact-text-faint) 0 4px, transparent 4px 8px)' }}
+              />
+              <Lock className="absolute right-1/2 top-1/2 h-3 w-3 -translate-y-1/2 translate-x-1/2 text-[var(--pact-text-faint)]" />
+            </div>
+            <p className="mt-1.5 text-[11px] text-[var(--pact-text-faint)]">
+              Complete {WIN_RATE_UNLOCK_THRESHOLD - stats.pactsCompleted} more pact{WIN_RATE_UNLOCK_THRESHOLD - stats.pactsCompleted === 1 ? '' : 's'} to unlock
+            </p>
+          </div>
+        )}
         <StatBar
           label="Streak"
           percent={Math.min(100, (stats.currentStreak / 30) * 100)}

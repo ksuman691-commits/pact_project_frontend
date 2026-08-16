@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import Image from 'next/image';
+import LogoMark from '@/components/LogoMark';
 
 export default function Register() {
   const router = useRouter();
@@ -49,14 +49,7 @@ export default function Register() {
       {/* Mobile header with logo */}
       <div className="lg:hidden p-4 border-b border-[rgba(20,18,31,0.06)]">
         <div className="flex justify-center mb-4">
-          <Image
-            src="/logo.png"
-            alt="CirclePact"
-            width={100}
-            height={60}
-            priority
-            className="object-contain"
-          />
+          <LogoMark size={52} withWordmark wordmarkPlacement="right" />
         </div>
         <h1 className="text-2xl font-bold text-[#14121F] text-center">Join CirclePact</h1>
       </div>
@@ -66,14 +59,7 @@ export default function Register() {
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-50 to-slate-100 flex-col items-center justify-center p-8">
           <div className="text-center max-w-md">
             <div className="mb-8 flex justify-center">
-              <Image
-                src="/logo.png"
-                alt="CirclePact"
-                width={200}
-                height={120}
-                priority
-                className="object-contain"
-              />
+              <LogoMark size={72} withWordmark wordmarkPlacement="right" />
             </div>
             <h1 className="text-3xl font-black text-[#14121F] mb-4">Join CirclePact</h1>
             <p className="text-[#6B7280] mb-8">Turn your goals into reality with real commitments and real accountability.</p>

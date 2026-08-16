@@ -33,6 +33,7 @@ export function useJoinCircle() {
       const { circleId } = params;
       queryClient.invalidateQueries({ queryKey: queryKeys.circles.detail(circleId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.circles.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success('Joined circle!');
       return response.data;
     },
@@ -50,6 +51,7 @@ export function useLeaveCircle(circleId: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.circles.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.circles.detail(circleId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
       toast.success('Left circle successfully!');
     },
     onError: (error: any) => {

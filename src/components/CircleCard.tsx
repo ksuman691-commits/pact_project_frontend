@@ -9,6 +9,7 @@ import UserAvatarLink from '@/components/UserAvatarLink';
 import MemberAvatarStack from '@/components/MemberAvatarStack';
 import PremiumJoinButton from '@/components/PremiumJoinButton';
 import { useCircleMembers } from '@/hooks/useCircles';
+import { getDisplayName } from '@/lib/displayName';
 
 interface CircleCardProps {
   circle: {
@@ -16,6 +17,7 @@ interface CircleCardProps {
     name: string;
     description: string;
     avatar?: string;
+    ownerId?: number | null;
     ownerUsername?: string | null;
     ownerAvatarUrl?: string | null;
     memberCount: number;
@@ -112,13 +114,17 @@ export default function CircleCard({ circle, onJoin, index = 0 }: CircleCardProp
         {circle.ownerUsername && (
           <div className="mt-3 flex items-center gap-2">
             <UserAvatarLink
-              name={circle.ownerUsername}
+              name={getDisplayName(circle.ownerId, circle.ownerUsername)}
               avatarUrl={circle.ownerAvatarUrl}
               username={circle.ownerUsername}
               size={20}
               stopPropagation
             />
-            <p className="text-xs font-medium text-[var(--pact-text-faint)]">Owner @{circle.ownerUsername}</p>
+            <p className="text-xs font-medium text-[var(--pact-text-faint)]">
+              {getDisplayName(circle.ownerId, circle.ownerUsername) === 'You'
+                ? 'Your circle'
+                : `Owner @${circle.ownerUsername}`}
+            </p>
           </div>
         )}
 

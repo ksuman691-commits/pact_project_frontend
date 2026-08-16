@@ -15,6 +15,7 @@ import SuccessStep from './SuccessStep';
 interface CreateCircleFlowProps {
   /** Called when the user taps the close (X) button. Omit to hide the close button (e.g. full-page route). */
   onExit?: () => void;
+  initialInviteUserId?: number | null;
 }
 
 function StepRouter({ onExit }: CreateCircleFlowProps) {
@@ -47,9 +48,9 @@ function StepRouter({ onExit }: CreateCircleFlowProps) {
  * Entry point for the "Create a Circle" immersive tap-flow. Shares its
  * shell/motion language with CreatePactFlow via the generic FlowShell.
  */
-export default function CreateCircleFlow({ onExit }: CreateCircleFlowProps) {
+export default function CreateCircleFlow({ onExit, initialInviteUserId }: CreateCircleFlowProps) {
   return (
-    <CreateCircleFlowProvider>
+    <CreateCircleFlowProvider initialInviteUserId={initialInviteUserId}>
       <StepRouter onExit={onExit} />
     </CreateCircleFlowProvider>
   );

@@ -23,6 +23,8 @@ import {
 import {
   useUserByUsername,
   useUserStats,
+  useUserRelationship,
+  useUserCircles,
 } from '@/hooks/useUserQueries';
 import { useAtRiskPact } from '@/hooks/useAtRiskPact';
 
@@ -43,6 +45,14 @@ export default function PublicProfilePage() {
   const userByUsernameQuery = useUserByUsername(username);
   const profileUser = userByUsernameQuery.data?.data;
   const profileUserId = profileUser?.id;
+
+  const relationshipQuery = useUserRelationship(profileUserId || 0);
+  const profileCirclesQuery = useUserCircles(profileUserId || 0);
+  const relationship = relationshipQuery.data?.data;
+  const sharedCircleIds: number[] = relationship?.shared_circle_ids ?? relationship?.sharedCircleIds ?? [];
+  const profileCircles = profileCirclesQuery.data?.data ?? [];
+  const hasSharedCircle = sharedCircleIds.length > 0;
+  const hasOwnCircles = isOwnProfile && profileCircles.length > 0;
 
   const userStatsQuery = useUserStats(profileUserId || 0);
   const profilePactsQuery = useQuery({
@@ -289,7 +299,17 @@ export default function PublicProfilePage() {
           {activeTab === 'pacts' && (
             <div className="space-y-4">
               <h2 className="text-lg font-black text-[var(--pact-text)]">{profilePactsHeading}</h2>
-              <PactsTab pacts={displayedPacts} joinedPacts={[]} votedPacts={[]} />
+              <PactsTab
+                pacts={displayedPacts}
+                joinedPacts={[]}
+                votedPacts={[]}
+                isOwnProfile={isOwnProfile}
+                hasSharedCircle={hasSharedCircle}
+                profileName={profileUser.full_name || `@${profileUser.username}`}
+                profileUserId={profileUser.id}
+                sharedCircleId={sharedCircleIds[0]}
+                hasOwnCircles={hasOwnCircles}
+              />
             </div>
           )}
           {activeTab === 'achievements' && <AchievementsBadges achievements={allAchievements} />}
@@ -330,18 +350,40 @@ export default function PublicProfilePage() {
             </div>
           )}
           {activeTab === 'circles' && (
-            // Deliberately not wired to real data: the backend has no
-            // "circles for user X" endpoint (only `/api/circles`, which is
-            // scoped to the authenticated caller). Rendering `myCircles`
-            // here would silently show the *viewer's* circles under the
-            // profile owner's name. See BACKEND_HANDOFF_USER_CIRCLES.md.
-            <div className="text-center py-12 text-[var(--pact-text-faint)]">
-              <p className="font-medium mb-2">{isOwnProfile ? 'Your circles' : `Circles for @${profileUser.username}`}</p>
-              <p className="text-sm">
-                {isOwnProfile
-                  ? 'Circle data will appear here.'
-                  : "This isn't available yet — viewing another member's circle memberships requires a backend endpoint that doesn't exist yet."}
-              </p>
+            <div className="space-y-3">
+              {profileCircles.length > 0 ? (
+                profileCircles.map((circle: any) => (
+                  <button
+                    key={circle.id}
+                    onClick={() => router.push(`/circles/${circle.id}`)}
+                    className="pact-card flex w-full items-center gap-3 rounded-2xl p-4 text-left transition hover:bg-[var(--pact-surface-2)]"
+                  >
+                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl text-xl" style={{ background: 'var(--pact-surface-2)' }}>
+                      {circle.icon_emoji || '◉'}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold text-[var(--pact-text)]">{circle.name}</span>
+                      <span className="block text-xs text-[var(--pact-text-faint)]">{circle.member_count ?? 0} members</span>
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <div className="pact-card rounded-3xl border border-dashed px-6 py-10 text-center" style={{ borderColor: 'var(--pact-hairline)' }}>
+                  <p className="font-semibold text-[var(--pact-text)]">
+                    {isOwnProfile ? 'Your circles are ready to grow' : `You don't share any circles with ${profileUser.full_name || `@${profileUser.username}`} yet`}
+                  </p>
+                  <p className="mt-2 text-sm text-[var(--pact-text-dim)]">
+                    {isOwnProfile ? 'Create a circle to bring your accountability crew together.' : 'Add them to a circle to start creating pacts together.'}
+                  </p>
+                  <button
+                    onClick={() => router.push(isOwnProfile ? '/circles/create' : `/circles/create?inviteUserId=${profileUser.id}`)}
+                    className="pact-btn-glow mt-5 rounded-full px-4 py-2 text-sm font-semibold"
+                    style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
+                  >
+                    {isOwnProfile ? 'Create a Circle' : `Add ${profileUser.full_name || `@${profileUser.username}`} to a Circle`}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </ProfileTabs>

@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useAuthStore } from '@/store/auth';
+import LogoMark from '@/components/LogoMark';
 import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
@@ -19,14 +19,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition">
-            <Image
-              src="/logo.png"
-              alt="CirclePact Logo"
-              width={40}
-              height={40}
-              className="w-10 h-10"
-              priority
-            />
+            <LogoMark size={32} withWordmark wordmarkPlacement="right" />
           </Link>
 
           <div className="flex items-center gap-4">

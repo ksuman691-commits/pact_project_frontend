@@ -33,6 +33,7 @@ export default function CirclesPage() {
     name: circle.name,
     description: circle.description || '',
     avatar: circle.icon_emoji || circle.name?.charAt(0) || 'C',
+    ownerId: circle.owner_id ?? null,
     ownerUsername: circle.owner_username || null,
     ownerAvatarUrl: circle.owner_avatar_url || null,
     memberCount: circle.member_count ?? circle.memberCount ?? 0,

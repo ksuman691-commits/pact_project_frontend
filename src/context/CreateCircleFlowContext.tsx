@@ -37,8 +37,11 @@ interface CreateCircleFlowContextValue {
 
 const CreateCircleFlowContext = createContext<CreateCircleFlowContextValue | null>(null);
 
-export function CreateCircleFlowProvider({ children }: { children: React.ReactNode }) {
-  const [draft, setDraft] = useState<CircleDraft>(createEmptyCircleDraft());
+export function CreateCircleFlowProvider({ children, initialInviteUserId }: { children: React.ReactNode; initialInviteUserId?: number | null }) {
+  const [draft, setDraft] = useState<CircleDraft>(() => ({
+    ...createEmptyCircleDraft(),
+    inviteUserIds: initialInviteUserId ? [initialInviteUserId] : [],
+  }));
   const [stepIndex, setStepIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdCircle, setCreatedCircle] = useState<CreatedCircle | null>(null);
