@@ -65,7 +65,7 @@ export default function IdentityStep() {
           }}
         />
         {error && (
-          <span className="mt-1.5 block text-xs" style={{ color: 'var(--pact-pink)' }}>
+          <span className="mt-1.5 block text-xs" style={{ color: 'var(--flow-accent)' }}>
             {error}
           </span>
         )}
@@ -112,7 +112,7 @@ export default function IdentityStep() {
         type="button"
         onClick={handleContinue}
         className="mt-8 w-full rounded-full px-6 py-3.5 text-center text-sm font-semibold text-[var(--pact-bg)]"
-        style={{ background: 'var(--pact-pink)' }}
+        style={{ background: 'linear-gradient(135deg, var(--flow-accent), var(--flow-accent-2))' }}
       >
         Continue →
       </button>

@@ -21,9 +21,9 @@ export default function ProgressDots({ current, total }: ProgressDotsProps) {
             style={{
               width: active ? '20px' : '6px',
               background: active
-                ? 'var(--pact-pink)'
+                ? 'var(--flow-accent)'
                 : past
-                  ? 'var(--pact-violet)'
+                  ? 'var(--flow-accent-2)'
                   : 'var(--pact-hairline)',
             }}
           />

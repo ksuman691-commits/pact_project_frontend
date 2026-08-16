@@ -69,7 +69,7 @@ export default function SuggestedPeopleSection({
                 style={
                   invited
                     ? { background: 'transparent', border: '1px solid var(--pact-hairline)', color: 'var(--pact-text-muted)' }
-                    : { background: 'var(--pact-violet)', color: 'var(--pact-text)' }
+                    : { background: 'var(--flow-accent-2)', color: 'var(--pact-text)' }
                 }
               >
                 {invitingId === person.id ? '...' : invited ? 'Invited' : 'Invite'}

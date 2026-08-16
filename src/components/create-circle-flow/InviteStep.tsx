@@ -53,8 +53,8 @@ export default function InviteStep() {
               <span
                 className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs"
                 style={{
-                  borderColor: selected ? 'var(--pact-pink)' : 'var(--pact-hairline)',
-                  background: selected ? 'var(--pact-pink)' : 'transparent',
+                  borderColor: selected ? 'var(--flow-accent)' : 'var(--pact-hairline)',
+                  background: selected ? 'var(--flow-accent)' : 'transparent',
                   color: 'var(--pact-bg)',
                 }}
               >
@@ -69,7 +69,7 @@ export default function InviteStep() {
         type="button"
         onClick={confirmInvites}
         className="mt-6 w-full rounded-full px-6 py-3.5 text-center text-sm font-semibold text-[var(--pact-bg)]"
-        style={{ background: 'var(--pact-pink)' }}
+        style={{ background: 'linear-gradient(135deg, var(--flow-accent), var(--flow-accent-2))' }}
       >
         {draft.inviteUserIds.length > 0 ? `Continue with ${draft.inviteUserIds.length} →` : 'Skip →'}
       </button>

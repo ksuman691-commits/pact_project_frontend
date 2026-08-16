@@ -19,6 +19,7 @@ export default function BottomNav() {
   const { user, isInitialized } = useAuthStore()
   const isHiddenRoute =
     pathname?.startsWith('/auth') ||
+    pathname?.startsWith('/onboarding') ||
     pathname?.startsWith('/pacts/create') ||
     pathname?.startsWith('/circles/create')
 
@@ -77,7 +78,7 @@ export default function BottomNav() {
           }}
         />
         <div
-          className="relative flex items-center gap-1 rounded-full border px-2 py-2 backdrop-blur-xl"
+          className="relative flex items-center gap-1 rounded-full border px-2 py-2.5 backdrop-blur-xl"
           style={{
             margin: 2,
             background: 'var(--pact-surface)',
@@ -93,7 +94,7 @@ export default function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className="relative flex flex-1 items-center justify-center py-1"
+              className="relative flex flex-1 flex-col items-center justify-center gap-0.5 py-1"
               title={item.label}
               aria-label={item.label}
               aria-current={active ? 'page' : undefined}
@@ -137,6 +138,17 @@ export default function BottomNav() {
                     style={{ background: 'var(--pact-mint)', boxShadow: '0 0 6px var(--pact-mint)' }}
                   />
                 )}
+              </span>
+              {/* Text label under each icon — small (10px), matching the
+                  app's Inter font system. Shares the same active/inactive
+                  emphasis logic as the icon above it (gradient-toned when
+                  active, faint when inactive) so the label lights up in
+                  step with the icon rather than staying flat. */}
+              <span
+                className="text-[10px] font-medium leading-none transition-colors"
+                style={active ? { color: 'var(--pact-violet)' } : { color: 'var(--pact-text-faint)' }}
+              >
+                {item.label}
               </span>
             </Link>
           )
