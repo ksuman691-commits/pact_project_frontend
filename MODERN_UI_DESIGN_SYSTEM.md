@@ -1,9 +1,17 @@
-# CirclePact Modern Vibrant UI Design System
+> **⚠️ DEPRECATED / HISTORICAL — DO NOT USE AS A REFERENCE.**
+> This emerald/white design system was superseded by the violet dark system
+> (`--pact-*` tokens defined in `globals.css`). It is kept only as a
+> historical record of an earlier design direction. The `/design-showcase`
+> route referenced below has been removed. For current design guidance,
+> use the `--pact-*` tokens and existing components (Avatar, CircleCard,
+> DareCard, etc.) as the source of truth.
+
+# CirclePact Modern Vibrant UI Design System (DEPRECATED)
 
 Based on the reference screenshot provided, I've designed a modern, high-contrast UI system for CirclePact with **white backgrounds** instead of black, maintaining the emerald color scheme while adding vibrant accent colors.
 
 ## Design Showcase
-Visit `/design-showcase` to see the complete design system in action with interactive examples.
+~~Visit `/design-showcase` to see the complete design system in action with interactive examples.~~ (route removed — see deprecation notice above)
 
 ## Color Palette
 

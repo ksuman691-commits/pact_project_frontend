@@ -24,14 +24,34 @@ export default function DaresPage() {
     [myDaresQuery.data],
   );
 
+  // "For You" = dares the viewer is a recipient on AND still needs their
+  // attention: either awaiting a response (pending) or accepted but not
+  // yet past its complete_by deadline (in progress, needs proof).
+  // Filtering to *only* 'pending' was a bug — an accepted dare fell out of
+  // both this tab and "Sent by You" (viewer isn't the creator), so it
+  // vanished from the page entirely once accepted. Completed/failed/
+  // expired dares correctly still drop out once they're no longer
+  // actionable.
   const forYou = useMemo(
-    () => mineAll.filter((d: any) => d.my_recipient_status === 'pending' && d.creator_id !== user?.id),
+    () =>
+      mineAll.filter((d: any) => {
+        if (d.creator_id === user?.id) return false;
+        if (d.my_recipient_status === 'pending') return true;
+        if (d.my_recipient_status === 'accepted') {
+          return !d.complete_by || new Date(d.complete_by).getTime() > Date.now();
+        }
+        return false;
+      }),
     [mineAll, user?.id],
   );
   const sentByYou = useMemo(() => mineAll.filter((d: any) => d.creator_id === user?.id), [mineAll, user?.id]);
   const discover = feedQuery.data?.pages?.flatMap((page) => page.data) || [];
 
-  const forYouCount = forYou.length;
+  // The tab's badge count stays scoped to strictly-pending (awaiting
+  // response) dares — that's the actionable-right-now number users expect
+  // from a notification-style count, even though the tab's list itself
+  // also shows in-progress accepted dares.
+  const forYouCount = forYou.filter((d: any) => d.my_recipient_status === 'pending').length;
 
   const currentQuery = tab === 'discover' ? feedQuery : myDaresQuery;
   const dares = tab === 'for-you' ? forYou : tab === 'sent' ? sentByYou : discover;
