@@ -1,16 +1,35 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { ChevronLeft, Upload, Shield } from 'lucide-react';
 import Link from 'next/link';
+import { ChevronLeft, Upload, Users, CheckCircle2, XCircle, Clock, CalendarClock, ShieldCheck, Zap } from 'lucide-react';
 import { useDareDetail, useDareRecipients, useDareStats } from '@/hooks/useDareQueries';
 import { useAcceptDare, useDeclineDare, useClaimDare } from '@/hooks/useDareMutations';
 import DareRecipientsList from '@/components/DareRecipientsList';
 import DareProofUploadModal from '@/components/DareProofUploadModal';
 import DareVerificationModal from '@/components/DareVerificationModal';
+import UserAvatarLink from '@/components/UserAvatarLink';
+import { formatCountdown, urgencyColor } from '@/lib/dareCountdown';
 import { useAuthStore } from '@/store/auth';
+
+const STATUS_PILL: Record<string, { label: string; color: string }> = {
+  pending: { label: 'Pending', color: 'var(--pact-gold)' },
+  accepted: { label: 'Accepted', color: 'var(--pact-violet)' },
+  declined: { label: 'Declined', color: 'var(--pact-text-faint)' },
+  completed: { label: 'Completed', color: 'var(--pact-mint)' },
+  failed: { label: 'Failed', color: 'var(--pact-pink)' },
+};
+
+function StatGroup({ icon: Icon, value, label, color }: { icon: any; value: number; label: string; color: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <Icon className="h-4 w-4" style={{ color }} />
+      <span className="font-bold text-[var(--pact-text)]">{value}</span>
+      <span className="text-xs font-medium text-[var(--pact-text-faint)]">{label}</span>
+    </div>
+  );
+}
 
 export default function DareDetailPage() {
   const params = useParams();
@@ -30,29 +49,9 @@ export default function DareDetailPage() {
 
   const dare = dareQuery.data?.data;
 
-  const handleAccept = () => {
-    acceptMutation.mutate(dareId, {
-      onSuccess: () => {
-        dareQuery.refetch();
-      },
-    });
-  };
-
-  const handleDecline = () => {
-    declineMutation.mutate(dareId, {
-      onSuccess: () => {
-        dareQuery.refetch();
-      },
-    });
-  };
-
-  const handleClaim = () => {
-    claimMutation.mutate(dareId, {
-      onSuccess: () => {
-        dareQuery.refetch();
-      },
-    });
-  };
+  const handleAccept = () => acceptMutation.mutate(dareId, { onSuccess: () => dareQuery.refetch() });
+  const handleDecline = () => declineMutation.mutate(dareId, { onSuccess: () => dareQuery.refetch() });
+  const handleClaim = () => claimMutation.mutate(dareId, { onSuccess: () => dareQuery.refetch() });
 
   if (dareQuery.isLoading) {
     return (
@@ -74,12 +73,27 @@ export default function DareDetailPage() {
     );
   }
 
-  const creatorAvatar = dare.creator_avatar_url?.trim()
-    ? dare.creator_avatar_url
-    : `https://api.dicebear.com/7.x/avataaars/svg?seed=${dare.creator_username}`;
-
   const isCreator = user?.id === dare.creator_id;
-  const isAccepted = dare.isAcceptedByMe;
+  const isPending = dare.my_recipient_status === 'pending';
+  const isAccepted = dare.my_recipient_status === 'accepted';
+  const isPublicUnclaimed = dare.audience === 'public' && !isCreator && !dare.my_recipient_status;
+
+  const countdown = isPending
+    ? formatCountdown(dare.respond_by, 'Respond')
+    : formatCountdown(dare.complete_by, 'Complete');
+
+  const statusPill = dare.my_recipient_status ? STATUS_PILL[dare.my_recipient_status] : null;
+  const stats = statsQuery.data?.data;
+
+  // DareResponse only carries `recipient_count`, not per-status breakdowns
+  // (confirmed against the live API schema) — the old acceptedCount /
+  // completedCount / failedCount fields the page previously read never
+  // existed on the backend and always rendered as 0. Deriving these from
+  // the actual recipients list is the only way to show real numbers.
+  const recipients = recipientsQuery.data?.data || [];
+  const acceptedCount = recipients.filter((r: any) => r.status === 'accepted').length;
+  const completedCount = recipients.filter((r: any) => r.status === 'completed').length;
+  const failedCount = recipients.filter((r: any) => r.status === 'declined' || r.status === 'failed').length;
 
   return (
     <div className="pact-flow pact-page-enter min-h-screen">
@@ -93,101 +107,113 @@ export default function DareDetailPage() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* Creator Info */}
-        <div className="flex items-center gap-4">
-          <div
-            className="relative w-14 h-14 rounded-full overflow-hidden flex-shrink-0"
-            style={{ background: 'var(--pact-surface-2)' }}
-          >
-            <Image
-              src={creatorAvatar}
-              alt={dare.creator_username || 'creator'}
-              fill
-              className="object-cover"
-              onError={(e) => {
-                const img = e.currentTarget as HTMLImageElement;
-                img.style.display = 'none';
-              }}
+        {/* Creator + status + countdown */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <UserAvatarLink
+              name={dare.creator_full_name || dare.creator_username}
+              avatarUrl={dare.creator_avatar_url}
+              username={dare.creator_username}
+              size={48}
             />
+            <div className="min-w-0">
+              <p className="font-semibold text-[var(--pact-text)] truncate">
+                {isCreator ? 'You' : dare.creator_full_name || dare.creator_username}
+              </p>
+              <p className="text-sm text-[var(--pact-text-faint)] truncate">@{dare.creator_username}</p>
+            </div>
           </div>
-          <div>
-            <p className="font-semibold text-[var(--pact-text)]">{dare.creator_full_name || dare.creator_username}</p>
-            <p className="text-sm text-[var(--pact-text-faint)]">@{dare.creator_username}</p>
+          <div className="flex flex-shrink-0 flex-col items-end gap-1.5">
+            {statusPill && (
+              <span
+                className="rounded-full px-2.5 py-1 text-xs font-bold"
+                style={{ background: 'var(--pact-surface-2)', color: statusPill.color }}
+              >
+                {statusPill.label}
+              </span>
+            )}
+            <span
+              className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold"
+              style={{ background: 'var(--pact-surface-2)', color: urgencyColor(countdown.urgency) }}
+            >
+              <Clock className="h-3 w-3" />
+              {countdown.label}
+            </span>
           </div>
         </div>
 
-        {/* Dare Title and Description */}
+        {/* Title + description */}
         <div>
-          <h2 className="text-2xl font-bold text-[var(--pact-text)] mb-2">{dare.title}</h2>
+          <h2
+            className="mb-2 text-3xl font-black leading-tight text-[var(--pact-text)] text-pretty"
+            style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}
+          >
+            {dare.title}
+          </h2>
           <p className="text-[var(--pact-text-dim)] leading-relaxed">{dare.description}</p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="pact-card rounded-[28px] p-4" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
-            <p className="text-xs font-semibold text-[var(--pact-text-faint)] uppercase mb-1">Recipients</p>
-            <p className="text-2xl font-bold text-[var(--pact-violet)]">{dare.recipientCount || 0}</p>
+        {/* Compact icon-led stat row — one merged panel instead of 4 boxes */}
+        <div className="pact-card flex flex-wrap items-center gap-5 rounded-2xl px-5 py-4">
+          <StatGroup icon={Users} value={dare.recipientCount || 0} label="recipients" color="var(--pact-violet)" />
+          <StatGroup icon={CheckCircle2} value={acceptedCount} label="accepted" color="var(--pact-violet)" />
+          <StatGroup icon={ShieldCheck} value={completedCount} label="completed" color="var(--pact-mint)" />
+          <StatGroup icon={XCircle} value={failedCount} label="failed" color="var(--pact-pink)" />
+        </div>
+
+        {/* Timeline — lighter weight than the stat row above it */}
+        <div className="space-y-2 rounded-2xl px-5 py-3" style={{ background: 'var(--pact-surface-2)' }}>
+          <div className="flex items-center gap-2 text-sm">
+            <CalendarClock className="h-3.5 w-3.5 flex-shrink-0" style={{ color: 'var(--pact-text-faint)' }} />
+            <span className="text-[var(--pact-text-faint)]">Respond by</span>
+            <span className="ml-auto font-medium text-[var(--pact-text-dim)]">
+              {dare.respond_by ? new Date(dare.respond_by).toLocaleString() : 'No deadline'}
+            </span>
           </div>
-          <div className="pact-card rounded-[28px] p-4" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
-            <p className="text-xs font-semibold text-[var(--pact-text-faint)] uppercase mb-1">Accepted</p>
-            <p className="text-2xl font-bold text-[var(--pact-violet)]">{dare.acceptedCount || 0}</p>
+          <div className="flex items-center gap-2 text-sm">
+            <CalendarClock className="h-3.5 w-3.5 flex-shrink-0" style={{ color: 'var(--pact-text-faint)' }} />
+            <span className="text-[var(--pact-text-faint)]">Complete by</span>
+            <span className="ml-auto font-medium text-[var(--pact-text-dim)]">
+              {dare.complete_by ? new Date(dare.complete_by).toLocaleString() : 'No deadline'}
+            </span>
           </div>
-          <div className="pact-card rounded-[28px] p-4" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
-            <p className="text-xs font-semibold text-[var(--pact-text-faint)] uppercase mb-1">Completed</p>
-            <p className="text-2xl font-bold text-[var(--pact-violet)]">{dare.completedCount || 0}</p>
-          </div>
-          <div className="pact-card rounded-[28px] p-4" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
-            <p className="text-xs font-semibold text-[var(--pact-text-faint)] uppercase mb-1">Failed</p>
-            <p className="text-2xl font-bold text-[var(--pact-pink)]">{dare.failedCount || 0}</p>
+          <div className="flex items-center gap-2 text-sm">
+            <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0" style={{ color: 'var(--pact-text-faint)' }} />
+            <span className="text-[var(--pact-text-faint)]">Verification</span>
+            <span className="ml-auto font-medium capitalize text-[var(--pact-text-dim)]">{dare.verification_method || 'photo'}</span>
           </div>
         </div>
 
-        {/* Timeline Info */}
-        <div className="space-y-2 rounded-[28px] p-4" style={{ background: 'var(--pact-surface-2)' }}>
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-[var(--pact-text-faint)]">Respond By:</span>
-            <span className="text-sm text-[var(--pact-text)]">{new Date(dare.respond_by_date).toLocaleDateString()}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-[var(--pact-text-faint)]">Complete By:</span>
-            <span className="text-sm text-[var(--pact-text)]">{new Date(dare.complete_by_date).toLocaleDateString()}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-[var(--pact-text-faint)]">Verification:</span>
-            <span className="text-sm text-[var(--pact-text)] capitalize">{dare.verification_method || 'photo'}</span>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        {!isCreator && (
+        {/* Primary actions */}
+        {!isCreator && (isPending || isAccepted || isPublicUnclaimed) && (
           <div className="grid grid-cols-2 gap-3">
-            {dare.visibility === 'public' && !isAccepted ? (
+            {isPublicUnclaimed ? (
               <button
                 onClick={handleClaim}
                 disabled={claimMutation.isPending}
-                className="pact-btn-glow col-span-2 px-6 py-3 rounded-[28px] disabled:opacity-50 font-semibold"
-                style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
+                className="pact-btn-glow col-span-2 flex items-center justify-center gap-2 rounded-full py-3 font-semibold disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-bg)' }}
               >
+                <Zap className="h-4 w-4" />
                 {claimMutation.isPending ? 'Claiming...' : 'Claim Dare'}
               </button>
             ) : isAccepted ? (
               <>
                 <button
                   onClick={() => setProofModalOpen(true)}
-                  className="pact-btn-glow flex items-center justify-center gap-2 px-4 py-3 rounded-[28px] font-semibold"
-                  style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
+                  className="pact-btn-glow flex items-center justify-center gap-2 rounded-full py-3 font-semibold"
+                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-bg)' }}
                 >
-                  <Upload className="w-4 h-4" />
-                  Submit Proof
+                  <Upload className="h-4 w-4" />
+                  Upload Proof
                 </button>
                 <button
                   onClick={() => setVerifyModalOpen(true)}
-                  className="pact-btn-glow flex items-center justify-center gap-2 px-4 py-3 rounded-[28px] font-semibold border"
-                  style={{ borderColor: 'var(--pact-violet)', background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
+                  className="flex items-center justify-center gap-2 rounded-full border py-3 font-semibold transition"
+                  style={{ borderColor: 'var(--pact-violet)', color: 'var(--pact-violet)' }}
                 >
-                  <Shield className="w-4 h-4" />
+                  <ShieldCheck className="h-4 w-4" />
                   Verify
                 </button>
               </>
@@ -196,17 +222,19 @@ export default function DareDetailPage() {
                 <button
                   onClick={handleAccept}
                   disabled={acceptMutation.isPending}
-                  className="pact-btn-glow px-4 py-3 rounded-[28px] disabled:opacity-50 font-semibold"
-                  style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
+                  className="pact-btn-glow flex items-center justify-center gap-2 rounded-full py-3 font-semibold disabled:opacity-50"
+                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-bg)' }}
                 >
+                  <CheckCircle2 className="h-4 w-4" />
                   {acceptMutation.isPending ? 'Accepting...' : 'Accept'}
                 </button>
                 <button
                   onClick={handleDecline}
                   disabled={declineMutation.isPending}
-                  className="px-4 py-3 rounded-[28px] border disabled:opacity-50 font-semibold transition"
-                  style={{ borderColor: 'var(--pact-pink)', color: 'var(--pact-pink)' }}
+                  className="flex items-center justify-center gap-2 rounded-full border py-3 font-semibold transition disabled:opacity-50"
+                  style={{ borderColor: 'var(--pact-hairline)', color: 'var(--pact-text-dim)' }}
                 >
+                  <XCircle className="h-4 w-4" />
                   {declineMutation.isPending ? 'Declining...' : 'Decline'}
                 </button>
               </>
@@ -214,40 +242,31 @@ export default function DareDetailPage() {
           </div>
         )}
 
-        {/* Recipients Section */}
-        <div>
-          <h3 className="text-lg font-bold text-[var(--pact-text)] mb-4">Recipients</h3>
-          <DareRecipientsList
-            recipients={recipientsQuery.data?.data || []}
-            isLoading={recipientsQuery.isLoading}
-          />
-        </div>
+        {/* Recipients — only shown when there's more than one */}
+        {(recipientsQuery.data?.data?.length || 0) > 1 && (
+          <div>
+            <h3 className="mb-4 text-lg font-bold text-[var(--pact-text)]">Recipients</h3>
+            <DareRecipientsList recipients={recipientsQuery.data?.data || []} isLoading={recipientsQuery.isLoading} />
+          </div>
+        )}
 
-        {/* Verification Stats */}
-        {statsQuery.data && (
-          <div className="rounded-[28px] p-4" style={{ background: 'var(--pact-surface-2)' }}>
-            <h3 className="text-sm font-bold text-[var(--pact-text)] mb-3">Verification Stats</h3>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <p className="text-xs text-[var(--pact-text-faint)] mb-1">Yes</p>
-                <p className="text-lg font-bold text-[var(--pact-violet)]">{statsQuery.data.data?.yes_count || 0}</p>
-              </div>
-              <div>
-                <p className="text-xs text-[var(--pact-text-faint)] mb-1">No</p>
-                <p className="text-lg font-bold text-[var(--pact-pink)]">{statsQuery.data.data?.no_count || 0}</p>
-              </div>
-              <div>
-                <p className="text-xs text-[var(--pact-text-faint)] mb-1">Confidence</p>
-                <p className="text-lg font-bold text-[var(--pact-gold)]">
-                  {(statsQuery.data.data?.confidence_avg || 0).toFixed(1)}%
-                </p>
+        {/* Verification stats */}
+        {stats && (stats.yes_count || stats.no_count) ? (
+          <div className="rounded-2xl px-5 py-4" style={{ background: 'var(--pact-surface-2)' }}>
+            <h3 className="mb-3 text-sm font-bold text-[var(--pact-text)]">Verification Stats</h3>
+            <div className="flex flex-wrap gap-5">
+              <StatGroup icon={CheckCircle2} value={stats.yes_count || 0} label="yes" color="var(--pact-mint)" />
+              <StatGroup icon={XCircle} value={stats.no_count || 0} label="no" color="var(--pact-pink)" />
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4" style={{ color: 'var(--pact-gold)' }} />
+                <span className="font-bold text-[var(--pact-text)]">{(stats.confidence_avg || 0).toFixed(0)}%</span>
+                <span className="text-xs font-medium text-[var(--pact-text-faint)]">confidence</span>
               </div>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
 
-      {/* Modals */}
       <DareProofUploadModal isOpen={proofModalOpen} onClose={() => setProofModalOpen(false)} dareId={dareId} />
       <DareVerificationModal isOpen={verifyModalOpen} onClose={() => setVerifyModalOpen(false)} dareId={dareId} />
     </div>
