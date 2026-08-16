@@ -184,7 +184,11 @@ api.interceptors.response.use(
       }
 
       clearToken();
-      if (typeof window !== 'undefined') {
+      // Guard against a reload loop: if some component fires an
+      // authenticated request while already sitting on /auth/login (e.g.
+      // before the session has hydrated), a hard redirect here would
+      // reload the page, remount that component, and 401 again forever.
+      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/login')) {
         window.location.href = '/auth/login';
       }
     }

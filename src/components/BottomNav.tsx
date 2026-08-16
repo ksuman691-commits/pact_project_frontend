@@ -16,20 +16,27 @@ const authItems = [
 
 export default function BottomNav() {
   const pathname = usePathname()
-  const { user } = useAuthStore()
+  const { user, isInitialized } = useAuthStore()
+  const isHiddenRoute =
+    pathname?.startsWith('/auth') ||
+    pathname?.startsWith('/pacts/create') ||
+    pathname?.startsWith('/circles/create')
+
   // Same getMine() result the /dares "For You" tab filters — cached under
   // the same query key, so this doesn't add an extra request beyond what
-  // that page already fetches once visited.
-  const myDaresQuery = useMyDares()
+  // that page already fetches once visited. Must stay disabled until the
+  // auth store has actually hydrated a session: this component lives in
+  // the root layout and mounts on every route (including /auth/login)
+  // before the pathname check below can bail out, so firing it while
+  // logged out 401s, which triggers the API client's hard redirect to
+  // /auth/login, which remounts this component and fires again — an
+  // infinite reload loop.
+  const myDaresQuery = useMyDares({ enabled: isInitialized && !!user && !isHiddenRoute })
   const pendingForYouCount = (myDaresQuery.data?.pages?.flatMap((page) => page.data) || []).filter(
     (d: any) => d.my_recipient_status === 'pending' && d.creator_id !== user?.id,
   ).length
 
-  if (
-    pathname?.startsWith('/auth') ||
-    pathname?.startsWith('/pacts/create') ||
-    pathname?.startsWith('/circles/create')
-  ) {
+  if (isHiddenRoute) {
     return null
   }
 
