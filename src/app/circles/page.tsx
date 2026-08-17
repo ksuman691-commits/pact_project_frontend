@@ -14,7 +14,7 @@ const bubbleSizes = ['h-28 w-28', 'h-36 w-36', 'h-44 w-44', 'h-52 w-52']
 export default function CirclesPage() {
   const { user } = useAuthStore()
   const circlesQuery = useCircles()
-  const circles = (circlesQuery.data?.data || []) as any[]
+  const circles = (circlesQuery.data || []) as any[]
   const isLoading = circlesQuery.isLoading
   const { data: statsResponse } = useQuery({ queryKey: ['user', 'stats'], queryFn: () => userService.getStats(user!.id!), enabled: Boolean(user?.id) })
   const stats = statsResponse?.data as any
