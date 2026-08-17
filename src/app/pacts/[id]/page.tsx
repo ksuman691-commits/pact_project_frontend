@@ -163,24 +163,32 @@ export default function PactDetailPage() {
     : [];
 
   if (isLoading) {
-    return <PactDetailSkeleton />;
+    return (
+      <>
+        <DetailPageHeader title="Loading pact…" maxWidthClassName="max-w-md" />
+        <PactDetailSkeleton />
+      </>
+    );
   }
 
   if (isError || !pact) {
     return (
-      <div className="pact-flow min-h-screen bg-slate-950 flex items-center justify-center px-4 text-white">
-        <div className="max-w-sm rounded-[28px] border border-white/10 bg-white/5 p-8 text-center backdrop-blur-sm">
-          <AlertCircle className="mx-auto h-10 w-10 text-rose-400" />
-          <h2 className="mt-4 text-xl font-black">Pact not found</h2>
-          <p className="mt-2 text-sm text-white/70">This pact could not be loaded or is no longer available.</p>
-          <button
-            onClick={() => router.push('/feed')}
-            className="mt-6 rounded-full bg-[#EDE9FE]0 px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#A78BFA]"
-          >
-            Back to feed
-          </button>
+      <>
+        <DetailPageHeader title="Pact not found" backHref="/feed" maxWidthClassName="max-w-md" />
+        <div className="pact-flow min-h-screen bg-slate-950 flex items-center justify-center px-4 text-white">
+          <div className="max-w-sm rounded-[28px] border border-white/10 bg-white/5 p-8 text-center backdrop-blur-sm">
+            <AlertCircle className="mx-auto h-10 w-10 text-rose-400" />
+            <h2 className="mt-4 text-xl font-black text-white">Pact not found</h2>
+            <p className="mt-2 text-sm text-white/70">This pact could not be loaded or is no longer available.</p>
+            <button
+              onClick={() => router.push('/feed')}
+              className="mt-6 rounded-full bg-[#EDE9FE]0 px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#A78BFA]"
+            >
+              Back to feed
+            </button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
