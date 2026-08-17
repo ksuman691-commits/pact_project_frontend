@@ -4,14 +4,15 @@ import type { ComponentType, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import TopNav from '@/components/TopNav';
+import DetailPageHeader from '@/components/DetailPageHeader';
 import { circleService, circleJoinRequestService, joinRequestService, userService } from '@/services/api';
 import { Circle, Pact } from '@/types';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Users, Globe, Target, Plus, Trophy, Calendar, Crown } from 'lucide-react';
+import { Users, Globe, Target, Plus, Trophy, Calendar, Crown, Activity, Flame } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CircleLeaderboard from '@/components/CircleLeaderboard';
 import InviteMembersModal from '@/components/InviteMembersModal';
+import ConfirmModal from '@/components/ConfirmModal';
 import PactCard from '@/components/PactCard';
 import { useCountUp } from '@/components/pact-ui/useCountUp';
 import UserAvatarLink from '@/components/UserAvatarLink';
@@ -26,6 +27,8 @@ export default function CircleDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isMember, setIsMember] = useState(false);
   const [inviteModal, setInviteModal] = useState(false);
+  const [leaveModal, setLeaveModal] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   // Real per-member stats for this circle — no fallback to placeholder/demo
   // entries. The backend has no dedicated circle-leaderboard endpoint (both
   // /api/circles/{id}/leaderboard and /api/leaderboards/circles/{id} 404),
@@ -146,16 +149,23 @@ export default function CircleDetailPage() {
   };
 
   const handleLeaveCircle = async () => {
-    if (!window.confirm('Are you sure you want to leave this circle?')) return;
-
+    setLeaving(true);
     try {
       await circleService.leave(circleId);
       toast.success('Left circle');
       router.push('/circles');
     } catch (error: any) {
       toast.error('Failed to leave circle');
+    } finally {
+      setLeaving(false);
+      setLeaveModal(false);
     }
   };
+
+  const activeMembers = leaderboardEntries.filter((entry) => entry.streak > 0).length;
+  const topContributor = [...leaderboardEntries].sort((a, b) => b.streak - a.streak || b.pactsCompleted - a.pactsCompleted)[0];
+  const activeStreaks = leaderboardEntries.filter((entry) => entry.streak > 0).map((entry) => entry.streak);
+  const groupStreak = activeStreaks.length > 0 ? Math.min(...activeStreaks) : 0;
 
   const handleRequestJoinPact = async (pactId: number) => {
     try {
@@ -181,17 +191,8 @@ export default function CircleDetailPage() {
 
   return (
     <div className="pact-flow pact-page-enter min-h-screen">
-      <TopNav showBack={false} showCategories={false} />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Back Button */}
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 mb-8 transition"
-          style={{ color: 'var(--pact-violet)' }}
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back to Circles
-        </button>
+      <DetailPageHeader title={circle.name || 'Circle'} backHref="/circles" maxWidthClassName="max-w-4xl" />
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Circle Header */}
         <div className="pact-card relative overflow-hidden rounded-[28px] p-6 sm:p-8 mb-8">
@@ -231,15 +232,24 @@ export default function CircleDetailPage() {
             className="relative mt-6 flex items-stretch gap-1 rounded-2xl p-1.5"
             style={{ background: 'var(--pact-surface-2)', border: '1px solid var(--pact-hairline)' }}
           >
-            <StatPill icon={Users} label="Members" value={<StatCount value={circle.member_count ?? members.length} />} />
+              <StatPill icon={Users} label="Members" value={<StatCount value={circle.member_count ?? members.length} />} />
+            <div className="w-px self-center h-8" style={{ background: 'var(--pact-hairline)' }} />
+            <StatPill icon={Activity} label="Active this week" value={<StatCount value={activeMembers} />} />
             <div className="w-px self-center h-8" style={{ background: 'var(--pact-hairline)' }} />
             <StatPill icon={Target} label="Pacts" value={<StatCount value={pacts.length} />} />
             <div className="w-px self-center h-8" style={{ background: 'var(--pact-hairline)' }} />
-            <StatPill
-              icon={Calendar}
-              label="Created"
-              value={new Date(circle.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-            />
+            <StatPill icon={Flame} label="Group streak" value={<StatCount value={groupStreak} />} />
+          </div>
+
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="flex items-center gap-3 rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] px-4 py-3">
+              <Trophy className="h-5 w-5 shrink-0 text-[var(--pact-gold)]" />
+              <div className="min-w-0"><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--pact-text-faint)]">Top contributor</p><p className="truncate text-sm font-bold text-[var(--pact-text)]">{topContributor ? `@${topContributor.username}` : 'Building momentum'}</p></div>
+            </div>
+            <div className="flex items-center gap-3 rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] px-4 py-3">
+              <Flame className="h-5 w-5 shrink-0 text-[var(--pact-violet)]" />
+              <div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--pact-text-faint)]">Shared achievement</p><p className="text-sm font-bold text-[var(--pact-text)]">{groupStreak > 0 ? `${groupStreak}-day group streak` : 'Start a group streak'}</p></div>
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -247,7 +257,7 @@ export default function CircleDetailPage() {
             {isMember ? (
               <>
                 <button
-                  onClick={() => router.push('/pacts/create')}
+                  onClick={() => router.push(`/pacts/create?circleId=${circleId}`)}
                   className="pact-btn-glow flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition"
                   style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
                 >
@@ -264,7 +274,7 @@ export default function CircleDetailPage() {
                 </button>
                 {!isOwner && (
                   <button
-                    onClick={handleLeaveCircle}
+                    onClick={() => setLeaveModal(true)}
                     className="ml-auto text-sm font-medium text-[var(--pact-text-faint)] transition hover:text-[var(--pact-pink)]"
                   >
                     Leave Circle
@@ -400,7 +410,7 @@ export default function CircleDetailPage() {
               <p className="text-[var(--pact-text-faint)] mb-4">No pacts in this circle yet</p>
               {isMember && (
                 <button
-                  onClick={() => router.push('/pacts/create')}
+                  onClick={() => router.push(`/pacts/create?circleId=${circleId}`)}
                   className="pact-btn-glow inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-white transition"
                   style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
                 >
@@ -422,6 +432,18 @@ export default function CircleDetailPage() {
           circleName={circle.name}
         />
       )}
+
+      {/* Leave Circle Confirmation */}
+      <ConfirmModal
+        isOpen={leaveModal}
+        onClose={() => setLeaveModal(false)}
+        onConfirm={handleLeaveCircle}
+        title="Leave circle?"
+        description={`You'll lose access to ${circle.name}'s pacts and leaderboard until you rejoin.`}
+        confirmLabel="Leave Circle"
+        destructive
+        loading={leaving}
+      />
     </div>
   );
 }

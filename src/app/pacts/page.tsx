@@ -1,175 +1,44 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useRequireAuth } from '@/hooks/useRequireAuth';
-import TopNav from '@/components/TopNav';
-import { pactService } from '@/services/api';
-import { Pact } from '@/types';
-import toast from 'react-hot-toast';
-import { Plus, TrendingUp } from 'lucide-react';
-import PactCard from '@/components/PactCard';
-import { useSkipPact } from '@/hooks/usePactActions';
+import { useMemo, useState } from 'react'
+import Link from 'next/link'
+import { useQuery } from '@tanstack/react-query'
+import { Activity, CheckCircle2, CircleDot, Flame, Target } from 'lucide-react'
+import DetailPageHeader from '@/components/DetailPageHeader'
+import PactProgressRing, { getPactProgress } from '@/components/PactProgressRing'
+import { pactAdvancedService, userService } from '@/services/api'
+import { useAuthStore } from '@/store/auth'
+
+const filters = ['All', 'Active', 'Completed'] as const
+type Filter = (typeof filters)[number]
 
 export default function PactsPage() {
-  const router = useRouter();
-  const { user, isInitialized } = useRequireAuth();
-  const [pacts, setPacts] = useState<Pact[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'value' | 'deadline' | 'newest'>('value');
-  const skipMutation = useSkipPact();
-
-  useEffect(() => {
-    if (!isInitialized) return;
-    if (!user) {
-      router.push('/auth/login');
-      return;
-    }
-
-    const fetchPacts = async () => {
-      try {
-        const params = filterStatus !== 'all' ? { status_filter: filterStatus } : {};
-        const response = await pactService.list(params);
-        setPacts(response.data);
-      } catch (error: any) {
-        toast.error('Failed to load pacts');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPacts();
-  }, [isInitialized, user, router, filterStatus]);
-
-  if (!isInitialized) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  const sortedPacts = [...pacts].sort((a, b) => {
-    if (sortBy === 'value') {
-      return 0;
-    } else if (sortBy === 'deadline') {
-      return new Date(a.deadline ?? a.end_date ?? '').getTime() - new Date(b.deadline ?? b.end_date ?? '').getTime();
-    } else {
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    }
-  });
-
-  const handleVote = async (pactId: number, _vote: string) => {
-    await skipMutation.mutateAsync(pactId);
-  };
+  const { user } = useAuthStore()
+  const [filter, setFilter] = useState<Filter>('All')
+  const pactsQuery = useQuery({ queryKey: ['my-pacts', user?.id], queryFn: () => pactAdvancedService.getMyPacts(0, 100), enabled: Boolean(user?.id), staleTime: 60_000 })
+  const statsQuery = useQuery({ queryKey: ['user-stats', user?.id], queryFn: () => userService.getStats(user!.id!), enabled: Boolean(user?.id), staleTime: 60_000 })
+  const pacts = pactsQuery.data?.data || []
+  const filtered = useMemo(() => pacts.filter((pact: any) => filter === 'All' || (filter === 'Active' ? pact.status === 'active' : ['completed', 'failed', 'cancelled'].includes(pact.status))), [filter, pacts])
+  const grouped = useMemo(() => filtered.reduce((groups: Record<string, any[]>, pact: any) => { const name = pact.circle_name || 'Personal pacts'; ;(groups[name] ||= []).push(pact); return groups }, {}), [filtered])
+  const stats = statsQuery.data?.data || {}
+  const activeCount = pacts.filter((pact: any) => pact.status === 'active').length
+  const winRate = Number(stats.win_rate ?? stats.completion_rate ?? 0)
+  const streak = Number(stats.current_streak ?? stats.streak ?? 0)
 
   return (
-    <div className="min-h-screen bg-[#F4F2FB]">
-      <TopNav showBack={true} />
-      <div className="pt-32 pb-8">
-        <div className="max-w-2xl mx-auto px-4">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold text-[#14121F]">All Pacts</h1>
-            <button
-              onClick={() => router.push('/pacts/create')}
-              className="btn-primary flex items-center gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              Create Pact
-            </button>
-          </div>
-
-          {/* Filter and Sort Buttons */}
-          <div className="flex gap-2 mb-8 flex-wrap">
-            {/* Status Filters */}
-            <div className="flex gap-2">
-              {['all', 'active', 'completed', 'failed'].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setFilterStatus(status)}
-                  className={`px-4 py-2 rounded-[28px] font-medium capitalize transition-colors ${
-                    filterStatus === status
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-slate-700 border border-[rgba(20,18,31,0.06)] hover:border-blue-600'
-                  }`}
-                >
-                  {status}
-                </button>
-              ))}
-            </div>
-
-            {/* Sort Options */}
-            <div className="flex gap-2 ml-auto">
-              <button
-                onClick={() => setSortBy('value')}
-                className={`px-4 py-2 rounded-[28px] font-medium transition-colors text-sm flex items-center gap-1 ${
-                  sortBy === 'value'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-white text-slate-700 border border-[rgba(20,18,31,0.06)] hover:border-purple-600'
-                }`}
-              >
-                <TrendingUp className="w-4 h-4" />
-                By Value
-              </button>
-              <button
-                onClick={() => setSortBy('deadline')}
-                className={`px-4 py-2 rounded-[28px] font-medium transition-colors text-sm ${
-                  sortBy === 'deadline'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-white text-slate-700 border border-[rgba(20,18,31,0.06)] hover:border-purple-600'
-                }`}
-              >
-                By Deadline
-              </button>
-              <button
-                onClick={() => setSortBy('newest')}
-                className={`px-4 py-2 rounded-[28px] font-medium transition-colors text-sm ${
-                  sortBy === 'newest'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-white text-slate-700 border border-[rgba(20,18,31,0.06)] hover:border-purple-600'
-                }`}
-              >
-                Newest
-              </button>
-            </div>
-          </div>
-
-          {/* Pacts List */}
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
-          ) : pacts.length === 0 ? (
-            <div className="legacy-light-card text-center py-12">
-              <p className="text-[#6B7280] mb-4">No pacts found</p>
-              <button
-                onClick={() => router.push('/pacts/create')}
-                className="btn-primary"
-              >
-                Create Your First Pact
-              </button>
-            </div>
-          ) : (
-            // PactCard renders FeedPactCard, whose dark glass surface (.pact-card)
-            // only resolves correctly inside a .pact-flow scope — see globals.css.
-            <div className="pact-flow space-y-6">
-              {sortedPacts.map((pact) => (
-                <PactCard
-                  key={pact.id}
-                  pact={pact}
-                  userVote={(pact as any).user_vote || (pact as any).userVote}
-                  onVote={handleVote}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+    <main className="pact-flow min-h-screen pb-32">
+      <DetailPageHeader title="Pacts" backHref="/feed" />
+      <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
+        <section className="rounded-[28px] border border-[var(--pact-hairline)] bg-[var(--pact-surface)] p-5 shadow-[0_18px_50px_var(--pact-shadow-violet)]">
+          <div className="flex items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.28em] text-[var(--pact-text-faint)]">Your pact orbit</p><h1 className="mt-1 text-2xl font-black text-[var(--pact-text)]">Keep your circle moving.</h1></div><CircleDot className="h-8 w-8 text-[var(--pact-violet)]" /></div>
+          <div className="mt-5 grid grid-cols-3 divide-x divide-[var(--pact-hairline)] rounded-2xl bg-[var(--pact-surface-2)] py-3"><Stat icon={Activity} value={activeCount} label="Active" /><Stat icon={Target} value={`${Math.round(winRate)}%`} label="Win rate" /><Stat icon={Flame} value={streak} label="Day streak" /></div>
+        </section>
+        <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Pact status filter">{filters.map((item) => <button key={item} type="button" role="tab" aria-selected={filter === item} onClick={() => setFilter(item)} className={`rounded-full px-4 py-2 text-sm font-bold transition ${filter === item ? 'bg-[var(--pact-violet)] text-white' : 'border border-[var(--pact-hairline)] bg-[var(--pact-surface)] text-[var(--pact-text-faint)]'}`}>{item}</button>)}</div>
+        {pactsQuery.isLoading ? <p className="py-12 text-center text-sm text-[var(--pact-text-faint)]">Loading your pacts...</p> : Object.keys(grouped).length === 0 ? <div className="rounded-[28px] border border-dashed border-[var(--pact-hairline)] p-10 text-center"><Target className="mx-auto h-10 w-10 text-[var(--pact-text-faint)]" /><p className="mt-3 font-bold text-[var(--pact-text)]">No pacts in this view</p><p className="mt-1 text-sm text-[var(--pact-text-faint)]">Create a pact or switch the filter to see more.</p></div> : (Object.entries(grouped) as [string, any[]][]).map(([circleName, circlePacts]) => <section key={circleName}><h2 className="mb-3 px-1 text-[11px] font-black uppercase tracking-[0.28em] text-[var(--pact-violet)]">{circleName}</h2><div className="space-y-3">{circlePacts.map((pact: any) => <PactRow key={pact.id} pact={pact} />)}</div></section>)}
       </div>
-    </div>
-  );
+    </main>
+  )
 }
+
+function Stat({ icon: Icon, value, label }: { icon: typeof Activity; value: string | number; label: string }) { return <div className="flex flex-col items-center gap-1 text-center"><Icon className="h-4 w-4 text-[var(--pact-violet)]" /><strong className="text-lg font-black text-[var(--pact-text)]">{value}</strong><span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--pact-text-faint)]">{label}</span></div> }
+function PactRow({ pact }: { pact: any }) { const progress = getPactProgress(pact); return <Link href={`/pacts/${pact.id}`} className="flex items-center gap-4 rounded-[24px] border border-[var(--pact-hairline)] bg-[var(--pact-surface)] p-4 transition hover:border-[var(--pact-violet)]/60 active:scale-[0.99]"><PactProgressRing completed={progress.completed} total={progress.total} missed={progress.missed} size={62} /><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h3 className="truncate font-bold text-[var(--pact-text)]">{pact.title}</h3>{pact.status === 'completed' && <CheckCircle2 className="h-4 w-4 shrink-0 text-[var(--pact-violet)]" />}</div><p className="mt-1 truncate text-sm text-[var(--pact-text-faint)]">{pact.circle_name || 'Personal pact'}</p>{progress.missed > 0 && <p className="mt-2 text-xs font-semibold text-[var(--pact-danger)]">Missed {progress.missed} {progress.missed === 1 ? 'day' : 'days'}</p>}</div><span className="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em]" style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-text-faint)' }}>{pact.status}</span></Link> }

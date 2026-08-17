@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, Zap } from 'lucide-react'
+import { Home, Users, Circle, Zap } from 'lucide-react'
 import { useMyDares } from '@/hooks/useDareQueries'
 import { useAuthStore } from '@/store/auth'
 
@@ -10,7 +10,8 @@ import { useAuthStore } from '@/store/auth'
 // fixing that route here) — exactly 3 items, Home → Circles → Dares.
 const authItems = [
   { href: '/feed', label: 'Home', icon: Home },
-  { href: '/circles', label: 'Circles', icon: Users },
+  { href: '/circles', label: 'Circles', icon: Circle },
+  { href: '/pacts', label: 'Pacts', icon: Users },
   { href: '/dares', label: 'Dares', icon: Zap },
 ]
 

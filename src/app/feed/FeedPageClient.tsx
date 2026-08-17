@@ -107,7 +107,9 @@ export default function FeedPageClient() {
         activeCategory={category}
       />
 
-      <div className="max-w-md mx-auto pb-20 px-4" id="pact-feed-shell">
+      {/* pb-28: clearance for the floating pill BottomNav (same convention as
+          circles/page.tsx) so the last pact card in the feed isn't covered. */}
+      <div className="max-w-md mx-auto pb-28 px-4" id="pact-feed-shell">
         <PactFeed
           showMockData={false}
           category={category}

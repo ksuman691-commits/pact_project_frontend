@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { ChevronLeft, Upload, Users, CheckCircle2, XCircle, Clock, CalendarClock, ShieldCheck, Zap } from 'lucide-react';
+import { Upload, Users, CheckCircle2, XCircle, Clock, CalendarClock, ShieldCheck, Zap } from 'lucide-react';
+import DetailPageHeader from '@/components/DetailPageHeader';
 import { useDareDetail, useDareRecipients, useDareStats } from '@/hooks/useDareQueries';
 import { useAcceptDare, useDeclineDare, useClaimDare } from '@/hooks/useDareMutations';
 import DareRecipientsModal from '@/components/DareRecipientsModal';
@@ -99,15 +99,7 @@ export default function DareDetailPage() {
 
   return (
     <div className="pact-flow pact-page-enter min-h-screen">
-      {/* Header */}
-      <div className="sticky top-0 z-40 border-b border-[var(--pact-hairline)]" style={{ background: 'var(--pact-bg)' }}>
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/dares" className="p-2 rounded-[28px] transition hover:bg-[var(--pact-surface)]">
-            <ChevronLeft className="w-5 h-5 text-[var(--pact-text)]" />
-          </Link>
-          <h1 className="text-lg font-bold text-[var(--pact-text)]">Dare Details</h1>
-        </div>
-      </div>
+      <DetailPageHeader title="Dare Details" backHref="/dares" />
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* Creator + status + countdown */}
