@@ -8,7 +8,7 @@ import DetailPageHeader from '@/components/DetailPageHeader';
 import { circleService, circleJoinRequestService, joinRequestService, userService } from '@/services/api';
 import { Circle, Pact } from '@/types';
 import toast from 'react-hot-toast';
-import { Users, Globe, Target, Plus, Trophy, Calendar, Crown } from 'lucide-react';
+import { Users, Globe, Target, Plus, Trophy, Calendar, Crown, Activity, Flame } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CircleLeaderboard from '@/components/CircleLeaderboard';
 import InviteMembersModal from '@/components/InviteMembersModal';
@@ -162,6 +162,10 @@ export default function CircleDetailPage() {
     }
   };
 
+  const activeMembers = leaderboardEntries.filter((entry) => entry.streak > 0).length;
+  const topContributor = [...leaderboardEntries].sort((a, b) => b.streak - a.streak || b.pactsCompleted - a.pactsCompleted)[0];
+  const groupStreak = leaderboardEntries.length > 0 ? Math.min(...leaderboardEntries.filter((entry) => entry.streak > 0).map((entry) => entry.streak)) || 0 : 0;
+
   const handleRequestJoinPact = async (pactId: number) => {
     try {
       await joinRequestService.sendRequest(pactId);
@@ -227,15 +231,24 @@ export default function CircleDetailPage() {
             className="relative mt-6 flex items-stretch gap-1 rounded-2xl p-1.5"
             style={{ background: 'var(--pact-surface-2)', border: '1px solid var(--pact-hairline)' }}
           >
-            <StatPill icon={Users} label="Members" value={<StatCount value={circle.member_count ?? members.length} />} />
+              <StatPill icon={Users} label="Members" value={<StatCount value={circle.member_count ?? members.length} />} />
+            <div className="w-px self-center h-8" style={{ background: 'var(--pact-hairline)' }} />
+            <StatPill icon={Activity} label="Active this week" value={<StatCount value={activeMembers} />} />
             <div className="w-px self-center h-8" style={{ background: 'var(--pact-hairline)' }} />
             <StatPill icon={Target} label="Pacts" value={<StatCount value={pacts.length} />} />
             <div className="w-px self-center h-8" style={{ background: 'var(--pact-hairline)' }} />
-            <StatPill
-              icon={Calendar}
-              label="Created"
-              value={new Date(circle.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-            />
+            <StatPill icon={Flame} label="Group streak" value={<StatCount value={groupStreak} />} />
+          </div>
+
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="flex items-center gap-3 rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] px-4 py-3">
+              <Trophy className="h-5 w-5 shrink-0 text-[var(--pact-gold)]" />
+              <div className="min-w-0"><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--pact-text-faint)]">Top contributor</p><p className="truncate text-sm font-bold text-[var(--pact-text)]">{topContributor ? `@${topContributor.username}` : 'Building momentum'}</p></div>
+            </div>
+            <div className="flex items-center gap-3 rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] px-4 py-3">
+              <Flame className="h-5 w-5 shrink-0 text-[var(--pact-violet)]" />
+              <div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--pact-text-faint)]">Shared achievement</p><p className="text-sm font-bold text-[var(--pact-text)]">{groupStreak > 0 ? `${groupStreak}-day group streak` : 'Start a group streak'}</p></div>
+            </div>
           </div>
 
           {/* Action Buttons */}

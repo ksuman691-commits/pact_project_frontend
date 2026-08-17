@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, Zap } from 'lucide-react'
+import { Home, Users, Target, Zap } from 'lucide-react'
 import { useMyDares } from '@/hooks/useDareQueries'
 import { useAuthStore } from '@/store/auth'
 
@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/auth'
 const authItems = [
   { href: '/feed', label: 'Home', icon: Home },
   { href: '/circles', label: 'Circles', icon: Users },
+  { href: '/pacts', label: 'Pacts', icon: Target },
   { href: '/dares', label: 'Dares', icon: Zap },
 ]
 
