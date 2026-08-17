@@ -3,13 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { AlertCircle, Camera, CheckCircle2, Clock3, Crown, Inbox, MessageSquare, Users } from 'lucide-react';
+import { AlertCircle, Camera, CheckCircle2, Crown, Inbox } from 'lucide-react';
 import toast from 'react-hot-toast';
 import TopNav from '@/components/TopNav';
 import FeedPactCard from '@/components/FeedPactCard';
 import ProofsSection from '@/components/ProofsSection';
-import CommentSection from '@/components/CommentSection';
-import VerificationResults from '@/components/VerificationResults';
 import UserAvatarLink from '@/components/UserAvatarLink';
 import CheerButton from '@/components/CheerButton';
 import CheerGallery from '@/components/CheerGallery';
@@ -19,7 +17,7 @@ import PactDetailCarousel, { type DetailCarouselPanel } from '@/components/PactD
 import { usePact, usePactProofs, usePactCheers } from '@/hooks/usePacts';
 import { useSkipPact } from '@/hooks/usePactActions';
 import { useAuthStore } from '@/store/auth';
-import { joinRequestService, pactService } from '@/services/api';
+import { pactService } from '@/services/api';
 
 function PactDetailSkeleton() {
   return (
@@ -67,41 +65,6 @@ function PactDetailSkeleton() {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function ProofTimeline({ proofs }: { proofs: any[] }) {
-  if (proofs.length === 0) {
-    return (
-      <div className="rounded-[24px] border border-dashed border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] px-6 py-10 text-center">
-        <p className="text-sm font-semibold text-[#14121F]">No proof updates yet</p>
-        <p className="mt-2 text-sm text-[#6B7280]">Proof updates will appear here as soon as members start posting them.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {proofs.map((proof) => (
-        <div key={proof.id} className="rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] p-4">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-[#14121F]">
-                {proof.day ? `Day ${proof.day}` : 'Proof update'}
-              </p>
-              <p className="mt-1 text-sm text-[#6B7280]">{proof.description || 'Proof submission'}</p>
-            </div>
-            <span className="rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
-              {proof.type === 'video' ? 'video' : 'photo'}
-            </span>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[#9CA3AF]">
-            <span>{proof.uploader ? `Uploaded by ${proof.uploader}` : 'Uploaded by a member'}</span>
-            {proof.uploadedAt && <span>{new Date(proof.uploadedAt).toLocaleString()}</span>}
-          </div>
-        </div>
-      ))}
     </div>
   );
 }
@@ -193,74 +156,7 @@ export default function PactDetailPage() {
             </>
           ),
         },
-        {
-          key: 'timeline',
-          label: 'Timeline',
-          icon: Clock3,
-          count: proofs.length,
-          content: (
-            <div className="space-y-5">
-              <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
-                <div className="mb-4 flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-slate-700" />
-                  <h2 className="text-lg font-black text-[#14121F]">Verification status</h2>
-                </div>
-                <VerificationResults pactId={pact.id} />
-              </section>
 
-              <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
-                <div className="mb-4 flex items-center gap-2">
-                  <Clock3 className="h-5 w-5 text-slate-700" />
-                  <h2 className="text-lg font-black text-[#14121F]">Proof timeline</h2>
-                </div>
-                <ProofTimeline proofs={proofs} />
-              </section>
-            </div>
-          ),
-        },
-        {
-          key: 'participants',
-          label: 'Participants',
-          icon: Users,
-          count: participants.length,
-          content: (
-            <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
-              <div className="mb-4 flex items-center gap-2">
-                <Users className="h-5 w-5 text-slate-700" />
-                <h2 className="text-lg font-black text-[#14121F]">Pact members</h2>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                {participants.length > 0 ? (
-                  participants.map((participant: any) => (
-                    <div
-                      key={participant.id || participant.user_id}
-                      className="flex items-center gap-3 rounded-full border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] px-3 py-2"
-                    >
-                      <UserAvatarLink name={participant.username} avatarUrl={participant.avatar_url} username={participant.username} size={40} />
-                      <div>
-                        <p className="text-sm font-semibold text-[#14121F]">@{participant.username}</p>
-                        <p className="text-xs uppercase tracking-[0.18em] text-[#9CA3AF]">{participant.status || 'active'}</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-[#9CA3AF]">No participant data yet.</p>
-                )}
-              </div>
-            </section>
-          ),
-        },
-        {
-          key: 'comments',
-          label: 'Comments',
-          icon: MessageSquare,
-          content: (
-            <section className="rounded-[28px] border border-white/10 bg-white p-5 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
-              <h2 className="mb-4 text-lg font-black text-[#14121F]">Discussion</h2>
-              <CommentSection pactId={pact.id} />
-            </section>
-          ),
-        },
       ]
     : [];
 
@@ -383,6 +279,28 @@ export default function PactDetailPage() {
               </div>
             </div>
             <PactDetailCarousel panels={detailPanels} activeIndex={activeIndex} onIndexChange={setActiveIndex} />
+            <div className="border-t border-white/10 px-4 py-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">Participants</p>
+                <span className="text-xs text-white/40">{participants.length}</span>
+              </div>
+              {participants.length > 0 ? (
+                <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
+                  {participants.map((participant: any) => (
+                    <UserAvatarLink
+                      key={participant.id || participant.user_id || participant.username}
+                      name={participant.full_name || participant.name || participant.username}
+                      avatarUrl={participant.avatar_url || participant.avatar}
+                      username={participant.username}
+                      size={36}
+                      className="shrink-0"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-white/50">No participant data yet.</p>
+              )}
+            </div>
           </section>
         </motion.div>
       </div>

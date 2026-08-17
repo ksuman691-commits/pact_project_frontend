@@ -87,6 +87,23 @@ export default function CheerCaptureModal({
   }, [isOpen, stopCamera, retryToken]);
 
   useEffect(() => {
+    if (!isOpen || typeof document === 'undefined') return;
+
+    const recheckCamera = () => {
+      if (document.visibilityState === 'visible' && permissionState === 'denied') {
+        setRetryToken((token) => token + 1);
+      }
+    };
+
+    document.addEventListener('visibilitychange', recheckCamera);
+    window.addEventListener('pageshow', recheckCamera);
+    return () => {
+      document.removeEventListener('visibilitychange', recheckCamera);
+      window.removeEventListener('pageshow', recheckCamera);
+    };
+  }, [isOpen, permissionState]);
+
+  useEffect(() => {
     return () => {
       if (capturedUrl) URL.revokeObjectURL(capturedUrl);
     };
@@ -118,13 +135,8 @@ export default function CheerCaptureModal({
     setCapturedFile(null);
     setCapturedUrl(null);
     setError(null);
-    navigator.mediaDevices
-      ?.getUserMedia({ audio: false, video: { facingMode: { exact: 'user' } } })
-      .then((stream) => {
-        streamRef.current = stream;
-        if (videoRef.current) videoRef.current.srcObject = stream;
-      })
-      .catch(() => setError('Front camera access is required to retake your Cheer.'));
+    setPermissionState('requesting');
+    setRetryToken((token) => token + 1);
   };
 
   if (!isOpen) return null;
@@ -150,7 +162,20 @@ export default function CheerCaptureModal({
             <video ref={videoRef} autoPlay muted playsInline aria-label="Front camera preview" className="aspect-square w-full object-cover -scale-x-100" />
           )}
           {!capturedUrl && !error && <span className="absolute left-3 top-3 rounded-full bg-black/45 px-3 py-1 text-xs font-semibold text-white/85">Front camera only</span>}
-          {error && <div className="absolute inset-0 flex items-center justify-center p-8 text-center text-sm leading-6 text-white/80">{error}</div>}
+          {error && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/55 p-8 text-center text-sm leading-6 text-white/80">
+              <p>{error}</p>
+              {permissionState !== 'unsupported' && (
+                <button
+                  type="button"
+                  onClick={requestCamera}
+                  className="rounded-full bg-[var(--pact-gold)] px-4 py-2.5 text-sm font-bold text-[#171421] transition hover:brightness-105"
+                >
+                  Enable Camera Access
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <footer className="flex items-center justify-center gap-3 px-5 py-5">
