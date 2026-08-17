@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { PartyPopper, Loader2, Check } from 'lucide-react';
 import { useCreateCheer } from '@/hooks/usePactMutations';
+import CheerCaptureModal from '@/components/CheerCaptureModal';
 
 interface CheerButtonProps {
   pactId: number;
@@ -39,8 +40,8 @@ interface CheerButtonProps {
 
 /**
  * Fast, single-photo "cheer" action for non-creator pact members.
- * Tapping the button opens the photo picker directly and uploads immediately
- * on selection — no caption, no confirmation step.
+ * Tapping the button opens a front-camera-only selfie capture flow. Cheers
+ * are confirmed before upload and are intended to expire after 24 hours.
  *
  * NOTE: `canCheer` only hides the upload affordance in the UI. The real
  * membership / non-creator authorization must happen server-side; see
@@ -56,18 +57,15 @@ export default function CheerButton({
   cheerCount = 0,
   onViewCheers,
 }: CheerButtonProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const createCheer = useCreateCheer(pactId);
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-
+  const handleCapture = async (file: File) => {
     setIsUploading(true);
     try {
       await createCheer.mutateAsync(file);
+      setIsCameraOpen(false);
     } finally {
       setIsUploading(false);
     }
@@ -95,7 +93,7 @@ export default function CheerButton({
       <>
         <button
           type="button"
-          onClick={() => inputRef.current?.click()}
+          onClick={() => setIsCameraOpen(true)}
           disabled={isUploading}
           title="Send a cheer"
           className={`flex w-12 flex-col items-center gap-1 rounded-full border border-[var(--pact-gold)]/70 bg-[var(--pact-gold)]/25 px-2 py-3 text-[var(--pact-gold)] backdrop-blur-md transition hover:bg-[var(--pact-gold)]/35 disabled:opacity-60 ${className}`}
@@ -103,7 +101,7 @@ export default function CheerButton({
           {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <PartyPopper className="h-4 w-4" />}
           <span className="text-[10px] font-semibold">{cheerCount}</span>
         </button>
-        <input ref={inputRef} type="file" accept="image/*" capture="user" className="hidden" onChange={handleFileChange} />
+        <CheerCaptureModal isOpen={isCameraOpen} isSubmitting={isUploading} onClose={() => setIsCameraOpen(false)} onCapture={handleCapture} />
       </>
     );
   }
@@ -129,7 +127,7 @@ export default function CheerButton({
     <>
       <button
         type="button"
-        onClick={() => inputRef.current?.click()}
+        onClick={() => setIsCameraOpen(true)}
         disabled={isUploading}
         className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-60 ${className}`}
         style={{ background: 'linear-gradient(135deg, var(--pact-gold), #f59e0b)' }}
@@ -141,13 +139,7 @@ export default function CheerButton({
         )}
         {isUploading ? 'Posting cheer...' : 'Send a cheer'}
       </button>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleFileChange}
-      />
+      <CheerCaptureModal isOpen={isCameraOpen} isSubmitting={isUploading} onClose={() => setIsCameraOpen(false)} onCapture={handleCapture} />
     </>
   );
 }

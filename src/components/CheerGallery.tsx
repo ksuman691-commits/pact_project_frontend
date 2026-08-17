@@ -10,6 +10,7 @@ export interface CheerItem {
   sender_username: string | null;
   sender_avatar_url: string | null;
   created_at: string | null;
+  expires_at?: string | null;
 }
 
 interface CheerGalleryProps {
@@ -22,17 +23,18 @@ interface CheerGalleryProps {
  * rather than the pact-holder's own progress evidence.
  */
 export default function CheerGallery({ cheers }: CheerGalleryProps) {
-  if (cheers.length === 0) return null;
+  const activeCheers = cheers.filter((cheer) => !cheer.expires_at || new Date(cheer.expires_at).getTime() > Date.now());
+  if (activeCheers.length === 0) return null;
 
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <PartyPopper className="h-5 w-5" style={{ color: 'var(--pact-gold)' }} />
-        <h2 className="font-bold text-[#14121F]">Cheers ({cheers.length})</h2>
+        <h2 className="font-bold text-[#14121F]">Cheers ({activeCheers.length})</h2>
       </div>
 
       <div className="flex gap-3 overflow-x-auto pb-1">
-        {cheers.map((cheer) => (
+        {activeCheers.map((cheer) => (
           <div
             key={cheer.id}
             className="relative w-32 flex-shrink-0 overflow-hidden rounded-[20px] border-2 shadow-sm"
