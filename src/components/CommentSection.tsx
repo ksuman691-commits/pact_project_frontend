@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Loader, Send, Trash2 } from 'lucide-react';
+import { AlertCircle, Loader, RotateCw, Send, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
 import { usePactComments } from '@/hooks/useFeedQueries';
@@ -121,6 +121,20 @@ export default function CommentSection({
       <div className="space-y-4 w-full">
         {commentsQuery.isLoading ? (
           <p className="text-sm text-[var(--pact-text-faint)] text-center py-8">Loading comments...</p>
+        ) : commentsQuery.isError ? (
+          <div className="flex flex-col items-center gap-3 py-8 text-center">
+            <AlertCircle className="h-5 w-5 text-[var(--pact-text-faint)]" />
+            <p className="text-sm text-[var(--pact-text-faint)]">
+              Couldn&apos;t load comments right now. Please try again.
+            </p>
+            <button
+              type="button"
+              onClick={() => commentsQuery.refetch()}
+              className="inline-flex items-center gap-1.5 rounded-full border border-[var(--pact-hairline)] px-4 py-1.5 text-xs font-semibold text-[var(--pact-text)] transition hover:bg-white/5"
+            >
+              <RotateCw className="h-3.5 w-3.5" /> Retry
+            </button>
+          </div>
         ) : comments.length === 0 ? (
           <p className="text-sm text-[var(--pact-text-faint)] text-center py-8">No comments yet. Be the first!</p>
         ) : (

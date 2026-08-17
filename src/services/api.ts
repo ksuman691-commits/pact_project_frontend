@@ -506,8 +506,20 @@ export const socialService = {
     api.post(`/api/pacts/${pactId}/comments`, { text }),
   deleteComment: (pactId: number, commentId: number) =>
     api.delete(`/api/pacts/${pactId}/comments/${commentId}`),
-  getComments: (pactId: number, skip?: number, limit?: number) =>
-    api.get(`/api/pacts/${pactId}/comments`, { params: { skip, limit } }).then((response) => normalizeListResponse(response)),
+  getComments: (pactId: number, skip = 0, limit = 20) =>
+    api.get(`/api/pacts/${pactId}/comments`, { params: { skip, limit } }).then((response) => {
+      const payload = response.data;
+      const rows = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload?.comments)
+            ? payload.comments
+            : [];
+      const pagination = payload?.pagination ?? { skip, limit, total: rows.length };
+
+      return { ...response, data: rows, pagination };
+    }),
   
   // Shares
   sharePact: (pactId: number, platform?: string) =>
