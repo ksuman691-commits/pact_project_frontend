@@ -39,6 +39,7 @@ export default function ProfileTabs({ children, onTabChange }: ProfileTabsProps)
             activeId={activeTab}
             onChange={handleTabChange}
             layoutId="profile-tabs-indicator"
+            scrollable={false}
           />
         </ScrollableRow>
       </div>

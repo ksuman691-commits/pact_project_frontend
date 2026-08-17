@@ -31,7 +31,7 @@ export interface Activity {
 }
 
 export type ProofMethod = 'Photo' | 'Video' | 'Check-in' | 'Activity data';
-export type ProofFrequency = 'Every day' | 'Every 2 days' | 'Every week';
+export type ProofFrequency = 'Every day' | 'Every 2 days' | 'Every week' | 'At the end of the Pact';
 export type AudienceLabel = 'Just me' | 'My Circle' | 'Everyone';
 export type VisibilityLabel = 'Only me' | 'My Circle' | 'Everyone';
 
