@@ -1,232 +1,38 @@
-'use client';
+'use client'
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Plus, Search, Users } from 'lucide-react';
-import { useInView } from 'react-intersection-observer';
-import { useCircles, usePublicCircles, useSearchCircles } from '@/hooks/useCircles';
-import { useJoinCircle } from '@/hooks/useCircleMutations';
-import TopNav from '@/components/TopNav';
-import CircleCard from '@/components/CircleCard';
-import MemberSearchModal from '@/components/MemberSearchModal';
-import AnimatedTabs from '@/components/pact-ui/AnimatedTabs';
+import Link from 'next/link'
+import { useMemo, useState } from 'react'
+import { Search, SlidersHorizontal, Plus } from 'lucide-react'
+import BottomNav from '@/components/BottomNav'
+import { useCircles } from '@/hooks/useCircles'
+import { useQuery } from '@tanstack/react-query'
+import { userService } from '@/services/api'
+import { useAuthStore } from '@/store/auth'
+
+const bubbleSizes = ['h-28 w-28', 'h-36 w-36', 'h-44 w-44', 'h-52 w-52']
 
 export default function CirclesPage() {
-  const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<'all' | 'my' | 'public' | 'trending'>('all');
-  const [memberSearchOpen, setMemberSearchOpen] = useState(false);
-  const { ref, inView } = useInView();
-  const shouldFetchPublic = sortBy === 'all' || sortBy === 'public' || sortBy === 'trending';
+  const { user } = useAuthStore()
+  const circlesQuery = useCircles()
+  const circles = (circlesQuery.data?.data || []) as any[]
+  const isLoading = circlesQuery.isLoading
+  const { data: statsResponse } = useQuery({ queryKey: ['user', 'stats'], queryFn: () => userService.getStats(user!.id!), enabled: Boolean(user?.id) })
+  const stats = statsResponse?.data as any
+  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState('Most active')
+  const [sortOpen, setSortOpen] = useState(false)
+  const filtered = useMemo(() => {
+    const list = circles.filter((circle: any) => (circle.name || '').toLowerCase().includes(search.toLowerCase()))
+    return [...list].sort((a: any, b: any) => sort === 'Alphabetical (A-Z)' ? a.name.localeCompare(b.name) : (b.member_count || 0) - (a.member_count || 0))
+  }, [circles, search, sort])
+  const people = circles.reduce((sum: number, circle: any) => sum + (circle.member_count || 0), 0)
+  const pactCount = circles.reduce((sum: number, circle: any) => sum + (circle.pact_count || circle.pacts_count || 0), 0)
+  const bestStreak = stats?.current_streak || stats?.longest_streak || 0
 
-  // Fetch different circle lists based on sort
-  const myCircles = useCircles();
-  const publicCircles = usePublicCircles(shouldFetchPublic);
-  const searchResults = useSearchCircles(search);
-  const joinMutation = useJoinCircle();
-  const publicHasNextPage = publicCircles.hasNextPage;
-  const publicFetchNextPage = publicCircles.fetchNextPage;
-  const searchHasNextPage = searchResults.hasNextPage;
-  const searchFetchNextPage = searchResults.fetchNextPage;
-
-  const toCardShape = (circle: any) => ({
-    id: circle.id,
-    name: circle.name,
-    description: circle.description || '',
-    avatar: circle.icon_emoji || circle.name?.charAt(0) || 'C',
-    ownerId: circle.owner_id ?? null,
-    ownerUsername: circle.owner_username || null,
-    ownerAvatarUrl: circle.owner_avatar_url || null,
-    memberCount: circle.member_count ?? circle.memberCount ?? 0,
-    isJoined: circle.isJoined || circle.is_member || circle.is_joined || false,
-    isTrending: false,
-    // pact_count isn't returned by the circles list/public endpoints yet
-    // (needs the backend addition described in the task) — omit rather
-    // than render a fake 0.
-    pactCount: typeof circle.pact_count === 'number' ? circle.pact_count : undefined,
-  });
-
-  // Determine which hook to use
-  useEffect(() => {
-    if (inView && sortBy === 'public' && publicHasNextPage) {
-      publicFetchNextPage();
-    }
-    if (inView && sortBy === 'trending' && publicHasNextPage) {
-      publicFetchNextPage();
-    }
-    if (inView && search && searchHasNextPage) {
-      searchFetchNextPage();
-    }
-  }, [
-    inView,
-    sortBy,
-    search,
-    publicHasNextPage,
-    publicFetchNextPage,
-    searchHasNextPage,
-    searchFetchNextPage,
-  ]);
-
-  // Get display data
-  let displayCircles: any[] = [];
-  let isLoading = false;
-  let hasMore = false;
-
-  if (search) {
-    displayCircles = (searchResults.data?.pages?.flatMap(p => p.data) || []).map(toCardShape);
-    isLoading = searchResults.isLoading;
-    hasMore = searchResults.hasNextPage || false;
-  } else if (sortBy === 'my') {
-    displayCircles = (myCircles.data || []).map(toCardShape);
-    isLoading = myCircles.isLoading;
-  } else if (sortBy === 'public' || sortBy === 'trending') {
-    displayCircles = (publicCircles.data?.pages?.flatMap(p => p.data) || []).map(toCardShape);
-    isLoading = publicCircles.isLoading;
-    hasMore = publicCircles.hasNextPage || false;
-  } else {
-    // Mix my circles + public circles
-    const myList = (myCircles.data || []).map(toCardShape);
-    const publicList = (publicCircles.data?.pages?.[0]?.data || []).map(toCardShape);
-    displayCircles = [...myList, ...publicList];
-    isLoading = myCircles.isLoading || publicCircles.isLoading;
-  }
-
-  const handleJoin = async (circleId: number) => {
-    try {
-      await joinMutation.mutateAsync({ circleId });
-    } catch (error) {
-      // Error already handled in mutation
-    }
-  };
-
-  return (
-    <div className="pact-flow pact-page-enter min-h-screen">
-      <TopNav showBack={false} showCategories={false} />
-      <div className="max-w-md mx-auto">
-        {/* Header */}
-        <div
-          className="sticky top-24 z-40 backdrop-blur"
-          style={{ background: 'var(--pact-bg)', borderBottom: '1px solid var(--pact-hairline)' }}
-        >
-          <div className="px-4 py-8 flex items-center justify-between gap-3">
-            <h1 className="text-4xl font-black leading-tight tracking-tight text-[var(--pact-text)]">Circles</h1>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => setMemberSearchOpen(true)}
-                className="inline-flex items-center justify-center w-10 h-10 rounded-full transition"
-                style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
-                aria-label="Search members"
-              >
-                <Search className="h-5 w-5" />
-              </button>
-
-              <Link href="/circles/create">
-                <button className="pact-btn-glow inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5" style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}>
-                  <Plus className="h-4 w-4" />
-                  Create Circle
-                </button>
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        {/* pb-28: clearance for the floating pill BottomNav so the last card
-            in the list (or the first, on short lists) isn't covered. */}
-        <div className="px-4 py-6 pb-28">
-        {/* Search and Filters */}
-        <div className="space-y-5 mb-8">
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-4 top-4 w-5 h-5" style={{ color: 'var(--pact-text-faint)' }} />
-            <input
-              type="text"
-              placeholder="Search circles..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 rounded-[24px] outline-none focus:ring-2 transition"
-              style={{
-                background: 'var(--pact-surface)',
-                border: '1px solid var(--pact-hairline)',
-                color: 'var(--pact-text)',
-              }}
-            />
-          </div>
-
-          {/* Sort Tabs */}
-          <AnimatedTabs
-            layoutId="circles-sort-tabs"
-            activeId={sortBy}
-            onChange={(id) => {
-              setSortBy(id as any);
-              if ((id === 'public' || id === 'trending') && publicCircles.data?.pages?.length === 0) {
-                publicCircles.refetch();
-              }
-            }}
-            tabs={[
-              { id: 'all', label: 'All Circles' },
-              { id: 'my', label: 'My Circles' },
-              { id: 'public', label: 'Discover' },
-              { id: 'trending', label: 'Trending' },
-            ]}
-          />
-        </div>
-
-        {/* Circles Grid */}
-        {isLoading && displayCircles.length === 0 ? (
-          <div className="space-y-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="pact-shimmer h-48 rounded-[24px]" style={{ background: 'var(--pact-surface-2)' }} />
-            ))}
-          </div>
-        ) : displayCircles.length === 0 ? (
-          <div className="pact-card rounded-[24px] text-center py-20">
-            <Users className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--pact-text-faint)' }} />
-            <p className="text-[var(--pact-text-dim)] text-lg font-medium mb-2">No circles match your search</p>
-            <p className="text-[var(--pact-text-faint)] mb-6">
-              {search ? 'Try a different search.' : 'Explore communities and join circles.'}
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="space-y-4">
-              {displayCircles.map((circle, index) => (
-                <CircleCard
-                  key={circle.id}
-                  circle={circle}
-                  onJoin={handleJoin}
-                  index={index}
-                />
-              ))}
-            </div>
-
-            {/* Load More */}
-            {hasMore && (
-              <div ref={ref} className="py-12 flex justify-center">
-                {isLoading ? (
-                  <div className="text-[var(--pact-text-faint)]">Loading more circles...</div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      if (search) searchResults.fetchNextPage();
-                      else if (sortBy === 'public' || sortBy === 'trending')
-                        publicCircles.fetchNextPage();
-                    }}
-                    className="px-6 py-2 font-medium rounded-[28px] transition"
-                    style={{ color: 'var(--pact-violet)' }}
-                  >
-                    Load More
-                  </button>
-                )}
-              </div>
-            )}
-          </>
-        )}
-        </div>
-      </div>
-
-      {/* Member Search Modal */}
-      <MemberSearchModal isOpen={memberSearchOpen} onClose={() => setMemberSearchOpen(false)} />
-    </div>
-  );
+  return <main className="min-h-screen bg-[var(--pact-bg)] pb-28 text-[var(--pact-text)]"><div className="mx-auto max-w-5xl px-5 pb-10 pt-8 md:px-10 md:pt-14">
+    <header className="border-b border-[var(--pact-hairline)] pb-8"><p className="text-xs font-bold uppercase tracking-[0.28em] text-[var(--pact-violet)]">Circles</p><h1 className="mt-3 text-balance text-5xl font-black tracking-[-0.07em] md:text-7xl">{circles.length}<span className="ml-3 text-2xl font-medium tracking-[-0.03em] text-[var(--pact-text-muted)] md:text-3xl">circles holding you together</span></h1><p className="mt-5 text-sm text-[var(--pact-text-muted)]">{people} people · {pactCount} pacts in motion · {bestStreak}d best streak</p></header>
+    <div className="flex items-center gap-5 border-b border-[var(--pact-hairline)] py-5 text-sm"><label className="flex min-w-0 flex-1 items-center gap-2 text-[var(--pact-text-muted)]"><Search className="h-4 w-4" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name" className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-[var(--pact-text-faint)]" /></label><div className="relative"><button onClick={() => setSortOpen(v => !v)} className="flex items-center gap-2 text-[var(--pact-text)]">{sort}<SlidersHorizontal className="h-3.5 w-3.5 text-[var(--pact-violet)]" /></button>{sortOpen && <div className="absolute right-0 top-7 z-10 w-48 border border-[var(--pact-hairline)] bg-[var(--pact-surface)] py-2 shadow-xl">{['Recent activity', 'Alphabetical (A-Z)', 'Most active', 'Member count', 'Newest circle', 'Most pacts'].map(option => <button key={option} onClick={() => { setSort(option); setSortOpen(false) }} className="block w-full px-3 py-2 text-left text-xs text-[var(--pact-text-muted)] hover:text-[var(--pact-text)]">{option}</button>)}</div>}</div></div>
+    <section className="-mx-5 flex snap-x gap-4 overflow-x-auto px-5 py-8 md:-mx-10 md:px-10" aria-label="Your circles">{isLoading ? <p className="text-sm text-[var(--pact-text-muted)]">Loading circles…</p> : filtered.map((circle: any, index: number) => <Link key={circle.id} href={`/circles/${circle.id}`} className={`flex shrink-0 snap-start items-center justify-center rounded-full border border-[var(--pact-violet)]/50 bg-[var(--pact-surface)] p-4 text-center transition hover:bg-[var(--pact-surface-2)] ${bubbleSizes[Math.min(index, bubbleSizes.length - 1)]}`}><span><span className="block text-2xl">{circle.emoji || circle.icon_emoji || '◌'}</span><span className="mt-1 block max-w-24 truncate text-sm font-bold">{circle.name}</span><span className="mt-1 block text-[10px] text-[var(--pact-text-faint)]">{circle.member_count || 0} people</span></span></Link>)}<Link href="/circles/create" className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--pact-violet)] text-center text-xs font-bold text-[var(--pact-violet)]"><span><Plus className="mx-auto mb-1 h-5 w-5" />New</span></Link></section>
+    <section className="border-t border-[var(--pact-hairline)]"><div className="flex items-baseline justify-between py-5"><h2 className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--pact-text-muted)]">Your circles</h2><span className="text-xs text-[var(--pact-text-faint)]">{filtered.length} total</span></div>{filtered.map((circle: any) => <Link key={circle.id} href={`/circles/${circle.id}`} className="flex items-center justify-between border-t border-[var(--pact-hairline)] py-4 transition hover:border-[var(--pact-violet)]"><div className="flex items-center gap-3"><span className="text-xl">{circle.emoji || circle.icon_emoji || '◌'}</span><div><p className="font-bold">{circle.name}</p><p className="text-xs text-[var(--pact-text-faint)]">{circle.member_count || 0} members</p></div></div><span className="text-xs text-[var(--pact-violet)]">{circle.current_streak || circle.streak || 0}d streak</span></Link>)}</section>
+  </div><BottomNav /></main>
 }

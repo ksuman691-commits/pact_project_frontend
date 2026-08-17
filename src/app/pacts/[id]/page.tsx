@@ -195,13 +195,13 @@ export default function PactDetailPage() {
           className="mx-auto max-w-md space-y-6 px-4"
         >
           {progress && (
-            <section className="flex items-center gap-5 rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-              <PactProgressRing completed={progress.completed} total={progress.total} missed={progress.missed} size={132} strokeWidth={10} />
+            <section className="flex flex-col items-center border-b border-[var(--pact-hairline)] pb-7 text-center">
+              <PactProgressRing completed={progress.completed} total={progress.total} missed={progress.missed} size={168} strokeWidth={10} />
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/50">Pact progress</p>
                 <p className="mt-2 text-2xl font-black text-white">{progress.completed} of {progress.total} days</p>
                 <p className="mt-1 text-sm text-white/60">Keep the circle moving, one proof at a time.</p>
-                {progress.missed > 0 && <p className="mt-3 text-xs font-semibold text-[var(--pact-danger)]">Missed {progress.missed} {progress.missed === 1 ? 'day' : 'days'}</p>}
+                <div className="mt-3 flex items-center gap-3 text-xs"><span className="font-semibold text-[var(--pact-danger)]">Missed {progress.missed} {progress.missed === 1 ? 'day' : 'days'}</span><span className="text-white/50">Next proof due today</span></div>
                 {participants.length > 0 && (
                   <div className="mt-4 flex items-center pl-2">
                     {participants.slice(0, 5).map((participant: any, index: number) => <UserAvatarLink key={participant.id || participant.user_id || participant.username} name={participant.full_name || participant.name || participant.username} avatarUrl={participant.avatar_url || participant.avatar} username={participant.username} size={30} className={`-ml-2 border-2 border-[var(--pact-bg)] ${index === 0 ? 'ml-0' : ''}`} />)}
