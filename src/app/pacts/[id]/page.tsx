@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { AlertCircle, Camera, CheckCircle2, Crown, Inbox } from 'lucide-react';
 import toast from 'react-hot-toast';
-import TopNav from '@/components/TopNav';
+import DetailPageHeader from '@/components/DetailPageHeader';
 import FeedPactCard from '@/components/FeedPactCard';
 import ProofsSection from '@/components/ProofsSection';
 import UserAvatarLink from '@/components/UserAvatarLink';
@@ -21,7 +21,7 @@ import { pactService } from '@/services/api';
 
 function PactDetailSkeleton() {
   return (
-    <div className="min-h-screen bg-slate-950 pb-16 pt-24">
+    <div className="min-h-screen bg-slate-950 pb-16 pt-6">
       <div className="mx-auto max-w-md space-y-6 px-4">
         <div className="overflow-hidden rounded-[32px] border border-white/10 bg-white/5 shadow-[0_20px_70px_rgba(2,6,23,0.45)]">
           <div className="aspect-[4/5] animate-pulse bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900" />
