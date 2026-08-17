@@ -247,7 +247,7 @@ export default function CircleDetailPage() {
             {isMember ? (
               <>
                 <button
-                  onClick={() => router.push('/pacts/create')}
+                  onClick={() => router.push(`/pacts/create?circleId=${circleId}`)}
                   className="pact-btn-glow flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition"
                   style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
                 >
@@ -400,7 +400,7 @@ export default function CircleDetailPage() {
               <p className="text-[var(--pact-text-faint)] mb-4">No pacts in this circle yet</p>
               {isMember && (
                 <button
-                  onClick={() => router.push('/pacts/create')}
+                  onClick={() => router.push(`/pacts/create?circleId=${circleId}`)}
                   className="pact-btn-glow inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-white transition"
                   style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
                 >

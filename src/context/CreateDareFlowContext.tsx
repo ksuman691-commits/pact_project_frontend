@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useCreateDare } from '@/hooks/useDareMutations';
+import { useUser } from '@/hooks/useUserQueries';
 import { resolveDareSteps } from '@/lib/createDareFlow/steps';
 import { dareDraftToApiPayload } from '@/lib/createDareFlow/toApiPayload';
 import { createEmptyDareDraft, type CreatedDare, type DareDraft, type DareFlowStep } from '@/types/createDareFlow';
@@ -24,11 +25,46 @@ interface CreateDareFlowContextValue {
 
 const CreateDareFlowContext = createContext<CreateDareFlowContextValue | null>(null);
 
-export function CreateDareFlowProvider({ children }: { children: React.ReactNode }) {
-  const [draft, setDraft] = useState<DareDraft>(createEmptyDareDraft());
+export function CreateDareFlowProvider({
+  children,
+  initialRecipientId,
+}: {
+  children: React.ReactNode;
+  /**
+   * Pre-attached recipient — arriving from a specific user's "Dare
+   * [Name]" CTA (e.g. a shared-circle profile). The target user context
+   * is already known, so the visibility and recipient-picker questions
+   * must be skipped entirely (never shown a generic recipient search) and
+   * that person shown as an already-added recipient.
+   */
+  initialRecipientId?: number | null;
+}) {
+  const [draft, setDraft] = useState<DareDraft>(() => {
+    let base = createEmptyDareDraft();
+    if (initialRecipientId != null) {
+      base = { ...base, recipientPreset: true, visibility: 'private' };
+    }
+    return base;
+  });
   const [stepIndex, setStepIndex] = useState(0);
   const [createdDare, setCreatedDare] = useState<CreatedDare | null>(null);
   const createDareMutation = useCreateDare();
+  const { data: presetUserData } = useUser(initialRecipientId ?? 0);
+
+  // The recipients array needs the full user object (username, full_name,
+  // avatar_url) for the review screen and API payload — only the id is
+  // known synchronously from the CTA, so seed it once the profile loads.
+  useEffect(() => {
+    const user = presetUserData?.data;
+    if (!user || draft.recipients.some((r) => r.id === user.id)) return;
+    setDraft((prev) => ({
+      ...prev,
+      recipients: [
+        { id: user.id, username: user.username, full_name: user.full_name, avatar_url: user.avatar_url },
+      ],
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presetUserData]);
 
   const resolvedSteps = useMemo(() => resolveDareSteps(draft), [draft]);
   // Clamp in case a draft change (e.g. switching visibility away from

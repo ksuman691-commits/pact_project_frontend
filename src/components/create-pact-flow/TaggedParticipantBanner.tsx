@@ -5,13 +5,21 @@ import Avatar from '@/components/Avatar';
 import { useUser } from '@/hooks/useUserQueries';
 
 /**
- * Persistent context banner shown across every step of the Create Pact flow
- * when it was launched from a specific user's "Create a Pact with [Name]"
- * CTA (e.g. from a shared-circle profile). Confirms that person is already
- * attached to this pact so the flow never needs to re-ask a generic
- * "who's watching"-style audience question.
+ * Persistent context banner shown across every step of a "create" flow
+ * (Pact, Dare, ...) when it was launched from a specific user's
+ * "Create a Pact with [Name]" / "Dare [Name]" CTA (e.g. from a
+ * shared-circle profile). Confirms that person is already attached so the
+ * flow never needs to re-ask a generic "who's watching"-style audience or
+ * recipient question. `label` lets each flow phrase this in its own voice
+ * while sharing the fetch/loading/avatar logic.
  */
-export default function TaggedParticipantBanner({ userId }: { userId: number }) {
+export default function TaggedParticipantBanner({
+  userId,
+  label = 'Creating pact with',
+}: {
+  userId: number;
+  label?: string;
+}) {
   const { data, isLoading } = useUser(userId);
   const user = data?.data;
 
@@ -38,7 +46,7 @@ export default function TaggedParticipantBanner({ userId }: { userId: number }) 
     >
       <Avatar name={name} avatarUrl={user.avatar_url} size={32} />
       <p className="text-sm">
-        Creating pact with <span className="font-semibold">{name}</span>
+        {label} <span className="font-semibold">{name}</span>
       </p>
     </div>
   );
