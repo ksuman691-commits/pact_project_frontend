@@ -164,7 +164,8 @@ export default function CircleDetailPage() {
 
   const activeMembers = leaderboardEntries.filter((entry) => entry.streak > 0).length;
   const topContributor = [...leaderboardEntries].sort((a, b) => b.streak - a.streak || b.pactsCompleted - a.pactsCompleted)[0];
-  const groupStreak = leaderboardEntries.length > 0 ? Math.min(...leaderboardEntries.filter((entry) => entry.streak > 0).map((entry) => entry.streak)) || 0 : 0;
+  const activeStreaks = leaderboardEntries.filter((entry) => entry.streak > 0).map((entry) => entry.streak);
+  const groupStreak = activeStreaks.length > 0 ? Math.min(...activeStreaks) : 0;
 
   const handleRequestJoinPact = async (pactId: number) => {
     try {
