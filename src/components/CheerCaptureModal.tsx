@@ -19,12 +19,18 @@ export default function CheerCaptureModal({
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [permissionState, setPermissionState] = useState<'idle' | 'requesting' | 'denied' | 'unsupported'>('idle');
   const [capturedUrl, setCapturedUrl] = useState<string | null>(null);
   const [capturedFile, setCapturedFile] = useState<File | null>(null);
+  const [retryToken, setRetryToken] = useState(0);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
+  }, []);
+
+  const requestCamera = useCallback(() => {
+    setRetryToken((token) => token + 1);
   }, []);
 
   useEffect(() => {
@@ -39,12 +45,15 @@ export default function CheerCaptureModal({
     setCapturedUrl(null);
 
     if (!navigator.mediaDevices?.getUserMedia) {
+      setPermissionState('unsupported');
       setError('This browser does not support front-camera capture.');
       return () => {
         cancelled = true;
         stopCamera();
       };
     }
+
+    setPermissionState('requesting');
 
     navigator.mediaDevices.getUserMedia({
       audio: false,
@@ -57,10 +66,17 @@ export default function CheerCaptureModal({
         }
         streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
+        setPermissionState('idle');
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
-          setError('Front camera access is required to send an authentic Cheer.');
+          const isDenied = err?.name === 'NotAllowedError' || err?.name === 'SecurityError';
+          setPermissionState(isDenied ? 'denied' : 'idle');
+          setError(
+            isDenied
+              ? 'Camera access was denied. Please enable camera permissions for this site in your browser settings, then try again.'
+              : 'Front camera access is required to send an authentic Cheer.'
+          );
         }
       });
 
@@ -68,7 +84,7 @@ export default function CheerCaptureModal({
       cancelled = true;
       stopCamera();
     };
-  }, [isOpen, stopCamera]);
+  }, [isOpen, stopCamera, retryToken]);
 
   useEffect(() => {
     return () => {
