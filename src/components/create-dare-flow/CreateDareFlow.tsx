@@ -4,6 +4,7 @@ import React from 'react';
 import { CreateDareFlowProvider, useCreateDareFlow } from '@/context/CreateDareFlowContext';
 import { generateDareSummary, DARE_LIVE_TITLE_PLACEHOLDER } from '@/lib/createDareFlow/generate';
 import FlowShell from '@/components/create-pact-flow/FlowShell';
+import TaggedParticipantBanner from '@/components/create-pact-flow/TaggedParticipantBanner';
 import TitleStep from './TitleStep';
 import DescriptionStep from './DescriptionStep';
 import TimingStep from './TimingStep';
@@ -15,9 +16,11 @@ import SuccessStep from './SuccessStep';
 
 interface CreateDareFlowProps {
   onExit: () => void;
+  /** Pre-attached recipient (arriving from a specific user's "Dare [Name]" CTA) — skips the visibility/recipient-picker steps and shows them as already-added. */
+  initialRecipientId?: number | null;
 }
 
-function StepRouter({ onExit }: CreateDareFlowProps) {
+function StepRouter({ onExit }: { onExit: () => void }) {
   const { currentStep, draft, stepIndex, resolvedSteps, canGoBack, goBack } = useCreateDareFlow();
 
   return (
@@ -30,6 +33,11 @@ function StepRouter({ onExit }: CreateDareFlowProps) {
       showChrome={currentStep !== 'success'}
       titleStripText={generateDareSummary(draft)}
       titleStripPlaceholder={DARE_LIVE_TITLE_PLACEHOLDER}
+      banner={
+        draft.recipientPreset && draft.recipients[0] ? (
+          <TaggedParticipantBanner userId={draft.recipients[0].id} label="Daring" />
+        ) : null
+      }
     >
       {currentStep === 'title' && <TitleStep />}
       {currentStep === 'description' && <DescriptionStep />}
@@ -43,9 +51,9 @@ function StepRouter({ onExit }: CreateDareFlowProps) {
   );
 }
 
-export default function CreateDareFlow({ onExit }: CreateDareFlowProps) {
+export default function CreateDareFlow({ onExit, initialRecipientId }: CreateDareFlowProps) {
   return (
-    <CreateDareFlowProvider>
+    <CreateDareFlowProvider initialRecipientId={initialRecipientId}>
       <StepRouter onExit={onExit} />
     </CreateDareFlowProvider>
   );
