@@ -1,7 +1,5 @@
 'use client'
 
-import Link from 'next/link'
-
 type PactProgressRingProps = {
   completed: number
   total: number
@@ -9,7 +7,6 @@ type PactProgressRingProps = {
   size?: number
   strokeWidth?: number
   showLabel?: boolean
-  pactId?: number
   className?: string
 }
 
@@ -20,7 +17,6 @@ export default function PactProgressRing({
   size = 72,
   strokeWidth = 7,
   showLabel = true,
-  pactId,
   className = '',
 }: PactProgressRingProps) {
   const safeTotal = Math.max(1, total)
@@ -54,7 +50,7 @@ export default function PactProgressRing({
     </div>
   )
 
-  return pactId ? <Link href={`/pacts/${pactId}`} className="inline-flex">{ring}</Link> : ring
+  return ring
 }
 
 export function getPactProgress(pact: any) {
