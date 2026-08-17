@@ -184,8 +184,8 @@ export default function PactDetailPage() {
 
   return (
     <>
-      <TopNav showBack={true} showCategories={false} />
-      <div className="pact-flow min-h-screen bg-slate-950 pb-16 pt-24">
+      <DetailPageHeader title={pact.title || 'Pact'} maxWidthClassName="max-w-md" />
+      <div className="pact-flow min-h-screen bg-slate-950 pb-16 pt-6">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

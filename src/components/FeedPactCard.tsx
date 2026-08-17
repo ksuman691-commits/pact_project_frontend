@@ -270,6 +270,7 @@ export default function FeedPactCard({
   const activePointerId = useRef<number | null>(null);
   const startPoint = useRef({ x: 0, y: 0 });
   const lastTapAt = useRef(0);
+  const singleTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const committedRef = useRef(false);
   const [displayVote, setDisplayVote] = useState<string | null>(null);
   const [displayCheerCount, setDisplayCheerCount] = useState(0);
@@ -298,7 +299,22 @@ export default function FeedPactCard({
     setActiveProofIndex(0);
     setShowJoinNudge(false);
     setMoreMenuOpen(false);
+    if (singleTapTimeoutRef.current) {
+      clearTimeout(singleTapTimeoutRef.current);
+      singleTapTimeoutRef.current = null;
+    }
   }, [pact.id]);
+
+  // Guard against navigating after the card has unmounted (e.g. dismissed
+  // via a vote) while a single-tap-to-open timer is still pending.
+  useEffect(() => {
+    return () => {
+      if (singleTapTimeoutRef.current) {
+        clearTimeout(singleTapTimeoutRef.current);
+        singleTapTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     setDisplayVote(userVote === 'doubt' ? 'skip' : userVote ?? null);
@@ -534,17 +550,39 @@ export default function FeedPactCard({
     resetDrag();
   };
 
+  // Single tap anywhere on the hero (image / progress ring / placeholder)
+  // opens the pact detail, same as tapping the rest of the card — it used to
+  // always stopPropagation() and swallow the tap here, which made most of
+  // the card's visible area dead to a single tap. A short delay lets a fast
+  // follow-up tap still be caught below as the double-tap-to-cheer/join
+  // gesture instead of navigating away immediately.
   const handleMediaTap = (event: React.MouseEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement | null)?.closest('button,a')) return;
-    if (!gesturesEnabled || isVoting || isExiting) return;
+    if (isVoting || isExiting) {
+      event.stopPropagation();
+      return;
+    }
 
     const now = Date.now();
     const tappedTwice = now - lastTapAt.current < 300;
     lastTapAt.current = now;
+    event.stopPropagation();
 
-    if (tappedTwice && rightAction) {
-      triggerRightAction();
+    if (tappedTwice) {
+      if (singleTapTimeoutRef.current) {
+        clearTimeout(singleTapTimeoutRef.current);
+        singleTapTimeoutRef.current = null;
+      }
+      if (gesturesEnabled && rightAction) {
+        triggerRightAction();
+      }
+      return;
     }
+
+    singleTapTimeoutRef.current = setTimeout(() => {
+      singleTapTimeoutRef.current = null;
+      handleCardNavigate();
+    }, 300);
   };
 
   const handleReport = async (reason: 'fake_or_ai' | 'spam' | 'offensive') => {
@@ -639,7 +677,9 @@ export default function FeedPactCard({
         whileTap={{ scale: 0.99 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
         onClick={handleCardNavigate}
-        className="pact-card group relative mx-2 cursor-pointer overflow-hidden rounded-[28px] transition-colors hover:border-[var(--pact-violet)]/60 sm:mx-0"
+        className={`pact-card group relative mx-2 cursor-pointer rounded-[28px] transition-colors hover:border-[var(--pact-violet)]/60 sm:mx-0 ${
+          moreMenuOpen ? 'overflow-visible' : 'overflow-hidden'
+        }`}
       >
         {/* Header row: avatar + creator name + category tag + time-left badge + overflow menu */}
         <div className="flex items-center gap-3 px-4 py-3.5">
@@ -745,10 +785,7 @@ export default function FeedPactCard({
             if ((event.target as HTMLElement | null)?.closest('button,a')) return;
             if (rightAction) triggerRightAction();
           }}
-          onClick={(event) => {
-            handleMediaTap(event);
-            event.stopPropagation();
-          }}
+          onClick={handleMediaTap}
           style={transformStyle}
         >
           {media.hasMedia ? (
@@ -886,13 +923,25 @@ export default function FeedPactCard({
             )}
 
             {!joinAllowed && pact.join_block_reason === 'creator' && (
-              <span
-                title="You created this pact"
-                className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-amber-300"
-              >
-                <Crown className="h-3.5 w-3.5" />
-                Creator
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  title="You created this pact"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-amber-300"
+                >
+                  <Crown className="h-3.5 w-3.5" />
+                  Creator
+                </span>
+                {uploadAllowed && (
+                  <button
+                    type="button"
+                    onClick={handleProofUploadClick}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-[var(--pact-violet)]/50 bg-[var(--pact-violet)]/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[var(--pact-violet)] transition hover:bg-[var(--pact-violet)]/25"
+                  >
+                    <FileImage className="h-3.5 w-3.5" />
+                    Submit Proof
+                  </button>
+                )}
+              </div>
             )}
 
             {!joinAllowed && pact.join_block_reason && pact.join_block_reason !== 'already_joined' && pact.join_block_reason !== 'creator' && (

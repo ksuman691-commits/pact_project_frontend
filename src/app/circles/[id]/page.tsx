@@ -4,11 +4,11 @@ import type { ComponentType, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import TopNav from '@/components/TopNav';
+import DetailPageHeader from '@/components/DetailPageHeader';
 import { circleService, circleJoinRequestService, joinRequestService, userService } from '@/services/api';
 import { Circle, Pact } from '@/types';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Users, Globe, Target, Plus, Trophy, Calendar, Crown } from 'lucide-react';
+import { Users, Globe, Target, Plus, Trophy, Calendar, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CircleLeaderboard from '@/components/CircleLeaderboard';
 import InviteMembersModal from '@/components/InviteMembersModal';
@@ -186,17 +186,8 @@ export default function CircleDetailPage() {
 
   return (
     <div className="pact-flow pact-page-enter min-h-screen">
-      <TopNav showBack={false} showCategories={false} />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Back Button */}
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 mb-8 transition"
-          style={{ color: 'var(--pact-violet)' }}
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back to Circles
-        </button>
+      <DetailPageHeader title={circle.name || 'Circle'} backHref="/circles" maxWidthClassName="max-w-4xl" />
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Circle Header */}
         <div className="pact-card relative overflow-hidden rounded-[28px] p-6 sm:p-8 mb-8">
