@@ -58,6 +58,7 @@ export function CreatePactFlowProvider({
   children,
   initialCircleId,
   initialDescription,
+  initialParticipantId,
 }: {
   children: React.ReactNode;
   /** Pre-set circle audience — skips the audience question entirely. */
@@ -69,17 +70,31 @@ export function CreatePactFlowProvider({
    * auto-generated description.
    */
   initialDescription?: string | null;
+  /**
+   * Pre-attached participant — arriving from a specific user's "Create a
+   * Pact with [Name]" CTA. The target user context is already known, so the
+   * audience question must be skipped entirely (never shown a generic
+   * profile-picker) and that person shown as an already-added participant.
+   */
+  initialParticipantId?: number | null;
 }) {
   const [draft, setDraft] = useState<PactDraft>(() => {
     let base = createEmptyDraft();
+    // Either signal (a resolved circle, or a known target user) means the
+    // audience question is already answered by context and must be skipped.
+    if (initialCircleId != null || initialParticipantId != null) {
+      base = { ...base, audiencePreset: true };
+    }
     if (initialCircleId != null) {
       base = {
         ...base,
         audience: 'My Circle',
         visibility: 'My Circle',
         circleId: initialCircleId,
-        audiencePreset: true,
       };
+    }
+    if (initialParticipantId != null) {
+      base = { ...base, taggedParticipantId: initialParticipantId };
     }
     if (initialDescription?.trim()) {
       base = { ...base, descriptionOverride: initialDescription.trim() };

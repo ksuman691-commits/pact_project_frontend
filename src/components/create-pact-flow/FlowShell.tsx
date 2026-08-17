@@ -30,6 +30,8 @@ interface FlowShellProps {
   /** Small icon shown in the live-title strip to hint at the flow's own
    * visual language (e.g. a target for Pact, people for Circle). */
   titleStripIcon?: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  /** Optional persistent context banner (e.g. an already-attached participant) shown under the title strip on every step. */
+  banner?: React.ReactNode;
 }
 
 /**
@@ -50,6 +52,7 @@ export default function FlowShell({
   titleStripPlaceholder,
   accent,
   titleStripIcon,
+  banner,
 }: FlowShellProps) {
   return (
     <div
@@ -94,6 +97,8 @@ export default function FlowShell({
           <LiveTitleStrip text={titleStripText} placeholder={titleStripPlaceholder} icon={titleStripIcon} />
         </div>
       )}
+
+      {showChrome && banner && <div className="px-5 pt-3">{banner}</div>}
 
       <main className="flex flex-1 flex-col px-5 pb-10 pt-6">{children}</main>
     </div>

@@ -48,6 +48,7 @@ export interface PactDraft {
   visibility: VisibilityLabel; // auto-derived, editable only in Customize
   circleId?: number | null; // bridging field: which circle when audience === 'My Circle'
   audiencePreset?: boolean; // true when arriving from a Circle's "Start a Pact" CTA — skips the audience step
+  taggedParticipantId?: number | null; // set when arriving from a specific user's "Create a Pact with [Name]" CTA — shown as an already-attached participant, never re-prompted for
   descriptionOverride?: string; // set only if user edits generated description
   remindersEnabled: boolean; // default true
   startDate?: string; // ISO, editable only in Customize
@@ -91,6 +92,7 @@ export function createEmptyDraft(): PactDraft {
     proofFrequency: null,
     audience: null,
     visibility: 'Only me',
+    taggedParticipantId: null,
     remindersEnabled: true,
   };
 }
