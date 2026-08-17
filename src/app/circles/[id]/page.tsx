@@ -12,6 +12,7 @@ import { ArrowLeft, Users, Globe, Target, Plus, Trophy, Calendar, Crown } from '
 import { motion } from 'framer-motion';
 import CircleLeaderboard from '@/components/CircleLeaderboard';
 import InviteMembersModal from '@/components/InviteMembersModal';
+import ConfirmModal from '@/components/ConfirmModal';
 import PactCard from '@/components/PactCard';
 import { useCountUp } from '@/components/pact-ui/useCountUp';
 import UserAvatarLink from '@/components/UserAvatarLink';
@@ -26,6 +27,8 @@ export default function CircleDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isMember, setIsMember] = useState(false);
   const [inviteModal, setInviteModal] = useState(false);
+  const [leaveModal, setLeaveModal] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   // Real per-member stats for this circle — no fallback to placeholder/demo
   // entries. The backend has no dedicated circle-leaderboard endpoint (both
   // /api/circles/{id}/leaderboard and /api/leaderboards/circles/{id} 404),
@@ -146,14 +149,16 @@ export default function CircleDetailPage() {
   };
 
   const handleLeaveCircle = async () => {
-    if (!window.confirm('Are you sure you want to leave this circle?')) return;
-
+    setLeaving(true);
     try {
       await circleService.leave(circleId);
       toast.success('Left circle');
       router.push('/circles');
     } catch (error: any) {
       toast.error('Failed to leave circle');
+    } finally {
+      setLeaving(false);
+      setLeaveModal(false);
     }
   };
 
@@ -264,7 +269,7 @@ export default function CircleDetailPage() {
                 </button>
                 {!isOwner && (
                   <button
-                    onClick={handleLeaveCircle}
+                    onClick={() => setLeaveModal(true)}
                     className="ml-auto text-sm font-medium text-[var(--pact-text-faint)] transition hover:text-[var(--pact-pink)]"
                   >
                     Leave Circle
@@ -422,6 +427,18 @@ export default function CircleDetailPage() {
           circleName={circle.name}
         />
       )}
+
+      {/* Leave Circle Confirmation */}
+      <ConfirmModal
+        isOpen={leaveModal}
+        onClose={() => setLeaveModal(false)}
+        onConfirm={handleLeaveCircle}
+        title="Leave circle?"
+        description={`You'll lose access to ${circle.name}'s pacts and leaderboard until you rejoin.`}
+        confirmLabel="Leave Circle"
+        destructive
+        loading={leaving}
+      />
     </div>
   );
 }
