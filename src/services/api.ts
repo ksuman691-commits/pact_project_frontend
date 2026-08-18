@@ -702,16 +702,20 @@ export const circleAdvancedService = {
 };
 
 // Pending Circle Invites (recipient side of circleAdvancedService.inviteUser)
-// NOTE: none of these three routes exist on the live backend yet — they're
-// the receiving-end counterpart to POST /api/circles/{id}/invite, being
-// built separately by the backend developer alongside it. Wired ahead of
-// time so the "Pending invites" card on /circles just starts working once
-// deployed; useMyCircleInvites swallows a 404 into an empty list so the
-// card silently stays hidden rather than erroring until then.
+// Receiving-end counterpart to POST /api/circles/{id}/invite. Confirmed
+// live against the deployed OpenAPI schema: accept/decline are nested
+// under circle_id, not addressable by invite id alone —
+// /api/circles/{circle_id}/invite/{invite_id}/accept|decline — while the
+// list endpoint is a flat /api/users/me/circle-invites returning
+// { id, circle_id, invited_by_user_id, status, created_at } records
+// (enriched client-side in useMyCircleInvites via circleService/userService
+// lookups since the list response has no nested circle/inviter details).
 export const circleInviteService = {
   listMine: () => api.get('/api/users/me/circle-invites'),
-  accept: (inviteId: number) => api.post(`/api/circle-invites/${inviteId}/accept`),
-  decline: (inviteId: number) => api.post(`/api/circle-invites/${inviteId}/decline`),
+  accept: (circleId: number, inviteId: number) =>
+    api.post(`/api/circles/${circleId}/invite/${inviteId}/accept`),
+  decline: (circleId: number, inviteId: number) =>
+    api.post(`/api/circles/${circleId}/invite/${inviteId}/decline`),
 };
 
 // Analytics Services

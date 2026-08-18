@@ -64,7 +64,10 @@ export function useAcceptCircleInvite() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (inviteId: number) => circleInviteService.accept(inviteId),
+    // accept is nested under circle_id on the backend, not addressable
+    // by invite id alone — see the NOTE on circleInviteService.
+    mutationFn: ({ circleId, inviteId }: { circleId: number; inviteId: number }) =>
+      circleInviteService.accept(circleId, inviteId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CIRCLE_INVITES_KEY });
       queryClient.invalidateQueries({ queryKey: queryKeys.circles.all });
@@ -85,7 +88,8 @@ export function useDeclineCircleInvite() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (inviteId: number) => circleInviteService.decline(inviteId),
+    mutationFn: ({ circleId, inviteId }: { circleId: number; inviteId: number }) =>
+      circleInviteService.decline(circleId, inviteId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CIRCLE_INVITES_KEY });
       toast.success('Invite declined');
