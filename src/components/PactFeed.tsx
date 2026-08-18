@@ -6,6 +6,7 @@ import { usePersonalizedFeed } from '@/hooks/useFeedQueries'
 import { useSkipPact } from '@/hooks/usePactActions'
 import { useInView } from 'react-intersection-observer'
 import FeedPactCard from './FeedPactCard'
+import PullToRefresh from './PullToRefresh'
 import { useRouter } from 'next/navigation'
 
 const mockPacts = [
@@ -113,7 +114,7 @@ export default function PactFeed({
   const normalizedCategory = (category || 'all').toLowerCase()
 
   // Fetch feed data with infinite scroll (will integrate with API later)
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isFetching } =
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isFetching, refetch } =
     usePersonalizedFeed(normalizedCategory)
 
   const isBusy = isLoading || isFetching || isFetchingNextPage
@@ -181,6 +182,7 @@ export default function PactFeed({
   }
 
   return (
+    <PullToRefresh onRefresh={refetch} disabled={isLoading}>
     <div id="pact-feed-list" className="space-y-4 scroll-mt-6">
       {isLoading ? (
         <div className="space-y-4">
@@ -257,5 +259,6 @@ export default function PactFeed({
         )}
       </div>
     </div>
+    </PullToRefresh>
   )
 }
