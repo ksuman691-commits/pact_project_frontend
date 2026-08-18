@@ -56,6 +56,7 @@ export function PactsTab({
   pacts,
   joinedPacts,
   votedPacts,
+  sharedPacts,
   allowJoinedUploads = false,
   isOwnProfile = true,
   hasSharedCircle = false,
@@ -67,6 +68,9 @@ export function PactsTab({
   pacts: any[];
   joinedPacts: any[];
   votedPacts: any[];
+  // Only present when viewing someone else's profile — see limitation note
+  // at the call site (profile/[username]/page.tsx) for how this is derived.
+  sharedPacts?: any[];
   allowJoinedUploads?: boolean;
   isOwnProfile?: boolean;
   hasSharedCircle?: boolean;
@@ -76,15 +80,28 @@ export function PactsTab({
   hasOwnCircles?: boolean;
 }) {
   const router = useRouter();
-  const [activeSection, setActiveSection] = useState<'created' | 'joined' | 'voted'>('created');
+  const showSharedSection = !isOwnProfile && Array.isArray(sharedPacts);
+  const [activeSection, setActiveSection] = useState<'created' | 'joined' | 'voted' | 'shared'>('created');
 
   const sections = [
     { id: 'created' as const, label: isOwnProfile ? 'Created by Me' : `Created by ${profileName}`, count: pacts.length },
     { id: 'joined' as const, label: 'Joined Pacts', count: joinedPacts.length },
     { id: 'voted' as const, label: 'Voted Pacts', count: votedPacts.length },
+    ...(showSharedSection ? [{ id: 'shared' as const, label: 'Shared with You', count: sharedPacts?.length ?? 0 }] : []),
   ];
 
-  const renderEmptyState = (sectionId: 'created' | 'joined' | 'voted') => {
+  const renderEmptyState = (sectionId: 'created' | 'joined' | 'voted' | 'shared') => {
+    if (sectionId === 'shared') {
+      return (
+        <div className="pact-card rounded-3xl border border-dashed px-6 py-10 text-center" style={{ borderColor: 'var(--pact-hairline)' }}>
+          <p className="text-base font-semibold text-[var(--pact-text)]">Nothing here yet</p>
+          <p className="mt-2 text-sm text-[var(--pact-text-dim)]">
+            {`You and ${profileName} haven't shared a pact yet.`}
+          </p>
+        </div>
+      );
+    }
+
     if (sectionId === 'created') {
       return (
         <div className="pact-card rounded-3xl border border-dashed px-6 py-10 text-center" style={{ borderColor: 'var(--pact-hairline)' }}>
@@ -138,7 +155,13 @@ export function PactsTab({
   };
 
   const currentPacts =
-    activeSection === 'created' ? pacts : activeSection === 'joined' ? joinedPacts : votedPacts;
+    activeSection === 'created'
+      ? pacts
+      : activeSection === 'joined'
+        ? joinedPacts
+        : activeSection === 'shared'
+          ? sharedPacts ?? []
+          : votedPacts;
 
   return (
     <div className="space-y-5">
