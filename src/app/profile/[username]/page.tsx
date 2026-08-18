@@ -33,14 +33,17 @@ export default function PublicProfilePage() {
   const params = useParams();
   const username = params.username as string;
   const { user: currentUser } = useAuthStore();
-  const [activeTab, setActiveTab] = useState('pacts');
-  const [showFollowersModal, setShowFollowersModal] = useState(false);
-  const [showFollowingModal, setShowFollowingModal] = useState(false);
-  const [showPactsModal, setShowPactsModal] = useState(false);
 
   const isOwnProfile =
     typeof currentUser?.username === 'string' &&
     currentUser.username.trim().toLowerCase() === username.trim().toLowerCase();
+
+  // Someone else's profile lands on Circles first — it establishes whether
+  // you share any context with this person before drilling into their pacts.
+  const [activeTab, setActiveTab] = useState(isOwnProfile ? 'pacts' : 'circles');
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [showPactsModal, setShowPactsModal] = useState(false);
 
   const userByUsernameQuery = useUserByUsername(username);
   const profileUser = userByUsernameQuery.data?.data;
@@ -295,7 +298,7 @@ export default function PublicProfilePage() {
         />
 
         {/* Tabs */}
-        <ProfileTabs onTabChange={setActiveTab}>
+        <ProfileTabs onTabChange={setActiveTab} initialTab={isOwnProfile ? 'pacts' : 'circles'}>
           {activeTab === 'pacts' && (
             <div className="space-y-4">
               <h2 className="text-lg font-black text-[var(--pact-text)]">{profilePactsHeading}</h2>

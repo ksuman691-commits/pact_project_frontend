@@ -11,10 +11,11 @@ import UserAvatarLink from '@/components/UserAvatarLink';
 interface ProfileTabsProps {
   children: React.ReactNode;
   onTabChange?: (tab: string) => void;
+  initialTab?: string;
 }
 
-export default function ProfileTabs({ children, onTabChange }: ProfileTabsProps) {
-  const [activeTab, setActiveTab] = useState('pacts');
+export default function ProfileTabs({ children, onTabChange, initialTab = 'pacts' }: ProfileTabsProps) {
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   const tabs = [
     { id: 'circles', label: 'Circles', icon: Circle },
@@ -78,7 +79,7 @@ export function PactsTab({
   const [activeSection, setActiveSection] = useState<'created' | 'joined' | 'voted'>('created');
 
   const sections = [
-    { id: 'created' as const, label: 'Created by Me', count: pacts.length },
+    { id: 'created' as const, label: isOwnProfile ? 'Created by Me' : `Created by ${profileName}`, count: pacts.length },
     { id: 'joined' as const, label: 'Joined Pacts', count: joinedPacts.length },
     { id: 'voted' as const, label: 'Voted Pacts', count: votedPacts.length },
   ];
@@ -88,30 +89,34 @@ export function PactsTab({
       return (
         <div className="pact-card rounded-3xl border border-dashed px-6 py-10 text-center" style={{ borderColor: 'var(--pact-hairline)' }}>
           <p className="text-base font-semibold text-[var(--pact-text)]">
-            {isOwnProfile ? 'Your pact space is ready' : hasSharedCircle ? `You and ${profileName} haven't made a pact yet` : 'This pact space is quiet'}
+            {isOwnProfile ? 'Your pact space is ready' : `${profileName} hasn't created any pacts yet`}
           </p>
           <p className="mt-2 text-sm text-[var(--pact-text-dim)]">
             {isOwnProfile
               ? 'Create a pact to start tracking progress with your circles.'
               : hasSharedCircle
-                ? `You and ${profileName} haven't made a pact yet. Start one together.`
-                : `Add ${profileName} to a circle to start creating pacts together.`}
+                ? `You'll see it here as soon as ${profileName} creates one.`
+                : `Add ${profileName} to a circle to see the pacts they create.`}
           </p>
-          <button
-            onClick={() => {
-              if (isOwnProfile && !hasOwnCircles) return router.push('/circles/create');
-              if (isOwnProfile) return router.push('/pacts/create');
-              if (hasSharedCircle && sharedCircleId) {
-                return router.push(`/pacts/create?circleId=${sharedCircleId}${profileUserId ? `&participantId=${profileUserId}` : ''}`);
-              }
-              return router.push(`/circles/create?inviteUserId=${profileUserId ?? ''}`);
-            }}
-            className="pact-btn-glow mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
-            style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
-          >
-            <Plus className="h-4 w-4" />
-            {isOwnProfile ? (hasOwnCircles ? 'Create Pact' : 'Create a Circle') : hasSharedCircle ? `Create a Pact with ${profileName}` : `Add ${profileName} to a Circle`}
-          </button>
+          {isOwnProfile ? (
+            <button
+              onClick={() => (hasOwnCircles ? router.push('/pacts/create') : router.push('/circles/create'))}
+              className="pact-btn-glow mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
+              style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
+            >
+              <Plus className="h-4 w-4" />
+              {hasOwnCircles ? 'Create Pact' : 'Create a Circle'}
+            </button>
+          ) : !hasSharedCircle ? (
+            <button
+              onClick={() => router.push(`/circles/create?inviteUserId=${profileUserId ?? ''}`)}
+              className="pact-btn-glow mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
+              style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
+            >
+              <Plus className="h-4 w-4" />
+              {`Add ${profileName} to a Circle`}
+            </button>
+          ) : null}
         </div>
       );
     }
