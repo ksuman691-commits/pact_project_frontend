@@ -28,9 +28,11 @@ import {
 } from '@/hooks/useUserQueries';
 import { useCirclePactsList } from '@/hooks/useCircles';
 import { useAtRiskPact } from '@/hooks/useAtRiskPact';
+import { useSmartBack } from '@/hooks/useSmartBack';
 
 export default function PublicProfilePage() {
   const router = useRouter();
+  const goBack = useSmartBack('/feed');
   const params = useParams();
   const username = params.username as string;
   const { user: currentUser } = useAuthStore();
@@ -274,7 +276,7 @@ export default function PublicProfilePage() {
       <div className="sticky top-0 z-40 backdrop-blur-xl border-b" style={{ background: 'rgba(20,9,31,0.85)', borderColor: 'var(--pact-hairline)' }}>
         <div className="max-w-md mx-auto px-4 py-4 flex items-center gap-4">
           <button
-            onClick={() => router.back()}
+            onClick={goBack}
             className="p-2 rounded-full transition hover:bg-[var(--pact-surface-2)]"
           >
             <ArrowLeft className="w-5 h-5 text-[var(--pact-text-dim)]" />

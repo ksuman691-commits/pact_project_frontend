@@ -194,7 +194,7 @@ export default function PactDetailPage() {
 
   return (
     <>
-      <DetailPageHeader title={pact.title || 'Pact'} maxWidthClassName="max-w-md" />
+      <DetailPageHeader title={pact.title || 'Pact'} fallbackHref="/feed" maxWidthClassName="max-w-md" />
       <div className="pact-flow min-h-screen bg-slate-950 pb-16 pt-6">
         <motion.div
           initial={{ opacity: 0, y: 10 }}

@@ -1,13 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { ChevronLeft, Home } from 'lucide-react';
+import { useSmartBack } from '@/hooks/useSmartBack';
 
 interface DetailPageHeaderProps {
   title: string;
   /** Where the back chevron goes. Falls back to router.back() when omitted. */
   backHref?: string;
+  /**
+   * Deterministic destination used only when omitting backHref AND there's
+   * no real history to go back through in this tab (e.g. a deep link or a
+   * fresh tab). Defaults to /feed so the chevron never dead-ends. Ignored
+   * when backHref is set, since that's already deterministic.
+   */
+  fallbackHref?: string;
   /** Constrains the header's inner row to match the page's content width. */
   maxWidthClassName?: string;
   /** Hide the Feed/Home shortcut on the right (shown by default). */
@@ -24,10 +31,11 @@ interface DetailPageHeaderProps {
 export default function DetailPageHeader({
   title,
   backHref,
+  fallbackHref = '/feed',
   maxWidthClassName = 'max-w-2xl',
   showHomeLink = true,
 }: DetailPageHeaderProps) {
-  const router = useRouter();
+  const smartBack = useSmartBack(fallbackHref);
 
   return (
     <div
@@ -46,7 +54,7 @@ export default function DetailPageHeader({
         ) : (
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={smartBack}
             aria-label="Go back"
             className="flex-shrink-0 rounded-full p-2 transition hover:bg-[var(--pact-surface)]"
           >
