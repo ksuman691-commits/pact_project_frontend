@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import LogoSpinner from './LogoSpinner';
 
 interface PullToRefreshProps {
   /** Called on release once the user has pulled past the threshold. Awaited so the spinner keeps spinning until data actually arrives. */
@@ -119,12 +119,11 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
             transition: isPulling ? 'none' : 'opacity 220ms ease, transform 220ms ease',
           }}
         >
-          <Loader2
-            className={isRefreshing ? 'h-6 w-6 animate-spin' : 'h-6 w-6'}
-            style={{
-              color: 'var(--pact-violet)',
-              transform: isRefreshing ? undefined : `rotate(${progress * 340}deg)`,
-            }}
+          <LogoSpinner
+            size={28}
+            progress={isRefreshing ? undefined : progress}
+            color="var(--pact-violet)"
+            aria-label={isRefreshing ? 'refreshing' : 'pull to refresh'}
           />
         </div>
       </div>

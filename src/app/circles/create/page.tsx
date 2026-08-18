@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import CreateCircleFlow from '@/components/create-circle-flow/CreateCircleFlow';
 import { useSmartBack } from '@/hooks/useSmartBack';
+import LogoSpinner from '@/components/LogoSpinner';
 
 function CreateCirclePageContent() {
   const router = useRouter();
@@ -17,7 +18,7 @@ function CreateCirclePageContent() {
   if (!isInitialized) {
     return (
       <div className="pact-flow min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--pact-pink)]" />
+        <LogoSpinner size={48} color="var(--pact-pink)" />
       </div>
     );
   }

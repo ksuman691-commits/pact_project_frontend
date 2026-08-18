@@ -36,6 +36,7 @@ export default function ReviewStep() {
         proofFrequency: draft.proofFrequency,
         audience: draft.audience ?? '',
         visibility: draft.visibility,
+        circleId: draft.audience === 'My Circle' ? draft.circleId ?? null : null,
         createdBy: '',
         createdAt: new Date().toISOString(),
       });

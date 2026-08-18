@@ -13,13 +13,14 @@ import InviteMembersModal from '@/components/InviteMembersModal'
 import ConfirmModal from '@/components/ConfirmModal'
 import UserAvatarLink from '@/components/UserAvatarLink'
 import PactProgressRing, { getPactProgress } from '@/components/PactProgressRing'
+import LogoSpinner from '@/components/LogoSpinner'
 
 export default function CircleDetailPage() {
   const router = useRouter(); const params = useParams(); const { user, isInitialized } = useRequireAuth(); const circleId = Number(params.id)
   const [circle, setCircle] = useState<Circle | null>(null); const [members, setMembers] = useState<any[]>([]); const [pacts, setPacts] = useState<Pact[]>([]); const [loading, setLoading] = useState(true); const [isMember, setIsMember] = useState(false); const [inviteModal, setInviteModal] = useState(false); const [leaveModal, setLeaveModal] = useState(false); const [leaving, setLeaving] = useState(false); const [memberStats, setMemberStats] = useState<any[]>([])
   useEffect(() => { if (!isInitialized) return; if (!user) { router.push('/auth/login'); return } (async () => { try { const [c, m, p] = await Promise.all([circleService.getById(circleId), circleJoinRequestService.listMembers(circleId), circleService.listPacts(circleId)]); setCircle(c.data); setMembers(m.data || []); setPacts(p.data || []); setIsMember(!!c.data?.is_member) } catch { toast.error('Failed to load circle'); router.push('/circles') } finally { setLoading(false) } })() }, [isInitialized, user, router, circleId])
   useEffect(() => { if (!members.length) { setMemberStats([]); return } Promise.allSettled(members.map(m => userService.getStats(m.user_id))).then(results => setMemberStats(results.map((r, i) => r.status === 'fulfilled' ? { ...members[i], ...(r.value.data || {}) } : null).filter(Boolean))) }, [members])
-  if (!isInitialized || loading) return <div className="flex min-h-screen items-center justify-center bg-[var(--pact-bg)]"><div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[var(--pact-violet)]" /></div>
+  if (!isInitialized || loading) return <div className="flex min-h-screen items-center justify-center bg-[var(--pact-bg)]"><LogoSpinner size={32} color="var(--pact-violet)" /></div>
   if (!user || !circle) return null
   const activeMembers = memberStats.filter(m => Number(m.current_streak) > 0).length; const activeStreaks = memberStats.filter(m => Number(m.current_streak) > 0).map(m => Number(m.current_streak)); const groupStreak = activeStreaks.length ? Math.min(...activeStreaks) : 0
   const handleJoin = async () => { try { await circleService.join(circleId); setIsMember(true); const m = await circleJoinRequestService.listMembers(circleId); setMembers(m.data || []); toast.success('Joined circle') } catch { toast.error('Failed to join circle') } }

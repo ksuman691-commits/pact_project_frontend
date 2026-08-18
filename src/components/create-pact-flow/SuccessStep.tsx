@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useCreatePactFlow } from '@/context/CreatePactFlowContext';
+import { useCircle } from '@/hooks/useCircles';
 import SuggestedPactsSection from './SuggestedPactsSection';
 
 const AUDIENCE_COPY: Record<string, string> = {
@@ -13,6 +14,7 @@ const AUDIENCE_COPY: Record<string, string> = {
 export default function SuccessStep() {
   const { createdPact, reset } = useCreatePactFlow();
   const router = useRouter();
+  const { data: circle } = useCircle(createdPact?.circleId ?? 0);
 
   if (!createdPact) return null;
 
@@ -52,6 +54,16 @@ export default function SuccessStep() {
         >
           Back to Feed
         </button>
+        {createdPact.circleId && circle?.name && (
+          <button
+            type="button"
+            onClick={() => router.push(`/circles/${createdPact.circleId}`)}
+            className="w-full rounded-full border px-6 py-3.5 text-sm font-semibold"
+            style={{ borderColor: 'var(--pact-hairline)', color: 'var(--pact-text)' }}
+          >
+            Go to {circle.name}
+          </button>
+        )}
         <button
           type="button"
           onClick={reset}
