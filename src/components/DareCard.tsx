@@ -2,51 +2,32 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Clock, CheckCircle2, XCircle, Upload, Zap, Eye, Lock } from 'lucide-react';
+import { CheckCircle2, XCircle, Upload, Zap, Eye, Lock } from 'lucide-react';
 import type { Dare } from '@/types';
-import UserAvatarLink from '@/components/UserAvatarLink';
+import DareTimeRing from '@/components/DareTimeRing';
 import { useAuthStore } from '@/store/auth';
 import { useAcceptDare, useDeclineDare, useClaimDare } from '@/hooks/useDareMutations';
-import { formatCountdown, urgencyColor } from '@/lib/dareCountdown';
 import { getDisplayName } from '@/lib/displayName';
 import DareProofUploadModal from '@/components/DareProofUploadModal';
 
 interface DareCardProps {
   dare: Dare;
+  /**
+   * Who this row's avatar/name line should represent — the page decides
+   * this per tab, since the same Dare object is viewed from different
+   * angles: "For You" cares who sent it, "Sent by You" cares who it went
+   * to, "Discover" has no personal recipient yet.
+   */
+  viewerContext?: 'for-you' | 'sent' | 'discover';
 }
 
 const STATUS_PILL: Record<string, { label: string; color: string }> = {
-  pending: { label: 'Pending', color: 'var(--pact-gold)' },
+  pending: { label: 'Pending', color: 'var(--pact-pink)' },
   accepted: { label: 'Accepted', color: 'var(--pact-violet)' },
   declined: { label: 'Declined', color: 'var(--pact-text-faint)' },
   completed: { label: 'Completed', color: 'var(--pact-mint)' },
   failed: { label: 'Failed', color: 'var(--pact-pink)' },
 };
-
-function PieClock({ progress, expired }: { progress: number; expired: boolean }) {
-  const size = 34;
-  const center = size / 2;
-  const radius = 13;
-  const startAngle = -90;
-  const endAngle = startAngle + progress * 360;
-  const start = {
-    x: center + radius * Math.cos((startAngle * Math.PI) / 180),
-    y: center + radius * Math.sin((startAngle * Math.PI) / 180),
-  };
-  const end = {
-    x: center + radius * Math.cos((endAngle * Math.PI) / 180),
-    y: center + radius * Math.sin((endAngle * Math.PI) / 180),
-  };
-  const largeArc = progress > 0.5 ? 1 : 0;
-  const wedge = progress > 0 ? `M ${center} ${center} L ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArc} 1 ${end.x} ${end.y} Z` : '';
-
-  return (
-    <svg aria-hidden="true" viewBox={`0 0 ${size} ${size}`} className="h-8 w-8 shrink-0">
-      <circle cx={center} cy={center} r={radius} fill="none" stroke="var(--pact-hairline)" strokeWidth="3" />
-      {!expired && <path d={wedge} fill="var(--pact-gold)" opacity="0.9" />}
-    </svg>
-  );
-}
 
 /**
  * Whole card navigates to the dare detail page, but it also hosts direct
@@ -56,7 +37,7 @@ function PieClock({ progress, expired }: { progress: number; expired: boolean })
  * an anchor tag would have every click inside it bubble up and navigate,
  * which a nested-<a> approach can't avoid.
  */
-export default function DareCard({ dare }: DareCardProps) {
+export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardProps) {
   const router = useRouter();
   const { user } = useAuthStore();
   const [proofModalOpen, setProofModalOpen] = useState(false);
@@ -70,32 +51,39 @@ export default function DareCard({ dare }: DareCardProps) {
   const isAccepted = dare.my_recipient_status === 'accepted';
   const isPublicUnclaimed = dare.audience === 'public' && !isCreator && !dare.my_recipient_status;
   const isPrivate = dare.audience !== 'public';
-  const expiresAt = dare.expires_at ?? (isPending ? dare.respond_by : dare.complete_by);
-  const expiresAtMs = Date.parse(expiresAt);
-  const createdAtMs = Date.parse(dare.created_at);
-  const [now, setNow] = useState(() => Date.now());
-  const remainingMs = Number.isFinite(expiresAtMs) ? expiresAtMs - now : 0;
-  const isExpired = remainingMs <= 0;
+  const target = dare.expires_at ?? (isPending ? dare.respond_by : dare.complete_by);
+  const isExpired = Number.isFinite(Date.parse(target)) ? Date.parse(target) <= Date.now() : false;
 
-  // The server timestamp remains the source of truth. This interval only
-  // triggers a render so the displayed value can be recomputed from now().
+  // Live-updating clock so the ring/label recompute as time passes without
+  // a page refresh. The server timestamp in `target` stays the source of
+  // truth; this interval only triggers a re-render.
+  const [, setNow] = useState(() => Date.now());
   useEffect(() => {
-    if (isExpired || !Number.isFinite(expiresAtMs)) return;
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    if (isExpired) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
     return () => window.clearInterval(timer);
-  }, [expiresAtMs, isExpired]);
+  }, [isExpired]);
 
-  const countdown = isPending
-    ? formatCountdown(expiresAt, 'Respond')
-    : formatCountdown(expiresAt, 'Complete');
   const statusPill = isExpired
     ? STATUS_PILL[dare.status] ?? { label: 'Expired', color: 'var(--pact-text-faint)' }
-    : dare.my_recipient_status ? STATUS_PILL[dare.my_recipient_status] : null;
-  const totalMs = Number.isFinite(createdAtMs) && Number.isFinite(expiresAtMs)
-    ? Math.max(1, expiresAtMs - createdAtMs)
-    : 1;
-  const progress = isExpired ? 0 : Math.max(0, Math.min(1, remainingMs / totalMs));
-  const countdownLabel = isExpired ? statusPill?.label ?? 'Expired' : countdown.label;
+    : dare.my_recipient_status ? STATUS_PILL[dare.my_recipient_status] : STATUS_PILL[dare.status] ?? null;
+
+  // First-recipient name comes from the full recipients array when it's
+  // loaded (dare detail), but list/feed responses only return
+  // `recipient_count` — falling back to a count keeps "Sent by You" honest
+  // rather than guessing a name that isn't actually in the payload.
+  const firstRecipient = dare.recipients?.[0];
+  const recipientCount = dare.recipient_count ?? dare.recipients?.length ?? 0;
+  const extraRecipients = Math.max(0, recipientCount - 1);
+  const recipientSummary = firstRecipient
+    ? `${getDisplayName(firstRecipient.user_id, firstRecipient.full_name || firstRecipient.username)}${extraRecipients > 0 ? ` +${extraRecipients}` : ''}`
+    : `${recipientCount} ${recipientCount === 1 ? 'person' : 'people'}`;
+
+  const senderName = getDisplayName(dare.creator_id, dare.creator_full_name || dare.creator_username);
+  const relationLabel = viewerContext === 'sent' ? `To ${recipientSummary}` : viewerContext === 'discover' ? `By ${senderName}` : `From ${senderName}`;
+  const ringName = viewerContext === 'sent' ? firstRecipient?.full_name || firstRecipient?.username || 'User' : senderName;
+  const ringAvatarUrl = viewerContext === 'sent' ? firstRecipient?.avatar_url : dare.creator_avatar_url;
+  const ringUsername = viewerContext === 'sent' ? firstRecipient?.username : dare.creator_username;
 
   return (
     <>
@@ -111,20 +99,22 @@ export default function DareCard({ dare }: DareCardProps) {
     >
       {/* Header */}
       <div className="p-4">
-        <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="mb-3 flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <UserAvatarLink
-              name={getDisplayName(dare.creator_id, dare.creator_full_name || dare.creator_username)}
-              avatarUrl={dare.creator_avatar_url}
-              username={dare.creator_username}
-              size={40}
-              stopPropagation
+            <DareTimeRing
+              name={ringName}
+              avatarUrl={ringAvatarUrl}
+              username={ringUsername}
+              target={target}
+              windowStart={dare.created_at}
+              size={44}
+              showLabel={!isExpired}
             />
-            <div className="min-w-0">
+            <div className="min-w-0 pt-1">
               <p className="text-sm font-semibold text-[var(--pact-text)] truncate">
-                {getDisplayName(dare.creator_id, dare.creator_full_name || dare.creator_username)}
+                {relationLabel}
               </p>
-              <p className="text-xs text-[var(--pact-text-faint)] truncate">@{dare.creator_username || 'user'}</p>
+              {isExpired && <p className="text-xs font-semibold text-[var(--pact-text-faint)]">Expired</p>}
             </div>
           </div>
 
@@ -138,25 +128,17 @@ export default function DareCard({ dare }: DareCardProps) {
               </span>
             )}
             <span
-              className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold"
-              style={{ background: 'var(--pact-surface-2)', color: isExpired ? statusPill?.color : urgencyColor(countdown.urgency) }}
-            >
-              {isExpired ? <Clock className="h-3 w-3" /> : <PieClock progress={progress} expired={isExpired} />}
-              {countdownLabel}
-            </span>
-            <span
-              className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
+              className="flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold"
               style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-text-faint)' }}
               title={isPrivate ? 'Private Dare' : 'Public Dare'}
             >
               {isPrivate ? <Lock className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-
             </span>
           </div>
         </div>
 
-        <h3 className="mb-1 font-bold text-base text-[var(--pact-text)] line-clamp-2">{dare.title}</h3>
-        <p className="text-sm text-[var(--pact-text-dim)] line-clamp-2">{dare.description}</p>
+        <h3 className="mb-1 font-bold text-base text-[var(--pact-text)] truncate">{dare.title}</h3>
+        <p className="text-sm text-[var(--pact-text-dim)] truncate">{dare.description}</p>
       </div>
 
       {/* Fast inline actions — no need to open the detail page for these */}

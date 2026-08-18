@@ -44,6 +44,58 @@ export function urgencyColor(urgency: CountdownUrgency): string {
   return 'var(--pact-gold)';
 }
 
+export type RingTier = 'critical' | 'soon' | 'relaxed' | 'expired';
+
+export interface TimeRing {
+  tier: RingTier;
+  /** CSS variable color matching the tier — drives both the ring arc and the time label. */
+  color: string;
+  /** Fraction of the ring that should remain filled (0-1), clockwise drain. */
+  percentRemaining: number;
+  /** Short label for display directly under the avatar, e.g. "3h left", "1d 9h left". */
+  label: string;
+  hoursRemaining: number;
+}
+
+/**
+ * Countdown-ring tier + drain percentage for a dare's avatar ring.
+ * `target` is the relevant deadline (respond_by while pending, complete_by
+ * once accepted); `windowStart` anchors the ring's "full circle" state — pass
+ * the dare's created_at (or accepted-at, if known) so the arc actually drains
+ * over the real window instead of jumping straight to a sliver on a 48h dare.
+ */
+export function getTimeRing(targetRaw: string | null | undefined, windowStartRaw: string | null | undefined): TimeRing {
+  const target = targetRaw ? new Date(targetRaw) : null;
+  if (!target || Number.isNaN(target.getTime())) {
+    return { tier: 'expired', color: 'var(--pact-text-faint)', percentRemaining: 0, label: 'No deadline', hoursRemaining: 0 };
+  }
+
+  const nowMs = Date.now();
+  const diffMs = target.getTime() - nowMs;
+  const hoursRemaining = diffMs / (1000 * 60 * 60);
+
+  if (diffMs <= 0) {
+    return { tier: 'expired', color: 'var(--pact-text-faint)', percentRemaining: 0, label: 'Expired', hoursRemaining: 0 };
+  }
+
+  const tier: RingTier = hoursRemaining < 6 ? 'critical' : hoursRemaining < 24 ? 'soon' : 'relaxed';
+  const color = tier === 'critical' ? 'var(--pact-pink)' : tier === 'soon' ? 'var(--pact-gold)' : 'var(--pact-violet)';
+
+  const windowStart = windowStartRaw ? new Date(windowStartRaw) : null;
+  const windowMs = windowStart && !Number.isNaN(windowStart.getTime())
+    ? Math.max(1, target.getTime() - windowStart.getTime())
+    : 48 * 60 * 60 * 1000; // fall back to a 48h window if we have no start anchor
+  const percentRemaining = Math.max(0, Math.min(1, diffMs / windowMs));
+
+  const totalMinutes = Math.round(diffMs / (1000 * 60));
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+  const label = days > 0 ? `${days}d ${hours}h left` : hours > 0 ? `${hours}h left` : `${Math.max(1, minutes)}m left`;
+
+  return { tier, color, percentRemaining, label, hoursRemaining };
+}
+
 /**
  * Plain relative-time label for a timeline row (e.g. "Respond by" / "Complete
  * by" on the dare detail page) — unlike formatCountdown above, this has no

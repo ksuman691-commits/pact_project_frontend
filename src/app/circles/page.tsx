@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { Search, SlidersHorizontal, Plus } from 'lucide-react'
-import BottomNav from '@/components/BottomNav'
 import { useCircles } from '@/hooks/useCircles'
 import { useQuery } from '@tanstack/react-query'
 import { userService } from '@/services/api'
@@ -65,5 +64,5 @@ export default function CirclesPage() {
       return <Link key={circle.id} href={`/circles/${circle.id}`} className="flex aspect-square w-[calc((100%-2rem)/3)] max-w-36 shrink-0 grow-0 basis-[calc((100%-2rem)/3)] snap-start items-center justify-center rounded-full border border-[var(--pact-violet)]/50 bg-[var(--pact-surface)] p-3 text-center transition hover:bg-[var(--pact-surface-2)]" style={{ boxShadow: `0 0 ${glow}px rgba(157,92,255,${glowOpacity})` }}><span className="flex flex-col items-center px-2"><span className="block text-2xl">{circle.emoji || circle.icon_emoji || '◌'}</span><span className="mt-1 block w-full truncate text-xs font-bold leading-tight text-[var(--pact-text)]">{circle.name}</span><span className="mt-1 block text-[10px] font-semibold text-[var(--pact-gold)]">{circle.member_count || 0} active</span></span></Link>
     })}</section>
     <section className="border-t border-[var(--pact-hairline)]"><div className="flex items-baseline justify-between py-5"><h2 className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--pact-text-muted)]">Your circles</h2><span className="text-xs font-semibold text-[var(--pact-gold)]">{filtered.length} total</span></div>{filtered.map((circle: any) => <Link key={circle.id} href={`/circles/${circle.id}`} className="flex items-center justify-between border-t border-[var(--pact-hairline)] py-4 transition hover:border-[var(--pact-violet)]"><div className="flex min-w-0 items-center gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--pact-violet)]/40 bg-[var(--pact-surface-2)] text-lg">{circle.emoji || circle.icon_emoji || '◌'}</span><div className="min-w-0"><p className="truncate font-bold text-[var(--pact-text)]">{circle.name}</p><p className="text-xs font-semibold text-[var(--pact-gold)]">{circle.member_count || 0} members</p></div></div><span className="shrink-0 pl-3 text-xs font-semibold text-[var(--pact-gold)]">{circle.current_streak || circle.streak || 0}d streak</span></Link>)}</section>
-  </div><BottomNav /></main>
+  </div></main>
 }
