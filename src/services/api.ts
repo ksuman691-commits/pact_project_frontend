@@ -683,6 +683,14 @@ export const circleAdvancedService = {
         String(c.description || '').toLowerCase().includes(query.toLowerCase())
       ),
     })),
+  // NOTE: POST /api/circles/{id}/invite (direct invite by user_id, not a
+  // shareable link) does not exist on the live backend yet — confirmed
+  // against the OpenAPI schema, which only exposes /join and
+  // /join-request. This is being built separately (outside this repo) by
+  // the backend developer. The call is wired as if the endpoint already
+  // exists so no frontend rework is needed once it's deployed; callers
+  // (useInviteUserToCircle) already downgrade the resulting 404 to a
+  // friendly "not available yet" toast instead of a generic error.
   inviteUser: (circleId: number, userId: number, message?: string) =>
     api.post(`/api/circles/${circleId}/invite`, { user_id: userId, message }),
   removeMember: (circleId: number, userId: number) =>
@@ -691,6 +699,19 @@ export const circleAdvancedService = {
     api.put(`/api/circles/${circleId}/members/${userId}`, data),
   getLeaderboard: (circleId: number) =>
     api.get(`/api/circles/${circleId}/leaderboard`),
+};
+
+// Pending Circle Invites (recipient side of circleAdvancedService.inviteUser)
+// NOTE: none of these three routes exist on the live backend yet — they're
+// the receiving-end counterpart to POST /api/circles/{id}/invite, being
+// built separately by the backend developer alongside it. Wired ahead of
+// time so the "Pending invites" card on /circles just starts working once
+// deployed; useMyCircleInvites swallows a 404 into an empty list so the
+// card silently stays hidden rather than erroring until then.
+export const circleInviteService = {
+  listMine: () => api.get('/api/users/me/circle-invites'),
+  accept: (inviteId: number) => api.post(`/api/circle-invites/${inviteId}/accept`),
+  decline: (inviteId: number) => api.post(`/api/circle-invites/${inviteId}/decline`),
 };
 
 // Analytics Services

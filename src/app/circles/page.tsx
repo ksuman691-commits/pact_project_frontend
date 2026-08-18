@@ -7,6 +7,7 @@ import { useCircles } from '@/hooks/useCircles'
 import { useQuery } from '@tanstack/react-query'
 import { userService } from '@/services/api'
 import { useAuthStore } from '@/store/auth'
+import PendingCircleInvites from '@/components/PendingCircleInvites'
 
 export default function CirclesPage() {
   const { user } = useAuthStore()
@@ -31,6 +32,7 @@ export default function CirclesPage() {
   const maxMembers = Math.max(1, ...circles.map((c: any) => c.member_count || 0))
 
   return <main className="min-h-screen bg-[var(--pact-bg)] pb-28 text-[var(--pact-text)]"><div className="mx-auto max-w-5xl px-5 pb-10 pt-8 md:px-10 md:pt-14">
+    <PendingCircleInvites />
     <header className="border-b border-[var(--pact-hairline)] pb-8">
       <p className="text-xs font-bold uppercase tracking-[0.28em] text-[var(--pact-violet)]">Circles</p>
       <div className="mt-3 flex items-center gap-4">
