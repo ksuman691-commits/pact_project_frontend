@@ -126,8 +126,12 @@ export function PactsTab({
         <p className="text-base font-semibold text-[var(--pact-text)]">Nothing here yet</p>
         <p className="mt-2 text-sm text-[var(--pact-text-dim)]">
           {sectionId === 'joined'
-            ? 'You have not joined any pacts yet.'
-            : 'You have not voted on any pacts yet.'}
+            ? isOwnProfile
+              ? 'You have not joined any pacts yet.'
+              : `${profileName} hasn't joined any pacts yet.`
+            : isOwnProfile
+              ? 'You have not voted on any pacts yet.'
+              : `${profileName} hasn't voted on any pacts yet.`}
         </p>
       </div>
     );
