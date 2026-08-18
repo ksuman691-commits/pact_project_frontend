@@ -683,6 +683,14 @@ export const circleAdvancedService = {
         String(c.description || '').toLowerCase().includes(query.toLowerCase())
       ),
     })),
+  // NOTE: POST /api/circles/{id}/invite (direct invite by user_id, not a
+  // shareable link) does not exist on the live backend yet — confirmed
+  // against the OpenAPI schema, which only exposes /join and
+  // /join-request. This is being built separately (outside this repo) by
+  // the backend developer. The call is wired as if the endpoint already
+  // exists so no frontend rework is needed once it's deployed; callers
+  // (useInviteUserToCircle) already downgrade the resulting 404 to a
+  // friendly "not available yet" toast instead of a generic error.
   inviteUser: (circleId: number, userId: number, message?: string) =>
     api.post(`/api/circles/${circleId}/invite`, { user_id: userId, message }),
   removeMember: (circleId: number, userId: number) =>
@@ -691,6 +699,23 @@ export const circleAdvancedService = {
     api.put(`/api/circles/${circleId}/members/${userId}`, data),
   getLeaderboard: (circleId: number) =>
     api.get(`/api/circles/${circleId}/leaderboard`),
+};
+
+// Pending Circle Invites (recipient side of circleAdvancedService.inviteUser)
+// Receiving-end counterpart to POST /api/circles/{id}/invite. Confirmed
+// live against the deployed OpenAPI schema: accept/decline are nested
+// under circle_id, not addressable by invite id alone —
+// /api/circles/{circle_id}/invite/{invite_id}/accept|decline — while the
+// list endpoint is a flat /api/users/me/circle-invites returning
+// { id, circle_id, invited_by_user_id, status, created_at } records
+// (enriched client-side in useMyCircleInvites via circleService/userService
+// lookups since the list response has no nested circle/inviter details).
+export const circleInviteService = {
+  listMine: () => api.get('/api/users/me/circle-invites'),
+  accept: (circleId: number, inviteId: number) =>
+    api.post(`/api/circles/${circleId}/invite/${inviteId}/accept`),
+  decline: (circleId: number, inviteId: number) =>
+    api.post(`/api/circles/${circleId}/invite/${inviteId}/decline`),
 };
 
 // Analytics Services

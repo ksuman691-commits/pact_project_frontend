@@ -12,6 +12,7 @@ import ProfileTabs, { PactsTab } from '@/components/ProfileTabs';
 import AchievementsBadges from '@/components/AchievementsBadges';
 import ActivityStrip from '@/components/pact-ui/ActivityStrip';
 import CirclesRow from '@/components/pact-ui/CirclesRow';
+import LogoSpinner from '@/components/LogoSpinner';
 import { LogOut, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useFollowers, useFollowing } from '@/hooks/useFollows';
@@ -110,7 +111,7 @@ export default function Profile() {
   if (!isInitialized) {
     return (
       <div className="pact-flow min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--pact-violet)]" />
+        <LogoSpinner size={40} color="var(--pact-violet)" />
       </div>
     );
   }

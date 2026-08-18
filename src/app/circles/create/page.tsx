@@ -4,9 +4,12 @@ import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import CreateCircleFlow from '@/components/create-circle-flow/CreateCircleFlow';
+import { useSmartBack } from '@/hooks/useSmartBack';
+import LogoSpinner from '@/components/LogoSpinner';
 
 function CreateCirclePageContent() {
   const router = useRouter();
+  const exitFlow = useSmartBack('/circles');
   const searchParams = useSearchParams();
   const inviteUserIdParam = searchParams.get('inviteUserId');
   const inviteUserId = inviteUserIdParam ? Number(inviteUserIdParam) : null;
@@ -15,7 +18,7 @@ function CreateCirclePageContent() {
   if (!isInitialized) {
     return (
       <div className="pact-flow min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--pact-pink)]" />
+        <LogoSpinner size={48} color="var(--pact-pink)" />
       </div>
     );
   }
@@ -25,7 +28,7 @@ function CreateCirclePageContent() {
     return null;
   }
 
-  return <CreateCircleFlow onExit={() => router.back()} initialInviteUserId={Number.isFinite(inviteUserId) ? inviteUserId : null} />;
+  return <CreateCircleFlow onExit={exitFlow} initialInviteUserId={Number.isFinite(inviteUserId) ? inviteUserId : null} />;
 }
 
 export default function CreateCirclePage() {

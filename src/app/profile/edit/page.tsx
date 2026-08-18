@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth';
 import { authService } from '@/services/api';
 import { Upload, ArrowLeft } from 'lucide-react';
 import LogoMark from '@/components/LogoMark';
+import { useSmartBack } from '@/hooks/useSmartBack';
 import toast from 'react-hot-toast';
 
 const inputClass =
@@ -17,6 +18,7 @@ const labelClass = 'pact-mono block text-xs uppercase tracking-wide text-[var(--
 
 export default function EditProfilePage() {
   const router = useRouter();
+  const goBack = useSmartBack('/feed');
   const { user, setUser } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -76,7 +78,7 @@ export default function EditProfilePage() {
       <div className="sticky top-0 z-40 backdrop-blur-xl border-b" style={{ background: 'rgba(20,9,31,0.85)', borderColor: 'var(--pact-hairline)' }}>
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
           <button
-            onClick={() => router.back()}
+            onClick={goBack}
             className="p-2 rounded-full transition hover:bg-[var(--pact-surface-2)]"
           >
             <ArrowLeft className="w-5 h-5 text-[var(--pact-text-dim)]" />

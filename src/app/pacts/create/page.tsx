@@ -1,11 +1,12 @@
 'use client';
 
 import { Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import CreatePactFlow from '@/components/create-pact-flow/CreatePactFlow';
+import { useSmartBack } from '@/hooks/useSmartBack';
 
 function CreatePactPageContent() {
-  const router = useRouter();
+  const exitFlow = useSmartBack('/pacts');
   const searchParams = useSearchParams();
   const circleIdParam = searchParams.get('circleId');
   const initialCircleId = circleIdParam ? Number(circleIdParam) : null;
@@ -20,7 +21,7 @@ function CreatePactPageContent() {
 
   return (
     <CreatePactFlow
-      onExit={() => router.back()}
+      onExit={exitFlow}
       initialCircleId={Number.isFinite(initialCircleId) ? initialCircleId : null}
       initialDescription={initialDescription}
       initialParticipantId={Number.isFinite(initialParticipantId) ? initialParticipantId : null}

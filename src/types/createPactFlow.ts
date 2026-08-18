@@ -68,6 +68,7 @@ export interface CreatedPact {
   proofFrequency: string | null;
   audience: string;
   visibility: string;
+  circleId?: number | null; // set when the pact was created within a specific circle's audience
   createdBy: string; // user id
   createdAt: string;
 }

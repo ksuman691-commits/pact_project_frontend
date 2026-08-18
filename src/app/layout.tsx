@@ -4,6 +4,7 @@ import { Bricolage_Grotesque, IBM_Plex_Mono, Inter } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import AuthInitializer from '@/components/AuthInitializer';
 import NotificationRealtimeBridge from '@/components/NotificationRealtimeBridge';
+import InAppNavigationTracker from '@/components/InAppNavigationTracker';
 import QueryProvider from '@/providers/QueryProvider';
 import BottomNav from '@/components/BottomNav';
 
@@ -47,6 +48,7 @@ export default function RootLayout({
         className={`${bricolageGrotesque.variable} ${ibmPlexMono.variable} ${inter.variable} bg-[#F4F2FB] text-[#14121F] antialiased`}
       >
         <QueryProvider>
+          <InAppNavigationTracker />
           <AuthInitializer />
           <NotificationRealtimeBridge />
           {children}
