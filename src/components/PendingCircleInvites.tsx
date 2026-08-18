@@ -7,11 +7,11 @@ import Avatar from '@/components/Avatar';
 /**
  * Recipient-side counterpart to the "Search for someone" invite tab in
  * InviteMembersModal. Backed by GET /api/users/me/circle-invites, which
- * doesn't exist on the live backend yet (being built alongside the
- * direct-invite endpoint — see the NOTE on circleAdvancedService.inviteUser).
- * useMyCircleInvites swallows a 404 into an empty list, so this card
- * simply renders nothing until the backend is deployed, rather than
- * showing a broken or empty-looking section.
+ * returns flat records (circle_id, invited_by_user_id) enriched by
+ * useMyCircleInvites into { ...invite, circle, inviter } via separate
+ * circleService/userService lookups. If the list endpoint itself isn't
+ * deployed, useMyCircleInvites swallows a 404 into an empty list, so
+ * this card simply renders nothing rather than showing a broken state.
  */
 export default function PendingCircleInvites() {
   const { data: invites, isLoading } = useMyCircleInvites();

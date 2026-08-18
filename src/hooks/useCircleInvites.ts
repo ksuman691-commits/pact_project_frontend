@@ -1,35 +1,59 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { circleInviteService } from '@/services/api';
+import { circleInviteService, circleService, userService } from '@/services/api';
 import { queryKeys } from '@/lib/queryKeys';
 import toast from 'react-hot-toast';
 
 const CIRCLE_INVITES_KEY = ['circleInvites', 'mine'];
 
 /**
- * Pending invites sent to the current user via the (not-yet-deployed)
- * direct-invite flow. GET /api/users/me/circle-invites doesn't exist on
- * the live backend yet — it's being built alongside POST
- * /api/circles/{id}/invite by the backend developer. A 404 here just
- * means "not deployed yet", so it's swallowed into an empty list rather
- * than surfaced as an error — the "Pending invites" card on /circles
- * simply stays hidden until the endpoint is live, instead of showing a
- * broken state.
+ * Pending invites sent to the current user via the direct-invite flow
+ * (POST /api/circles/{id}/invite on the sending side). GET
+ * /api/users/me/circle-invites returns flat records — just
+ * { id, circle_id, invited_by_user_id, status, created_at } — with no
+ * nested circle/inviter details, so each invite is enriched here with a
+ * circleService.getById + userService.getById lookup to get the circle
+ * name/emoji and inviter name for display. A 404/501 on the list
+ * endpoint itself still means "not deployed" and is swallowed into an
+ * empty list so the card stays hidden rather than erroring.
  */
 export function useMyCircleInvites() {
   return useQuery({
     queryKey: CIRCLE_INVITES_KEY,
     queryFn: async () => {
+      let invites: any[];
       try {
         const response = await circleInviteService.listMine();
-        return response.data || [];
+        invites = response.data || [];
       } catch (error: any) {
         if (error?.response?.status === 404 || error?.response?.status === 501) {
           return [];
         }
         throw error;
       }
+
+      const pending = invites.filter((invite) => invite.status === 'pending');
+
+      const enriched = await Promise.all(
+        pending.map(async (invite) => {
+          const [circleResult, inviterResult] = await Promise.allSettled([
+            circleService.getById(invite.circle_id),
+            userService.getById(invite.invited_by_user_id),
+          ]);
+
+          const circle = circleResult.status === 'fulfilled' ? circleResult.value.data : null;
+          const inviter = inviterResult.status === 'fulfilled' ? inviterResult.value.data : null;
+
+          return {
+            ...invite,
+            circle,
+            inviter,
+          };
+        })
+      );
+
+      return enriched;
     },
     staleTime: 1000 * 60,
     retry: false,
