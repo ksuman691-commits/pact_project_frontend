@@ -1087,8 +1087,8 @@ export default function FeedPactCard({
             <div className="px-5 pb-5 pt-4">
               <div className="mb-5 flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white/50">report this pact</p>
-                  <h3 className="mt-2 text-2xl font-black">report this pact</h3>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white/50">Report this pact</p>
+                  <h3 className="mt-2 text-2xl font-black">Report this pact</h3>
                 </div>
                 <button
                   type="button"

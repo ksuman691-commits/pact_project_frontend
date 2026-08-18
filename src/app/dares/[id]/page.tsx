@@ -181,14 +181,14 @@ export default function DareDetailPage() {
             >
               <Users className="h-4 w-4" style={{ color: 'var(--pact-violet)' }} />
               <span className="font-bold text-[var(--pact-text)]">{dare.recipientCount || 0}</span>
-              <span className="text-xs font-medium underline decoration-dotted text-[var(--pact-text-faint)]">recipients</span>
+              <span className="text-xs font-medium underline decoration-dotted text-[var(--pact-text-faint)]">Recipients</span>
             </button>
           ) : (
-            <StatGroup icon={Users} value={dare.recipientCount || 0} label="recipients" color="var(--pact-violet)" />
+            <StatGroup icon={Users} value={dare.recipientCount || 0} label="Recipients" color="var(--pact-violet)" />
           )}
-          <StatGroup icon={CheckCircle2} value={acceptedCount} label="accepted" color="var(--pact-violet)" />
-          <StatGroup icon={ShieldCheck} value={completedCount} label="completed" color="var(--pact-mint)" />
-          <StatGroup icon={XCircle} value={failedCount} label="failed" color="var(--pact-pink)" />
+          <StatGroup icon={CheckCircle2} value={acceptedCount} label="Accepted" color="var(--pact-violet)" />
+          <StatGroup icon={ShieldCheck} value={completedCount} label="Completed" color="var(--pact-mint)" />
+          <StatGroup icon={XCircle} value={failedCount} label="Failed" color="var(--pact-pink)" />
         </div>
 
         {/* Timeline — relative labels ("in 5h" / "2h ago") instead of raw
@@ -285,13 +285,13 @@ export default function DareDetailPage() {
           <div className="rounded-2xl px-5 py-4" style={{ background: 'var(--pact-surface-2)' }}>
             <h3 className="mb-3 text-sm font-bold text-[var(--pact-text)]">Verification Stats</h3>
             <div className="flex flex-wrap gap-5">
-              <StatGroup icon={CheckCircle2} value={stats.yes_count || 0} label="yes" color="var(--pact-mint)" />
-              <StatGroup icon={XCircle} value={stats.no_count || 0} label="no" color="var(--pact-pink)" />
-              <div className="flex items-center gap-1.5">
-                <ShieldCheck className="h-4 w-4" style={{ color: 'var(--pact-gold)' }} />
-                <span className="font-bold text-[var(--pact-text)]">{(stats.confidence_avg || 0).toFixed(0)}%</span>
-                <span className="text-xs font-medium text-[var(--pact-text-faint)]">confidence</span>
-              </div>
+          <StatGroup icon={CheckCircle2} value={stats.yes_count || 0} label="Yes" color="var(--pact-mint)" />
+          <StatGroup icon={XCircle} value={stats.no_count || 0} label="No" color="var(--pact-pink)" />
+          <div className="flex items-center gap-1.5">
+            <ShieldCheck className="h-4 w-4" style={{ color: 'var(--pact-gold)' }} />
+            <span className="font-bold text-[var(--pact-text)]">{(stats.confidence_avg || 0).toFixed(0)}%</span>
+            <span className="text-xs font-medium text-[var(--pact-text-faint)]">Confidence</span>
+          </div>
             </div>
           </div>
         ) : null}

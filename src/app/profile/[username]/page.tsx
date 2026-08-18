@@ -26,6 +26,7 @@ import {
   useUserRelationship,
   useUserCircles,
 } from '@/hooks/useUserQueries';
+import { useCirclePactsList } from '@/hooks/useCircles';
 import { useAtRiskPact } from '@/hooks/useAtRiskPact';
 
 export default function PublicProfilePage() {
@@ -33,14 +34,17 @@ export default function PublicProfilePage() {
   const params = useParams();
   const username = params.username as string;
   const { user: currentUser } = useAuthStore();
-  const [activeTab, setActiveTab] = useState('pacts');
-  const [showFollowersModal, setShowFollowersModal] = useState(false);
-  const [showFollowingModal, setShowFollowingModal] = useState(false);
-  const [showPactsModal, setShowPactsModal] = useState(false);
 
   const isOwnProfile =
     typeof currentUser?.username === 'string' &&
     currentUser.username.trim().toLowerCase() === username.trim().toLowerCase();
+
+  // Someone else's profile lands on Circles first — it establishes whether
+  // you share any context with this person before drilling into their pacts.
+  const [activeTab, setActiveTab] = useState(isOwnProfile ? 'pacts' : 'circles');
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [showPactsModal, setShowPactsModal] = useState(false);
 
   const userByUsernameQuery = useUserByUsername(username);
   const profileUser = userByUsernameQuery.data?.data;
@@ -75,6 +79,33 @@ export default function PublicProfilePage() {
   const displayedPacts = profilePactsQuery.data?.data || [];
   const followers = followersQuery.data?.data || [];
   const following = followingQuery.data?.data || [];
+
+  // --- "Shared with you" pacts (client-side approximation) ---
+  // LIMITATION: There is no backend endpoint that returns pacts a viewer and
+  // a profile owner are both actual participants in. As a stand-in, we pull
+  // the pact list for the first circle the two of us have in common
+  // (sharedCircleIds[0]) and narrow it to pacts created by either of us that
+  // I have personally joined. This only surfaces shared pacts that live
+  // inside a *shared circle* — it will miss any shared pact that could ever
+  // exist outside that scope (e.g. a direct/private pact between two users
+  // with no circle in common). Treat this as a temporary approximation, not
+  // a complete solution.
+  // TODO(backend): replace with a real endpoint, e.g.
+  //   GET /users/{id}/shared-pacts
+  // that returns pacts where both the viewer and the profile owner are
+  // confirmed participants, regardless of circle membership.
+  const sharedCirclePactsQuery = useCirclePactsList(sharedCircleIds[0] || 0);
+  const sharedPacts = useMemo(() => {
+    if (isOwnProfile || !sharedCircleIds.length) return undefined;
+    const circlePacts = sharedCirclePactsQuery.data?.data ?? sharedCirclePactsQuery.data ?? [];
+    const rows = Array.isArray(circlePacts) ? circlePacts : [];
+    const myUsername = currentUser?.username;
+    const theirUsername = profileUser?.username;
+    return rows.filter((pact: any) => {
+      const creatorIsEitherOfUs = pact.creator === myUsername || pact.creator === theirUsername;
+      return creatorIsEitherOfUs && Boolean(pact.is_joined_by_me);
+    });
+  }, [isOwnProfile, sharedCircleIds.length, sharedCirclePactsQuery.data, currentUser?.username, profileUser?.username]);
 
   const stats = {
     pactsCreated: userStatsQuery.data?.data?.pacts_created ?? 0,
@@ -295,7 +326,7 @@ export default function PublicProfilePage() {
         />
 
         {/* Tabs */}
-        <ProfileTabs onTabChange={setActiveTab}>
+        <ProfileTabs onTabChange={setActiveTab} initialTab={isOwnProfile ? 'pacts' : 'circles'}>
           {activeTab === 'pacts' && (
             <div className="space-y-4">
               <h2 className="text-lg font-black text-[var(--pact-text)]">{profilePactsHeading}</h2>
@@ -303,6 +334,7 @@ export default function PublicProfilePage() {
                 pacts={displayedPacts}
                 joinedPacts={[]}
                 votedPacts={[]}
+                sharedPacts={sharedPacts}
                 isOwnProfile={isOwnProfile}
                 hasSharedCircle={hasSharedCircle}
                 profileName={profileUser.full_name || `@${profileUser.username}`}
