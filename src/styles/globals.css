@@ -63,10 +63,17 @@
 
 html {
   @apply bg-[#F4F2FB];
+  /* Disable Chrome-for-Android's native pull-to-refresh/overscroll-glow so it
+     doesn't fight with (and visually mask) PullToRefresh.tsx's custom gesture.
+     This is a browser-level compositor behavior that JS preventDefault() calls
+     on touch/pointer events cannot reliably suppress on their own — see
+     PullToRefresh.tsx for the pointer-event half of this fix. */
+  overscroll-behavior-y: contain;
 }
 
 body {
   @apply font-sans bg-[#F4F2FB] text-[#14121F] antialiased;
+  overscroll-behavior-y: contain;
 }
 
 /* Legacy light-theme card surface. Exact class only — do NOT use a

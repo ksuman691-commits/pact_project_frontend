@@ -6,7 +6,6 @@ import { usePersonalizedFeed } from '@/hooks/useFeedQueries'
 import { useSkipPact } from '@/hooks/usePactActions'
 import { useInView } from 'react-intersection-observer'
 import FeedPactCard from './FeedPactCard'
-import PullToRefresh from './PullToRefresh'
 import { useRouter } from 'next/navigation'
 
 const mockPacts = [
@@ -78,8 +77,15 @@ interface PactFeedProps {
   onCreatePact?: () => void
   /** Pact id to give a one-time glow entrance (e.g. just returned from Create Pact). */
   highlightPactId?: string | number | null
+  /**
+   * Hands the current refetch function up to the parent page so it can drive
+   * a PullToRefresh wrapper that spans the whole scrollable page (header +
+   * feed), not just this component's own markup. Called whenever `refetch`
+   * is (re)created, mirroring the `onBusyChange` pattern above.
+   */
+  onRefreshReady?: (refetch: () => Promise<unknown>) => void
   // Force rebuild v2
-}
+  }
 
 const normalizeVote = (vote: unknown): string | null => {
   if (typeof vote !== 'string') return null
@@ -107,6 +113,7 @@ export default function PactFeed({
   onBusyChange,
   onCreatePact,
   highlightPactId = null,
+  onRefreshReady,
 }: PactFeedProps) {
   const router = useRouter()
   const [pacts, setPacts] = useState(showMockData ? mockPacts : [])
@@ -122,6 +129,10 @@ export default function PactFeed({
   useEffect(() => {
     onBusyChange?.(isBusy)
   }, [isBusy, onBusyChange])
+
+  useEffect(() => {
+    onRefreshReady?.(refetch)
+  }, [refetch, onRefreshReady])
 
   useEffect(() => {
     if (!showMockData) {
@@ -182,7 +193,6 @@ export default function PactFeed({
   }
 
   return (
-    <PullToRefresh onRefresh={refetch} disabled={isLoading}>
     <div id="pact-feed-list" className="space-y-4 scroll-mt-6">
       {isLoading ? (
         <div className="space-y-4">
@@ -259,6 +269,5 @@ export default function PactFeed({
         )}
       </div>
     </div>
-    </PullToRefresh>
   )
 }
