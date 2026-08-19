@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { AlertCircle, Camera, CheckCircle2, Crown, Inbox } from 'lucide-react';
 import toast from 'react-hot-toast';
 import DetailPageHeader from '@/components/DetailPageHeader';
+import { useSeedBackHistory } from '@/hooks/useSeedBackHistory';
 import FeedPactCard from '@/components/FeedPactCard';
 import PactProgressRing, { getPactProgress } from '@/components/PactProgressRing';
 import ProofsSection from '@/components/ProofsSection';
@@ -84,6 +85,12 @@ export default function PactDetailPage() {
   const skipMutation = useSkipPact();
 
   const pact = pactData?.data;
+  // Undefined (don't seed yet) while still loading, since the pact's
+  // circle_id — the real hierarchical parent — isn't known yet; seeding
+  // too early with a placeholder would get permanently locked in by
+  // useSeedBackHistory's de-dupe guard once the real value arrives.
+  const pactFallbackHref = pact ? (pact.circle_id ? `/circles/${pact.circle_id}` : '/feed') : isLoading ? undefined : '/feed';
+  useSeedBackHistory(pactFallbackHref);
   const proofs = useMemo(
     () =>
       (proofsData?.data || []).map((proof: any) => ({
@@ -194,7 +201,7 @@ export default function PactDetailPage() {
 
   return (
     <>
-      <DetailPageHeader title={pact.title || 'Pact'} fallbackHref="/feed" maxWidthClassName="max-w-md" />
+      <DetailPageHeader title={pact.title || 'Pact'} fallbackHref={pactFallbackHref || '/feed'} maxWidthClassName="max-w-md" />
       <div className="pact-flow min-h-screen bg-slate-950 pb-16 pt-6">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
