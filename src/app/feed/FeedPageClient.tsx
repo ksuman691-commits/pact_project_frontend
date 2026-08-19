@@ -12,6 +12,10 @@ import { useAuthStore } from '@/store/auth'
 import { useUnreadNotificationCount } from '@/hooks/useNotifications'
 import { useUserStats } from '@/hooks/useUserQueries'
 import { useAtRiskPact } from '@/hooks/useAtRiskPact'
+import { useProfileCompletion } from '@/hooks/useProfileCompletion'
+import { isProfileNudgeDismissed } from '@/lib/onboarding'
+import ProfileCompletionCard from '@/components/ProfileCompletionCard'
+import ProfileNudgeCard from '@/components/ProfileNudgeCard'
 import toast from 'react-hot-toast'
 
 export default function FeedPageClient() {
@@ -22,6 +26,8 @@ export default function FeedPageClient() {
   const { data: userStatsData } = useUserStats(user?.id || 0)
   const currentStreak = userStatsData?.data?.current_streak ?? 0
   const isAtRisk = useAtRiskPact(user?.id)
+  const profileCompletion = useProfileCompletion()
+  const [nudgeDismissed, setNudgeDismissed] = useState(true)
   const [pactModalOpen, setPactModalOpen] = useState(false)
   const [searchModalOpen, setSearchModalOpen] = useState(false)
   const [feedBusy, setFeedBusy] = useState(false)
@@ -46,6 +52,12 @@ export default function FeedPageClient() {
       router.replace('/auth/register')
     }
   }, [isInitialized, user, router])
+
+  // Read the dismissal flag on mount only (client-only localStorage), rather
+  // than during render, so this never causes a hydration mismatch.
+  useEffect(() => {
+    setNudgeDismissed(isProfileNudgeDismissed())
+  }, [])
 
   // "Back to Feed" on the create-pact success screen pushes /feed?created=id.
   // When the modal was opened from this same page (Feed's own "New Pact"
@@ -110,6 +122,18 @@ export default function FeedPageClient() {
           streak={currentStreak}
           atRisk={isAtRisk}
         />
+
+        {profileCompletion.showChecklist && (
+          <div className="max-w-md mx-auto px-4 pb-4">
+            <ProfileCompletionCard percent={profileCompletion.percent} checklist={profileCompletion.checklist} />
+          </div>
+        )}
+
+        {profileCompletion.showSingleNudge && !nudgeDismissed && profileCompletion.missingItem && (
+          <div className="max-w-md mx-auto px-4 pb-4">
+            <ProfileNudgeCard itemId={profileCompletion.missingItem.id} onDismiss={() => setNudgeDismissed(true)} />
+          </div>
+        )}
 
         <TopNav
           showCategories={true}

@@ -25,3 +25,35 @@ export function markOnboardingSeen(): void {
     // Ignore — worst case the carousel reappears next visit.
   }
 }
+
+const PROFILE_NUDGE_DISMISSED_UNTIL_KEY = 'circlepact_profile_nudge_dismissed_until';
+const PROFILE_NUDGE_SUPPRESS_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+/**
+ * Whether the single dismissible profile-completion nudge (e.g. "Add a
+ * photo") is currently suppressed on this device. Same localStorage pattern
+ * as the onboarding-seen flag above: read directly rather than through
+ * React state since it only gates a render decision.
+ */
+export function isProfileNudgeDismissed(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const raw = localStorage.getItem(PROFILE_NUDGE_DISMISSED_UNTIL_KEY);
+    if (!raw) return false;
+    const dismissedUntil = Number(raw);
+    if (!Number.isFinite(dismissedUntil)) return false;
+    return Date.now() < dismissedUntil;
+  } catch {
+    return false;
+  }
+}
+
+/** Suppresses the profile nudge for PROFILE_NUDGE_SUPPRESS_MS (7 days). */
+export function dismissProfileNudge(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(PROFILE_NUDGE_DISMISSED_UNTIL_KEY, String(Date.now() + PROFILE_NUDGE_SUPPRESS_MS));
+  } catch {
+    // Ignore — worst case the nudge reappears sooner than 7 days.
+  }
+}

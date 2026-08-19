@@ -29,6 +29,20 @@ export default function ReviewStep() {
         );
       }
 
+      // Photo upload is also best-effort and non-blocking: the endpoint
+      // isn't live on the backend yet (see circleAdvancedService.uploadPhoto),
+      // and even once it is, a failed upload shouldn't stop the circle from
+      // being reported as created — the emoji fallback still renders fine.
+      let photoUrl: string | null = null;
+      if (draft.photoFile && created?.id) {
+        try {
+          const photoResponse = await circleAdvancedService.uploadPhoto(created.id, draft.photoFile);
+          photoUrl = photoResponse?.data?.photo_url ?? null;
+        } catch {
+          photoUrl = null;
+        }
+      }
+
       setCreatedCircle({
         id: created?.id ?? Date.now(),
         name: payload.name,
@@ -37,6 +51,7 @@ export default function ReviewStep() {
         vibeId: draft.vibeId,
         privacy: draft.privacy ?? 'open',
         memberCount: created?.memberCount ?? 1,
+        photoUrl,
       });
       advanceToSuccess();
     } catch (error) {

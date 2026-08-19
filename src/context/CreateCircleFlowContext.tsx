@@ -21,6 +21,8 @@ interface CreateCircleFlowContextValue {
   setEmoji: (emoji: string) => void;
   setName: (name: string) => void;
   setTagline: (tagline: string) => void;
+  setPhoto: (file: File) => void;
+  clearPhoto: () => void;
   confirmIdentity: () => void;
   pickPrivacy: (privacy: PrivacyLevel) => void;
   toggleInvite: (userId: number) => void;
@@ -86,6 +88,25 @@ export function CreateCircleFlowProvider({ children, initialInviteUserId }: { ch
   const setName = useCallback((name: string) => updateDraft({ name }), [updateDraft]);
   const setTagline = useCallback((tagline: string) => updateDraft({ tagline }), [updateDraft]);
 
+  const setPhoto = useCallback(
+    (file: File) => {
+      setDraft((prev) => {
+        // Revoke the previous preview URL before replacing it so we don't
+        // leak object URLs if the user swaps photos multiple times.
+        if (prev.photoPreviewUrl) URL.revokeObjectURL(prev.photoPreviewUrl);
+        return { ...prev, photoFile: file, photoPreviewUrl: URL.createObjectURL(file) };
+      });
+    },
+    [],
+  );
+
+  const clearPhoto = useCallback(() => {
+    setDraft((prev) => {
+      if (prev.photoPreviewUrl) URL.revokeObjectURL(prev.photoPreviewUrl);
+      return { ...prev, photoFile: null, photoPreviewUrl: null };
+    });
+  }, []);
+
   // Identity requires typing → explicit Continue action, not auto-advance.
   const confirmIdentity = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -128,7 +149,10 @@ export function CreateCircleFlowProvider({ children, initialInviteUserId }: { ch
   }, [resolvedSteps]);
 
   const reset = useCallback(() => {
-    setDraft(createEmptyCircleDraft());
+    setDraft((prev) => {
+      if (prev.photoPreviewUrl) URL.revokeObjectURL(prev.photoPreviewUrl);
+      return createEmptyCircleDraft();
+    });
     setStepIndex(0);
     setCreatedCircle(null);
   }, []);
@@ -145,6 +169,8 @@ export function CreateCircleFlowProvider({ children, initialInviteUserId }: { ch
     setEmoji,
     setName,
     setTagline,
+    setPhoto,
+    clearPhoto,
     confirmIdentity,
     pickPrivacy,
     toggleInvite,

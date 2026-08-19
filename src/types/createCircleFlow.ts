@@ -29,6 +29,13 @@ export interface CircleDraft {
   tagline: string;
   privacy: PrivacyLevel | null;
   inviteUserIds: number[];
+  // Real photo, distinct from `emoji` — emoji remains a permanent, valid
+  // fallback choice rather than something photo upload forces you off of.
+  // photoFile is uploaded via circleService.uploadPhoto once the circle
+  // exists (POST /api/circles/{id}/photo mirrors the user avatar endpoint);
+  // photoPreviewUrl is the local object URL used to preview it beforehand.
+  photoFile: File | null;
+  photoPreviewUrl: string | null;
 }
 
 export interface CreatedCircle {
@@ -39,6 +46,9 @@ export interface CreatedCircle {
   vibeId: VibeId | null;
   privacy: PrivacyLevel;
   memberCount: number;
+  // Set once circleAdvancedService.uploadPhoto resolves; null if the user
+  // picked an emoji instead, or if the (not-yet-live) upload failed.
+  photoUrl: string | null;
 }
 
 export type CircleFlowStep = 'vibe' | 'identity' | 'privacy' | 'invite' | 'review' | 'success';
@@ -51,5 +61,7 @@ export function createEmptyCircleDraft(): CircleDraft {
     tagline: '',
     privacy: null,
     inviteUserIds: [],
+    photoFile: null,
+    photoPreviewUrl: null,
   };
 }

@@ -15,7 +15,14 @@ export default function CircleCard() {
         Your Circle
       </span>
       <div className="mt-2 flex items-center gap-3">
-        <span className="text-3xl">{draft.emoji}</span>
+        {draft.photoPreviewUrl ? (
+          <span className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full" style={{ border: '1px solid var(--pact-hairline)' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- blob: object URL preview, not a next/image-optimizable remote asset */}
+            <img src={draft.photoPreviewUrl} alt="" className="h-full w-full object-cover" />
+          </span>
+        ) : (
+          <span className="text-3xl">{draft.emoji}</span>
+        )}
         <h2 className="text-2xl font-bold leading-snug">{draft.name || 'Untitled Circle'}</h2>
       </div>
       {description && <p className="mt-2 text-sm italic">&ldquo;{description}&rdquo;</p>}
