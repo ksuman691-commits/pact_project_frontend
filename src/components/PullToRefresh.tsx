@@ -44,6 +44,17 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
     if (!atTop()) return;
     pointerId.current = event.pointerId;
     startY.current = event.clientY;
+    // On a real touchscreen the finger drifts more than a simulated/mouse
+    // pointer does, so without capture a fast or wide drag can hand
+    // subsequent pointermove events to a different element (or none) and
+    // silently drop the gesture. Capturing keeps every move/up event for
+    // this pointerId routed here regardless of what's underneath it.
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Capture can throw for already-released/invalid pointer ids; the
+      // gesture still works without it, just less robustly on real touch.
+    }
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {

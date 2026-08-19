@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import TopNav from '@/components/TopNav'
 import WelcomeHeader from '@/components/WelcomeHeader'
 import CreatePactFlowModal from '@/components/create-pact-flow/CreatePactFlowModal'
 import PactFeed from '@/components/PactFeed'
+import PullToRefresh from '@/components/PullToRefresh'
 import MemberSearchModal from '@/components/MemberSearchModal'
 import { useAuthStore } from '@/store/auth'
 import { useUnreadNotificationCount } from '@/hooks/useNotifications'
@@ -25,6 +26,16 @@ export default function FeedPageClient() {
   const [searchModalOpen, setSearchModalOpen] = useState(false)
   const [feedBusy, setFeedBusy] = useState(false)
   const firstLoadRef = useRef(true)
+  // PullToRefresh needs to wrap the *whole* scrollable page (header + nav +
+  // feed) so a pull starting anywhere on screen while scrolled to the top is
+  // caught — not just one starting inside PactFeed's own markup, which sits
+  // below ~250px of header/nav on a typical phone screen. PactFeed still owns
+  // the actual data fetching, so it hands its `refetch` up through this ref
+  // each time the query identity changes.
+  const feedRefetchRef = useRef<() => Promise<unknown>>(async () => {})
+  const handleRefreshReady = useCallback((refetch: () => Promise<unknown>) => {
+    feedRefetchRef.current = refetch
+  }, [])
   const unreadCount = unreadCountData?.unread_count ?? 0
   const category = (searchParams.get('category') || 'all').toLowerCase()
   const highlightPactId = searchParams.get('created')
@@ -85,42 +96,45 @@ export default function FeedPageClient() {
   }
 
   return (
-    <div className="pact-flow pact-page-enter min-h-screen">
-      <WelcomeHeader
-        userName={user?.full_name || 'Test User'}
-        avatarUrl={user?.avatar_url || null}
-        notificationCount={unreadCount}
-        onNotificationsClick={handleNotificationsClick}
-        onCreatePact={handleCreatePact}
-        onNavigateCircles={handleNavigateCircles}
-        onSearch={() => setSearchModalOpen(true)}
-        actionsDisabled={!isInitialized}
-        streak={currentStreak}
-        atRisk={isAtRisk}
-      />
-
-      <TopNav
-        showCategories={true}
-        fixed={false}
-        compact={true}
-        isLoadingCategories={feedBusy}
-        activeCategory={category}
-      />
-
-      {/* pb-28: clearance for the floating pill BottomNav (same convention as
-          circles/page.tsx) so the last pact card in the feed isn't covered. */}
-      <div className="max-w-md mx-auto pb-28 px-4" id="pact-feed-shell">
-        <PactFeed
-          showMockData={false}
-          category={category}
-          onBusyChange={setFeedBusy}
+    <PullToRefresh onRefresh={() => feedRefetchRef.current()} disabled={!isInitialized}>
+      <div className="pact-flow pact-page-enter min-h-screen">
+        <WelcomeHeader
+          userName={user?.full_name || 'Test User'}
+          avatarUrl={user?.avatar_url || null}
+          notificationCount={unreadCount}
+          onNotificationsClick={handleNotificationsClick}
           onCreatePact={handleCreatePact}
-          highlightPactId={highlightPactId}
+          onNavigateCircles={handleNavigateCircles}
+          onSearch={() => setSearchModalOpen(true)}
+          actionsDisabled={!isInitialized}
+          streak={currentStreak}
+          atRisk={isAtRisk}
         />
-      </div>
 
-      <CreatePactFlowModal isOpen={pactModalOpen} onClose={() => setPactModalOpen(false)} />
-      <MemberSearchModal isOpen={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
-    </div>
+        <TopNav
+          showCategories={true}
+          fixed={false}
+          compact={true}
+          isLoadingCategories={feedBusy}
+          activeCategory={category}
+        />
+
+        {/* pb-28: clearance for the floating pill BottomNav (same convention as
+            circles/page.tsx) so the last pact card in the feed isn't covered. */}
+        <div className="max-w-md mx-auto pb-28 px-4" id="pact-feed-shell">
+          <PactFeed
+            showMockData={false}
+            category={category}
+            onBusyChange={setFeedBusy}
+            onCreatePact={handleCreatePact}
+            highlightPactId={highlightPactId}
+            onRefreshReady={handleRefreshReady}
+          />
+        </div>
+
+        <CreatePactFlowModal isOpen={pactModalOpen} onClose={() => setPactModalOpen(false)} />
+        <MemberSearchModal isOpen={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
+      </div>
+    </PullToRefresh>
   )
 }
