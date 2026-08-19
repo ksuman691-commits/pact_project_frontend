@@ -41,12 +41,15 @@ export default function PendingCircleInvites() {
           const declining = declineMutation.isPending && declineMutation.variables?.inviteId === invite.id;
           return (
             <div key={invite.id} className="flex items-center gap-3">
-              {/* circle.icon_emoji is a literal emoji character, not an
-                  image URL, so it can't be passed as Avatar's avatarUrl
-                  (that goes straight into next/image). Show it as a
-                  small badge instead and let Avatar fall back to
-                  initials from the circle name. */}
-              {invite.circle?.icon_emoji ? (
+              {/* circle.photo_url is a real image URL and can go straight
+                  into Avatar's avatarUrl. circle.icon_emoji, by contrast,
+                  is a literal emoji character, not a URL, so it can't be
+                  passed there (that prop goes straight into next/image) —
+                  it gets its own small badge instead, with Avatar's
+                  name-initials fallback used only when neither is set. */}
+              {invite.circle?.photo_url ? (
+                <Avatar avatarUrl={invite.circle.photo_url} name={circleName} size={40} />
+              ) : invite.circle?.icon_emoji ? (
                 <div
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg"
                   style={{ background: 'var(--pact-surface-2)' }}

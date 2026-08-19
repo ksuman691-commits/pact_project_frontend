@@ -699,12 +699,10 @@ export const circleAdvancedService = {
   api.put(`/api/circles/${circleId}/members/${userId}`, data),
   getLeaderboard: (circleId: number) =>
   api.get(`/api/circles/${circleId}/leaderboard`),
-  // NOT YET LIVE on the backend as of this writing (see
-  // BACKEND_SPEC_PROFILE_NUDGE_AND_CIRCLE_PHOTO.md — POST
-  // /api/circles/{id}/photo, mirrors authService.uploadAvatar). Callers
-  // (ReviewStep) treat a failure here as best-effort, the same way
-  // inviteUser above already downgrades its 404 to a friendly toast rather
-  // than blocking circle creation.
+  // POST /api/circles/{id}/photo — mirrors authService.uploadAvatar.
+  // Callers (ReviewStep) still treat a failure here as best-effort so a
+  // transient network error doesn't block circle creation; the emoji
+  // fallback renders fine either way.
   uploadPhoto: async (circleId: number, file: File) => {
   const formData = new FormData();
   formData.append('file', file);

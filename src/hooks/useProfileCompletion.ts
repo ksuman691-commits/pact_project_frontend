@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { useAuthStore } from '@/store/auth';
-import { useUserStats, useUserCircles } from '@/hooks/useUserQueries';
+import { useUserStats } from '@/hooks/useUserQueries';
 
 export type ProfileChecklistItemId = 'account' | 'photo' | 'circle' | 'pact';
 
@@ -20,30 +20,23 @@ const NEW_USER_WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
  * "New user" vs "returning user" is decided purely by account age
  * (created_at within the last 7 days) — no new backend field needed.
  *
- * circles_count and pacts_joined_count are new UserStatsResponse fields
- * (see BACKEND_SPEC_PROFILE_NUDGE_AND_CIRCLE_PHOTO.md) that aren't live on
- * the backend yet. Until they are, hasJoinedCircle falls back to counting
- * the existing GET /api/users/{id}/circles list — same underlying data,
- * just an extra request instead of a single stat field.
+ * circles_count and pacts_joined_count are live UserStatsResponse fields
+ * (see BACKEND_SPEC_PROFILE_NUDGE_AND_CIRCLE_PHOTO.md for the contract).
  */
 export function useProfileCompletion() {
   const { user } = useAuthStore();
   const userId = user?.id || 0;
 
   const statsQuery = useUserStats(userId);
-  const circlesQuery = useUserCircles(userId);
-
   const stats = statsQuery.data?.data;
-  const circlesFallback = circlesQuery.data?.data;
 
-  const isLoading = !!userId && (statsQuery.isLoading || (stats?.circles_count === undefined && circlesQuery.isLoading));
+  const isLoading = !!userId && statsQuery.isLoading;
 
   const hasPhoto = Boolean(user?.avatar_url);
-  const hasCircle = typeof stats?.circles_count === 'number'
-    ? stats.circles_count > 0
-    : Array.isArray(circlesFallback)
-      ? circlesFallback.length > 0
-      : false;
+  const hasCircle = (stats?.circles_count ?? 0) > 0;
+  // Checklist item is specifically "Create your first Pact" — pacts_created
+  // only. pacts_joined_count tracks a different signal (participating in
+  // someone else's pact) and isn't what this item is asking about.
   const hasCreatedPact = (stats?.pacts_created ?? 0) > 0;
 
   const checklist: ProfileChecklistItem[] = useMemo(

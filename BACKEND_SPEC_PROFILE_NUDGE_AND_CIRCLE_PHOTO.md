@@ -1,9 +1,10 @@
 # Backend spec: profile completion stats + circle photo upload
 
-Hand this file to Copilot against `pact_project_backend_v2`. Both changes follow patterns
-already in the codebase (`upload_avatar_file`, `_serialize_circle`, `_get_user_circle_ids`).
-The frontend (`pact_project_frontend`) has already been built against this exact contract,
-with graceful fallbacks for anything not live yet.
+**STATUS: SHIPPED.** Both changes below have been confirmed live in production
+(photo upload/delete round-trips correctly, `circles_count`/`pacts_joined_count`
+return real numbers). The frontend (`pact_project_frontend`) is wired directly
+against these live fields — no fallback/degraded paths remain. Kept here as a
+record of the contract that was implemented.
 
 ## 1. Add `circles_count` + `pacts_joined_count` to `UserStatsResponse`
 
