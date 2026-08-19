@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Upload, Users, CheckCircle2, XCircle, Clock, CalendarClock, ShieldCheck, Zap } from 'lucide-react';
 import DetailPageHeader from '@/components/DetailPageHeader';
+import { useSeedBackHistory } from '@/hooks/useSeedBackHistory';
 import { useDareDetail, useDareRecipients, useDareStats } from '@/hooks/useDareQueries';
 import { useAcceptDare, useDeclineDare, useClaimDare } from '@/hooks/useDareMutations';
 import DareRecipientsModal from '@/components/DareRecipientsModal';
@@ -36,6 +37,7 @@ export default function DareDetailPage() {
   const params = useParams();
   const dareId = parseInt(params.id as string);
   const { user } = useAuthStore();
+  useSeedBackHistory('/dares');
 
   const dareQuery = useDareDetail(dareId);
   const recipientsQuery = useDareRecipients(dareId);
@@ -99,7 +101,7 @@ export default function DareDetailPage() {
 
   return (
     <div className="pact-flow pact-page-enter min-h-screen">
-      <DetailPageHeader title="Dare Details" backHref="/dares" />
+      <DetailPageHeader title="Dare Details" fallbackHref="/dares" />
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* Creator + status + countdown */}
