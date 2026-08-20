@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import ProfileHero from '@/components/ProfileHero';
 import ProfileStats from '@/components/ProfileStats';
@@ -392,8 +393,12 @@ export default function PublicProfilePage() {
                     onClick={() => router.push(`/circles/${circle.id}`)}
                     className="pact-card flex w-full items-center gap-3 rounded-2xl p-4 text-left transition hover:bg-[var(--pact-surface-2)]"
                   >
-                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl text-xl" style={{ background: 'var(--pact-surface-2)' }}>
-                      {circle.icon_emoji || '◉'}
+                    <span className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl text-xl" style={{ background: 'var(--pact-surface-2)' }}>
+                      {circle.photo_url ? (
+                        <Image src={circle.photo_url} alt="" fill sizes="44px" className="object-cover" />
+                      ) : (
+                        circle.icon_emoji || '◉'
+                      )}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold text-[var(--pact-text)]">{circle.name}</span>

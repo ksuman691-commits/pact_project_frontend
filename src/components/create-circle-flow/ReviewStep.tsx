@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useCreateCircleFlow } from '@/context/CreateCircleFlowContext';
 import { useCreateCircle } from '@/hooks/useCircleMutations';
 import { circleAdvancedService } from '@/services/api';
@@ -29,6 +30,20 @@ export default function ReviewStep() {
         );
       }
 
+      // Photo upload is best-effort and non-blocking: a failed upload (e.g.
+      // transient network error) shouldn't stop the circle from being
+      // reported as created — the emoji fallback still renders fine.
+      let photoUrl: string | null = null;
+      if (draft.photoFile && created?.id) {
+        try {
+          const photoResponse = await circleAdvancedService.uploadPhoto(created.id, draft.photoFile);
+          photoUrl = photoResponse?.data?.photo_url ?? null;
+        } catch {
+          photoUrl = null;
+          toast.error("Circle created, but your photo didn't upload. It's showing your emoji for now.");
+        }
+      }
+
       setCreatedCircle({
         id: created?.id ?? Date.now(),
         name: payload.name,
@@ -37,6 +52,7 @@ export default function ReviewStep() {
         vibeId: draft.vibeId,
         privacy: draft.privacy ?? 'open',
         memberCount: created?.memberCount ?? 1,
+        photoUrl,
       });
       advanceToSuccess();
     } catch (error) {

@@ -692,14 +692,29 @@ export const circleAdvancedService = {
   // (useInviteUserToCircle) already downgrade the resulting 404 to a
   // friendly "not available yet" toast instead of a generic error.
   inviteUser: (circleId: number, userId: number, message?: string) =>
-    api.post(`/api/circles/${circleId}/invite`, { user_id: userId, message }),
+  api.post(`/api/circles/${circleId}/invite`, { user_id: userId, message }),
   removeMember: (circleId: number, userId: number) =>
-    api.delete(`/api/circles/${circleId}/members/${userId}`),
+  api.delete(`/api/circles/${circleId}/members/${userId}`),
   updateMember: (circleId: number, userId: number, data: any) =>
-    api.put(`/api/circles/${circleId}/members/${userId}`, data),
+  api.put(`/api/circles/${circleId}/members/${userId}`, data),
   getLeaderboard: (circleId: number) =>
-    api.get(`/api/circles/${circleId}/leaderboard`),
-};
+  api.get(`/api/circles/${circleId}/leaderboard`),
+  // POST /api/circles/{id}/photo — mirrors authService.uploadAvatar.
+  // Callers (ReviewStep) still treat a failure here as best-effort so a
+  // transient network error doesn't block circle creation; the emoji
+  // fallback renders fine either way.
+  uploadPhoto: async (circleId: number, file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  // Do not hardcode Content-Type here: see uploadAvatar in authService —
+  // the api instance's default 'application/json' header must be
+  // explicitly cleared or the backend rejects the multipart request.
+  const response = await api.post(`/api/circles/${circleId}/photo`, formData, {
+  headers: { 'Content-Type': undefined },
+  });
+  return response;
+  },
+  };
 
 // Pending Circle Invites (recipient side of circleAdvancedService.inviteUser)
 // Receiving-end counterpart to POST /api/circles/{id}/invite. Confirmed

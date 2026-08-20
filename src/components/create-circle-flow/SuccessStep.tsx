@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCreateCircleFlow } from '@/context/CreateCircleFlowContext';
 import SuggestedPeopleSection from './SuggestedPeopleSection';
@@ -24,10 +25,14 @@ export default function SuccessStep() {
           }}
         />
         <div
-          className="absolute inset-[6px] flex items-center justify-center rounded-full text-3xl"
+          className="absolute inset-[6px] flex items-center justify-center overflow-hidden rounded-full text-3xl"
           style={{ background: 'var(--pact-bg)' }}
         >
-          {createdCircle.emoji}
+          {createdCircle.photoUrl ? (
+            <Image src={createdCircle.photoUrl} alt="" fill sizes="88px" className="object-cover" />
+          ) : (
+            createdCircle.emoji
+          )}
         </div>
       </div>
 

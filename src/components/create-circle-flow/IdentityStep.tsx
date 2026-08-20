@@ -1,13 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { Camera } from 'lucide-react';
 import { useCreateCircleFlow } from '@/context/CreateCircleFlowContext';
 import { CIRCLE_EMOJIS, NAME_TEMPLATES } from '@/lib/createCircleFlow/content';
 import { validateCircleName } from '@/lib/createCircleFlow/steps';
 
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5MB, matches profile avatar upload limit
+
 export default function IdentityStep() {
-  const { draft, setEmoji, setName, setTagline, confirmIdentity } = useCreateCircleFlow();
+  const { draft, setEmoji, setName, setTagline, setPhoto, clearPhoto, confirmIdentity } = useCreateCircleFlow();
   const [error, setError] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const suggestions = draft.vibeId ? NAME_TEMPLATES[draft.vibeId] : [];
 
@@ -21,26 +26,88 @@ export default function IdentityStep() {
     confirmIdentity();
   };
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setPhotoError('Please choose an image file.');
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      setPhotoError('Photo must be under 5MB.');
+      return;
+    }
+    setPhotoError(null);
+    setPhoto(file);
+  };
+
+  const handlePickEmoji = (emoji: string) => {
+    // Emoji is a permanent fallback: choosing one clears any uploaded photo
+    // so the circle shows exactly one avatar treatment, not both.
+    setPhotoError(null);
+    clearPhoto();
+    setEmoji(emoji);
+  };
+
   return (
     <div className="pact-step-enter flex flex-1 flex-col">
       <h1 className="text-2xl font-bold">Give it a face.</h1>
-      <p className="mt-1 text-sm">An emoji, a name, and a one-line tagline.</p>
+      <p className="mt-1 text-sm">A photo (or emoji), a name, and a one-line tagline.</p>
 
-      <div className="mt-6 grid grid-cols-5 gap-2">
-        {CIRCLE_EMOJIS.map((emoji) => {
-          const selected = draft.emoji === emoji;
-          return (
-            <button
-              key={emoji}
-              type="button"
-              onClick={() => setEmoji(emoji)}
-              aria-label={`Choose ${emoji}`}
-              className={`pact-tile rounded-2xl px-0 py-3 text-xl ${selected ? 'selected' : ''}`}
-            >
-              {emoji}
-            </button>
-          );
-        })}
+      <div className="mt-6 flex flex-col items-center">
+        <input ref={fileInputRef} type="file" accept="image/*" className="sr-only" onChange={handlePhotoChange} />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          aria-label={draft.photoPreviewUrl ? 'Change circle photo' : 'Upload a circle photo'}
+          className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full text-4xl"
+          style={{
+            background: draft.photoPreviewUrl ? 'transparent' : 'var(--pact-surface-raised)',
+            border: '1px solid var(--pact-hairline)',
+          }}
+        >
+          {draft.photoPreviewUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- blob: object URL preview; next/image's loader can't optimize it and doesn't need to for an ephemeral local file.
+            <img src={draft.photoPreviewUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span>{draft.emoji}</span>
+          )}
+          <span
+            className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full"
+            style={{ background: 'var(--flow-accent)', border: '2px solid var(--pact-bg)' }}
+          >
+            <Camera className="h-4 w-4" style={{ color: 'var(--pact-bg)' }} aria-hidden="true" />
+          </span>
+        </button>
+        <span className="pact-mono mt-2 text-xs" style={{ color: 'var(--pact-text-muted)' }}>
+          Tap to {draft.photoPreviewUrl ? 'change photo' : 'upload a photo'}
+        </span>
+        {photoError && (
+          <span className="mt-1 text-xs" style={{ color: 'var(--flow-accent)' }}>
+            {photoError}
+          </span>
+        )}
+
+        <span className="pact-mono mt-4 block text-xs uppercase tracking-wide" style={{ color: 'var(--pact-text-muted)' }}>
+          Or pick an emoji
+        </span>
+        <div className="mt-2 flex flex-wrap justify-center gap-2">
+          {CIRCLE_EMOJIS.map((emoji) => {
+            const selected = !draft.photoPreviewUrl && draft.emoji === emoji;
+            return (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => handlePickEmoji(emoji)}
+                aria-label={`Choose ${emoji}`}
+                className={`pact-tile flex h-11 w-11 items-center justify-center rounded-2xl text-xl ${selected ? 'selected' : ''}`}
+              >
+                {emoji}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="mt-6">
