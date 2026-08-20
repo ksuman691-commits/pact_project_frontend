@@ -117,7 +117,6 @@ export default function FeedPageClient() {
           onNotificationsClick={handleNotificationsClick}
           onCreatePact={handleCreatePact}
           onNavigateCircles={handleNavigateCircles}
-          actionsDisabled={!isInitialized}
           streak={currentStreak}
           atRisk={isAtRisk}
         />
