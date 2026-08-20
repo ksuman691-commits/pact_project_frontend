@@ -1,7 +1,9 @@
 'use client'
 
 import { Bell, Plus, Search, Users } from 'lucide-react'
+import { useState } from 'react'
 import UserAvatarLink from '@/components/UserAvatarLink'
+import MemberSearchModal from '@/components/MemberSearchModal'
 
 interface WelcomeHeaderProps {
   userName?: string
@@ -36,7 +38,10 @@ export default function WelcomeHeader({
   streak,
   atRisk = false
 }: WelcomeHeaderProps) {
+  const [searchOpen, setSearchOpen] = useState(false)
+
   return (
+    <>
     <div className="border-b border-[var(--pact-hairline)]">
       <div className="mx-auto max-w-md px-4 pb-4 pt-4">
         <div className="pact-card flex items-center justify-between gap-4 rounded-[28px] px-4 py-5 sm:py-6">
@@ -59,7 +64,10 @@ export default function WelcomeHeader({
           <div className="flex flex-shrink-0 items-center gap-2">
             <button
               type="button"
-              onClick={() => onSearch?.()}
+              onClick={() => {
+                setSearchOpen(true)
+                onSearch?.()
+              }}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--pact-surface-2)] text-[var(--pact-text-dim)] transition hover:bg-[var(--pact-surface-3)] hover:text-[var(--pact-text)]"
               aria-label="Search"
               data-testid="search-button"
@@ -106,5 +114,7 @@ export default function WelcomeHeader({
         </div>
       </div>
     </div>
+    <MemberSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+    </>
   )
 }
