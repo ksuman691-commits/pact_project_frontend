@@ -12,7 +12,7 @@ import DareProofUploadModal from '@/components/DareProofUploadModal';
 import DareVerificationModal from '@/components/DareVerificationModal';
 import UserAvatarLink from '@/components/UserAvatarLink';
 import Avatar from '@/components/Avatar';
-import { formatCountdown, formatRelativeTime, urgencyColor } from '@/lib/dareCountdown';
+import { formatCountdown, formatRelativeTime, parseApiDate, urgencyColor } from '@/lib/dareCountdown';
 import { useAuthStore } from '@/store/auth';
 
 const STATUS_PILL: Record<string, { label: string; color: string }> = {
@@ -208,7 +208,7 @@ export default function DareDetailPage() {
             <span className="text-[var(--pact-text-faint)]">Respond by</span>
             <span
               className="ml-auto font-medium text-[var(--pact-text-dim)]"
-              title={dare.respond_by ? new Date(dare.respond_by).toLocaleString() : undefined}
+              title={parseApiDate(dare.respond_by)?.toLocaleString()}
             >
               {formatRelativeTime(dare.respond_by)}
             </span>
@@ -218,7 +218,7 @@ export default function DareDetailPage() {
             <span className="text-[var(--pact-text-faint)]">Complete by</span>
             <span
               className="ml-auto font-medium text-[var(--pact-text-dim)]"
-              title={dare.complete_by ? new Date(dare.complete_by).toLocaleString() : undefined}
+              title={parseApiDate(dare.complete_by)?.toLocaleString()}
             >
               {formatRelativeTime(dare.complete_by)}
             </span>

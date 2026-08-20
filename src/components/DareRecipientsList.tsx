@@ -5,6 +5,7 @@ import { CheckCircle2, Clock, XCircle } from 'lucide-react';
 import type { DareRecipient } from '@/types';
 import Avatar from '@/components/Avatar';
 import MemberAvatarStack from '@/components/MemberAvatarStack';
+import { parseApiDate } from '@/lib/dareCountdown';
 
 interface DareRecipientsListProps {
   recipients: DareRecipient[];
@@ -97,8 +98,10 @@ export default function DareRecipientsList({ recipients, isLoading }: DareRecipi
                   <StatusIcon className="w-4 h-4" />
                   {statusConfig.label}
                 </div>
-                {recipient.responded_at && (
-                  <p className="text-xs text-[var(--pact-text-faint)]">{new Date(recipient.responded_at).toLocaleDateString()}</p>
+                {parseApiDate(recipient.responded_at) && (
+                  <p className="text-xs text-[var(--pact-text-faint)]">
+                    {parseApiDate(recipient.responded_at)!.toLocaleDateString()}
+                  </p>
                 )}
               </div>
             </div>

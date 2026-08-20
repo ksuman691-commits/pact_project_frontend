@@ -6,6 +6,23 @@
  * recipient must submit proof in time).
  */
 
+/**
+ * Parses an API timestamp as UTC even when the string has no timezone
+ * designator. The backend's dare timestamp columns are plain `DateTime`
+ * (not `DateTime(timezone=True)`), so Postgres/SQLAlchemy round-trips them
+ * without a `Z`/offset (e.g. "2026-08-20T23:29:18.615000") even though the
+ * value is UTC. Per the JS spec, `new Date()` on a zone-less string parses
+ * it as *local* time, not UTC — so a viewer at UTC+6 selecting a 12h
+ * response window would see it immediately collapse to "6 hours left".
+ * Every dare timestamp must go through this instead of a bare `new Date()`.
+ */
+export function parseApiDate(raw: string | null | undefined): Date | null {
+  if (!raw) return null;
+  const hasZone = /[Zz]|[+-]\d{2}:?\d{2}$/.test(raw);
+  const date = new Date(hasZone ? raw : `${raw}Z`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export type CountdownUrgency = 'urgent' | 'neutral' | 'expired';
 
 export interface Countdown {
@@ -17,8 +34,8 @@ export interface Countdown {
 export function formatCountdown(targetDateRaw: string | null | undefined, verb: 'Respond' | 'Complete' = 'Complete'): Countdown {
   if (!targetDateRaw) return { label: 'No deadline', urgency: 'neutral' };
 
-  const targetDate = new Date(targetDateRaw);
-  if (Number.isNaN(targetDate.getTime())) return { label: 'No deadline', urgency: 'neutral' };
+  const targetDate = parseApiDate(targetDateRaw);
+  if (!targetDate) return { label: 'No deadline', urgency: 'neutral' };
 
   const diffMs = targetDate.getTime() - Date.now();
   if (diffMs <= 0) return { label: `${verb === 'Respond' ? 'Response' : 'Deadline'} expired`, urgency: 'expired' };
@@ -65,8 +82,8 @@ export interface TimeRing {
  * over the real window instead of jumping straight to a sliver on a 48h dare.
  */
 export function getTimeRing(targetRaw: string | null | undefined, windowStartRaw: string | null | undefined): TimeRing {
-  const target = targetRaw ? new Date(targetRaw) : null;
-  if (!target || Number.isNaN(target.getTime())) {
+  const target = parseApiDate(targetRaw);
+  if (!target) {
     return { tier: 'expired', color: 'var(--pact-text-faint)', percentRemaining: 0, label: 'No deadline', hoursRemaining: 0 };
   }
 
@@ -81,8 +98,8 @@ export function getTimeRing(targetRaw: string | null | undefined, windowStartRaw
   const tier: RingTier = hoursRemaining < 6 ? 'critical' : hoursRemaining < 24 ? 'soon' : 'relaxed';
   const color = tier === 'critical' ? 'var(--pact-pink)' : tier === 'soon' ? 'var(--pact-gold)' : 'var(--pact-violet)';
 
-  const windowStart = windowStartRaw ? new Date(windowStartRaw) : null;
-  const windowMs = windowStart && !Number.isNaN(windowStart.getTime())
+  const windowStart = parseApiDate(windowStartRaw);
+  const windowMs = windowStart
     ? Math.max(1, target.getTime() - windowStart.getTime())
     : 48 * 60 * 60 * 1000; // fall back to a 48h window if we have no start anchor
   const percentRemaining = Math.max(0, Math.min(1, diffMs / windowMs));
@@ -115,8 +132,8 @@ export function isDareExpired(dare: {
   if (resolvedStatus && ['completed', 'failed', 'declined'].includes(resolvedStatus)) return false;
 
   const target = dare.expires_at ?? (resolvedStatus === 'pending' || !resolvedStatus ? dare.respond_by : dare.complete_by);
-  const targetMs = target ? Date.parse(target) : NaN;
-  return Number.isFinite(targetMs) && targetMs <= Date.now();
+  const targetDate = parseApiDate(target);
+  return targetDate !== null && targetDate.getTime() <= Date.now();
 }
 
 /**
@@ -131,8 +148,8 @@ export function isDareExpired(dare: {
 export function formatRelativeTime(targetDateRaw: string | null | undefined): string {
   if (!targetDateRaw) return 'No deadline';
 
-  const targetDate = new Date(targetDateRaw);
-  if (Number.isNaN(targetDate.getTime())) return 'No deadline';
+  const targetDate = parseApiDate(targetDateRaw);
+  if (!targetDate) return 'No deadline';
 
   const diffMs = targetDate.getTime() - Date.now();
   const future = diffMs > 0;
