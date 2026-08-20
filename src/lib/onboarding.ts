@@ -57,3 +57,38 @@ export function dismissProfileNudge(): void {
     // Ignore — worst case the nudge reappears sooner than 7 days.
   }
 }
+
+const PROFILE_CHECKLIST_DISMISSED_UNTIL_KEY = 'circlepact_profile_checklist_dismissed_until';
+const PROFILE_CHECKLIST_SUPPRESS_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+/**
+ * Whether the guided profile-completion checklist flow (new-user variant,
+ * see useProfileCompletion + ProfileCompletionCard) is currently suppressed
+ * on this device. Same pattern as the single nudge above, but tracked with
+ * its own key since the two cards are independent surfaces. The checklist
+ * stamps this the moment it's shown (not only on explicit dismissal) — any
+ * exposure in the last 7 days, whether completed, skipped, or closed early,
+ * counts as "seen" and suppresses it for the rest of that window.
+ */
+export function isProfileChecklistDismissed(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const raw = localStorage.getItem(PROFILE_CHECKLIST_DISMISSED_UNTIL_KEY);
+    if (!raw) return false;
+    const dismissedUntil = Number(raw);
+    if (!Number.isFinite(dismissedUntil)) return false;
+    return Date.now() < dismissedUntil;
+  } catch {
+    return false;
+  }
+}
+
+/** Suppresses the profile checklist flow for PROFILE_CHECKLIST_SUPPRESS_MS (7 days). */
+export function dismissProfileChecklist(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(PROFILE_CHECKLIST_DISMISSED_UNTIL_KEY, String(Date.now() + PROFILE_CHECKLIST_SUPPRESS_MS));
+  } catch {
+    // Ignore — worst case the checklist reappears sooner than 7 days.
+  }
+}
