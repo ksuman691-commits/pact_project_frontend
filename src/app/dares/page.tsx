@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, X } from 'lucide-react';
 import DareCard from '@/components/DareCard';
@@ -33,7 +33,18 @@ function isResolved(dare: any) {
   return ['completed', 'failed', 'declined', 'expired'].includes(dare.my_recipient_status || dare.status);
 }
 
+// useSearchParams() (for the ?tab=/?status= deep links from the dashboard
+// stat cards) requires a Suspense boundary around any client component that
+// calls it, or `next build` fails prerendering this page.
 export default function DaresPage() {
+  return (
+    <Suspense fallback={null}>
+      <DaresPageInner />
+    </Suspense>
+  );
+}
+
+function DaresPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>('for-you');
