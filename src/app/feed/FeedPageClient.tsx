@@ -7,7 +7,6 @@ import WelcomeHeader from '@/components/WelcomeHeader'
 import CreatePactFlowModal from '@/components/create-pact-flow/CreatePactFlowModal'
 import PactFeed from '@/components/PactFeed'
 import PullToRefresh from '@/components/PullToRefresh'
-import MemberSearchModal from '@/components/MemberSearchModal'
 import { useAuthStore } from '@/store/auth'
 import { useUnreadNotificationCount } from '@/hooks/useNotifications'
 import { useUserStats } from '@/hooks/useUserQueries'
@@ -30,7 +29,6 @@ export default function FeedPageClient() {
   const [nudgeDismissed, setNudgeDismissed] = useState(true)
   const [checklistDismissed, setChecklistDismissed] = useState(true)
   const [pactModalOpen, setPactModalOpen] = useState(false)
-  const [searchModalOpen, setSearchModalOpen] = useState(false)
   const [feedBusy, setFeedBusy] = useState(false)
   const firstLoadRef = useRef(true)
   // PullToRefresh needs to wrap the *whole* scrollable page (header + nav +
@@ -119,7 +117,6 @@ export default function FeedPageClient() {
           onNotificationsClick={handleNotificationsClick}
           onCreatePact={handleCreatePact}
           onNavigateCircles={handleNavigateCircles}
-          onSearch={() => setSearchModalOpen(true)}
           actionsDisabled={!isInitialized}
           streak={currentStreak}
           atRisk={isAtRisk}
@@ -163,7 +160,6 @@ export default function FeedPageClient() {
         </div>
 
         <CreatePactFlowModal isOpen={pactModalOpen} onClose={() => setPactModalOpen(false)} />
-        <MemberSearchModal isOpen={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
       </div>
     </PullToRefresh>
   )
