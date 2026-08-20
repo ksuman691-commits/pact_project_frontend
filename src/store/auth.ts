@@ -122,3 +122,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 }));
+
+// TEMP DEBUG: verifying header buttons while the backend is unreachable. Remove after use.
+if (typeof window !== 'undefined') {
+  (window as any).__authStore = useAuthStore;
+}
