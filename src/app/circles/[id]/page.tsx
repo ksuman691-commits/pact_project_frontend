@@ -23,8 +23,12 @@ export default function CircleDetailPage() {
   useSeedBackHistory('/circles')
   useEffect(() => { if (!isInitialized) return; if (!user) { router.push('/auth/login'); return } (async () => { try { const [c, m, p] = await Promise.all([circleService.getById(circleId), circleJoinRequestService.listMembers(circleId), circleService.listPacts(circleId)]); setCircle(c.data); setMembers(m.data || []); setPacts(p.data || []); setIsMember(!!c.data?.is_member) } catch { toast.error('Failed to load circle'); router.push('/circles') } finally { setLoading(false) } })() }, [isInitialized, user, router, circleId])
   useEffect(() => { if (!members.length) { setMemberStats([]); return } Promise.allSettled(members.map(m => userService.getStats(m.user_id))).then(results => setMemberStats(results.map((r, i) => r.status === 'fulfilled' ? { ...members[i], ...(r.value.data || {}) } : null).filter(Boolean))) }, [members])
-  if (!isInitialized || loading) return <div className="flex min-h-screen items-center justify-center bg-[var(--pact-bg)]"><LogoSpinner size={32} color="var(--pact-violet)" /></div>
-  if (!user || !circle) return null
+  if (!isInitialized || loading) return <><DetailPageHeader title="Loading circle…" fallbackHref="/circles" maxWidthClassName="max-w-4xl" /><div className="flex min-h-screen items-center justify-center bg-[var(--pact-bg)]"><LogoSpinner size={32} color="var(--pact-violet)" /></div></>
+  if (!user) return null
+  // Real not-found state instead of a blank screen — reachable when the load
+  // effect's catch block hasn't redirected away yet (or a future change stops
+  // redirecting), matching the Pact detail page's "not found" pattern.
+  if (!circle) return <><DetailPageHeader title="Circle not found" backHref="/circles" maxWidthClassName="max-w-4xl" /><div className="flex min-h-screen items-center justify-center bg-[var(--pact-bg)] px-5 text-center text-[var(--pact-text)]"><div><p className="text-lg font-bold">Circle not found</p><p className="mt-2 text-sm text-[var(--pact-text-muted)]">This circle could not be loaded or is no longer available.</p></div></div></>
   const activeMembers = memberStats.filter(m => Number(m.current_streak) > 0).length; const activeStreaks = memberStats.filter(m => Number(m.current_streak) > 0).map(m => Number(m.current_streak)); const groupStreak = activeStreaks.length ? Math.min(...activeStreaks) : 0
   const handleJoin = async () => { try { await circleService.join(circleId); setIsMember(true); const m = await circleJoinRequestService.listMembers(circleId); setMembers(m.data || []); toast.success('Joined circle') } catch { toast.error('Failed to join circle') } }
   const handleLeave = async () => { setLeaving(true); try { await circleService.leave(circleId); router.push('/circles') } finally { setLeaving(false); setLeaveModal(false) } }

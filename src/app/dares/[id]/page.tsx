@@ -60,6 +60,7 @@ export default function DareDetailPage() {
   if (dareQuery.isLoading) {
     return (
       <div className="pact-flow min-h-screen">
+        <DetailPageHeader title="Loading dare…" fallbackHref="/dares" />
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="pact-shimmer h-96 rounded-[28px]" />
         </div>
@@ -70,8 +71,12 @@ export default function DareDetailPage() {
   if (!dare) {
     return (
       <div className="pact-flow min-h-screen">
-        <div className="max-w-2xl mx-auto px-4 py-6">
-          <p className="text-[var(--pact-text-dim)]">Dare not found</p>
+        <DetailPageHeader title="Dare not found" backHref="/dares" />
+        <div className="max-w-2xl mx-auto flex min-h-[60vh] items-center justify-center px-4 text-center">
+          <div>
+            <p className="text-lg font-bold text-[var(--pact-text)]">Dare not found</p>
+            <p className="mt-2 text-sm text-[var(--pact-text-dim)]">This dare could not be loaded or is no longer available.</p>
+          </div>
         </div>
       </div>
     );
