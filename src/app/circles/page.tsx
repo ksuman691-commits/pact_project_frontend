@@ -41,14 +41,14 @@ export default function CirclesPage() {
         <span className="text-balance text-xl font-medium leading-[1.15] tracking-[-0.02em] text-[var(--pact-text-muted)] md:text-2xl">Circles holding<br />you together</span>
       </div>
       <div className="mt-6 flex items-stretch divide-x divide-[var(--pact-hairline)] rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)]">
-        <div className="flex-1 px-4 py-3 text-center">
+        <Link href="/circles/people" className="flex-1 px-4 py-3 text-center transition hover:bg-[var(--pact-surface-2)]">
           <p className="text-lg font-black text-[var(--pact-text)]">{people}</p>
           <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">People</p>
-        </div>
-        <div className="flex-1 px-4 py-3 text-center">
+        </Link>
+        <Link href="/pacts?filter=Active" className="flex-1 px-4 py-3 text-center transition hover:bg-[var(--pact-surface-2)]">
           <p className="text-lg font-black text-[var(--pact-text)]">{activeThisWeek}</p>
           <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">Active this week</p>
-        </div>
+        </Link>
         <div className="flex-1 px-4 py-3 text-center">
           <p className="text-lg font-black text-[var(--pact-text)]">{bestStreak}d</p>
           <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">Best streak</p>
