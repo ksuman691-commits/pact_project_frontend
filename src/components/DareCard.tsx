@@ -8,6 +8,7 @@ import DareTimeRing from '@/components/DareTimeRing';
 import { useAuthStore } from '@/store/auth';
 import { useAcceptDare, useDeclineDare, useClaimDare } from '@/hooks/useDareMutations';
 import { getDisplayName } from '@/lib/displayName';
+import { isDareExpired } from '@/lib/dareCountdown';
 import DareProofUploadModal from '@/components/DareProofUploadModal';
 
 interface DareCardProps {
@@ -52,7 +53,7 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
   const isPublicUnclaimed = dare.audience === 'public' && !isCreator && !dare.my_recipient_status;
   const isPrivate = dare.audience !== 'public';
   const target = dare.expires_at ?? (isPending ? dare.respond_by : dare.complete_by);
-  const isExpired = Number.isFinite(Date.parse(target)) ? Date.parse(target) <= Date.now() : false;
+  const isExpired = isDareExpired(dare);
 
   // Live-updating clock so the ring/label recompute as time passes without
   // a page refresh. The server timestamp in `target` stays the source of
@@ -64,9 +65,21 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
     return () => window.clearInterval(timer);
   }, [isExpired]);
 
-  const statusPill = isExpired
-    ? STATUS_PILL[dare.status] ?? { label: 'Expired', color: 'var(--pact-text-faint)' }
-    : dare.my_recipient_status ? STATUS_PILL[dare.my_recipient_status] : STATUS_PILL[dare.status] ?? null;
+  // A dare/recipient that already reached a real outcome (completed/failed/
+  // declined) always wins over the deadline check — that status is more
+  // informative than "expired" and isDareExpired() already excludes these
+  // from being flagged as expired in the first place. Otherwise, once the
+  // deadline has passed, the badge must say "Expired" rather than falling
+  // back to whatever transient status (e.g. "pending") the dare was in
+  // right before it expired — showing "Pending" + an "Expired" subtitle
+  // together was the contradiction being fixed here.
+  const resolvedStatus = dare.my_recipient_status || dare.status;
+  const isTerminalOutcome = Boolean(resolvedStatus) && ['completed', 'failed', 'declined'].includes(resolvedStatus);
+  const statusPill = isTerminalOutcome
+    ? STATUS_PILL[resolvedStatus]
+    : isExpired
+      ? { label: 'Expired', color: 'var(--pact-text-faint)' }
+      : dare.my_recipient_status ? STATUS_PILL[dare.my_recipient_status] : STATUS_PILL[dare.status] ?? null;
 
   // First-recipient name comes from the full recipients array when it's
   // loaded (dare detail), but list/feed responses only return
@@ -94,7 +107,7 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
       onKeyDown={(e) => {
         if (e.key === 'Enter') router.push(`/dares/${dare.id}`);
       }}
-      className="pact-card cursor-pointer overflow-hidden rounded-[28px] transition"
+      className={`pact-card cursor-pointer overflow-hidden rounded-[28px] transition ${isExpired ? 'opacity-60' : ''}`}
       style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}
     >
       {/* Header */}
@@ -114,7 +127,6 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
               <p className="text-sm font-semibold text-[var(--pact-text)] truncate">
                 {relationLabel}
               </p>
-              {isExpired && <p className="text-xs font-semibold text-[var(--pact-text-faint)]">Expired</p>}
             </div>
           </div>
 
@@ -127,12 +139,17 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
                 {statusPill.label}
               </span>
             )}
+            {/* Visible label, not just a `title` tooltip — this app runs as
+                a mobile web view where hover tooltips are unreachable, so a
+                touch user previously had no way to know what this icon
+                meant. */}
             <span
               className="flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold"
               style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-text-faint)' }}
               title={isPrivate ? 'Private Dare' : 'Public Dare'}
             >
               {isPrivate ? <Lock className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+              {isPrivate ? 'Private' : 'Public'}
             </span>
           </div>
         </div>

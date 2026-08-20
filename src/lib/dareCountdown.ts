@@ -97,6 +97,29 @@ export function getTimeRing(targetRaw: string | null | undefined, windowStartRaw
 }
 
 /**
+ * Whether a dare's deadline has passed without a resolving action.
+ * Deliberately excludes dares whose status already reflects a real action
+ * (completed/failed/declined) — those are resolved outcomes, not "expired",
+ * even if their deadline is also in the past. Used by both the dare list
+ * card (status pill + muted styling) and the Dares page (tab filtering) so
+ * "expired" means the same thing everywhere.
+ */
+export function isDareExpired(dare: {
+  status?: string;
+  my_recipient_status?: string | null;
+  expires_at?: string | null;
+  respond_by?: string | null;
+  complete_by?: string | null;
+}): boolean {
+  const resolvedStatus = dare.my_recipient_status || dare.status;
+  if (resolvedStatus && ['completed', 'failed', 'declined'].includes(resolvedStatus)) return false;
+
+  const target = dare.expires_at ?? (resolvedStatus === 'pending' || !resolvedStatus ? dare.respond_by : dare.complete_by);
+  const targetMs = target ? Date.parse(target) : NaN;
+  return Number.isFinite(targetMs) && targetMs <= Date.now();
+}
+
+/**
  * Plain relative-time label for a timeline row (e.g. "Respond by" / "Complete
  * by" on the dare detail page) — unlike formatCountdown above, this has no
  * verb baked in and handles both future ("in 5h") and past ("5h ago") dates,
