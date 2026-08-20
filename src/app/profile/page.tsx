@@ -13,14 +13,20 @@ import AchievementsBadges from '@/components/AchievementsBadges';
 import ActivityStrip from '@/components/pact-ui/ActivityStrip';
 import CirclesRow from '@/components/pact-ui/CirclesRow';
 import LogoSpinner from '@/components/LogoSpinner';
-import { LogOut, Settings } from 'lucide-react';
+import { ChevronLeft, LogOut, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useFollowers, useFollowing } from '@/hooks/useFollows';
 import { useAtRiskPact } from '@/hooks/useAtRiskPact';
+import { useSmartBack } from '@/hooks/useSmartBack';
 
 export default function Profile() {
   const router = useRouter();
   const { user, isInitialized } = useRequireAuth();
+  // Own profile has no natural single parent route the way a circle/pact
+  // detail page does, so this always falls back to /feed — same behavior
+  // as any other detail page's chevron when there's no real history to
+  // go back through (deep link, fresh tab).
+  const smartBack = useSmartBack('/feed');
   const logout = useAuthStore((state) => state.logout);
   const [activeTab, setActiveTab] = useState('pacts');
   const [showFollowersModal, setShowFollowersModal] = useState(false);
@@ -144,8 +150,16 @@ export default function Profile() {
     <div className="pact-flow pact-page-enter min-h-screen">
       {/* Top Bar */}
       <div className="sticky top-0 z-40 backdrop-blur-xl border-b" style={{ background: 'rgba(20,9,31,0.85)', borderColor: 'var(--pact-hairline)' }}>
-        <div className="px-4 py-4 flex items-center justify-between max-w-md mx-auto">
-          <h1 className="text-xl font-bold text-[var(--pact-text)]">My Profile</h1>
+        <div className="px-4 py-4 flex items-center gap-2 max-w-md mx-auto">
+          <button
+            type="button"
+            onClick={smartBack}
+            aria-label="Go back"
+            className="flex-shrink-0 rounded-full p-2 -ml-2 transition hover:bg-[var(--pact-surface-2)]"
+          >
+            <ChevronLeft className="h-5 w-5 text-[var(--pact-text)]" />
+          </button>
+          <h1 className="flex-1 text-xl font-bold text-[var(--pact-text)]">My Profile</h1>
           <div className="flex gap-2">
             <button
               onClick={handleEditProfile}

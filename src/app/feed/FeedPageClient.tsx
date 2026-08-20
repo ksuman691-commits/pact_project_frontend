@@ -13,7 +13,7 @@ import { useUnreadNotificationCount } from '@/hooks/useNotifications'
 import { useUserStats } from '@/hooks/useUserQueries'
 import { useAtRiskPact } from '@/hooks/useAtRiskPact'
 import { useProfileCompletion } from '@/hooks/useProfileCompletion'
-import { isProfileNudgeDismissed } from '@/lib/onboarding'
+import { isProfileNudgeDismissed, isProfileChecklistDismissed } from '@/lib/onboarding'
 import ProfileCompletionCard from '@/components/ProfileCompletionCard'
 import ProfileNudgeCard from '@/components/ProfileNudgeCard'
 import toast from 'react-hot-toast'
@@ -28,6 +28,7 @@ export default function FeedPageClient() {
   const isAtRisk = useAtRiskPact(user?.id)
   const profileCompletion = useProfileCompletion()
   const [nudgeDismissed, setNudgeDismissed] = useState(true)
+  const [checklistDismissed, setChecklistDismissed] = useState(true)
   const [pactModalOpen, setPactModalOpen] = useState(false)
   const [searchModalOpen, setSearchModalOpen] = useState(false)
   const [feedBusy, setFeedBusy] = useState(false)
@@ -57,6 +58,7 @@ export default function FeedPageClient() {
   // than during render, so this never causes a hydration mismatch.
   useEffect(() => {
     setNudgeDismissed(isProfileNudgeDismissed())
+    setChecklistDismissed(isProfileChecklistDismissed())
   }, [])
 
   // "Back to Feed" on the create-pact success screen pushes /feed?created=id.
@@ -123,9 +125,13 @@ export default function FeedPageClient() {
           atRisk={isAtRisk}
         />
 
-        {profileCompletion.showChecklist && (
+        {profileCompletion.showChecklist && !checklistDismissed && (
           <div className="max-w-md mx-auto px-4 pb-4">
-            <ProfileCompletionCard percent={profileCompletion.percent} checklist={profileCompletion.checklist} />
+            <ProfileCompletionCard
+              percent={profileCompletion.percent}
+              checklist={profileCompletion.checklist}
+              onDismiss={() => setChecklistDismissed(true)}
+            />
           </div>
         )}
 
