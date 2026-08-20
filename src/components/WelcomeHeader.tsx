@@ -58,9 +58,11 @@ export default function WelcomeHeader({
 
           <div className="flex flex-shrink-0 items-center gap-2">
             <button
-              onClick={onSearch}
+              type="button"
+              onClick={() => onSearch?.()}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--pact-surface-2)] text-[var(--pact-text-dim)] transition hover:bg-[var(--pact-surface-3)] hover:text-[var(--pact-text)]"
               aria-label="Search"
+              data-testid="search-button"
             >
               <Search className="h-5 w-5" strokeWidth={1.5} />
             </button>
