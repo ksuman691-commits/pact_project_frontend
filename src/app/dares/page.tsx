@@ -9,7 +9,7 @@ import DareTimeRing from '@/components/DareTimeRing';
 import CreateDareModal from '@/components/CreateDareModal';
 import { useDareFeed, useMyDares } from '@/hooks/useDareQueries';
 import { useAuthStore } from '@/store/auth';
-import { getTimeRing, isDareExpired } from '@/lib/dareCountdown';
+import { getTimeRing, isDareExpired, parseApiDate } from '@/lib/dareCountdown';
 import { getDisplayName } from '@/lib/displayName';
 
 type Tab = 'for-you' | 'sent' | 'discover' | 'expired';
@@ -24,8 +24,8 @@ function getActiveTarget(dare: any) {
   if (dare.my_recipient_status === 'pending') return dare.respond_by;
   // Creator's own sent dares have no personal recipient status — fall back
   // to whichever deadline is still ahead of us.
-  const respondMs = Date.parse(dare.respond_by);
-  if (Number.isFinite(respondMs) && respondMs > Date.now()) return dare.respond_by;
+  const respondBy = parseApiDate(dare.respond_by);
+  if (respondBy && respondBy.getTime() > Date.now()) return dare.respond_by;
   return dare.complete_by ?? dare.respond_by;
 }
 
@@ -88,7 +88,8 @@ function DaresPageInner() {
         if (isDareExpired(d)) return false;
         if (d.my_recipient_status === 'pending') return true;
         if (d.my_recipient_status === 'accepted') {
-          return !d.complete_by || new Date(d.complete_by).getTime() > Date.now();
+          const completeBy = parseApiDate(d.complete_by);
+          return !completeBy || completeBy.getTime() > Date.now();
         }
         return false;
       }),
@@ -204,10 +205,25 @@ function DaresPageInner() {
           </div>
         </header>
 
+        {/* "New" gets its own centered row directly under the stat card —
+            previously it shared a cramped flex row with the tab nav, which
+            forced "For You" and "Sent by You" to wrap onto two lines. */}
+        <div className="flex justify-center pt-6">
+          <button
+            onClick={() => setCreateModalOpen(true)}
+            className="pact-btn-glow flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold text-[var(--pact-text)]"
+            style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+          >
+            <Plus className="h-4 w-4" />
+            New Dare
+          </button>
+        </div>
+
         {/* Tabs — replaced by a status-filter banner when a stat with a
             cross-tab status (Accepted/Completed) was clicked, since that
-            filter doesn't belong to any single tab. */}
-        <div className="flex items-baseline justify-between border-b border-[var(--pact-hairline)] pt-6">
+            filter doesn't belong to any single tab. Own row, horizontally
+            scrollable so labels never wrap even on narrow screens. */}
+        <div className="border-b border-[var(--pact-hairline)] pt-5">
           {statusFilter ? (
             <div className="flex items-center gap-2 pb-3 text-sm font-semibold text-[var(--pact-text)]">
               Showing:{' '}
@@ -222,12 +238,12 @@ function DaresPageInner() {
               </button>
             </div>
           ) : (
-            <nav className="flex gap-5" aria-label="Dare filters">
+            <nav className="flex gap-5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Dare filters">
               {tabs.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => setTab(t.id)}
-                  className={`relative flex items-center gap-1.5 pb-3 text-sm font-semibold transition ${
+                  className={`relative flex flex-shrink-0 items-center gap-1.5 pb-3 text-sm font-semibold transition ${
                     tab === t.id ? 'text-[var(--pact-text)]' : 'text-[var(--pact-text-muted)] hover:text-[var(--pact-text-dim)]'
                   }`}
                 >
@@ -247,14 +263,6 @@ function DaresPageInner() {
               ))}
             </nav>
           )}
-          <button
-            onClick={() => setCreateModalOpen(true)}
-            className="pact-btn-glow flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold text-[var(--pact-text)]"
-            style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            New
-          </button>
         </div>
 
         {/* Running out of time */}
@@ -299,14 +307,40 @@ function DaresPageInner() {
               <p className="text-[var(--pact-text-dim)] mb-4">
                 {statusFilter ? `No ${statusFilter} dares.` : emptyCopy[tab]}
               </p>
-              <button
-                onClick={() => setCreateModalOpen(true)}
-                className="pact-btn-glow inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--pact-text)]"
-                style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
-              >
-                <Plus className="w-4 h-4" />
-                Send Your First Dare
-              </button>
+              {/* CTA is tab-contextual — "Send Your First Dare" only makes
+                  sense on Sent by You (sending is something the viewer does),
+                  not on "For You" (a page of dares the viewer receives).
+                  Expired and the status-filtered views get no CTA at all —
+                  there's nothing actionable to do about either. */}
+              {!statusFilter && tab === 'for-you' && (
+                <button
+                  onClick={() => setTab('discover')}
+                  className="pact-btn-glow inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--pact-text)]"
+                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+                >
+                  Browse Discover
+                </button>
+              )}
+              {!statusFilter && tab === 'sent' && (
+                <button
+                  onClick={() => setCreateModalOpen(true)}
+                  className="pact-btn-glow inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--pact-text)]"
+                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+                >
+                  <Plus className="w-4 h-4" />
+                  Send Your First Dare
+                </button>
+              )}
+              {!statusFilter && tab === 'discover' && (
+                <button
+                  onClick={() => setCreateModalOpen(true)}
+                  className="pact-btn-glow inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--pact-text)]"
+                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+                >
+                  <Plus className="w-4 h-4" />
+                  Create a Dare
+                </button>
+              )}
             </div>
           )}
 
