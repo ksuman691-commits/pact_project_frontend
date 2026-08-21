@@ -30,14 +30,14 @@ export default function CheerGallery({ cheers }: CheerGalleryProps) {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <PartyPopper className="h-5 w-5" style={{ color: 'var(--pact-gold)' }} />
-        <h2 className="font-bold text-[#14121F]">Cheers ({activeCheers.length})</h2>
+        <h2 className="text-sm font-bold text-white">Cheers ({activeCheers.length})</h2>
       </div>
 
       <div className="flex gap-3 overflow-x-auto pb-1">
         {activeCheers.map((cheer) => (
           <div
             key={cheer.id}
-            className="relative w-32 flex-shrink-0 overflow-hidden rounded-[20px] border-2 shadow-sm"
+            className="relative w-32 flex-shrink-0 overflow-hidden rounded-2xl border shadow-sm"
             style={{ borderColor: 'var(--pact-gold)' }}
           >
             <div className="relative aspect-square w-full bg-[#FAF9FE]">
@@ -58,14 +58,14 @@ export default function CheerGallery({ cheers }: CheerGalleryProps) {
                 Cheer
               </span>
             </div>
-            <div className="flex items-center gap-1.5 bg-white px-2 py-1.5">
+            <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1.5">
               <UserAvatarLink
                 name={cheer.sender_username}
                 avatarUrl={cheer.sender_avatar_url}
                 username={cheer.sender_username}
                 size={18}
               />
-              <span className="truncate text-xs font-semibold text-[#14121F]">
+              <span className="truncate text-xs font-semibold text-white/80">
                 @{cheer.sender_username || 'member'}
               </span>
             </div>

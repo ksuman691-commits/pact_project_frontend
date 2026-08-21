@@ -40,53 +40,41 @@ export default function ProofsSection({
     <>
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <ImageIcon className="w-5 h-5 text-slate-700" />
-          <h2 className="font-bold text-[#14121F]">
+          <ImageIcon className="h-4 w-4 text-white/60" />
+          <h2 className="text-sm font-bold text-white">
             {title} ({proofs.length})
           </h2>
         </div>
 
         {variant === 'immersive' ? (
-          <div className="space-y-5">
+          <div className="grid grid-cols-3 gap-1.5">
             {proofs.map((proof, index) => (
               <button
                 key={proof.id}
+                type="button"
                 onClick={() => handleProofClick(index)}
-                className="group w-full overflow-hidden rounded-[28px] border border-[rgba(20,18,31,0.06)] bg-white text-left shadow-[0_4px_12px_rgba(94,84,142,0.08)] transition hover:shadow-md"
+                aria-label={`${proof.type === 'video' ? 'Video' : 'Photo'} proof${proof.day ? `, day ${proof.day}` : ''}`}
+                className="group relative aspect-square overflow-hidden rounded-xl bg-white/5 text-left ring-1 ring-white/10 transition hover:ring-[var(--pact-violet)]/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pact-violet)]"
               >
-                <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#FAF9FE]">
-                  {proof.type === 'image' ? (
-                    <Image
-                      src={proof.url}
-                      alt={proof.description || 'Proof'}
-                      fill
-                      className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
-                      sizes="100vw"
-                    />
-                  ) : (
-                    <div className="relative h-full w-full bg-slate-950">
-                      <video src={proof.url} className="h-full w-full object-cover" muted playsInline />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/25">
-                        <Play className="h-10 w-10 fill-white text-white" />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-12 text-white">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/70">
-                          {proof.day ? `Day ${proof.day}` : 'Proof update'}
-                        </p>
-                        {proof.description && (
-                          <p className="mt-1 text-sm font-medium text-white">{proof.description}</p>
-                        )}
-                      </div>
-                      <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">
-                        {proof.type === 'video' ? 'video' : 'photo'}
-                      </span>
+                {proof.type === 'image' ? (
+                  <Image
+                    src={proof.url}
+                    alt={proof.description || 'Proof'}
+                    fill
+                    className="object-cover transition duration-300 group-hover:scale-105"
+                    sizes="(max-width: 768px) 33vw, 160px"
+                  />
+                ) : (
+                  <div className="relative h-full w-full bg-slate-900">
+                    <video src={proof.url} className="h-full w-full object-cover" muted playsInline />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+                      <Play className="h-8 w-8 fill-white text-white" />
                     </div>
                   </div>
+                )}
+                <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-1 bg-gradient-to-t from-black/75 to-transparent px-2 pb-2 pt-6 text-[10px] font-semibold text-white">
+                  <span>{proof.day ? `Day ${proof.day}` : 'Update'}</span>
+                  <span className="uppercase tracking-wider text-white/75">{proof.type === 'video' ? 'Video' : 'Photo'}</span>
                 </div>
               </button>
             ))}
