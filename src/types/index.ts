@@ -44,6 +44,11 @@ export interface Pact {
   required_approvers?: number;
   is_public?: boolean; // NEW: Public or Private pact
   visibility?: 'public' | 'private' | 'circle_only';
+  // Closed enum on the backend (pactcategory): fitness | startup | coding |
+  // creator | study | habits | social. Sent on create via the VIBE_TO_CATEGORY
+  // map (src/lib/createPactFlow/toApiPayload.ts) and already used to filter
+  // the personalized feed (usePersonalizedFeed(category)).
+  category?: string;
   created_at: string;
   updated_at?: string;
   creator?: User | any;
@@ -52,6 +57,25 @@ export interface Pact {
   creator_avatar_url?: string;
   circle_name?: string;
   circle_icon_emoji?: string;
+}
+
+// Mutual-goal matching — GET /api/pacts/{pact_id}/matches (see
+// BACKEND_SPEC_MUTUAL_GOAL_MATCHING.md). NOT YET LIVE on the backend;
+// consumed via useGoalMatches (src/hooks/usePactMatches.ts), which treats a
+// 404/network error as "no matches" rather than surfacing an error state.
+export interface PactMatch {
+  user_id: number;
+  username: string;
+  full_name: string;
+  avatar_url: string | null;
+  pact_id: number;
+  pact_title: string;
+}
+
+export interface PactMatchesResponse {
+  category: string;
+  total_count: number;
+  matches: PactMatch[];
 }
 
 export interface PactParticipant {

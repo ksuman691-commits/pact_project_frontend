@@ -12,7 +12,16 @@ function CreateCirclePageContent() {
   const exitFlow = useSmartBack('/circles');
   const searchParams = useSearchParams();
   const inviteUserIdParam = searchParams.get('inviteUserId');
-  const inviteUserId = inviteUserIdParam ? Number(inviteUserIdParam) : null;
+  // Supports both a single id (existing deep links, e.g. from a profile's
+  // "Add to a Circle" CTA) and multiple comma-separated ids (e.g.
+  // "?inviteUserId=12,45,88" from GoalMatchStrip's "Start a circle with
+  // them" — one invite per person on the same goal, not just one).
+  const inviteUserIds = inviteUserIdParam
+    ? inviteUserIdParam
+        .split(',')
+        .map((id) => Number(id.trim()))
+        .filter((id) => Number.isFinite(id))
+    : [];
   const { user, isInitialized } = useRequireAuth();
 
   if (!isInitialized) {
@@ -28,7 +37,7 @@ function CreateCirclePageContent() {
     return null;
   }
 
-  return <CreateCircleFlow onExit={exitFlow} initialInviteUserId={Number.isFinite(inviteUserId) ? inviteUserId : null} />;
+  return <CreateCircleFlow onExit={exitFlow} initialInviteUserId={inviteUserIds.length > 0 ? inviteUserIds : null} />;
 }
 
 export default function CreateCirclePage() {

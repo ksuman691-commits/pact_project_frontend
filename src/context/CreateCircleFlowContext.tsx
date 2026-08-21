@@ -39,10 +39,23 @@ interface CreateCircleFlowContextValue {
 
 const CreateCircleFlowContext = createContext<CreateCircleFlowContextValue | null>(null);
 
-export function CreateCircleFlowProvider({ children, initialInviteUserId }: { children: React.ReactNode; initialInviteUserId?: number | null }) {
+export function CreateCircleFlowProvider({
+  children,
+  initialInviteUserId,
+}: {
+  children: React.ReactNode;
+  /** A single id (existing single-invite deep links) or multiple ids at once
+   * (e.g. "start a circle with everyone on the same goal" — see
+   * GoalMatchStrip). */
+  initialInviteUserId?: number | number[] | null;
+}) {
   const [draft, setDraft] = useState<CircleDraft>(() => ({
     ...createEmptyCircleDraft(),
-    inviteUserIds: initialInviteUserId ? [initialInviteUserId] : [],
+    inviteUserIds: Array.isArray(initialInviteUserId)
+      ? initialInviteUserId
+      : initialInviteUserId
+        ? [initialInviteUserId]
+        : [],
   }));
   const [stepIndex, setStepIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);

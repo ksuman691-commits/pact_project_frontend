@@ -32,18 +32,21 @@ function StatTile({
   onClick,
 }: {
   label: string;
-  value: number;
+  value: number | string;
   onClick?: () => void;
 }) {
-  const animated = useCountUp(value);
+  const numeric = typeof value === 'number' ? value : undefined;
+  const animated = numeric !== undefined ? useCountUp(numeric) : value;
+  const isButton = typeof onClick === 'function';
+  const Tag = isButton ? 'button' : 'div';
   return (
-    <button
+    <Tag
       onClick={onClick}
-      className="flex-1 px-4 py-4 text-left transition hover:bg-[var(--pact-surface-2)]"
+      className={`flex-1 px-3 py-3 text-center transition${isButton ? ' hover:bg-[var(--pact-surface-2)]' : ''}`}
     >
-      <p className="pact-mono text-2xl font-bold text-[var(--pact-text)]">{animated}</p>
-      <p className="mt-1 text-xs font-medium text-[var(--pact-text-faint)]">{label}</p>
-    </button>
+      <p className="text-lg font-black text-[var(--pact-text)]">{animated}</p>
+      <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">{label}</p>
+    </Tag>
   );
 }
 
@@ -53,14 +56,37 @@ export default function ProfileStats({
   onFollowersClick,
   onFollowingClick,
 }: ProfileStatsProps) {
+  const completed = useCountUp(stats.pactsCompleted);
   return (
-    <div className="mb-6 space-y-3">
-      <div className="pact-card flex divide-x overflow-hidden rounded-2xl" style={{ borderColor: 'var(--pact-hairline)' }}>
+    <div className="mb-6 space-y-4">
+      {/* Hero number — same "label + big number + supporting line" header
+          treatment used on Circles/Pacts/Dares, so Profile reads as the
+          same visual language instead of the older stat-row-first layout. */}
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.28em] text-[var(--pact-violet)]">Profile</p>
+        <div className="mt-2 flex items-center gap-4">
+          <span className="pact-mono text-6xl font-black leading-none tracking-[-0.07em] text-[var(--pact-text)]">
+            {completed}
+          </span>
+          <span className="text-balance text-lg font-medium leading-[1.15] tracking-[-0.02em] text-[var(--pact-text-muted)]">
+            Pacts completed<br />and counting
+          </span>
+        </div>
+      </div>
+
+      {/* Unified stat row — each stat is a real action where one applies,
+          matching the Dares/Circles/Pacts pattern instead of the old
+          separated stat-row card. */}
+      <div className="flex items-stretch divide-x divide-[var(--pact-hairline)] rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)]">
         <StatTile label="Pacts" value={stats.pactsCreated} onClick={onPactClick} />
         <StatTile label="Followers" value={stats.followers ?? 0} onClick={onFollowersClick} />
         <StatTile label="Following" value={stats.following ?? 0} onClick={onFollowingClick} />
+        <StatTile label="Streak" value={`${stats.currentStreak}d`} />
       </div>
-      <div className="pact-card grid grid-cols-2 gap-4 rounded-2xl p-4">
+
+      {/* Win rate — kept as its own supporting card since it needs the
+          locked/unlocked treatment; not part of the unified row above. */}
+      <div className="pact-card grid grid-cols-1 gap-4 rounded-2xl p-4">
         {stats.pactsCompleted >= WIN_RATE_UNLOCK_THRESHOLD ? (
           <StatBar label="Win rate" percent={stats.winRate} color="var(--pact-mint)" />
         ) : (
@@ -86,12 +112,6 @@ export default function ProfileStats({
             </p>
           </div>
         )}
-        <StatBar
-          label="Streak"
-          percent={Math.min(100, (stats.currentStreak / 30) * 100)}
-          displayValue={`${stats.currentStreak}d`}
-          color="var(--pact-gold)"
-        />
       </div>
     </div>
   );
