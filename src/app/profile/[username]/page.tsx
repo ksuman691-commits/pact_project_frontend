@@ -7,6 +7,7 @@ import ProfileHero from '@/components/ProfileHero';
 import ProfileStats from '@/components/ProfileStats';
 import ProfileTabs, { PactsTab } from '@/components/ProfileTabs';
 import AchievementsBadges from '@/components/AchievementsBadges';
+import AddToCircleSheet from '@/components/AddToCircleSheet';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
@@ -48,6 +49,7 @@ export default function PublicProfilePage() {
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showFollowingModal, setShowFollowingModal] = useState(false);
   const [showPactsModal, setShowPactsModal] = useState(false);
+  const [showAddToCircle, setShowAddToCircle] = useState(false);
 
   const userByUsernameQuery = useUserByUsername(username);
   const profileUser = userByUsernameQuery.data?.data;
@@ -415,7 +417,7 @@ export default function PublicProfilePage() {
                     {isOwnProfile ? 'Create a circle to bring your accountability crew together.' : 'Add them to a circle to start creating pacts together.'}
                   </p>
                   <button
-                    onClick={() => router.push(isOwnProfile ? '/circles/create' : `/circles/create?inviteUserId=${profileUser.id}`)}
+                    onClick={() => (isOwnProfile ? router.push('/circles/create') : setShowAddToCircle(true))}
                     className="pact-btn-glow mt-5 rounded-full px-4 py-2 text-sm font-semibold"
                     style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
                   >
@@ -498,6 +500,16 @@ export default function PublicProfilePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Add to Circle sheet */}
+      {!isOwnProfile && (
+        <AddToCircleSheet
+          isOpen={showAddToCircle}
+          onClose={() => setShowAddToCircle(false)}
+          targetUserId={profileUser.id}
+          targetName={profileUser.full_name || `@${profileUser.username}`}
+        />
       )}
     </div>
   );

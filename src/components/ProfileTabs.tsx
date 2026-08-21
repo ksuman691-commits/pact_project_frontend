@@ -7,6 +7,7 @@ import PactCard from './PactCard';
 import AnimatedTabs from '@/components/pact-ui/AnimatedTabs';
 import ScrollableRow from '@/components/pact-ui/ScrollableRow';
 import UserAvatarLink from '@/components/UserAvatarLink';
+import AddToCircleSheet from '@/components/AddToCircleSheet';
 
 interface ProfileTabsProps {
   children: React.ReactNode;
@@ -82,6 +83,7 @@ export function PactsTab({
   const router = useRouter();
   const showSharedSection = !isOwnProfile && Array.isArray(sharedPacts);
   const [activeSection, setActiveSection] = useState<'created' | 'joined' | 'voted' | 'shared'>('created');
+  const [showAddToCircle, setShowAddToCircle] = useState(false);
 
   const sections = [
     { id: 'created' as const, label: isOwnProfile ? 'Created by Me' : `Created by ${profileName}`, count: pacts.length },
@@ -126,7 +128,7 @@ export function PactsTab({
             </button>
           ) : !hasSharedCircle ? (
             <button
-              onClick={() => router.push(`/circles/create?inviteUserId=${profileUserId ?? ''}`)}
+              onClick={() => setShowAddToCircle(true)}
               className="pact-btn-glow mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
               style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
             >
@@ -207,6 +209,15 @@ export function PactsTab({
           renderEmptyState(activeSection)
         )}
       </div>
+
+      {typeof profileUserId === 'number' && (
+        <AddToCircleSheet
+          isOpen={showAddToCircle}
+          onClose={() => setShowAddToCircle(false)}
+          targetUserId={profileUserId}
+          targetName={profileName}
+        />
+      )}
     </div>
   );
 }
