@@ -36,6 +36,11 @@ export interface CircleDraft {
   // photoPreviewUrl is the local object URL used to preview it beforehand.
   photoFile: File | null;
   photoPreviewUrl: string | null;
+  // Set when this circle was launched from a goal-match "Start a circle with
+  // them" CTA (see GoalMatchStrip / FeedPactCard). Lets SuccessStep offer to
+  // create a matching pact instead of the generic "Start a Pact" CTA.
+  matchCategory: string | null;
+  matchPactId: number | null;
 }
 
 export interface CreatedCircle {
@@ -63,5 +68,7 @@ export function createEmptyCircleDraft(): CircleDraft {
     inviteUserIds: [],
     photoFile: null,
     photoPreviewUrl: null,
+    matchCategory: null,
+    matchPactId: null,
   };
 }

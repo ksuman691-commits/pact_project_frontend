@@ -22,6 +22,11 @@ function CreateCirclePageContent() {
         .map((id) => Number(id.trim()))
         .filter((id) => Number.isFinite(id))
     : [];
+  // Carried over from a goal-match "Start a circle with them" CTA — see
+  // FeedPactCard.handleStartCircleWithMatches.
+  const category = searchParams.get('category');
+  const pactIdParam = searchParams.get('pactId');
+  const pactId = pactIdParam ? Number(pactIdParam) : null;
   const { user, isInitialized } = useRequireAuth();
 
   if (!isInitialized) {
@@ -37,7 +42,14 @@ function CreateCirclePageContent() {
     return null;
   }
 
-  return <CreateCircleFlow onExit={exitFlow} initialInviteUserId={inviteUserIds.length > 0 ? inviteUserIds : null} />;
+  return (
+    <CreateCircleFlow
+      onExit={exitFlow}
+      initialInviteUserId={inviteUserIds.length > 0 ? inviteUserIds : null}
+      initialCategory={category}
+      initialPactId={Number.isFinite(pactId) ? pactId : null}
+    />
+  );
 }
 
 export default function CreateCirclePage() {

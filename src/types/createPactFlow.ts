@@ -37,6 +37,10 @@ export type VisibilityLabel = 'Only me' | 'My Circle' | 'Everyone';
 
 export interface PactDraft {
   vibeId: VibeId | null;
+  // true when vibeId was seeded from context (e.g. a goal-match's category)
+  // rather than picked by the user — skips the Vibe step entirely, same
+  // pattern as audiencePreset below.
+  vibePreset?: boolean;
   activityIndex: number | null;
   customActivityLabel?: string; // only if activity.custom
   target: number | null; // null when milestone

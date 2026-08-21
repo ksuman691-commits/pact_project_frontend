@@ -24,6 +24,10 @@ interface CreatePactFlowProps {
   initialDescription?: string | null;
   /** Pre-attached participant (arriving from a specific user's "Create a Pact with [Name]" CTA) — skips the audience step and shows them as already-added. */
   initialParticipantId?: number | null;
+  /** Category carried from a goal-match "Create a matching pact" CTA — seeds the vibe and skips the vibe step. */
+  initialCategory?: string | null;
+  /** The originating matched pact's id — best-effort duration prefill only. */
+  initialPactId?: number | null;
 }
 
 function StepRouter({ onExit }: CreatePactFlowProps) {
@@ -63,12 +67,16 @@ export default function CreatePactFlow({
   initialCircleId,
   initialDescription,
   initialParticipantId,
+  initialCategory,
+  initialPactId,
 }: CreatePactFlowProps) {
   return (
     <CreatePactFlowProvider
       initialCircleId={initialCircleId}
       initialDescription={initialDescription}
       initialParticipantId={initialParticipantId}
+      initialCategory={initialCategory}
+      initialPactId={initialPactId}
     >
       <StepRouter onExit={onExit} />
     </CreatePactFlowProvider>

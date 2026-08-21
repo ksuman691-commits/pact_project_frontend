@@ -13,7 +13,9 @@ import type {
 } from '@/types/createPactFlow';
 import { ACTIVITIES, AUDIENCES, CUSTOM_ACTIVITY_DEFAULTS } from '@/lib/createPactFlow/content';
 import { resolveSteps } from '@/lib/createPactFlow/steps';
+import { categoryToVibe } from '@/lib/createPactFlow/toApiPayload';
 import { createEmptyDraft } from '@/types/createPactFlow';
+import { pactService } from '@/services/api';
 
 const AUTO_ADVANCE_DELAY_MS = 150;
 
@@ -59,6 +61,8 @@ export function CreatePactFlowProvider({
   initialCircleId,
   initialDescription,
   initialParticipantId,
+  initialCategory,
+  initialPactId,
 }: {
   children: React.ReactNode;
   /** Pre-set circle audience — skips the audience question entirely. */
@@ -77,6 +81,22 @@ export function CreatePactFlowProvider({
    * profile-picker) and that person shown as an already-added participant.
    */
   initialParticipantId?: number | null;
+  /**
+   * Carried over from a goal-match's "Create a matching pact" CTA (see
+   * SuccessStep). Seeds vibeId via categoryToVibe and skips the Vibe step.
+   * Title/target/activity are intentionally NOT prefilled from this — the
+   * originating pact's generated title can't be reliably reverse-mapped
+   * back to a specific catalog activity + target, so those stay normal
+   * user choices (now correctly scoped to the right vibe).
+   */
+  initialCategory?: string | null;
+  /**
+   * The originating pact's id from the same CTA — used only as a
+   * best-effort duration prefill (fetched once on mount; silently ignored
+   * on failure, same degrade-gracefully pattern as
+   * circleAdvancedService.inviteUser).
+   */
+  initialPactId?: number | null;
 }) {
   const [draft, setDraft] = useState<PactDraft>(() => {
     let base = createEmptyDraft();
@@ -99,6 +119,10 @@ export function CreatePactFlowProvider({
     if (initialDescription?.trim()) {
       base = { ...base, descriptionOverride: initialDescription.trim() };
     }
+    const seededVibeId = categoryToVibe(initialCategory);
+    if (seededVibeId) {
+      base = { ...base, vibeId: seededVibeId, vibePreset: true };
+    }
     return base;
   });
   const [stepIndex, setStepIndex] = useState(0);
@@ -112,6 +136,34 @@ export function CreatePactFlowProvider({
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
+
+  // Best-effort duration prefill from the originating pact (goal-match
+  // "Create a matching pact" CTA only — initialPactId is unset otherwise).
+  // start_date/end_date are plain dates, so diffing them into days is a
+  // trivial, lossless number worth carrying over even though title/target
+  // can't be. Degrades silently on any failure — never blocks the flow.
+  useEffect(() => {
+    if (initialPactId == null) return;
+    let cancelled = false;
+    pactService
+      .getById(initialPactId)
+      .then(({ data }) => {
+        if (cancelled || !data?.start_date || !data?.end_date) return;
+        const start = new Date(data.start_date);
+        const end = new Date(data.end_date);
+        const days = Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+        if (Number.isFinite(days) && days > 0) {
+          setDraft((prev) => (prev.durationDays == null ? { ...prev, durationDays: days } : prev));
+        }
+      })
+      .catch(() => {
+        // Ignored — worst case the user just picks a duration themselves.
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPactId]);
 
   const activity: Activity | null = useMemo(() => {
     if (!draft.vibeId || draft.activityIndex == null) return null;

@@ -5,6 +5,8 @@ import type { CircleDraft, CircleFlowStep, CreatedCircle, PrivacyLevel } from '@
 import type { VibeId } from '@/types/createPactFlow';
 import { createEmptyCircleDraft } from '@/types/createCircleFlow';
 import { resolveCircleSteps } from '@/lib/createCircleFlow/steps';
+import { generateMatchTagline } from '@/lib/createCircleFlow/generate';
+import { categoryToVibe } from '@/lib/createPactFlow/toApiPayload';
 
 const AUTO_ADVANCE_DELAY_MS = 150;
 
@@ -42,13 +44,27 @@ const CreateCircleFlowContext = createContext<CreateCircleFlowContextValue | nul
 export function CreateCircleFlowProvider({
   children,
   initialInviteUserId,
+  initialCategory,
+  initialPactId,
 }: {
   children: React.ReactNode;
   /** A single id (existing single-invite deep links) or multiple ids at once
    * (e.g. "start a circle with everyone on the same goal" — see
    * GoalMatchStrip). */
   initialInviteUserId?: number | number[] | null;
+  /**
+   * Carried over from a goal-match "Start a circle with them" CTA (see
+   * FeedPactCard/GoalMatchStrip). Seeds vibeId via categoryToVibe (skipping
+   * the Vibe step entirely) and a suggested tagline, and is stashed on the
+   * draft as matchCategory so SuccessStep can offer to create a matching
+   * pact once the circle exists.
+   */
+  initialCategory?: string | null;
+  /** The originating pact's id — stashed as matchPactId so the eventual
+   * matching-pact CTA can look up its duration as a bonus prefill. */
+  initialPactId?: number | null;
 }) {
+  const seededVibeId = categoryToVibe(initialCategory);
   const [draft, setDraft] = useState<CircleDraft>(() => ({
     ...createEmptyCircleDraft(),
     inviteUserIds: Array.isArray(initialInviteUserId)
@@ -56,6 +72,10 @@ export function CreateCircleFlowProvider({
       : initialInviteUserId
         ? [initialInviteUserId]
         : [],
+    ...(seededVibeId ? { vibeId: seededVibeId } : {}),
+    ...(initialCategory ? { tagline: generateMatchTagline(initialCategory) } : {}),
+    matchCategory: initialCategory ?? null,
+    matchPactId: initialPactId ?? null,
   }));
   const [stepIndex, setStepIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,8 +88,10 @@ export function CreateCircleFlowProvider({
     };
   }, []);
 
-  const resolvedSteps = useMemo(() => resolveCircleSteps(), []);
-  const currentStep = resolvedSteps[stepIndex] ?? 'vibe';
+  // Fixed at init (not recomputed if vibeId later changes) — this only ever
+  // reflects whether a vibe was seeded from context on mount.
+  const resolvedSteps = useMemo(() => resolveCircleSteps(seededVibeId != null), [seededVibeId]);
+  const currentStep = resolvedSteps[stepIndex] ?? resolvedSteps[0];
 
   const updateDraft = useCallback((patch: Partial<CircleDraft>) => {
     setDraft((prev) => ({ ...prev, ...patch }));
