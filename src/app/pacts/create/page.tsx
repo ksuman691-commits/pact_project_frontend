@@ -18,6 +18,13 @@ function CreatePactPageContent() {
   // already-attached participant instead of asking again.
   const participantIdParam = searchParams.get('participantId');
   const initialParticipantId = participantIdParam ? Number(participantIdParam) : null;
+  // Carried over from a goal-match "Create a matching pact for this circle"
+  // CTA (see the Create Circle flow's SuccessStep) — seeds the vibe from
+  // category and skips the vibe step; pactId is a best-effort duration
+  // prefill only (see CreatePactFlowContext).
+  const category = searchParams.get('category');
+  const matchPactIdParam = searchParams.get('pactId');
+  const initialMatchPactId = matchPactIdParam ? Number(matchPactIdParam) : null;
 
   return (
     <CreatePactFlow
@@ -25,6 +32,8 @@ function CreatePactPageContent() {
       initialCircleId={Number.isFinite(initialCircleId) ? initialCircleId : null}
       initialDescription={initialDescription}
       initialParticipantId={Number.isFinite(initialParticipantId) ? initialParticipantId : null}
+      initialCategory={category}
+      initialPactId={Number.isFinite(initialMatchPactId) ? initialMatchPactId : null}
     />
   );
 }

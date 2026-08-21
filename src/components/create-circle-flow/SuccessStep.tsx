@@ -11,6 +11,19 @@ export default function SuccessStep() {
 
   if (!createdCircle) return null;
 
+  // When this circle came from a goal-match CTA, the pact-creation CTA
+  // should offer to recreate the same shared goal rather than the generic
+  // blank-slate prompt — otherwise two people who matched on the same goal
+  // still end up manually rebuilding the same pact from scratch, defeating
+  // the point of matching them in the first place.
+  const matchParams = new URLSearchParams({ circleId: String(createdCircle.id) });
+  if (draft.matchCategory) matchParams.set('category', draft.matchCategory);
+  if (draft.matchPactId != null) matchParams.set('pactId', String(draft.matchPactId));
+  const pactCtaHref = `/pacts/create?${matchParams.toString()}`;
+  const pactCtaLabel = draft.matchCategory
+    ? `🔥 Create a ${draft.matchCategory} pact for this circle?`
+    : '🔥 Start a Pact for this Circle';
+
   return (
     <div className="pact-step-enter flex flex-1 flex-col items-center pt-4 text-center">
       {/* Decorative stamp — same ring motion as the Pact flow's success
@@ -45,11 +58,11 @@ export default function SuccessStep() {
       <div className="mt-8 flex w-full flex-col gap-3">
         <button
           type="button"
-          onClick={() => router.push(`/pacts/create?circleId=${createdCircle.id}`)}
+          onClick={() => router.push(pactCtaHref)}
           className="w-full rounded-full px-6 py-3.5 text-sm font-semibold text-[var(--pact-bg)]"
           style={{ background: 'linear-gradient(135deg, var(--flow-accent), var(--flow-accent-2))' }}
         >
-          🔥 Start a Pact for this Circle
+          {pactCtaLabel}
         </button>
         <button
           type="button"

@@ -19,6 +19,26 @@ const VIBE_TO_CATEGORY: Record<VibeId, string> = {
   wellbeing: 'fitness',
 };
 
+// Best-effort reverse of VIBE_TO_CATEGORY. The forward map is many-to-one
+// (e.g. both 'social' and 'adventure' -> 'social'; both 'money' and 'build'
+// -> 'startup'), so there's no single correct inverse — this just picks one
+// representative vibe per category (first key wins, in VIBE_TO_CATEGORY's
+// declaration order) so a category carried over from a goal-match can seed
+// a reasonable vibe rather than leaving the user to re-pick one we already
+// have context for.
+const CATEGORY_TO_VIBE: Record<string, VibeId> = Object.entries(VIBE_TO_CATEGORY).reduce(
+  (acc, [vibeId, category]) => {
+    if (!(category in acc)) acc[category] = vibeId as VibeId;
+    return acc;
+  },
+  {} as Record<string, VibeId>,
+);
+
+export function categoryToVibe(category?: string | null): VibeId | null {
+  if (!category) return null;
+  return CATEGORY_TO_VIBE[category] ?? null;
+}
+
 // Backend verification_method only supports these three; "Activity data" has
 // no dedicated backend proof type yet, so it maps to the closest analogue
 // (a self-reported check-in) — see plan notes for the bridging rationale.

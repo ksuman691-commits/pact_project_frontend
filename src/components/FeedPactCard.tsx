@@ -370,7 +370,16 @@ export default function FeedPactCard({
   const goalMatchesTotal = goalMatchesQuery.data?.total_count ?? 0;
   const handleStartCircleWithMatches = () => {
     const ids = goalMatches.map((match) => match.user_id).join(',');
-    if (ids) router.push(`/circles/create?inviteUserId=${ids}`);
+    if (!ids) return;
+    // Carry the shared goal context along too — without this, the circle
+    // wizard has no idea why these people were grouped together and starts
+    // from a blank slate. category seeds the vibe step (skipped entirely);
+    // pactId lets the eventual "create a matching pact" prompt look up the
+    // originating pact's duration as a bonus prefill.
+    const params = new URLSearchParams({ inviteUserId: ids });
+    if (pact.category) params.set('category', pact.category);
+    params.set('pactId', String(pact.id));
+    router.push(`/circles/create?${params.toString()}`);
   };
   // Swipe-right (and its double-tap shortcut) now branches on membership
   // instead of performing a vote: participants get the fast single-photo

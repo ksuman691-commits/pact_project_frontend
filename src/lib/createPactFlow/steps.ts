@@ -9,7 +9,13 @@ import type { Activity, FlowStep, PactDraft } from '@/types/createPactFlow';
  * proofMethod is "Activity data".
  */
 export function resolveSteps(draft: PactDraft, activity: Activity | null): FlowStep[] {
-  const steps: FlowStep[] = ['vibe', 'activity'];
+  const steps: FlowStep[] = [];
+  // Vibe is pre-set (and the question skipped) when the flow was launched
+  // with a known category context, e.g. a goal-match's "Create a matching
+  // pact" CTA (see CreatePactFlowContext's vibePreset seeding) — matches the
+  // existing audiencePreset pattern below.
+  if (!draft.vibePreset) steps.push('vibe');
+  steps.push('activity');
   if (!activity?.milestone) steps.push('target');
   steps.push('duration', 'proof');
   // Audience is pre-set (and the question skipped) when the flow was
