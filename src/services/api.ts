@@ -750,6 +750,26 @@ export const analyticsService = {
     api.get(`/api/circles/${circleId}/analytics`),
 };
 
+// Sponsor Services
+export type Sponsor = {
+  name: string;
+  logo_url?: string | null;
+  headline: string;
+  subtext?: string | null;
+  cta_label: string;
+  affiliate_link: string;
+};
+
+export const sponsorService = {
+  getByCategory: async (category: string): Promise<Sponsor | null> => {
+    const response = await api.get('/api/sponsors', { params: { category } });
+    const payload = response.data;
+    const sponsor = Array.isArray(payload) ? payload[0] : payload?.sponsor ?? payload;
+    if (!sponsor?.name || !sponsor?.headline || !sponsor?.cta_label || !sponsor?.affiliate_link) return null;
+    return sponsor as Sponsor;
+  },
+};
+
 // Health Check
 export const healthService = {
   check: () => api.get('/health'),

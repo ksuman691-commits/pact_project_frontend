@@ -13,6 +13,8 @@ import ProofsSection from '@/components/ProofsSection';
 import UserAvatarLink from '@/components/UserAvatarLink';
 import CheerButton from '@/components/CheerButton';
 import CheerGallery from '@/components/CheerGallery';
+import SponsoredCard from '@/components/SponsoredCard';
+import { useSponsor } from '@/hooks/useSponsor';
 import PremiumJoinButton from '@/components/PremiumJoinButton';
 import PactJoinRequestsModal from '@/components/PactJoinRequestsModal';
 import { usePact, usePactProofs, usePactCheers } from '@/hooks/usePacts';
@@ -83,6 +85,7 @@ export default function PactDetailPage() {
   const skipMutation = useSkipPact();
 
   const pact = pactData?.data;
+  const sponsor = useSponsor(pact?.category);
   // Undefined (don't seed yet) while still loading, since the pact's
   // circle_id — the real hierarchical parent — isn't known yet; seeding
   // too early with a placeholder would get permanently locked in by
@@ -253,6 +256,8 @@ export default function PactDetailPage() {
               )}
             </div>
           </section>
+
+          {sponsor && <SponsoredCard sponsor={sponsor} />}
 
           {isCreator && (
             <button
