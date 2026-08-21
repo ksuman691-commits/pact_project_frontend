@@ -385,9 +385,16 @@ export default function FeedPactCard({
       : joinAllowed
         ? 'join'
         : null;
-  const canSkip = Boolean(onVote) && !isCreator && displayVote !== 'skip';
+  // Skip is a "should I join this?" decision for non-members only — once a
+  // user has joined, there's nothing left to skip. Without the `!isParticipant`
+  // guard here, a joined pact still showed a "Skip" button next to the
+  // "Joined" badge (including on ended pacts, since join state and end state
+  // are independent). The Joined badge alone is the source of truth for
+  // status once a member; cheering remains available via the persistent
+  // action-row cheer button below, so nothing is lost by hiding this row.
+  const canSkip = Boolean(onVote) && !isCreator && !isParticipant && displayVote !== 'skip';
   const gesturesEnabled = (enableGestures ?? true) && (canSkip || rightAction !== null);
-  const voteActionsVisible = (showVoteActions ?? Boolean(onVote)) && !isCreator;
+  const voteActionsVisible = (showVoteActions ?? Boolean(onVote)) && !isCreator && !isParticipant;
   const voteStatusLabel = displayVote === 'skip' ? 'skipped' : null;
 
   const transformStyle = useMemo(() => {
