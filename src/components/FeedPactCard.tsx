@@ -25,8 +25,10 @@ import CommentsBottomSheet from './CommentsBottomSheet';
 import Avatar from './Avatar';
 import UserAvatarLink from './UserAvatarLink';
 import PremiumJoinButton from './PremiumJoinButton';
+import GoalMatchStrip from './GoalMatchStrip';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useCreateCheer } from '@/hooks/usePactMutations';
+import { useGoalMatches } from '@/hooks/usePactMatches';
 import { useAuthStore } from '@/store/auth';
 import { getDisplayName } from '@/lib/displayName';
 import { pactService } from '@/services/api';
@@ -359,6 +361,17 @@ export default function FeedPactCard({
   );
   const uploadAllowed = canUploadProof ?? Boolean(user && (pact.creator_id === user.id || isParticipant));
   const joinAllowed = Boolean(pact.can_join);
+  // Mutual-goal matching: same query for both placements below, just gated
+  // on the pact actually having a category to match against. See
+  // GoalMatchStrip / useGoalMatches / BACKEND_SPEC_MUTUAL_GOAL_MATCHING.md.
+  const isPublicPact = Boolean(pact.is_public || pact.visibility === 'public');
+  const goalMatchesQuery = useGoalMatches(pact.id, { enabled: Boolean(pact.category) });
+  const goalMatches = goalMatchesQuery.data?.matches ?? [];
+  const goalMatchesTotal = goalMatchesQuery.data?.total_count ?? 0;
+  const handleStartCircleWithMatches = () => {
+    const ids = goalMatches.map((match) => match.user_id).join(',');
+    if (ids) router.push(`/circles/create?inviteUserId=${ids}`);
+  };
   // Swipe-right (and its double-tap shortcut) now branches on membership
   // instead of performing a vote: participants get the fast single-photo
   // Cheer flow, non-participants get the Join nudge. Neither goes through
@@ -774,6 +787,19 @@ export default function FeedPactCard({
           </div>
         </div>
 
+        {/* Placement B: "Discover" case — a public pact being browsed/swiped
+            by someone who isn't its creator. Sits below the header, above
+            the hero media, so it reads before the pact's own content. */}
+        {!isCreator && isPublicPact && (
+          <GoalMatchStrip
+            matches={goalMatches}
+            totalCount={goalMatchesTotal}
+            category={pact.category}
+            variant="discover"
+            onStartCircle={handleStartCircleWithMatches}
+          />
+        )}
+
         {/* Hero: proof photo carousel, else a duration-progress ring, else the old empty-state placeholder. Swipe-left (skip) / swipe-right (cheer or join) / double-tap-cheer all live only here, unchanged from before. */}
         <div
           className="relative isolate aspect-[4/5] w-full select-none touch-pan-y"
@@ -1029,6 +1055,18 @@ export default function FeedPactCard({
               <Share2 className="h-5 w-5" />
             </button>
           </div>
+
+          {/* Placement A: this is the viewer's own pact — surface who else
+              shares the same goal category, right below the action row. */}
+          {isCreator && (
+            <GoalMatchStrip
+              matches={goalMatches}
+              totalCount={goalMatchesTotal}
+              category={pact.category}
+              variant="feed"
+              onStartCircle={handleStartCircleWithMatches}
+            />
+          )}
         </div>
 
         {/* "View all N comments" — opens the same comment sheet as the comment icon */}

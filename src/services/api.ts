@@ -593,6 +593,13 @@ export const pactAdvancedService = {
     })),
   getProofHistory: (pactId: number) =>
     api.get(`/api/pacts/${pactId}`),
+  // NOTE: GET /api/pacts/{id}/matches does not exist on the live backend
+  // yet — see BACKEND_SPEC_MUTUAL_GOAL_MATCHING.md. Wired as if it already
+  // exists so no frontend rework is needed once it's deployed; the caller
+  // (useGoalMatches) already downgrades a 404/network error to "no matches"
+  // instead of a generic error state.
+  getCategoryMatches: (pactId: number, limit = 6) =>
+    api.get(`/api/pacts/${pactId}/matches`, { params: { limit } }),
 };
 
 // Dare Services

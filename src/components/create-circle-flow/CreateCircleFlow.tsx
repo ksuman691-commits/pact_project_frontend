@@ -15,7 +15,7 @@ import SuccessStep from './SuccessStep';
 interface CreateCircleFlowProps {
   /** Called when the user taps the close (X) button. Omit to hide the close button (e.g. full-page route). */
   onExit?: () => void;
-  initialInviteUserId?: number | null;
+  initialInviteUserId?: number | number[] | null;
 }
 
 function StepRouter({ onExit }: CreateCircleFlowProps) {
