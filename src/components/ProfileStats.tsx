@@ -36,7 +36,12 @@ function StatTile({
   onClick?: () => void;
 }) {
   const numeric = typeof value === 'number' ? value : undefined;
-  const animated = numeric !== undefined ? useCountUp(numeric) : value;
+  // useCountUp must be called unconditionally on every render (Rules of
+  // Hooks) — pass 0 as a safe fallback when `value` is a string (e.g. the
+  // "Streak" tile's "3d"), and simply ignore the animated result in that
+  // case by falling back to the original string value below.
+  const animatedNumeric = useCountUp(numeric ?? 0);
+  const animated = numeric !== undefined ? animatedNumeric : value;
   const isButton = typeof onClick === 'function';
   const Tag = isButton ? 'button' : 'div';
   return (
