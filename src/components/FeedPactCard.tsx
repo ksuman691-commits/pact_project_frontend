@@ -930,12 +930,6 @@ export default function FeedPactCard({
           </AnimatePresence>
         </div>
 
-        {galleryProofs && galleryCheers && (galleryProofs.length > 0 || galleryCheers.length > 0) && (
-          <div className="border-t border-white/10 px-4 py-4">
-            <PactGallery proofs={galleryProofs} cheers={galleryCheers} title="Gallery" />
-          </div>
-        )}
-
         {/* Body: title + description, then the join/cheer/skip CTAs, then the unified action row */}
         <div className="px-4 py-3.5">
           <h2
@@ -1077,6 +1071,12 @@ export default function FeedPactCard({
               <Share2 className="h-5 w-5" />
             </button>
           </div>
+
+          {galleryProofs && galleryCheers && (galleryProofs.length > 0 || galleryCheers.length > 0) && (
+            <div className="mt-4 border-t border-white/10 pt-4">
+              <PactGallery proofs={galleryProofs} cheers={galleryCheers} title="Gallery" />
+            </div>
+          )}
 
           {/* Placement A: this is the viewer's own pact — surface who else
               shares the same goal category, right below the action row. */}
