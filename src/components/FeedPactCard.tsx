@@ -20,13 +20,12 @@ import {
   Crown,
 } from 'lucide-react';
 import ProofUploadModal from './ProofUploadModal';
-import ProofMediaCarousel from './ProofMediaCarousel';
 import CommentsBottomSheet from './CommentsBottomSheet';
 import Avatar from './Avatar';
 import UserAvatarLink from './UserAvatarLink';
 import PremiumJoinButton from './PremiumJoinButton';
 import GoalMatchStrip from './GoalMatchStrip';
-import PactGallery from './PactGallery';
+import PactGallery, { buildGalleryTiles } from './PactGallery';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useCreateCheer } from '@/hooks/usePactMutations';
 import { useGoalMatches } from '@/hooks/usePactMatches';
@@ -64,7 +63,12 @@ interface FeedPactCardProps {
   hasCheered?: boolean;
   /** When nested in a detail-page shell, remove the card's outer chrome. */
   chromeless?: boolean;
-  /** Optional detail-page media rendered inside this pact card. */
+  /**
+   * Full proof/cheer lists fetched separately by the detail page (which has
+   * more data than the compact feed embeds on the pact object). When
+   * omitted, the card falls back to `pact.proofClips`/no cheers — same hero
+   * strip either way, just a richer photo set on the detail page.
+   */
   galleryProofs?: any[];
   galleryCheers?: any[];
 }
@@ -350,8 +354,17 @@ export default function FeedPactCard({
   const proofs = useMemo(() => getProofs(pact), [pact]);
   const media = useMemo(() => getMedia(pact), [pact]);
   const progressInfo = useMemo(() => getDurationProgress(pact), [pact]);
-  const hasProof = proofs.length > 0;
-  const activeProof = proofs[activeProofIndex] ?? proofs[0] ?? null;
+  // Single source of truth for "what photos does this pact have" — the
+  // detail page passes its separately-fetched proofs+cheers through
+  // galleryProofs/galleryCheers; the compact feed card (no such fetch) falls
+  // back to the proofs already embedded on the pact object. Either way this
+  // is the ONLY tile list rendered — there is no second, separate gallery.
+  const tiles = useMemo(
+    () => buildGalleryTiles(galleryProofs ?? proofs, galleryCheers ?? []),
+    [galleryProofs, galleryCheers, proofs],
+  );
+  const canPageMedia = tiles.length > 1;
+  const activeProof = tiles[activeProofIndex] ?? tiles[0] ?? null;
   const isExiting = exitDirection !== null;
   const resolvedDetailHref = detailHref || `/pacts/${pact.id}`;
   // The feed-list endpoint (/api/pacts) never returns a participants array,
@@ -524,8 +537,26 @@ export default function FeedPactCard({
     }
   };
 
+  // Advances/retreats the active photo (wrapping, same as the old tap-zone
+  // carousel) — shared by the drag gesture below.
+  const pageMedia = (direction: 'next' | 'prev') => {
+    if (!canPageMedia) return;
+    setActiveProofIndex((index) => {
+      if (direction === 'next') return index === tiles.length - 1 ? 0 : index + 1;
+      return index === 0 ? tiles.length - 1 : index - 1;
+    });
+  };
+
+  // A drag below the vote-commit threshold pages through photos instead of
+  // doing nothing — this is what makes the hero's photo strip swipeable
+  // directly in the feed, without stealing the gesture surface reserved for
+  // the decisive skip/cheer/join swipe (which still wins once the drag
+  // crosses MEDIA_PAGE_VOTE_THRESHOLD_PX below).
+  const MEDIA_PAGE_THRESHOLD_PX = 40;
+  const MEDIA_PAGE_VOTE_THRESHOLD_PX = 90;
+
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!gesturesEnabled) return;
+    if (!gesturesEnabled && !canPageMedia) return;
     if ((event.target as HTMLElement | null)?.closest('button,a')) return;
     if (isVoting || isExiting) return;
     activePointerId.current = event.pointerId;
@@ -537,7 +568,7 @@ export default function FeedPactCard({
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!gesturesEnabled) return;
+    if (!gesturesEnabled && !canPageMedia) return;
     if (activePointerId.current !== event.pointerId || isVoting || isExiting) return;
 
     const dx = event.clientX - startPoint.current.x;
@@ -560,24 +591,24 @@ export default function FeedPactCard({
       setIsDragging(true);
       setDragX(dx);
       setDragY(0);
-      setShowActionTag(Math.abs(dx) >= 40);
+      setShowActionTag(gesturesEnabled && Math.abs(dx) >= MEDIA_PAGE_VOTE_THRESHOLD_PX);
 
-      if (dx <= -90 && canSkip) {
+      if (gesturesEnabled && dx <= -MEDIA_PAGE_VOTE_THRESHOLD_PX && canSkip) {
         void completeVote('skip');
-      } else if (dx >= 90 && rightAction) {
+      } else if (gesturesEnabled && dx >= MEDIA_PAGE_VOTE_THRESHOLD_PX && rightAction) {
         triggerRightAction();
       }
     }
   };
 
   const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!gesturesEnabled) return;
+    if (!gesturesEnabled && !canPageMedia) return;
     if (activePointerId.current !== event.pointerId) return;
     activePointerId.current = null;
 
     if (isVoting || isExiting) return;
 
-    if (dragAxis === 'horizontal' && Math.abs(dragX) >= 90) {
+    if (dragAxis === 'horizontal' && gesturesEnabled && Math.abs(dragX) >= MEDIA_PAGE_VOTE_THRESHOLD_PX) {
       if (dragX < 0 && canSkip) {
         void completeVote('skip');
         return;
@@ -586,6 +617,15 @@ export default function FeedPactCard({
         triggerRightAction();
         return;
       }
+    }
+
+    // Didn't cross the vote-commit threshold (or gestures are off entirely,
+    // e.g. the pact detail page) — a confident-enough drag pages the photo
+    // strip instead of just snapping back to center.
+    if (dragAxis === 'horizontal' && canPageMedia && Math.abs(dragX) >= MEDIA_PAGE_THRESHOLD_PX) {
+      pageMedia(dragX < 0 ? 'next' : 'prev');
+      resetDrag();
+      return;
     }
 
     resetDrag();
@@ -815,7 +855,13 @@ export default function FeedPactCard({
           </div>
         </div>
 
-        {/* Hero: proof photo carousel, else a duration-progress ring, else the old empty-state placeholder. Swipe-left (skip) / swipe-right (cheer or join) / double-tap-cheer all live only here, unchanged from before. */}
+        {/* Hero: the single unified photo/cheer strip (proofs + cheers, swipeable
+            via drag or dots), else a duration-progress ring, else the old
+            empty-state placeholder. Swipe-left (skip) / swipe-right (cheer or
+            join) / double-tap-cheer share this surface with photo paging —
+            a decisive swipe still wins the vote gesture; a shorter drag pages
+            through photos instead, so the same swipeable strip works here in
+            the feed and, unchanged, on the pact detail page. */}
         <div
           className="relative isolate aspect-[4/5] w-full select-none touch-pan-y"
           onPointerDown={handlePointerDown}
@@ -829,13 +875,15 @@ export default function FeedPactCard({
           onClick={handleMediaTap}
           style={transformStyle}
         >
-          {media.hasMedia ? (
-            <ProofMediaCarousel
-              proofs={proofs}
-              fallbackLabel={creatorLabel}
-              fallbackAvatarUrl={creatorAvatarUrl}
-              className="h-full w-full"
-              onIndexChange={setActiveProofIndex}
+          {tiles.length > 0 ? (
+            <PactGallery
+              proofs={galleryProofs ?? proofs}
+              cheers={galleryCheers ?? []}
+              interactive={false}
+              fillHeight
+              dotsPosition="overlay"
+              activeIndex={activeProofIndex}
+              onActiveIndexChange={setActiveProofIndex}
             />
           ) : progressInfo ? (
             <div className="relative flex h-full w-full items-center justify-center bg-[linear-gradient(160deg,var(--pact-surface-3),var(--pact-surface-2))]">
@@ -1094,11 +1142,6 @@ export default function FeedPactCard({
             />
           )}
 
-          {galleryProofs && galleryCheers && (galleryProofs.length > 0 || galleryCheers.length > 0) && (
-            <div className="mt-4">
-              <PactGallery proofs={galleryProofs} cheers={galleryCheers} />
-            </div>
-          )}
         </div>
 
         {/* "View all N comments" — opens the same comment sheet as the comment icon */}

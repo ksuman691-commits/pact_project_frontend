@@ -16,7 +16,7 @@ interface Proof {
   day?: number;
 }
 
-interface GalleryTile {
+export interface GalleryTile {
   id: number;
   url: string;
   type: 'image' | 'video';
@@ -27,89 +27,157 @@ interface GalleryTile {
   kind: 'proof' | 'cheer';
 }
 
+/**
+ * Merges proof submissions + active cheers into one deduped, most-recent-first
+ * tile list. This is the single source of truth for "what photos does this
+ * pact have" — both the feed card's hero slot and the detail-page carousel
+ * call this same function so a pact never shows two different photo sets.
+ */
+export function buildGalleryTiles(proofs: Proof[], cheers: CheerItem[]): GalleryTile[] {
+  const activeCheers = cheers.filter(
+    (cheer) => !cheer.expires_at || new Date(cheer.expires_at).getTime() > Date.now(),
+  );
+
+  const proofTiles: GalleryTile[] = proofs.map((proof) => ({
+    id: proof.id,
+    url: proof.url,
+    type: proof.type,
+    description: proof.description,
+    uploadedAt: proof.uploadedAt,
+    uploader: proof.uploader,
+    day: proof.day,
+    kind: 'proof',
+  }));
+  const cheerTiles: GalleryTile[] = activeCheers
+    .filter((cheer) => cheer.photo_url)
+    .map((cheer) => ({
+      // Negate cheer ids so they can never collide with a proof id in the
+      // merged list (both id spaces start at 1+ from independent tables).
+      id: -cheer.id,
+      url: cheer.photo_url as string,
+      type: 'image',
+      uploadedAt: cheer.created_at ?? undefined,
+      uploader: cheer.sender_username ?? undefined,
+      kind: 'cheer',
+    }));
+
+  return [...proofTiles, ...cheerTiles].sort((a, b) => {
+    const aTime = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
+    const bTime = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
+    return bTime - aTime;
+  });
+}
+
 interface PactGalleryProps {
   proofs: Proof[];
   cheers: CheerItem[];
+  /** Aspect ratio of each slide — square for the detail-page strip, 4/5 for the feed hero. */
+  aspectClassName?: string;
+  /**
+   * Externally-controlled active slide (e.g. driven by the feed card's own
+   * swipe gesture). When provided, the carousel scrolls to this index
+   * instead of tracking its own.
+   */
+  activeIndex?: number;
+  onActiveIndexChange?: (index: number) => void;
+  /**
+   * When false, tiles are non-interactive (no tap-to-open lightbox) — used
+   * in the feed hero, where a tap on the photo should fall through to the
+   * card's own tap-to-open-detail / double-tap-to-cheer handlers instead.
+   */
+  interactive?: boolean;
+  /**
+   * 'below' (default) lays the dot row out under the strip, adding its own
+   * height — right for the detail-page strip. 'overlay' floats the dots
+   * over the bottom of the image instead, for use inside a fixed-aspect
+   * container like the feed hero, where extra layout height isn't available.
+   */
+  dotsPosition?: 'below' | 'overlay';
+  /** Fills the parent's height instead of sizing itself via aspectClassName — used by the feed hero. */
+  fillHeight?: boolean;
 }
 
 /**
  * Unified Instagram-style photo strip combining proof submissions and cheers
  * into one horizontally swipeable carousel, sorted most-recent-first. Lives
  * directly in the pact card body — no header/label, no grid framing — so it
- * reads as part of the post rather than a separate "Gallery" section.
+ * reads as part of the post rather than a separate "Gallery" section. Reused
+ * as-is for both the feed card's hero slot and the pact detail page, so
+ * there is exactly one photo display per pact, not two.
  */
-export default function PactGallery({ proofs, cheers }: PactGalleryProps) {
+export default function PactGallery({
+  proofs,
+  cheers,
+  aspectClassName = 'aspect-square',
+  activeIndex,
+  onActiveIndexChange,
+  interactive = true,
+  dotsPosition = 'below',
+  fillHeight = false,
+}: PactGalleryProps) {
   const [carouselOpen, setCarouselOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [activeSlide, setActiveSlide] = useState(0);
+  const [internalActiveSlide, setInternalActiveSlide] = useState(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const activeSlide = activeIndex ?? internalActiveSlide;
 
-  const activeCheers = useMemo(
-    () => cheers.filter((cheer) => !cheer.expires_at || new Date(cheer.expires_at).getTime() > Date.now()),
-    [cheers],
-  );
+  const tiles: GalleryTile[] = useMemo(() => buildGalleryTiles(proofs, cheers), [proofs, cheers]);
 
-  const tiles: GalleryTile[] = useMemo(() => {
-    const proofTiles: GalleryTile[] = proofs.map((proof) => ({
-      id: proof.id,
-      url: proof.url,
-      type: proof.type,
-      description: proof.description,
-      uploadedAt: proof.uploadedAt,
-      uploader: proof.uploader,
-      day: proof.day,
-      kind: 'proof',
-    }));
-    const cheerTiles: GalleryTile[] = activeCheers
-      .filter((cheer) => cheer.photo_url)
-      .map((cheer) => ({
-        // Negate cheer ids so they can never collide with a proof id in the
-        // merged list (both id spaces start at 1+ from independent tables).
-        id: -cheer.id,
-        url: cheer.photo_url as string,
-        type: 'image',
-        uploadedAt: cheer.created_at ?? undefined,
-        uploader: cheer.sender_username ?? undefined,
-        kind: 'cheer',
-      }));
-
-    return [...proofTiles, ...cheerTiles].sort((a, b) => {
-      const aTime = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
-      const bTime = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
-      return bTime - aTime;
-    });
-  }, [proofs, activeCheers]);
+  // Keep the scroller in sync when the active index is driven externally
+  // (feed hero swipe gesture) rather than by the user scrolling directly.
+  React.useEffect(() => {
+    if (activeIndex === undefined) return;
+    const el = scrollerRef.current;
+    if (!el) return;
+    const slideWidth = el.clientWidth;
+    if (slideWidth === 0) return;
+    el.scrollTo({ left: activeIndex * slideWidth, behavior: 'smooth' });
+  }, [activeIndex]);
 
   if (tiles.length === 0) return null;
 
   const handleTileClick = (index: number) => {
+    if (!interactive) return;
     setSelectedIndex(index);
     setCarouselOpen(true);
   };
 
   const handleScroll = () => {
+    if (activeIndex !== undefined) return;
     const el = scrollerRef.current;
     if (!el) return;
     const slideWidth = el.clientWidth;
     if (slideWidth === 0) return;
-    setActiveSlide(Math.round(el.scrollLeft / slideWidth));
+    const next = Math.round(el.scrollLeft / slideWidth);
+    setInternalActiveSlide(next);
+    onActiveIndexChange?.(next);
   };
+
+  const Tile = interactive ? 'button' : 'div';
 
   return (
     <>
-      <div className="relative">
+      <div className={`relative ${fillHeight ? 'h-full' : ''}`}>
         <div
           ref={scrollerRef}
           onScroll={handleScroll}
-          className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className={`flex snap-x snap-mandatory overflow-x-auto scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+            fillHeight ? 'h-full' : ''
+          }`}
         >
           {tiles.map((tile, index) => (
-            <button
+            <Tile
               key={`${tile.kind}-${tile.id}`}
-              type="button"
-              onClick={() => handleTileClick(index)}
-              aria-label={`${tile.kind === 'cheer' ? 'Cheer' : tile.type === 'video' ? 'Video proof' : 'Photo proof'}${tile.day ? `, day ${tile.day}` : ''}`}
-              className="group relative aspect-square w-full flex-shrink-0 snap-center overflow-hidden rounded-2xl bg-white/5 text-left focus:outline-none"
+              type={interactive ? 'button' : undefined}
+              onClick={interactive ? () => handleTileClick(index) : undefined}
+              aria-label={
+                interactive
+                  ? `${tile.kind === 'cheer' ? 'Cheer' : tile.type === 'video' ? 'Video proof' : 'Photo proof'}${tile.day ? `, day ${tile.day}` : ''}`
+                  : undefined
+              }
+              className={`group relative ${fillHeight ? 'h-full' : aspectClassName} w-full flex-shrink-0 snap-center overflow-hidden bg-white/5 text-left focus:outline-none ${
+                interactive ? 'rounded-2xl' : ''
+              }`}
             >
               {tile.type === 'image' ? (
                 <Image
@@ -143,17 +211,25 @@ export default function PactGallery({ proofs, cheers }: PactGalleryProps) {
                   <span className="truncate">@{tile.uploader}</span>
                 </div>
               )}
-            </button>
+            </Tile>
           ))}
         </div>
 
         {tiles.length > 1 && (
-          <div className="mt-2 flex items-center justify-center gap-1.5">
+          <div
+            className={
+              dotsPosition === 'overlay'
+                ? 'pointer-events-none absolute inset-x-0 bottom-3 z-10 flex items-center justify-center gap-1.5'
+                : 'mt-2 flex items-center justify-center gap-1.5'
+            }
+          >
             {tiles.map((tile, index) => (
               <span
                 key={`dot-${tile.kind}-${tile.id}`}
                 className={`h-1.5 rounded-full transition-all ${
-                  index === activeSlide ? 'w-4 bg-[var(--pact-violet)]' : 'w-1.5 bg-white/25'
+                  index === activeSlide
+                    ? `w-4 ${dotsPosition === 'overlay' ? 'bg-white' : 'bg-[var(--pact-violet)]'}`
+                    : `w-1.5 ${dotsPosition === 'overlay' ? 'bg-white/40' : 'bg-white/25'}`
                 }`}
               />
             ))}
@@ -161,7 +237,9 @@ export default function PactGallery({ proofs, cheers }: PactGalleryProps) {
         )}
       </div>
 
-      <ProofCarousel proofs={tiles} isOpen={carouselOpen} onClose={() => setCarouselOpen(false)} initialIndex={selectedIndex} />
+      {interactive && (
+        <ProofCarousel proofs={tiles} isOpen={carouselOpen} onClose={() => setCarouselOpen(false)} initialIndex={selectedIndex} />
+      )}
     </>
   );
 }
