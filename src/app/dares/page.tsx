@@ -7,6 +7,7 @@ import { Plus, X } from 'lucide-react';
 import DareCard from '@/components/DareCard';
 import DareTimeRing from '@/components/DareTimeRing';
 import CreateDareModal from '@/components/CreateDareModal';
+import CuratedContentGrid from '@/components/CuratedContentGrid';
 import { useDareFeed, useMyDares } from '@/hooks/useDareQueries';
 import { useAuthStore } from '@/store/auth';
 import { getTimeRing, isDareExpired, parseApiDate } from '@/lib/dareCountdown';
@@ -381,6 +382,16 @@ function DaresPageInner() {
               >
                 {currentQuery.isFetchingNextPage ? 'Loading…' : 'Load More'}
               </button>
+            </div>
+          )}
+
+          {/* The former standalone "Curated" bottom-nav destination now lives
+              here, folded into Discover — staff-picked dares alongside the
+              open-feed ones above rather than a separate nav item duplicating
+              the same "browse things you haven't joined yet" purpose. */}
+          {tab === 'discover' && !statusFilter && (
+            <div className="mt-10 border-t border-[var(--pact-hairline)] pt-8">
+              <CuratedContentGrid type="dare" />
             </div>
           )}
 
