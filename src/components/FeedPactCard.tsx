@@ -379,7 +379,10 @@ export default function FeedPactCard({
     // from a blank slate. category seeds the vibe step (skipped entirely);
     // pactId lets the eventual "create a matching pact" prompt look up the
     // originating pact's duration as a bonus prefill.
-    const params = new URLSearchParams({ inviteUserId: ids });
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('circle-match-invitees', JSON.stringify(goalMatches));
+    }
+    const params = new URLSearchParams({ inviteUserId: ids, confirmInvites: '1' });
     if (pact.category) params.set('category', pact.category);
     params.set('pactId', String(pact.id));
     router.push(`/circles/create?${params.toString()}`);
@@ -942,8 +945,6 @@ export default function FeedPactCard({
               {formatCompactCount(cheerCount)} cheering this pact
             </p>
 
-            {joinAllowed && <PremiumJoinButton onClick={handleJoinPact} loading={isJoining} size="sm" />}
-
             {!joinAllowed && pact.join_block_reason === 'already_joined' && (
               <span
                 title="You're already part of this pact"
@@ -991,9 +992,9 @@ export default function FeedPactCard({
               </p>
             )}
 
-            {voteActionsVisible && !voteStatusLabel && (
-              <div className="flex gap-2">
-                {canSkip && (
+            {!voteStatusLabel && (voteActionsVisible || joinAllowed) && (
+              <div className="flex items-center gap-2">
+                {voteActionsVisible && canSkip && (
                   <button
                     type="button"
                     onClick={() => void completeVote('skip')}
@@ -1004,17 +1005,20 @@ export default function FeedPactCard({
                     Skip
                   </button>
                 )}
-                {rightAction === 'cheer' && (
-                  <button
-                    type="button"
-                    onClick={triggerRightAction}
-                    disabled={isCheering}
-                    className="inline-flex items-center gap-2 rounded-full border border-[var(--pact-gold)]/50 bg-[var(--pact-gold)]/12 px-4 py-2 text-sm font-semibold text-[var(--pact-gold)] transition hover:bg-[var(--pact-gold)]/18 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {isCheering ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Cheer'}
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                )}
+                <div className="ml-auto flex items-center gap-2">
+                  {joinAllowed && <PremiumJoinButton onClick={handleJoinPact} loading={isJoining} size="sm" />}
+                  {!joinAllowed && voteActionsVisible && rightAction === 'cheer' && (
+                    <button
+                      type="button"
+                      onClick={triggerRightAction}
+                      disabled={isCheering}
+                      className="inline-flex items-center gap-2 rounded-full border border-[var(--pact-gold)]/50 bg-[var(--pact-gold)]/12 px-4 py-2 text-sm font-semibold text-[var(--pact-gold)] transition hover:bg-[var(--pact-gold)]/18 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isCheering ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Cheer'}
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>

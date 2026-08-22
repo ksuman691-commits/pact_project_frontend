@@ -9,10 +9,9 @@ import DetailPageHeader from '@/components/DetailPageHeader';
 import { useSeedBackHistory } from '@/hooks/useSeedBackHistory';
 import FeedPactCard from '@/components/FeedPactCard';
 import PactProgressRing, { getPactProgress } from '@/components/PactProgressRing';
-import ProofsSection from '@/components/ProofsSection';
+import PactGallery from '@/components/PactGallery';
 import UserAvatarLink from '@/components/UserAvatarLink';
 import CheerButton from '@/components/CheerButton';
-import CheerGallery from '@/components/CheerGallery';
 import SponsoredCard from '@/components/SponsoredCard';
 import { useSponsor } from '@/hooks/useSponsor';
 import PremiumJoinButton from '@/components/PremiumJoinButton';
@@ -223,13 +222,9 @@ export default function PactDetailPage() {
               chromeless
             />
 
-            <div className="border-t border-white/10 px-4 py-4">
-              <ProofsSection proofs={proofs} title="Proofs" variant="immersive" />
-            </div>
-
-            {cheers.length > 0 && (
+            {(proofs.length > 0 || cheers.length > 0) && (
               <div className="border-t border-white/10 px-4 py-4">
-                <CheerGallery cheers={cheers} />
+                <PactGallery proofs={proofs} cheers={cheers} title="Gallery" />
               </div>
             )}
 

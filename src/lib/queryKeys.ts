@@ -115,6 +115,12 @@ export const queryKeys = {
     detail: (id: number) => [...queryKeys.shorts.all, 'detail', id],
   },
 
+  curated: {
+    all: ['curated-content'],
+    discover: (filters?: any) => [...queryKeys.curated.all, 'discover', filters],
+    review: (status = 'draft') => [...queryKeys.curated.all, 'review', status],
+  },
+
   // Dares
   dares: {
     all: ['dares'],

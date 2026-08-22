@@ -9,6 +9,34 @@ export interface User {
   created_at?: string;
   avatar_url?: string;
   bio?: string;
+  is_staff?: boolean;
+}
+
+export type CuratedContentType = 'pact' | 'dare';
+export type CuratedContentStatus = 'draft' | 'approved' | 'rejected';
+
+export interface CuratedContent {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  type: CuratedContentType;
+  status?: CuratedContentStatus;
+  trending_until?: string | null;
+  duration_days?: number | null;
+  target?: string | number | null;
+  defaults?: Record<string, unknown> | null;
+  source?: 'ai_generated' | 'manual';
+  rejection_reason?: string | null;
+  reviewed_at?: string | null;
+}
+
+export interface CuratedContentListResponse {
+  items: CuratedContent[];
+  page: number;
+  limit: number;
+  total: number;
+  has_more: boolean;
 }
 
 export interface Circle {
