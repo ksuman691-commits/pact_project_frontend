@@ -287,6 +287,19 @@ export default function FeedPactCard({
   const lastTapAt = useRef(0);
   const singleTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const committedRef = useRef(false);
+  // The hero carries pointer handlers (real drag tracking) AND onClick/
+  // onDoubleClick (tap-to-open, double-tap-to-vote) on the SAME element.
+  // Every browser fires a synthesized click on pointerup/touchend in
+  // addition to the manual pointer events above — including right after a
+  // real drag — so without this flag every swipe (paging photos or an
+  // in-progress skip/cheer/join drag) was immediately followed by its own
+  // "ghost tap": handleMediaTap/onDoubleClick ran their full tap logic a
+  // moment later as if nothing but a tap had happened. Set true the instant
+  // real movement is seen, checked (and left alone) by the click handlers
+  // below, and only cleared on the next pointerdown — this is what actually
+  // isolates "browsing photos" from "tapping/voting on the card", not the
+  // page-vs-vote pixel thresholds those handlers separately use.
+  const didDragRef = useRef(false);
   const [displayVote, setDisplayVote] = useState<string | null>(null);
   const [displayCheerCount, setDisplayCheerCount] = useState(0);
   const [optimisticCheer, setOptimisticCheer] = useState(false);
@@ -565,6 +578,7 @@ export default function FeedPactCard({
     if (isVoting || isExiting) return;
     activePointerId.current = event.pointerId;
     startPoint.current = { x: event.clientX, y: event.clientY };
+    didDragRef.current = false;
     setDragAxis(null);
     setIsDragging(false);
     setShowActionTag(false);
@@ -577,6 +591,13 @@ export default function FeedPactCard({
 
     const dx = event.clientX - startPoint.current.x;
     const dy = event.clientY - startPoint.current.y;
+
+    // Same 8px sensitivity already used below to decide which axis this
+    // gesture belongs to — anything past it is a real drag, on either axis,
+    // and must never also be treated as a tap once the click fires.
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+      didDragRef.current = true;
+    }
 
     if (!dragAxis && Math.abs(dx) > 8 && Math.abs(dy) > 8) {
       const nextAxis: DragAxis = Math.abs(dx) > Math.abs(dy) ? 'horizontal' : 'vertical';
@@ -661,6 +682,15 @@ export default function FeedPactCard({
   // gesture instead of navigating away immediately.
   const handleMediaTap = (event: React.MouseEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement | null)?.closest('button,a')) return;
+
+    // This click is the browser's own ghost-tap follow-up to a real drag
+    // (see didDragRef above), not an actual tap — swallow it before it can
+    // navigate to the detail page or register as half of a double-tap vote.
+    if (didDragRef.current) {
+      event.stopPropagation();
+      return;
+    }
+
     if (isVoting || isExiting) {
       event.stopPropagation();
       return;
@@ -892,6 +922,9 @@ export default function FeedPactCard({
           onPointerCancel={resetDrag}
           onDoubleClick={(event) => {
             if ((event.target as HTMLElement | null)?.closest('button,a')) return;
+            // Same ghost-event concern as handleMediaTap above — a real
+            // drag must never also read as (half of) a double-tap vote.
+            if (didDragRef.current) return;
             if (rightAction) triggerRightAction();
           }}
           onClick={handleMediaTap}
