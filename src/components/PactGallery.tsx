@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import { Play, Image as ImageIcon, PartyPopper } from 'lucide-react';
+import { Play, PartyPopper } from 'lucide-react';
 import ProofCarousel from './ProofCarousel';
 import type { CheerItem } from './CheerGallery';
 
@@ -30,18 +30,19 @@ interface GalleryTile {
 interface PactGalleryProps {
   proofs: Proof[];
   cheers: CheerItem[];
-  title?: string;
 }
 
 /**
- * Unified Instagram-style photo grid combining proof submissions and cheers
- * into one feed, sorted most-recent-first. Replaces the previous split
- * "Proofs" + "Cheers" blocks — a viewer shouldn't have to hunt through two
- * separate sections to see everything posted about a pact.
+ * Unified Instagram-style photo strip combining proof submissions and cheers
+ * into one horizontally swipeable carousel, sorted most-recent-first. Lives
+ * directly in the pact card body — no header/label, no grid framing — so it
+ * reads as part of the post rather than a separate "Gallery" section.
  */
-export default function PactGallery({ proofs, cheers, title = 'Gallery' }: PactGalleryProps) {
+export default function PactGallery({ proofs, cheers }: PactGalleryProps) {
   const [carouselOpen, setCarouselOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const scrollerRef = useRef<HTMLDivElement>(null);
 
   const activeCheers = useMemo(
     () => cheers.filter((cheer) => !cheer.expires_at || new Date(cheer.expires_at).getTime() > Date.now()),
@@ -86,44 +87,49 @@ export default function PactGallery({ proofs, cheers, title = 'Gallery' }: PactG
     setCarouselOpen(true);
   };
 
+  const handleScroll = () => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const slideWidth = el.clientWidth;
+    if (slideWidth === 0) return;
+    setActiveSlide(Math.round(el.scrollLeft / slideWidth));
+  };
+
   return (
     <>
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <ImageIcon className="h-4 w-4 text-white/60" />
-          <h2 className="text-sm font-bold text-white">
-            {title} ({tiles.length})
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-3 gap-1.5">
+      <div className="relative">
+        <div
+          ref={scrollerRef}
+          onScroll={handleScroll}
+          className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           {tiles.map((tile, index) => (
             <button
               key={`${tile.kind}-${tile.id}`}
               type="button"
               onClick={() => handleTileClick(index)}
               aria-label={`${tile.kind === 'cheer' ? 'Cheer' : tile.type === 'video' ? 'Video proof' : 'Photo proof'}${tile.day ? `, day ${tile.day}` : ''}`}
-              className="group relative aspect-square overflow-hidden rounded-xl bg-white/5 text-left ring-1 ring-white/10 transition hover:ring-[var(--pact-violet)]/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pact-violet)]"
+              className="group relative aspect-square w-full flex-shrink-0 snap-center overflow-hidden rounded-2xl bg-white/5 text-left focus:outline-none"
             >
               {tile.type === 'image' ? (
                 <Image
                   src={tile.url}
                   alt={tile.description || (tile.kind === 'cheer' ? `Cheer from ${tile.uploader || 'a member'}` : 'Proof')}
                   fill
-                  className="object-cover transition duration-300 group-hover:scale-105"
-                  sizes="(max-width: 768px) 33vw, 160px"
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 480px"
                 />
               ) : (
                 <div className="relative h-full w-full bg-slate-900">
                   <video src={tile.url} className="h-full w-full object-cover" muted playsInline />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/25">
-                    <Play className="h-8 w-8 fill-white text-white" />
+                    <Play className="h-10 w-10 fill-white text-white" />
                   </div>
                 </div>
               )}
 
               <span
-                className={`absolute left-1.5 top-1.5 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white ${
+                className={`absolute left-2.5 top-2.5 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white ${
                   tile.kind === 'cheer' ? '' : 'bg-[var(--pact-violet)]'
                 }`}
                 style={tile.kind === 'cheer' ? { background: 'var(--pact-gold)' } : undefined}
@@ -132,12 +138,27 @@ export default function PactGallery({ proofs, cheers, title = 'Gallery' }: PactG
                 {tile.kind === 'cheer' ? 'Cheer' : tile.day ? `Day ${tile.day}` : 'Proof'}
               </span>
 
-              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-1 bg-gradient-to-t from-black/75 to-transparent px-2 pb-2 pt-6 text-[10px] font-semibold text-white opacity-0 transition group-hover:opacity-100">
-                <span className="truncate">{tile.uploader ? `@${tile.uploader}` : ''}</span>
-              </div>
+              {tile.uploader && (
+                <div className="absolute inset-x-0 bottom-0 flex items-end bg-gradient-to-t from-black/70 to-transparent px-2.5 pb-2 pt-8 text-xs font-semibold text-white">
+                  <span className="truncate">@{tile.uploader}</span>
+                </div>
+              )}
             </button>
           ))}
         </div>
+
+        {tiles.length > 1 && (
+          <div className="mt-2 flex items-center justify-center gap-1.5">
+            {tiles.map((tile, index) => (
+              <span
+                key={`dot-${tile.kind}-${tile.id}`}
+                className={`h-1.5 rounded-full transition-all ${
+                  index === activeSlide ? 'w-4 bg-[var(--pact-violet)]' : 'w-1.5 bg-white/25'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <ProofCarousel proofs={tiles} isOpen={carouselOpen} onClose={() => setCarouselOpen(false)} initialIndex={selectedIndex} />
