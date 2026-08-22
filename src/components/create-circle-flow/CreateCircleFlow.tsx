@@ -11,6 +11,7 @@ import PrivacyStep from './PrivacyStep';
 import InviteStep from './InviteStep';
 import ReviewStep from './ReviewStep';
 import SuccessStep from './SuccessStep';
+import InviteContextBanner from './InviteContextBanner';
 
 interface CreateCircleFlowProps {
   /** Called when the user taps the close (X) button. Omit to hide the close button (e.g. full-page route). */
@@ -35,6 +36,7 @@ function StepRouter({ onExit }: CreateCircleFlowProps) {
       titleStripPlaceholder={LIVE_SUMMARY_PLACEHOLDER}
       accent="circle"
       titleStripIcon={Users}
+      banner={<InviteContextBanner />}
     >
       {currentStep === 'vibe' && <VibeStep />}
       {currentStep === 'identity' && <IdentityStep />}

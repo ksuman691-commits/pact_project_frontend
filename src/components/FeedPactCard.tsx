@@ -379,7 +379,10 @@ export default function FeedPactCard({
     // from a blank slate. category seeds the vibe step (skipped entirely);
     // pactId lets the eventual "create a matching pact" prompt look up the
     // originating pact's duration as a bonus prefill.
-    const params = new URLSearchParams({ inviteUserId: ids });
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('circle-match-invitees', JSON.stringify(goalMatches));
+    }
+    const params = new URLSearchParams({ inviteUserId: ids, confirmInvites: '1' });
     if (pact.category) params.set('category', pact.category);
     params.set('pactId', String(pact.id));
     router.push(`/circles/create?${params.toString()}`);

@@ -1,6 +1,7 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import InviteConfirmation from '@/components/create-circle-flow/InviteConfirmation';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import CreateCircleFlow from '@/components/create-circle-flow/CreateCircleFlow';
@@ -28,8 +29,35 @@ function CreateCirclePageContent() {
   const pactIdParam = searchParams.get('pactId');
   const pactId = pactIdParam ? Number(pactIdParam) : null;
   const { user, isInitialized } = useRequireAuth();
+  const [matchInvitees, setMatchInvitees] = useState<any[]>([]);
+  const [inviteesReady, setInviteesReady] = useState(false);
+  const needsConfirmation = searchParams.get('confirmInvites') === '1';
 
-  if (!isInitialized) {
+  useEffect(() => {
+    if (!needsConfirmation) {
+      setInviteesReady(true);
+      return;
+    }
+    try {
+      const raw = sessionStorage.getItem('circle-match-invitees');
+      setMatchInvitees(raw ? JSON.parse(raw) : []);
+    } catch {
+      setMatchInvitees([]);
+    } finally {
+      setInviteesReady(true);
+    }
+  }, [needsConfirmation]);
+
+  const cancelConfirmation = () => {
+    sessionStorage.removeItem('circle-match-invitees');
+    router.back();
+  };
+
+  const confirmInvites = () => {
+    router.replace(`/circles/create?inviteUserId=${inviteUserIds.join(',')}${category ? `&category=${encodeURIComponent(category)}` : ''}${pactId ? `&pactId=${pactId}` : ''}`);
+  };
+
+  if (!isInitialized || !inviteesReady) {
     return (
       <div className="pact-flow min-h-screen flex items-center justify-center">
         <LogoSpinner size={48} color="var(--pact-pink)" />
@@ -40,6 +68,10 @@ function CreateCirclePageContent() {
   if (!user) {
     router.push('/auth/login');
     return null;
+  }
+
+  if (needsConfirmation) {
+    return <InviteConfirmation invitees={matchInvitees} onConfirm={confirmInvites} onCancel={cancelConfirmation} />;
   }
 
   return (
