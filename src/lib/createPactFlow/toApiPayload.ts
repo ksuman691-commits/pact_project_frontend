@@ -21,18 +21,19 @@ const VIBE_TO_CATEGORY: Record<VibeId, string> = {
 
 // Best-effort reverse of VIBE_TO_CATEGORY. The forward map is many-to-one
 // (e.g. both 'social' and 'adventure' -> 'social'; both 'money' and 'build'
-// -> 'startup'), so there's no single correct inverse — this just picks one
-// representative vibe per category (first key wins, in VIBE_TO_CATEGORY's
-// declaration order) so a category carried over from a goal-match can seed
-// a reasonable vibe rather than leaving the user to re-pick one we already
-// have context for.
-const CATEGORY_TO_VIBE: Record<string, VibeId> = Object.entries(VIBE_TO_CATEGORY).reduce(
-  (acc, [vibeId, category]) => {
-    if (!(category in acc)) acc[category] = vibeId as VibeId;
-    return acc;
-  },
-  {} as Record<string, VibeId>,
-);
+// -> 'startup'), so there's no single correct inverse. Rather than picking
+// "first declaration wins" (which silently resolved 'startup' -> 'money' —
+// a savings vibe — instead of 'build', and 'social' -> 'adventure' instead
+// of the literal 'social' vibe), this explicitly picks the most
+// representative vibe per category by hand.
+const CATEGORY_TO_VIBE: Record<string, VibeId> = {
+  fitness: 'glowup',
+  startup: 'build',
+  habits: 'dare',
+  social: 'social',
+  creator: 'create',
+  study: 'levelup',
+};
 
 export function categoryToVibe(category?: string | null): VibeId | null {
   if (!category) return null;
