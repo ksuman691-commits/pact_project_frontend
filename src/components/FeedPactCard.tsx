@@ -33,6 +33,7 @@ import { useAuthStore } from '@/store/auth';
 import { getDisplayName } from '@/lib/displayName';
 import { pactService } from '@/services/api';
 import toast from 'react-hot-toast';
+import confetti from 'canvas-confetti';
 
 // Support (the old swipe-right vote-support action) has been removed —
 // Cheer and Join now cover that ground, so "skip" is the only remaining
@@ -337,10 +338,8 @@ export default function FeedPactCard({
   const [isCheering, setIsCheering] = useState(false);
   const [activeProofIndex, setActiveProofIndex] = useState(0);
   const cheerInputRef = useRef<HTMLInputElement>(null);
-  // Swipe-right on a pact the user hasn't joined slides up an inline
-  // "Join to cheer this pact" prompt over the card, instead of a dead-end
-  // gesture — membership is already known client-side, so this shows
-  // immediately rather than waiting on a failed API call.
+  // Kept for backwards-compatible rendering of any explicit join prompt
+  // state; swipe-right now joins directly and no longer opens this nudge.
   const [showJoinNudge, setShowJoinNudge] = useState(false);
 
   useEffect(() => {
@@ -447,12 +446,11 @@ export default function FeedPactCard({
     params.set('pactId', String(pact.id));
     router.push(`/circles/create?${params.toString()}`);
   };
-  // Swipe-right (and its double-tap shortcut) now branches on membership
-  // instead of performing a vote: participants get the fast single-photo
-  // Cheer flow, non-participants get the Join nudge. Neither goes through
-  // `onVote` or hits the backend to find out — membership is already known
-  // client-side, so the join case can be shown immediately rather than
-  // waiting on a failed request.
+  // Swipe-right (and its double-tap shortcut) branches on membership instead
+  // of performing a vote: participants get the Cheer flow, while a
+  // non-participant joins immediately. The join action uses the same backend
+  // endpoint as the explicit Join button, then celebrates in place so the
+  // user stays in the feed and can continue browsing.
   const rightAction: RightAction = isCreator
     ? null
     : isParticipant
@@ -554,7 +552,7 @@ export default function FeedPactCard({
     if (rightAction === 'cheer') {
       cheerInputRef.current?.click();
     } else {
-      setShowJoinNudge(true);
+      void handleJoinPact();
     }
   };
 
@@ -666,7 +664,11 @@ export default function FeedPactCard({
       // always won the race. Voting/cheering/joining remain fully available
       // via their dedicated buttons below the hero — only the ambiguous
       // drag shortcut is scoped to pacts with nothing to page through.
-      if (canPageMedia) {
+      // A rightward swipe is the explicit Join/Cheer gesture, even on cards
+      // that also have multiple photos. Only a leftward drag remains available
+      // for photo paging, so the right swipe cannot stop at a tilt and never
+      // invoke the action.
+      if (canPageMedia && dx < 0) {
         setShowActionTag(false);
         return;
       }
@@ -808,8 +810,15 @@ export default function FeedPactCard({
     setIsJoining(true);
     try {
       await pactService.join(pact.id);
-      toast.success('Joined pact');
-      window.location.href = resolvedDetailHref;
+      const creatorName = creatorLabel || 'this creator';
+      toast.success(`You joined ${creatorName}'s pact`);
+      confetti({
+        particleCount: 90,
+        spread: 70,
+        origin: { y: 0.68 },
+        colors: ['#10b981', '#fbbf24', '#f472b6', '#8b5cf6'],
+      });
+      setShowJoinNudge(false);
     } catch (error: any) {
       toast.error(error?.response?.data?.detail || 'Failed to join pact');
     } finally {
