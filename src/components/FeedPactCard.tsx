@@ -329,6 +329,10 @@ export default function FeedPactCard({
   // isolates "browsing photos" from "tapping/voting on the card", not the
   // page-vs-vote pixel thresholds those handlers separately use.
   const didDragRef = useRef(false);
+  // Tracks whether this specific card fired the join confetti, so the
+  // unmount cleanup below only resets the (shared, global) confetti canvas
+  // when it's actually this card's own celebration still in flight.
+  const didCelebrateRef = useRef(false);
   const [displayVote, setDisplayVote] = useState<string | null>(null);
   const [displayCheerCount, setDisplayCheerCount] = useState(0);
   const [optimisticCheer, setOptimisticCheer] = useState(false);
@@ -367,6 +371,20 @@ export default function FeedPactCard({
       if (singleTapTimeoutRef.current) {
         clearTimeout(singleTapTimeoutRef.current);
         singleTapTimeoutRef.current = null;
+      }
+      // canvas-confetti's default confetti() call attaches one shared,
+      // full-viewport canvas straight to document.body with its own
+      // requestAnimationFrame loop — independent of this component's
+      // lifecycle. If the user navigates away while the join celebration is
+      // still animating (particles take a couple seconds to fully settle),
+      // that canvas keeps rendering right on top of whatever screen they
+      // land on next. reset() immediately halts the loop and removes the
+      // canvas. Only calling it when THIS card actually fired the
+      // celebration avoids one feed card's unmount (e.g. a virtualized list
+      // recycling an off-screen card) from cutting off a different card's
+      // still-playing celebration, since the canvas is shared globally.
+      if (didCelebrateRef.current) {
+        confetti.reset();
       }
     };
   }, []);
@@ -622,7 +640,17 @@ export default function FeedPactCard({
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     if (!gesturesEnabled && !canPageMedia) return;
-    if (activePointerId.current !== event.pointerId || isVoting || isExiting) return;
+    // Once a gesture has committed (skip/cheer/join fired), the pointer is
+    // very likely still down and still moving — without this check, this
+    // handler kept re-entering on every subsequent move tick and re-set
+    // isDragging/dragX from scratch, "reviving" the drag transform right
+    // after triggerRightAction's snapBack() had just cleared it. That's what
+    // produced the frozen, stuck-at-an-angle card: the reset only ever held
+    // for a single frame before being overwritten by the next move event of
+    // the same still-active gesture. isVoting already covers the skip/vote
+    // path (completeVote sets it before its await), but the cheer/join path
+    // never sets any flag this handler checks — committedRef is that flag.
+    if (activePointerId.current !== event.pointerId || isVoting || isExiting || committedRef.current) return;
 
     const dx = event.clientX - startPoint.current.x;
     const dy = event.clientY - startPoint.current.y;
@@ -689,6 +717,14 @@ export default function FeedPactCard({
     activePointerId.current = null;
 
     if (isVoting || isExiting) return;
+
+    // Same defensive check as handlePointerMove above — if the gesture
+    // already committed mid-drag, drag state was already reset by
+    // snapBack()/resetDrag() and there's nothing left to do here.
+    if (committedRef.current) {
+      resetDrag();
+      return;
+    }
 
     if (!canPageMedia && dragAxis === 'horizontal' && gesturesEnabled && Math.abs(dragX) >= MEDIA_PAGE_VOTE_THRESHOLD_PX) {
       if (dragX < 0 && canSkip) {
@@ -812,6 +848,7 @@ export default function FeedPactCard({
       await pactService.join(pact.id);
       const creatorName = creatorLabel || 'this creator';
       toast.success(`You joined ${creatorName}'s pact`);
+      didCelebrateRef.current = true;
       confetti({
         particleCount: 90,
         spread: 70,
