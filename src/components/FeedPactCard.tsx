@@ -1072,12 +1072,6 @@ export default function FeedPactCard({
             </button>
           </div>
 
-          {galleryProofs && galleryCheers && (galleryProofs.length > 0 || galleryCheers.length > 0) && (
-            <div className="mt-4 border-t border-white/10 pt-4">
-              <PactGallery proofs={galleryProofs} cheers={galleryCheers} title="Gallery" />
-            </div>
-          )}
-
           {/* Placement A: this is the viewer's own pact — surface who else
               shares the same goal category, right below the action row. */}
           {isCreator && (
@@ -1098,6 +1092,12 @@ export default function FeedPactCard({
               variant="discover"
               onStartCircle={handleStartCircleWithMatches}
             />
+          )}
+
+          {galleryProofs && galleryCheers && (galleryProofs.length > 0 || galleryCheers.length > 0) && (
+            <div className="mt-4 border-t border-white/10 pt-4">
+              <PactGallery proofs={galleryProofs} cheers={galleryCheers} title="Gallery" />
+            </div>
           )}
         </div>
 
