@@ -9,7 +9,6 @@ import DetailPageHeader from '@/components/DetailPageHeader';
 import { useSeedBackHistory } from '@/hooks/useSeedBackHistory';
 import FeedPactCard from '@/components/FeedPactCard';
 import PactProgressRing, { getPactProgress } from '@/components/PactProgressRing';
-import PactGallery from '@/components/PactGallery';
 import UserAvatarLink from '@/components/UserAvatarLink';
 import CheerButton from '@/components/CheerButton';
 import SponsoredCard from '@/components/SponsoredCard';
@@ -219,14 +218,10 @@ export default function PactDetailPage() {
               detailHref={`/pacts/${pact.id}`}
               canReport={pact.creator_id !== user?.id}
               hasCheered={hasCheered}
+              galleryProofs={proofs}
+              galleryCheers={cheers}
               chromeless
             />
-
-            {(proofs.length > 0 || cheers.length > 0) && (
-              <div className="border-t border-white/10 px-4 py-4">
-                <PactGallery proofs={proofs} cheers={cheers} title="Gallery" />
-              </div>
-            )}
 
             <div className="border-t border-white/10 px-4 py-4">
               <div className="flex items-center justify-between gap-3">
