@@ -26,6 +26,7 @@ import Avatar from './Avatar';
 import UserAvatarLink from './UserAvatarLink';
 import PremiumJoinButton from './PremiumJoinButton';
 import GoalMatchStrip from './GoalMatchStrip';
+import PactGallery from './PactGallery';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useCreateCheer } from '@/hooks/usePactMutations';
 import { useGoalMatches } from '@/hooks/usePactMatches';
@@ -63,6 +64,9 @@ interface FeedPactCardProps {
   hasCheered?: boolean;
   /** When nested in a detail-page shell, remove the card's outer chrome. */
   chromeless?: boolean;
+  /** Optional detail-page media rendered inside this pact card. */
+  galleryProofs?: any[];
+  galleryCheers?: any[];
 }
 
 const REPORT_OPTIONS = [
@@ -256,7 +260,9 @@ export default function FeedPactCard({
   canReport = true,
   hasCheered = false,
   chromeless = false,
-}: FeedPactCardProps) {
+  galleryProofs,
+  galleryCheers,
+  }: FeedPactCardProps) {
   const router = useRouter();
   const { user } = useAuthStore();
   const reportMutation = useReportPact(pact.id);
@@ -923,6 +929,12 @@ export default function FeedPactCard({
             )}
           </AnimatePresence>
         </div>
+
+        {galleryProofs && galleryCheers && (galleryProofs.length > 0 || galleryCheers.length > 0) && (
+          <div className="border-t border-white/10 px-4 py-4">
+            <PactGallery proofs={galleryProofs} cheers={galleryCheers} title="Gallery" />
+          </div>
+        )}
 
         {/* Body: title + description, then the join/cheer/skip CTAs, then the unified action row */}
         <div className="px-4 py-3.5">
