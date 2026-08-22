@@ -75,30 +75,21 @@ export default function GoalMatchStrip({ matches, totalCount, category, variant,
     .filter(Boolean);
 
   return (
-    <div
-      className="mx-4 mt-3 rounded-2xl border px-4 py-3"
-      style={{ borderColor: 'var(--pact-violet)', background: 'linear-gradient(135deg, rgba(255,79,135,0.08), rgba(157,92,255,0.08))' }}
-      onClick={(event) => event.stopPropagation()}
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        onStartCircle();
+      }}
+      className="mx-4 mt-3 flex w-[calc(100%-2rem)] items-center gap-3 rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] px-3 py-2.5 text-left transition hover:border-[var(--pact-violet)]/60"
     >
-      <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.16em] text-[var(--pact-violet)]">
-        <Users className="h-3.5 w-3.5" />
-        Same goal, different circle
-      </p>
-      <div className="mt-2 flex items-center gap-3">
-        <AvatarStack matches={matches} />
-        <p className="min-w-0 flex-1 text-xs font-medium leading-snug text-[var(--pact-text-dim)]">
-          {firstNames.join(', ')}
-          {totalCount > firstNames.length ? ` +${totalCount - firstNames.length} more` : ''} {totalCount === 1 ? 'is' : 'are'} also working on {categoryLabel} goals.
-        </p>
-      </div>
-      <button
-        type="button"
-        onClick={onStartCircle}
-        className="pact-btn-glow mt-3 w-full rounded-full px-4 py-2 text-xs font-bold text-[var(--pact-text)]"
-        style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
-      >
-        + Start a circle with them
-      </button>
-    </div>
+      <AvatarStack matches={matches} />
+      <span className="min-w-0 flex-1 truncate text-xs font-semibold text-[var(--pact-text-dim)]">
+        <span className="text-[var(--pact-text)]">Same goal</span>
+        <span className="mx-1 text-[var(--pact-text-faint)]">·</span>
+        {firstNames.join(', ')}{totalCount > firstNames.length ? ` +${totalCount - firstNames.length}` : ''} on {categoryLabel} goals
+      </span>
+      <span className="shrink-0 text-xs font-bold text-[var(--pact-violet)]">Start circle</span>
+    </button>
   );
 }

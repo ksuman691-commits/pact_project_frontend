@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { AlertCircle, Camera, CheckCircle2, Crown, Inbox } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Crown, Inbox } from 'lucide-react';
 import toast from 'react-hot-toast';
 import DetailPageHeader from '@/components/DetailPageHeader';
 import { useSeedBackHistory } from '@/hooks/useSeedBackHistory';
@@ -13,9 +13,10 @@ import ProofsSection from '@/components/ProofsSection';
 import UserAvatarLink from '@/components/UserAvatarLink';
 import CheerButton from '@/components/CheerButton';
 import CheerGallery from '@/components/CheerGallery';
+import SponsoredCard from '@/components/SponsoredCard';
+import { useSponsor } from '@/hooks/useSponsor';
 import PremiumJoinButton from '@/components/PremiumJoinButton';
 import PactJoinRequestsModal from '@/components/PactJoinRequestsModal';
-import PactDetailCarousel, { type DetailCarouselPanel } from '@/components/PactDetailCarousel';
 import { usePact, usePactProofs, usePactCheers } from '@/hooks/usePacts';
 import { useSkipPact } from '@/hooks/usePactActions';
 import { useAuthStore } from '@/store/auth';
@@ -76,7 +77,6 @@ export default function PactDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
-  const [activeIndex, setActiveIndex] = useState(0);
   const [showJoinRequestsModal, setShowJoinRequestsModal] = useState(false);
   const pactId = Number(params.id);
   const { data: pactData, isLoading, isError, refetch: refetchPact } = usePact(pactId);
@@ -85,6 +85,7 @@ export default function PactDetailPage() {
   const skipMutation = useSkipPact();
 
   const pact = pactData?.data;
+  const sponsor = useSponsor(pact?.category);
   // Undefined (don't seed yet) while still loading, since the pact's
   // circle_id — the real hierarchical parent — isn't known yet; seeding
   // too early with a placeholder would get permanently locked in by
@@ -147,28 +148,6 @@ export default function PactDetailPage() {
     }
   };
 
-  const detailPanels: DetailCarouselPanel[] = pact
-    ? [
-        {
-          key: 'proofs',
-          label: 'Proofs',
-          icon: Camera,
-          count: proofs.length,
-          content: (
-            <>
-              <ProofsSection proofs={proofs} title="Proof gallery" variant="immersive" />
-              {cheers.length > 0 && (
-                <div className="mt-6">
-                  <CheerGallery cheers={cheers} />
-                </div>
-              )}
-            </>
-          ),
-        },
-
-      ]
-    : [];
-
   if (isLoading) {
     return (
       <>
@@ -226,21 +205,59 @@ export default function PactDetailPage() {
               </div>
             </section>
           )}
-          <FeedPactCard
-            pact={{ ...pact, proofClips: proofs }}
-            userVote={(pact as any).user_vote || (pact as any).userVote}
-            onVote={handleVote}
-            onProofUpload={async () => {
-              await Promise.all([refetchProofs(), refetchPact()]);
-            }}
-            dismissOnVote={false}
-            enableGestures={true}
-            showVoteActions={true}
-            canUploadProof={isParticipant}
-            detailHref={`/pacts/${pact.id}`}
-            canReport={pact.creator_id !== user?.id}
-            hasCheered={hasCheered}
-          />
+          <section className="overflow-hidden rounded-[32px] border border-white/10 bg-white/5 shadow-[0_20px_70px_rgba(2,6,23,0.45)] backdrop-blur-sm">
+            <FeedPactCard
+              pact={{ ...pact, proofClips: proofs }}
+              userVote={(pact as any).user_vote || (pact as any).userVote}
+              onVote={handleVote}
+              onProofUpload={async () => {
+                await Promise.all([refetchProofs(), refetchPact()]);
+              }}
+              dismissOnVote={false}
+              enableGestures={true}
+              showVoteActions={true}
+              canUploadProof={isParticipant}
+              detailHref={`/pacts/${pact.id}`}
+              canReport={pact.creator_id !== user?.id}
+              hasCheered={hasCheered}
+              chromeless
+            />
+
+            <div className="border-t border-white/10 px-4 py-4">
+              <ProofsSection proofs={proofs} title="Proofs" variant="immersive" />
+            </div>
+
+            {cheers.length > 0 && (
+              <div className="border-t border-white/10 px-4 py-4">
+                <CheerGallery cheers={cheers} />
+              </div>
+            )}
+
+            <div className="border-t border-white/10 px-4 py-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">Participants</p>
+                <span className="text-xs text-white/40">{participants.length}</span>
+              </div>
+              {participants.length > 0 ? (
+                <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
+                  {participants.map((participant: any) => (
+                    <UserAvatarLink
+                      key={participant.id || participant.user_id || participant.username}
+                      name={participant.full_name || participant.name || participant.username}
+                      avatarUrl={participant.avatar_url || participant.avatar}
+                      username={participant.username}
+                      size={36}
+                      className="shrink-0"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-white/50">No participant data yet.</p>
+              )}
+            </div>
+          </section>
+
+          {sponsor && <SponsoredCard sponsor={sponsor} />}
 
           {isCreator && (
             <button
@@ -305,37 +322,7 @@ export default function PactDetailPage() {
             </div>
           )}
 
-          <section className="overflow-hidden rounded-[32px] border border-white/10 bg-white/5 shadow-[0_20px_70px_rgba(2,6,23,0.45)] backdrop-blur-sm">
-            <div className="border-b border-white/10 px-4 pt-4">
-              <div className="mb-3 flex items-center gap-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/50">Pact detail</p>
-                <span className="text-xs text-white/30">· swipe to browse</span>
-              </div>
-            </div>
-            <PactDetailCarousel panels={detailPanels} activeIndex={activeIndex} onIndexChange={setActiveIndex} />
-            <div className="border-t border-white/10 px-4 py-4">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">Participants</p>
-                <span className="text-xs text-white/40">{participants.length}</span>
-              </div>
-              {participants.length > 0 ? (
-                <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
-                  {participants.map((participant: any) => (
-                    <UserAvatarLink
-                      key={participant.id || participant.user_id || participant.username}
-                      name={participant.full_name || participant.name || participant.username}
-                      avatarUrl={participant.avatar_url || participant.avatar}
-                      username={participant.username}
-                      size={36}
-                      className="shrink-0"
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-2 text-sm text-white/50">No participant data yet.</p>
-              )}
-            </div>
-          </section>
+
         </motion.div>
       </div>
 

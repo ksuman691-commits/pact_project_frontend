@@ -61,6 +61,8 @@ interface FeedPactCardProps {
    * instead of offering a second way to double-post a cheer.
    */
   hasCheered?: boolean;
+  /** When nested in a detail-page shell, remove the card's outer chrome. */
+  chromeless?: boolean;
 }
 
 const REPORT_OPTIONS = [
@@ -253,6 +255,7 @@ export default function FeedPactCard({
   canUploadProof,
   canReport = true,
   hasCheered = false,
+  chromeless = false,
 }: FeedPactCardProps) {
   const router = useRouter();
   const { user } = useAuthStore();
@@ -706,12 +709,12 @@ export default function FeedPactCard({
         whileTap={{ scale: 0.99 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
         onClick={handleCardNavigate}
-        className={`pact-card group relative mx-2 cursor-pointer rounded-[28px] transition-colors hover:border-[var(--pact-violet)]/60 sm:mx-0 ${
-          moreMenuOpen ? 'overflow-visible' : 'overflow-hidden'
-        }`}
+        className={`${chromeless ? '' : 'pact-card'} group relative mx-2 cursor-pointer transition-colors hover:border-[var(--pact-violet)]/60 sm:mx-0 ${
+          chromeless ? '' : 'rounded-[28px]'
+        } ${moreMenuOpen ? 'overflow-visible' : 'overflow-hidden'}`}
       >
         {/* Header row: avatar + creator name + category tag + time-left badge + overflow menu */}
-        <div className="flex items-center gap-3 px-4 py-3.5">
+        <div className="flex items-center gap-3 px-4 py-3">
           <div className="flex-shrink-0" onClick={(event) => event.stopPropagation()}>
             {creatorProfileHref ? (
               <UserAvatarLink
@@ -802,19 +805,6 @@ export default function FeedPactCard({
             )}
           </div>
         </div>
-
-        {/* Placement B: "Discover" case — a public pact being browsed/swiped
-            by someone who isn't its creator. Sits below the header, above
-            the hero media, so it reads before the pact's own content. */}
-        {!isCreator && isPublicPact && (
-          <GoalMatchStrip
-            matches={goalMatches}
-            totalCount={goalMatchesTotal}
-            category={pact.category}
-            variant="discover"
-            onStartCircle={handleStartCircleWithMatches}
-          />
-        )}
 
         {/* Hero: proof photo carousel, else a duration-progress ring, else the old empty-state placeholder. Swipe-left (skip) / swipe-right (cheer or join) / double-tap-cheer all live only here, unchanged from before. */}
         <div
@@ -932,7 +922,7 @@ export default function FeedPactCard({
         </div>
 
         {/* Body: title + description, then the join/cheer/skip CTAs, then the unified action row */}
-        <div className="px-4 py-4">
+        <div className="px-4 py-3.5">
           <h2
             className="text-lg font-black leading-snug text-[var(--pact-text)]"
             style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}
@@ -946,7 +936,7 @@ export default function FeedPactCard({
             </p>
           )}
 
-          <div className="mt-3 space-y-2.5" onClick={(event) => event.stopPropagation()}>
+          <div className="mt-2.5 space-y-2" onClick={(event) => event.stopPropagation()}>
             <p className="flex items-center gap-1.5 text-sm font-bold text-[var(--pact-text)]">
               <PartyPopper className="h-3.5 w-3.5 text-[var(--pact-gold)]" />
               {formatCompactCount(cheerCount)} cheering this pact
@@ -1030,7 +1020,7 @@ export default function FeedPactCard({
           </div>
 
           {/* Unified action row: same stroke-icon size/style for all three, muted at rest, accented only on hover/active */}
-          <div className="mt-4 flex items-center gap-6" onClick={(event) => event.stopPropagation()}>
+          <div className="mt-3 flex items-center gap-6" onClick={(event) => event.stopPropagation()}>
             <button
               type="button"
               onClick={handleCheerTap}
@@ -1083,6 +1073,16 @@ export default function FeedPactCard({
               onStartCircle={handleStartCircleWithMatches}
             />
           )}
+
+          {!isCreator && isPublicPact && (
+            <GoalMatchStrip
+              matches={goalMatches}
+              totalCount={goalMatchesTotal}
+              category={pact.category}
+              variant="discover"
+              onStartCircle={handleStartCircleWithMatches}
+            />
+          )}
         </div>
 
         {/* "View all N comments" — opens the same comment sheet as the comment icon */}
@@ -1093,7 +1093,7 @@ export default function FeedPactCard({
               event.stopPropagation();
               setCommentSheetOpen(true);
             }}
-            className="block w-full px-4 pb-4 text-left text-xs text-[var(--pact-text-faint)] transition hover:text-[var(--pact-text-dim)]"
+            className="block w-full px-4 pb-3 text-left text-xs text-[var(--pact-text-faint)] transition hover:text-[var(--pact-text-dim)]"
           >
             View all {formatCompactCount(commentCount)} comments
           </button>

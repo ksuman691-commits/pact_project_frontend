@@ -4,6 +4,21 @@ import { useRouter } from 'next/navigation';
 import { useCreatePactFlow } from '@/context/CreatePactFlowContext';
 import { useCircle } from '@/hooks/useCircles';
 import SuggestedPactsSection from './SuggestedPactsSection';
+import SponsoredCard from '@/components/SponsoredCard';
+import { useSponsor } from '@/hooks/useSponsor';
+
+const VIBE_TO_CATEGORY: Record<string, string> = {
+  glowup: 'fitness',
+  money: 'startup',
+  dare: 'habits',
+  adventure: 'social',
+  love: 'social',
+  social: 'social',
+  create: 'creator',
+  build: 'startup',
+  levelup: 'study',
+  wellbeing: 'fitness',
+};
 
 const AUDIENCE_COPY: Record<string, string> = {
   'Just me': 'Only you can see this pact.',
@@ -15,6 +30,8 @@ export default function SuccessStep() {
   const { createdPact, reset } = useCreatePactFlow();
   const router = useRouter();
   const { data: circle } = useCircle(createdPact?.circleId ?? 0);
+  const sponsorCategory = (createdPact as (typeof createdPact & { category?: string }) | null)?.category || (createdPact?.vibeId ? VIBE_TO_CATEGORY[createdPact.vibeId] : null);
+  const sponsor = useSponsor(sponsorCategory);
 
   if (!createdPact) return null;
 
@@ -44,6 +61,13 @@ export default function SuccessStep() {
       <p className="mt-1 text-sm">
         {AUDIENCE_COPY[createdPact.audience] ?? 'Your pact is live.'}
       </p>
+
+      {sponsor && (
+        <div className="mt-6 w-full text-left">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--pact-text-faint)]">Tools that might help</p>
+          <SponsoredCard sponsor={sponsor} />
+        </div>
+      )}
 
       <div className="mt-8 flex w-full flex-col gap-3">
         <button
