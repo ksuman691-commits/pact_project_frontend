@@ -36,6 +36,7 @@ const mapUser = (raw: any) => ({
   created_at: raw?.created_at ?? new Date().toISOString(),
   avatar_url: raw?.avatar_url ?? null,
   bio: raw?.bio ?? null,
+  is_staff: raw?.is_staff ?? false,
 });
 
 const formatTimeRemaining = (endDateRaw: string | undefined) => {
@@ -768,6 +769,17 @@ export const sponsorService = {
     if (!sponsor?.name || !sponsor?.headline || !sponsor?.cta_label || !sponsor?.affiliate_link) return null;
     return sponsor as Sponsor;
   },
+};
+
+// Curated Pacts / Dares
+export const curatedContentService = {
+  discover: async (params: { type?: string; category?: string; trending?: boolean; page?: number; limit?: number } = {}) =>
+    api.get('/api/curated-content', { params }),
+  review: async (status = 'draft') => api.get('/api/admin/curated-content', { params: { status } }),
+  update: async (id: number, payload: Partial<import('@/types').CuratedContent>) => api.patch(`/api/admin/curated-content/${id}`, payload),
+  approve: async (id: number) => api.post(`/api/admin/curated-content/${id}/approve`),
+  reject: async (id: number, reason?: string) => api.post(`/api/admin/curated-content/${id}/reject`, { reason }),
+  deploy: async (id: number, circleId: number) => api.post(`/api/curated-content/${id}/deploy`, { circle_id: circleId }),
 };
 
 // Health Check

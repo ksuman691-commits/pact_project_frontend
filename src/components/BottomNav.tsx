@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, Circle, Zap } from 'lucide-react'
+import { Home, Users, Circle, Zap, Sparkles } from 'lucide-react'
 import { useMyDares } from '@/hooks/useDareQueries'
 import { useAuthStore } from '@/store/auth'
 
@@ -13,6 +13,7 @@ const authItems = [
   { href: '/circles', label: 'Circles', icon: Circle },
   { href: '/pacts', label: 'Pacts', icon: Users },
   { href: '/dares', label: 'Dares', icon: Zap },
+  { href: '/curated-pacts', label: 'Curated', icon: Sparkles },
 ]
 
 export default function BottomNav() {
