@@ -120,6 +120,22 @@ export default function PactGallery({
   const [internalActiveSlide, setInternalActiveSlide] = useState(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const activeSlide = activeIndex ?? internalActiveSlide;
+  // Externally-controlled mode (the feed hero, driven by the card's own
+  // pointer gesture) must NOT also let the browser natively touch-scroll
+  // this strip. On real touch devices the two systems raced: a real
+  // touchmove can start native momentum scrolling on this overflow-x-auto
+  // container even though the ancestor sets touch-action: pan-y, and a fast
+  // flick + scroll-snap can travel several slides before settling — the
+  // card's own JS only ever advances one slide per gesture, but the native
+  // scroll it was racing against could land anywhere, including the last
+  // slide, and left the dot indicator (driven only by the controlled
+  // activeIndex prop) never matching what was on screen. Making the strip
+  // itself non-scrollable and non-hit-testable when controlled means the
+  // ancestor's pointer handlers are the only thing that can ever move it —
+  // deterministic one-slide-per-swipe paging, and dots that always agree
+  // with what's showing. The self-contained detail-page strip (no
+  // activeIndex passed in) is untouched and keeps native scroll + snap.
+  const controlled = activeIndex !== undefined;
 
   const tiles: GalleryTile[] = useMemo(() => buildGalleryTiles(proofs, cheers), [proofs, cheers]);
 
@@ -161,9 +177,9 @@ export default function PactGallery({
         <div
           ref={scrollerRef}
           onScroll={handleScroll}
-          className={`flex snap-x snap-mandatory overflow-x-auto scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
-            fillHeight ? 'h-full' : ''
-          }`}
+          className={`flex scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+            controlled ? 'touch-none overflow-hidden pointer-events-none' : 'snap-x snap-mandatory overflow-x-auto'
+          } ${fillHeight ? 'h-full' : ''}`}
         >
           {tiles.map((tile, index) => (
             <Tile
