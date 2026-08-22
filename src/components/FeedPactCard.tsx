@@ -123,6 +123,34 @@ function formatCompactCount(count: number) {
 }
 
 function getProofs(pact: any) {
+  // Feed list responses only ever embedded a single latest proof
+  // (`proof_url`), so the feed hero never had more than one photo to
+  // swipe/page through — not a gesture bug, a data gap. `recent_proofs` is a
+  // capped array the list endpoint can add (see
+  // BACKEND_SPEC_FEED_GALLERY_PROOFS.md) with the same per-proof shape as
+  // the detail page's `/pacts/{id}/proofs`; prefer it the moment it's
+  // present, and fall back to the single-photo behavior below until then.
+  const recentProofs = Array.isArray(pact.recent_proofs) ? pact.recent_proofs : [];
+  if (recentProofs.length > 0) {
+    const normalized = recentProofs
+      .map((proof: any, index: number) => {
+        const url = proof?.proof_url || proof?.url || proof?.file_url || '';
+        if (!url) return null;
+        const type = (proof?.proof_type || proof?.type || 'image').toString().toLowerCase();
+        return {
+          id: proof?.id ?? `${pact.id ?? 'proof'}-${index}`,
+          url,
+          type: type === 'video' ? 'video' : 'image',
+          description: proof?.caption || proof?.description || '',
+          uploadedAt: proof?.uploaded_at || proof?.created_at || null,
+          uploader: proof?.uploader || proof?.username || null,
+          day: proof?.day_number ?? proof?.day ?? index + 1,
+        };
+      })
+      .filter(Boolean);
+    if (normalized.length > 0) return normalized;
+  }
+
   const clips = Array.isArray(pact.proofClips) ? pact.proofClips : [];
   const normalizedProofs = clips
     .map((clip: any, index: number) => {
@@ -441,6 +469,11 @@ export default function FeedPactCard({
   // action-row cheer button below, so nothing is lost by hiding this row.
   const canSkip = Boolean(onVote) && !isCreator && !isParticipant && displayVote !== 'skip';
   const gesturesEnabled = (enableGestures ?? true) && (canSkip || rightAction !== null);
+  // Live per-pixel offset fed into PactGallery so the photo strip tracks the
+  // finger in real time during a paging drag (Instagram-style) instead of
+  // only jumping once the gesture commits on release.
+  const isPagingDrag = isDragging && dragAxis === 'horizontal' && canPageMedia;
+  const galleryDragOffsetPx = isPagingDrag ? dragX : 0;
   const voteActionsVisible = (showVoteActions ?? Boolean(onVote)) && !isCreator && !isParticipant;
   const voteStatusLabel = displayVote === 'skip' ? 'skipped' : null;
 
@@ -452,12 +485,16 @@ export default function FeedPactCard({
     }
 
     if (isDragging) {
-      // The tilt is a vote-swipe affordance (this card is being flicked away
-      // to skip/cheer/join) — it has no business appearing while the drag is
-      // just flipping through photos, so it's suppressed whenever paging
-      // owns the gesture (see handlePointerMove).
+      // The tilt AND the horizontal shift are both a vote-swipe affordance
+      // (this whole card being flicked away to skip/cheer/join) — neither
+      // has any business appearing while the drag is just flipping through
+      // photos. When paging owns the gesture, the photo strip inside
+      // PactGallery tracks the finger itself (via dragOffsetPx below); this
+      // wrapper staying put avoids double-shifting the same drag twice, and
+      // avoids revealing empty space next to the (stationary) strip.
       const rotate = canPageMedia ? 0 : Math.max(Math.min(dragX / 18, 10), -10);
-      return { transform: `translate3d(${dragX}px, ${dragY}px, 0) rotate(${rotate}deg)`, transition: 'none' };
+      const translateX = canPageMedia ? 0 : dragX;
+      return { transform: `translate3d(${translateX}px, ${dragY}px, 0) rotate(${rotate}deg)`, transition: 'none' };
     }
 
     return { transform: 'translate3d(0, 0, 0)', transition: 'transform 240ms ease, opacity 240ms ease' };
@@ -939,6 +976,8 @@ export default function FeedPactCard({
               dotsPosition="overlay"
               activeIndex={activeProofIndex}
               onActiveIndexChange={setActiveProofIndex}
+              dragOffsetPx={galleryDragOffsetPx}
+              isDragging={isPagingDrag}
             />
           ) : progressInfo ? (
             <div className="relative flex h-full w-full items-center justify-center bg-[linear-gradient(160deg,var(--pact-surface-3),var(--pact-surface-2))]">
