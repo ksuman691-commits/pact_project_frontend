@@ -95,6 +95,21 @@ interface PactGalleryProps {
   dotsPosition?: 'below' | 'overlay';
   /** Fills the parent's height instead of sizing itself via aspectClassName — used by the feed hero. */
   fillHeight?: boolean;
+  /**
+   * Live per-pixel horizontal offset from an in-progress controlling drag
+   * (e.g. the feed hero's own pointer gesture). Lets the strip track the
+   * finger 1:1 in real time, Instagram-style, instead of only updating once
+   * the gesture commits on release. Ignored unless `activeIndex` is also
+   * controlled.
+   */
+  dragOffsetPx?: number;
+  /**
+   * True while the controlling drag above is in progress. Suppresses the
+   * settle transition so the strip doesn't fight the live `dragOffsetPx`
+   * updates — the transition re-enables the instant the drag ends, which is
+   * what animates the smooth settle into the next/previous slide.
+   */
+  isDragging?: boolean;
 }
 
 /**
@@ -114,6 +129,8 @@ export default function PactGallery({
   interactive = true,
   dotsPosition = 'below',
   fillHeight = false,
+  dragOffsetPx = 0,
+  isDragging = false,
 }: PactGalleryProps) {
   const [carouselOpen, setCarouselOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -133,22 +150,33 @@ export default function PactGallery({
   // itself non-scrollable and non-hit-testable when controlled means the
   // ancestor's pointer handlers are the only thing that can ever move it —
   // deterministic one-slide-per-swipe paging, and dots that always agree
-  // with what's showing. The self-contained detail-page strip (no
-  // activeIndex passed in) is untouched and keeps native scroll + snap.
+  // with what's showing. (The feed hero and the pact detail page both
+  // render this component through the same FeedPactCard, which always
+  // passes activeIndex — so in practice both are controlled; a true
+  // native-scroll usage is only a fallback for a future caller that omits
+  // activeIndex entirely.)
   const controlled = activeIndex !== undefined;
 
   const tiles: GalleryTile[] = useMemo(() => buildGalleryTiles(proofs, cheers), [proofs, cheers]);
 
-  // Keep the scroller in sync when the active index is driven externally
-  // (feed hero swipe gesture) rather than by the user scrolling directly.
+  // Controlled mode (the feed hero / detail page, driven by the card's own
+  // pointer gesture) positions the strip with the CSS `transform` rendered
+  // below instead of `scrollTo`. `scrollTo({ behavior: 'smooth' })` only
+  // ever started once the drag *committed* to a new index on release, with
+  // no way to track the finger while the drag was still in progress — so the
+  // strip sat frozen through the whole gesture and then played a separate,
+  // slightly-delayed catch-up animation afterwards: a visible stutter
+  // instead of one continuous Instagram-style motion. This effect is now
+  // only relevant to a true native-scroll (uncontrolled) usage.
   React.useEffect(() => {
+    if (controlled) return;
     if (activeIndex === undefined) return;
     const el = scrollerRef.current;
     if (!el) return;
     const slideWidth = el.clientWidth;
     if (slideWidth === 0) return;
     el.scrollTo({ left: activeIndex * slideWidth, behavior: 'smooth' });
-  }, [activeIndex]);
+  }, [activeIndex, controlled]);
 
   if (tiles.length === 0) return null;
 
@@ -169,6 +197,19 @@ export default function PactGallery({
     onActiveIndexChange?.(next);
   };
 
+  // Instagram-style positioning for controlled mode: a plain CSS transform
+  // that includes the live drag offset, so the strip visually tracks the
+  // finger 1:1 on every pointermove instead of only jumping once the drag
+  // commits. `transition: none` while dragging keeps that tracking instant;
+  // it switches back to an eased transition the moment the drag ends,
+  // which is what animates the smooth settle into the next/previous slide.
+  const controlledTransform = controlled
+    ? {
+        transform: `translateX(calc(${-activeSlide * 100}% + ${dragOffsetPx}px))`,
+        transition: isDragging ? 'none' : 'transform 260ms cubic-bezier(0.22, 1, 0.36, 1)',
+      }
+    : undefined;
+
   const Tile = interactive ? 'button' : 'div';
 
   return (
@@ -180,6 +221,7 @@ export default function PactGallery({
           className={`flex scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
             controlled ? 'touch-none overflow-hidden pointer-events-none' : 'snap-x snap-mandatory overflow-x-auto'
           } ${fillHeight ? 'h-full' : ''}`}
+          style={controlledTransform}
         >
           {tiles.map((tile, index) => (
             <Tile
