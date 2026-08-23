@@ -24,7 +24,7 @@ const RESISTANCE = 0.5;
 // setPointerCapture retargets the resulting click to the capturing element, so
 // capturing eagerly on every pointerdown silently swallowed clicks on anything
 // underneath while the page was scrolled to the top.
-const CAPTURE_DRAG_THRESHOLD_PX = 6;
+const CAPTURE_DRAG_THRESHOLD_PX = 2;
 
 /**
  * Custom pull-to-refresh wrapper built on Pointer Events (no external library).
@@ -43,6 +43,20 @@ const CAPTURE_DRAG_THRESHOLD_PX = 6;
  * (e.g. the feed header's Search/Notifications/My Circles/New Pact buttons)
  * whenever the page happened to be scrolled to the top — i.e. on every real
  * attempt to click a non-sticky header, since it's only clickable at scrollY 0.
+ *
+ * touch-action is set imperatively on the wrapper DOM node (via wrapperRef),
+ * NOT through a React state → re-render → paint cycle. A real touchscreen's
+ * compositor decides whether to hand a touch sequence to native scrolling
+ * based on touch-action's value essentially at touchstart/the first touchmove
+ * tick — React state updates are batched and only reach the DOM on the next
+ * commit, which on real hardware can easily run behind several native
+ * touchmove ticks. That lag was almost certainly why the previous state-driven
+ * `style={{ touchAction: isPulling ? 'none' : 'auto' }}` produced *zero*
+ * visible response on device: touch-action was still 'auto' in the DOM by the
+ * time the compositor had already committed to native scrolling, so it just
+ * scrolled (or no-opped at the very top) instead of feeding move events to JS.
+ * Mutating wrapperRef.current.style.touchAction directly is synchronous and
+ * has no such lag.
  */
 export default function PullToRefresh({ onRefresh, children, disabled = false }: PullToRefreshProps) {
   const [pullDistance, setPullDistance] = useState(0);
@@ -51,18 +65,32 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
   const pointerId = useRef<number | null>(null);
   const startY = useRef(0);
   const pullingRef = useRef(false);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   const atTop = () => typeof window !== 'undefined' && window.scrollY <= 0;
+
+  // Imperative, synchronous touch-action toggle — see the class doc comment
+  // above for why this can't go through React state without lagging behind
+  // the compositor's gesture-recognition decision on real touch hardware.
+  const setTouchAction = (value: 'none' | 'auto') => {
+    if (wrapperRef.current) wrapperRef.current.style.touchAction = value;
+  };
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (disabled || isRefreshing) return;
     if (!atTop()) return;
     pointerId.current = event.pointerId;
     startY.current = event.clientY;
-    // Capture is deferred to handlePointerMove, once a real downward drag
-    // is confirmed — see CAPTURE_DRAG_THRESHOLD_PX. Capturing here on every
-    // pointerdown retargeted the resulting click event to this wrapper for
-    // ANY tap underneath it (buttons, links, etc.), not just genuine pulls.
+    // Claim touch-action:none from the very first touch, synchronously,
+    // while we're still at the top and might be about to start a pull. If
+    // it turns out not to be a downward pull (see the dy <= 0 branch in
+    // handlePointerMove), this is released back to 'auto' immediately so
+    // native scroll can still take over for the rest of that same touch.
+    setTouchAction('none');
+    // Pointer capture is still deferred to handlePointerMove, once a real
+    // downward drag is confirmed — see CAPTURE_DRAG_THRESHOLD_PX. Capturing
+    // here on every pointerdown retargeted the resulting click event to
+    // this wrapper for ANY tap underneath it, not just genuine pulls.
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -72,7 +100,10 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
 
     if (dy <= 0 || !atTop()) {
       // Moving up, or the page has scrolled — this was never a downward
-      // pull, release control back to native scroll/click handling.
+      // pull. Hand touch-action back to 'auto' immediately (not just React
+      // state) so native scroll can still take over for the rest of this
+      // same touch sequence instead of staying locked out until release.
+      setTouchAction('auto');
       if (pullingRef.current) {
         pullingRef.current = false;
         setIsPulling(false);
@@ -86,10 +117,9 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
     // the gesture as a scroll — which on a real touchscreen can happen as
     // early as the very first touchmove past the platform's tiny built-in
     // slop, well before our own CAPTURE_DRAG_THRESHOLD_PX dead zone below is
-    // satisfied. So this fires on every downward move while at the top,
-    // not gated behind the dead zone, to give it the best chance of winning
-    // that race. touch-action: none on the wrapper (tied to isPulling,
-    // below) is the second layer of defense once a pull is confirmed.
+    // satisfied. touch-action was already set to 'none' synchronously in
+    // handlePointerDown (see setTouchAction above) specifically to win that
+    // race — preventDefault() here is the second layer of defense on top of it.
     event.preventDefault();
 
     if (dy < CAPTURE_DRAG_THRESHOLD_PX) {
@@ -121,6 +151,9 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
 
   const finishPull = async () => {
     pointerId.current = null;
+    // Safety net: always release touch-action back to 'auto' on any
+    // pointerup/cancel, even if a move handler somehow missed it.
+    setTouchAction('auto');
     if (!pullingRef.current) return;
     pullingRef.current = false;
     setIsPulling(false);
@@ -149,16 +182,18 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
 
   return (
     <div
+      ref={wrapperRef}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
-      // Only opt out of native touch panning while a pull is actively
-      // confirmed and driving the indicator — reinforces preventDefault()
-      // above so the compositor can't resume a native scroll mid-gesture.
-      // Reverts to normal ('auto') the instant the pull ends/cancels, so
-      // regular feed scrolling elsewhere is never affected.
-      style={{ touchAction: isPulling ? 'none' : 'auto' }}
+      // Starts at 'auto' (normal scrolling everywhere). handlePointerDown
+      // flips this to 'none' imperatively (via wrapperRef, not this style
+      // prop/React state) the instant a touch starts while at the top, and
+      // hands it back to 'auto' the moment that touch turns out not to be a
+      // downward pull. See the class doc comment for why this must be a
+      // direct DOM mutation rather than state-driven.
+      style={{ touchAction: 'auto' }}
     >
       <div
         aria-hidden="true"
