@@ -2,18 +2,21 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, Circle, Zap, Sparkles } from 'lucide-react'
+import { Home, Users, Circle, Zap } from 'lucide-react'
 import { useMyDares } from '@/hooks/useDareQueries'
 import { useAuthStore } from '@/store/auth'
 
 // Leaderboard was dropped from the nav deliberately (it 404s and we're not
-// fixing that route here) — exactly 3 items, Home → Circles → Dares.
+// fixing that route here) — exactly 4 items, Home → Circles → Pacts → Dares.
+// "Curated" used to live here as its own destination; it's been folded into
+// the Discover tabs on the Pacts and Dares pages instead, since those tabs
+// already cover "browse things you haven't joined yet" and a separate
+// bottom-nav entry for essentially the same purpose was redundant.
 const authItems = [
   { href: '/feed', label: 'Home', icon: Home },
   { href: '/circles', label: 'Circles', icon: Circle },
   { href: '/pacts', label: 'Pacts', icon: Users },
   { href: '/dares', label: 'Dares', icon: Zap },
-  { href: '/curated-pacts', label: 'Curated', icon: Sparkles },
 ]
 
 export default function BottomNav() {

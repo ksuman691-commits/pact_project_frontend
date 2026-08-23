@@ -11,6 +11,7 @@ import ProfileStats from '@/components/ProfileStats';
 import ProfileTabs, { PactsTab } from '@/components/ProfileTabs';
 import AchievementsBadges from '@/components/AchievementsBadges';
 import ActivityStrip from '@/components/pact-ui/ActivityStrip';
+import WeeklyStreakStrip from '@/components/pact-ui/WeeklyStreakStrip';
 import CirclesRow from '@/components/pact-ui/CirclesRow';
 import LogoSpinner from '@/components/LogoSpinner';
 import { ChevronLeft, LogOut, Settings } from 'lucide-react';
@@ -217,6 +218,7 @@ export default function Profile() {
                   relevant right next to the pacts it reflects, and this
                   keeps Stats + Tabs visible immediately below the Hero. */}
               <div className="pact-card rounded-2xl p-4">
+                <WeeklyStreakStrip activityDates={activityDates} className="mb-4" />
                 <ActivityStrip activityDates={activityDates} />
               </div>
               <h2 className="text-lg font-black text-[var(--pact-text)]">Your pacts</h2>
