@@ -70,9 +70,9 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
 
     const dy = event.clientY - startY.current;
 
-    if (dy < CAPTURE_DRAG_THRESHOLD_PX || !atTop()) {
-      // Not a confirmed downward pull yet (or the page has scrolled) —
-      // release control back to native scroll/click handling.
+    if (dy <= 0 || !atTop()) {
+      // Moving up, or the page has scrolled — this was never a downward
+      // pull, release control back to native scroll/click handling.
       if (pullingRef.current) {
         pullingRef.current = false;
         setIsPulling(false);
@@ -81,8 +81,26 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
       return;
     }
 
+    // preventDefault() only stops the browser's native touch-scroll if it's
+    // called before the compositor thread has already committed to handling
+    // the gesture as a scroll — which on a real touchscreen can happen as
+    // early as the very first touchmove past the platform's tiny built-in
+    // slop, well before our own CAPTURE_DRAG_THRESHOLD_PX dead zone below is
+    // satisfied. So this fires on every downward move while at the top,
+    // not gated behind the dead zone, to give it the best chance of winning
+    // that race. touch-action: none on the wrapper (tied to isPulling,
+    // below) is the second layer of defense once a pull is confirmed.
+    event.preventDefault();
+
+    if (dy < CAPTURE_DRAG_THRESHOLD_PX) {
+      // Still inside the dead zone — not yet confirmed as a genuine pull.
+      // Don't capture the pointer or show any visual movement yet, so a
+      // plain tap (which never exceeds this) is unaffected.
+      return;
+    }
+
     if (!pullingRef.current) {
-      // First move past the threshold: this is a genuine pull, not a tap.
+      // First move past the dead zone: this is a genuine pull, not a tap.
       // On a real touchscreen the finger drifts more than a simulated/mouse
       // pointer does, so without capture a fast or wide drag can hand
       // subsequent pointermove events to a different element (or none) and
@@ -98,8 +116,6 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
 
     pullingRef.current = true;
     setIsPulling(true);
-    // Suppress the native overscroll/bounce while we're driving our own indicator.
-    event.preventDefault();
     setPullDistance(Math.min(dy * RESISTANCE, MAX_PULL));
   };
 
@@ -137,6 +153,12 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
+      // Only opt out of native touch panning while a pull is actively
+      // confirmed and driving the indicator — reinforces preventDefault()
+      // above so the compositor can't resume a native scroll mid-gesture.
+      // Reverts to normal ('auto') the instant the pull ends/cancels, so
+      // regular feed scrolling elsewhere is never affected.
+      style={{ touchAction: isPulling ? 'none' : 'auto' }}
     >
       <div
         aria-hidden="true"
