@@ -244,6 +244,13 @@ export default function PactGallery({
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 480px"
+                  // In controlled mode the strip is positioned via a CSS
+                  // transform, not scrolling, so off-screen slides never get
+                  // a scroll/intersection signal to trigger native lazy
+                  // loading. Load eagerly (the tile count is capped) so
+                  // slides 2/3 actually fetch instead of staying blank.
+                  loading="eager"
+                  priority={index === 0}
                 />
               ) : (
                 <div className="relative h-full w-full bg-slate-900">
