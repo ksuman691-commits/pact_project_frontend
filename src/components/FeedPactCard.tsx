@@ -898,7 +898,7 @@ export default function FeedPactCard({
         } ${moreMenuOpen ? 'overflow-visible' : 'overflow-hidden'}`}
       >
         {/* Header row: avatar + creator name + category tag + time-left badge + overflow menu */}
-        <div className="flex items-center gap-3 px-4 py-3">
+        <div className="flex min-w-0 items-center gap-3 px-4 py-3">
           <div className="flex-shrink-0" onClick={(event) => event.stopPropagation()}>
             {creatorProfileHref ? (
               <UserAvatarLink
@@ -923,7 +923,7 @@ export default function FeedPactCard({
           </div>
 
           <span
-            className="flex-shrink-0 rounded-full bg-[var(--pact-surface-3)] px-2.5 py-1 text-[10.5px] font-semibold text-[var(--pact-gold)]"
+            className="max-w-[35%] shrink-0 truncate rounded-full bg-[var(--pact-surface-3)] px-2.5 py-1 text-[10.5px] font-semibold text-[var(--pact-gold)]"
             style={{ fontFamily: 'var(--font-pact-mono), monospace' }}
           >
             {timeRemaining}
