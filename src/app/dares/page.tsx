@@ -194,7 +194,7 @@ function DaresPageInner() {
               className="flex-1 px-4 py-3 text-center transition hover:bg-[var(--pact-surface-2)]"
             >
               <p className="text-lg font-black text-[var(--pact-text)]">{acceptedCount}</p>
-              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">Accepted</p>
+              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">Received &amp; accepted</p>
             </Link>
             <Link
               href="/dares?status=completed"

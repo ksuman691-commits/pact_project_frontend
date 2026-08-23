@@ -60,7 +60,7 @@ export default function CirclesPage() {
       <h2 className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--pact-text-muted)]">Browse circles</h2>
       <Link href="/circles/create" className="pact-btn-glow flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold text-[var(--pact-text)]" style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}><Plus className="h-3.5 w-3.5" />New</Link>
     </div>
-    <section className="-mx-5 flex snap-x gap-4 overflow-x-auto px-5 py-6 md:-mx-10 md:px-10" aria-label="Your circles">{isLoading ? <p className="text-sm text-[var(--pact-text-muted)]">Loading circles…</p> : filtered.map((circle: any) => {
+    <section className="-mx-5 flex snap-x gap-4 overflow-x-auto px-5 py-6 md:-mx-10 md:px-10" aria-label="Your circles">{isLoading ? <p className="text-sm text-[var(--pact-text-muted)]">Loading circles…</p> : circlesQuery.isError ? <div className="flex w-full flex-col gap-3 py-4 text-sm text-[var(--pact-text-muted)]"><p>We couldn&apos;t load your circles.</p><button type="button" onClick={() => circlesQuery.refetch()} className="w-fit rounded-full border border-[var(--pact-violet)] px-4 py-2 font-semibold text-[var(--pact-text)]">Try again</button></div> : filtered.length === 0 ? <p className="py-4 text-sm text-[var(--pact-text-muted)]">No circles found. Create one to get started.</p> : filtered.map((circle: any) => {
       const activity = Math.min(1, (circle.member_count || 0) / maxMembers)
       const glow = 10 + activity * 14
       const glowOpacity = 0.28 + activity * 0.32
