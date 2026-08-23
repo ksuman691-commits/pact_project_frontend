@@ -93,9 +93,18 @@ export default function WelcomeHeader({
         <div className="mt-3 flex gap-2">
           {/* Primary slot: My Circles — the most prominent home page action. */}
           <button
-            onClick={onNavigateCircles}
+            type="button"
+            onClick={(event) => {
+              // This header sits inside the feed's gesture/pull-to-refresh
+              // surface. Stop the bubbling click here so an ancestor gesture
+              // cannot consume the tap before the navigation callback runs.
+              event.stopPropagation()
+              onNavigateCircles?.()
+            }}
             disabled={actionsDisabled}
-            className="pact-btn-glow flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="Open My Circles"
+            data-testid="my-circles-button"
+            className="pact-btn-glow relative z-20 flex flex-1 touch-manipulation pointer-events-auto items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
             style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
           >
             <Users className="h-4 w-4" strokeWidth={2.4} />
