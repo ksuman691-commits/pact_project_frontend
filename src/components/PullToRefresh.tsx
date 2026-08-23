@@ -18,6 +18,13 @@ const MAX_PULL = 96;
 // Rubber-band factor: raw finger travel is scaled down before it reaches the indicator,
 // so the pull feels like it has resistance instead of tracking 1:1 with the finger.
 const RESISTANCE = 0.5;
+// Minimum raw downward travel (px) before we treat the pointer as a genuine pull
+// gesture rather than a stationary press. Below this, nothing is captured, so a
+// plain click/tap on a child button (e.g. header actions) always reaches it —
+// setPointerCapture retargets the resulting click to the capturing element, so
+// capturing eagerly on every pointerdown silently swallowed clicks on anything
+// underneath while the page was scrolled to the top.
+const CAPTURE_DRAG_THRESHOLD_PX = 6;
 
 /**
  * Custom pull-to-refresh wrapper built on Pointer Events (no external library).
@@ -28,6 +35,14 @@ const RESISTANCE = 0.5;
  * cheer gesture) without interference: that gesture only reacts to horizontal drags
  * and never calls preventDefault, while this component only reacts to a downward
  * drag while already at the top of the page.
+ *
+ * Pointer capture is deliberately deferred until a real downward drag is confirmed
+ * (see CAPTURE_DRAG_THRESHOLD_PX in handlePointerMove), not taken eagerly on
+ * pointerdown. Capturing on every pointerdown retargets the resulting click event
+ * to this wrapper, which silently swallowed clicks on any child button/link
+ * (e.g. the feed header's Search/Notifications/My Circles/New Pact buttons)
+ * whenever the page happened to be scrolled to the top — i.e. on every real
+ * attempt to click a non-sticky header, since it's only clickable at scrollY 0.
  */
 export default function PullToRefresh({ onRefresh, children, disabled = false }: PullToRefreshProps) {
   const [pullDistance, setPullDistance] = useState(0);
@@ -44,17 +59,10 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
     if (!atTop()) return;
     pointerId.current = event.pointerId;
     startY.current = event.clientY;
-    // On a real touchscreen the finger drifts more than a simulated/mouse
-    // pointer does, so without capture a fast or wide drag can hand
-    // subsequent pointermove events to a different element (or none) and
-    // silently drop the gesture. Capturing keeps every move/up event for
-    // this pointerId routed here regardless of what's underneath it.
-    try {
-      event.currentTarget.setPointerCapture(event.pointerId);
-    } catch {
-      // Capture can throw for already-released/invalid pointer ids; the
-      // gesture still works without it, just less robustly on real touch.
-    }
+    // Capture is deferred to handlePointerMove, once a real downward drag
+    // is confirmed — see CAPTURE_DRAG_THRESHOLD_PX. Capturing here on every
+    // pointerdown retargeted the resulting click event to this wrapper for
+    // ANY tap underneath it (buttons, links, etc.), not just genuine pulls.
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -63,7 +71,8 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
     const dy = event.clientY - startY.current;
 
     if (dy <= 0 || !atTop()) {
-      // Moving back up, or the page has scrolled — release control back to native scroll.
+      // Moving up, or the page has scrolled — this was never a downward
+      // pull, release control back to native scroll/click handling.
       if (pullingRef.current) {
         pullingRef.current = false;
         setIsPulling(false);
@@ -72,10 +81,41 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
       return;
     }
 
+    // preventDefault() only stops the browser's native touch-scroll if it's
+    // called before the compositor thread has already committed to handling
+    // the gesture as a scroll — which on a real touchscreen can happen as
+    // early as the very first touchmove past the platform's tiny built-in
+    // slop, well before our own CAPTURE_DRAG_THRESHOLD_PX dead zone below is
+    // satisfied. So this fires on every downward move while at the top,
+    // not gated behind the dead zone, to give it the best chance of winning
+    // that race. touch-action: none on the wrapper (tied to isPulling,
+    // below) is the second layer of defense once a pull is confirmed.
+    event.preventDefault();
+
+    if (dy < CAPTURE_DRAG_THRESHOLD_PX) {
+      // Still inside the dead zone — not yet confirmed as a genuine pull.
+      // Don't capture the pointer or show any visual movement yet, so a
+      // plain tap (which never exceeds this) is unaffected.
+      return;
+    }
+
+    if (!pullingRef.current) {
+      // First move past the dead zone: this is a genuine pull, not a tap.
+      // On a real touchscreen the finger drifts more than a simulated/mouse
+      // pointer does, so without capture a fast or wide drag can hand
+      // subsequent pointermove events to a different element (or none) and
+      // silently drop the gesture. Capturing keeps every move/up event for
+      // this pointerId routed here regardless of what's underneath it.
+      try {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      } catch {
+        // Capture can throw for already-released/invalid pointer ids; the
+        // gesture still works without it, just less robustly on real touch.
+      }
+    }
+
     pullingRef.current = true;
     setIsPulling(true);
-    // Suppress the native overscroll/bounce while we're driving our own indicator.
-    event.preventDefault();
     setPullDistance(Math.min(dy * RESISTANCE, MAX_PULL));
   };
 
@@ -113,6 +153,12 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
+      // Only opt out of native touch panning while a pull is actively
+      // confirmed and driving the indicator — reinforces preventDefault()
+      // above so the compositor can't resume a native scroll mid-gesture.
+      // Reverts to normal ('auto') the instant the pull ends/cancels, so
+      // regular feed scrolling elsewhere is never affected.
+      style={{ touchAction: isPulling ? 'none' : 'auto' }}
     >
       <div
         aria-hidden="true"

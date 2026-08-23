@@ -692,11 +692,15 @@ export default function FeedPactCard({
       // always won the race. Voting/cheering/joining remain fully available
       // via their dedicated buttons below the hero — only the ambiguous
       // drag shortcut is scoped to pacts with nothing to page through.
-      // A rightward swipe is the explicit Join/Cheer gesture, even on cards
-      // that also have multiple photos. Only a leftward drag remains available
-      // for photo paging, so the right swipe cannot stop at a tilt and never
-      // invoke the action.
-      if (canPageMedia && dx < 0) {
+      // A rightward drag was previously always treated as the explicit
+      // Join/Cheer gesture, even on cards with multiple photos to page
+      // through — so swiping backward to an earlier photo kept re-triggering
+      // join/cheer (surfacing as an unwanted "Submit Proof"-style prompt),
+      // even on pacts the viewer wasn't interacting with at all. Paging must
+      // own the drag in both directions whenever there's more than one
+      // photo; voting/cheering/joining stay available via their dedicated
+      // buttons below the hero.
+      if (canPageMedia) {
         setShowActionTag(false);
         return;
       }
