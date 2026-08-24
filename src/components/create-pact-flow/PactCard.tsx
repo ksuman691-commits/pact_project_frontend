@@ -3,12 +3,30 @@
 import React from 'react';
 import { useCreatePactFlow } from '@/context/CreatePactFlowContext';
 import { generateDescription, generateTitle, resolveDurationDays } from '@/lib/createPactFlow/generate';
+import { useCircles } from '@/hooks/useCircles';
 
 export default function PactCard() {
   const { draft, activity } = useCreatePactFlow();
+  const { data: circles } = useCircles();
   const title = generateTitle(draft, activity);
   const description = generateDescription(draft);
   const durationDays = resolveDurationDays(draft);
+
+  // draft.audience is the generic AUDIENCES category label ('Just me' /
+  // 'My Circle' / 'Everyone'), and the 'My Circle' preset's own visibility
+  // is also literally the string 'My Circle' — so naively rendering
+  // `${draft.audience} · ${draft.visibility}` always showed the doubled
+  // placeholder "My Circle · My Circle" and never surfaced which circle was
+  // actually selected (that's only tracked separately via draft.circleId).
+  // Resolve the real circle name here so users can confirm exactly where
+  // the pact is going before committing.
+  const selectedCircleName =
+    draft.audience === 'My Circle' && draft.circleId != null
+      ? Array.isArray(circles)
+        ? circles.find((c: any) => c.id === draft.circleId)?.name
+        : undefined
+      : undefined;
+  const audienceLabel = selectedCircleName ?? draft.audience ?? '—';
 
   return (
     <div className="pact-surface rounded-3xl p-6">
@@ -31,7 +49,7 @@ export default function PactCard() {
               : `${draft.proofMethod ?? '—'} · ${draft.proofFrequency ?? '—'}`
           }
         />
-        <MetaRow label="Audience" value={`${draft.audience ?? '—'} · ${draft.visibility}`} />
+        <MetaRow label="Audience" value={`${audienceLabel} · ${draft.visibility}`} />
       </div>
     </div>
   );

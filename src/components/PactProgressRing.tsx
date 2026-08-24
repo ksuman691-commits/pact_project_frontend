@@ -58,7 +58,15 @@ export function getPactProgress(pact: any) {
   const end = new Date(pact.end_date || pact.deadline || Date.now())
   const today = new Date()
   const total = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86400000) + 1)
-  const elapsed = Math.min(total, Math.max(0, Math.floor((today.getTime() - start.getTime()) / 86400000) + 1))
+  // "Elapsed" here means days that have fully PASSED, i.e. days that could
+  // actually have been missed — it deliberately does NOT include today
+  // (day 0 on creation, or whichever day is currently in progress), since
+  // that day hasn't ended yet and can't be "missed" retroactively. Without
+  // the "+ 1" that used to be here, a brand-new pact created moments ago
+  // (today - start ~= 0ms) correctly gets elapsed = 0 instead of 1, so it
+  // shows 0% complete with no red "missed" segment until its first day is
+  // actually over.
+  const elapsed = Math.min(total, Math.max(0, Math.floor((today.getTime() - start.getTime()) / 86400000)))
   const completed = Math.min(elapsed, Number(pact.proof_count ?? pact.proofs_count ?? pact.completed_days ?? (pact.status === 'completed' ? total : 0)))
   const missed = Math.max(0, elapsed - completed)
   return { total, completed, missed }
