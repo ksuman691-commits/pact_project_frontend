@@ -13,10 +13,12 @@ interface CommentsBottomSheetProps {
 }
 
 /**
- * Spring-up bottom sheet that presents the existing CommentSection inline
- * instead of navigating to the pact detail page's Comments tab. Reuses
- * CommentSection's real data/mutations as-is — this component only owns
- * the sheet chrome (backdrop, handle, header, close) around it.
+ * Spring-up bottom sheet that presents the existing CommentSection inline,
+ * relabeled "Chat" and styled as a lightweight group chat. This is purely a
+ * presentation change: CommentSection still reuses the same real comments
+ * data/mutations (usePactComments/useAddComment/useDeleteComment) as
+ * before, and this component only owns the sheet chrome (backdrop, handle,
+ * header, close) around it.
  *
  * Portalled straight to document.body. Rendering this inline where the feed
  * card lives isn't enough to guarantee `fixed inset-0` covers the real
@@ -49,7 +51,7 @@ export default function CommentsBottomSheet({ pactId, commentCount, isOpen, onCl
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="fixed inset-x-0 bottom-0 z-[61] mx-auto flex h-[70vh] max-w-md flex-col overflow-hidden rounded-t-[24px] border border-b-0 border-[var(--pact-hairline)] bg-[var(--pact-surface-raised)]"
             role="dialog"
-            aria-label={`Comments, ${commentCount}`}
+            aria-label={`Chat, ${commentCount}`}
           >
             <div className="mx-auto mt-2.5 h-1 w-9 flex-shrink-0 rounded-full bg-[var(--pact-hairline)]" />
 
@@ -58,7 +60,7 @@ export default function CommentsBottomSheet({ pactId, commentCount, isOpen, onCl
                 className="text-[15px] font-black text-[var(--pact-text)]"
                 style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}
               >
-                Comments &middot; {commentCount}
+                Chat &middot; {commentCount}
               </p>
               <button
                 type="button"

@@ -1245,7 +1245,7 @@ export default function FeedPactCard({
             <button
               type="button"
               onClick={() => setCommentSheetOpen(true)}
-              aria-label="view comments"
+              aria-label="open chat"
               className="flex items-center gap-1.5 text-[var(--pact-text-dim)] transition hover:text-[var(--pact-violet)]"
             >
               <MessageCircle className="h-5 w-5" />
@@ -1288,7 +1288,7 @@ export default function FeedPactCard({
 
         </div>
 
-        {/* "View all N comments" — opens the same comment sheet as the comment icon */}
+        {/* "View all N in chat" — opens the same chat sheet as the chat icon */}
         {commentCount > 0 && (
           <button
             type="button"
@@ -1298,7 +1298,7 @@ export default function FeedPactCard({
             }}
             className="block w-full px-4 pb-3 text-left text-xs text-[var(--pact-text-faint)] transition hover:text-[var(--pact-text-dim)]"
           >
-            View all {formatCompactCount(commentCount)} comments
+            View all {formatCompactCount(commentCount)} in chat
           </button>
         )}
       </motion.div>

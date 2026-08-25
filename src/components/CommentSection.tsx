@@ -26,6 +26,10 @@ interface CommentSectionProps {
   pactId: number;
 }
 
+// Chat bubble row — same data/mutations as before, just presented like a
+// lightweight group chat: own messages align right in a violet-tinted
+// bubble, everyone else's align left in a neutral surface bubble, with the
+// avatar + name sitting just outside the bubble on the leading side.
 function CommentRow({ comment, pactId, currentUserId }: { comment: Comment; pactId: number; currentUserId?: number }) {
   const deleteMutation = useDeleteComment(pactId, comment.id);
   const isOwnComment = typeof currentUserId === 'number' && comment.user_id === currentUserId;
@@ -34,29 +38,34 @@ function CommentRow({ comment, pactId, currentUserId }: { comment: Comment; pact
   const timestamp = comment.timestamp || comment.created_at || 'just now';
 
   return (
-    <div className="rounded-[24px] border border-white/5 p-4 transition hover:border-[var(--pact-hairline)] hover:bg-white/5">
-      <div className="flex gap-3">
-          <div className="flex-shrink-0">
-            <UserAvatarLink name={displayName} avatarUrl={avatarUrl} username={comment.username} size={32} />
-          </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-[var(--pact-text)]">{displayName}</p>
-            {isOwnComment && (
-              <button
-                type="button"
-                onClick={() => deleteMutation.mutate()}
-                className="text-[var(--pact-text-faint)] transition hover:text-[var(--pact-text)]"
-                aria-label="Delete comment"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-          <p className="text-sm text-[var(--pact-text-dim)] break-words">{comment.text}</p>
-          <p className="text-xs text-[var(--pact-text-faint)] mt-1">{timestamp}</p>
+    <div className={`flex items-start gap-2 ${isOwnComment ? 'flex-row-reverse' : ''}`}>
+      <div className="flex-shrink-0 pt-0.5">
+        <UserAvatarLink name={displayName} avatarUrl={avatarUrl} username={comment.username} size={28} />
+      </div>
+      <div className={`min-w-0 max-w-[80%] ${isOwnComment ? 'items-end text-right' : 'items-start text-left'} flex flex-col`}>
+        <div className="flex items-center gap-2 px-1">
+          <p className="text-xs font-semibold text-[var(--pact-text-muted)]">{displayName}</p>
+          {isOwnComment && (
+            <button
+              type="button"
+              onClick={() => deleteMutation.mutate()}
+              className="text-[var(--pact-text-faint)] transition hover:text-[var(--pact-text)]"
+              aria-label="Delete message"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+          )}
         </div>
+        <div
+          className={`mt-1 break-words rounded-[18px] px-3.5 py-2 text-sm ${
+            isOwnComment
+              ? 'rounded-tr-sm bg-[var(--pact-violet)] text-white'
+              : 'rounded-tl-sm bg-[var(--pact-surface-2)] text-[var(--pact-text)]'
+          }`}
+        >
+          {comment.text}
+        </div>
+        <p className="mt-1 px-1 text-[10px] text-[var(--pact-text-faint)]">{timestamp}</p>
       </div>
     </div>
   );
@@ -86,46 +95,17 @@ export default function CommentSection({
   };
 
   return (
-    <div className="space-y-4 w-full">
-      {/* Comment Input */}
-      <form onSubmit={handleAddComment} className="border border-[var(--pact-hairline)] rounded-[24px] p-4 w-full">
-        <div className="flex gap-3">
-          <div className="flex-shrink-0">
-            <UserAvatarLink name={user?.username} avatarUrl={user?.avatar_url} size={32} />
-          </div>
-          <div className="flex-1">
-            <input
-              type="text"
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Add a comment..."
-              className="w-full bg-transparent text-sm text-[var(--pact-text)] placeholder-[var(--pact-text-faint)] focus:outline-none"
-              disabled={addCommentMutation.isPending}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={addCommentMutation.isPending || !newComment.trim()}
-            className="text-[var(--pact-violet)] hover:text-[var(--pact-pink)] disabled:text-[var(--pact-text-faint)] transition flex-shrink-0"
-          >
-            {addCommentMutation.isPending ? (
-              <Loader className="w-4 h-4 animate-spin" />
-            ) : (
-              <Send className="w-4 h-4" />
-            )}
-          </button>
-        </div>
-      </form>
-
-      {/* Comments List */}
-      <div className="space-y-4 w-full">
+    <div className="flex w-full flex-col gap-4">
+      {/* Chat message list — same usePactComments/useAddComment/useDeleteComment
+          data and mutations as before, just rendered as bubbles. */}
+      <div className="flex w-full flex-col gap-3">
         {commentsQuery.isLoading ? (
-          <p className="text-sm text-[var(--pact-text-faint)] text-center py-8">Loading comments...</p>
+          <p className="text-sm text-[var(--pact-text-faint)] text-center py-8">Loading chat...</p>
         ) : commentsQuery.isError ? (
           <div className="flex flex-col items-center gap-3 py-8 text-center">
             <AlertCircle className="h-5 w-5 text-[var(--pact-text-faint)]" />
             <p className="text-sm text-[var(--pact-text-faint)]">
-              Couldn&apos;t load comments right now. Please try again.
+              Couldn&apos;t load the chat right now. Please try again.
             </p>
             <button
               type="button"
@@ -136,13 +116,41 @@ export default function CommentSection({
             </button>
           </div>
         ) : comments.length === 0 ? (
-          <p className="text-sm text-[var(--pact-text-faint)] text-center py-8">No comments yet. Be the first!</p>
+          <p className="text-sm text-[var(--pact-text-faint)] text-center py-8">No messages yet. Say hi!</p>
         ) : (
           comments.map((comment: Comment) => (
             <CommentRow key={comment.id} comment={comment} pactId={pactId} currentUserId={user?.id} />
           ))
         )}
       </div>
+
+      {/* Chat composer — same submit handler/mutation as the previous
+          "Add a comment" input, restyled as a rounded pill message bar. */}
+      <form onSubmit={handleAddComment} className="flex items-center gap-2 rounded-full border border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] px-3 py-2 w-full">
+        <div className="flex-shrink-0">
+          <UserAvatarLink name={user?.username} avatarUrl={user?.avatar_url} size={28} />
+        </div>
+        <input
+          type="text"
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          placeholder="Message the circle..."
+          className="min-w-0 flex-1 bg-transparent text-sm text-[var(--pact-text)] placeholder-[var(--pact-text-faint)] focus:outline-none"
+          disabled={addCommentMutation.isPending}
+        />
+        <button
+          type="submit"
+          disabled={addCommentMutation.isPending || !newComment.trim()}
+          aria-label="Send message"
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[var(--pact-violet)] text-white transition disabled:bg-[var(--pact-surface)] disabled:text-[var(--pact-text-faint)]"
+        >
+          {addCommentMutation.isPending ? (
+            <Loader className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Send className="w-3.5 h-3.5" />
+          )}
+        </button>
+      </form>
     </div>
   );
 }
