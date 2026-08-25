@@ -975,38 +975,15 @@ export default function FeedPactCard({
               dragOffsetPx={galleryDragOffsetPx}
               isDragging={isPagingDrag}
             />
-          ) : progressInfo ? (
-            <div className="relative flex h-full w-full items-center justify-center bg-[linear-gradient(160deg,var(--pact-surface-3),var(--pact-surface-2))]">
-              <div
-                className="pointer-events-none absolute inset-0"
-                style={{ background: 'radial-gradient(circle at 30% 20%, rgba(255,79,135,0.18), transparent 55%)' }}
-              />
-              <PactProgressRing
-                percent={progressInfo.percent}
-                elapsedDays={progressInfo.elapsedDays}
-                totalDays={progressInfo.totalDays}
-                gradientId={`pact-ring-gradient-${pact.id}`}
-              />
-            </div>
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#EDE9FE_0%,#C4B5FD_40%,#A78BFA_100%)]">
-              <div className="relative h-full w-full overflow-hidden">
-                {/* Soft large letter watermark */}
-                <div className="absolute inset-0 flex items-center justify-center text-[140px] font-black text-violet-300/20 select-none">
-                  {creatorLabel.charAt(0).toUpperCase()}
-                </div>
-                {/* Anchored to the upper portion of the media area so it never collides with content below */}
-                <div className="absolute inset-x-0 top-16 z-10 flex flex-col items-center gap-3 px-8 text-center">
-                  <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-white/60 bg-white/70 shadow-[0_8px_32px_rgba(139,92,246,0.20)] backdrop-blur-sm">
-                    <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={96} />
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <Camera className="h-4 w-4 text-violet-600" />
-                    <p className="max-w-[220px] text-sm font-semibold uppercase tracking-[0.18em] text-violet-900">
-                      {uploadAllowed ? 'no proof uploaded yet — be the first' : 'No proof uploaded yet'}
-                    </p>
-                  </div>
-                </div>
+            /* Keep the proof area photo-forward even before the first upload.
+               The progress ring is already the compact badge in the top-right
+               overlay above; never render the old large standalone ring here. */
+            <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[var(--pact-surface-3)]">
+              <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(45deg,rgba(139,92,246,0.08)_0px,rgba(139,92,246,0.08)_2px,transparent_2px,transparent_12px)]" />
+              <div className="relative z-[1] flex flex-col items-center gap-2 text-center text-[var(--pact-text-faint)]">
+                <Camera className="h-5 w-5" />
+                <p className="text-sm font-medium">{uploadAllowed ? "Add today's proof photo" : 'Proof photo'}</p>
               </div>
             </div>
           )}
