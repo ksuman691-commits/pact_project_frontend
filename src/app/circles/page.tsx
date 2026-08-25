@@ -55,10 +55,24 @@ export default function CirclesPage() {
         </div>
       </div>
     </header>
+    {/* "New Circle" gets its own centered row directly under the stat card,
+        matching the Dares/Pacts landing pages' treatment — a prominent,
+        full-width CTA rather than a small icon-only button tucked in a
+        corner (the "Browse circles" heading below keeps its own "New" link
+        removed in favor of this one, to avoid two competing create CTAs). */}
+    <div className="flex justify-center pt-6">
+      <Link
+        href="/circles/create"
+        className="pact-btn-glow flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold text-[var(--pact-text)]"
+        style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+      >
+        <Plus className="h-4 w-4" />
+        New Circle
+      </Link>
+    </div>
     <div className="flex items-center gap-5 border-b border-[var(--pact-hairline)] py-5 text-sm"><label className="flex min-w-0 flex-1 items-center gap-2 text-[var(--pact-text-muted)]"><Search className="h-4 w-4" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name" className="min-w-0 flex-1 bg-transparent text-[var(--pact-text)] outline-none placeholder:text-[var(--pact-text-muted)]" /></label><div className="relative"><button onClick={() => setSortOpen(v => !v)} className="flex items-center gap-2 text-[var(--pact-text)]">{sort}<SlidersHorizontal className="h-3.5 w-3.5 text-[var(--pact-violet)]" /></button>{sortOpen && <div className="absolute right-0 top-7 z-10 w-48 border border-[var(--pact-hairline)] bg-[var(--pact-surface)] py-2 shadow-xl">{['Recent activity', 'Alphabetical (A-Z)', 'Most active', 'Member count', 'Newest circle', 'Most pacts'].map(option => <button key={option} onClick={() => { setSort(option); setSortOpen(false) }} className="block w-full px-3 py-2 text-left text-xs text-[var(--pact-text-muted)] hover:text-[var(--pact-text)]">{option}</button>)}</div>}</div></div>
     <div className="flex items-baseline justify-between pt-8">
       <h2 className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--pact-text-muted)]">Browse circles</h2>
-      <Link href="/circles/create" className="pact-btn-glow flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold text-[var(--pact-text)]" style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}><Plus className="h-3.5 w-3.5" />New</Link>
     </div>
     <section className="-mx-5 flex snap-x gap-4 overflow-x-auto px-5 py-6 md:-mx-10 md:px-10" aria-label="Your circles">{isLoading ? <p className="text-sm text-[var(--pact-text-muted)]">Loading circles…</p> : circlesQuery.isError ? <div className="flex w-full flex-col gap-3 py-4 text-sm text-[var(--pact-text-muted)]"><p>We couldn&apos;t load your circles.</p><button type="button" onClick={() => circlesQuery.refetch()} className="w-fit rounded-full border border-[var(--pact-violet)] px-4 py-2 font-semibold text-[var(--pact-text)]">Try again</button></div> : filtered.length === 0 ? <p className="py-4 text-sm text-[var(--pact-text-muted)]">No circles found. Create one to get started.</p> : filtered.map((circle: any) => {
       const activity = Math.min(1, (circle.member_count || 0) / maxMembers)
