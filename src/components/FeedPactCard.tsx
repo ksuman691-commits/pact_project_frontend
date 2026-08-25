@@ -239,30 +239,34 @@ function PactProgressRing({
   gradientId: string;
   compact?: boolean;
 }) {
-  const radius = compact ? 29 : 60;
+  const size = compact ? 92 : 150;
+  const center = size / 2;
+  const radius = compact ? 39 : 60;
+  const strokeWidth = compact ? 6 : 9;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - percent / 100);
 
   return (
     <div
-      className={`relative flex items-center justify-center ${compact ? 'h-[76px] w-[76px] rounded-full bg-black/35 p-1.5 backdrop-blur-sm animate-[pulse_2.8s_ease-in-out_infinite]' : 'h-[150px] w-[150px]'}`}
-      style={compact ? { filter: 'drop-shadow(0 0 10px color-mix(in srgb, var(--pact-violet) 55%, transparent))' } : undefined}
+      className={`relative flex shrink-0 items-center justify-center ${compact ? 'h-[92px] w-[92px]' : 'h-[150px] w-[150px]'}`}
+      style={compact ? { filter: 'drop-shadow(0 0 7px color-mix(in srgb, var(--pact-violet) 60%, transparent))' } : undefined}
     >
-      <svg viewBox="0 0 130 130" className="h-full w-full -rotate-90 overflow-visible">
+      <svg viewBox={`0 0 ${size} ${size}`} className={`h-full w-full -rotate-90 ${compact ? 'animate-[pulse_3s_ease-in-out_infinite]' : ''}`} role="img" aria-label={`Day ${elapsedDays} of ${totalDays}`}>
         <defs>
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="var(--pact-pink)" />
             <stop offset="100%" stopColor="var(--pact-violet)" />
           </linearGradient>
         </defs>
-        <circle cx="65" cy="65" r={radius} fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth={compact ? 5 : 9} />
+        <circle cx={center} cy={center} r={radius} fill="rgba(15, 10, 30, 0.68)" stroke="rgba(255,255,255,0.18)" strokeWidth={strokeWidth} />
+        <circle cx={center} cy={center} r={radius} fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth={strokeWidth} />
         <circle
-          cx="65"
-          cy="65"
+          cx={center}
+          cy={center}
           r={radius}
           fill="none"
           stroke={`url(#${gradientId})`}
-          strokeWidth={compact ? 5 : 9}
+          strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
@@ -272,18 +276,12 @@ function PactProgressRing({
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
         {compact ? (
           <>
-            <span className="text-[17px] font-black text-[var(--pact-text)]" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>
-              D{elapsedDays}
-            </span>
-            <span className="mt-0.5 text-[9px] font-semibold text-[var(--pact-text-faint)]" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>
-              of {totalDays}
-            </span>
+            <span className="text-[23px] font-black tracking-[-0.04em] text-[var(--pact-text)]" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>D{elapsedDays}</span>
+            <span className="mt-1 text-[11px] font-bold text-[var(--pact-text-dim)]" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>of {totalDays}</span>
           </>
         ) : (
           <>
-            <span className="text-2xl font-bold text-[var(--pact-text)]" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>
-              {percent}%
-            </span>
+            <span className="text-2xl font-bold text-[var(--pact-text)]" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>{percent}%</span>
             <span className="mt-0.5 text-[10.5px] text-[var(--pact-text-faint)]">{elapsedDays}/{totalDays} days</span>
           </>
         )}
