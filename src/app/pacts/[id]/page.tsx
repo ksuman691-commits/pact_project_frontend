@@ -212,7 +212,6 @@ export default function PactDetailPage() {
                 await Promise.all([refetchProofs(), refetchPact()]);
               }}
               dismissOnVote={false}
-              enableGestures={true}
               showVoteActions={true}
               canUploadProof={isParticipant}
               detailHref={`/pacts/${pact.id}`}

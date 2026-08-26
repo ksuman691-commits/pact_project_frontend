@@ -19,6 +19,12 @@ interface DetailPageHeaderProps {
   maxWidthClassName?: string;
   /** Hide the Feed/Home shortcut on the right (shown by default). */
   showHomeLink?: boolean;
+  /**
+   * Runs instead of the default smart-back behavior when set (and
+   * backHref is omitted) — for screens that need to clear local/session
+   * state on the way out, not just navigate.
+   */
+  onBack?: () => void;
 }
 
 /**
@@ -34,8 +40,10 @@ export default function DetailPageHeader({
   fallbackHref = '/feed',
   maxWidthClassName = 'max-w-2xl',
   showHomeLink = true,
+  onBack,
 }: DetailPageHeaderProps) {
   const smartBack = useSmartBack(fallbackHref);
+  const handleBack = onBack ?? smartBack;
 
   return (
     <div
@@ -54,7 +62,7 @@ export default function DetailPageHeader({
         ) : (
           <button
             type="button"
-            onClick={smartBack}
+            onClick={handleBack}
             aria-label="Go back"
             className="flex-shrink-0 rounded-full p-2 transition hover:bg-[var(--pact-surface)]"
           >

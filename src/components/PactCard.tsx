@@ -29,7 +29,6 @@ export default function PactCard({
       canUploadProof={canUploadProof}
       canReport={canReport}
       dismissOnVote={false}
-      enableGestures={Boolean(onVote)}
       showVoteActions={Boolean(onVote)}
       detailHref={`/pacts/${pact.id}`}
     />

@@ -60,6 +60,16 @@ export default function Avatar({
   imgSizes,
 }: AvatarProps) {
   const initials = getInitials(name);
+  // Presigned S3 URLs (see queryClient's refetchInterval comment) expire
+  // after ~1 hour; between that expiry and the next scheduled refetch, an
+  // <img>/Image src pointing at one 403s. Rather than leaving the browser's
+  // broken-image icon on screen, fall back to the initials placeholder —
+  // reset whenever a new avatarUrl comes in (e.g. after the refetch lands).
+  const [imgFailed, setImgFailed] = useState(false);
+  useEffect(() => {
+    setImgFailed(false);
+  }, [avatarUrl]);
+  const showImage = Boolean(avatarUrl) && !imgFailed;
   const ringConfig: AvatarRingConfig | null = ring ? (typeof ring === 'object' ? ring : {}) : null;
   const atRisk = ringConfig?.atRisk ?? false;
   const hasPercent = typeof ringConfig?.percent === 'number' && !atRisk;
@@ -80,8 +90,15 @@ export default function Avatar({
       className="relative overflow-hidden rounded-full bg-slate-900 text-white flex items-center justify-center font-bold"
       style={{ width: size, height: size, fontSize: Math.max(11, Math.round(size * 0.36)) }}
     >
-      {avatarUrl ? (
-        <Image src={avatarUrl} alt={name || 'Avatar'} fill sizes={imgSizes || `${size}px`} className="object-cover" />
+      {showImage ? (
+        <Image
+          src={avatarUrl as string}
+          alt={name || 'Avatar'}
+          fill
+          sizes={imgSizes || `${size}px`}
+          className="object-cover"
+          onError={() => setImgFailed(true)}
+        />
       ) : (
         <span>{initials}</span>
       )}

@@ -7,6 +7,7 @@ const nextConfig = {
       { protocol: 'https', hostname: '**.amazonaws.com' },
       { protocol: 'https', hostname: '**.cloudfront.net' },
       { protocol: 'https', hostname: 'pact-project-backend-v2.onrender.com' },
+      { protocol: 'https', hostname: 'picsum.photos' }, // TEMP debug — remove after gallery investigation
     ],
   },
 }

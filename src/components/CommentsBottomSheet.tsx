@@ -10,6 +10,10 @@ interface CommentsBottomSheetProps {
   commentCount: number;
   isOpen: boolean;
   onClose: () => void;
+  /** Reports the real total once CommentSection's own paginated query
+   * resolves, so the caller can correct the badge count that list endpoints
+   * currently always send as 0 (see BACKEND_SPEC_COMMENT_COUNT.md). */
+  onCountChange?: (count: number) => void;
 }
 
 /**
@@ -27,7 +31,13 @@ interface CommentsBottomSheetProps {
  * its own containing block and silently traps this sheet inside the card
  * instead of the viewport (see DareProofUploadModal for the same fix).
  */
-export default function CommentsBottomSheet({ pactId, commentCount, isOpen, onClose }: CommentsBottomSheetProps) {
+export default function CommentsBottomSheet({
+  pactId,
+  commentCount,
+  isOpen,
+  onClose,
+  onCountChange,
+}: CommentsBottomSheetProps) {
   if (typeof document === 'undefined') return null;
 
   return createPortal(
@@ -73,7 +83,7 @@ export default function CommentsBottomSheet({ pactId, commentCount, isOpen, onCl
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-4">
-              <CommentSection pactId={pactId} />
+              <CommentSection pactId={pactId} onCountChange={onCountChange} />
             </div>
           </motion.div>
         </>
