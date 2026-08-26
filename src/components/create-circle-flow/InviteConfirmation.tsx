@@ -1,6 +1,7 @@
 'use client';
 
 import Avatar from '@/components/Avatar';
+import DetailPageHeader from '@/components/DetailPageHeader';
 
 type Invitee = {
   user_id: number;
@@ -19,9 +20,15 @@ export default function InviteConfirmation({
   onCancel: () => void;
 }) {
   return (
-    <main className="flex min-h-dvh flex-col px-5 pb-10 pt-10">
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--pact-violet)]">Circle invite</p>
+    <main className="flex min-h-dvh flex-col">
+      {/* This screen previously had no way back at all — no header, and
+          the bottom "Cancel" button reads as declining the invite rather
+          than as navigation. Reusing DetailPageHeader (same treatment as
+          every other detail page) gives it a real back chevron; wired to
+          the same onCancel used below so both paths clear the pending
+          sessionStorage match list and go back consistently. */}
+      <DetailPageHeader title="Circle invite" showHomeLink={false} onBack={onCancel} />
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-10 pt-6">
         <h1 className="mt-3 text-balance text-3xl font-black tracking-tight text-[var(--pact-text)]">Start a circle with them?</h1>
         <p className="mt-3 text-sm leading-6 text-[var(--pact-text-dim)]">
           You&apos;re about to invite these people to a new accountability circle.
