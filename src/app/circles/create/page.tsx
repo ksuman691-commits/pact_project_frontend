@@ -53,8 +53,14 @@ function CreateCirclePageContent() {
     router.back();
   };
 
-  const confirmInvites = () => {
-    router.replace(`/circles/create?inviteUserId=${inviteUserIds.join(',')}${category ? `&category=${encodeURIComponent(category)}` : ''}${pactId ? `&pactId=${pactId}` : ''}`);
+  // Takes the (possibly edited — someone removed or added on the
+  // confirmation screen) final invitee list rather than reusing the
+  // original inviteUserIds from the URL, so add/remove on that screen
+  // actually changes who the circle gets created with.
+  const confirmInvites = (finalInvitees: { user_id: number }[]) => {
+    const finalIds = finalInvitees.map((invitee) => invitee.user_id);
+    sessionStorage.removeItem('circle-match-invitees');
+    router.replace(`/circles/create?inviteUserId=${finalIds.join(',')}${category ? `&category=${encodeURIComponent(category)}` : ''}${pactId ? `&pactId=${pactId}` : ''}`);
   };
 
   if (!isInitialized || !inviteesReady) {
