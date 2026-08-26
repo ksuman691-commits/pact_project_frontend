@@ -233,11 +233,21 @@ function PactProgressRing({
   const offset = circumference * (1 - percent / 100);
 
   return (
-    <div
-      className={`relative flex shrink-0 items-center justify-center ${compact ? 'h-[92px] w-[92px]' : 'h-[150px] w-[150px]'}`}
-      style={compact ? { filter: 'drop-shadow(0 0 7px color-mix(in srgb, var(--pact-violet) 60%, transparent))' } : undefined}
-    >
-      <svg viewBox={`0 0 ${size} ${size}`} className={`h-full w-full -rotate-90 ${compact ? 'animate-[pulse_3s_ease-in-out_infinite]' : ''}`} role="img" aria-label={`Day ${elapsedDays} of ${totalDays}`}>
+    <div className={`relative flex shrink-0 items-center justify-center ${compact ? 'h-[92px] w-[92px]' : 'h-[150px] w-[150px]'}`}>
+      {/* Soft ambient glow behind the ring, on its own blurred layer rather
+          than an SVG drop-shadow filter — a filter on the whole <svg>
+          (as this used to be) shadows the flat circle fills too, which
+          mostly just muddies the badge instead of reading as a glow. A
+          dedicated pink/violet radial blob behind it, sized larger than
+          the ring and blurred, is what actually produces a visible halo
+          against the busy diagonal-stripe background. */}
+      <div
+        className="pointer-events-none absolute inset-[-30%] rounded-full opacity-70 blur-xl"
+        style={{
+          background: 'radial-gradient(circle, var(--pact-pink) 0%, var(--pact-violet) 55%, transparent 75%)',
+        }}
+      />
+      <svg viewBox={`0 0 ${size} ${size}`} className={`relative h-full w-full -rotate-90 ${compact ? 'animate-[pulse_3s_ease-in-out_infinite]' : ''}`} role="img" aria-label={`Day ${elapsedDays} of ${totalDays}`}>
         <defs>
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="var(--pact-pink)" />
@@ -419,7 +429,12 @@ export default function FeedPactCard({
       (pact.creator_username && pact.creator_username === user.username)
     )
   );
-  const uploadAllowed = canUploadProof ?? Boolean(user && (pact.creator_id === user.id || isParticipant));
+  // Use the fuller isCreator check (also covers pact.user_id and
+  // creator_username) rather than a bare pact.creator_id comparison —
+  // otherwise a creator whose identity on this payload only resolves via
+  // one of those other fields saw the passive "Proof photo" viewer empty
+  // state instead of their own "Add today's proof photo" upload CTA.
+  const uploadAllowed = canUploadProof ?? Boolean(isCreator || isParticipant);
   const joinAllowed = Boolean(pact.can_join);
   // Mutual-goal matching: same query for both placements below, just gated
   // on the pact actually having a category to match against. See
@@ -756,7 +771,13 @@ export default function FeedPactCard({
               </div>
               <div className="min-w-0">
                 <p className="truncate text-xs font-bold">{creatorLabel === 'You' ? 'You' : `@${creatorLabel}`}</p>
-                <p className="text-[10px] text-white/70">{timeRemaining}</p>
+                {/* Duration ("N days left") used to repeat right next to the
+                    ring badge, which already spells out the same day count
+                    as "D{elapsedDays} of {totalDays}" — dropped here so it's
+                    said once instead of twice in the same header row. When
+                    there's no ring (pact missing start/end dates), fall back
+                    to showing it here since it's the only place left. */}
+                {!progressInfo && <p className="text-[10px] text-white/70">{timeRemaining}</p>}
               </div>
             </div>
             <div className="flex items-center gap-1.5">
