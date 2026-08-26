@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -15,8 +15,6 @@ import {
   PartyPopper,
   Loader2,
   MoreVertical,
-  Check,
-  Crown,
 } from 'lucide-react';
 import ProofUploadModal from './ProofUploadModal';
 import CommentsBottomSheet from './CommentsBottomSheet';
@@ -49,7 +47,6 @@ interface FeedPactCardProps {
   onProofUpload?: (pactId: number, proof?: any) => void;
   detailHref?: string;
   dismissOnVote?: boolean;
-  enableGestures?: boolean;
   showVoteActions?: boolean;
   canUploadProof?: boolean;
   canReport?: boolean;
@@ -89,15 +86,6 @@ const REPORT_OPTIONS = [
     description: 'Contains harassment, hate, or other harmful content.',
   },
 ];
-
-const JOIN_MESSAGES: Record<string, string> = {
-  creator: 'You created this pact',
-  already_joined: "You're already part of this pact",
-  full: 'This pact is full',
-  not_active: 'This pact is no longer active',
-  no_access: "You don't have access to this pact",
-  unauthenticated: 'Sign in to join this pact',
-};
 
 function formatEndsIn(endDateRaw?: string) {
   if (!endDateRaw) return 'Ends soon';
@@ -313,29 +301,21 @@ export default function FeedPactCard({
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [commentSheetOpen, setCommentSheetOpen] = useState(false);
   const [dragX, setDragX] = useState(0);
-  const [dragY, setDragY] = useState(0);
   const [dragAxis, setDragAxis] = useState<DragAxis>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [exitDirection, setExitDirection] = useState<VoteDirection | null>(null);
   const [isVoting, setIsVoting] = useState(false);
-  const [showActionTag, setShowActionTag] = useState(false);
   const activePointerId = useRef<number | null>(null);
   const startPoint = useRef({ x: 0, y: 0 });
-  const lastTapAt = useRef(0);
-  const singleTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const committedRef = useRef(false);
-  // The hero carries pointer handlers (real drag tracking) AND onClick/
-  // onDoubleClick (tap-to-open, double-tap-to-vote) on the SAME element.
-  // Every browser fires a synthesized click on pointerup/touchend in
-  // addition to the manual pointer events above — including right after a
-  // real drag — so without this flag every swipe (paging photos or an
-  // in-progress skip/cheer/join drag) was immediately followed by its own
-  // "ghost tap": handleMediaTap/onDoubleClick ran their full tap logic a
-  // moment later as if nothing but a tap had happened. Set true the instant
-  // real movement is seen, checked (and left alone) by the click handlers
-  // below, and only cleared on the next pointerdown — this is what actually
-  // isolates "browsing photos" from "tapping/voting on the card", not the
-  // page-vs-vote pixel thresholds those handlers separately use.
+  // The hero carries pointer handlers (real drag tracking) AND an onClick
+  // (tap-to-open) on the SAME element. Every browser fires a synthesized
+  // click on pointerup/touchend in addition to the manual pointer events
+  // above — including right after a real paging drag — so without this flag
+  // every swipe through the photos was immediately followed by its own
+  // "ghost tap" that navigated to the detail page as if nothing but a tap
+  // had happened. Set true the instant real movement is seen, checked (and
+  // left alone) by handleMediaTap below, and only cleared on the next
+  // pointerdown.
   const didDragRef = useRef(false);
   // Tracks whether this specific card fired the join confetti, so the
   // unmount cleanup below only resets the (shared, global) confetti canvas
@@ -350,36 +330,20 @@ export default function FeedPactCard({
   const [isCheering, setIsCheering] = useState(false);
   const [activeProofIndex, setActiveProofIndex] = useState(0);
   const cheerInputRef = useRef<HTMLInputElement>(null);
-  // Kept for backwards-compatible rendering of any explicit join prompt
-  // state; swipe-right now joins directly and no longer opens this nudge.
-  const [showJoinNudge, setShowJoinNudge] = useState(false);
 
   useEffect(() => {
     setDragX(0);
-    setDragY(0);
     setDragAxis(null);
     setIsDragging(false);
     setExitDirection(null);
     setIsVoting(false);
-    setShowActionTag(false);
-    committedRef.current = false;
     setActiveProofIndex(0);
-    setShowJoinNudge(false);
     setMoreMenuOpen(false);
-    if (singleTapTimeoutRef.current) {
-      clearTimeout(singleTapTimeoutRef.current);
-      singleTapTimeoutRef.current = null;
-    }
   }, [pact.id]);
 
-  // Guard against navigating after the card has unmounted (e.g. dismissed
-  // via a vote) while a single-tap-to-open timer is still pending.
+  // canvas-confetti cleanup on unmount.
   useEffect(() => {
     return () => {
-      if (singleTapTimeoutRef.current) {
-        clearTimeout(singleTapTimeoutRef.current);
-        singleTapTimeoutRef.current = null;
-      }
       // canvas-confetti's default confetti() call attaches one shared,
       // full-viewport canvas straight to document.body with its own
       // requestAnimationFrame loop — independent of this component's
@@ -472,18 +436,6 @@ export default function FeedPactCard({
     params.set('pactId', String(pact.id));
     router.push(`/circles/create?${params.toString()}`);
   };
-  // Swipe-right (and its double-tap shortcut) branches on membership instead
-  // of performing a vote: participants get the Cheer flow, while a
-  // non-participant joins immediately. The join action uses the same backend
-  // endpoint as the explicit Join button, then celebrates in place so the
-  // user stays in the feed and can continue browsing.
-  const rightAction: RightAction = isCreator
-    ? null
-    : isParticipant
-      ? (hasCheered ? null : 'cheer')
-      : joinAllowed
-        ? 'join'
-        : null;
   // Skip is a "should I join this?" decision for non-members only — once a
   // user has joined, there's nothing left to skip. Without the `!isParticipant`
   // guard here, a joined pact still showed a "Skip" button next to the
@@ -492,51 +444,33 @@ export default function FeedPactCard({
   // status once a member; cheering remains available via the persistent
   // action-row cheer button below, so nothing is lost by hiding this row.
   const canSkip = Boolean(onVote) && !isCreator && !isParticipant && displayVote !== 'skip';
-  const gesturesEnabled = (enableGestures ?? true) && (canSkip || rightAction !== null);
   // Live per-pixel offset fed into PactGallery so the photo strip tracks the
   // finger in real time during a paging drag (Instagram-style) instead of
   // only jumping once the gesture commits on release.
   const isPagingDrag = isDragging && dragAxis === 'horizontal' && canPageMedia;
   const galleryDragOffsetPx = isPagingDrag ? dragX : 0;
   const voteActionsVisible = (showVoteActions ?? Boolean(onVote)) && !isCreator && !isParticipant;
-  const voteStatusLabel = displayVote === 'skip' ? 'skipped' : null;
 
+  // Voting/cheering/joining are button-only actions (see the action row
+  // below) — the hero's drag gesture exists solely to page through photos,
+  // so the card itself never tilts or shifts while dragging. The only
+  // transform the wrapper ever needs is the skip-vote dismiss animation.
   const transformStyle = useMemo(() => {
     if (isExiting) {
-      // Only "skip" ever exits the card off-screen — cheering or getting
-      // nudged to join both leave the card in place in the feed.
       return { transform: 'translateX(-115%) rotate(-12deg)', opacity: 0, transition: 'transform 260ms ease, opacity 260ms ease' };
     }
-
-    if (isDragging) {
-      // The tilt AND the horizontal shift are both a vote-swipe affordance
-      // (this whole card being flicked away to skip/cheer/join) — neither
-      // has any business appearing while the drag is just flipping through
-      // photos. When paging owns the gesture, the photo strip inside
-      // PactGallery tracks the finger itself (via dragOffsetPx below); this
-      // wrapper staying put avoids double-shifting the same drag twice, and
-      // avoids revealing empty space next to the (stationary) strip.
-      const rotate = canPageMedia ? 0 : Math.max(Math.min(dragX / 18, 10), -10);
-      const translateX = canPageMedia ? 0 : dragX;
-      return { transform: `translate3d(${translateX}px, ${dragY}px, 0) rotate(${rotate}deg)`, transition: 'none' };
-    }
-
     return { transform: 'translate3d(0, 0, 0)', transition: 'transform 240ms ease, opacity 240ms ease' };
-  }, [canPageMedia, dragX, dragY, exitDirection, isDragging, isExiting]);
+  }, [isExiting]);
 
   const resetDrag = () => {
     if (isExiting) return;
     setDragX(0);
-    setDragY(0);
     setDragAxis(null);
     setIsDragging(false);
-    setShowActionTag(false);
-    committedRef.current = false;
   };
 
   const completeVote = async (direction: VoteDirection) => {
-    if (!canSkip || !onVote || isVoting || committedRef.current) return;
-    committedRef.current = true;
+    if (!canSkip || !onVote || isVoting) return;
     setIsVoting(true);
 
     const previousVote = displayVote;
@@ -554,31 +488,8 @@ export default function FeedPactCard({
       resetDrag();
     } catch {
       setDisplayVote(previousVote);
-      committedRef.current = false;
       setIsVoting(false);
       resetDrag();
-    }
-  };
-
-  // Snaps the card back to center without touching committedRef — used by
-  // the cheer/join branch of the swipe-right gesture, which (unlike skip)
-  // never exits/dismisses the card, so the drag visuals just need to reset.
-  const snapBack = () => {
-    setDragX(0);
-    setDragY(0);
-    setDragAxis(null);
-    setIsDragging(false);
-    setShowActionTag(false);
-  };
-
-  const triggerRightAction = () => {
-    if (!rightAction || committedRef.current) return;
-    committedRef.current = true;
-    snapBack();
-    if (rightAction === 'cheer') {
-      cheerInputRef.current?.click();
-    } else {
-      void handleJoinPact();
     }
   };
 
@@ -595,7 +506,6 @@ export default function FeedPactCard({
   const handleCheerFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
-    committedRef.current = false;
     if (!file) {
       setOptimisticCheer(false);
       setDisplayCheerCount((count) => Math.max(0, count - 1));
@@ -625,17 +535,14 @@ export default function FeedPactCard({
     });
   };
 
-  // A drag below the vote-commit threshold pages through photos instead of
-  // doing nothing — this is what makes the hero's photo strip swipeable
-  // directly in the feed, without stealing the gesture surface reserved for
-  // the decisive skip/cheer/join swipe (which still wins once the drag
-  // crosses MEDIA_PAGE_VOTE_THRESHOLD_PX below).
+  // The hero's drag gesture ONLY pages through photos — voting, cheering,
+  // and joining are exclusively button-driven (see the action row below).
+  // A drag below this threshold snaps back to the current photo instead of
+  // paging, so a light tap-like wobble doesn't accidentally flip pages.
   const MEDIA_PAGE_THRESHOLD_PX = 40;
-  const MEDIA_PAGE_VOTE_THRESHOLD_PX = 90;
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    console.log('[v0] pointerdown', { gesturesEnabled, canPageMedia, isVoting, isExiting, pointerId: event.pointerId });
-    if (!gesturesEnabled && !canPageMedia) return;
+    if (!canPageMedia) return;
     if ((event.target as HTMLElement | null)?.closest('button,a')) return;
     if (isVoting || isExiting) return;
     activePointerId.current = event.pointerId;
@@ -643,24 +550,11 @@ export default function FeedPactCard({
     didDragRef.current = false;
     setDragAxis(null);
     setIsDragging(false);
-    setShowActionTag(false);
-    committedRef.current = false;
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    console.log('[v0] pointermove', { activePointerId: activePointerId.current, eventPointerId: event.pointerId, dragAxis, canPageMedia });
-    if (!gesturesEnabled && !canPageMedia) return;
-    // Once a gesture has committed (skip/cheer/join fired), the pointer is
-    // very likely still down and still moving — without this check, this
-    // handler kept re-entering on every subsequent move tick and re-set
-    // isDragging/dragX from scratch, "reviving" the drag transform right
-    // after triggerRightAction's snapBack() had just cleared it. That's what
-    // produced the frozen, stuck-at-an-angle card: the reset only ever held
-    // for a single frame before being overwritten by the next move event of
-    // the same still-active gesture. isVoting already covers the skip/vote
-    // path (completeVote sets it before its await), but the cheer/join path
-    // never sets any flag this handler checks — committedRef is that flag.
-    if (activePointerId.current !== event.pointerId || isVoting || isExiting || committedRef.current) return;
+    if (!canPageMedia) return;
+    if (activePointerId.current !== event.pointerId || isVoting || isExiting) return;
 
     const dx = event.clientX - startPoint.current.x;
     const dy = event.clientY - startPoint.current.y;
@@ -688,73 +582,19 @@ export default function FeedPactCard({
       setDragAxis('horizontal');
       setIsDragging(true);
       setDragX(dx);
-      setDragY(0);
-
-      // Photo paging owns the horizontal drag entirely whenever there's more
-      // than one photo to look through. Previously the vote/cheer/join swipe
-      // could fire mid-drag (as soon as dx crossed the threshold, before the
-      // finger even lifted) on TOP of an in-progress "flip through the
-      // photos" gesture — a normal swipe easily travels past 90px before
-      // release, so photo browsing on any un-joined pact kept getting
-      // hijacked into a "Join to cheer this pact" overlay covering the
-      // photos entirely (reported as an unwanted "Submit Proof"-style
-      // prompt), and the feed never actually paged because the vote gesture
-      // always won the race. Voting/cheering/joining remain fully available
-      // via their dedicated buttons below the hero — only the ambiguous
-      // drag shortcut is scoped to pacts with nothing to page through.
-      // A rightward drag was previously always treated as the explicit
-      // Join/Cheer gesture, even on cards with multiple photos to page
-      // through — so swiping backward to an earlier photo kept re-triggering
-      // join/cheer (surfacing as an unwanted "Submit Proof"-style prompt),
-      // even on pacts the viewer wasn't interacting with at all. Paging must
-      // own the drag in both directions whenever there's more than one
-      // photo; voting/cheering/joining stay available via their dedicated
-      // buttons below the hero.
-      if (canPageMedia) {
-        setShowActionTag(false);
-        return;
-      }
-
-      setShowActionTag(gesturesEnabled && Math.abs(dx) >= MEDIA_PAGE_VOTE_THRESHOLD_PX);
-
-      if (gesturesEnabled && dx <= -MEDIA_PAGE_VOTE_THRESHOLD_PX && canSkip) {
-        void completeVote('skip');
-      } else if (gesturesEnabled && dx >= MEDIA_PAGE_VOTE_THRESHOLD_PX && rightAction) {
-        triggerRightAction();
-      }
     }
   };
 
   const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!gesturesEnabled && !canPageMedia) return;
+    if (!canPageMedia) return;
     if (activePointerId.current !== event.pointerId) return;
     activePointerId.current = null;
 
     if (isVoting || isExiting) return;
 
-    // Same defensive check as handlePointerMove above — if the gesture
-    // already committed mid-drag, drag state was already reset by
-    // snapBack()/resetDrag() and there's nothing left to do here.
-    if (committedRef.current) {
-      resetDrag();
-      return;
-    }
-
-    if (!canPageMedia && dragAxis === 'horizontal' && gesturesEnabled && Math.abs(dragX) >= MEDIA_PAGE_VOTE_THRESHOLD_PX) {
-      if (dragX < 0 && canSkip) {
-        void completeVote('skip');
-        return;
-      }
-      if (dragX > 0 && rightAction) {
-        triggerRightAction();
-        return;
-      }
-    }
-
-    // Didn't cross the vote-commit threshold (or gestures are off entirely,
-    // e.g. the pact detail page) — a confident-enough drag pages the photo
-    // strip instead of just snapping back to center.
-    if (dragAxis === 'horizontal' && canPageMedia && Math.abs(dragX) >= MEDIA_PAGE_THRESHOLD_PX) {
+    // A confident-enough drag pages the photo strip; anything shorter just
+    // snaps back to center.
+    if (dragAxis === 'horizontal' && Math.abs(dragX) >= MEDIA_PAGE_THRESHOLD_PX) {
       pageMedia(dragX < 0 ? 'next' : 'prev');
       resetDrag();
       return;
@@ -764,17 +604,13 @@ export default function FeedPactCard({
   };
 
   // Single tap anywhere on the hero (image / progress ring / placeholder)
-  // opens the pact detail, same as tapping the rest of the card — it used to
-  // always stopPropagation() and swallow the tap here, which made most of
-  // the card's visible area dead to a single tap. A short delay lets a fast
-  // follow-up tap still be caught below as the double-tap-to-cheer/join
-  // gesture instead of navigating away immediately.
+  // opens the pact detail, same as tapping the rest of the card.
   const handleMediaTap = (event: React.MouseEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement | null)?.closest('button,a')) return;
 
     // This click is the browser's own ghost-tap follow-up to a real drag
     // (see didDragRef above), not an actual tap — swallow it before it can
-    // navigate to the detail page or register as half of a double-tap vote.
+    // navigate to the detail page.
     if (didDragRef.current) {
       event.stopPropagation();
       return;
@@ -785,26 +621,8 @@ export default function FeedPactCard({
       return;
     }
 
-    const now = Date.now();
-    const tappedTwice = now - lastTapAt.current < 300;
-    lastTapAt.current = now;
     event.stopPropagation();
-
-    if (tappedTwice) {
-      if (singleTapTimeoutRef.current) {
-        clearTimeout(singleTapTimeoutRef.current);
-        singleTapTimeoutRef.current = null;
-      }
-      if (gesturesEnabled && rightAction) {
-        triggerRightAction();
-      }
-      return;
-    }
-
-    singleTapTimeoutRef.current = setTimeout(() => {
-      singleTapTimeoutRef.current = null;
-      handleCardNavigate();
-    }, 300);
+    handleCardNavigate();
   };
 
   const handleReport = async (reason: 'fake_or_ai' | 'spam' | 'offensive') => {
@@ -869,7 +687,6 @@ export default function FeedPactCard({
         origin: { y: 0.68 },
         colors: ['#10b981', '#fbbf24', '#f472b6', '#8b5cf6'],
       });
-      setShowJoinNudge(false);
     } catch (error: any) {
       toast.error(error?.response?.data?.detail || 'Failed to join pact');
     } finally {
@@ -886,19 +703,6 @@ export default function FeedPactCard({
     router.push(resolvedDetailHref);
   };
 
-  // Unified action-row Cheer icon: unchanged from the existing Cheer feature.
-  // Eligible members trigger the same fast single-photo flow as swipe-right /
-  // double-tap; everyone else (creator, already-cheered, non-participants)
-  // gets a "view cheers" tap-through to the detail page, matching the old
-  // rail icon's passive count+link behavior.
-  const handleCheerIconClick = () => {
-    if (rightAction === 'cheer') {
-      triggerRightAction();
-    } else {
-      router.push(resolvedDetailHref);
-    }
-  };
-
   return (
     <>
       <motion.div
@@ -911,26 +715,19 @@ export default function FeedPactCard({
           chromeless ? '' : 'rounded-[28px]'
         } ${moreMenuOpen ? 'overflow-visible' : 'overflow-hidden'}`}
       >
-        {/* Hero: the single unified photo/cheer strip (proofs + cheers, swipeable
-            via drag or dots), else a duration-progress ring, else the old
-            empty-state placeholder. Swipe-left (skip) / swipe-right (cheer or
-            join) / double-tap-cheer share this surface with photo paging —
-            a decisive swipe still wins the vote gesture; a shorter drag pages
-            through photos instead, so the same swipeable strip works here in
-            the feed and, unchanged, on the pact detail page. */}
+        {/* Hero: the single unified photo/cheer strip (proofs + cheers,
+            swipeable via drag or dots), else a duration-progress ring, else
+            the old empty-state placeholder. Dragging the hero ONLY pages
+            through photos — voting, cheering, and joining are handled
+            exclusively by the buttons in the action row below, so the same
+            swipeable strip works here in the feed and, unchanged, on the
+            pact detail page. */}
         <div
           className="relative isolate aspect-[4/5] w-full select-none touch-pan-y"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={resetDrag}
-          onDoubleClick={(event) => {
-            if ((event.target as HTMLElement | null)?.closest('button,a')) return;
-            // Same ghost-event concern as handleMediaTap above — a real
-            // drag must never also read as (half of) a double-tap vote.
-            if (didDragRef.current) return;
-            if (rightAction) triggerRightAction();
-          }}
           onClick={handleMediaTap}
           style={transformStyle}
         >
@@ -999,158 +796,16 @@ export default function FeedPactCard({
             {circleLabel && <p className="mt-1 text-xs font-medium text-white/75">{circleLabel}</p>}
           </div>
 
-          {gesturesEnabled &&
-            dragAxis === 'horizontal' &&
-            showActionTag &&
-            !isExiting &&
-            (dragX < 0 ? canSkip : Boolean(rightAction)) && (
-              <div className="absolute inset-x-0 top-6 z-10 flex px-4">
-                <div
-                  className={`rounded-full border px-4 py-1 text-xs font-black uppercase tracking-[0.25em] ${
-                    dragX > 0
-                      ? `ml-auto ${rightAction === 'join' ? 'border-emerald-400 text-emerald-300' : 'border-[var(--pact-gold)] text-[var(--pact-gold)]'}`
-                      : 'mr-auto border-rose-400 text-rose-300'
-                  }`}
-                >
-                  {dragX > 0 ? (rightAction === 'join' ? 'join' : 'cheer') : 'skip'}
-                </div>
-              </div>
-            )}
-
-          {/* Swipe-right on a pact the user hasn't joined used to bounce
-              them out to a blocking "must be a participant" error toast —
-              a dead end right when they showed positive intent. This
-              slides up an inline join prompt over the hero instead. */}
-          <AnimatePresence>
-            {showJoinNudge && (
-              <motion.div
-                initial={{ y: '100%' }}
-                animate={{ y: 0 }}
-                exit={{ y: '100%' }}
-                transition={{ duration: 0.28, ease: 'easeOut' }}
-                className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-slate-950/92 px-6 text-center backdrop-blur-sm"
-              >
-                <div className="flex h-14 w-14 items-center justify-center rounded-full border border-emerald-400/40 bg-emerald-400/15">
-                  <ArrowRight className="h-6 w-6 text-emerald-300" />
-                </div>
-                <div>
-                  <p className="text-lg font-black text-white">Join to cheer this pact</p>
-                  <p className="mt-1.5 text-sm text-white/65">
-                    Only members can cheer — join {creatorLabel ? `@${creatorLabel}'s` : 'this'} pact to back it.
-                  </p>
-                </div>
-                <PremiumJoinButton onClick={handleJoinPact} loading={isJoining} size="md" />
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setShowJoinNudge(false);
-                    committedRef.current = false;
-                  }}
-                  className="text-sm font-semibold text-white/50 transition hover:text-white/80"
-                >
-                  Not now
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
 
         {/* Body: the photo carries the title/circle context; keep only a
-            compact caption and the quiet secondary action row below it. The
-            legacy CTA block remains mounted but hidden so its existing
-            handlers/state are not rewritten or duplicated during this visual
-            restructure. */}
+            compact caption and the quiet secondary action row below it. */}
         <div className="px-4 py-3.5">
           {(activeProof?.description || media.caption) && (
             <p className="text-[13px] italic leading-relaxed text-[var(--pact-text-dim)]">
               &ldquo;{activeProof?.description || media.caption}&rdquo;
             </p>
           )}
-
-          <div className="hidden" onClick={(event) => event.stopPropagation()}>
-            <p className="flex items-center gap-1.5 text-sm font-bold text-[var(--pact-text)]">
-              <PartyPopper className="h-3.5 w-3.5 text-[var(--pact-gold)]" />
-              {formatCompactCount(cheerCount)} cheering this pact
-            </p>
-
-            {!joinAllowed && pact.join_block_reason === 'already_joined' && (
-              <span
-                title="You're already part of this pact"
-                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-400/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-emerald-300"
-              >
-                <Check className="h-3.5 w-3.5" />
-                Joined
-              </span>
-            )}
-
-            {!joinAllowed && pact.join_block_reason === 'creator' && (
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  title="You created this pact"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-amber-300"
-                >
-                  <Crown className="h-3.5 w-3.5" />
-                  Creator
-                </span>
-                {uploadAllowed && (
-                  <button
-                    type="button"
-                    onClick={handleProofUploadClick}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-[var(--pact-violet)]/50 bg-[var(--pact-violet)]/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[var(--pact-violet)] transition hover:bg-[var(--pact-violet)]/25"
-                  >
-                    <FileImage className="h-3.5 w-3.5" />
-                    Submit Proof
-                  </button>
-                )}
-              </div>
-            )}
-
-            {!joinAllowed && pact.join_block_reason && pact.join_block_reason !== 'already_joined' && pact.join_block_reason !== 'creator' && (
-              <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--pact-text-faint)]">
-                {JOIN_MESSAGES[pact.join_block_reason] ?? 'Joining is not available'}
-                {pact.join_block_reason === 'full' && pact.max_participants
-                  ? ` — ${pact.max_participants}/${pact.max_participants} joined`
-                  : ''}
-              </p>
-            )}
-
-            {voteStatusLabel && (
-              <p className="inline-flex items-center rounded-full border border-rose-400/70 bg-rose-500/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-rose-200">
-                {voteStatusLabel}
-              </p>
-            )}
-
-            {!voteStatusLabel && (voteActionsVisible || joinAllowed) && (
-              <div className="flex items-center gap-2">
-                {voteActionsVisible && canSkip && (
-                  <button
-                    type="button"
-                    onClick={() => void completeVote('skip')}
-                    disabled={isVoting}
-                    className="inline-flex items-center gap-2 rounded-full border border-[var(--pact-hairline)] bg-white/5 px-4 py-2 text-sm font-semibold text-[var(--pact-text)] transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                    Skip
-                  </button>
-                )}
-                <div className="ml-auto flex items-center gap-2">
-                  {joinAllowed && <PremiumJoinButton onClick={handleJoinPact} loading={isJoining} size="sm" />}
-                  {!joinAllowed && voteActionsVisible && rightAction === 'cheer' && (
-                    <button
-                      type="button"
-                      onClick={triggerRightAction}
-                      disabled={isCheering}
-                      className="inline-flex items-center gap-2 rounded-full border border-[var(--pact-gold)]/50 bg-[var(--pact-gold)]/12 px-4 py-2 text-sm font-semibold text-[var(--pact-gold)] transition hover:bg-[var(--pact-gold)]/18 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {isCheering ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Cheer'}
-                      <ArrowRight className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
 
           {/* Unified action row: same stroke-icon size/style for all three, muted at rest, accented only on hover/active */}
           <div className="mt-3 flex items-center gap-6" onClick={(event) => event.stopPropagation()}>
