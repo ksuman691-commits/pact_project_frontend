@@ -11,7 +11,6 @@ import {
   Share2,
   FileImage,
   ArrowLeft,
-  ArrowRight,
   Camera,
   PartyPopper,
   Loader2,
@@ -37,10 +36,9 @@ import confetti from 'canvas-confetti';
 
 // Support (the old swipe-right vote-support action) has been removed —
 // Cheer and Join now cover that ground, so "skip" is the only remaining
-// vote direction. Swipe-right/double-tap is repurposed below to open the
-// Cheer flow (participants) or the Join nudge (non-participants) instead.
+// vote direction. Swiping the hero ONLY pages through photos — voting,
+// cheering, and joining are button-only actions (see the action row below).
 type VoteDirection = 'skip';
-type RightAction = 'cheer' | 'join' | null;
 type DragAxis = 'horizontal' | 'vertical' | null;
 
 interface FeedPactCardProps {
@@ -298,7 +296,6 @@ export default function FeedPactCard({
   onProofUpload,
   detailHref,
   dismissOnVote = true,
-  enableGestures,
   showVoteActions,
   canUploadProof,
   canReport = true,
