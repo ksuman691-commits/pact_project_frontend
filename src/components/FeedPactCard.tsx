@@ -637,6 +637,7 @@ export default function FeedPactCard({
   const MEDIA_PAGE_VOTE_THRESHOLD_PX = 90;
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    console.log('[v0] pointerdown', { gesturesEnabled, canPageMedia, isVoting, isExiting, pointerId: event.pointerId });
     if (!gesturesEnabled && !canPageMedia) return;
     if ((event.target as HTMLElement | null)?.closest('button,a')) return;
     if (isVoting || isExiting) return;
@@ -650,6 +651,7 @@ export default function FeedPactCard({
   };
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    console.log('[v0] pointermove', { activePointerId: activePointerId.current, eventPointerId: event.pointerId, dragAxis, canPageMedia });
     if (!gesturesEnabled && !canPageMedia) return;
     // Once a gesture has committed (skip/cheer/join fired), the pointer is
     // very likely still down and still moving — without this check, this
