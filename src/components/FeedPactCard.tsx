@@ -300,6 +300,14 @@ export default function FeedPactCard({
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [commentSheetOpen, setCommentSheetOpen] = useState(false);
+  // The feed/detail list responses don't serialize a live comment count yet
+  // (see BACKEND_SPEC_COMMENT_COUNT.md — the `Pact.comment_count` column
+  // exists and is kept up to date server-side, it's just never included in
+  // the response payload), so `commentCount` below is always 0 from list
+  // data. Once the chat sheet has been opened at least once, CommentSection
+  // reports back the real total from its own paginated query via this
+  // callback, so the badge/label self-correct without a page reload.
+  const [liveCommentCount, setLiveCommentCount] = useState<number | null>(null);
   const [dragX, setDragX] = useState(0);
   const [dragAxis, setDragAxis] = useState<DragAxis>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -379,7 +387,7 @@ export default function FeedPactCard({
   const circleLabel = pact.circle || pact.circle_name || pact.category || null;
   const cheerCount = displayCheerCount;
   const proofCount = Number(pact.proof_count ?? pact.proofClips?.length ?? 0);
-  const commentCount = Number(pact.comment_count ?? pact.comments?.length ?? 0);
+  const commentCount = liveCommentCount ?? Number(pact.comment_count ?? pact.comments?.length ?? 0);
   const timeRemaining = pact.timeRemaining || formatEndsIn(pact.end_date || pact.deadline);
   const proofs = useMemo(() => getProofs(pact), [pact]);
   const media = useMemo(() => getMedia(pact), [pact]);
@@ -920,6 +928,7 @@ export default function FeedPactCard({
         commentCount={commentCount}
         isOpen={commentSheetOpen}
         onClose={() => setCommentSheetOpen(false)}
+        onCountChange={setLiveCommentCount}
       />
 
       {reportSheetOpen && (

@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AlertCircle, Loader, RotateCw, Send, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
 import { usePactComments } from '@/hooks/useFeedQueries';
 import { useAddComment, useDeleteComment } from '@/hooks/usePactMutations';
 import UserAvatarLink from '@/components/UserAvatarLink';
+import { formatRelativeTime, parseApiDate } from '@/lib/dareCountdown';
 
 interface Comment {
   id: number;
@@ -24,6 +25,11 @@ interface Comment {
 
 interface CommentSectionProps {
   pactId: number;
+  /** Reports the real total (from this component's own paginated query)
+   * back to the caller — the feed/detail list endpoints don't serialize a
+   * live comment count yet, so this is the only accurate source until
+   * BACKEND_SPEC_COMMENT_COUNT.md ships. */
+  onCountChange?: (count: number) => void;
 }
 
 // Chat bubble row — same data/mutations as before, just presented like a
@@ -35,7 +41,15 @@ function CommentRow({ comment, pactId, currentUserId }: { comment: Comment; pact
   const isOwnComment = typeof currentUserId === 'number' && comment.user_id === currentUserId;
   const displayName = comment.username || comment.user || 'Someone';
   const avatarUrl = comment.avatar_url || comment.avatar || null;
-  const timestamp = comment.timestamp || comment.created_at || 'just now';
+  // Comments only ever have a raw ISO/API timestamp (there's no separate
+  // pre-formatted `timestamp` field coming from the backend today, but the
+  // type keeps it as a fallback) — rendering that raw string verbatim
+  // showed something like "2026-08-25T13:04:11.912000" in the chat instead
+  // of a normal "5m ago" label. Route it through the same relative-time +
+  // UTC-safe parsing used for dare deadlines elsewhere in the app.
+  const rawTimestamp = comment.created_at || comment.timestamp;
+  const parsedTimestamp = parseApiDate(rawTimestamp);
+  const timestamp = parsedTimestamp ? formatRelativeTime(rawTimestamp) : rawTimestamp || 'just now';
 
   return (
     <div className={`flex items-start gap-2 ${isOwnComment ? 'flex-row-reverse' : ''}`}>
@@ -65,7 +79,12 @@ function CommentRow({ comment, pactId, currentUserId }: { comment: Comment; pact
         >
           {comment.text}
         </div>
-        <p className="mt-1 px-1 text-[10px] text-[var(--pact-text-faint)]">{timestamp}</p>
+        <p
+          className="mt-1 px-1 text-[10px] text-[var(--pact-text-faint)]"
+          title={parsedTimestamp ? parsedTimestamp.toLocaleString() : undefined}
+        >
+          {timestamp}
+        </p>
       </div>
     </div>
   );
@@ -73,6 +92,7 @@ function CommentRow({ comment, pactId, currentUserId }: { comment: Comment; pact
 
 export default function CommentSection({
   pactId,
+  onCountChange,
 }: CommentSectionProps) {
   const { user } = useAuthStore();
   const [newComment, setNewComment] = useState('');
@@ -83,6 +103,17 @@ export default function CommentSection({
     () => (commentsQuery.data?.pages ?? []).flatMap((page: any) => page.data ?? []),
     [commentsQuery.data]
   );
+
+  // `pagination.total` on the first page is the authoritative live count;
+  // fall back to the loaded comment count so an optimistic add/delete still
+  // reflects instantly instead of waiting on a refetch.
+  const liveTotal = commentsQuery.data?.pages?.[0]?.pagination?.total ?? comments.length;
+
+  useEffect(() => {
+    if (!commentsQuery.isLoading) {
+      onCountChange?.(liveTotal);
+    }
+  }, [liveTotal, commentsQuery.isLoading, onCountChange]);
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
