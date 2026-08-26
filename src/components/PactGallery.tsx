@@ -92,7 +92,7 @@ interface PactGalleryProps {
    * over the bottom of the image instead, for use inside a fixed-aspect
    * container like the feed hero, where extra layout height isn't available.
    */
-  dotsPosition?: 'below' | 'overlay';
+  dotsPosition?: 'below' | 'overlay' | 'none';
   /** Fills the parent's height instead of sizing itself via aspectClassName — used by the feed hero. */
   fillHeight?: boolean;
   /**
@@ -280,7 +280,7 @@ export default function PactGallery({
           ))}
         </div>
 
-        {tiles.length > 1 && (
+        {tiles.length > 1 && dotsPosition !== 'none' && (
           <div
             className={
               dotsPosition === 'overlay'

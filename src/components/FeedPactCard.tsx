@@ -231,49 +231,60 @@ function PactProgressRing({
   elapsedDays,
   totalDays,
   gradientId,
+  compact = false,
 }: {
   percent: number;
   elapsedDays: number;
   totalDays: number;
   gradientId: string;
+  compact?: boolean;
 }) {
-  const radius = 60;
+  const size = compact ? 92 : 150;
+  const center = size / 2;
+  const radius = compact ? 39 : 60;
+  const strokeWidth = compact ? 6 : 9;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - percent / 100);
 
   return (
-    <div className="relative flex h-[150px] w-[150px] items-center justify-center">
-      <svg viewBox="0 0 130 130" className="h-full w-full -rotate-90">
+    <div
+      className={`relative flex shrink-0 items-center justify-center ${compact ? 'h-[92px] w-[92px]' : 'h-[150px] w-[150px]'}`}
+      style={compact ? { filter: 'drop-shadow(0 0 7px color-mix(in srgb, var(--pact-violet) 60%, transparent))' } : undefined}
+    >
+      <svg viewBox={`0 0 ${size} ${size}`} className={`h-full w-full -rotate-90 ${compact ? 'animate-[pulse_3s_ease-in-out_infinite]' : ''}`} role="img" aria-label={`Day ${elapsedDays} of ${totalDays}`}>
         <defs>
-          <linearGradient id={gradientId}>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="var(--pact-pink)" />
             <stop offset="100%" stopColor="var(--pact-violet)" />
           </linearGradient>
         </defs>
-        <circle cx="65" cy="65" r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={9} />
+        <circle cx={center} cy={center} r={radius} fill="rgba(15, 10, 30, 0.68)" stroke="rgba(255,255,255,0.18)" strokeWidth={strokeWidth} />
+        <circle cx={center} cy={center} r={radius} fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth={strokeWidth} />
         <circle
-          cx="65"
-          cy="65"
+          cx={center}
+          cy={center}
           r={radius}
           fill="none"
           stroke={`url(#${gradientId})`}
-          strokeWidth={9}
+          strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           style={{ transition: 'stroke-dashoffset 900ms ease-out' }}
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span
-          className="text-2xl font-bold text-[var(--pact-text)]"
-          style={{ fontFamily: 'var(--font-pact-mono), monospace' }}
-        >
-          {percent}%
-        </span>
-        <span className="mt-0.5 text-[10.5px] text-[var(--pact-text-faint)]">
-          {elapsedDays}/{totalDays} days
-        </span>
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
+        {compact ? (
+          <>
+            <span className="text-[23px] font-black tracking-[-0.04em] text-[var(--pact-text)]" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>D{elapsedDays}</span>
+            <span className="mt-1 text-[11px] font-bold text-[var(--pact-text-dim)]" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>of {totalDays}</span>
+          </>
+        ) : (
+          <>
+            <span className="text-2xl font-bold text-[var(--pact-text)]" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>{percent}%</span>
+            <span className="mt-0.5 text-[10.5px] text-[var(--pact-text-faint)]">{elapsedDays}/{totalDays} days</span>
+          </>
+        )}
       </div>
     </div>
   );
@@ -901,99 +912,6 @@ export default function FeedPactCard({
           chromeless ? '' : 'rounded-[28px]'
         } ${moreMenuOpen ? 'overflow-visible' : 'overflow-hidden'}`}
       >
-        {/* Header row: avatar + creator name + category tag + time-left badge + overflow menu */}
-        <div className="flex min-w-0 items-center gap-3 px-4 py-3">
-          <div className="flex-shrink-0" onClick={(event) => event.stopPropagation()}>
-            {creatorProfileHref ? (
-              <UserAvatarLink
-                name={creatorLabel}
-                avatarUrl={creatorAvatarUrl}
-                username={creatorUsername}
-                size={40}
-                stopPropagation
-              />
-            ) : (
-              <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={40} />
-            )}
-          </div>
-
-          <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold text-[var(--pact-text)]">{creatorLabel === 'You' ? 'You' : `@${creatorLabel}`}</p>
-            {circleLabel && (
-              <span className="mt-1 inline-flex max-w-full truncate rounded-full bg-[var(--pact-surface-3)] px-2 py-0.5 text-[10px] font-semibold text-[var(--pact-text-dim)]">
-                {circleLabel}
-              </span>
-            )}
-          </div>
-
-          <span
-            className="max-w-[35%] shrink-0 truncate rounded-full bg-[var(--pact-surface-3)] px-2.5 py-1 text-[10.5px] font-semibold text-[var(--pact-gold)]"
-            style={{ fontFamily: 'var(--font-pact-mono), monospace' }}
-          >
-            {timeRemaining}
-          </span>
-
-          <div className="relative flex-shrink-0" onClick={(event) => event.stopPropagation()}>
-            <button
-              type="button"
-              onClick={() => setMoreMenuOpen((open) => !open)}
-              aria-label="more options"
-              aria-haspopup="menu"
-              aria-expanded={moreMenuOpen}
-              className="rounded-full p-1.5 text-[var(--pact-text-faint)] transition hover:bg-white/5 hover:text-[var(--pact-text)]"
-            >
-              <MoreVertical className="h-[18px] w-[18px]" />
-            </button>
-
-            {moreMenuOpen && (
-              <>
-                <button
-                  type="button"
-                  aria-label="close more options menu"
-                  onClick={() => setMoreMenuOpen(false)}
-                  className="fixed inset-0 z-40 cursor-default"
-                />
-                <div
-                  role="menu"
-                  className="absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)] py-1.5 shadow-[0_12px_28px_rgba(2,6,23,0.5)]"
-                >
-                  {uploadAllowed && (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setMoreMenuOpen(false);
-                        handleProofUploadClick();
-                      }}
-                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--pact-text)] transition hover:bg-white/5"
-                    >
-                      <FileImage className="h-4 w-4" />
-                      Upload proof
-                      {proofCount > 0 && (
-                        <span className="ml-auto text-xs text-[var(--pact-text-faint)]">{formatCompactCount(proofCount)}</span>
-                      )}
-                    </button>
-                  )}
-                  {canReport && (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setMoreMenuOpen(false);
-                        setReportSheetOpen(true);
-                      }}
-                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-rose-300 transition hover:bg-white/5"
-                    >
-                      <Flag className="h-4 w-4" />
-                      Report pact
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
         {/* Hero: the single unified photo/cheer strip (proofs + cheers, swipeable
             via drag or dots), else a duration-progress ring, else the old
             empty-state placeholder. Swipe-left (skip) / swipe-right (cheer or
@@ -1017,53 +935,70 @@ export default function FeedPactCard({
           onClick={handleMediaTap}
           style={transformStyle}
         >
+          {/* Story bars stay at the very top of the hero, independent of the
+              gallery's paging transform, so photo count/progress remains clear. */}
+          {tiles.length > 1 && (
+            <div className="pointer-events-none absolute inset-x-3 top-3 z-20 flex gap-1">
+              {tiles.map((tile, index) => (
+                <span key={`story-${tile.kind}-${tile.id}`} className={`h-0.5 flex-1 rounded-full ${index === activeProofIndex ? 'bg-white' : 'bg-white/45'}`} />
+              ))}
+            </div>
+          )}
+
+          <div className="pointer-events-none absolute inset-x-3 top-7 z-20 flex items-start justify-between gap-3 text-white">
+            <div className="flex min-w-0 items-center gap-2 rounded-full bg-black/30 px-2 py-1.5 backdrop-blur-sm">
+              <div className="pointer-events-auto flex-shrink-0" onClick={(event) => event.stopPropagation()}>
+                {creatorProfileHref ? <UserAvatarLink name={creatorLabel} avatarUrl={creatorAvatarUrl} username={creatorUsername} size={32} stopPropagation /> : <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={32} />}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-bold">{creatorLabel === 'You' ? 'You' : `@${creatorLabel}`}</p>
+                <p className="text-[10px] text-white/70">{timeRemaining}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {progressInfo && <PactProgressRing percent={progressInfo.percent} elapsedDays={progressInfo.elapsedDays} totalDays={progressInfo.totalDays} gradientId={`hero-ring-gradient-${pact.id}`} compact />}
+              <div className="pointer-events-auto relative" onClick={(event) => event.stopPropagation()}>
+                <button type="button" onClick={() => setMoreMenuOpen((open) => !open)} aria-label="more options" aria-haspopup="menu" aria-expanded={moreMenuOpen} className="rounded-full bg-black/35 p-2 text-white backdrop-blur-sm transition hover:bg-black/55"><MoreVertical className="h-4 w-4" /></button>
+                {moreMenuOpen && <>
+                  <button type="button" aria-label="close more options menu" onClick={() => setMoreMenuOpen(false)} className="fixed inset-0 z-40 cursor-default" />
+                  <div role="menu" className="absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)] py-1.5 shadow-xl">
+                    {uploadAllowed && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); handleProofUploadClick(); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--pact-text)] transition hover:bg-white/5"><FileImage className="h-4 w-4" />Upload proof{proofCount > 0 && <span className="ml-auto text-xs text-[var(--pact-text-faint)]">{formatCompactCount(proofCount)}</span>}</button>}
+                    {canReport && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); setReportSheetOpen(true); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-rose-300 transition hover:bg-white/5"><Flag className="h-4 w-4" />Report pact</button>}
+                  </div>
+                </>}
+              </div>
+            </div>
+          </div>
+
           {tiles.length > 0 ? (
             <PactGallery
               proofs={galleryProofs ?? proofs}
               cheers={galleryCheers ?? []}
               interactive={false}
               fillHeight
-              dotsPosition="overlay"
+              dotsPosition="none"
               activeIndex={activeProofIndex}
               onActiveIndexChange={setActiveProofIndex}
               dragOffsetPx={galleryDragOffsetPx}
               isDragging={isPagingDrag}
             />
-          ) : progressInfo ? (
-            <div className="relative flex h-full w-full items-center justify-center bg-[linear-gradient(160deg,var(--pact-surface-3),var(--pact-surface-2))]">
-              <div
-                className="pointer-events-none absolute inset-0"
-                style={{ background: 'radial-gradient(circle at 30% 20%, rgba(255,79,135,0.18), transparent 55%)' }}
-              />
-              <PactProgressRing
-                percent={progressInfo.percent}
-                elapsedDays={progressInfo.elapsedDays}
-                totalDays={progressInfo.totalDays}
-                gradientId={`pact-ring-gradient-${pact.id}`}
-              />
-            </div>
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#EDE9FE_0%,#C4B5FD_40%,#A78BFA_100%)]">
-              <div className="relative h-full w-full overflow-hidden">
-                {/* Soft large letter watermark */}
-                <div className="absolute inset-0 flex items-center justify-center text-[140px] font-black text-violet-300/20 select-none">
-                  {creatorLabel.charAt(0).toUpperCase()}
-                </div>
-                {/* Anchored to the upper portion of the media area so it never collides with content below */}
-                <div className="absolute inset-x-0 top-16 z-10 flex flex-col items-center gap-3 px-8 text-center">
-                  <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-white/60 bg-white/70 shadow-[0_8px_32px_rgba(139,92,246,0.20)] backdrop-blur-sm">
-                    <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={96} />
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <Camera className="h-4 w-4 text-violet-600" />
-                    <p className="max-w-[220px] text-sm font-semibold uppercase tracking-[0.18em] text-violet-900">
-                      {uploadAllowed ? 'no proof uploaded yet — be the first' : 'No proof uploaded yet'}
-                    </p>
-                  </div>
-                </div>
+            /* Keep the proof area photo-forward even before the first upload.
+               The progress ring is already the compact badge in the top-right
+               overlay above; never render the old large standalone ring here. */
+            <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[var(--pact-surface-3)]">
+              <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(45deg,rgba(139,92,246,0.08)_0px,rgba(139,92,246,0.08)_2px,transparent_2px,transparent_12px)]" />
+              <div className="relative z-[1] flex flex-col items-center gap-2 text-center text-[var(--pact-text-faint)]">
+                <Camera className="h-5 w-5" />
+                <p className="text-sm font-medium">{uploadAllowed ? "Add today's proof photo" : 'Proof photo'}</p>
               </div>
             </div>
           )}
+
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-4 pb-4 pt-20 text-white">
+            <h2 className="text-lg font-black leading-tight">{pact.title}</h2>
+            {circleLabel && <p className="mt-1 text-xs font-medium text-white/75">{circleLabel}</p>}
+          </div>
 
           {gesturesEnabled &&
             dragAxis === 'horizontal' &&
@@ -1122,22 +1057,19 @@ export default function FeedPactCard({
           </AnimatePresence>
         </div>
 
-        {/* Body: title + description, then the join/cheer/skip CTAs, then the unified action row */}
+        {/* Body: the photo carries the title/circle context; keep only a
+            compact caption and the quiet secondary action row below it. The
+            legacy CTA block remains mounted but hidden so its existing
+            handlers/state are not rewritten or duplicated during this visual
+            restructure. */}
         <div className="px-4 py-3.5">
-          <h2
-            className="text-lg font-black leading-snug text-[var(--pact-text)]"
-            style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}
-          >
-            {pact.title}
-          </h2>
-
           {(activeProof?.description || media.caption) && (
-            <p className="mt-1.5 text-[13px] italic leading-relaxed text-[var(--pact-text-dim)]">
+            <p className="text-[13px] italic leading-relaxed text-[var(--pact-text-dim)]">
               &ldquo;{activeProof?.description || media.caption}&rdquo;
             </p>
           )}
 
-          <div className="mt-2.5 space-y-2" onClick={(event) => event.stopPropagation()}>
+          <div className="hidden" onClick={(event) => event.stopPropagation()}>
             <p className="flex items-center gap-1.5 text-sm font-bold text-[var(--pact-text)]">
               <PartyPopper className="h-3.5 w-3.5 text-[var(--pact-gold)]" />
               {formatCompactCount(cheerCount)} cheering this pact
@@ -1262,6 +1194,12 @@ export default function FeedPactCard({
             >
               <Share2 className="h-5 w-5" />
             </button>
+            <div className="ml-auto flex items-center gap-2">
+              {!isCreator && isParticipant && <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-300">Joined</span>}
+              {isCreator && <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-300">Creator</span>}
+              {joinAllowed && <PremiumJoinButton onClick={handleJoinPact} loading={isJoining} size="sm" />}
+              {!joinAllowed && voteActionsVisible && canSkip && <button type="button" onClick={() => void completeVote('skip')} disabled={isVoting} className="inline-flex items-center gap-1 rounded-full border border-[var(--pact-hairline)] px-3 py-1.5 text-[11px] font-bold text-[var(--pact-text-dim)] transition hover:text-[var(--pact-text)] disabled:opacity-50"><ArrowLeft className="h-3 w-3" />Skip</button>}
+            </div>
           </div>
 
           {/* Placement A: this is the viewer's own pact — surface who else
