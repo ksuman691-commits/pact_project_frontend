@@ -101,13 +101,32 @@ export const PROOF_FREQUENCIES = ['Every day', 'Every 2 days', 'Every week', 'At
 
 export const AUDIENCES: {
   emoji: string;
-  label: AudienceLabel;
+  label: AudienceLabel; // internal identifier — do not display directly, use displayLabel
+  displayLabel: string;
   desc: string;
   visibility: VisibilityLabel;
 }[] = [
-  { emoji: '🙋', label: 'Just me', desc: 'Personal accountability', visibility: 'Only me' },
-  { emoji: '👯', label: 'My Circle', desc: 'Challenge your friends', visibility: 'My Circle' },
-  { emoji: '🌎', label: 'Everyone', desc: 'Let anyone join', visibility: 'Everyone' },
+  {
+    emoji: '👯',
+    label: 'My Circle',
+    displayLabel: 'Private',
+    desc: 'Circle-only. Never public.',
+    visibility: 'My Circle',
+  },
+  {
+    emoji: '🌎',
+    label: 'Everyone',
+    displayLabel: 'Public',
+    desc: 'Visible to everyone — including your proof photos. Shows up in Discover & matching.',
+    visibility: 'Everyone',
+  },
+  {
+    emoji: '🙋',
+    label: 'Just me',
+    displayLabel: 'Only me',
+    desc: 'Solo tracking. No circle, just for you.',
+    visibility: 'Only me',
+  },
 ];
 
 export const DURATION_PRESETS = [7, 30, 60, 90] as const;

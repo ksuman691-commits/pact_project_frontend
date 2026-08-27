@@ -17,10 +17,12 @@ export function resolveSteps(draft: PactDraft, activity: Activity | null): FlowS
   if (!draft.vibePreset) steps.push('vibe');
   steps.push('activity');
   if (!activity?.milestone) steps.push('target');
-  steps.push('duration', 'proof');
-  // Audience is pre-set (and the question skipped) when the flow was
-  // launched from a Circle's "Start a Pact for this Circle" CTA.
+  // Audience is asked right after the goal is set (rather than at the end)
+  // so privacy is decided before duration/proof details, and is pre-set
+  // (and the question skipped) when the flow was launched from a Circle's
+  // "Start a Pact for this Circle" CTA.
   if (!draft.audiencePreset) steps.push('audience');
+  steps.push('duration', 'proof');
   steps.push('review', 'success');
   return steps;
 }
