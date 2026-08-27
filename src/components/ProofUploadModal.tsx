@@ -250,7 +250,7 @@ export default function ProofUploadModal({
       <div className="w-full sm:max-w-md sm:rounded-[24px] rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto bg-slate-950 border border-white/10">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white">Upload Proof Photos</h2>
+          <h2 className="text-xl font-bold text-white">Capture Proof</h2>
           <button
             onClick={handleClose}
             className="p-2 rounded-full bg-white/10 hover:bg-white/15 transition"
