@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Upload, Image as ImageIcon, Video, Loader } from 'lucide-react';
+import { X, Camera as CameraIcon, Video, Loader, SwitchCamera } from 'lucide-react';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { pactService } from '@/services/api';
@@ -31,7 +31,9 @@ export default function ProofUploadModal({
   const [cameraMode, setCameraMode] = useState<'photo' | 'video' | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
-  const genericInputRef = useRef<HTMLInputElement>(null);
+  // Proof must be captured live, in the moment — no gallery/file picker.
+  // Defaults to the back (environment) camera; switchable to front.
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const liveVideoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -54,7 +56,7 @@ export default function ProofUploadModal({
     }
   };
 
-  const startCamera = async (mode: 'photo' | 'video') => {
+  const startCamera = async (mode: 'photo' | 'video', facing: 'environment' | 'user' = facingMode) => {
     if (!navigator.mediaDevices?.getUserMedia) {
       toast.error('Camera is not supported in this browser');
       return;
@@ -64,13 +66,14 @@ export default function ProofUploadModal({
       stopCamera();
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: 'environment',
+          facingMode: { ideal: facing },
           width: { ideal: 1920 },
           height: { ideal: 1080 },
         },
         audio: mode === 'video',
       });
       streamRef.current = stream;
+      setFacingMode(facing);
       setCameraMode(mode);
       setCameraReady(true);
       requestAnimationFrame(() => {
@@ -82,6 +85,11 @@ export default function ProofUploadModal({
     } catch (err: any) {
       toast.error('Unable to access camera. Check browser permissions.');
     }
+  };
+
+  const flipCamera = () => {
+    if (!cameraMode) return;
+    startCamera(cameraMode, facingMode === 'environment' ? 'user' : 'environment');
   };
 
   const capturePhoto = () => {
@@ -178,33 +186,6 @@ export default function ProofUploadModal({
 
   if (!isOpen) return null;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files ?? []);
-    if (selectedFiles.length === 0) return;
-
-    selectedFiles.forEach((selectedFile) => {
-      const id = `${selectedFile.name}-${selectedFile.lastModified}-${Math.random().toString(36).slice(2)}`;
-      const reader = new FileReader();
-
-      reader.onerror = () => {
-        // FileReader can fail (e.g. NotFoundError on some file-picker/OS combos).
-        // Skip this file rather than pushing a null preview, which would crash
-        // the <Image> preview below.
-        toast.error(`Could not read ${selectedFile.name}`);
-      };
-
-      reader.onloadend = () => {
-        if (typeof reader.result !== 'string') return;
-        setItems((prev) => [...prev, { id, file: selectedFile, preview: reader.result as string }]);
-      };
-
-      reader.readAsDataURL(selectedFile);
-    });
-
-    // Allow re-selecting the same file(s) again after removing them.
-    e.target.value = '';
-  };
-
   const handleRemoveFile = (id: string) => {
     setItems((prev) => prev.filter((item) => item.id !== id));
   };
@@ -294,50 +275,62 @@ export default function ProofUploadModal({
             />
           </div>
 
-          {/* File Upload */}
+          {/* Live capture only — no gallery/file picker. Proof must be taken
+              in the moment with the camera, mirroring the Cheer capture
+              pattern (CheerCaptureModal): default back camera, switchable
+              to front, capture-then-review. */}
           <div>
             <label className="block text-sm font-semibold text-white mb-3">
-              Upload Evidence {items.length > 0 && `(${items.length} selected)`}
+              Capture Evidence {items.length > 0 && `(${items.length} captured)`}
             </label>
 
             <div className="space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => startCamera('photo')}
-                  className="px-3 py-2 rounded-[28px] text-sm font-semibold transition bg-white/5 hover:bg-white/10 text-violet-300"
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <ImageIcon className="w-4 h-4" />
-                    Take Photo
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => startCamera('video')}
-                  className="px-3 py-2 rounded-[28px] text-sm font-semibold transition bg-white/5 hover:bg-white/10 text-pink-300"
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <Video className="w-4 h-4" />
-                    Record Video
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => genericInputRef.current?.click()}
-                  className="px-3 py-2 rounded-[28px] text-sm font-semibold transition bg-white/5 hover:bg-white/10 text-white/70"
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <Upload className="w-4 h-4" />
-                    Choose Files
-                  </span>
-                </button>
-              </div>
+              {!cameraMode && (
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => startCamera('photo')}
+                    className="px-3 py-2 rounded-[28px] text-sm font-semibold transition bg-white/5 hover:bg-white/10 text-violet-300"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <CameraIcon className="w-4 h-4" />
+                      Take Photo
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startCamera('video')}
+                    className="px-3 py-2 rounded-[28px] text-sm font-semibold transition bg-white/5 hover:bg-white/10 text-pink-300"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <Video className="w-4 h-4" />
+                      Record Video
+                    </span>
+                  </button>
+                </div>
+              )}
 
               {cameraMode && cameraReady && (
                 <div className="rounded-[24px] p-3 space-y-3 border border-white/10 bg-white/5">
-                  <div className="w-full aspect-video bg-black rounded-[28px] overflow-hidden">
-                    <video ref={liveVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                  <div className="relative w-full aspect-video bg-black rounded-[28px] overflow-hidden">
+                    <video
+                      ref={liveVideoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className={`w-full h-full object-cover ${facingMode === 'user' ? '-scale-x-100' : ''}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={flipCamera}
+                      aria-label="Switch camera"
+                      className="absolute top-2 right-2 rounded-full bg-black/50 p-2 text-white transition hover:bg-black/70"
+                    >
+                      <SwitchCamera className="w-4 h-4" />
+                    </button>
+                    <span className="absolute left-2 top-2 rounded-full bg-black/50 px-2.5 py-1 text-[11px] font-semibold text-white/85">
+                      {facingMode === 'environment' ? 'Back camera' : 'Front camera'}
+                    </span>
                   </div>
                   <div className="flex gap-2">
                     {cameraMode === 'photo' ? (
@@ -370,29 +363,21 @@ export default function ProofUploadModal({
                 </div>
               )}
 
-              {items.length === 0 ? (
-                <label className="rounded-[24px] p-6 text-center cursor-pointer transition block border-2 border-dashed border-white/15 hover:border-violet-400/50 hover:bg-white/5">
-                  <input
-                    ref={genericInputRef}
-                    type="file"
-                    accept="image/*,video/*"
-                    multiple
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
+              {items.length === 0 && !cameraMode ? (
+                <div className="rounded-[24px] p-6 text-center border-2 border-dashed border-white/15">
                   <div className="flex flex-col items-center gap-2">
-                    <Upload className="w-8 h-8 text-white/40" />
+                    <CameraIcon className="w-8 h-8 text-white/40" />
                     <div>
                       <p className="text-sm font-semibold text-white">
-                        Click to upload or drag and drop
+                        Tap Take Photo or Record Video above
                       </p>
                       <p className="text-xs text-white/50">
-                        Select multiple photos at once — PNG, JPG, GIF, MP4 (max 50MB each)
+                        Proof must be captured live — no photos or videos from your library.
                       </p>
                     </div>
                   </div>
-                </label>
-              ) : (
+                </div>
+              ) : items.length > 0 ? (
                 <div className="space-y-3">
                   <div className="grid grid-cols-3 gap-2">
                     {items.map((item, index) => {
@@ -415,22 +400,16 @@ export default function ProofUploadModal({
                         </div>
                       );
                     })}
-                    <input
-                      ref={genericInputRef}
-                      type="file"
-                      accept="image/*,video/*"
-                      multiple
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => genericInputRef.current?.click()}
-                      className="flex aspect-square items-center justify-center rounded-[16px] border-2 border-dashed border-white/15 text-white/50 transition hover:border-violet-400/50 hover:bg-white/5"
-                      aria-label="Add more files"
-                    >
-                      <Upload className="w-5 h-5" />
-                    </button>
+                    {!cameraMode && (
+                      <button
+                        type="button"
+                        onClick={() => startCamera('photo')}
+                        className="flex aspect-square items-center justify-center rounded-[16px] border-2 border-dashed border-white/15 text-white/50 transition hover:border-violet-400/50 hover:bg-white/5"
+                        aria-label="Capture another photo"
+                      >
+                        <CameraIcon className="w-5 h-5" />
+                      </button>
+                    )}
                   </div>
                   {isUploading && uploadProgress && (
                     <p className="text-xs text-white/50">
@@ -438,7 +417,7 @@ export default function ProofUploadModal({
                     </p>
                   )}
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
 
