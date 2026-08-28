@@ -66,7 +66,7 @@ const calculateCurrentDay = (startDateRaw: string | undefined, durationDaysRaw: 
   return Math.min(Math.max(elapsedDays, 1), Math.max(durationDaysRaw, 1));
 };
 
-const mapCircle = (raw: any) => ({
+export const mapCircle = (raw: any) => ({
   ...raw,
   is_public: raw?.visibility === 'public',
   memberCount: raw?.member_count ?? 0,
@@ -97,7 +97,7 @@ const mapCheer = (raw: any) => ({
   expires_at: raw?.expires_at ?? null,
 });
 
-const normalizeListResponse = <T,>(response: any, mapper: (item: any) => T = (item) => item): any => {
+export const normalizeListResponse = <T,>(response: any, mapper: (item: any) => T = (item) => item): any => {
   const payload = response.data;
   const rows = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
   const pagination = payload?.pagination ?? { skip: 0, limit: rows.length, total: rows.length };
@@ -109,7 +109,7 @@ const normalizeListResponse = <T,>(response: any, mapper: (item: any) => T = (it
   };
 };
 
-const mapPact = (raw: any) => ({
+export const mapPact = (raw: any) => ({
   ...raw,
   pact_uuid: raw?.pact_uuid ?? String(raw?.id ?? ''),
   is_public: raw?.visibility === 'public',
