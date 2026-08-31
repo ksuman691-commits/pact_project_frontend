@@ -129,6 +129,12 @@ export function toCreatePactApiPayload(draft: PactDraft, activity: Activity): Cr
     min_participants: min,
     max_participants: max,
     visibility,
-    circle_id: visibility === 'circle_only' ? draft.circleId ?? null : null,
+    // Only "Only me" (solo tracking, explicitly "No circle, just for you" in
+    // the AUDIENCES copy) clears the circle association. A "Public" pact
+    // started from within a circle should keep its circle_id — Public only
+    // widens *who can see it* (Discover, matching, the circle's public
+    // Wall); it must not silently detach the pact from the circle it was
+    // created in, or it can never appear on that circle's Wall at all.
+    circle_id: visibility === 'private' ? null : draft.circleId ?? null,
   };
 }

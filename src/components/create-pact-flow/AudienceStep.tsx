@@ -25,7 +25,15 @@ export default function AudienceStep() {
       updateDraft({ audience: label, visibility: preset?.visibility ?? draft.visibility, circleId: null });
       return;
     }
-    selectAudience(label, label === 'My Circle' ? circles?.[0]?.id ?? null : null);
+    // "Just me" is solo tracking — no circle. "My Circle" needs a specific
+    // circle picked (the single-circle case, since hasMultipleCircles is
+    // handled above). "Everyone" (Public) must keep whichever circle is
+    // already attached (e.g. this flow was launched from within a Circle)
+    // — Public only widens who can see the pact, it should not detach it
+    // from the circle, otherwise it can never appear on that circle's Wall.
+    const nextCircleId =
+      label === 'My Circle' ? circles?.[0]?.id ?? null : label === 'Just me' ? null : draft.circleId ?? null;
+    selectAudience(label, nextCircleId);
   };
 
   return (

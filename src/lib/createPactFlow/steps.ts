@@ -18,9 +18,12 @@ export function resolveSteps(draft: PactDraft, activity: Activity | null): FlowS
   steps.push('activity');
   if (!activity?.milestone) steps.push('target');
   // Audience is asked right after the goal is set (rather than at the end)
-  // so privacy is decided before duration/proof details, and is pre-set
-  // (and the question skipped) when the flow was launched from a Circle's
-  // "Start a Pact for this Circle" CTA.
+  // so privacy is decided before duration/proof details. It's only skipped
+  // (audiencePreset) when a specific target user is already known (a
+  // "Create a Pact with [Name]" CTA) — a known circle alone just pre-fills
+  // "My Circle" as the default answer but still shows this step, since the
+  // user must be able to switch to Public (keeping the circle_id) or Only
+  // me (dropping it) instead. See CreatePactFlowContext.
   if (!draft.audiencePreset) steps.push('audience');
   steps.push('duration', 'proof');
   steps.push('review', 'success');

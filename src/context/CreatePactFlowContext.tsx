@@ -65,7 +65,14 @@ export function CreatePactFlowProvider({
   initialPactId,
 }: {
   children: React.ReactNode;
-  /** Pre-set circle audience — skips the audience question entirely. */
+  /**
+   * Pre-attaches a circle (e.g. a Circle's "Start a Pact for this Circle"
+   * CTA) and pre-selects "My Circle" as the default audience — but does NOT
+   * skip the audience question. Public and Only-me must both stay reachable
+   * here: Public should keep this circle_id (so the pact can appear on the
+   * circle's public Wall, see selectAudience), and a user should still be
+   * able to opt out to solo tracking.
+   */
   initialCircleId?: number | null;
   /**
    * Carries over free text typed elsewhere (e.g. the Dare flow's "switch to
@@ -100,9 +107,12 @@ export function CreatePactFlowProvider({
 }) {
   const [draft, setDraft] = useState<PactDraft>(() => {
     let base = createEmptyDraft();
-    // Either signal (a resolved circle, or a known target user) means the
-    // audience question is already answered by context and must be skipped.
-    if (initialCircleId != null || initialParticipantId != null) {
+    // A known target user fully answers the audience question (that pact is
+    // tied to that person) — skip it entirely. A known circle only supplies
+    // a *default* answer ("My Circle"); the question must still be shown so
+    // the user can switch to Public (keeping this circle_id, see
+    // selectAudience) or Only me (solo, no circle) instead.
+    if (initialParticipantId != null) {
       base = { ...base, audiencePreset: true };
     }
     if (initialCircleId != null) {
@@ -323,7 +333,13 @@ export function CreatePactFlowProvider({
         ...prev,
         audience: label,
         visibility: preset?.visibility ?? prev.visibility,
-        circleId: label === 'My Circle' ? circleId ?? prev.circleId ?? null : null,
+        // "Just me" is explicitly solo tracking ("No circle, just for
+        // you") and clears any circle. Both "My Circle" (private) and
+        // "Everyone" (public) keep whichever circle is already known —
+        // switching to Public must only widen who can see the pact, not
+        // detach it from its circle, or it could never show up on that
+        // circle's public Wall.
+        circleId: label === 'Just me' ? null : circleId ?? prev.circleId ?? null,
       }));
     },
     [commitAndAdvance],
