@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { circlePublicWallService, type CirclePublicWallSummary } from '@/services/circlePublicWallService';
-import { Pact } from '@/types';
+import {
+  circlePublicWallService,
+  type CirclePublicWallSummary,
+  type CirclePublicWallPact,
+} from '@/services/circlePublicWallService';
 import LogoMark from '@/components/LogoMark';
 import LogoSpinner from '@/components/LogoSpinner';
-import PactProgressRing, { getPactProgress } from '@/components/PactProgressRing';
 import { Users, CheckCircle2 } from 'lucide-react';
 
 /**
@@ -17,28 +19,26 @@ import { Users, CheckCircle2 } from 'lucide-react';
  * does NOT use useRequireAuth or DetailPageHeader (its Home link points at
  * /feed, which requires auth) — this page must render fully and never
  * redirect for a signed-out visitor. All data comes through the
- * unauthenticated circlePublicWallService, which already enforces (and
- * double-checks) that only visibility === 'public' pacts ever appear here.
+ * unauthenticated circlePublicWallService hitting the real, deployed
+ * GET /api/circles/{id}/wall endpoint, which returns only the pacts the
+ * backend has already restricted server-side to public (+ completed)
+ * visibility — this response has no visibility field to re-check client
+ * side, so the privacy boundary is enforced entirely by the backend query.
  */
 export default function CirclePublicWallPage() {
   const params = useParams();
   const circleId = Number(params.id);
 
   const [circle, setCircle] = useState<CirclePublicWallSummary | null>(null);
-  const [pacts, setPacts] = useState<Pact[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     let active = true;
     (async () => {
-      const [circleResult, pactsResult] = await Promise.all([
-        circlePublicWallService.getCircle(circleId),
-        circlePublicWallService.getPacts(circleId),
-      ]);
+      const circleResult = await circlePublicWallService.getWall(circleId);
       if (!active) return;
       setCircle(circleResult);
-      setPacts(pactsResult);
       setNotFound(!circleResult);
       setLoading(false);
     })();
@@ -65,7 +65,7 @@ export default function CirclePublicWallPage() {
       ) : (
         <div className="mx-auto max-w-2xl px-5 pb-20 pt-8">
           <CircleHero circle={circle!} />
-          <PactList pacts={pacts} />
+          <PactList pacts={circle!.pacts} />
           <BottomCta />
         </div>
       )}
@@ -116,6 +116,7 @@ function TopBar() {
 }
 
 function CircleHero({ circle }: { circle: CirclePublicWallSummary }) {
+  const completedCount = circle.pacts.filter((p) => p.progress_percent >= 100).length;
   return (
     <header className="border-b border-[var(--pact-hairline)] pb-8">
       <div className="flex items-start gap-4">
@@ -132,32 +133,28 @@ function CircleHero({ circle }: { circle: CirclePublicWallSummary }) {
         <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--pact-violet)]">Circle Wall</p>
           <h1 className="mt-1 text-3xl font-black tracking-[-0.05em] text-[var(--pact-text)]">{circle.name}</h1>
-          {circle.description && (
-            <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--pact-text-muted)]">{circle.description}</p>
-          )}
         </div>
       </div>
       <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[var(--pact-text-muted)]">
         <span className="flex items-center gap-1.5">
           <Users className="h-4 w-4" aria-hidden="true" />
-          {circle.member_count} member{circle.member_count === 1 ? '' : 's'}
+          {circle.pacts.length} public pact{circle.pacts.length === 1 ? '' : 's'}
         </span>
         <span className="flex items-center gap-1.5">
           <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-          {circle.public_pact_completed_count} pact{circle.public_pact_completed_count === 1 ? '' : 's'} completed
+          {completedCount} completed
         </span>
-        <span>{circle.public_pact_count} public pact{circle.public_pact_count === 1 ? '' : 's'}</span>
       </div>
     </header>
   );
 }
 
-function PactList({ pacts }: { pacts: Pact[] }) {
+function PactList({ pacts }: { pacts: CirclePublicWallPact[] }) {
   if (!pacts.length) {
     return (
       <section className="py-10 text-center">
         <p className="text-sm text-[var(--pact-text-muted)]">
-          This circle&apos;s public pacts aren&apos;t available yet.
+          This circle doesn&apos;t have any public pacts yet.
         </p>
       </section>
     );
@@ -167,21 +164,26 @@ function PactList({ pacts }: { pacts: Pact[] }) {
     <section className="py-8">
       <h2 className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--pact-violet)]">Public pacts</h2>
       <div className="mt-4">
-        {pacts.map((pact: any) => {
-          const progress = getPactProgress(pact);
-          const isCompleted = pact.status === 'completed';
+        {pacts.map((pact) => {
+          const isCompleted = pact.progress_percent >= 100;
           return (
             <Link
               key={pact.id}
               href={`/pacts/${pact.id}`}
               className="flex items-center gap-4 border-t border-[var(--pact-hairline)] py-4 transition hover:border-[var(--pact-violet)]"
             >
-              <PactProgressRing completed={progress.completed} total={progress.total} missed={progress.missed} size={54} />
+              <div
+                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold"
+                style={{ borderColor: 'var(--pact-violet)', color: 'var(--pact-violet)' }}
+              >
+                {Math.round(pact.progress_percent)}%
+              </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-bold text-[var(--pact-text)]">{pact.title}</p>
                 <p className="mt-1 truncate text-sm text-[var(--pact-text-muted)]">
-                  {isCompleted ? 'Completed' : `Day ${progress.completed} of ${progress.total}`}
-                  {pact.creator_username ? ` · by ${pact.creator_username}` : ''}
+                  {isCompleted ? 'Completed' : pact.category}
+                  {' · '}
+                  {pact.participant_count} participant{pact.participant_count === 1 ? '' : 's'}
                 </p>
               </div>
             </Link>
