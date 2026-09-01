@@ -24,10 +24,30 @@ export default function CirclesPage() {
   // default, with a "View all N" button expanding it in place — no
   // navigation to a separate page. Toggling collapses it back to 3.
   const [showAllCircles, setShowAllCircles] = useState(false)
-  const filtered = useMemo(() => {
+  const searchFiltered = useMemo(() => {
     const list = circles.filter((circle: any) => (circle.name || '').toLowerCase().includes(search.toLowerCase()))
     return [...list].sort((a: any, b: any) => sort === 'Alphabetical (A-Z)' ? a.name.localeCompare(b.name) : (b.member_count || 0) - (a.member_count || 0))
   }, [circles, search, sort])
+  // Membership filter — who can JOIN the circle, not who can see its
+  // content. The backend circle record only ever stores a binary
+  // `visibility: 'public' | 'private'` (confirmed against the live API);
+  // there is no separate "approval required" vs "invite only" field
+  // persisted server-side, even though the create-circle wizard presents
+  // those as distinct choices (see types/createCircleFlow.ts) — both
+  // collapse to 'private' on save. So "Open to join" here means
+  // visibility === 'public' and "Invite only" means visibility ===
+  // 'private'; a circle that was created as "Approval required" is
+  // indistinguishable from a true invite-only one in this data and will
+  // show up under "Invite only" too.
+  const isOpenToJoin = (circle: any) => (circle.visibility ? circle.visibility === 'public' : circle.is_public !== false)
+  const membershipFilters = ['All', 'Open to join', 'Invite only'] as const
+  const [membershipFilter, setMembershipFilter] = useState<(typeof membershipFilters)[number]>('All')
+  const openToJoinCount = useMemo(() => searchFiltered.filter(isOpenToJoin).length, [searchFiltered])
+  const inviteOnlyCount = searchFiltered.length - openToJoinCount
+  const filtered = useMemo(() => {
+    if (membershipFilter === 'All') return searchFiltered
+    return searchFiltered.filter((circle: any) => (membershipFilter === 'Open to join' ? isOpenToJoin(circle) : !isOpenToJoin(circle)))
+  }, [searchFiltered, membershipFilter])
   const people = circles.reduce((sum: number, circle: any) => sum + (circle.member_count || 0), 0)
   // "Active this week" approximates pacts currently in motion across all circles —
   // there's no per-circle weekly-activity metric from the backend yet, so this
@@ -75,6 +95,30 @@ export default function CirclesPage() {
       </Link>
     </div>
     <div className="flex items-center gap-5 border-b border-[var(--pact-hairline)] py-5 text-sm"><label className="flex min-w-0 flex-1 items-center gap-2 text-[var(--pact-text-muted)]"><Search className="h-4 w-4" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name" className="min-w-0 flex-1 bg-transparent text-[var(--pact-text)] outline-none placeholder:text-[var(--pact-text-muted)]" /></label><div className="relative"><button onClick={() => setSortOpen(v => !v)} className="flex items-center gap-2 text-[var(--pact-text)]">{sort}<SlidersHorizontal className="h-3.5 w-3.5 text-[var(--pact-violet)]" /></button>{sortOpen && <div className="absolute right-0 top-7 z-10 w-48 border border-[var(--pact-hairline)] bg-[var(--pact-surface)] py-2 shadow-xl">{['Recent activity', 'Alphabetical (A-Z)', 'Most active', 'Member count', 'Newest circle', 'Most pacts'].map(option => <button key={option} onClick={() => { setSort(option); setSortOpen(false) }} className="block w-full px-3 py-2 text-left text-xs text-[var(--pact-text-muted)] hover:text-[var(--pact-text)]">{option}</button>)}</div>}</div></div>
+    {/* Membership filter — deliberately plain text, no emoji, unlike other
+        tabs/badges in the app. An emoji here (e.g. a lock) would visually
+        imply a content-privacy guarantee these tabs don't make: "Invite
+        only" is about who can JOIN the circle, not who can see a member's
+        own public pacts, which can still surface on this circle's Wall
+        page for anyone with the link. */}
+    <nav className="flex gap-4 border-b border-[var(--pact-hairline)] py-5 text-sm" aria-label="Circle membership filters">
+      {membershipFilters.map(item => {
+        const count = item === 'All' ? searchFiltered.length : item === 'Open to join' ? openToJoinCount : inviteOnlyCount
+        return (
+          <button
+            key={item}
+            type="button"
+            onClick={() => setMembershipFilter(item)}
+            className={`border-b pb-1 ${membershipFilter === item ? 'border-[var(--pact-violet)] font-bold text-[var(--pact-text)]' : 'border-transparent text-[var(--pact-text-faint)]'}`}
+          >
+            {item} ({count})
+          </button>
+        )
+      })}
+    </nav>
+    <p className="pt-3 text-xs text-[var(--pact-text-muted)]">
+      This controls who can join a circle, not who can see it — a member&apos;s public pact can still appear on that circle&apos;s Wall page even when the circle itself is invite only.
+    </p>
     <div className="flex items-baseline justify-between pt-8">
       <h2 className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--pact-text-muted)]">Browse circles</h2>
     </div>
