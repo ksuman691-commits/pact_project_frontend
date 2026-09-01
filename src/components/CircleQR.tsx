@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
-import { Download, ExternalLink, Share2, X } from 'lucide-react';
+import { Download, ExternalLink, Lock, Share2, X } from 'lucide-react';
 import { circlePublicWallService } from '@/services/circlePublicWallService';
 
 type CircleLike = { id: number; name: string; icon_emoji?: string | null; photo_url?: string | null; member_count?: number };
@@ -73,11 +73,38 @@ function useCircleQrProgress(circleId: number) {
   return state;
 }
 
+/** Fade-out threshold for the "locked" treatment below — chosen so the
+ * overlay is only present while reveal_progress is still close to nothing
+ * (the "broken image" range), and is fully gone well before the QR
+ * actually becomes scannable (~78%, see CircleQR above). */
+const LOCKED_OVERLAY_THRESHOLD = 8;
+
+/**
+ * At/near 0% revealed, the sparse QR modules on their own read as a
+ * broken or glitchy image rather than an intentional "not yet earned"
+ * state. This frosted-blur + lock treatment (Duolingo/Apple Fitness style)
+ * signals "locked reward," not "something's wrong" - and fades out as soon
+ * as there's meaningful progress, rather than snapping off abruptly.
+ */
+function LockedQrOverlay({ progress }: { progress: number }) {
+  if (progress >= LOCKED_OVERLAY_THRESHOLD) return null;
+  const opacity = 1 - progress / LOCKED_OVERLAY_THRESHOLD;
+  return (
+    <div
+      className="absolute inset-0 flex items-center justify-center rounded-[inherit] backdrop-blur-sm transition-opacity"
+      style={{ background: 'rgba(255,255,255,0.72)', opacity }}
+      aria-hidden="true"
+    >
+      <Lock className="h-6 w-6 text-slate-400" strokeWidth={2.5} />
+    </div>
+  );
+}
+
 export function CircleQRTeaser({ circle, onOpen }: { circle: CircleLike; onOpen: () => void }) {
   const { progress, seed, loaded } = useCircleQrProgress(circle.id);
   const scannable = progress >= 78;
   return <button type="button" onClick={onOpen} className="flex w-full items-center gap-4 border-y border-[var(--pact-hairline)] py-5 text-left">
-    <div className="h-24 w-24 shrink-0 rounded-xl bg-white p-2"><CircleQR url={circleWallUrl(circle.id)} progress={progress} seed={seed} size={200} /></div>
+    <div className="relative h-24 w-24 shrink-0 rounded-xl bg-white p-2"><CircleQR url={circleWallUrl(circle.id)} progress={progress} seed={seed} size={200} />{loaded && <LockedQrOverlay progress={progress} />}</div>
     <span className="min-w-0"><span className="block text-xs font-bold uppercase tracking-[0.2em] text-[var(--pact-violet)]">Circle QR</span><span className="mt-1 block font-bold">{loaded ? `${Math.round(progress)}% revealed` : 'Loading…'}</span><span className="mt-1 block text-sm text-[var(--pact-text-muted)]">{scannable ? 'Already scannable!' : 'Keep showing up to unlock it.'}</span></span>
   </button>;
 }
@@ -86,7 +113,7 @@ export function CircleQRFullView({ circle, onClose }: { circle: CircleLike; onCl
   const { progress, seed, loaded } = useCircleQrProgress(circle.id);
   const complete = loaded && progress >= 100;
   return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5" role="dialog" aria-modal="true" aria-label="Circle QR">
-    <div className="w-full max-w-md rounded-3xl bg-[var(--pact-bg)] p-6 text-[var(--pact-text)]"><button type="button" onClick={onClose} className="float-right rounded-full p-2" aria-label="Close"><X className="h-5 w-5" /></button><p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--pact-violet)]">{circle.name}</p><h2 className="mt-2 text-2xl font-black">Your circle, revealed.</h2><div className="mx-auto mt-6 max-w-[280px] rounded-2xl bg-white p-4"><CircleQR url={circleWallUrl(circle.id)} progress={progress} seed={seed} size={280} /></div><p className="mt-4 text-center text-sm text-[var(--pact-text-muted)]">{complete ? '100% complete — this QR is ready to share anywhere.' : `${Math.round(progress)}% revealed · public pacts only`}</p>{complete && <CircleShareCard circle={circle} />}</div>
+    <div className="w-full max-w-md rounded-3xl bg-[var(--pact-bg)] p-6 text-[var(--pact-text)]"><button type="button" onClick={onClose} className="float-right rounded-full p-2" aria-label="Close"><X className="h-5 w-5" /></button><p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--pact-violet)]">{circle.name}</p><h2 className="mt-2 text-2xl font-black">Your circle, revealed.</h2><div className="relative mx-auto mt-6 max-w-[280px] rounded-2xl bg-white p-4"><CircleQR url={circleWallUrl(circle.id)} progress={progress} seed={seed} size={280} />{loaded && <LockedQrOverlay progress={progress} />}</div><p className="mt-4 text-center text-sm text-[var(--pact-text-muted)]">{complete ? '100% complete — this QR is ready to share anywhere.' : `${Math.round(progress)}% revealed · public pacts only`}</p>{complete && <CircleShareCard circle={circle} />}</div>
   </div>;
 }
 
