@@ -6,7 +6,10 @@ import { generateDescription, generateTitle, resolveDurationDays } from './gener
 
 // Nearest existing category id per vibe (categories are backend-agnostic
 // strings: fitness/coding/study/startup/habits/creator/social).
-const VIBE_TO_CATEGORY: Record<VibeId, string> = {
+// Exported so the "who else is chasing this" surfaces (VibeCard,
+// ConnectSimilarFolksModal) can query matches per vibe's real backend
+// category without re-declaring this mapping.
+export const VIBE_TO_CATEGORY: Record<VibeId, string> = {
   glowup: 'fitness',
   money: 'startup',
   dare: 'habits',

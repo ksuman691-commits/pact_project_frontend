@@ -3,15 +3,17 @@
  import Link from 'next/link'
  import Image from 'next/image'
  import { useMemo, useState } from 'react'
-import { Search, SlidersHorizontal, Plus } from 'lucide-react'
+import { Search, SlidersHorizontal, Plus, Sparkles } from 'lucide-react'
 import { useCircles } from '@/hooks/useCircles'
 import { useQuery } from '@tanstack/react-query'
 import { userService } from '@/services/api'
 import { useAuthStore } from '@/store/auth'
 import PendingCircleInvites from '@/components/PendingCircleInvites'
+import ConnectSimilarFolksModal from '@/components/ConnectSimilarFolksModal'
 
 export default function CirclesPage() {
   const { user } = useAuthStore()
+  const [connectModalOpen, setConnectModalOpen] = useState(false)
   const circlesQuery = useCircles()
   const circles = (circlesQuery.data || []) as any[]
   const isLoading = circlesQuery.isLoading
@@ -84,7 +86,7 @@ export default function CirclesPage() {
         full-width CTA rather than a small icon-only button tucked in a
         corner (the "Browse circles" heading below keeps its own "New" link
         removed in favor of this one, to avoid two competing create CTAs). */}
-    <div className="flex justify-center pt-6">
+    <div className="flex flex-wrap justify-center gap-3 pt-6">
       <Link
         href="/circles/create"
         className="pact-btn-glow flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold text-[var(--pact-text)]"
@@ -93,6 +95,19 @@ export default function CirclesPage() {
         <Plus className="h-4 w-4" />
         New Circle
       </Link>
+      {/* Standalone entry point into mutual-goal matching — previously
+          this only surfaced on an already-created pact's card. Placed
+          alongside "New Circle" since both lead to the same destination
+          (forming a circle), just from a different starting point: goal
+          category instead of an existing pact. */}
+      <button
+        type="button"
+        onClick={() => setConnectModalOpen(true)}
+        className="flex items-center gap-2 rounded-full border border-[var(--pact-violet)] px-6 py-2.5 text-sm font-bold text-[var(--pact-violet)] transition hover:bg-[var(--pact-surface-2)]"
+      >
+        <Sparkles className="h-4 w-4" />
+        Connect me with similar folks
+      </button>
     </div>
     <div className="flex items-center gap-5 border-b border-[var(--pact-hairline)] py-5 text-sm"><label className="flex min-w-0 flex-1 items-center gap-2 text-[var(--pact-text-muted)]"><Search className="h-4 w-4" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name" className="min-w-0 flex-1 bg-transparent text-[var(--pact-text)] outline-none placeholder:text-[var(--pact-text-muted)]" /></label><div className="relative"><button onClick={() => setSortOpen(v => !v)} className="flex items-center gap-2 text-[var(--pact-text)]">{sort}<SlidersHorizontal className="h-3.5 w-3.5 text-[var(--pact-violet)]" /></button>{sortOpen && <div className="absolute right-0 top-7 z-10 w-48 border border-[var(--pact-hairline)] bg-[var(--pact-surface)] py-2 shadow-xl">{['Recent activity', 'Alphabetical (A-Z)', 'Most active', 'Member count', 'Newest circle', 'Most pacts'].map(option => <button key={option} onClick={() => { setSort(option); setSortOpen(false) }} className="block w-full px-3 py-2 text-left text-xs text-[var(--pact-text-muted)] hover:text-[var(--pact-text)]">{option}</button>)}</div>}</div></div>
     {/* Membership filter — deliberately plain text, no emoji, unlike other
@@ -163,5 +178,7 @@ export default function CirclesPage() {
         </button>
       )}
     </section>
-  </div></main>
+  </div>
+  <ConnectSimilarFolksModal isOpen={connectModalOpen} onClose={() => setConnectModalOpen(false)} />
+  </main>
 }
