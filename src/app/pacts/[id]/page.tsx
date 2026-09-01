@@ -22,7 +22,9 @@ import { pactService } from '@/services/api';
 
 function PactDetailSkeleton() {
   return (
-    <div className="min-h-screen bg-slate-950 pb-16 pt-6">
+    // pb-24 matches circles/[id]/page.tsx — clearance for the floating pill
+    // BottomNav, which otherwise overlaps trailing content (see below).
+    <div className="min-h-screen bg-slate-950 pb-24 pt-6">
       <div className="mx-auto max-w-md space-y-6 px-4">
         <div className="overflow-hidden rounded-[32px] border border-white/10 bg-white/5 shadow-[0_20px_70px_rgba(2,6,23,0.45)]">
           <div className="aspect-[4/5] animate-pulse bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900" />
@@ -179,7 +181,12 @@ export default function PactDetailPage() {
   return (
     <>
       <DetailPageHeader title={pact.title || 'Pact'} fallbackHref={pactFallbackHref || '/feed'} maxWidthClassName="max-w-md" />
-      <div className="pact-flow min-h-screen bg-slate-950 pb-16 pt-6">
+      {/* pb-24 (not pb-16): the floating pill BottomNav sits fixed at the
+          bottom of the viewport and was clipping/overlapping the last
+          section here (the "Join requests" / MANAGE row, or the join CTA
+          for non-participants) — matches the clearance circles/[id]/page.tsx
+          already uses for the same reason. */}
+      <div className="pact-flow min-h-screen bg-slate-950 pb-24 pt-6">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

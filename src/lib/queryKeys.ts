@@ -82,6 +82,7 @@ export const queryKeys = {
     discover: () => [...queryKeys.feed.all, 'discover'],
     following: () => [...queryKeys.feed.all, 'following'],
     suggestions: () => [...queryKeys.feed.all, 'suggestions'],
+    categoryMatches: (category: string) => [...queryKeys.feed.all, 'category-matches', category],
   },
 
   // Leaderboards
