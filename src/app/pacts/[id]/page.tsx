@@ -200,7 +200,11 @@ export default function PactDetailPage() {
                 <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/50">Pact progress</p>
                 <p className="mt-2 text-2xl font-black text-white">{progress.completed} of {progress.total} days</p>
                 <p className="mt-1 text-sm text-white/60">Keep the circle moving, one proof at a time.</p>
-                <div className="mt-3 flex items-center gap-3 text-xs"><span className="font-semibold text-[var(--pact-danger)]">Missed {progress.missed} {progress.missed === 1 ? 'day' : 'days'}</span><span className="text-white/50">Next proof due today</span></div>
+                {/* Red/danger styling only makes sense once there's an
+                    actual miss — at 0 it was a warning color describing a
+                    non-warning state ("Missed 0 days" in red reads as
+                    alarming when nothing has actually gone wrong yet). */}
+                <div className="mt-3 flex items-center gap-3 text-xs"><span className={`font-semibold ${progress.missed > 0 ? 'text-[var(--pact-danger)]' : 'text-emerald-400'}`}>{progress.missed > 0 ? `Missed ${progress.missed} ${progress.missed === 1 ? 'day' : 'days'}` : 'No missed days'}</span><span className="text-white/50">Next proof due today</span></div>
                 {participants.length > 0 && (
                   <div className="mt-4 flex items-center pl-2">
                     {participants.slice(0, 5).map((participant: any, index: number) => <UserAvatarLink key={participant.id || participant.user_id || participant.username} name={participant.full_name || participant.name || participant.username} avatarUrl={participant.avatar_url || participant.avatar} username={participant.username} size={30} className={`-ml-2 border-2 border-[var(--pact-bg)] ${index === 0 ? 'ml-0' : ''}`} />)}
