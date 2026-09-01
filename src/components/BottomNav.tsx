@@ -26,7 +26,12 @@ export default function BottomNav() {
     pathname?.startsWith('/auth') ||
     pathname?.startsWith('/onboarding') ||
     pathname?.startsWith('/pacts/create') ||
-    pathname?.startsWith('/circles/create')
+    pathname?.startsWith('/circles/create') ||
+    // The circle wall is a public, unauthenticated share surface (linked from
+    // the QR code / social shares) — it must not show the members-only app
+    // shell nav, which would overlap its own "Join CirclePact" CTA and tempt
+    // logged-out visitors into auth-gated routes that just bounce them to login.
+    pathname?.endsWith('/wall')
 
   // Same getMine() result the /dares "For You" tab filters — cached under
   // the same query key, so this doesn't add an extra request beyond what
