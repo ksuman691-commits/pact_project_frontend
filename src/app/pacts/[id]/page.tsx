@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { AlertCircle, CheckCircle2, Crown, Inbox } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Crown, Inbox, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import DetailPageHeader from '@/components/DetailPageHeader';
 import { useSeedBackHistory } from '@/hooks/useSeedBackHistory';
@@ -22,9 +22,17 @@ import { pactService } from '@/services/api';
 
 function PactDetailSkeleton() {
   return (
-    // pb-24 matches circles/[id]/page.tsx — clearance for the floating pill
-    // BottomNav, which otherwise overlaps trailing content (see below).
-    <div className="min-h-screen bg-slate-950 pb-24 pt-6">
+    // pb-36: the earlier pb-24 pass just copied circles/[id]/page.tsx's
+    // value without measuring the nav's actual footprint. Measured against
+    // the real BottomNav (fixed pill + its own safe-area-aware bottom
+    // padding), 96px of clearance leaves only ~20px of breathing room in a
+    // best case (no iOS home-indicator inset) and goes negative once
+    // env(safe-area-inset-bottom) is non-zero on a real device — which is
+    // exactly the "still overlapping" repeat report. 144px (pb-36) matches
+    // profile/page.tsx's clearance for the same reason: this page's last
+    // section also sits directly against the bottom padding with no
+    // trailing whitespace of its own.
+    <div className="min-h-screen bg-slate-950 pb-36 pt-6">
       <div className="mx-auto max-w-md space-y-6 px-4">
         <div className="overflow-hidden rounded-[32px] border border-white/10 bg-white/5 shadow-[0_20px_70px_rgba(2,6,23,0.45)]">
           <div className="aspect-[4/5] animate-pulse bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900" />
@@ -138,6 +146,35 @@ export default function PactDetailPage() {
     await skipMutation.mutateAsync(pactId);
   };
 
+  // Mirrors FeedPactCard's handleCopyShareLink (same clipboard-with-fallback
+  // approach and the same private-visibility heads-up) so the Participants
+  // "Invite others" nudge does something real rather than being purely
+  // decorative.
+  const handleInvite = async () => {
+    const url = `${window.location.origin}/pacts/${pact.id}`;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      if (pact.visibility === 'private') {
+        toast('Link copied — heads up, this pact is private so only people with access can open it', { icon: '🔒' });
+      } else {
+        toast.success('Invite link copied');
+      }
+    } catch {
+      toast.error('Could not copy the link');
+    }
+  };
+
   const handleJoinRequest = async () => {
     try {
       await pactService.join(pactId);
@@ -181,12 +218,17 @@ export default function PactDetailPage() {
   return (
     <>
       <DetailPageHeader title={pact.title || 'Pact'} fallbackHref={pactFallbackHref || '/feed'} maxWidthClassName="max-w-md" />
-      {/* pb-24 (not pb-16): the floating pill BottomNav sits fixed at the
+      {/* pb-36 (not pb-24): the floating pill BottomNav sits fixed at the
           bottom of the viewport and was clipping/overlapping the last
           section here (the "Join requests" / MANAGE row, or the join CTA
-          for non-participants) — matches the clearance circles/[id]/page.tsx
-          already uses for the same reason. */}
-      <div className="pact-flow min-h-screen bg-slate-950 pb-24 pt-6">
+          for non-participants). The prior pb-24 pass copied
+          circles/[id]/page.tsx's clearance without measuring the nav's real
+          height — it only nets ~20px of margin with no iOS safe-area inset,
+          and disappears entirely once env(safe-area-inset-bottom) kicks in
+          on a real device, which is why this kept coming back. Matches
+          profile/page.tsx's pb-36 for the same "content ends right at the
+          bottom, no natural trailing space" situation. */}
+      <div className="pact-flow min-h-screen bg-slate-950 pb-36 pt-6">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -195,11 +237,15 @@ export default function PactDetailPage() {
         >
           {progress && (
             <section className="flex flex-col items-center border-b border-[var(--pact-hairline)] pb-7 text-center">
-              <PactProgressRing completed={progress.completed} total={progress.total} missed={progress.missed} size={168} strokeWidth={10} />
-              <div className="min-w-0 flex-1">
+              {/* Size reduced from 168 to 132, and the ring now leads with
+                  the day count (percentage as its secondary line) so it
+                  carries the "X of Y days" fact itself — removes the need
+                  for the separate large headline that used to repeat the
+                  same number right underneath it. */}
+              <PactProgressRing completed={progress.completed} total={progress.total} missed={progress.missed} size={132} strokeWidth={9} emphasizeDays />
+              <div className="mt-4 min-w-0 flex-1">
                 <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/50">Pact progress</p>
-                <p className="mt-2 text-2xl font-black text-white">{progress.completed} of {progress.total} days</p>
-                <p className="mt-1 text-sm text-white/60">Keep the circle moving, one proof at a time.</p>
+                <p className="mt-1 text-sm italic text-white/60">Keep the circle moving, one proof at a time.</p>
                 {/* Red/danger styling only makes sense once there's an
                     actual miss — at 0 it was a warning color describing a
                     non-warning state ("Missed 0 days" in red reads as
@@ -234,26 +280,49 @@ export default function PactDetailPage() {
             />
 
             <div className="border-t border-white/10 px-4 py-4">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">Participants</p>
-                <span className="text-xs text-white/40">{participants.length}</span>
-              </div>
-              {participants.length > 0 ? (
-                <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
-                  {participants.map((participant: any) => (
-                    <UserAvatarLink
-                      key={participant.id || participant.user_id || participant.username}
-                      name={participant.full_name || participant.name || participant.username}
-                      avatarUrl={participant.avatar_url || participant.avatar}
-                      username={participant.username}
-                      size={36}
-                      className="shrink-0"
-                    />
-                  ))}
+              {/* Card treatment matching the Discover match strip rendered
+                  just above (inside FeedPactCard) — a rounded, bordered,
+                  softly-backed box — so Participants doesn't read as bare
+                  text floating on the outer card while Discover next to it
+                  looks like a distinct, intentional element. */}
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3.5 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">Participants</p>
+                  <span className="text-xs text-white/40">{participants.length}</span>
                 </div>
-              ) : (
-                <p className="mt-2 text-sm text-white/50">No participant data yet.</p>
-              )}
+                {participants.length > 0 ? (
+                  <div className="mt-3 flex items-center gap-2">
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                      {participants.map((participant: any) => (
+                        <UserAvatarLink
+                          key={participant.id || participant.user_id || participant.username}
+                          name={participant.full_name || participant.name || participant.username}
+                          avatarUrl={participant.avatar_url || participant.avatar}
+                          username={participant.username}
+                          size={36}
+                          className="shrink-0"
+                        />
+                      ))}
+                    </div>
+                    {/* Turns the otherwise-empty rest of the row into a
+                        nudge instead of dead space when the pact still has
+                        few participants. Reuses the same copy-link share
+                        action FeedPactCard's share button uses. */}
+                    {participants.length < 3 && (
+                      <button
+                        type="button"
+                        onClick={() => void handleInvite()}
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-dashed border-white/15 px-3 py-2 text-xs font-semibold text-white/50 transition hover:border-white/30 hover:text-white/75"
+                      >
+                        <UserPlus className="h-3.5 w-3.5" />
+                        Invite others to join
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <p className="mt-2 text-sm text-white/50">No participant data yet.</p>
+                )}
+              </div>
             </div>
           </section>
 

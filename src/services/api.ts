@@ -269,6 +269,7 @@ async function refreshAccessTokenSilently(): Promise<string | null> {
 export const authService = {
   register: (data: any) => api.post('/api/auth/register', data),
   login: (data: any) => api.post('/api/auth/login', data),
+  googleLogin: (data: { id_token: string }) => api.post('/api/auth/google', data),
   refresh: (refresh_token: string) => api.post('/api/auth/refresh', { refresh_token }),
   getProfile: async () => {
     const response = await api.get('/api/auth/me');

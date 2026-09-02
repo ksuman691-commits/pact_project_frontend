@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import AuthShell from '@/components/AuthShell';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 export default function Login() {
   const router = useRouter();
@@ -70,9 +71,9 @@ export default function Login() {
           <span className="h-px flex-1 bg-[#EEE5DF]" />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <button type="button" className="rounded-[18px] border border-[#E8DED7] bg-white py-3 text-sm lowercase text-[#5E4C45] transition hover:bg-[#FAF6F0]">google</button>
-          <button type="button" className="rounded-[18px] border border-[#E8DED7] bg-white py-3 text-sm lowercase text-[#5E4C45] transition hover:bg-[#FAF6F0]">apple</button>
+        <div className="space-y-3">
+          <GoogleSignInButton />
+          <button type="button" className="w-full rounded-[18px] border border-[#E8DED7] bg-white py-3 text-sm lowercase text-[#5E4C45] transition hover:bg-[#FAF6F0]">apple</button>
         </div>
 
         <p className="mt-7 text-center text-xs text-[#A99991]">by continuing you agree to our terms</p>
