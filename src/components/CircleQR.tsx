@@ -105,7 +105,16 @@ export function CircleQRTeaser({ circle, onOpen }: { circle: CircleLike; onOpen:
   const scannable = progress >= 78;
   return <button type="button" onClick={onOpen} className="flex w-full items-center gap-4 border-y border-[var(--pact-hairline)] py-5 text-left">
     <div className="relative h-24 w-24 shrink-0 rounded-xl bg-white p-2"><CircleQR url={circleWallUrl(circle.id)} progress={progress} seed={seed} size={200} />{loaded && <LockedQrOverlay progress={progress} />}</div>
-    <span className="min-w-0"><span className="block text-xs font-bold uppercase tracking-[0.2em] text-[var(--pact-violet)]">Circle QR</span><span className="mt-1 block font-bold">{loaded ? `${Math.round(progress)}% revealed` : 'Loading…'}</span><span className="mt-1 block text-sm text-[var(--pact-text-muted)]">{scannable ? 'Already scannable!' : 'Keep showing up to unlock it.'}</span></span>
+    {/* The reveal mechanic itself was previously unexplained ("keep
+        showing up to unlock it" — showing up how? unlocks what?), reading
+        as a mystery box rather than a motivating feature. This states the
+        one thing we can actually confirm ties reveal progress to circle
+        activity: the Wall this QR links to only ever surfaces the
+        circle's PUBLIC pacts (see circlePublicWallService.ts), so framing
+        it around completing those together is accurate without
+        overclaiming an exact formula (streak days vs. proof count) the
+        backend doesn't expose. */}
+    <span className="min-w-0"><span className="block text-xs font-bold uppercase tracking-[0.2em] text-[var(--pact-violet)]">Circle QR</span><span className="mt-1 block font-bold">{loaded ? `${Math.round(progress)}% revealed` : 'Loading…'}</span><span className="mt-1 block text-sm text-[var(--pact-text-muted)]">{scannable ? 'Already scannable!' : 'Reveals as your circle completes public pacts together.'}</span></span>
   </button>;
 }
 
@@ -113,7 +122,7 @@ export function CircleQRFullView({ circle, onClose }: { circle: CircleLike; onCl
   const { progress, seed, loaded } = useCircleQrProgress(circle.id);
   const complete = loaded && progress >= 100;
   return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-5" role="dialog" aria-modal="true" aria-label="Circle QR">
-    <div className="w-full max-w-md rounded-3xl bg-[var(--pact-bg)] p-6 text-[var(--pact-text)]"><button type="button" onClick={onClose} className="float-right rounded-full p-2" aria-label="Close"><X className="h-5 w-5" /></button><p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--pact-violet)]">{circle.name}</p><h2 className="mt-2 text-2xl font-black">Your circle, revealed.</h2><div className="relative mx-auto mt-6 max-w-[280px] rounded-2xl bg-white p-4"><CircleQR url={circleWallUrl(circle.id)} progress={progress} seed={seed} size={280} />{loaded && <LockedQrOverlay progress={progress} />}</div><p className="mt-4 text-center text-sm text-[var(--pact-text-muted)]">{complete ? '100% complete — this QR is ready to share anywhere.' : `${Math.round(progress)}% revealed · public pacts only`}</p>{complete && <CircleShareCard circle={circle} />}</div>
+    <div className="w-full max-w-md rounded-3xl bg-[var(--pact-bg)] p-6 text-[var(--pact-text)]"><button type="button" onClick={onClose} className="float-right rounded-full p-2" aria-label="Close"><X className="h-5 w-5" /></button><p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--pact-violet)]">{circle.name}</p><h2 className="mt-2 text-2xl font-black">Your circle, revealed.</h2><div className="relative mx-auto mt-6 max-w-[280px] rounded-2xl bg-white p-4"><CircleQR url={circleWallUrl(circle.id)} progress={progress} seed={seed} size={280} />{loaded && <LockedQrOverlay progress={progress} />}</div><p className="mt-4 text-center text-sm text-[var(--pact-text-muted)]">{complete ? '100% complete — this QR is ready to share anywhere.' : `${Math.round(progress)}% revealed — reveals as your circle completes public pacts together`}</p>{complete && <CircleShareCard circle={circle} />}</div>
   </div>;
 }
 
