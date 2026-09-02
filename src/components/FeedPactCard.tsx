@@ -811,14 +811,18 @@ export default function FeedPactCard({
             /* Keep the proof area photo-forward even before the first upload.
                The progress ring is already the compact badge in the top-right
                overlay above; never render the old large standalone ring here. */
-            <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[var(--pact-surface-3)]">
-              <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(45deg,rgba(139,92,246,0.08)_0px,rgba(139,92,246,0.08)_2px,transparent_2px,transparent_12px)]" />
-              <div className="relative z-[1] flex flex-col items-center gap-2 text-center text-[var(--pact-text-faint)]">
-                <Camera className="h-5 w-5" />
-                <p className="text-sm font-medium">{uploadAllowed ? "Add today's proof photo" : 'Proof photo'}</p>
+          <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-b from-[var(--pact-surface-2)] to-[var(--pact-surface-3)]">
+            <div className="relative z-[1] flex flex-col items-center gap-3 px-8 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--pact-violet)]/12 text-[var(--pact-violet)]">
+                <Camera className="h-6 w-6" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-[var(--pact-text-dim)]">{uploadAllowed ? "Add today's proof photo" : 'No proof yet'}</p>
+                {uploadAllowed && <p className="text-xs text-[var(--pact-text-faint)]">Tap to open your camera or gallery</p>}
               </div>
             </div>
-          )}
+          </div>
+        )}
 
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-4 pb-4 pt-20 text-white">
             <h2 className="text-lg font-black leading-tight">{pact.title}</h2>
@@ -847,9 +851,15 @@ export default function FeedPactCard({
               style={{ transitionDuration: '150ms' }}
             >
               {isCheering ? <Loader2 className="h-5 w-5 animate-spin" /> : <PartyPopper className={`h-5 w-5 ${optimisticCheer ? 'text-[var(--pact-gold)]' : ''}`} />}
-              <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>
-                {formatCompactCount(cheerCount)}
-              </span>
+              {/* Hide the count entirely at 0 rather than showing a bare
+                  "0" next to the icon — a page full of "0"s next to every
+                  icon reads as unused/dead, whereas an icon alone with no
+                  number reads as neutral/not-yet-engaged. */}
+              {cheerCount > 0 && (
+                <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>
+                  {formatCompactCount(cheerCount)}
+                </span>
+              )}
             </button>
             {cheerError && (
               <span role="status" className="text-xs text-rose-300" aria-live="polite">
@@ -864,9 +874,11 @@ export default function FeedPactCard({
               className="flex items-center gap-1.5 text-[var(--pact-text-dim)] transition hover:text-[var(--pact-violet)]"
             >
               <MessageCircle className="h-5 w-5" />
-              <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>
-                {formatCompactCount(commentCount)}
-              </span>
+              {commentCount > 0 && (
+                <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>
+                  {formatCompactCount(commentCount)}
+                </span>
+              )}
             </button>
 
             <button

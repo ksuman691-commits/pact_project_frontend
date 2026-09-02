@@ -8,6 +8,14 @@ type PactProgressRingProps = {
   strokeWidth?: number
   showLabel?: boolean
   className?: string
+  // When true, the day count becomes the ring's primary label and the
+  // percentage moves to a smaller secondary line underneath — for contexts
+  // (like the pact detail hero) that used to show "X% done" in the ring
+  // AND a separate "X of Y days" headline right below it, which was the
+  // same fact stated twice. Default false preserves the original
+  // percentage-first label used everywhere else (e.g. the compact badge
+  // in FeedPactCard).
+  emphasizeDays?: boolean
 }
 
 export default function PactProgressRing({
@@ -18,6 +26,7 @@ export default function PactProgressRing({
   strokeWidth = 7,
   showLabel = true,
   className = '',
+  emphasizeDays = false,
 }: PactProgressRingProps) {
   const safeTotal = Math.max(1, total)
   const safeCompleted = Math.min(safeTotal, Math.max(0, completed))
@@ -43,8 +52,19 @@ export default function PactProgressRing({
       </svg>
       {showLabel && (
         <span className="absolute inset-0 flex flex-col items-center justify-center leading-none">
-          <strong className="text-[0.78em] font-black text-[var(--pact-text)]">{progress}%</strong>
-          <span className="mt-1 text-[0.48em] font-bold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">done</span>
+          {emphasizeDays ? (
+            <>
+              <strong className="text-[0.6em] font-black text-[var(--pact-text)]">
+                {safeCompleted}/{safeTotal}
+              </strong>
+              <span className="mt-1 text-[0.4em] font-bold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">{progress}% done</span>
+            </>
+          ) : (
+            <>
+              <strong className="text-[0.78em] font-black text-[var(--pact-text)]">{progress}%</strong>
+              <span className="mt-1 text-[0.48em] font-bold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">done</span>
+            </>
+          )}
         </span>
       )}
     </div>
