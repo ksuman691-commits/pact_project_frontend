@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import AuthShell from '@/components/AuthShell';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 export default function Register() {
   const router = useRouter();
@@ -105,6 +106,14 @@ export default function Register() {
             {isLoading ? 'creating account...' : 'create account'}
           </button>
         </form>
+
+        <div className="my-7 flex items-center gap-3 text-xs text-[#B4A59D]">
+          <span className="h-px flex-1 bg-[#EEE5DF]" />
+          <span>or</span>
+          <span className="h-px flex-1 bg-[#EEE5DF]" />
+        </div>
+
+        <GoogleSignInButton />
 
         <p className="mt-7 text-center text-xs text-[#A99991]">by continuing you agree to our terms</p>
         <p className="mt-4 text-center text-sm text-[#8E7C73]">
