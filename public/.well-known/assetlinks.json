@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.vercel.pact_project_frontend.twa",
+    "sha256_cert_fingerprints": ["3A:B1:E7:C6:54:08:03:36:94:24:E9:57:EA:2D:F8:07:64:82:95:2D:FC:06:6D:9D:A0:1E:2B:68:CF:E1:53:07"]
+  }
+}]
