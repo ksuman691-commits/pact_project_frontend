@@ -27,6 +27,12 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'CirclePact - Accountability, together',
   description: 'Join circles, make pacts, track goals, and build streaks with followers who keep you accountable.',
+  // Renders <link rel="manifest" href="/manifest.json"> in <head> — this is
+  // the Next.js Metadata API's idiomatic way to add it (same mechanism as
+  // title/description above), rather than hand-writing the tag. Purely
+  // additive: prepares the site for an Android TWA wrapper and has no
+  // effect on existing behavior in a normal browser tab.
+  manifest: '/manifest.json',
 };
 
 export const viewport: Viewport = {
