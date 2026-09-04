@@ -23,11 +23,13 @@ import UserAvatarLink from './UserAvatarLink';
 import PremiumJoinButton from './PremiumJoinButton';
 import GoalMatchStrip from './GoalMatchStrip';
 import PactGallery, { buildGalleryTiles } from './PactGallery';
+import ActivePactFireBadge from './ActivePactFireBadge';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useCreateCheer } from '@/hooks/usePactMutations';
 import { useGoalMatches } from '@/hooks/usePactMatches';
 import { useAuthStore } from '@/store/auth';
 import { getDisplayName } from '@/lib/displayName';
+import { hasPactMomentum } from '@/lib/pactMomentum';
 import { pactService } from '@/services/api';
 import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
@@ -677,6 +679,11 @@ export default function FeedPactCard({
               </div>
             </div>
             <div className="flex items-center gap-1.5">
+              {/* Fire badge signals real momentum right now (proof today, or
+                  a clean streak with no missed days) — separate from the
+                  duration ring next to it, which just says how far through
+                  the pact's calendar window this is. */}
+              {hasPactMomentum(pact) && <div className="pointer-events-auto" onClick={(event) => event.stopPropagation()}><ActivePactFireBadge size={22} /></div>}
               {progressInfo && <PactProgressRing percent={progressInfo.percent} elapsedDays={progressInfo.elapsedDays} totalDays={progressInfo.totalDays} gradientId={`hero-ring-gradient-${pact.id}`} compact mutedGlow={tiles.length === 0} />}
               <div className="pointer-events-auto relative" onClick={(event) => event.stopPropagation()}>
                 <button type="button" onClick={() => setMoreMenuOpen((open) => !open)} aria-label="more options" aria-haspopup="menu" aria-expanded={moreMenuOpen} className="rounded-full bg-black/35 p-2 text-white backdrop-blur-sm transition hover:bg-black/55"><MoreVertical className="h-4 w-4" /></button>
