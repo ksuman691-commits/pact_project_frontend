@@ -26,7 +26,12 @@ export default function PactCard() {
         ? circles.find((c: any) => c.id === draft.circleId)?.name
         : undefined
       : undefined;
-  const audienceLabel = selectedCircleName ?? draft.audience ?? '—';
+  // Defensive fallback: AudienceStep should never leave audience === 'My
+  // Circle' with no resolvable circleId (see its hasNoCircles handling),
+  // but if it ever did, fall back to a generic "Circle" label instead of
+  // re-doubling draft.audience against draft.visibility below (both are
+  // literally the string 'My Circle' for this preset).
+  const audienceLabel = selectedCircleName ?? (draft.audience === 'My Circle' ? 'Circle' : draft.audience) ?? '—';
 
   return (
     <div className="pact-surface rounded-3xl p-6">
