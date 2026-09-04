@@ -34,10 +34,10 @@ import confetti from 'canvas-confetti';
 
 // Support (the old swipe-right vote-support action) has been removed —
 // Cheer and Join now cover that ground, so "skip" is the only remaining
-// vote direction. Swiping the hero ONLY pages through photos — voting,
-// cheering, and joining are button-only actions (see the action row below).
+// vote direction. Swiping the hero ONLY pages through photos, and that
+// paging is native CSS scroll-snap inside PactGallery — voting, cheering,
+// and joining are button-only actions (see the action row below).
 type VoteDirection = 'skip';
-type DragAxis = 'horizontal' | 'vertical' | null;
 
 interface FeedPactCardProps {
   pact: any;
@@ -329,23 +329,8 @@ export default function FeedPactCard({
   // reports back the real total from its own paginated query via this
   // callback, so the badge/label self-correct without a page reload.
   const [liveCommentCount, setLiveCommentCount] = useState<number | null>(null);
-  const [dragX, setDragX] = useState(0);
-  const [dragAxis, setDragAxis] = useState<DragAxis>(null);
-  const [isDragging, setIsDragging] = useState(false);
   const [exitDirection, setExitDirection] = useState<VoteDirection | null>(null);
   const [isVoting, setIsVoting] = useState(false);
-  const activePointerId = useRef<number | null>(null);
-  const startPoint = useRef({ x: 0, y: 0 });
-  // The hero carries pointer handlers (real drag tracking) AND an onClick
-  // (tap-to-open) on the SAME element. Every browser fires a synthesized
-  // click on pointerup/touchend in addition to the manual pointer events
-  // above — including right after a real paging drag — so without this flag
-  // every swipe through the photos was immediately followed by its own
-  // "ghost tap" that navigated to the detail page as if nothing but a tap
-  // had happened. Set true the instant real movement is seen, checked (and
-  // left alone) by handleMediaTap below, and only cleared on the next
-  // pointerdown.
-  const didDragRef = useRef(false);
   // Tracks whether this specific card fired the join confetti, so the
   // unmount cleanup below only resets the (shared, global) confetti canvas
   // when it's actually this card's own celebration still in flight.
@@ -361,9 +346,6 @@ export default function FeedPactCard({
   const cheerInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setDragX(0);
-    setDragAxis(null);
-    setIsDragging(false);
     setExitDirection(null);
     setIsVoting(false);
     setActiveProofIndex(0);
@@ -422,7 +404,6 @@ export default function FeedPactCard({
     () => buildGalleryTiles(galleryProofs ?? proofs, galleryCheers ?? []),
     [galleryProofs, galleryCheers, proofs],
   );
-  const canPageMedia = tiles.length > 1;
   const activeProof = tiles[activeProofIndex] ?? tiles[0] ?? null;
   const isExiting = exitDirection !== null;
   const resolvedDetailHref = detailHref || `/pacts/${pact.id}`;
@@ -478,30 +459,19 @@ export default function FeedPactCard({
   // status once a member; cheering remains available via the persistent
   // action-row cheer button below, so nothing is lost by hiding this row.
   const canSkip = Boolean(onVote) && !isCreator && !isParticipant && displayVote !== 'skip';
-  // Live per-pixel offset fed into PactGallery so the photo strip tracks the
-  // finger in real time during a paging drag (Instagram-style) instead of
-  // only jumping once the gesture commits on release.
-  const isPagingDrag = isDragging && dragAxis === 'horizontal' && canPageMedia;
-  const galleryDragOffsetPx = isPagingDrag ? dragX : 0;
   const voteActionsVisible = (showVoteActions ?? Boolean(onVote)) && !isCreator && !isParticipant;
 
   // Voting/cheering/joining are button-only actions (see the action row
-  // below) — the hero's drag gesture exists solely to page through photos,
-  // so the card itself never tilts or shifts while dragging. The only
-  // transform the wrapper ever needs is the skip-vote dismiss animation.
+  // below) — photo paging is native scroll inside PactGallery, so the card
+  // itself never tilts or shifts as the user swipes through photos. The
+  // only transform the wrapper ever needs is the skip-vote dismiss
+  // animation.
   const transformStyle = useMemo(() => {
     if (isExiting) {
       return { transform: 'translateX(-115%) rotate(-12deg)', opacity: 0, transition: 'transform 260ms ease, opacity 260ms ease' };
     }
     return { transform: 'translate3d(0, 0, 0)', transition: 'transform 240ms ease, opacity 240ms ease' };
   }, [isExiting]);
-
-  const resetDrag = () => {
-    if (isExiting) return;
-    setDragX(0);
-    setDragAxis(null);
-    setIsDragging(false);
-  };
 
   const completeVote = async (direction: VoteDirection) => {
     if (!canSkip || !onVote || isVoting) return;
@@ -519,11 +489,9 @@ export default function FeedPactCard({
       }
 
       setIsVoting(false);
-      resetDrag();
     } catch {
       setDisplayVote(previousVote);
       setIsVoting(false);
-      resetDrag();
     }
   };
 
@@ -559,96 +527,13 @@ export default function FeedPactCard({
     }
   };
 
-  // Advances/retreats the active photo (wrapping, same as the old tap-zone
-  // carousel) — shared by the drag gesture below.
-  const pageMedia = (direction: 'next' | 'prev') => {
-    if (!canPageMedia) return;
-    setActiveProofIndex((index) => {
-      if (direction === 'next') return index === tiles.length - 1 ? 0 : index + 1;
-      return index === 0 ? tiles.length - 1 : index - 1;
-    });
-  };
-
-  // The hero's drag gesture ONLY pages through photos — voting, cheering,
-  // and joining are exclusively button-driven (see the action row below).
-  // A drag below this threshold snaps back to the current photo instead of
-  // paging, so a light tap-like wobble doesn't accidentally flip pages.
-  const MEDIA_PAGE_THRESHOLD_PX = 40;
-
-  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!canPageMedia) return;
-    if ((event.target as HTMLElement | null)?.closest('button,a')) return;
-    if (isVoting || isExiting) return;
-    activePointerId.current = event.pointerId;
-    startPoint.current = { x: event.clientX, y: event.clientY };
-    didDragRef.current = false;
-    setDragAxis(null);
-    setIsDragging(false);
-  };
-
-  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!canPageMedia) return;
-    if (activePointerId.current !== event.pointerId || isVoting || isExiting) return;
-
-    const dx = event.clientX - startPoint.current.x;
-    const dy = event.clientY - startPoint.current.y;
-
-    // Same 8px sensitivity already used below to decide which axis this
-    // gesture belongs to — anything past it is a real drag, on either axis,
-    // and must never also be treated as a tap once the click fires.
-    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
-      didDragRef.current = true;
-    }
-
-    if (!dragAxis && Math.abs(dx) > 8 && Math.abs(dy) > 8) {
-      const nextAxis: DragAxis = Math.abs(dx) > Math.abs(dy) ? 'horizontal' : 'vertical';
-      setDragAxis(nextAxis);
-      if (nextAxis === 'vertical') {
-        return;
-      }
-    }
-
-    if (dragAxis === 'vertical') {
-      return;
-    }
-
-    if (dragAxis === 'horizontal' || Math.abs(dx) > 8) {
-      setDragAxis('horizontal');
-      setIsDragging(true);
-      setDragX(dx);
-    }
-  };
-
-  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!canPageMedia) return;
-    if (activePointerId.current !== event.pointerId) return;
-    activePointerId.current = null;
-
-    if (isVoting || isExiting) return;
-
-    // A confident-enough drag pages the photo strip; anything shorter just
-    // snaps back to center.
-    if (dragAxis === 'horizontal' && Math.abs(dragX) >= MEDIA_PAGE_THRESHOLD_PX) {
-      pageMedia(dragX < 0 ? 'next' : 'prev');
-      resetDrag();
-      return;
-    }
-
-    resetDrag();
-  };
-
   // Single tap anywhere on the hero (image / progress ring / placeholder)
-  // opens the pact detail, same as tapping the rest of the card.
+  // opens the pact detail, same as tapping the rest of the card. Photo
+  // paging happens via native scroll-snap inside PactGallery, and browsers
+  // already distinguish a scroll gesture from a tap before firing (or
+  // suppressing) `click` — no manual drag-vs-tap bookkeeping needed here.
   const handleMediaTap = (event: React.MouseEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement | null)?.closest('button,a')) return;
-
-    // This click is the browser's own ghost-tap follow-up to a real drag
-    // (see didDragRef above), not an actual tap — swallow it before it can
-    // navigate to the detail page.
-    if (didDragRef.current) {
-      event.stopPropagation();
-      return;
-    }
 
     if (isVoting || isExiting) {
       event.stopPropagation();
@@ -750,23 +635,23 @@ export default function FeedPactCard({
         } ${moreMenuOpen ? 'overflow-visible' : 'overflow-hidden'}`}
       >
         {/* Hero: the single unified photo/cheer strip (proofs + cheers,
-            swipeable via drag or dots), else a duration-progress ring, else
-            the old empty-state placeholder. Dragging the hero ONLY pages
-            through photos — voting, cheering, and joining are handled
-            exclusively by the buttons in the action row below, so the same
-            swipeable strip works here in the feed and, unchanged, on the
-            pact detail page. */}
+            natively swipeable via CSS scroll-snap inside PactGallery, or
+            tap the dots), else a duration-progress ring, else the old
+            empty-state placeholder. Swiping the hero ONLY pages through
+            photos — voting, cheering, and joining are handled exclusively
+            by the buttons in the action row below, so the same swipeable
+            strip works here in the feed and, unchanged, on the pact detail
+            page. */}
         <div
-          className="relative isolate aspect-[4/5] w-full select-none touch-pan-y"
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={resetDrag}
+          className="relative isolate aspect-[4/5] w-full select-none"
           onClick={handleMediaTap}
           style={transformStyle}
         >
-          {/* Story bars stay at the very top of the hero, independent of the
-              gallery's paging transform, so photo count/progress remains clear. */}
+          {/* Story bars stay at the very top of the hero, driven by
+              activeProofIndex, which PactGallery reports up from real
+              scroll position — independent of the gallery's own DOM, so
+              photo count/progress remains clear no matter how the user got
+              there (swipe or tapping a dot). */}
           {tiles.length > 1 && (
             <div className="pointer-events-none absolute inset-x-3 top-3 z-20 flex gap-1">
               {tiles.map((tile, index) => (
@@ -813,10 +698,7 @@ export default function FeedPactCard({
               interactive={false}
               fillHeight
               dotsPosition="none"
-              activeIndex={activeProofIndex}
               onActiveIndexChange={setActiveProofIndex}
-              dragOffsetPx={galleryDragOffsetPx}
-              isDragging={isPagingDrag}
             />
           ) : (
             /* Keep the proof area photo-forward even before the first upload.
