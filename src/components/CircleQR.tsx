@@ -187,19 +187,29 @@ async function buildCircleShareCardImage(circle: CircleLike, qrSvgEl: SVGElement
   ctx.lineWidth = 3;
   ctx.stroke();
 
-  // Logo mark (LogoMark's wedge, see src/components/LogoMark.tsx) + "pact" wordmark.
+  // Logo mark (LogoMark's wedge, see src/components/LogoMark.tsx) + full
+  // "CirclePact" wordmark. This card is the external-facing artifact
+  // people post to WhatsApp/social/print, so it spells out the full brand
+  // name for clarity, unlike the app's internal "pact" wordmark shorthand
+  // used in in-product chrome (nav, spinner, etc).
+  ctx.font = '600 40px system-ui, -apple-system, sans-serif';
+  const wordmarkText = 'CirclePact';
+  const wordmarkWidth = ctx.measureText(wordmarkText).width;
+  const logoSize = 54;
+  const logoGap = 16;
+  const lockupWidth = logoSize + logoGap + wordmarkWidth;
+  const lockupX = (width - lockupWidth) / 2;
   const wedgePath = new Path2D('M80 80 L137.34 39.84 A70 70 0 1 1 92.16 11.06 Z');
   ctx.save();
-  ctx.translate(width / 2 - 96, 88);
-  ctx.scale(0.34, 0.34);
+  ctx.translate(lockupX, 88 - logoSize / 2);
+  ctx.scale(logoSize / 160, logoSize / 160);
   ctx.fillStyle = '#E5373B';
   ctx.fill(wedgePath);
   ctx.restore();
   ctx.fillStyle = '#1C1310';
-  ctx.font = '600 40px system-ui, -apple-system, sans-serif';
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
-  ctx.fillText('pact', width / 2 - 40, 100);
+  ctx.fillText(wordmarkText, lockupX + logoSize + logoGap, 88);
 
   // QR code, rasterized from its live SVG and framed in a white inset panel.
   const svgMarkup = new XMLSerializer().serializeToString(qrSvgEl);
