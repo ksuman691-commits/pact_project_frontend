@@ -3,39 +3,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { pactService } from '@/services/api';
 import { queryKeys } from '@/lib/queryKeys';
+import { toErrorMessage } from '@/lib/errorMessages';
 import toast from 'react-hot-toast';
-
-function toErrorMessage(error: any, fallback: string) {
-  const detail = error?.response?.data?.detail;
-
-  if (typeof detail === 'string' && detail.trim()) {
-    return detail;
-  }
-
-  if (Array.isArray(detail)) {
-    const messages = detail
-      .map((item) => {
-        if (typeof item === 'string') return item;
-        if (item && typeof item.msg === 'string') return item.msg;
-        return null;
-      })
-      .filter(Boolean);
-
-    if (messages.length > 0) {
-      return messages.join(', ');
-    }
-  }
-
-  if (detail && typeof detail === 'object' && typeof detail.msg === 'string') {
-    return detail.msg;
-  }
-
-  if (typeof error?.message === 'string' && error.message.trim()) {
-    return error.message;
-  }
-
-  return fallback;
-}
 
 /**
  * The vote-skip endpoint returns 403 with this message for anyone who

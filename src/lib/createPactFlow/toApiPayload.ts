@@ -117,7 +117,17 @@ export function toCreatePactApiPayload(draft: PactDraft, activity: Activity): Cr
   const endDate = new Date(startDate.getTime() + durationDays * 24 * 60 * 60 * 1000);
   const proofFrequency = mapProofFrequency(draft.proofFrequency);
   const { min, max } = computeParticipantRange(draft.audience);
-  const visibility = mapVisibility(draft.visibility);
+  let visibility = mapVisibility(draft.visibility);
+  const resolvedCircleId = visibility === 'private' ? null : draft.circleId ?? null;
+  // Defense-in-depth: the backend rejects "circle_id is required for
+  // circle-only pacts" (400) if visibility resolves to circle_only with no
+  // circle_id. AudienceStep should never let a user reach this screen in
+  // that state (see its hasNoCircles handling), but this guard makes sure a
+  // future regression there degrades to a working private pact instead of
+  // a submit-time 400.
+  if (visibility === 'circle_only' && resolvedCircleId == null) {
+    visibility = 'private';
+  }
 
   return {
     title: generateTitle(draft, activity),

@@ -11,14 +11,27 @@ export default function AudienceStep() {
   const { draft, updateDraft, selectAudience } = useCreatePactFlow();
   const { data: circles } = useCircles();
 
+  const hasNoCircles = Array.isArray(circles) && circles.length === 0;
   const hasMultipleCircles = Array.isArray(circles) && circles.length > 1;
   // Private ("My Circle") is the default posture until the user taps
   // something else, so treat an unset draft.audience as Private for both
   // the tile highlight and whether the circle sub-picker should be showing.
-  const effectiveAudience: AudienceLabel = draft.audience ?? 'My Circle';
+  // But a user with zero circles has nothing for "Private" to resolve to —
+  // defaulting the tile highlight to "My Circle" there would visually lie
+  // about what happens on submit (see toApiPayload: circle_id would be
+  // null, and the backend rejects a circle-only pact with no circle_id).
+  // "Just me" is the only default that's actually reachable for them.
+  const effectiveAudience: AudienceLabel = draft.audience ?? (hasNoCircles ? 'Just me' : 'My Circle');
   const showCirclePicker = effectiveAudience === 'My Circle' && hasMultipleCircles;
 
   const handlePickAudience = (label: (typeof AUDIENCES)[number]['label']) => {
+    if (label === 'My Circle' && hasNoCircles) {
+      // Nothing to attach the pact to — fall back to solo tracking instead
+      // of committing to "My Circle" with an unresolvable circle_id. Same
+      // unresolvable-state bug this default now also avoids above.
+      selectAudience('Just me', null);
+      return;
+    }
     if (label === 'My Circle' && hasMultipleCircles) {
       // Don't auto-advance yet — wait for the specific circle to be picked below.
       const preset = AUDIENCES.find((a) => a.label === label);
@@ -26,11 +39,12 @@ export default function AudienceStep() {
       return;
     }
     // "Just me" is solo tracking — no circle. "My Circle" needs a specific
-    // circle picked (the single-circle case, since hasMultipleCircles is
-    // handled above). "Everyone" (Public) must keep whichever circle is
-    // already attached (e.g. this flow was launched from within a Circle)
-    // — Public only widens who can see the pact, it should not detach it
-    // from the circle, otherwise it can never appear on that circle's Wall.
+    // circle picked (the single-circle case, since hasMultipleCircles and
+    // hasNoCircles are both handled above). "Everyone" (Public) must keep
+    // whichever circle is already attached (e.g. this flow was launched
+    // from within a Circle) — Public only widens who can see the pact, it
+    // should not detach it from the circle, otherwise it can never appear
+    // on that circle's Wall.
     const nextCircleId =
       label === 'My Circle' ? circles?.[0]?.id ?? null : label === 'Just me' ? null : draft.circleId ?? null;
     selectAudience(label, nextCircleId);
@@ -44,6 +58,11 @@ export default function AudienceStep() {
       <div className="mt-6 flex flex-col gap-2">
         {AUDIENCES.map((option) => {
           const selected = effectiveAudience === option.label;
+          // "My Circle" stays tappable even with zero circles (tapping it
+          // just resolves to "Just me", see handlePickAudience) — it's not
+          // disabled, only relabeled so the tile honestly reflects what
+          // will actually happen.
+          const desc = option.label === 'My Circle' && hasNoCircles ? 'Create a circle first — tracked solo for now' : option.desc;
           return (
             <button
               key={option.label}
@@ -55,7 +74,7 @@ export default function AudienceStep() {
               <span className="flex flex-col">
                 <span className="font-semibold">{option.displayLabel}</span>
                 <span className="text-xs" style={{ color: 'var(--pact-text-muted)' }}>
-                  {option.desc}
+                  {desc}
                 </span>
               </span>
             </button>
