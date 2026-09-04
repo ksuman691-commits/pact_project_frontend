@@ -135,6 +135,14 @@ export default function PactGallery({
   const [carouselOpen, setCarouselOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [internalActiveSlide, setInternalActiveSlide] = useState(0);
+  // A genuine image load failure (expired signed URL, network drop) used to
+  // fail completely silently — the <img> just never painted, leaving a bare
+  // slide with no error icon and no indication anything went wrong, which
+  // is indistinguishable from a paint/compositing glitch by looking at the
+  // screen alone. Tracking failures here surfaces a visible, tappable retry
+  // state instead, so a real failure is diagnosable rather than a silent
+  // blank tile.
+  const [failedTileKeys, setFailedTileKeys] = useState<Set<string>>(() => new Set());
   const scrollerRef = useRef<HTMLDivElement>(null);
   const activeSlide = activeIndex ?? internalActiveSlide;
   // Externally-controlled mode (the feed hero, driven by the card's own
@@ -207,6 +215,18 @@ export default function PactGallery({
     ? {
         transform: `translateX(calc(${-activeSlide * 100}% + ${dragOffsetPx}px))`,
         transition: isDragging ? 'none' : 'transform 260ms cubic-bezier(0.22, 1, 0.36, 1)',
+        // Without this hint the browser has no reason to promote this row to
+        // its own compositor layer up front — it only does so reactively,
+        // the first time something (scroll, resize, another paint) forces a
+        // fresh composite. Confirmed-loadable images can still end up as a
+        // visually blank slide 2/3 until that trigger fires, which matches
+        // exactly what was reported on an Android TWA (no broken-image icon,
+        // no network error — a paint that never happened), and is a known
+        // rougher edge on embedded WebView/TWA Chromium builds than on
+        // desktop Chrome. will-change forces the layer to exist from the
+        // first render instead of waiting for a reactive trigger that may
+        // not come until the user does something else.
+        willChange: 'transform',
       }
     : undefined;
 
@@ -238,20 +258,41 @@ export default function PactGallery({
               }`}
             >
               {tile.type === 'image' ? (
-                <Image
-                  src={tile.url}
-                  alt={tile.description || (tile.kind === 'cheer' ? `Cheer from ${tile.uploader || 'a member'}` : 'Proof')}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 480px"
-                  // In controlled mode the strip is positioned via a CSS
-                  // transform, not scrolling, so off-screen slides never get
-                  // a scroll/intersection signal to trigger native lazy
-                  // loading. Load eagerly (the tile count is capped) so
-                  // slides 2/3 actually fetch instead of staying blank.
-                  loading="eager"
-                  priority={index === 0}
-                />
+                failedTileKeys.has(`${tile.kind}-${tile.id}`) ? (
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setFailedTileKeys((prev) => {
+                        const next = new Set(prev);
+                        next.delete(`${tile.kind}-${tile.id}`);
+                        return next;
+                      });
+                    }}
+                    className="flex h-full w-full flex-col items-center justify-center gap-1 bg-white/5 text-xs font-medium text-white/60"
+                  >
+                    <span>Photo failed to load</span>
+                    <span className="text-white/40">Tap to retry</span>
+                  </button>
+                ) : (
+                  <Image
+                    src={tile.url}
+                    alt={tile.description || (tile.kind === 'cheer' ? `Cheer from ${tile.uploader || 'a member'}` : 'Proof')}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 480px"
+                    // In controlled mode the strip is positioned via a CSS
+                    // transform, not scrolling, so off-screen slides never get
+                    // a scroll/intersection signal to trigger native lazy
+                    // loading. Load eagerly (the tile count is capped) so
+                    // slides 2/3 actually fetch instead of staying blank.
+                    loading="eager"
+                    priority={index === 0}
+                    onError={() =>
+                      setFailedTileKeys((prev) => new Set(prev).add(`${tile.kind}-${tile.id}`))
+                    }
+                  />
+                )
               ) : (
                 <div className="relative h-full w-full bg-slate-900">
                   <video src={tile.url} className="h-full w-full object-cover" muted playsInline />
