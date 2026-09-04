@@ -218,12 +218,23 @@ function PactProgressRing({
   totalDays,
   gradientId,
   compact = false,
+  mutedGlow = false,
 }: {
   percent: number;
   elapsedDays: number;
   totalDays: number;
   gradientId: string;
   compact?: boolean;
+  /**
+   * The corner-badge ring's ambient glow was tuned against a busy photo
+   * background, where a big soft blob reads as a halo. On the flat, dark
+   * no-photo placeholder there's no texture to blend into, so the same
+   * blob's contrast against solid black made it look like it was taking
+   * over the card instead of sitting quietly in the corner. Shrinking the
+   * spread/opacity/blur here (rather than for the photo case too) keeps the
+   * glow readable as a small badge accent specifically on that background.
+   */
+  mutedGlow?: boolean;
 }) {
   const size = compact ? 92 : 150;
   const center = size / 2;
@@ -242,7 +253,7 @@ function PactProgressRing({
           the ring and blurred, is what actually produces a visible halo
           against the busy diagonal-stripe background. */}
       <div
-        className="pointer-events-none absolute inset-[-30%] rounded-full opacity-70 blur-xl"
+        className={`pointer-events-none absolute rounded-full ${mutedGlow ? 'inset-[-8%] opacity-35 blur-md' : 'inset-[-30%] opacity-70 blur-xl'}`}
         style={{
           background: 'radial-gradient(circle, var(--pact-pink) 0%, var(--pact-violet) 55%, transparent 75%)',
         }}
@@ -781,7 +792,7 @@ export default function FeedPactCard({
               </div>
             </div>
             <div className="flex items-center gap-1.5">
-              {progressInfo && <PactProgressRing percent={progressInfo.percent} elapsedDays={progressInfo.elapsedDays} totalDays={progressInfo.totalDays} gradientId={`hero-ring-gradient-${pact.id}`} compact />}
+              {progressInfo && <PactProgressRing percent={progressInfo.percent} elapsedDays={progressInfo.elapsedDays} totalDays={progressInfo.totalDays} gradientId={`hero-ring-gradient-${pact.id}`} compact mutedGlow={tiles.length === 0} />}
               <div className="pointer-events-auto relative" onClick={(event) => event.stopPropagation()}>
                 <button type="button" onClick={() => setMoreMenuOpen((open) => !open)} aria-label="more options" aria-haspopup="menu" aria-expanded={moreMenuOpen} className="rounded-full bg-black/35 p-2 text-white backdrop-blur-sm transition hover:bg-black/55"><MoreVertical className="h-4 w-4" /></button>
                 {moreMenuOpen && <>

@@ -271,9 +271,22 @@ export default function PactGallery({
                 {tile.kind === 'cheer' ? 'Cheer' : tile.day ? `Day ${tile.day}` : 'Proof'}
               </span>
 
-              {tile.uploader && (
-                <div className="absolute inset-x-0 bottom-0 flex items-end bg-gradient-to-t from-black/70 to-transparent px-2.5 pb-2 pt-8 text-xs font-semibold text-white">
-                  <span className="truncate">@{tile.uploader}</span>
+              {/* Only cheer tiles need their own uploader credit here — proof
+                  tiles already show the same person in FeedPactCard's own
+                  top header row (creatorLabel), so repeating it was
+                  redundant. More importantly, this used to be pinned to
+                  `bottom-0` of the tile, directly underneath FeedPactCard's
+                  own title/circle-name overlay (also `absolute ...
+                  bottom-0`, in the same hero stacking context) — two
+                  independently-sized absolute blocks anchored to the same
+                  edge collide by construction regardless of either one's
+                  text length. Anchoring this to the top instead, under the
+                  kind badge, removes the shared edge entirely rather than
+                  trying to reserve enough space for two variable-height
+                  blocks at the same spot. */}
+              {tile.kind === 'cheer' && tile.uploader && (
+                <div className="absolute left-2.5 top-10 max-w-[calc(100%-1.25rem)] truncate rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+                  from @{tile.uploader}
                 </div>
               )}
             </Tile>
