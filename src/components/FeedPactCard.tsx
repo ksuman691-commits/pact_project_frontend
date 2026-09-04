@@ -810,18 +810,42 @@ export default function FeedPactCard({
           ) : (
             /* Keep the proof area photo-forward even before the first upload.
                The progress ring is already the compact badge in the top-right
-               overlay above; never render the old large standalone ring here. */
-          <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-b from-[var(--pact-surface-2)] to-[var(--pact-surface-3)]">
-            <div className="relative z-[1] flex flex-col items-center gap-3 px-8 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--pact-violet)]/12 text-[var(--pact-violet)]">
-                <Camera className="h-6 w-6" />
+               overlay above; never render the old large standalone ring here.
+               When the viewer can actually upload, this placeholder IS the
+               empty-state CTA — rendered as a real <button> (not a bare div)
+               so it lands inside handleMediaTap's existing
+               closest('button,a') exclusion above and opens the upload
+               modal directly instead of falling through to card navigation.
+               Non-uploaders get the old inert div — nothing to tap into. */
+          uploadAllowed ? (
+            <button
+              type="button"
+              onClick={handleProofUploadClick}
+              aria-label="Add today's proof photo"
+              className="relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-b from-[var(--pact-surface-2)] to-[var(--pact-surface-3)] text-left transition hover:brightness-110"
+            >
+              <div className="relative z-[1] flex flex-col items-center gap-3 px-8 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--pact-violet)]/12 text-[var(--pact-violet)]">
+                  <Camera className="h-6 w-6" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-[var(--pact-text-dim)]">Tap to add today&apos;s proof</p>
+                  <p className="text-xs text-[var(--pact-text-faint)]">Opens your camera or gallery</p>
+                </div>
               </div>
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-[var(--pact-text-dim)]">{uploadAllowed ? "Add today's proof photo" : 'No proof yet'}</p>
-                {uploadAllowed && <p className="text-xs text-[var(--pact-text-faint)]">Tap to open your camera or gallery</p>}
+            </button>
+          ) : (
+            <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-b from-[var(--pact-surface-2)] to-[var(--pact-surface-3)]">
+              <div className="relative z-[1] flex flex-col items-center gap-3 px-8 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--pact-violet)]/12 text-[var(--pact-violet)]">
+                  <Camera className="h-6 w-6" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-[var(--pact-text-dim)]">No proof yet</p>
+                </div>
               </div>
             </div>
-          </div>
+          )
         )}
 
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-4 pb-4 pt-20 text-white">
