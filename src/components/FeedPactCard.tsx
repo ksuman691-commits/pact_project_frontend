@@ -221,6 +221,7 @@ function PactProgressRing({
   gradientId,
   compact = false,
   mutedGlow = false,
+  momentum = false,
 }: {
   percent: number;
   elapsedDays: number;
@@ -237,8 +238,19 @@ function PactProgressRing({
    * glow readable as a small badge accent specifically on that background.
    */
   mutedGlow?: boolean;
+  /**
+   * Fuses a small fire dot onto this ring's bottom-right edge instead of a
+   * second free-floating badge next to it (see hasPactMomentum in
+   * src/lib/pactMomentum.ts). Callers should not also render
+   * ActivePactFireBadge separately — this ring is the single corner badge.
+   */
+  momentum?: boolean;
 }) {
-  const size = compact ? 92 : 150;
+  // Shrunk from 92 — with the fire signal now fused onto the ring itself
+  // instead of sitting beside it as a second same-sized badge, the corner
+  // no longer needs to reserve room for two elements, so the ring itself
+  // can come down a size without anything feeling cramped.
+  const size = compact ? 76 : 150;
   const center = size / 2;
   const radius = compact ? 39 : 60;
   const strokeWidth = compact ? 6 : 9;
@@ -246,7 +258,7 @@ function PactProgressRing({
   const offset = circumference * (1 - percent / 100);
 
   return (
-    <div className={`relative flex shrink-0 items-center justify-center ${compact ? 'h-[92px] w-[92px]' : 'h-[150px] w-[150px]'}`}>
+    <div className={`relative flex shrink-0 items-center justify-center ${compact ? 'h-[76px] w-[76px]' : 'h-[150px] w-[150px]'}`}>
       {/* Soft ambient glow behind the ring, on its own blurred layer rather
           than an SVG drop-shadow filter — a filter on the whole <svg>
           (as this used to be) shadows the flat circle fills too, which
@@ -295,6 +307,11 @@ function PactProgressRing({
           </>
         )}
       </div>
+      {momentum && (
+        <div className="absolute" style={{ bottom: -size * 0.03, right: -size * 0.03 }}>
+          <ActivePactFireBadge variant="fused" size={Math.max(16, Math.round(size * 0.32))} />
+        </div>
+      )}
     </div>
   );
 }
@@ -345,6 +362,14 @@ export default function FeedPactCard({
   const [isJoining, setIsJoining] = useState(false);
   const [isCheering, setIsCheering] = useState(false);
   const [activeProofIndex, setActiveProofIndex] = useState(0);
+  // Local "have I joined" state, synced from the server flags below but also
+  // flipped optimistically the moment a join succeeds — without this, the
+  // Join button stayed rendered as "Join" after a successful join (nothing
+  // ever re-derived joinAllowed/isParticipant, since both were computed
+  // straight from the now-stale pact.can_join / pact.is_joined_by_me props,
+  // and no refetch happens on this card), so a second tap hit the backend's
+  // "already joined" rejection instead of being a no-op.
+  const [displayJoined, setDisplayJoined] = useState(false);
   const cheerInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -382,6 +407,16 @@ export default function FeedPactCard({
     setDisplayCheerCount(Number(pact.active_cheer_count ?? 0));
   }, [pact.active_cheer_count, pact.id]);
 
+  // Re-sync from the server whenever fresh pact data actually arrives (e.g.
+  // this card gets recycled to a different pact, or a parent list refetches
+  // after this one's own optimistic update settles) — join_block_reason is
+  // included as a second signal alongside is_joined_by_me since both
+  // endpoints set it to 'already_joined' precisely when the viewer has
+  // already joined, giving the same answer through an independent field.
+  useEffect(() => {
+    setDisplayJoined(Boolean(pact.is_joined_by_me) || pact.join_block_reason === 'already_joined');
+  }, [pact.id, pact.is_joined_by_me, pact.join_block_reason]);
+
   const creatorLabel = getDisplayName(
     pact.creator_id ?? pact.user_id ?? pact.creator?.id,
     pact.creator || pact.creator_username || 'creator',
@@ -412,10 +447,12 @@ export default function FeedPactCard({
   // The feed-list endpoint (/api/pacts) never returns a participants array,
   // only an is_joined_by_me flag, unlike the pact detail endpoint. Fall back
   // to that flag here so membership-gated actions (e.g. proof upload) work
-  // correctly on feed cards.
-  const isParticipant = Array.isArray(pact.participants)
+  // correctly on feed cards. displayJoined is OR'd in on top so a join that
+  // just succeeded this render is reflected immediately, not just once the
+  // participants array/is_joined_by_me flag catches up on a future refetch.
+  const isParticipant = displayJoined || (Array.isArray(pact.participants)
     ? pact.participants.some((participant: any) => participant.id === user?.id || participant.user_id === user?.id)
-    : Boolean(pact.is_joined_by_me);
+    : Boolean(pact.is_joined_by_me));
   const isCreator = Boolean(
     user && (
       pact.creator_id === user.id ||
@@ -429,7 +466,13 @@ export default function FeedPactCard({
   // one of those other fields saw the passive "Proof photo" viewer empty
   // state instead of their own "Add today's proof photo" upload CTA.
   const uploadAllowed = canUploadProof ?? Boolean(isCreator || isParticipant);
-  const joinAllowed = Boolean(pact.can_join);
+  const joinAllowed = Boolean(pact.can_join) && !displayJoined;
+  // Whether to render the button in its disabled "Joined" state instead of
+  // hiding it — covers both "just joined this render" (displayJoined) and
+  // "server already reported this pact as joined" (join_block_reason),
+  // vs. every other block reason (creator, unauthenticated, pact not
+  // active, etc.) where no button should render at all, same as before.
+  const showJoinedState = displayJoined && (Boolean(pact.can_join) || pact.join_block_reason === 'already_joined');
   // Mutual-goal matching: same query for both placements below, just gated
   // on the pact actually having a category to match against. See
   // GoalMatchStrip / useGoalMatches / BACKEND_SPEC_MUTUAL_GOAL_MATCHING.md.
@@ -595,10 +638,22 @@ export default function FeedPactCard({
   };
 
   const handleJoinPact = async () => {
-    if (isJoining || !joinAllowed) return;
+    // showJoinedState (not just joinAllowed) also guards this — joinAllowed
+    // alone flips false the instant displayJoined is set below, but that
+    // update and the button re-render aren't perfectly synchronous, so this
+    // is the actual belt-and-suspenders guard against a double-tap firing
+    // the request twice.
+    if (isJoining || !joinAllowed || showJoinedState) return;
     setIsJoining(true);
     try {
       await pactService.join(pact.id);
+      // Flip local state immediately so the button reflects "Joined" (and
+      // proof upload unlocks) right away — nothing here re-invalidates the
+      // various list queries (feed/my-pacts/etc.) this card might be
+      // rendered from, so without this the button silently reverted to
+      // "Join" until a manual refresh, and a second tap then hit the
+      // backend's "already joined" rejection instead of being a no-op.
+      setDisplayJoined(true);
       const creatorName = creatorLabel || 'this creator';
       toast.success(`You joined ${creatorName}'s pact`);
       didCelebrateRef.current = true;
@@ -609,6 +664,16 @@ export default function FeedPactCard({
         colors: ['#10b981', '#fbbf24', '#f472b6', '#8b5cf6'],
       });
     } catch (error: any) {
+      // The join endpoint's rejection ("You cannot join this pact", 403) is
+      // shared across every block reason — already joined, pact full,
+      // creator, not active — so it can't be used to infer success here.
+      // Genuinely-stale props (this card's pact.can_join was true, but the
+      // server independently already has the viewer joined, e.g. a race
+      // with another tab/device) are rare now that the button disables
+      // itself the instant a join actually succeeds; when it does happen,
+      // surface the real rejection rather than guessing at "already joined"
+      // from an ambiguous message and risking masking a genuine failure
+      // (e.g. the pact just filled up) as a false "Joined".
       toast.error(error?.response?.data?.detail || 'Failed to join pact');
     } finally {
       setIsJoining(false);
@@ -679,12 +744,11 @@ export default function FeedPactCard({
               </div>
             </div>
             <div className="flex items-center gap-1.5">
-              {/* Fire badge signals real momentum right now (proof today, or
-                  a clean streak with no missed days) — separate from the
-                  duration ring next to it, which just says how far through
-                  the pact's calendar window this is. */}
-              {hasPactMomentum(pact) && <div className="pointer-events-auto" onClick={(event) => event.stopPropagation()}><ActivePactFireBadge size={22} /></div>}
-              {progressInfo && <PactProgressRing percent={progressInfo.percent} elapsedDays={progressInfo.elapsedDays} totalDays={progressInfo.totalDays} gradientId={`hero-ring-gradient-${pact.id}`} compact mutedGlow={tiles.length === 0} />}
+              {/* Momentum (proof today, a clean streak, or a recent cheer —
+                  see hasPactMomentum) now fuses onto the duration ring's own
+                  bottom-right edge instead of sitting beside it as a second
+                  badge — a single consolidated corner element. */}
+              {progressInfo && <PactProgressRing percent={progressInfo.percent} elapsedDays={progressInfo.elapsedDays} totalDays={progressInfo.totalDays} gradientId={`hero-ring-gradient-${pact.id}`} compact mutedGlow={tiles.length === 0} momentum={hasPactMomentum(pact)} />}
               <div className="pointer-events-auto relative" onClick={(event) => event.stopPropagation()}>
                 <button type="button" onClick={() => setMoreMenuOpen((open) => !open)} aria-label="more options" aria-haspopup="menu" aria-expanded={moreMenuOpen} className="rounded-full bg-black/35 p-2 text-white backdrop-blur-sm transition hover:bg-black/55"><MoreVertical className="h-4 w-4" /></button>
                 {moreMenuOpen && <>
@@ -816,8 +880,16 @@ export default function FeedPactCard({
             <div className="ml-auto flex items-center gap-2">
               {!isCreator && isParticipant && <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-300">Joined</span>}
               {isCreator && <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-300">Creator</span>}
-              {joinAllowed && <PremiumJoinButton onClick={handleJoinPact} loading={isJoining} size="sm" />}
-              {!joinAllowed && voteActionsVisible && canSkip && <button type="button" onClick={() => void completeVote('skip')} disabled={isVoting} className="inline-flex items-center gap-1 rounded-full border border-[var(--pact-hairline)] px-3 py-1.5 text-[11px] font-bold text-[var(--pact-text-dim)] transition hover:text-[var(--pact-text)] disabled:opacity-50"><ArrowLeft className="h-3 w-3" />Skip</button>}
+              {(joinAllowed || showJoinedState) && (
+                <PremiumJoinButton
+                  onClick={handleJoinPact}
+                  loading={isJoining}
+                  disabled={showJoinedState}
+                  label={showJoinedState ? 'Joined' : 'Join'}
+                  size="sm"
+                />
+              )}
+              {!joinAllowed && !showJoinedState && voteActionsVisible && canSkip && <button type="button" onClick={() => void completeVote('skip')} disabled={isVoting} className="inline-flex items-center gap-1 rounded-full border border-[var(--pact-hairline)] px-3 py-1.5 text-[11px] font-bold text-[var(--pact-text-dim)] transition hover:text-[var(--pact-text)] disabled:opacity-50"><ArrowLeft className="h-3 w-3" />Skip</button>}
             </div>
           </div>
 

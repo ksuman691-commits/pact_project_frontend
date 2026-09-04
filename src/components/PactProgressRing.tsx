@@ -1,5 +1,7 @@
 'use client'
 
+import ActivePactFireBadge from './ActivePactFireBadge'
+
 type PactProgressRingProps = {
   completed: number
   total: number
@@ -16,6 +18,12 @@ type PactProgressRingProps = {
   // percentage-first label used everywhere else (e.g. the compact badge
   // in FeedPactCard).
   emphasizeDays?: boolean
+  // When true, fuses a small fire dot onto the ring's bottom-right edge
+  // (see hasPactMomentum in src/lib/pactMomentum.ts). Deliberately a single
+  // dot fused onto the ring rather than a second free-floating badge next
+  // to it — callers should not also render ActivePactFireBadge separately.
+  // Omitted entirely when false, not just dimmed.
+  momentum?: boolean
 }
 
 export default function PactProgressRing({
@@ -27,6 +35,7 @@ export default function PactProgressRing({
   showLabel = true,
   className = '',
   emphasizeDays = false,
+  momentum = false,
 }: PactProgressRingProps) {
   const safeTotal = Math.max(1, total)
   const safeCompleted = Math.min(safeTotal, Math.max(0, completed))
@@ -66,6 +75,11 @@ export default function PactProgressRing({
             </>
           )}
         </span>
+      )}
+      {momentum && (
+        <div className="absolute" style={{ bottom: -size * 0.04, right: -size * 0.04 }}>
+          <ActivePactFireBadge variant="fused" size={Math.max(14, Math.round(size * 0.36))} />
+        </div>
       )}
     </div>
   )
