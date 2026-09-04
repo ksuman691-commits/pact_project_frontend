@@ -21,14 +21,16 @@ const mockPact = {
   comment_count: 0,
   can_join: false,
   join_block_reason: 'already_joined',
-  // Real signed S3 URLs pulled live from GET /api/pacts (pact id 79, a
-  // throwaway test pact created specifically for this investigation) —
-  // confirmed individually loadable via direct curl (all 3 returned
-  // HTTP 200) moments before being pasted in here.
+  // Real signed S3 URLs re-pulled live from GET /api/pacts (pact id 79, the
+  // same throwaway test pact) moments before this render — each one
+  // individually curl'd and confirmed HTTP 200 with real JPEG bytes
+  // immediately beforehand (the previous batch pasted here had since
+  // expired, which is itself expected: these are short-lived signed URLs,
+  // not evidence of a bug on their own).
   recent_proofs: [
-    { url: 'https://pact-proofs-suman-2026.s3.amazonaws.com/pact-proofs/pact_79/user_100/20260904035355.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAQQCRHA2KVFRWQYG2%2F20260904%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20260904T035406Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=18d1a5ce1703334becc7c9870635fd5f82b97b0444608f8461031b656e6d84de', username: 'v0debug', created_at: '2026-09-04T03:53:56Z' },
-    { url: 'https://pact-proofs-suman-2026.s3.amazonaws.com/pact-proofs/pact_79/user_100/20260904035353.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAQQCRHA2KVFRWQYG2%2F20260904%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20260904T035406Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=d6e51148c02bff361cf223eb424a5b171dd969c461a9801f51044d2aade98290', username: 'v0debug', created_at: '2026-09-04T03:53:54Z' },
-    { url: 'https://pact-proofs-suman-2026.s3.amazonaws.com/pact-proofs/pact_79/user_100/20260904035352.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAQQCRHA2KVFRWQYG2%2F20260904%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20260904T035406Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=1f6a40ad3af82e84307017ddfd8e22093494a794eaa1eb72f005e3d30ffa7dfd', username: 'v0debug', created_at: '2026-09-04T03:53:52Z' },
+    { url: 'https://pact-proofs-suman-2026.s3.amazonaws.com/pact-proofs/pact_79/user_100/20260904035355.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAQQCRHA2KVFRWQYG2%2F20260904%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20260904T050957Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=1bbe0f570c02694dcc28a24a071df1154f89bb9dba15b0d5eea11a97e93260fa', username: 'v0debug', created_at: '2026-09-04T03:53:56Z' },
+    { url: 'https://pact-proofs-suman-2026.s3.amazonaws.com/pact-proofs/pact_79/user_100/20260904035353.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAQQCRHA2KVFRWQYG2%2F20260904%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20260904T050957Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=fdfcb569f27da13ac60ae12964623585feba1170e024305dea742141213715d3', username: 'v0debug', created_at: '2026-09-04T03:53:54Z' },
+    { url: 'https://pact-proofs-suman-2026.s3.amazonaws.com/pact-proofs/pact_79/user_100/20260904035352.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAQQCRHA2KVFRWQYG2%2F20260904%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20260904T050957Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=e74eb1c9722d68d4a6de33f08ecb272b2f7f89fdbec120e32cbc3d56e0ee0068', username: 'v0debug', created_at: '2026-09-04T03:53:52Z' },
   ],
 };
 
