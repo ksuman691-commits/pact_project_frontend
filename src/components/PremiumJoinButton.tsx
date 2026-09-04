@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Plus } from 'lucide-react';
+import { Plus, Check } from 'lucide-react';
 
 interface PremiumJoinButtonProps {
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
@@ -10,6 +10,13 @@ interface PremiumJoinButtonProps {
   loading?: boolean;
   label?: string;
   loadingLabel?: string;
+  /**
+   * Swaps the inset "+" badge for a checkmark — used for the disabled
+   * "Joined" resting state so it reads as a confirmed status pill rather
+   * than a still-clickable "add" action, without needing a whole separate
+   * component just for that state.
+   */
+  joined?: boolean;
   /** Compact size for inline use on cards; 'md' for standalone CTAs (panels, empty states). */
   size?: 'sm' | 'md';
   fullWidth?: boolean;
@@ -39,6 +46,7 @@ export default function PremiumJoinButton({
   fullWidth = false,
   className = '',
   type = 'button',
+  joined = false,
 }: PremiumJoinButtonProps) {
   const s = SIZE_STYLES[size];
   const isDisabled = disabled || loading;
@@ -67,7 +75,7 @@ export default function PremiumJoinButton({
           gap: s.gap,
           fontSize: s.text,
           fontFamily: 'var(--font-pact-display), sans-serif',
-          background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))',
+          background: joined ? 'var(--pact-surface-3)' : 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))',
           boxShadow: isDisabled ? 'none' : '0 8px 20px rgba(139,107,255,0.35)',
         }}
       >
@@ -84,7 +92,11 @@ export default function PremiumJoinButton({
           className="relative flex flex-shrink-0 items-center justify-center rounded-full bg-white/90"
           style={{ width: s.badge, height: s.badge }}
         >
-          <Plus className="text-[var(--pact-violet)]" style={{ width: s.badge * 0.6, height: s.badge * 0.6 }} strokeWidth={3} />
+          {joined ? (
+            <Check className="text-[var(--pact-surface-3)]" style={{ width: s.badge * 0.6, height: s.badge * 0.6 }} strokeWidth={3} />
+          ) : (
+            <Plus className="text-[var(--pact-violet)]" style={{ width: s.badge * 0.6, height: s.badge * 0.6 }} strokeWidth={3} />
+          )}
         </span>
         <span className="relative">{loading ? loadingLabel : label}</span>
       </motion.button>

@@ -885,6 +885,7 @@ export default function FeedPactCard({
                   onClick={handleJoinPact}
                   loading={isJoining}
                   disabled={showJoinedState}
+                  joined={showJoinedState}
                   label={showJoinedState ? 'Joined' : 'Join'}
                   size="sm"
                 />
