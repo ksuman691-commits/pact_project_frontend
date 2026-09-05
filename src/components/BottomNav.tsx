@@ -112,7 +112,7 @@ export default function BottomNav() {
                   <span
                     aria-hidden="true"
                     className="pact-bottomnav-active-glow pointer-events-none absolute inset-0 rounded-full blur-md"
-                    style={{ background: 'radial-gradient(circle, rgba(139,107,255,0.55), rgba(255,79,135,0.4) 55%, transparent 78%)' }}
+                    style={{ background: 'radial-gradient(circle, rgba(24,119,242,0.55), rgba(24,119,242,0.4) 55%, transparent 78%)' }}
                   />
                 )}
                 <span

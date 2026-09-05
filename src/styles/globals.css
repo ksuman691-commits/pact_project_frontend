@@ -557,20 +557,20 @@ section + section {
   0% {
     opacity: 0;
     transform: translateY(14px) scale(0.98);
-    box-shadow: 0 0 0 0 rgba(255, 79, 135, 0);
+    box-shadow: 0 0 0 0 rgba(24, 119, 242, 0);
   }
   30% {
     opacity: 1;
     transform: translateY(0) scale(1);
-    box-shadow: 0 0 0 4px rgba(255, 79, 135, 0.3), 0 0 44px rgba(139, 107, 255, 0.4);
+    box-shadow: 0 0 0 4px rgba(24, 119, 242, 0.3), 0 0 44px rgba(24, 119, 242, 0.4);
   }
   70% {
-    box-shadow: 0 0 0 4px rgba(255, 79, 135, 0.16), 0 0 30px rgba(139, 107, 255, 0.22);
+    box-shadow: 0 0 0 4px rgba(24, 119, 242, 0.16), 0 0 30px rgba(24, 119, 242, 0.22);
   }
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
-    box-shadow: 0 0 0 0 rgba(255, 79, 135, 0);
+    box-shadow: 0 0 0 0 rgba(24, 119, 242, 0);
   }
 }
 
