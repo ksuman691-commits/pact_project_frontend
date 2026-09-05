@@ -102,6 +102,14 @@ interface PactGalleryProps {
   dotsPosition?: 'below' | 'overlay' | 'none';
   /** Fills the parent's height instead of sizing itself via aspectClassName — used by the feed hero. */
   fillHeight?: boolean;
+  /**
+   * Extra non-tile slide appended after the real photos/cheers — used by
+   * FeedPactCard's "+ Add today" CTA when there's already at least one
+   * proof photo but today's hasn't been submitted yet. Counted as its own
+   * slide in the dot row below so the dots always match what's actually
+   * swipeable, even though it isn't a GalleryTile itself.
+   */
+  trailingSlot?: React.ReactNode;
 }
 
 /**
@@ -144,6 +152,7 @@ export default function PactGallery({
   interactive = true,
   dotsPosition = 'below',
   fillHeight = false,
+  trailingSlot,
 }: PactGalleryProps) {
   const [carouselOpen, setCarouselOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -167,6 +176,12 @@ export default function PactGallery({
   }, [onActiveIndexChange]);
 
   const tiles: GalleryTile[] = useMemo(() => buildGalleryTiles(proofs, cheers), [proofs, cheers]);
+  // Total swipeable slide count — real tiles plus the optional trailing
+  // "+ Add today" slot, which isn't a GalleryTile but still occupies a real
+  // scroll-snap child and therefore needs its own dot.
+  const slideCount = tiles.length + (trailingSlot ? 1 : 0);
+  const firstTileId = tiles[0]?.id;
+  const lastTileId = tiles[tiles.length - 1]?.id;
 
   // The single source of truth for "which slide is active" is the browser's
   // own scroll position, read via IntersectionObserver rather than tracked
@@ -180,7 +195,7 @@ export default function PactGallery({
     const scroller = scrollerRef.current;
     if (!scroller) return;
 
-    if (tiles.length <= 1) {
+    if (slideCount <= 1) {
       setActiveSlide(0);
       onActiveIndexChangeRef.current?.(0);
       return;
@@ -211,13 +226,15 @@ export default function PactGallery({
 
     items.forEach((item) => observer.observe(item));
     return () => observer.disconnect();
-    // Deliberately keyed on tile identity (via length + first/last id) so a
-    // pact swap that still happens to have the same slide count (rare, but
-    // possible) still tears down and rebuilds the observer against the new
-    // DOM nodes rather than silently observing stale ones.
-  }, [tiles.length, tiles[0]?.id, tiles[tiles.length - 1]?.id]);
+    // Deliberately keyed on tile identity (via length + first/last id) plus
+    // slideCount (covers the trailing "+ Add today" slot appearing or
+    // disappearing) so a pact swap that still happens to have the same
+    // slide count (rare, but possible) still tears down and rebuilds the
+    // observer against the new DOM nodes rather than silently observing
+    // stale ones.
+  }, [slideCount, firstTileId, lastTileId]);
 
-  if (tiles.length === 0) return null;
+  if (tiles.length === 0 && !trailingSlot) return null;
 
   const handleTileClick = (index: number) => {
     if (!interactive) return;
@@ -327,9 +344,14 @@ export default function PactGallery({
               )}
             </Tile>
           ))}
+          {trailingSlot && (
+            <div className={`flex-shrink-0 snap-center ${fillHeight ? 'h-full' : aspectClassName} w-full`}>
+              {trailingSlot}
+            </div>
+          )}
         </div>
 
-        {tiles.length > 1 && dotsPosition !== 'none' && (
+        {slideCount > 1 && dotsPosition !== 'none' && (
           <div
             className={
               dotsPosition === 'overlay'
@@ -337,9 +359,9 @@ export default function PactGallery({
                 : 'mt-2 flex items-center justify-center gap-1.5'
             }
           >
-            {tiles.map((tile, index) => (
+            {Array.from({ length: slideCount }).map((_, index) => (
               <button
-                key={`dot-${tile.kind}-${tile.id}`}
+                key={`dot-${index}`}
                 type="button"
                 aria-label={`Go to photo ${index + 1}`}
                 onClick={() => scrollToIndex(index)}
