@@ -133,9 +133,7 @@ export default function Avatar({
         className={`absolute rounded-full ${atRisk ? 'animate-tier-pulse' : 'avatar-ring-spin'}`}
         style={{
           inset: ringBand,
-          background: atRisk
-            ? 'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)'
-            : 'conic-gradient(from 0deg, var(--pact-pink), var(--pact-gold), var(--pact-mint), var(--pact-violet), var(--pact-pink))',
+          background: atRisk ? 'var(--pact-danger)' : 'var(--pact-pink)',
           padding: ringBand,
         }}
       >

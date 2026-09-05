@@ -86,6 +86,7 @@ export default function PactDetailPage() {
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const [showJoinRequestsModal, setShowJoinRequestsModal] = useState(false);
+  const [isJoiningPact, setIsJoiningPact] = useState(false);
   const pactId = Number(params.id);
   const { data: pactData, isLoading, isError, refetch: refetchPact } = usePact(pactId);
   const { data: proofsData, refetch: refetchProofs } = usePactProofs(pactId, 50);
@@ -176,12 +177,22 @@ export default function PactDetailPage() {
   };
 
   const handleJoinRequest = async () => {
+    if (isJoiningPact || !pact?.can_join) return;
+    setIsJoiningPact(true);
     try {
       await pactService.join(pactId);
       toast.success('Joined pact');
-      router.refresh();
+      // router.refresh() re-runs Server Components — a no-op here since
+      // `pact` comes entirely from usePact's React Query cache, not an
+      // RSC. That's why the button kept showing "Join": can_join/
+      // is_joined_by_me/participants never actually updated, so a second
+      // tap hit the backend's already-joined rejection. Refetching the
+      // query this page actually reads is the real fix.
+      await refetchPact();
     } catch (error: any) {
       toast.error(error?.response?.data?.detail || 'Failed to join pact');
+    } finally {
+      setIsJoiningPact(false);
     }
   };
 
@@ -366,7 +377,7 @@ export default function PactDetailPage() {
                 <>
                   <p className="mt-2 text-sm text-white/75">Join this pact to upload proof updates from the camera or your gallery.</p>
                   <div className="mt-4">
-                    <PremiumJoinButton onClick={handleJoinRequest} size="md" />
+                    <PremiumJoinButton onClick={handleJoinRequest} loading={isJoiningPact} size="md" />
                   </div>
                 </>
               ) : pact.join_block_reason === 'already_joined' ? (
