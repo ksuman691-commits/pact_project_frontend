@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import TopNav from '@/components/TopNav'
 import WelcomeHeader from '@/components/WelcomeHeader'
+import StreakStatsHero from '@/components/StreakStatsHero'
 import CreatePactFlowModal from '@/components/create-pact-flow/CreatePactFlowModal'
 import PactFeed from '@/components/PactFeed'
 import PullToRefresh from '@/components/PullToRefresh'
@@ -22,8 +23,11 @@ export default function FeedPageClient() {
   const searchParams = useSearchParams()
   const { user, isInitialized } = useAuthStore()
   const { data: unreadCountData } = useUnreadNotificationCount()
-  const { data: userStatsData } = useUserStats(user?.id || 0)
+  const { data: userStatsData, isLoading: statsLoading } = useUserStats(user?.id || 0)
   const currentStreak = userStatsData?.data?.current_streak ?? 0
+  const winRate = userStatsData?.data?.win_rate ?? 0
+  const pactsCompleted = userStatsData?.data?.pacts_completed ?? 0
+  const circlesCount = userStatsData?.data?.circles_count ?? 0
   const isAtRisk = useAtRiskPact(user?.id)
   const profileCompletion = useProfileCompletion()
   const [nudgeDismissed, setNudgeDismissed] = useState(true)
@@ -120,6 +124,18 @@ export default function FeedPageClient() {
           streak={currentStreak}
           atRisk={isAtRisk}
         />
+
+        {isInitialized && user && (
+          <div className="max-w-md mx-auto px-4 pb-4">
+            <StreakStatsHero
+              streak={currentStreak}
+              winRate={winRate}
+              pactsCompleted={pactsCompleted}
+              circlesCount={circlesCount}
+              isLoading={statsLoading}
+            />
+          </div>
+        )}
 
         {profileCompletion.showChecklist && !checklistDismissed && (
           <div className="max-w-md mx-auto px-4 pb-4">

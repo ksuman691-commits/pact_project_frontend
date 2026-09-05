@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, XCircle, Upload, Zap, Eye, Lock } from 'lucide-react';
+import Image from 'next/image';
+import { CheckCircle2, XCircle, Upload, Zap, Eye, Lock, CheckCheck } from 'lucide-react';
 import type { Dare } from '@/types';
 import DareTimeRing from '@/components/DareTimeRing';
 import { useAuthStore } from '@/store/auth';
@@ -98,6 +99,12 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
   const ringAvatarUrl = viewerContext === 'sent' ? firstRecipient?.avatar_url : dare.creator_avatar_url;
   const ringUsername = viewerContext === 'sent' ? firstRecipient?.username : dare.creator_username;
 
+  // A photo is only ever real for a dare once its proof has been submitted
+  // (proof_url on the Dare object, populated on completion) — pending/
+  // accepted dares have no image field at all, so this card only goes
+  // photo-forward for that completed slice rather than faking a cover image.
+  const hasProofPhoto = Boolean(dare.proof_url) && dare.proof_type !== 'video';
+
   return (
     <>
       <div
@@ -110,6 +117,25 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
       className={`pact-card cursor-pointer overflow-hidden rounded-[28px] transition ${isExpired ? 'opacity-60' : ''}`}
       style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}
     >
+      {hasProofPhoto && (
+        <div className="relative aspect-[16/9] w-full">
+          <Image
+            src={dare.proof_url as string}
+            alt={`Proof for ${dare.title}`}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 480px"
+          />
+          <span
+            className="absolute left-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
+            style={{ background: 'var(--pact-mint)' }}
+          >
+            <CheckCheck className="h-2.5 w-2.5" />
+            Completed
+          </span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="p-4">
         <div className="mb-3 flex items-start justify-between gap-3">
