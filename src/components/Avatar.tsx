@@ -124,7 +124,7 @@ export default function Avatar({
         style={{
           background: atRisk
             ? 'radial-gradient(circle, rgba(239,68,68,0.55), transparent 70%)'
-            : 'radial-gradient(circle, rgba(255,79,135,0.4), rgba(139,107,255,0.4) 55%, transparent 75%)',
+            : 'radial-gradient(circle, rgba(24,119,242,0.4), rgba(24,119,242,0.4) 55%, transparent 75%)',
         }}
       />
 

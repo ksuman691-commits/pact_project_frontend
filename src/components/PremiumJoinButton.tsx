@@ -60,7 +60,7 @@ export default function PremiumJoinButton({
         <span
           aria-hidden="true"
           className="join-btn-breathe pointer-events-none absolute inset-0 rounded-full blur-lg"
-          style={{ background: 'radial-gradient(circle, rgba(255,79,135,0.55), rgba(139,107,255,0.45) 55%, transparent 75%)' }}
+          style={{ background: 'radial-gradient(circle, rgba(24,119,242,0.55), rgba(24,119,242,0.45) 55%, transparent 75%)' }}
         />
       )}
       <motion.button
@@ -76,7 +76,7 @@ export default function PremiumJoinButton({
           fontSize: s.text,
           fontFamily: 'var(--font-pact-display), sans-serif',
           background: joined ? 'var(--pact-surface-3)' : 'var(--pact-pink)',
-          boxShadow: isDisabled ? 'none' : '0 8px 20px rgba(139,107,255,0.35)',
+          boxShadow: isDisabled ? 'none' : '0 8px 20px rgba(24,119,242,0.35)',
         }}
       >
         {/* Diagonal light sweep looping across the pill — the "bling" motif

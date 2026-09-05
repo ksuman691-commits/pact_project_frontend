@@ -5,12 +5,14 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import TopNav from '@/components/TopNav'
 import WelcomeHeader from '@/components/WelcomeHeader'
 import StreakStatsHero from '@/components/StreakStatsHero'
+import YourCirclesRail from '@/components/YourCirclesRail'
 import CreatePactFlowModal from '@/components/create-pact-flow/CreatePactFlowModal'
 import PactFeed from '@/components/PactFeed'
 import PullToRefresh from '@/components/PullToRefresh'
 import { useAuthStore } from '@/store/auth'
 import { useUnreadNotificationCount } from '@/hooks/useNotifications'
 import { useUserStats } from '@/hooks/useUserQueries'
+import { useCircles } from '@/hooks/useCircles'
 import { useAtRiskPact } from '@/hooks/useAtRiskPact'
 import { useProfileCompletion } from '@/hooks/useProfileCompletion'
 import { isProfileNudgeDismissed, isProfileChecklistDismissed } from '@/lib/onboarding'
@@ -28,6 +30,8 @@ export default function FeedPageClient() {
   const winRate = userStatsData?.data?.win_rate ?? 0
   const pactsCompleted = userStatsData?.data?.pacts_completed ?? 0
   const circlesCount = userStatsData?.data?.circles_count ?? 0
+  const { data: circlesData, isLoading: circlesLoading } = useCircles()
+  const circles = (circlesData || []) as Array<{ id: number; name: string; photo_url?: string | null; emoji?: string | null; icon_emoji?: string | null; member_count?: number }>
   const isAtRisk = useAtRiskPact(user?.id)
   const profileCompletion = useProfileCompletion()
   const [nudgeDismissed, setNudgeDismissed] = useState(true)
@@ -134,6 +138,12 @@ export default function FeedPageClient() {
               circlesCount={circlesCount}
               isLoading={statsLoading}
             />
+          </div>
+        )}
+
+        {isInitialized && user && (
+          <div className="max-w-md mx-auto px-4 pb-4">
+            <YourCirclesRail circles={circles} isLoading={circlesLoading} />
           </div>
         )}
 

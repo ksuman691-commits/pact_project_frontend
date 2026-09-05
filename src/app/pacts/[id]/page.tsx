@@ -32,47 +32,47 @@ function PactDetailSkeleton() {
     // profile/page.tsx's clearance for the same reason: this page's last
     // section also sits directly against the bottom padding with no
     // trailing whitespace of its own.
-    <div className="min-h-screen bg-slate-950 pb-36 pt-6">
+    <div className="pact-flow min-h-screen pb-36 pt-6">
       <div className="mx-auto max-w-md space-y-6 px-4">
-        <div className="overflow-hidden rounded-[32px] border border-white/10 bg-white/5 shadow-[0_20px_70px_rgba(2,6,23,0.45)]">
-          <div className="aspect-[4/5] animate-pulse bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900" />
+        <div className="pact-card overflow-hidden rounded-[32px]">
+          <div className="pact-shimmer aspect-[4/5]" />
         </div>
 
-        <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
-          <div className="h-4 w-28 animate-pulse rounded-full bg-white/10" />
+        <div className="pact-card rounded-[28px] p-5">
+          <div className="pact-shimmer h-4 w-28 rounded-full" />
           <div className="mt-4 space-y-3">
-            <div className="h-5 w-3/4 animate-pulse rounded-full bg-white/10" />
-            <div className="h-5 w-2/3 animate-pulse rounded-full bg-white/10" />
+            <div className="pact-shimmer h-5 w-3/4 rounded-full" />
+            <div className="pact-shimmer h-5 w-2/3 rounded-full" />
           </div>
         </div>
 
-        <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
-          <div className="h-4 w-32 animate-pulse rounded-full bg-white/10" />
+        <div className="pact-card rounded-[28px] p-5">
+          <div className="pact-shimmer h-4 w-32 rounded-full" />
           <div className="mt-4 grid grid-cols-3 gap-3">
-            <div className="h-16 animate-pulse rounded-[24px] bg-white/10" />
-            <div className="h-16 animate-pulse rounded-[24px] bg-white/10" />
-            <div className="h-16 animate-pulse rounded-[24px] bg-white/10" />
+            <div className="pact-shimmer h-16 rounded-[24px]" />
+            <div className="pact-shimmer h-16 rounded-[24px]" />
+            <div className="pact-shimmer h-16 rounded-[24px]" />
           </div>
         </div>
 
-        <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
-          <div className="h-4 w-40 animate-pulse rounded-full bg-white/10" />
+        <div className="pact-card rounded-[28px] p-5">
+          <div className="pact-shimmer h-4 w-40 rounded-full" />
           <div className="mt-4 space-y-3">
-            <div className="h-28 animate-pulse rounded-[24px] bg-white/10" />
-            <div className="h-28 animate-pulse rounded-[24px] bg-white/10" />
+            <div className="pact-shimmer h-28 rounded-[24px]" />
+            <div className="pact-shimmer h-28 rounded-[24px]" />
           </div>
         </div>
 
-        <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
-          <div className="h-4 w-36 animate-pulse rounded-full bg-white/10" />
-          <div className="mt-4 h-44 animate-pulse rounded-[24px] bg-white/10" />
+        <div className="pact-card rounded-[28px] p-5">
+          <div className="pact-shimmer h-4 w-36 rounded-full" />
+          <div className="pact-shimmer mt-4 h-44 rounded-[24px]" />
         </div>
 
-        <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
-          <div className="h-4 w-32 animate-pulse rounded-full bg-white/10" />
+        <div className="pact-card rounded-[28px] p-5">
+          <div className="pact-shimmer h-4 w-32 rounded-full" />
           <div className="mt-4 space-y-3">
-            <div className="h-14 animate-pulse rounded-[24px] bg-white/10" />
-            <div className="h-14 animate-pulse rounded-[24px] bg-white/10" />
+            <div className="pact-shimmer h-14 rounded-[24px]" />
+            <div className="pact-shimmer h-14 rounded-[24px]" />
           </div>
         </div>
       </div>
@@ -209,14 +209,15 @@ export default function PactDetailPage() {
     return (
       <>
         <DetailPageHeader title="Pact not found" backHref="/feed" maxWidthClassName="max-w-md" />
-        <div className="pact-flow min-h-screen bg-slate-950 flex items-center justify-center px-4 text-white">
-          <div className="max-w-sm rounded-[28px] border border-white/10 bg-white/5 p-8 text-center backdrop-blur-sm">
+        <div className="pact-flow flex min-h-screen items-center justify-center px-4">
+          <div className="pact-card max-w-sm rounded-[28px] p-8 text-center">
             <AlertCircle className="mx-auto h-10 w-10 text-rose-400" />
-            <h2 className="mt-4 text-xl font-black text-white">Pact not found</h2>
-            <p className="mt-2 text-sm text-white/70">This pact could not be loaded or is no longer available.</p>
+            <h2 className="mt-4 text-xl font-black text-[var(--pact-text)]">Pact not found</h2>
+            <p className="mt-2 text-sm text-[var(--pact-text-muted)]">This pact could not be loaded or is no longer available.</p>
             <button
               onClick={() => router.push('/feed')}
-              className="mt-6 rounded-full bg-[#EDE9FE]0 px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#A78BFA]"
+              className="pact-btn-glow mt-6 rounded-full px-5 py-3 text-sm font-semibold"
+              style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-bg)' }}
             >
               Back to feed
             </button>
@@ -239,7 +240,7 @@ export default function PactDetailPage() {
           on a real device, which is why this kept coming back. Matches
           profile/page.tsx's pb-36 for the same "content ends right at the
           bottom, no natural trailing space" situation. */}
-      <div className="pact-flow min-h-screen bg-slate-950 pb-36 pt-6">
+      <div className="pact-flow min-h-screen pb-36 pt-6">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -255,23 +256,23 @@ export default function PactDetailPage() {
                   same number right underneath it. */}
               <PactProgressRing completed={progress.completed} total={progress.total} missed={progress.missed} size={132} strokeWidth={9} emphasizeDays />
               <div className="mt-4 min-w-0 flex-1">
-                <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/50">Pact progress</p>
-                <p className="mt-1 text-sm italic text-white/60">Keep the circle moving, one proof at a time.</p>
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--pact-text-faint)]">Pact progress</p>
+                <p className="mt-1 text-sm italic text-[var(--pact-text-muted)]">Keep the circle moving, one proof at a time.</p>
                 {/* Red/danger styling only makes sense once there's an
                     actual miss — at 0 it was a warning color describing a
                     non-warning state ("Missed 0 days" in red reads as
                     alarming when nothing has actually gone wrong yet). */}
-                <div className="mt-3 flex items-center gap-3 text-xs"><span className={`font-semibold ${progress.missed > 0 ? 'text-[var(--pact-danger)]' : 'text-emerald-400'}`}>{progress.missed > 0 ? `Missed ${progress.missed} ${progress.missed === 1 ? 'day' : 'days'}` : 'No missed days'}</span><span className="text-white/50">Next proof due today</span></div>
+                <div className="mt-3 flex items-center gap-3 text-xs"><span className={`font-semibold ${progress.missed > 0 ? 'text-[var(--pact-danger)]' : 'text-emerald-500'}`}>{progress.missed > 0 ? `Missed ${progress.missed} ${progress.missed === 1 ? 'day' : 'days'}` : 'No missed days'}</span><span className="text-[var(--pact-text-faint)]">Next proof due today</span></div>
                 {participants.length > 0 && (
                   <div className="mt-4 flex items-center pl-2">
                     {participants.slice(0, 5).map((participant: any, index: number) => <UserAvatarLink key={participant.id || participant.user_id || participant.username} name={participant.full_name || participant.name || participant.username} avatarUrl={participant.avatar_url || participant.avatar} username={participant.username} size={30} className={`-ml-2 border-2 border-[var(--pact-bg)] ${index === 0 ? 'ml-0' : ''}`} />)}
-                    {participants.length > 5 && <span className="ml-2 text-xs font-bold text-white/50">+{participants.length - 5}</span>}
+                    {participants.length > 5 && <span className="ml-2 text-xs font-bold text-[var(--pact-text-faint)]">+{participants.length - 5}</span>}
                   </div>
                 )}
               </div>
             </section>
           )}
-          <section className="overflow-hidden rounded-[32px] border border-white/10 bg-white/5 shadow-[0_20px_70px_rgba(2,6,23,0.45)] backdrop-blur-sm">
+          <section className="pact-card overflow-hidden rounded-[32px]">
             <FeedPactCard
               pact={{ ...pact, proofClips: proofs }}
               userVote={(pact as any).user_vote || (pact as any).userVote}
@@ -290,16 +291,16 @@ export default function PactDetailPage() {
               chromeless
             />
 
-            <div className="border-t border-white/10 px-4 py-4">
+            <div className="border-t border-[var(--pact-hairline)] px-4 py-4">
               {/* Card treatment matching the Discover match strip rendered
                   just above (inside FeedPactCard) — a rounded, bordered,
                   softly-backed box — so Participants doesn't read as bare
                   text floating on the outer card while Discover next to it
                   looks like a distinct, intentional element. */}
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3.5 py-3">
+              <div className="rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] px-3.5 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">Participants</p>
-                  <span className="text-xs text-white/40">{participants.length}</span>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--pact-text-faint)]">Participants</p>
+                  <span className="text-xs text-[var(--pact-text-faint)]">{participants.length}</span>
                 </div>
                 {participants.length > 0 ? (
                   <div className="mt-3 flex items-center gap-2">
@@ -323,7 +324,7 @@ export default function PactDetailPage() {
                       <button
                         type="button"
                         onClick={() => void handleInvite()}
-                        className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-dashed border-white/15 px-3 py-2 text-xs font-semibold text-white/50 transition hover:border-white/30 hover:text-white/75"
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-dashed border-[var(--pact-hairline)] px-3 py-2 text-xs font-semibold text-[var(--pact-text-faint)] transition hover:border-[var(--pact-violet)]/40 hover:text-[var(--pact-text-muted)]"
                       >
                         <UserPlus className="h-3.5 w-3.5" />
                         Invite others to join
@@ -331,7 +332,7 @@ export default function PactDetailPage() {
                     )}
                   </div>
                 ) : (
-                  <p className="mt-2 text-sm text-white/50">No participant data yet.</p>
+                  <p className="mt-2 text-sm text-[var(--pact-text-faint)]">No participant data yet.</p>
                 )}
               </div>
             </div>
@@ -343,24 +344,24 @@ export default function PactDetailPage() {
             <button
               type="button"
               onClick={() => setShowJoinRequestsModal(true)}
-              className="flex w-full items-center justify-between gap-3 rounded-[24px] border border-white/10 bg-white/5 px-5 py-4 text-left backdrop-blur-sm transition hover:bg-white/8"
+              className="pact-card flex w-full items-center justify-between gap-3 rounded-[24px] px-5 py-4 text-left transition"
             >
               <div className="flex items-center gap-3">
-                <Inbox className="h-5 w-5 text-white/70" />
+                <Inbox className="h-5 w-5 text-[var(--pact-text-muted)]" />
                 <div>
-                  <p className="text-sm font-semibold text-white">Join requests</p>
-                  <p className="text-xs text-white/60">Review who&apos;s asked to join this pact.</p>
+                  <p className="text-sm font-semibold text-[var(--pact-text)]">Join requests</p>
+                  <p className="text-xs text-[var(--pact-text-muted)]">Review who&apos;s asked to join this pact.</p>
                 </div>
               </div>
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40">Manage</span>
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--pact-text-faint)]">Manage</span>
             </button>
           )}
 
           {canCheer && (
-            <div className="flex items-center justify-between gap-3 rounded-[24px] border border-white/10 bg-white/5 px-5 py-4 backdrop-blur-sm">
+            <div className="pact-card flex items-center justify-between gap-3 rounded-[24px] px-5 py-4">
               <div>
-                <p className="text-sm font-semibold text-white">Cheer this pact on</p>
-                <p className="text-xs text-white/60">
+                <p className="text-sm font-semibold text-[var(--pact-text)]">Cheer this pact on</p>
+                <p className="text-xs text-[var(--pact-text-muted)]">
                   {hasCheered
                     ? "You've already sent a cheer for this pact."
                     : `Post an encouragement photo for ${pact.creator_username || 'the creator'}.`}
@@ -371,11 +372,11 @@ export default function PactDetailPage() {
           )}
 
           {!isParticipant && (
-            <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 text-white backdrop-blur-sm">
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-white/55">Join this pact</p>
+            <div className="pact-card rounded-[28px] p-5">
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[var(--pact-text-faint)]">Join this pact</p>
               {pact.can_join ? (
                 <>
-                  <p className="mt-2 text-sm text-white/75">Join this pact to upload proof updates from the camera or your gallery.</p>
+                  <p className="mt-2 text-sm text-[var(--pact-text-muted)]">Join this pact to upload proof updates from the camera or your gallery.</p>
                   <div className="mt-4">
                     <PremiumJoinButton onClick={handleJoinRequest} loading={isJoiningPact} size="md" />
                   </div>
@@ -391,7 +392,7 @@ export default function PactDetailPage() {
                   Creator
                 </span>
               ) : (
-                <p className="mt-2 text-sm text-white/75">
+                <p className="mt-2 text-sm text-[var(--pact-text-muted)]">
                   {pact.join_block_reason === 'full'
                     ? 'This pact is full.'
                     : pact.join_block_reason === 'not_active'
