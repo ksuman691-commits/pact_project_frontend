@@ -75,7 +75,7 @@ export default function PremiumJoinButton({
           gap: s.gap,
           fontSize: s.text,
           fontFamily: 'var(--font-pact-display), sans-serif',
-          background: joined ? 'var(--pact-surface-3)' : 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))',
+          background: joined ? 'var(--pact-surface-3)' : 'var(--pact-pink)',
           boxShadow: isDisabled ? 'none' : '0 8px 20px rgba(139,107,255,0.35)',
         }}
       >

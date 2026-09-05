@@ -259,34 +259,15 @@ function PactProgressRing({
 
   return (
     <div className={`relative flex shrink-0 items-center justify-center ${compact ? 'h-[76px] w-[76px]' : 'h-[150px] w-[150px]'}`}>
-      {/* Soft ambient glow behind the ring, on its own blurred layer rather
-          than an SVG drop-shadow filter — a filter on the whole <svg>
-          (as this used to be) shadows the flat circle fills too, which
-          mostly just muddies the badge instead of reading as a glow. A
-          dedicated pink/violet radial blob behind it, sized larger than
-          the ring and blurred, is what actually produces a visible halo
-          against the busy diagonal-stripe background. */}
-      <div
-        className={`pointer-events-none absolute rounded-full ${mutedGlow ? 'inset-[-8%] opacity-35 blur-md' : 'inset-[-30%] opacity-70 blur-xl'}`}
-        style={{
-          background: 'radial-gradient(circle, var(--pact-pink) 0%, var(--pact-violet) 55%, transparent 75%)',
-        }}
-      />
       <svg viewBox={`0 0 ${size} ${size}`} className={`relative h-full w-full -rotate-90 ${compact ? 'animate-[pulse_3s_ease-in-out_infinite]' : ''}`} role="img" aria-label={`Day ${elapsedDays} of ${totalDays}`}>
-        <defs>
-          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="var(--pact-pink)" />
-            <stop offset="100%" stopColor="var(--pact-violet)" />
-          </linearGradient>
-        </defs>
-        <circle cx={center} cy={center} r={radius} fill="rgba(15, 10, 30, 0.68)" stroke="rgba(255,255,255,0.18)" strokeWidth={strokeWidth} />
-        <circle cx={center} cy={center} r={radius} fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth={strokeWidth} />
+        <circle cx={center} cy={center} r={radius} fill="var(--pact-surface)" stroke="var(--pact-hairline)" strokeWidth={strokeWidth} />
+        <circle cx={center} cy={center} r={radius} fill="none" stroke="var(--pact-hairline)" strokeWidth={strokeWidth} />
         <circle
           cx={center}
           cy={center}
           r={radius}
           fill="none"
-          stroke={`url(#${gradientId})`}
+          stroke="var(--pact-pink)"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}

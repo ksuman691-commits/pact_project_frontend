@@ -71,7 +71,7 @@ export default function BottomNav() {
           className="pointer-events-none absolute inset-0 rounded-full"
           style={{
             background:
-              'conic-gradient(from 0deg, var(--pact-violet), var(--pact-pink), var(--pact-gold), var(--pact-violet))',
+              'var(--pact-pink)',
           }}
         />
         <div

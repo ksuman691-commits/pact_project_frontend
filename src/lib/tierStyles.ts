@@ -44,7 +44,7 @@ export const TIER_STYLES: Record<TierKey, TierStyle> = {
   strong: {
     key: 'strong',
     label: 'Strong',
-    ringGradient: 'linear-gradient(135deg, #FB923C 0%, #EF4444 100%)',
+    ringGradient: '#1877F2',
     ringWidth: 3,
     glowColor: 'rgba(249, 115, 22, 0.45)',
     glowBlur: 14,
@@ -53,7 +53,7 @@ export const TIER_STYLES: Record<TierKey, TierStyle> = {
   peak: {
     key: 'peak',
     label: 'Peak',
-    ringGradient: 'linear-gradient(135deg, #FDE68A 0%, #F59E0B 50%, #FDE68A 100%)',
+    ringGradient: '#0BA5EC',
     ringWidth: 3,
     glowColor: 'rgba(245, 158, 11, 0.6)',
     glowBlur: 20,
