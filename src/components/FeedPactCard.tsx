@@ -63,6 +63,15 @@ interface FeedPactCardProps {
   /** When nested in a detail-page shell, remove the card's outer chrome. */
   chromeless?: boolean;
   /**
+   * The pact detail page renders its own dedicated hero (cover photo,
+   * category/title overlay, progress ring) above this card, so showing the
+   * carousel + category/title/caption/avatar-streak row here too would
+   * duplicate that exact content a second time. When true, only the
+   * creator row, action row (cheer/comment/share), and discover-match
+   * strip render — the parts the detail page doesn't build itself.
+   */
+  hideHeroAndTitle?: boolean;
+  /**
    * Full proof/cheer lists fetched separately by the detail page (which has
    * more data than the compact feed embeds on the pact object). When
    * omitted, the card falls back to `pact.proofClips`/no cheers — same hero
@@ -311,6 +320,7 @@ export default function FeedPactCard({
   canReport = true,
   hasCheered = false,
   chromeless = false,
+  hideHeroAndTitle = false,
   galleryProofs,
   galleryCheers,
   }: FeedPactCardProps) {
@@ -406,7 +416,11 @@ export default function FeedPactCard({
   const creatorUsername = pact.creator_username || null;
   const creatorProfileHref = creatorUsername ? `/profile/${encodeURIComponent(creatorUsername)}` : null;
   const creatorAvatarUrl = pact.creatorAvatarUrl || pact.creator_avatar_url || null;
-  const circleLabel = pact.circle || pact.circle_name || pact.category || null;
+  // Circle name only — NOT category. category is already shown as its own
+  // label directly above the title; falling back to it here duplicated the
+  // same text as a second line (e.g. "Startup" under "Startup · Save
+  // ₹50,000 in 30 Days") for any pact that isn't scoped to a circle.
+  const circleLabel = pact.circle || pact.circle_name || null;
   const cheerCount = displayCheerCount;
   const proofCount = Number(pact.proof_count ?? pact.proofClips?.length ?? 0);
   const commentCount = liveCommentCount ?? Number(pact.comment_count ?? pact.comments?.length ?? 0);
@@ -723,7 +737,11 @@ export default function FeedPactCard({
             row below it (via PactGallery's dotsPosition="below") — nothing
             is overlaid on top of the photos anymore. All context (creator,
             category, title, ring/Join, avatars, streak) lives in the white
-            body underneath instead. */}
+            body underneath instead. Skipped entirely when hideHeroAndTitle
+            is set — the pact detail page renders its own hero above this
+            card using the same proof set, so this would just be the same
+            photo shown twice. */}
+        {!hideHeroAndTitle && (
         <div className="relative w-full" onClick={handleMediaTap} style={transformStyle}>
           {tiles.length > 0 ? (
             <PactGallery
@@ -771,6 +789,7 @@ export default function FeedPactCard({
             </div>
           )}
         </div>
+        )}
 
         {/* Body: distinct surface area holding all text/context — creator
             identity, category/title/ring-or-Join, avatar stack + streak or
@@ -795,6 +814,12 @@ export default function FeedPactCard({
             </div>
           </div>
 
+          {/* Title row, caption, and avatar/streak row: skipped when
+              hideHeroAndTitle is set, since the detail page's own hero
+              already shows category/title and its own progress ring —
+              only the creator row above and the action row below stay. */}
+          {!hideHeroAndTitle && (
+          <>
           {/* Title row: category + title on the left, personal progress
               ring (joined/creator, with a real duration) or a Join CTA
               (not yet joined) on the right — never both, never overlapping
@@ -842,19 +867,25 @@ export default function FeedPactCard({
 
           {/* Avatar stack (recent supporters — real avatars, not a claim
               that these people have joined the pact) + streak/time-left,
-              as their own row under the title. */}
+              as their own row under the title. Only spread the two ends
+              apart when there's actually an avatar stack to anchor the
+              left side — otherwise (most Discover-state pacts, which have
+              no "believe" votes yet) the lone meta text would float
+              right with nothing to balance it against. */}
           {(supporterAvatars.length > 0 || bottomRightText) && (
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <div className="flex items-center -space-x-2">
-                {supporterAvatars.slice(0, 4).map((supporter: any, index: number) => (
-                  <span key={supporter.id ?? index} className="rounded-full ring-2 ring-[var(--pact-surface)]">
-                    <Avatar name={supporter.username} avatarUrl={supporter.avatar_url} size={26} />
-                  </span>
-                ))}
-                {supporterAvatars.length > 4 && (
-                  <span className="ml-2 text-[10px] font-bold text-[var(--pact-text-faint)]">+{supporterAvatars.length - 4}</span>
-                )}
-              </div>
+            <div className={`mt-3 flex items-center gap-3 ${supporterAvatars.length > 0 ? 'justify-between' : 'justify-start'}`}>
+              {supporterAvatars.length > 0 && (
+                <div className="flex items-center -space-x-2">
+                  {supporterAvatars.slice(0, 4).map((supporter: any, index: number) => (
+                    <span key={supporter.id ?? index} className="rounded-full ring-2 ring-[var(--pact-surface)]">
+                      <Avatar name={supporter.username} avatarUrl={supporter.avatar_url} size={26} />
+                    </span>
+                  ))}
+                  {supporterAvatars.length > 4 && (
+                    <span className="ml-2 text-[10px] font-bold text-[var(--pact-text-faint)]">+{supporterAvatars.length - 4}</span>
+                  )}
+                </div>
+              )}
               {bottomRightText && (
                 <span className="flex flex-shrink-0 items-center gap-1 text-xs font-bold text-[var(--pact-text-dim)]">
                   {bottomRightShowFlame && <Flame className="h-3.5 w-3.5 text-[var(--pact-gold)]" />}
@@ -862,6 +893,8 @@ export default function FeedPactCard({
                 </span>
               )}
             </div>
+          )}
+          </>
           )}
 
           {/* Unified action row: same stroke-icon size/style for all three, muted at rest, accented only on hover/active */}
