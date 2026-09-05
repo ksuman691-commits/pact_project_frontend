@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Upload, Users, CheckCircle2, XCircle, Clock, CalendarClock, ShieldCheck, Zap } from 'lucide-react';
+import Image from 'next/image';
+import { Upload, Users, CheckCircle2, XCircle, Clock, CalendarClock, ShieldCheck, Zap, CheckCheck } from 'lucide-react';
 import DetailPageHeader from '@/components/DetailPageHeader';
 import { useSeedBackHistory } from '@/hooks/useSeedBackHistory';
 import { useDareDetail, useDareRecipients, useDareStats } from '@/hooks/useDareQueries';
@@ -10,8 +11,8 @@ import { useAcceptDare, useDeclineDare, useClaimDare } from '@/hooks/useDareMuta
 import DareRecipientsModal from '@/components/DareRecipientsModal';
 import DareProofUploadModal from '@/components/DareProofUploadModal';
 import DareVerificationModal from '@/components/DareVerificationModal';
-import UserAvatarLink from '@/components/UserAvatarLink';
 import Avatar from '@/components/Avatar';
+import DareTimeRing from '@/components/DareTimeRing';
 import { formatCountdown, formatRelativeTime, parseApiDate, urgencyColor } from '@/lib/dareCountdown';
 import { useAuthStore } from '@/store/auth';
 
@@ -86,6 +87,15 @@ export default function DareDetailPage() {
   const isPending = dare.my_recipient_status === 'pending';
   const isAccepted = dare.my_recipient_status === 'accepted';
   const isPublicUnclaimed = dare.audience === 'public' && !isCreator && !dare.my_recipient_status;
+  // Same photo-forward rule as the Dares list card (DareCard): a photo is
+  // only ever real for a dare once its proof has been submitted
+  // (proof_url populated on completion) — pending/accepted dares have no
+  // image field at all, so this only goes photo-forward for that completed
+  // slice rather than faking a cover image.
+  const hasProofPhoto = Boolean(dare.proof_url) && dare.proof_type !== 'video';
+  // Mirrors DareCard's own ring target so the countdown ring here always
+  // agrees with the one shown on the list card for the same dare.
+  const ringTarget = dare.expires_at ?? (isPending ? dare.respond_by : dare.complete_by);
 
   const countdown = isPending
     ? formatCountdown(dare.respond_by, 'Respond')
@@ -109,14 +119,43 @@ export default function DareDetailPage() {
       <DetailPageHeader title="Dare Details" fallbackHref="/dares" />
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* Creator + status + countdown */}
+        {/* Photo-forward proof cover — same treatment as the Dares list
+            card (DareCard), not a simplified duplicate. Only rendered once
+            proof has actually been submitted; otherwise the time-ring
+            pattern below is the whole hero, matching the list card's own
+            fallback. */}
+        {hasProofPhoto && (
+          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[28px]">
+            <Image
+              src={dare.proof_url as string}
+              alt={`Proof for ${dare.title}`}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 640px"
+            />
+            <span
+              className="absolute left-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
+              style={{ background: 'var(--pact-mint)' }}
+            >
+              <CheckCheck className="h-2.5 w-2.5" />
+              Completed
+            </span>
+          </div>
+        )}
+
+        {/* Creator + status + countdown — same DareTimeRing used on the
+            list card, so the countdown reads as a literal draining ring
+            here too instead of falling back to a plain avatar + text pill. */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <UserAvatarLink
+            <DareTimeRing
               name={dare.creator_full_name || dare.creator_username}
               avatarUrl={dare.creator_avatar_url}
               username={dare.creator_username}
-              size={48}
+              target={ringTarget}
+              windowStart={dare.created_at}
+              size={44}
+              showLabel={false}
             />
             <div className="min-w-0">
               <p className="font-semibold text-[var(--pact-text)] truncate">
