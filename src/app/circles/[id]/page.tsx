@@ -7,7 +7,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth'
 import { circleService, circleJoinRequestService, circleAdvancedService, userService } from '@/services/api'
 import { Circle, Pact } from '@/types'
 import toast from 'react-hot-toast'
-import { Plus, Users, Camera, Sparkles } from 'lucide-react'
+import { Plus, Users, Camera, Sparkles, Share2 } from 'lucide-react'
 import DetailPageHeader from '@/components/DetailPageHeader'
 import { useSeedBackHistory } from '@/hooks/useSeedBackHistory'
 import InviteMembersModal from '@/components/InviteMembersModal'
@@ -39,6 +39,33 @@ export default function CircleDetailPage() {
   // waiting for both conditions to be true.
   const isNewCircle = members.length <= 1 && pacts.length === 0
   const handleJoin = async () => { try { await circleService.join(circleId); setIsMember(true); const m = await circleJoinRequestService.listMembers(circleId); setMembers(m.data || []); toast.success('Joined circle') } catch { toast.error('Failed to join circle') } }
+  // Same clipboard-with-fallback approach as FeedPactCard's share button —
+  // and the same private-visibility heads-up, since a private circle's link
+  // is only useful to people who already have access.
+  const handleShare = async () => {
+    const url = `${window.location.origin}/circles/${circleId}`
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url)
+      } else {
+        const textarea = document.createElement('textarea')
+        textarea.value = url
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+      }
+      if (circle?.visibility === 'private') {
+        toast('Link copied — heads up, this circle is private so only people with access can open it', { icon: '🔒' })
+      } else {
+        toast.success('Invite link copied')
+      }
+    } catch {
+      toast.error('Could not copy the link')
+    }
+  }
   const handleLeave = async () => { setLeaving(true); try { await circleService.leave(circleId); router.push('/circles') } finally { setLeaving(false); setLeaveModal(false) } }
   const isOwner = !!user && !!circle && user.id === (circle as any).owner_id
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,7 +132,7 @@ export default function CircleDetailPage() {
           several legitimately show "0d" (no current streak), which directly
           contradicted a header implying recent activity. */}
       <section className="border-b border-[var(--pact-hairline)] py-8"><h2 className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--pact-violet)]">Members of the circle</h2><div className="mt-5 flex flex-wrap gap-x-6 gap-y-4">{members.map((member: any) => { const stat = memberStats.find(s => s.user_id === member.user_id); return <div key={member.user_id} className="flex items-center gap-2"><UserAvatarLink name={member.username} avatarUrl={member.avatar_url} username={member.username} size={34} /><span className="text-sm"><span className="font-bold">{member.full_name || member.username}</span><span className="ml-2 text-[var(--pact-violet)]">{stat?.current_streak || 0}d</span></span></div> })}</div></section>
-      <div className="flex flex-wrap items-center gap-5 border-b border-[var(--pact-hairline)] py-5 text-sm">{isMember && <><button onClick={() => router.push(`/pacts/create?circleId=${circleId}`)} className="flex items-center gap-2 font-bold text-[var(--pact-violet)]"><Plus className="h-4 w-4" />Create pact</button><button onClick={() => setInviteModal(true)} className="flex items-center gap-2 text-[var(--pact-text-muted)]"><Users className="h-4 w-4" />Invite members</button></>}{!isMember && <button onClick={handleJoin} className="font-bold text-[var(--pact-violet)]">Join circle</button>}<button onClick={() => setLeaveModal(true)} className="text-[var(--pact-text-faint)]">Leave</button></div>
+      <div className="flex flex-wrap items-center gap-5 border-b border-[var(--pact-hairline)] py-5 text-sm">{isMember && <><button onClick={() => router.push(`/pacts/create?circleId=${circleId}`)} className="flex items-center gap-2 font-bold text-[var(--pact-violet)]"><Plus className="h-4 w-4" />Create pact</button><button onClick={() => setInviteModal(true)} className="flex items-center gap-2 text-[var(--pact-text-muted)]"><Users className="h-4 w-4" />Invite members</button></>}{!isMember && <button onClick={handleJoin} className="font-bold text-[var(--pact-violet)]">Join circle</button>}<button onClick={() => void handleShare()} className="flex items-center gap-2 text-[var(--pact-text-muted)]"><Share2 className="h-4 w-4" />Share</button><button onClick={() => setLeaveModal(true)} className="text-[var(--pact-text-faint)]">Leave</button></div>
       <section className="pt-8"><h2 className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--pact-violet)]">Pacts in this circle</h2>{!isMember ? <p className="py-8 text-sm text-[var(--pact-text-muted)]">Join this circle to view its pacts.</p> : pacts.length ? (
         // Same photo-forward FeedPactCard used on the main feed and the
         // single-pact detail page — not a simplified duplicate — so a
