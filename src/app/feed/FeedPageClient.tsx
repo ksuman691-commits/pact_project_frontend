@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import TopNav from '@/components/TopNav'
 import WelcomeHeader from '@/components/WelcomeHeader'
 import StreakStatsHero from '@/components/StreakStatsHero'
+import HomeActionsRow from '@/components/HomeActionsRow'
 import YourCirclesRail from '@/components/YourCirclesRail'
 import CreatePactFlowModal from '@/components/create-pact-flow/CreatePactFlowModal'
 import PactFeed from '@/components/PactFeed'
@@ -123,12 +124,14 @@ export default function FeedPageClient() {
           avatarUrl={user?.avatar_url || null}
           notificationCount={unreadCount}
           onNotificationsClick={handleNotificationsClick}
-          onCreatePact={handleCreatePact}
-          onNavigateCircles={handleNavigateCircles}
           streak={currentStreak}
           atRisk={isAtRisk}
         />
 
+        {/* Topbar -> Hero -> Actions -> Circles rail, matching the approved
+            mockup order. The actions row used to live inside the topbar
+            card above the hero; it's now its own row between the hero and
+            the circles rail. */}
         {isInitialized && user && (
           <div className="max-w-md mx-auto px-4 pb-4">
             <StreakStatsHero
@@ -138,6 +141,12 @@ export default function FeedPageClient() {
               circlesCount={circlesCount}
               isLoading={statsLoading}
             />
+          </div>
+        )}
+
+        {isInitialized && user && (
+          <div className="max-w-md mx-auto px-4 pb-4">
+            <HomeActionsRow onNavigateCircles={handleNavigateCircles} onCreatePact={handleCreatePact} />
           </div>
         )}
 
