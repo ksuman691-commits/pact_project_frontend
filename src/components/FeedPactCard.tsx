@@ -143,7 +143,14 @@ function getProofs(pact: any) {
           description: proof?.caption || proof?.description || '',
           uploadedAt: proof?.uploaded_at || proof?.created_at || null,
           uploader: proof?.uploader || proof?.username || null,
-          day: proof?.day_number ?? proof?.day ?? index + 1,
+          // Was `?? index + 1`: recent_proofs is newest-first, so any proof
+          // missing a real day_number (the upload flow didn't send one
+          // until this was fixed — see ProofUploadModal) silently got
+          // labeled "Day 1" regardless of which day it actually landed on.
+          // Leaving it undefined instead falls through to PactGallery's
+          // generic "Proof" tag — an honest unknown beats a fabricated,
+          // often-wrong one.
+          day: proof?.day_number ?? proof?.day ?? undefined,
         };
       })
       .filter(Boolean);
@@ -163,7 +170,7 @@ function getProofs(pact: any) {
         description: clip?.caption || clip?.text || clip?.description || '',
         uploadedAt: clip?.uploaded_at || clip?.created_at || null,
         uploader: clip?.uploader || clip?.username || null,
-        day: clip?.day ?? index + 1,
+        day: clip?.day ?? undefined,
       };
     })
     .filter(Boolean);
@@ -182,7 +189,7 @@ function getProofs(pact: any) {
     description: pact.latest_proof_caption || '',
     uploadedAt: pact.latest_proof_upload_date || null,
     uploader: pact.creator || pact.creator_username || null,
-    day: 1,
+    day: undefined,
   }];
 }
 
@@ -1006,6 +1013,7 @@ export default function FeedPactCard({
           isOpen={proofUploadModal}
           onClose={() => setProofUploadModal(false)}
           pactId={pact.id}
+          pactStartDate={pact.start_date || pact.created_at}
           onUpload={(pactId, proof) => onProofUpload?.(pactId, proof)}
         />
       )}

@@ -12,6 +12,12 @@ interface ProofUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   pactId: number;
+  // The pact's start_date (or created_at as a fallback), used to compute
+  // which day of the pact this upload belongs to (see dayNumber below).
+  // Optional so existing callers that haven't been updated yet still work —
+  // day_number is simply omitted from the upload request in that case,
+  // same as before this fix.
+  pactStartDate?: string | Date | null;
   onUpload?: (pactId: number, proof?: any) => void;
 }
 
@@ -19,6 +25,7 @@ export default function ProofUploadModal({
   isOpen,
   onClose,
   pactId,
+  pactStartDate,
   onUpload,
 }: ProofUploadModalProps) {
   const queryClient = useQueryClient();
@@ -209,6 +216,18 @@ export default function ProofUploadModal({
     setIsUploading(true);
     setUploadProgress({ done: 0, total: items.length });
 
+    // Same "days since start, floored, +1" math as getPactProgress's
+    // `elapsed` calc — this used to not be sent at all, so every real
+    // upload landed with day_number=NULL on the backend. Feed cards then
+    // masked that gap with an `index + 1` fallback over the newest-first
+    // proof list, which silently mislabeled the newest upload "Day 1"
+    // instead of leaving it blank or showing the real day. Undefined
+    // (never sent) when pactStartDate isn't available, matching the old
+    // no-day_number behavior rather than guessing a wrong day.
+    const dayNumber = pactStartDate
+      ? Math.max(1, Math.floor((Date.now() - new Date(pactStartDate).getTime()) / 86400000) + 1)
+      : undefined;
+
     let successCount = 0;
     for (let i = 0; i < items.length; i += 1) {
       const currentItem = items[i];
@@ -216,7 +235,7 @@ export default function ProofUploadModal({
       try {
         // The backend only accepts one file per request, so each queued
         // photo/video is posted as its own proof entry with the shared caption.
-        const response = await pactService.uploadProofFile(pactId, currentItem.file, proofType, description);
+        const response = await pactService.uploadProofFile(pactId, currentItem.file, proofType, description, dayNumber);
         onUpload?.(pactId, {
           id: response.data?.proof_id ?? Date.now() + i,
           file_url: response.data?.file_url || currentItem.preview,

@@ -575,6 +575,7 @@ export default function PactDetailPage() {
         isOpen={proofUploadOpen}
         onClose={() => setProofUploadOpen(false)}
         pactId={pact.id}
+        pactStartDate={pact.start_date || pact.created_at}
         onUpload={async () => {
           await Promise.all([refetchProofs(), refetchPact()]);
         }}
