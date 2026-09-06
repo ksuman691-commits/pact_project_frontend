@@ -68,6 +68,11 @@ export function useUploadPactProof(pactId: number) {
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.pacts.detail(pactId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.pacts.proofHistory(pactId) });
+      // Feed list cards embed their own snapshot of this pact's proof state
+      // (proof_url/recent_proofs), so without this the Home feed kept
+      // showing the pre-upload photo until usePersonalizedFeed's staleTime
+      // happened to expire on its own.
+      queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
       toast.success('Proof uploaded successfully!');
       return response.data;
     },

@@ -4,7 +4,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { X, Camera as CameraIcon, Video, Loader, SwitchCamera } from 'lucide-react';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
+import { useQueryClient } from '@tanstack/react-query';
 import { pactService } from '@/services/api';
+import { queryKeys } from '@/lib/queryKeys';
 
 interface ProofUploadModalProps {
   isOpen: boolean;
@@ -19,6 +21,7 @@ export default function ProofUploadModal({
   pactId,
   onUpload,
 }: ProofUploadModalProps) {
+  const queryClient = useQueryClient();
   const [description, setDescription] = useState('');
   // Multiple photos can be queued and posted together — the backend only
   // accepts one file per request (POST /api/pacts/:id/upload-proof-file),
@@ -234,6 +237,16 @@ export default function ProofUploadModal({
 
     if (successCount > 0) {
       toast.success(successCount === 1 ? 'Proof uploaded successfully!' : `${successCount} photos uploaded successfully!`);
+      // This call bypasses react-query's mutation layer entirely (it hits
+      // pactService directly), so nothing else marks the feed list stale —
+      // without this, usePersonalizedFeed's 2-minute staleTime kept serving
+      // the pre-upload snapshot (old proof_url/recent_proofs) on the Home
+      // feed until it happened to expire, even though the detail page
+      // (refetched separately by its own caller) already showed the new
+      // photo. queryKeys.pacts.all also covers this pact's own detail/
+      // proof-history queries for callers that don't refetch those manually.
+      queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pacts.all });
       resetForm();
       onClose();
     }
