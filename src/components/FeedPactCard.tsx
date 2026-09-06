@@ -754,7 +754,17 @@ export default function FeedPactCard({
             <PactGallery
               proofs={galleryProofs ?? proofs}
               cheers={galleryCheers ?? []}
-              interactive={false}
+              // Tapping the photo itself now opens the full-screen story
+              // viewer (PactGallery's own ProofCarousel) instead of falling
+              // through to handleMediaTap's card-navigate — this is one of
+              // the two real "tap into a pact's proof photos" entry points
+              // (the other is the pact detail page's Proof Wall grid).
+              // Tiles render as real <button>s when interactive, and
+              // handleMediaTap already special-cases any click whose target
+              // is inside a button/link to skip navigation, so this doesn't
+              // need any change on that side — tapping the rest of the card
+              // (title, footer, blank space) still navigates as before.
+              interactive
               aspectClassName="aspect-[4/5]"
               dotsPosition="below"
               onActiveIndexChange={setActiveProofIndex}
