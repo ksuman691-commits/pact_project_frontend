@@ -20,7 +20,11 @@ import { useSkipPact } from '@/hooks/usePactActions'
 
 export default function CircleDetailPage() {
   const router = useRouter(); const params = useParams(); const { user, isInitialized } = useRequireAuth(); const circleId = Number(params.id)
-  const [circle, setCircle] = useState<Circle | null>(null); const [members, setMembers] = useState<any[]>([]); const [pacts, setPacts] = useState<Pact[]>([]); const [loading, setLoading] = useState(true); const [isMember, setIsMember] = useState(false); const [qrOpen, setQrOpen] = useState(false); const [inviteModal, setInviteModal] = useState(false); const [leaveModal, setLeaveModal] = useState(false); const [leaving, setLeaving] = useState(false); const [memberStats, setMemberStats] = useState<any[]>([]); const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [circle, setCircle] = useState<Circle | null>(null); const [members, setMembers] = useState<any[]>([]); const [pacts, setPacts] = useState<Pact[]>([]); const [loading, setLoading] = useState(true); const [isMember, setIsMember] = useState(false); const [qrOpen, setQrOpen] = useState(false); const [inviteModal, setInviteModal] = useState(false); const [leaveModal, setLeaveModal] = useState(false); const [leaving, setLeaving] = useState(false); const [memberStats, setMemberStats] = useState<any[]>([]); const [uploadingPhoto, setUploadingPhoto] = useState(false); const [showAllMembers, setShowAllMembers] = useState(false)
+  // Grid layout (mockup): a handful of members shown up front with a "See
+  // all" expand toggle, rather than the full roster always rendered flat.
+  const MEMBER_PREVIEW_COUNT = 9
+  const visibleMembers = showAllMembers ? members : members.slice(0, MEMBER_PREVIEW_COUNT)
   const skipMutation = useSkipPact()
   const handleSkipPact = async (pactId: number, _vote: 'skip') => { await skipMutation.mutateAsync(pactId) }
   useSeedBackHistory('/circles')
@@ -84,26 +88,41 @@ export default function CircleDetailPage() {
   }
   return <main className="min-h-screen bg-[var(--pact-bg)] pb-24 text-[var(--pact-text)]"><DetailPageHeader title={circle.name || 'Circle'} fallbackHref="/circles" maxWidthClassName="max-w-4xl" /><div className="mx-auto max-w-4xl px-5 pb-12 pt-8">
     <header className="border-b border-[var(--pact-hairline)] pb-8">
-      {/* Photo-forward cover: promoted from a small 64px avatar chip to a
-          full-width banner when the circle actually has a photo_url, matching
-          the photo-forward card language used everywhere else (FeedPactCard's
-          hero + bottom gradient scrim). Circles without a photo keep the
-          original small emoji/initial chip below — there's nothing to make
-          bigger in that case. The owner-gated "change cover" affordance is
-          the same upload flow either way, just repositioned onto the banner. */}
-      {(circle as any).photo_url && (
-        <div className="relative mb-5 aspect-[16/9] w-full overflow-hidden rounded-[28px]">
+      {/* Photo-forward cover, always a full-width banner — either the
+          circle's real photo_url, or (when there is none) a gradient banner
+          using the same violet/pink pair used elsewhere in the app, so a
+          circle without an uploaded photo still gets the banner structure
+          the approved layout calls for rather than falling back to a tiny
+          64px chip. The icon/emoji/initial and the owner-gated "change
+          cover" affordance sit on top of either background the same way. */}
+      <div className="relative mb-5 aspect-[16/9] w-full overflow-hidden rounded-[28px]">
+        {(circle as any).photo_url ? (
           <Image src={(circle as any).photo_url} alt="" fill sizes="(max-width: 768px) 100vw, 768px" className="object-cover" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/70 to-transparent" />
-          {isOwner && <label className="absolute bottom-3 right-3 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full" style={{ background: 'var(--pact-violet)', border: '2px solid var(--pact-bg)' }} aria-label="Change circle photo">{uploadingPhoto ? <LogoSpinner size={14} color="#fff" /> : <Camera className="h-4 w-4 text-white" aria-hidden="true" />}<input type="file" accept="image/*" className="sr-only" onChange={handlePhotoChange} disabled={uploadingPhoto} /></label>}
+        ) : (
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg,var(--pact-pink),var(--pact-violet))' }} />
+        )}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
+        <div className="absolute inset-x-5 bottom-4 flex items-end gap-3">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-white/80 bg-black/20 text-2xl backdrop-blur-sm">
+            {(circle as any).icon_emoji || (circle as any).emoji || circle.name?.charAt(0)}
+          </div>
+          <div className="min-w-0 pb-0.5">
+            <h1 className="truncate text-2xl font-black tracking-[-0.04em] text-white">{circle.name}</h1>
+            <p className="mt-0.5 text-xs font-semibold text-white/80">{circle.member_count ?? members.length} member{(circle.member_count ?? members.length) === 1 ? '' : 's'} · Active since {new Date(circle.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</p>
+          </div>
         </div>
-      )}
-      <div className="flex items-start gap-4">
-        {!(circle as any).photo_url && <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full text-3xl" style={{ background: 'linear-gradient(135deg,var(--pact-pink),var(--pact-violet))' }}>{(circle as any).icon_emoji || (circle as any).emoji || circle.name?.charAt(0)}{isOwner && <label className="absolute bottom-0 right-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full" style={{ background: 'var(--pact-violet)', border: '2px solid var(--pact-bg)' }} aria-label="Change circle photo">{uploadingPhoto ? <LogoSpinner size={12} color="#fff" /> : <Camera className="h-3 w-3 text-white" aria-hidden="true" />}<input type="file" accept="image/*" className="sr-only" onChange={handlePhotoChange} disabled={uploadingPhoto} /></label>}</div>}
-        <div><h1 className="text-4xl font-black tracking-[-0.06em] text-[var(--pact-text)]">{circle.name}</h1>{/* Italicized — a bio-style tagline in the circle's own voice, not
-        another metadata fact like the member-count/streak line below it. */}<p className="mt-2 max-w-xl text-sm italic leading-relaxed text-[var(--pact-text-muted)]">{circle.description || 'A place to show up for each other.'}</p></div>
+        {isOwner && (
+          <label className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm" style={{ background: 'rgba(16,24,40,0.45)', border: '1px solid rgba(255,255,255,0.25)' }} aria-label="Change circle cover photo">
+            {uploadingPhoto ? <LogoSpinner size={12} color="#fff" /> : <Camera className="h-3.5 w-3.5" aria-hidden="true" />}
+            Change cover
+            <input type="file" accept="image/*" className="sr-only" onChange={handlePhotoChange} disabled={uploadingPhoto} />
+          </label>
+        )}
       </div>
-      <p className="mt-6 text-sm text-[var(--pact-text-muted)]">Started {new Date(circle.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })} · {pacts.length} pacts made together</p><p className="mt-3 text-sm text-[var(--pact-text)]">{circle.member_count ?? members.length} people · {activeMembers} active this week · {groupStreak}d group streak</p>
+      {/* Italicized — a bio-style tagline in the circle's own voice, not
+      another metadata fact like the stats line below it. */}
+      <p className="max-w-xl text-sm italic leading-relaxed text-[var(--pact-text-muted)]">{circle.description || 'A place to show up for each other.'}</p>
+      <p className="mt-4 text-sm text-[var(--pact-text-muted)]">Started {new Date(circle.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })} · {pacts.length} pacts made together</p><p className="mt-3 text-sm text-[var(--pact-text)]">{circle.member_count ?? members.length} people · {activeMembers} active this week · {groupStreak}d group streak</p>
     </header>
     {isNewCircle ? <>
       {/* New/empty-circle state: one hero CTA instead of the full widget
@@ -131,7 +150,16 @@ export default function CircleDetailPage() {
           member roster with each person's streak next to their name, and
           several legitimately show "0d" (no current streak), which directly
           contradicted a header implying recent activity. */}
-      <section className="border-b border-[var(--pact-hairline)] py-8"><h2 className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--pact-violet)]">Members of the circle</h2><div className="mt-5 flex flex-wrap gap-x-6 gap-y-4">{members.map((member: any) => { const stat = memberStats.find(s => s.user_id === member.user_id); return <div key={member.user_id} className="flex items-center gap-2"><UserAvatarLink name={member.username} avatarUrl={member.avatar_url} username={member.username} size={34} /><span className="text-sm"><span className="font-bold">{member.full_name || member.username}</span><span className="ml-2 text-[var(--pact-violet)]">{stat?.current_streak || 0}d</span></span></div> })}</div></section>
+      <section className="border-b border-[var(--pact-hairline)] py-8">
+        <div className="flex items-baseline justify-between"><h2 className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--pact-violet)]">Members</h2>{members.length > MEMBER_PREVIEW_COUNT && <button type="button" onClick={() => setShowAllMembers(v => !v)} className="text-xs font-semibold text-[var(--pact-text-muted)]">{showAllMembers ? 'Show less' : 'See all'}</button>}</div>
+        <div className="mt-5 grid grid-cols-4 gap-4 sm:grid-cols-6">{visibleMembers.map((member: any) => { const stat = memberStats.find(s => s.user_id === member.user_id); return (
+          <div key={member.user_id} className="flex flex-col items-center gap-1.5 text-center">
+            <UserAvatarLink name={member.username} avatarUrl={member.avatar_url} username={member.username} size={40} />
+            <p className="w-full truncate text-[11px] font-semibold text-[var(--pact-text)]">{member.full_name || member.username}</p>
+            <p className="text-[10px] font-semibold text-[var(--pact-violet)]">{stat?.current_streak || 0}d</p>
+          </div>
+        ) })}</div>
+      </section>
       <div className="flex flex-wrap items-center gap-5 border-b border-[var(--pact-hairline)] py-5 text-sm">{isMember && <><button onClick={() => router.push(`/pacts/create?circleId=${circleId}`)} className="flex items-center gap-2 font-bold text-[var(--pact-violet)]"><Plus className="h-4 w-4" />Create pact</button><button onClick={() => setInviteModal(true)} className="flex items-center gap-2 text-[var(--pact-text-muted)]"><Users className="h-4 w-4" />Invite members</button></>}{!isMember && <button onClick={handleJoin} className="font-bold text-[var(--pact-violet)]">Join circle</button>}<button onClick={() => void handleShare()} className="flex items-center gap-2 text-[var(--pact-text-muted)]"><Share2 className="h-4 w-4" />Share</button><button onClick={() => setLeaveModal(true)} className="text-[var(--pact-text-faint)]">Leave</button></div>
       <section className="pt-8"><h2 className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--pact-violet)]">Pacts in this circle</h2>{!isMember ? <p className="py-8 text-sm text-[var(--pact-text-muted)]">Join this circle to view its pacts.</p> : pacts.length ? (
         // Same photo-forward FeedPactCard used on the main feed and the

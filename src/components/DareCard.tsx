@@ -104,6 +104,12 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
   // accepted dares have no image field at all, so this card only goes
   // photo-forward for that completed slice rather than faking a cover image.
   const hasProofPhoto = Boolean(dare.proof_url) && dare.proof_type !== 'video';
+  // Not-yet-completed dares still get the same photo-forward card language
+  // as everywhere else in the app (FeedPactCard's hero) via a solid-color
+  // cover instead of a real photo — deterministic per dare id so it doesn't
+  // change on every render, not a stand-in for fabricated image content.
+  const coverPalette = ['var(--pact-violet)', 'var(--pact-pink)', 'var(--pact-gold)', 'var(--pact-mint)'];
+  const coverColor = coverPalette[dare.id % coverPalette.length];
 
   return (
     <>
@@ -117,7 +123,7 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
       className={`pact-card cursor-pointer overflow-hidden rounded-[28px] transition ${isExpired ? 'opacity-60' : ''}`}
       style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}
     >
-      {hasProofPhoto && (
+      {hasProofPhoto ? (
         <div className="relative aspect-[16/9] w-full">
           <Image
             src={dare.proof_url as string}
@@ -133,6 +139,10 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
             <CheckCheck className="h-2.5 w-2.5" />
             Completed
           </span>
+        </div>
+      ) : (
+        <div className="relative flex aspect-[16/9] w-full items-center justify-center" style={{ background: coverColor }}>
+          <Zap className="h-10 w-10 text-white/40" strokeWidth={1.5} aria-hidden="true" />
         </div>
       )}
 
@@ -182,6 +192,14 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
 
         <h3 className="mb-1 font-bold text-base text-[var(--pact-text)] truncate">{dare.title}</h3>
         <p className="text-sm text-[var(--pact-text-dim)] truncate">{dare.description}</p>
+        {/* Public dares show the same "N accepted" framing as the rest of
+            the app's social-proof copy — `recipient_count` on a public dare
+            counts everyone who has claimed it, a real field, not a fabricated
+            engagement number. Private dares (fixed, named recipients) don't
+            get this line since "accepted" isn't a meaningful open count there. */}
+        {!isPrivate && recipientCount > 0 && (
+          <p className="mt-1.5 text-xs text-[var(--pact-text-faint)]"><span className="font-bold text-[var(--pact-text)]">{recipientCount}</span> {recipientCount === 1 ? 'person' : 'people'} accepted</p>
+        )}
       </div>
 
       {/* Fast inline actions — no need to open the detail page for these */}

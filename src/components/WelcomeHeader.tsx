@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, Plus, Search, Users } from 'lucide-react'
+import { Bell, Search } from 'lucide-react'
 import { useState } from 'react'
 import UserAvatarLink from '@/components/UserAvatarLink'
 import MemberSearchModal from '@/components/MemberSearchModal'
@@ -10,16 +10,7 @@ interface WelcomeHeaderProps {
   avatarUrl?: string | null
   notificationCount?: number
   onNotificationsClick?: () => void
-  onCreatePact?: () => void
-  /**
-   * "My Circles" is now the home page's primary action — Dare has been
-   * deliberately dropped from this row entirely (still reachable via the
-   * bottom nav) and Circles takes over the pink primary slot New Pact used
-   * to occupy. Don't add Dare back here without checking first.
-   */
-  onNavigateCircles?: () => void
   onSearch?: () => void
-  actionsDisabled?: boolean
   /** Current streak in days — wraps the avatar in a tier ring when provided. */
   streak?: number
   /** Pulses the ring amber-red to signal an approaching deadline with no proof yet. */
@@ -31,10 +22,7 @@ export default function WelcomeHeader({
   avatarUrl = null,
   notificationCount = 3,
   onNotificationsClick,
-  onCreatePact,
-  onNavigateCircles,
   onSearch,
-  actionsDisabled = false,
   streak,
   atRisk = false
 }: WelcomeHeaderProps) {
@@ -88,38 +76,6 @@ export default function WelcomeHeader({
               )}
             </button>
           </div>
-        </div>
-
-        <div className="mt-3 flex gap-2">
-          {/* Primary slot: My Circles — the most prominent home page action. */}
-          <button
-            type="button"
-            onClick={(event) => {
-              // This header sits inside the feed's gesture/pull-to-refresh
-              // surface. Stop the bubbling click here so an ancestor gesture
-              // cannot consume the tap before the navigation callback runs.
-              event.stopPropagation()
-              onNavigateCircles?.()
-            }}
-            disabled={actionsDisabled}
-            aria-label="Open My Circles"
-            data-testid="my-circles-button"
-            className="pact-btn-glow relative z-20 flex flex-1 touch-manipulation pointer-events-auto items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
-            style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
-          >
-            <Users className="h-4 w-4" strokeWidth={2.4} />
-            My Circles
-          </button>
-          {/* Secondary slot: + New Pact — same action as before, moved here. */}
-          <button
-            onClick={onCreatePact}
-            disabled={actionsDisabled}
-            className="pact-btn-glow flex flex-1 items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
-            style={{ borderColor: 'var(--pact-violet)', background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
-          >
-            <Plus className="h-4 w-4" strokeWidth={2.2} />
-            New Pact
-          </button>
         </div>
       </div>
     </div>
