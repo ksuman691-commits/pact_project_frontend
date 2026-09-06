@@ -23,6 +23,7 @@ import DetailPageHeader from '@/components/DetailPageHeader';
 import { useSeedBackHistory } from '@/hooks/useSeedBackHistory';
 import { useSmartBack } from '@/hooks/useSmartBack';
 import FeedPactCard from '@/components/FeedPactCard';
+import PactGallery, { buildGalleryTiles } from '@/components/PactGallery';
 import PactProgressRing, { getPactProgress } from '@/components/PactProgressRing';
 import UserAvatarLink from '@/components/UserAvatarLink';
 import CheerButton from '@/components/CheerButton';
@@ -75,6 +76,10 @@ export default function PactDetailPage() {
   // `proofs`, not a proof id, since tapping any tile should always be able
   // to open its neighbors regardless of id gaps.
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  // Which hero slide is currently in view — drives the dot row overlaid on
+  // the hero. PactGallery reports this via scroll position (see its own
+  // IntersectionObserver), so this never has to be driven manually.
+  const [heroActiveIndex, setHeroActiveIndex] = useState(0);
   const pactId = Number(params.id);
   const { data: pactData, isLoading, isError, refetch: refetchPact } = usePact(pactId);
   const { data: proofsData, refetch: refetchProofs } = usePactProofs(pactId, 50);
@@ -120,8 +125,6 @@ export default function PactDetailPage() {
   const categoryLabel = pact?.category
     ? String(pact.category).replace(/_/g, ' ').replace(/^./, (char: string) => char.toUpperCase())
     : null;
-  const heroProof = proofs.find((proof: any) => proof.type === 'image') || proofs[0];
-
   // Deep-linked from a "so-and-so wants to join" notification
   // (?joinRequests=1) — opens the requests modal automatically once the
   // pact has loaded and confirmed the current user is the creator.
@@ -146,6 +149,11 @@ export default function PactDetailPage() {
   // this as the real fix.
   const hasCheered = Boolean(user && cheers.some((cheer: any) => cheer.sender_id === user.id));
   const canUploadToday = isParticipant && pact && !wasProofSubmittedToday(pact);
+  // Same merge PactGallery uses internally for the hero carousel above, so
+  // the dot count drawn over the title always matches the real slide count
+  // rather than assuming it equals proofs.length (cheer photos add slides
+  // too, and expired cheers don't).
+  const heroTileCount = useMemo(() => buildGalleryTiles(proofs, cheers).length, [proofs, cheers]);
 
   const handleVote = async (_pactId: number, _vote: 'skip') => {
     await skipMutation.mutateAsync(pactId);
@@ -237,15 +245,28 @@ export default function PactDetailPage() {
           today's proof" pill this page adds above it when canUploadToday. */}
       <div className="pact-flow min-h-screen pb-40">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.28, ease: 'easeOut' }}>
-          {/* Hero: cover photo (freshest proof) or a category-colored
-              placeholder when there's no proof yet, with the back/home
-              chevrons overlaid on top of it and category + title overlaid
-              at the bottom via a gradient scrim — replaces the old bare
-              header bar + standalone progress ring that repeated this same
-              information twice in two different, disconnected layouts. */}
+          {/* Hero: a swipeable carousel of every proof/cheer photo (freshest
+              first), or a category-colored placeholder when there's none
+              yet, with the back/home chevrons overlaid on top and category +
+              title + a dot row overlaid at the bottom via a gradient scrim —
+              replaces the old bare header bar + standalone progress ring
+              that repeated this same information twice in two different,
+              disconnected layouts. This used to render only the single
+              freshest photo via a static <Image>, silently dropping every
+              other proof this pact has even though `proofs` already holds
+              the full list right here — swapped to the same PactGallery
+              carousel FeedPactCard uses so multi-proof pacts are actually
+              swipeable here too, not just in the proof-wall grid below. */}
           <div className="relative aspect-[4/5] w-full overflow-hidden">
-            {heroProof ? (
-              <Image src={heroProof.url} alt="" fill sizes="(max-width: 768px) 100vw, 480px" className="object-cover" priority />
+            {proofs.length > 0 ? (
+              <PactGallery
+                proofs={proofs}
+                cheers={cheers}
+                interactive={false}
+                fillHeight
+                dotsPosition="none"
+                onActiveIndexChange={setHeroActiveIndex}
+              />
             ) : (
               <div className="flex h-full w-full items-center justify-center" style={{ background: categoryTheme.gradient }}>
                 <span className="text-6xl opacity-90">{categoryTheme.emoji}</span>
@@ -273,6 +294,22 @@ export default function PactDetailPage() {
             </div>
 
             <div className="absolute inset-x-0 bottom-0 px-5 pb-5">
+              {/* Dot row drawn here (not via PactGallery's own dotsPosition)
+                  so it sits above the category/title text instead of
+                  colliding with it at the same bottom edge — both are
+                  fed by heroActiveIndex/heroTileCount from the gallery. */}
+              {heroTileCount > 1 && (
+                <div className="mb-2.5 flex items-center gap-1.5">
+                  {Array.from({ length: heroTileCount }).map((_, index) => (
+                    <span
+                      key={`hero-dot-${index}`}
+                      className={`h-1.5 rounded-full transition-all ${
+                        index === heroActiveIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/40'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
               {categoryLabel && (
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/80">{categoryLabel}</p>
               )}
