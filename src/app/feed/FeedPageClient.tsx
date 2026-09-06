@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import TopNav from '@/components/TopNav'
 import WelcomeHeader from '@/components/WelcomeHeader'
 import StreakStatsHero from '@/components/StreakStatsHero'
+import FeaturedDareCard from '@/components/FeaturedDareCard'
 import HomeActionsRow from '@/components/HomeActionsRow'
 import YourCirclesRail from '@/components/YourCirclesRail'
 import CreatePactFlowModal from '@/components/create-pact-flow/CreatePactFlowModal'
@@ -15,6 +16,7 @@ import { useUnreadNotificationCount } from '@/hooks/useNotifications'
 import { useUserStats } from '@/hooks/useUserQueries'
 import { useCircles } from '@/hooks/useCircles'
 import { useAtRiskPact } from '@/hooks/useAtRiskPact'
+import { useFeaturedDare } from '@/hooks/useFeaturedDare'
 import { useProfileCompletion } from '@/hooks/useProfileCompletion'
 import { isProfileNudgeDismissed, isProfileChecklistDismissed } from '@/lib/onboarding'
 import ProfileCompletionCard from '@/components/ProfileCompletionCard'
@@ -34,6 +36,7 @@ export default function FeedPageClient() {
   const { data: circlesData, isLoading: circlesLoading } = useCircles()
   const circles = (circlesData || []) as Array<{ id: number; name: string; photo_url?: string | null; emoji?: string | null; icon_emoji?: string | null; member_count?: number }>
   const isAtRisk = useAtRiskPact(user?.id)
+  const { featuredDare } = useFeaturedDare()
   const profileCompletion = useProfileCompletion()
   const [nudgeDismissed, setNudgeDismissed] = useState(true)
   const [checklistDismissed, setChecklistDismissed] = useState(true)
@@ -141,6 +144,19 @@ export default function FeedPageClient() {
               circlesCount={circlesCount}
               isLoading={statsLoading}
             />
+          </div>
+        )}
+
+        {/* Dare of the Day: the same real "featured dare" selection the
+            Dares page hero uses (see useFeaturedDare) — reused as-is rather
+            than a second, home-feed-specific pick. Sits right under the
+            streak hero and above the actions row/circles rail so it reads
+            as a highlight, not a wall the user has to scroll past before
+            reaching their actual pacts feed; renders nothing when Discover
+            has no open public dare, same as the Dares page's own hero. */}
+        {isInitialized && user && featuredDare && (
+          <div className="max-w-md mx-auto px-4 pb-4">
+            <FeaturedDareCard dare={featuredDare} />
           </div>
         )}
 

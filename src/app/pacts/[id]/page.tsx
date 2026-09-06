@@ -17,13 +17,13 @@ import {
   Inbox,
   Play,
   UserPlus,
-  X,
 } from 'lucide-react';
 import DetailPageHeader from '@/components/DetailPageHeader';
 import { useSeedBackHistory } from '@/hooks/useSeedBackHistory';
 import { useSmartBack } from '@/hooks/useSmartBack';
 import FeedPactCard from '@/components/FeedPactCard';
 import PactGallery, { buildGalleryTiles } from '@/components/PactGallery';
+import ProofCarousel from '@/components/ProofCarousel';
 import PactProgressRing, { getPactProgress } from '@/components/PactProgressRing';
 import UserAvatarLink from '@/components/UserAvatarLink';
 import CheerButton from '@/components/CheerButton';
@@ -581,54 +581,19 @@ export default function PactDetailPage() {
         }}
       />
 
-      {/* Full-screen proof-wall viewer — a plain image/video view with
-          prev/next, not a second copy of PactGallery's swipe carousel
-          (that one drives the feed hero + the "no proof yet" upload CTA;
-          reusing it here for a simple tap-to-view grid would drag in state
-          it doesn't need). */}
-      {viewerIndex !== null && proofs[viewerIndex] && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-black/95">
-          <div className="flex items-center justify-between px-4 py-4">
-            <p className="text-sm font-semibold text-white/80">
-              {viewerIndex + 1} / {proofs.length}
-            </p>
-            <button
-              type="button"
-              onClick={() => setViewerIndex(null)}
-              aria-label="Close"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="flex flex-1 items-center justify-center px-4">
-            {proofs[viewerIndex].type === 'video' ? (
-              <video src={proofs[viewerIndex].url} className="max-h-[70vh] w-full rounded-2xl" controls autoPlay playsInline />
-            ) : (
-              // eslint-disable-next-line @next/next/no-img-element -- arbitrary aspect ratio in a fixed-height viewer; next/image's fill needs a sized ancestor this modal doesn't have.
-              <img src={proofs[viewerIndex].url} alt="" className="max-h-[70vh] w-full rounded-2xl object-contain" />
-            )}
-          </div>
-          <div className="flex items-center justify-between px-6 py-6">
-            <button
-              type="button"
-              onClick={() => setViewerIndex((index) => Math.max(0, (index ?? 0) - 1))}
-              disabled={viewerIndex === 0}
-              className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white disabled:opacity-30"
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewerIndex((index) => Math.min(proofs.length - 1, (index ?? 0) + 1))}
-              disabled={viewerIndex === proofs.length - 1}
-              className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white disabled:opacity-30"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Full-screen proof-wall viewer — the same shared Instagram/WhatsApp
+          story-style viewer PactGallery's tappable tiles open (see
+          ProofCarousel), not a second hand-rolled prev/next modal. This
+          used to be its own bespoke implementation here; unifying onto one
+          component means the Proof Wall and the feed-card hero can never
+          drift into two different viewing experiences for the same
+          photos. */}
+      <ProofCarousel
+        proofs={proofs}
+        isOpen={viewerIndex !== null}
+        onClose={() => setViewerIndex(null)}
+        initialIndex={viewerIndex ?? 0}
+      />
 
       {isCreator && (
         <PactJoinRequestsModal
