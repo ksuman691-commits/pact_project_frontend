@@ -30,7 +30,7 @@ import { useCreateCheer } from '@/hooks/usePactMutations';
 import { useGoalMatches } from '@/hooks/usePactMatches';
 import { useAuthStore } from '@/store/auth';
 import { getDisplayName } from '@/lib/displayName';
-import { hasPactMomentum, wasProofSubmittedToday } from '@/lib/pactMomentum';
+import { hasPactMomentum } from '@/lib/pactMomentum';
 import { pactService } from '@/services/api';
 import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
@@ -518,10 +518,6 @@ export default function FeedPactCard({
   const showRing = (isParticipant || isCreator) && Boolean(progressInfo);
   const showStatusBadgeOnly = (isParticipant || isCreator) && !progressInfo;
   const showJoinCta = !isParticipant && !isCreator && (joinAllowed || showJoinedState);
-  // Whether today already has a proof — gates the "+ Add today" trailing
-  // carousel slide so it only shows up when there's genuinely still
-  // something to add today, even if earlier days already have photos.
-  const postedToday = wasProofSubmittedToday(pact);
   // Pact category is a plain lowercase enum value ("fitness", "coding",
   // etc.) with no emoji/label mapping anywhere in the frontend today — just
   // capitalize it for display rather than inventing icons that don't exist
@@ -768,7 +764,11 @@ export default function FeedPactCard({
               aspectClassName="aspect-[4/5]"
               dotsPosition="below"
               onActiveIndexChange={setActiveProofIndex}
-              trailingSlot={uploadAllowed && !postedToday ? (
+              // Always available to uploaders, even after today already has
+              // a proof — multiple proofs per day are allowed (no daily
+              // upload limit on the backend), so this shouldn't disappear
+              // just because one photo already went up today.
+              trailingSlot={uploadAllowed ? (
                 <button
                   type="button"
                   onClick={(event) => { event.stopPropagation(); handleProofUploadClick(); }}

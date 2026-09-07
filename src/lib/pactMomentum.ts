@@ -19,10 +19,11 @@ import { getPactProgress } from '@/components/PactProgressRing'
 //      FeedPactCard.tsx), so comment activity can't feed this without a
 //      backend addition — flagged as a gap, not silently ignored.
 /**
- * Whether *any* proof landed today, per latest_proof_upload_date. Extracted
- * out of hasPactMomentum so FeedPactCard can reuse the exact same check to
- * decide whether to still offer a "+ Add today" carousel slide alongside
- * already-uploaded photos.
+ * Whether *any* proof landed today, per latest_proof_upload_date. Feeds the
+ * "momentum" flame signal below — a proof today counts as live activity
+ * regardless of how many others also landed today (multiple proofs per day
+ * are allowed; this has never been a "has today's one proof been used up"
+ * check, only "did something happen today").
  */
 export function wasProofSubmittedToday(pact: any): boolean {
   const latestProofDate = pact.latest_proof_upload_date ?? pact.latestProofUploadDate

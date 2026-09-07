@@ -37,7 +37,7 @@ import { useSkipPact } from '@/hooks/usePactActions';
 import { useAuthStore } from '@/store/auth';
 import { pactService } from '@/services/api';
 import { getCategoryTheme } from '@/lib/categoryTheme';
-import { hasPactMomentum, wasProofSubmittedToday } from '@/lib/pactMomentum';
+import { hasPactMomentum } from '@/lib/pactMomentum';
 
 function PactDetailSkeleton() {
   return (
@@ -116,7 +116,12 @@ export default function PactDetailPage() {
 
   const participants = useMemo(() => pact?.participants || [], [pact?.participants]);
   const isCreator = Boolean(user && pact?.creator_id === user.id);
-  const progress = pact ? getPactProgress(pact) : null;
+  // Passes the full proofs list so completed-days counts distinct days
+  // (via day_number) rather than raw proof rows — needed now that multiple
+  // proofs per day are allowed. This page already fetches the full list
+  // (usePactProofs(pactId, 50)), unlike the feed card which only ever gets
+  // the 5-newest recent_proofs slice.
+  const progress = pact ? getPactProgress(pact, proofs) : null;
   const categoryTheme = getCategoryTheme(pact?.category);
   // Same "Uppercase, underscores → spaces" formatting FeedPactCard uses for
   // its category chip, so the hero's overlaid tag reads identically to
@@ -148,7 +153,10 @@ export default function PactDetailPage() {
   // a second device, a replayed request, or a modified client. Do not treat
   // this as the real fix.
   const hasCheered = Boolean(user && cheers.some((cheer: any) => cheer.sender_id === user.id));
-  const canUploadToday = isParticipant && pact && !wasProofSubmittedToday(pact);
+  // Renamed from canUploadToday: multiple proofs per day are allowed (no
+  // daily limit on the backend), so this is just "is this person allowed
+  // to upload at all," not "...and hasn't already posted today."
+  const canUploadProof = isParticipant && Boolean(pact);
   // Same merge PactGallery uses internally for the hero carousel above, so
   // the dot count drawn over the title always matches the real slide count
   // rather than assuming it equals proofs.length (cheer photos add slides
@@ -242,7 +250,7 @@ export default function PactDetailPage() {
   return (
     <>
       {/* pb-40: clears both the floating BottomNav AND the sticky "Upload
-          today's proof" pill this page adds above it when canUploadToday. */}
+          today's proof" pill this page adds above it when canUploadProof. */}
       <div className="pact-flow min-h-screen pb-40">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.28, ease: 'easeOut' }}>
           {/* Hero: a swipeable carousel of every proof/cheer photo (freshest
@@ -554,10 +562,10 @@ export default function PactDetailPage() {
 
       {/* Sticky "Upload today's proof" pill — floats above BottomNav (which
           is a centered ~76px-tall pill of its own, not an edge-to-edge bar)
-          rather than overlapping it. Only rendered for a participant who
-          hasn't already posted today; everyone else either isn't allowed to
-          upload or already has, so there's nothing for this button to do. */}
-      {canUploadToday && (
+          rather than overlapping it. Stays visible even after a proof
+          already went up today — multiple proofs per day are allowed, so
+          this is only hidden for non-participants. */}
+      {canUploadProof && (
         <div className="fixed inset-x-0 z-30 flex justify-center px-6" style={{ bottom: 'calc(max(1.25rem, env(safe-area-inset-bottom)) + 84px)' }}>
           <button
             type="button"
