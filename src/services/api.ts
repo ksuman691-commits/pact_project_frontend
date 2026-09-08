@@ -541,6 +541,22 @@ export const notificationService = {
   getUnreadCount: () => api.get('/api/notifications/unread-count'),
 };
 
+// Push Notification Services (Firebase Cloud Messaging)
+//
+// None of these are live on the backend yet — see
+// BACKEND_SPEC_PUSH_NOTIFICATIONS.md for the push_subscriptions schema,
+// preferences shape, and scheduling contract. Same "degrade gracefully"
+// convention as circleAdvancedService.inviteUser: callers treat a
+// 404/501 here as "not available yet", not a real failure.
+export const pushService = {
+  subscribe: (fcmToken: string, timezone: string) =>
+    api.post('/api/push/subscribe', { fcm_token: fcmToken, timezone }),
+  unsubscribe: (fcmToken: string) => api.post('/api/push/unsubscribe', { fcm_token: fcmToken }),
+  getPreferences: () => api.get('/api/push/preferences'),
+  updatePreferences: (preferences: Record<string, boolean>) =>
+    api.put('/api/push/preferences', preferences),
+};
+
 // Follow Services
 export const followService = {
   request: (userId: number) => api.post(`/api/follows/${userId}`),
