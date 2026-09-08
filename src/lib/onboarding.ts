@@ -92,3 +92,36 @@ export function dismissProfileChecklist(): void {
     // Ignore — worst case the checklist reappears sooner than 7 days.
   }
 }
+
+const PUSH_PROMPT_DISMISSED_UNTIL_KEY = 'circlepact_push_prompt_dismissed_until';
+const PUSH_PROMPT_SUPPRESS_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+/**
+ * Whether the "Turn on reminders" push-notification prompt (shown after
+ * creating a pact — see PushNotificationPrompt) is currently suppressed on
+ * this device. Same localStorage pattern as the profile nudges above, but a
+ * longer 30-day window since re-asking sooner for a binary permission
+ * decision reads as nagging rather than a helpful reminder.
+ */
+export function isPushPromptDismissed(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const raw = localStorage.getItem(PUSH_PROMPT_DISMISSED_UNTIL_KEY);
+    if (!raw) return false;
+    const dismissedUntil = Number(raw);
+    if (!Number.isFinite(dismissedUntil)) return false;
+    return Date.now() < dismissedUntil;
+  } catch {
+    return false;
+  }
+}
+
+/** Suppresses the push-notification prompt for PUSH_PROMPT_SUPPRESS_MS (30 days). */
+export function dismissPushPrompt(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(PUSH_PROMPT_DISMISSED_UNTIL_KEY, String(Date.now() + PUSH_PROMPT_SUPPRESS_MS));
+  } catch {
+    // Ignore — worst case the prompt reappears sooner than 30 days.
+  }
+}

@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bell, CheckCheck } from 'lucide-react';
+import Link from 'next/link';
+import { Bell, CheckCheck, Settings } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import TopNav from '@/components/TopNav';
 import { queryKeys } from '@/lib/queryKeys';
@@ -107,13 +108,22 @@ export default function NotificationsPage() {
         <div className="bg-white border-b border-[rgba(20,18,31,0.06)] sticky top-24 z-30">
           <div className="px-4 py-4 flex items-center justify-between">
             <h1 className="text-xl font-bold text-[#14121F]">Notifications</h1>
-            <button
-              onClick={() => markAllAsRead.mutate()}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-full bg-[#FAF9FE] text-slate-700 hover:bg-slate-200 transition"
-            >
-              <CheckCheck className="w-4 h-4" />
-              Mark all read
-            </button>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/notifications/preferences"
+                aria-label="Notification preferences"
+                className="inline-flex items-center justify-center p-2 rounded-full bg-[#FAF9FE] text-slate-700 hover:bg-slate-200 transition"
+              >
+                <Settings className="w-4 h-4" />
+              </Link>
+              <button
+                onClick={() => markAllAsRead.mutate()}
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-full bg-[#FAF9FE] text-slate-700 hover:bg-slate-200 transition"
+              >
+                <CheckCheck className="w-4 h-4" />
+                Mark all read
+              </button>
+            </div>
           </div>
         </div>
 
