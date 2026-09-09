@@ -244,8 +244,24 @@ export default function ProofUploadModal({
           created_at: new Date().toISOString(),
         });
         successCount += 1;
-      } catch (error) {
-        toast.error(`Failed to upload ${currentItem.file.name}`);
+      } catch (error: any) {
+        // Once backend content moderation ships (see
+        // BACKEND_SPEC_CONTENT_MODERATION.md), a flagged photo/video is
+        // rejected with 422 + { detail: { code: 'content_flagged', ... } }
+        // instead of the generic upload failure below — surfaced as a
+        // clear, non-punitive message so a false positive doesn't read like
+        // an accusation. Falls back to the existing generic message for
+        // every other failure (network error, file too large, etc.), and
+        // for the moderation shape too if the `code` field isn't present,
+        // so this stays a no-op until the backend endpoint actually exists.
+        const detail = error?.response?.data?.detail;
+        const isContentFlagged =
+          error?.response?.status === 422 && typeof detail === 'object' && detail?.code === 'content_flagged';
+        toast.error(
+          isContentFlagged
+            ? "This photo doesn't meet our content guidelines — please try a different photo"
+            : `Failed to upload ${currentItem.file.name}`
+        );
       } finally {
         setUploadProgress({ done: i + 1, total: items.length });
       }

@@ -10,6 +10,13 @@ export interface User {
   avatar_url?: string;
   bio?: string;
   is_staff?: boolean;
+  // Self-declared, provider-agnostic age verification (see /verify-age and
+  // BACKEND_SPEC_CONTENT_MODERATION.md). Not yet a real backend column —
+  // GET /api/auth/me won't return this until that field ships, so
+  // `useAuthStore`'s completeAgeVerification also falls back to a
+  // localStorage-only flag (see lib/ageVerification.ts) so the gate isn't
+  // permanently unpassable while the backend catches up.
+  date_of_birth?: string | null;
 }
 
 export type CuratedContentType = 'pact' | 'dare';
