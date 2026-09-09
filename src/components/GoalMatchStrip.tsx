@@ -45,14 +45,18 @@ interface GoalMatchStripProps {
  * the not-yet-live-backend graceful fallback and the genuine "nobody else
  * yet" case, so callers never need to branch on that themselves.
  *
- * Self-labels with a "Discover" heading + violet-tinted card treatment
- * (rather than relying on callers to add distinguishing chrome) so this
- * never gets visually confused with an actual pact-participants list —
- * these are OTHER people on similar goals, not members of this pact. On
- * the pact detail page in particular this strip sits right next to the
- * real "Participants" count, which uses plain neutral styling with no
- * heading, so without an explicit label of its own a skimming user could
- * easily misread these avatars as additional participants.
+ * Self-labels with an "Others on the same goal" heading + violet-tinted
+ * card treatment (rather than relying on callers to add distinguishing
+ * chrome) so this never gets visually confused with an actual
+ * pact-participants list — these are OTHER people on similar goals, not
+ * members of this pact. On the pact detail page in particular this strip
+ * sits right next to the real "Participants" count, which uses plain
+ * neutral styling with no heading, so without an explicit label of its own
+ * a skimming user could easily misread these avatars as additional
+ * participants. The label is deliberately phrased as a positive statement
+ * of what the strip IS, not a negation of what it isn't ("not
+ * participants") — a negation reads, at a skim, like a status claim about
+ * the pact itself rather than a caption for a different feature entirely.
  */
 export default function GoalMatchStrip({ matches, totalCount, category, variant, onStartCircle }: GoalMatchStripProps) {
   if (matches.length === 0) return null;
@@ -62,7 +66,7 @@ export default function GoalMatchStrip({ matches, totalCount, category, variant,
   const label = (
     <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--pact-violet)]">
       <Users className="h-3 w-3" />
-      Discover · not participants
+      Others on the same goal
     </p>
   );
 
