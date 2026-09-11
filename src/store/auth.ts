@@ -97,22 +97,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   // Called once, right after a first-time user passes the client-side
   // 18+ check on /verify-age — never before that check, so this action
-  // never has to re-validate age itself. POST /api/auth/verify-age isn't
-  // live yet (see BACKEND_SPEC_CONTENT_MODERATION.md), so a 404/network
-  // failure here still counts as "verified" locally rather than trapping
-  // every user behind a gate the backend can't yet satisfy; once the
-  // endpoint ships, its response becomes the source of truth and this
-  // fallback stops mattering.
+  // never has to re-validate age itself. PATCH /api/users/me is now live
+  // (see BACKEND_SPEC_CONTENT_MODERATION.md; backend extended the generic
+  // profile-update endpoint rather than the originally-specced dedicated
+  // route), so it's called FIRST and treated as the source of truth — no
+  // more optimistic local-write-before-the-call. A 403
+  // { code: 'underage_user' } response means the backend's own age
+  // calculation disagreed with the client's and genuinely rejects the
+  // user; that must propagate to the caller (VerifyAgePage) so it can
+  // show the rejection instead of letting the user through. Any other
+  // failure (network hiccup, unexpected 5xx) still degrades to a
+  // local-only verification rather than trapping the user behind a step
+  // the backend transiently couldn't complete.
   completeAgeVerification: async (dateOfBirth) => {
-    const currentUser = get().user;
-    set({ user: currentUser ? { ...currentUser, date_of_birth: dateOfBirth } : currentUser });
-    markAgeVerifiedLocally(currentUser?.user_uuid);
-
     try {
       const response = await authService.verifyAge(dateOfBirth);
       set({ user: response.data });
-    } catch (err) {
-      console.log('[v0] /api/auth/verify-age not available yet — proceeding with local-only verification', err);
+      markAgeVerifiedLocally(response.data?.user_uuid ?? get().user?.user_uuid);
+    } catch (err: any) {
+      if (err?.response?.status === 403 && err?.response?.data?.detail?.code === 'underage_user') {
+        throw err;
+      }
+      const currentUser = get().user;
+      set({ user: currentUser ? { ...currentUser, date_of_birth: dateOfBirth } : currentUser });
+      markAgeVerifiedLocally(currentUser?.user_uuid);
+      console.log('[v0] PATCH /api/users/me failed for a non-underage reason — proceeding with local-only verification', err);
     }
   },
 

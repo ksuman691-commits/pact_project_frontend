@@ -93,6 +93,19 @@ export default function VerifyAgePage() {
       await completeAgeVerification(dateOfBirth);
       toast.success('Age verified — welcome to CirclePact!');
       router.replace('/feed');
+    } catch (err: any) {
+      // The client-side check above already caught this in the normal
+      // case — this only fires if the backend's own calculation disagrees
+      // (e.g. clock skew, or a client-side bypass attempt), per
+      // BACKEND_SPEC_CONTENT_MODERATION.md's 403 { code: 'underage_user' }
+      // response. Any other failure is swallowed by the store itself
+      // (falls back to local-only verification), so reaching this catch
+      // block at all means it was specifically an underage rejection.
+      const detail = err?.response?.data?.detail;
+      setUnderageMessage(
+        detail?.message ||
+          `You must be ${MIN_AGE} or older to use CirclePact. Based on the date you entered, you don't currently meet that requirement.`
+      );
     } finally {
       setIsSubmitting(false);
     }

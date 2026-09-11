@@ -292,12 +292,20 @@ export const authService = {
   },
   verify: () => api.get('/api/auth/verify'),
   logout: () => api.post('/api/auth/logout'),
-  // Not yet live — see BACKEND_SPEC_CONTENT_MODERATION.md. Provider-agnostic
-  // by design: called from the single global /verify-age gate regardless of
-  // whether the user signed up via Google, manual email/password, or a
-  // future OAuth provider, so it can't be tied to any one signup endpoint.
+  // Live per backend confirmation (originally specced as a dedicated
+  // POST /api/auth/verify-age — see BACKEND_SPEC_CONTENT_MODERATION.md —
+  // backend instead extended the generic profile-update endpoint).
+  // Provider-agnostic by design: called from the single global
+  // /verify-age gate regardless of whether the user signed up via Google,
+  // manual email/password, or a future OAuth provider, so it can't be
+  // tied to any one signup endpoint. On success returns the updated
+  // profile (200). On failure, a 403 with
+  // { detail: { code: 'underage_user', ... } } means the backend's own
+  // age calculation rejected the date of birth — callers must NOT treat
+  // that as a fallback-to-local-success case (see
+  // useAuthStore.completeAgeVerification).
   verifyAge: async (date_of_birth: string) => {
-    const response = await api.post('/api/auth/verify-age', { date_of_birth });
+    const response = await api.patch('/api/users/me', { date_of_birth });
     return { ...response, data: mapUser(response.data) };
   },
 };
