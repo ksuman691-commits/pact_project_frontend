@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { User } from '@/types';
 import { authService, clearToken, getRefreshToken, setAuthTokens, setToken } from '@/services/api';
+import { markAgeVerifiedLocally } from '@/lib/ageVerification';
 
 interface AuthState {
   user: User | null;
@@ -15,9 +16,10 @@ interface AuthState {
   logout: () => void;
   setUser: (user: User | null) => void;
   initAuth: () => Promise<void>;
+  completeAgeVerification: (dateOfBirth: string) => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
   isLoading: false,
@@ -92,6 +94,27 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   setUser: (user) => set({ user }),
+
+  // Called once, right after a first-time user passes the client-side
+  // 18+ check on /verify-age — never before that check, so this action
+  // never has to re-validate age itself. POST /api/auth/verify-age isn't
+  // live yet (see BACKEND_SPEC_CONTENT_MODERATION.md), so a 404/network
+  // failure here still counts as "verified" locally rather than trapping
+  // every user behind a gate the backend can't yet satisfy; once the
+  // endpoint ships, its response becomes the source of truth and this
+  // fallback stops mattering.
+  completeAgeVerification: async (dateOfBirth) => {
+    const currentUser = get().user;
+    set({ user: currentUser ? { ...currentUser, date_of_birth: dateOfBirth } : currentUser });
+    markAgeVerifiedLocally(currentUser?.user_uuid);
+
+    try {
+      const response = await authService.verifyAge(dateOfBirth);
+      set({ user: response.data });
+    } catch (err) {
+      console.log('[v0] /api/auth/verify-age not available yet — proceeding with local-only verification', err);
+    }
+  },
 
   initAuth: async () => {
     set({ isLoading: true });

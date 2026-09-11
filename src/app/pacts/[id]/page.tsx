@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -26,6 +27,7 @@ import PactGallery, { buildGalleryTiles } from '@/components/PactGallery';
 import ProofCarousel from '@/components/ProofCarousel';
 import PactProgressRing, { getPactProgress } from '@/components/PactProgressRing';
 import UserAvatarLink from '@/components/UserAvatarLink';
+import Avatar from '@/components/Avatar';
 import CheerButton from '@/components/CheerButton';
 import SponsoredCard from '@/components/SponsoredCard';
 import ProofUploadModal from '@/components/ProofUploadModal';
@@ -472,20 +474,25 @@ export default function PactDetailPage() {
                     <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--pact-text-faint)]">Participants</p>
                     <span className="text-xs text-[var(--pact-text-faint)]">{participants.length}</span>
                   </div>
-                  {participants.length > 0 ? (
-                    <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
-                      {participants.map((participant: any) => (
-                        <UserAvatarLink
-                          key={participant.id || participant.user_id || participant.username}
-                          name={participant.full_name || participant.name || participant.username}
-                          avatarUrl={participant.avatar_url || participant.avatar}
-                          username={participant.username}
-                          size={36}
-                          className="shrink-0"
-                        />
-                      ))}
-                    </div>
-                  ) : (
+              {participants.length > 0 ? (
+                <div className="mt-3 flex items-center gap-2.5 overflow-x-auto pb-1">
+                  {participants.map((participant: any) => {
+                    const displayName = participant.full_name || participant.name || participant.username || 'Member';
+                    const href = participant.username ? `/profile/${participant.username}` : '/profile';
+                    return (
+                      <Link
+                        key={participant.id || participant.user_id || participant.username}
+                        href={href}
+                        aria-label={`Open ${displayName}'s profile`}
+                        className="flex shrink-0 flex-col items-center gap-1.5 rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)] px-3 py-2.5 text-center transition hover:border-[var(--pact-violet)]/50 hover:bg-[var(--pact-surface-2)] active:scale-95"
+                      >
+                        <Avatar name={displayName} avatarUrl={participant.avatar_url || participant.avatar} size={36} />
+                        <p className="max-w-[4.5rem] truncate text-[11px] font-semibold text-[var(--pact-text)]">{displayName}</p>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : (
                     <p className="mt-2 text-sm text-[var(--pact-text-faint)]">No participant data yet.</p>
                   )}
                 </div>

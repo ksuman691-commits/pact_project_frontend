@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import { Bricolage_Grotesque, IBM_Plex_Mono, Inter } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import AuthInitializer from '@/components/AuthInitializer';
+import AgeVerificationGate from '@/components/AgeVerificationGate';
 import NotificationRealtimeBridge from '@/components/NotificationRealtimeBridge';
 import InAppNavigationTracker from '@/components/InAppNavigationTracker';
 import QueryProvider from '@/providers/QueryProvider';
@@ -56,6 +57,7 @@ export default function RootLayout({
         <QueryProvider>
           <InAppNavigationTracker />
           <AuthInitializer />
+          <AgeVerificationGate />
           <NotificationRealtimeBridge />
           {children}
           <BottomNav />

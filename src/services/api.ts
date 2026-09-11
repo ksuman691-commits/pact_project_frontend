@@ -37,6 +37,7 @@ const mapUser = (raw: any) => ({
   avatar_url: raw?.avatar_url ?? null,
   bio: raw?.bio ?? null,
   is_staff: raw?.is_staff ?? false,
+  date_of_birth: raw?.date_of_birth ?? null,
 });
 
 const formatTimeRemaining = (endDateRaw: string | undefined) => {
@@ -291,6 +292,14 @@ export const authService = {
   },
   verify: () => api.get('/api/auth/verify'),
   logout: () => api.post('/api/auth/logout'),
+  // Not yet live — see BACKEND_SPEC_CONTENT_MODERATION.md. Provider-agnostic
+  // by design: called from the single global /verify-age gate regardless of
+  // whether the user signed up via Google, manual email/password, or a
+  // future OAuth provider, so it can't be tied to any one signup endpoint.
+  verifyAge: async (date_of_birth: string) => {
+    const response = await api.post('/api/auth/verify-age', { date_of_birth });
+    return { ...response, data: mapUser(response.data) };
+  },
 };
 
 // Circle Services
