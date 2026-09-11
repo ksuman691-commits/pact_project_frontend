@@ -7,7 +7,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth'
 import { circleService, circleJoinRequestService, circleAdvancedService, userService } from '@/services/api'
 import { Circle, Pact } from '@/types'
 import toast from 'react-hot-toast'
-import { Plus, Users, Camera, Sparkles, Share2 } from 'lucide-react'
+import { Plus, Users, Camera, Sparkles, Share2, Bell } from 'lucide-react'
 import DetailPageHeader from '@/components/DetailPageHeader'
 import { useSeedBackHistory } from '@/hooks/useSeedBackHistory'
 import InviteMembersModal from '@/components/InviteMembersModal'
@@ -20,7 +20,12 @@ import { useSkipPact } from '@/hooks/usePactActions'
 
 export default function CircleDetailPage() {
   const router = useRouter(); const params = useParams(); const { user, isInitialized } = useRequireAuth(); const circleId = Number(params.id)
-  const [circle, setCircle] = useState<Circle | null>(null); const [members, setMembers] = useState<any[]>([]); const [pacts, setPacts] = useState<Pact[]>([]); const [loading, setLoading] = useState(true); const [isMember, setIsMember] = useState(false); const [qrOpen, setQrOpen] = useState(false); const [inviteModal, setInviteModal] = useState(false); const [leaveModal, setLeaveModal] = useState(false); const [leaving, setLeaving] = useState(false); const [memberStats, setMemberStats] = useState<any[]>([]); const [uploadingPhoto, setUploadingPhoto] = useState(false); const [showAllMembers, setShowAllMembers] = useState(false)
+  const [circle, setCircle] = useState<Circle | null>(null); const [members, setMembers] = useState<any[]>([]); const [pacts, setPacts] = useState<Pact[]>([]); const [loading, setLoading] = useState(true); const [isMember, setIsMember] = useState(false); const [qrOpen, setQrOpen] = useState(false); const [inviteModal, setInviteModal] = useState(false); const [leaveModal, setLeaveModal] = useState(false); const [leaving, setLeaving] = useState(false);   const [memberStats, setMemberStats] = useState<any[]>([]); const [uploadingPhoto, setUploadingPhoto] = useState(false); const [showAllMembers, setShowAllMembers] = useState(false)
+  // Tracks which members were just nudged this session so the button can
+  // flip to a disabled "Nudged" state and prevent an accidental double-send
+  // — not persisted, so it resets on reload (there's no "already nudged
+  // today" read endpoint yet to hydrate this from).
+  const [nudgedIds, setNudgedIds] = useState<Set<number>>(new Set())
   // Grid layout (mockup): a handful of members shown up front with a "See
   // all" expand toggle, rather than the full roster always rendered flat.
   const MEMBER_PREVIEW_COUNT = 9
@@ -43,6 +48,31 @@ export default function CircleDetailPage() {
   // waiting for both conditions to be true.
   const isNewCircle = members.length <= 1 && pacts.length === 0
   const handleJoin = async () => { try { await circleService.join(circleId); setIsMember(true); const m = await circleJoinRequestService.listMembers(circleId); setMembers(m.data || []); toast.success('Joined circle') } catch { toast.error('Failed to join circle') } }
+  // POST /api/circles/{id}/members/{user_id}/nudge — see
+  // circleAdvancedService.nudgeMember and BACKEND_SPEC_PUSH_NOTIFICATIONS.md.
+  // Not live yet, same graceful-degradation convention as
+  // circleAdvancedService.inviteUser: a 404 (endpoint doesn't exist) is
+  // downgraded to a "not available yet" toast rather than a generic error,
+  // and the button still flips to its nudged state either way so the UI is
+  // fully clickable/testable ahead of the backend shipping.
+  const handleNudgeMember = async (memberUserId: number) => {
+    setNudgedIds((prev) => new Set(prev).add(memberUserId))
+    try {
+      await circleAdvancedService.nudgeMember(circleId, memberUserId)
+      toast.success('Nudge sent!')
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        toast('Nudges are coming soon', { icon: '🔔' })
+      } else {
+        toast.error('Failed to send nudge')
+        setNudgedIds((prev) => {
+          const next = new Set(prev)
+          next.delete(memberUserId)
+          return next
+        })
+      }
+    }
+  }
   // Same clipboard-with-fallback approach as FeedPactCard's share button —
   // and the same private-visibility heads-up, since a private circle's link
   // is only useful to people who already have access.
@@ -152,11 +182,26 @@ export default function CircleDetailPage() {
           contradicted a header implying recent activity. */}
       <section className="border-b border-[var(--pact-hairline)] py-8">
         <div className="flex items-baseline justify-between"><h2 className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--pact-violet)]">Members</h2>{members.length > MEMBER_PREVIEW_COUNT && <button type="button" onClick={() => setShowAllMembers(v => !v)} className="text-xs font-semibold text-[var(--pact-text-muted)]">{showAllMembers ? 'Show less' : 'See all'}</button>}</div>
-        <div className="mt-5 grid grid-cols-4 gap-4 sm:grid-cols-6">{visibleMembers.map((member: any) => { const stat = memberStats.find(s => s.user_id === member.user_id); return (
+        <div className="mt-5 grid grid-cols-4 gap-4 sm:grid-cols-6">{visibleMembers.map((member: any) => { const stat = memberStats.find(s => s.user_id === member.user_id); const isSelf = member.user_id === user.id; const isNudged = nudgedIds.has(member.user_id); return (
           <div key={member.user_id} className="flex flex-col items-center gap-1.5 text-center">
             <UserAvatarLink name={member.username} avatarUrl={member.avatar_url} username={member.username} size={40} />
             <p className="w-full truncate text-[11px] font-semibold text-[var(--pact-text)]">{member.full_name || member.username}</p>
             <p className="text-[10px] font-semibold text-[var(--pact-violet)]">{stat?.current_streak || 0}d</p>
+            {/* Nudge: only meaningful for other members, and only once you're
+                a circle member yourself (mirrors the "Create pact"/"Invite
+                members" actions below, which are also isMember-gated). */}
+            {isMember && !isSelf && (
+              <button
+                type="button"
+                onClick={() => handleNudgeMember(member.user_id)}
+                disabled={isNudged}
+                aria-label={isNudged ? `Nudged ${member.full_name || member.username}` : `Nudge ${member.full_name || member.username}`}
+                className="mt-0.5 flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[var(--pact-text-muted)] transition-colors disabled:text-[var(--pact-text-faint)] enabled:hover:bg-[var(--pact-violet)]/10 enabled:hover:text-[var(--pact-violet)] enabled:active:scale-95"
+              >
+                <Bell className="h-3 w-3" />
+                {isNudged ? 'Nudged' : 'Nudge'}
+              </button>
+            )}
           </div>
         ) })}</div>
       </section>

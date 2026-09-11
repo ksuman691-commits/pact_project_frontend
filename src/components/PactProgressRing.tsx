@@ -120,15 +120,20 @@ export function getPactProgress(pact: any, proofs?: Array<{ day?: number | null;
   // days done, 0 missed"). Whenever the real per-day list is available,
   // count distinct days instead — genuinely accurate, no backend change
   // needed since day_number already comes back per-proof. Callers without
-  // that list (the raw pact object only) still fall back to proof_count,
-  // same approximation as before this fix — see
-  // BACKEND_SPEC_DISTINCT_DAY_COUNT.md for making that case accurate too.
+  // that list (the raw pact object only) prefer the backend's own
+  // distinct-day count once it exists (see BACKEND_SPEC_DISTINCT_DAY_COUNT.md
+  // — field name `completed_days` on PactResponse) and only fall back to
+  // proof_count's raw-row approximation for pacts serialized before that
+  // field ships. `completed_days` MUST be checked before `proof_count` here:
+  // both will be present on the same response once the backend field
+  // lands, and `??` stops at the first defined value, so checking
+  // proof_count first would make completed_days permanently unreachable.
   const distinctDaysCompleted = proofs
     ? new Set(proofs.map((proof) => proof.day ?? proof.day_number).filter((day): day is number => typeof day === 'number')).size
     : null
   const completed = Math.min(
     elapsed,
-    distinctDaysCompleted ?? Number(pact.proof_count ?? pact.proofs_count ?? pact.completed_days ?? (pact.status === 'completed' ? total : 0))
+    distinctDaysCompleted ?? Number(pact.completed_days ?? pact.proof_count ?? pact.proofs_count ?? (pact.status === 'completed' ? total : 0))
   )
   const missed = Math.max(0, elapsed - completed)
   return { total, completed, missed }

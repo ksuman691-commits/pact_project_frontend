@@ -733,6 +733,20 @@ export const circleAdvancedService = {
   api.put(`/api/circles/${circleId}/members/${userId}`, data),
   getLeaderboard: (circleId: number) =>
   api.get(`/api/circles/${circleId}/leaderboard`),
+  // POST /api/circles/{id}/members/{user_id}/nudge — NOT YET LIVE on the
+  // backend. Per BACKEND_SPEC_PUSH_NOTIFICATIONS.md section 2 (type 3,
+  // `circle_nudges`), the notification infrastructure to send the actual
+  // push already exists (NotificationType enum, persistence, list/read
+  // endpoints) — this endpoint is the one missing piece: it should look up
+  // the target member, create a `circle_nudges`-typed notification row for
+  // them, and call the same shared `send_push` helper the rest of that
+  // spec defines. No request body needed (circle_id + user_id in the path
+  // fully identify the nudge; the sender is the authenticated caller).
+  // Wired as if it already exists, same convention as inviteUser above —
+  // callers (handleNudgeMember in circles/[id]/page.tsx) downgrade a 404
+  // to a friendly "not available yet" toast rather than a generic error.
+  nudgeMember: (circleId: number, userId: number) =>
+  api.post(`/api/circles/${circleId}/members/${userId}/nudge`),
   // POST /api/circles/{id}/photo — mirrors authService.uploadAvatar.
   // Callers (ReviewStep) still treat a failure here as best-effort so a
   // transient network error doesn't block circle creation; the emoji
