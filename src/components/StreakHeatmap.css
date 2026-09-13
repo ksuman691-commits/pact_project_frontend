@@ -1,0 +1,62 @@
+/* Overrides for react-calendar-heatmap's default GitHub-green palette,
+   remapped onto this app's pact-pink accent so it reads as part of the
+   same design system rather than a bolted-on third-party widget. */
+
+/* Deliberately NOT width: 100% — react-calendar-heatmap's SVG viewBox is
+   sized by week count, so stretching a short pact's handful of weeks to
+   fill the card blows every cell up to a giant square instead of the
+   normal small GitHub-style dots. Natural size + horizontal scroll on
+   overflow (long pacts) matches the standard pattern for this widget. */
+.streak-heatmap {
+  overflow-x: auto;
+}
+
+.streak-heatmap .react-calendar-heatmap {
+  width: auto;
+  max-width: 100%;
+  height: 104px;
+}
+
+.streak-heatmap .react-calendar-heatmap text {
+  font-size: 6px;
+  fill: var(--pact-text-faint);
+}
+
+.streak-heatmap .react-calendar-heatmap rect {
+  rx: 2;
+  stroke: var(--pact-surface);
+}
+
+.streak-heatmap .streak-scale-0 {
+  fill: var(--pact-hairline);
+}
+
+.streak-heatmap .streak-scale-1 {
+  fill: color-mix(in srgb, var(--pact-pink) 35%, var(--pact-hairline));
+}
+
+.streak-heatmap .streak-scale-2 {
+  fill: color-mix(in srgb, var(--pact-pink) 65%, var(--pact-hairline));
+}
+
+.streak-heatmap .streak-scale-3 {
+  fill: var(--pact-pink);
+}
+
+.streak-heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--pact-text-faint);
+}
+
+.streak-legend-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}

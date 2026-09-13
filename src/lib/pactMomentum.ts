@@ -48,3 +48,27 @@ export function hasPactMomentum(pact: any): boolean {
   const { completed, missed } = getPactProgress(pact)
   return completed > 0 && missed === 0
 }
+
+// Same 7/14/30-day thresholds the backend's `milestones` push-notification
+// type fires on (see the "Callouts when a streak crosses 7, 14, or 30 days"
+// copy in notifications/preferences) — kept as one shared list so the
+// client-side confetti celebration below can't drift out of sync with that
+// wording if the thresholds ever change.
+export const STREAK_MILESTONE_DAYS = [7, 14, 30] as const
+
+/**
+ * Returns the milestone day count that was just crossed by an upload
+ * (previousCompleted < day <= nextCompleted), or null if none was. Requires
+ * missed === 0 — a streak with a gap isn't "momentum" (see hasPactMomentum
+ * above), so it shouldn't get a celebration either. Only ever returns at
+ * most one threshold per call since a single upload advances `completed`
+ * by exactly one day.
+ */
+export function getCrossedStreakMilestone(
+  previousCompleted: number,
+  nextCompleted: number,
+  missed: number
+): number | null {
+  if (missed !== 0) return null
+  return STREAK_MILESTONE_DAYS.find((day) => previousCompleted < day && nextCompleted >= day) ?? null
+}

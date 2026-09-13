@@ -26,6 +26,7 @@ import FeedPactCard from '@/components/FeedPactCard';
 import PactGallery, { buildGalleryTiles } from '@/components/PactGallery';
 import ProofCarousel from '@/components/ProofCarousel';
 import PactProgressRing, { getPactProgress } from '@/components/PactProgressRing';
+import StreakHeatmap from '@/components/StreakHeatmap';
 import UserAvatarLink from '@/components/UserAvatarLink';
 import Avatar from '@/components/Avatar';
 import CheerButton from '@/components/CheerButton';
@@ -39,7 +40,8 @@ import { useSkipPact } from '@/hooks/usePactActions';
 import { useAuthStore } from '@/store/auth';
 import { pactService } from '@/services/api';
 import { getCategoryTheme } from '@/lib/categoryTheme';
-import { hasPactMomentum } from '@/lib/pactMomentum';
+import { hasPactMomentum, getCrossedStreakMilestone } from '@/lib/pactMomentum';
+import confetti from 'canvas-confetti';
 
 function PactDetailSkeleton() {
   return (
@@ -371,6 +373,23 @@ export default function PactDetailPage() {
               </div>
             </section>
 
+            {/* Streak heatmap: GitHub-style contribution grid of this pact's
+                proof-upload dates, fed the same `proofs` list the stat row
+                and gallery above already use — no separate fetch. */}
+            {pact && proofs.length > 0 && (
+              <section className="pact-card rounded-[22px] p-5">
+                <p className="text-sm font-black text-[var(--pact-text)]">Streak activity</p>
+                <p className="mt-0.5 text-xs text-[var(--pact-text-muted)]">Proof uploads at a glance</p>
+                <div className="mt-4">
+                  <StreakHeatmap
+                    proofDates={proofs.map((proof: any) => proof.uploadedAt).filter(Boolean)}
+                    startDate={pact.start_date || pact.created_at}
+                    endDate={pact.end_date || pact.deadline || undefined}
+                  />
+                </div>
+              </section>
+            )}
+
             {/* Avatar row: participant avatars + a real Invite action (same
                 copy-link flow as FeedPactCard's share button). */}
             <section className="flex items-center justify-between gap-3">
@@ -591,9 +610,31 @@ export default function PactDetailPage() {
         onClose={() => setProofUploadOpen(false)}
         pactId={pact.id}
         pactStartDate={pact.start_date || pact.created_at}
-        onUpload={async () => {
-          await Promise.all([refetchProofs(), refetchPact()]);
-        }}
+              onUpload={async () => {
+                // Captured before the refetch so it reflects the streak as
+                // it stood right before this upload landed — compared
+                // against the post-refetch count below to detect a
+                // just-crossed 7/14/30-day milestone (see
+                // getCrossedStreakMilestone).
+                const previousCompleted = pact ? getPactProgress(pact, proofs).completed : 0;
+                const [proofsResult] = await Promise.all([refetchProofs(), refetchPact()]);
+                if (pact) {
+                  const freshProofs = (proofsResult.data?.data || []).map((proof: any) => ({
+                    day: proof.day_number,
+                  }));
+                  const nextProgress = getPactProgress(pact, freshProofs);
+                  const milestone = getCrossedStreakMilestone(previousCompleted, nextProgress.completed, nextProgress.missed);
+                  if (milestone) {
+                    confetti({
+                      particleCount: 90,
+                      spread: 70,
+                      origin: { y: 0.68 },
+                      colors: ['#10b981', '#fbbf24', '#f472b6', '#8b5cf6'],
+                    });
+                    toast.success(`${milestone}-day streak! Keep it going.`);
+                  }
+                }
+              }}
       />
 
       {/* Full-screen proof-wall viewer — the same shared Instagram/WhatsApp
