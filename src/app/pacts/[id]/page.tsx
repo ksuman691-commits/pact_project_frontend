@@ -330,6 +330,49 @@ export default function PactDetailPage() {
           </div>
 
           <div className="mx-auto max-w-md space-y-6 px-4 pt-5">
+            {/* Join card renders first, right after the hero — this is the
+                single most important action for a non-participant, so it
+                can't wait behind the progress ring / stats / heatmap below
+                (those describe a pact this visitor hasn't joined yet, so
+                they're secondary). Kept as a normal in-flow card rather than
+                a sticky pill like "Upload today's proof": that button is a
+                repeated daily action for an already-committed participant
+                and needs to survive scrolling through unrelated content,
+                whereas joining is a one-time decision made once per visit,
+                and it disappears the moment it's acted on — a sticky
+                element would have to un-mount mid-scroll for that. */}
+            {!isParticipant && (
+              <div className="pact-card rounded-[28px] p-5">
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[var(--pact-text-faint)]">Join this pact</p>
+                {pact.can_join ? (
+                  <>
+                    <p className="mt-2 text-sm text-[var(--pact-text-muted)]">Join this pact to upload proof updates from the camera or your gallery.</p>
+                    <div className="mt-4">
+                      <PremiumJoinButton onClick={handleJoinRequest} loading={isJoiningPact} size="md" />
+                    </div>
+                  </>
+                ) : pact.join_block_reason === 'already_joined' ? (
+                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-400/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-emerald-300">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Joined
+                  </span>
+                ) : pact.join_block_reason === 'creator' ? (
+                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-amber-300">
+                    <Crown className="h-3.5 w-3.5" />
+                    Creator
+                  </span>
+                ) : (
+                  <p className="mt-2 text-sm text-[var(--pact-text-muted)]">
+                    {pact.join_block_reason === 'full'
+                      ? 'This pact is full.'
+                      : pact.join_block_reason === 'not_active'
+                        ? 'This pact is no longer active.'
+                        : "Joining isn't available right now."}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Progress row: ring on the left, day count + days-left copy on
                 the right — one fact stated once, not the ring's percentage
                 and a separate "X of Y days" headline repeating each other. */}
@@ -548,38 +591,6 @@ export default function PactDetailPage() {
                   </p>
                 </div>
                 <CheerButton pactId={pact.id} canCheer={canCheer} hasCheered={hasCheered} />
-              </div>
-            )}
-
-            {!isParticipant && (
-              <div className="pact-card rounded-[28px] p-5">
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[var(--pact-text-faint)]">Join this pact</p>
-                {pact.can_join ? (
-                  <>
-                    <p className="mt-2 text-sm text-[var(--pact-text-muted)]">Join this pact to upload proof updates from the camera or your gallery.</p>
-                    <div className="mt-4">
-                      <PremiumJoinButton onClick={handleJoinRequest} loading={isJoiningPact} size="md" />
-                    </div>
-                  </>
-                ) : pact.join_block_reason === 'already_joined' ? (
-                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-400/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-emerald-300">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Joined
-                  </span>
-                ) : pact.join_block_reason === 'creator' ? (
-                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-amber-300">
-                    <Crown className="h-3.5 w-3.5" />
-                    Creator
-                  </span>
-                ) : (
-                  <p className="mt-2 text-sm text-[var(--pact-text-muted)]">
-                    {pact.join_block_reason === 'full'
-                      ? 'This pact is full.'
-                      : pact.join_block_reason === 'not_active'
-                        ? 'This pact is no longer active.'
-                        : "Joining isn't available right now."}
-                  </p>
-                )}
               </div>
             )}
           </div>
