@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
-import { Upload, Users, CheckCircle2, XCircle, Clock, CalendarClock, ShieldCheck, Zap, CheckCheck } from 'lucide-react';
+import { Upload, Users, CheckCircle2, XCircle, Clock, CalendarClock, ShieldCheck, Zap, CheckCheck, Share2 } from 'lucide-react';
 import DetailPageHeader from '@/components/DetailPageHeader';
 import { useSeedBackHistory } from '@/hooks/useSeedBackHistory';
 import { useDareDetail, useDareRecipients, useDareStats } from '@/hooks/useDareQueries';
@@ -11,6 +11,7 @@ import { useAcceptDare, useDeclineDare, useClaimDare } from '@/hooks/useDareMuta
 import DareRecipientsModal from '@/components/DareRecipientsModal';
 import DareProofUploadModal from '@/components/DareProofUploadModal';
 import DareVerificationModal from '@/components/DareVerificationModal';
+import DareShareSheet from '@/components/DareShareSheet';
 import Avatar from '@/components/Avatar';
 import DareTimeRing from '@/components/DareTimeRing';
 import { formatCountdown, formatRelativeTime, parseApiDate, urgencyColor } from '@/lib/dareCountdown';
@@ -51,6 +52,7 @@ export default function DareDetailPage() {
   const [proofModalOpen, setProofModalOpen] = useState(false);
   const [verifyModalOpen, setVerifyModalOpen] = useState(false);
   const [recipientsModalOpen, setRecipientsModalOpen] = useState(false);
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
 
   const dare = dareQuery.data?.data;
 
@@ -140,6 +142,17 @@ export default function DareDetailPage() {
               <CheckCheck className="h-2.5 w-2.5" />
               Completed
             </span>
+            {/* Share action — only surfaced once there's actually a proof
+                photo to share, same gating as the Completed pill above. */}
+            <button
+              onClick={() => setShareSheetOpen(true)}
+              aria-label="Share this dare"
+              className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md transition hover:opacity-90"
+              style={{ background: 'rgba(0,0,0,0.45)' }}
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              Share
+            </button>
           </div>
         )}
 
@@ -343,6 +356,12 @@ export default function DareDetailPage() {
         ) : null}
       </div>
 
+      <DareShareSheet
+        isOpen={shareSheetOpen}
+        onClose={() => setShareSheetOpen(false)}
+        dareId={dareId}
+        dareTitle={dare.title}
+      />
       <DareProofUploadModal isOpen={proofModalOpen} onClose={() => setProofModalOpen(false)} dareId={dareId} />
       <DareVerificationModal isOpen={verifyModalOpen} onClose={() => setVerifyModalOpen(false)} dareId={dareId} />
       <DareRecipientsModal
