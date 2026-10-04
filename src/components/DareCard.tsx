@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { CheckCircle2, XCircle, Upload, Zap, Eye, Lock, CheckCheck } from 'lucide-react';
+import { CheckCircle2, XCircle, Upload, Zap, Eye, Lock } from 'lucide-react';
 import type { Dare } from '@/types';
 import DareTimeRing from '@/components/DareTimeRing';
 import { useAuthStore } from '@/store/auth';
@@ -24,11 +24,11 @@ interface DareCardProps {
 }
 
 const STATUS_PILL: Record<string, { label: string; color: string }> = {
-  pending: { label: 'Pending', color: 'var(--pact-pink)' },
-  accepted: { label: 'Accepted', color: 'var(--pact-violet)' },
-  declined: { label: 'Declined', color: 'var(--pact-text-faint)' },
-  completed: { label: 'Completed', color: 'var(--pact-mint)' },
-  failed: { label: 'Failed', color: 'var(--pact-pink)' },
+  pending: { label: 'Awaiting response', color: 'var(--navy)' },
+  accepted: { label: 'Accepted', color: 'var(--navy)' },
+  declined: { label: 'Declined', color: 'var(--muted)' },
+  completed: { label: 'Completed', color: 'var(--navy)' },
+  failed: { label: 'Not completed', color: 'var(--warn-text)' },
 };
 
 /**
@@ -104,12 +104,6 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
   // accepted dares have no image field at all, so this card only goes
   // photo-forward for that completed slice rather than faking a cover image.
   const hasProofPhoto = Boolean(dare.proof_url) && dare.proof_type !== 'video';
-  // Not-yet-completed dares still get the same photo-forward card language
-  // as everywhere else in the app (FeedPactCard's hero) via a solid-color
-  // cover instead of a real photo — deterministic per dare id so it doesn't
-  // change on every render, not a stand-in for fabricated image content.
-  const coverPalette = ['var(--pact-violet)', 'var(--pact-pink)', 'var(--pact-gold)', 'var(--pact-mint)'];
-  const coverColor = coverPalette[dare.id % coverPalette.length];
 
   return (
     <>
@@ -120,78 +114,46 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
       onKeyDown={(e) => {
         if (e.key === 'Enter') router.push(`/dares/${dare.id}`);
       }}
-      className={`pact-card cursor-pointer overflow-hidden rounded-[28px] transition ${isExpired ? 'opacity-60' : ''}`}
-      style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}
+      className={`cursor-pointer overflow-hidden rounded-[6px] transition ${isExpired ? 'bg-[var(--card-muted)]' : 'bg-[var(--card)]'}`}
+      style={{ border: '1px solid var(--hairline)' }}
     >
-      {hasProofPhoto ? (
-        <div className="relative aspect-[16/9] w-full">
-          <Image
-            src={dare.proof_url as string}
-            alt={`Proof for ${dare.title}`}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 480px"
-          />
-          <span
-            className="absolute left-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
-            style={{ background: 'var(--pact-mint)' }}
-          >
-            <CheckCheck className="h-2.5 w-2.5" />
-            Completed
+      {/* Header */}
+      <div className="p-5 pb-4">
+        <div className="mb-3 flex items-center justify-between gap-3 font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]">
+          <span className="truncate">Dare · {relationLabel}</span>
+          <span className="flex flex-shrink-0 items-center gap-1">
+            {isPrivate ? <Lock className="h-3 w-3" aria-hidden="true" /> : <Eye className="h-3 w-3" aria-hidden="true" />}
+            {isPrivate ? 'Private' : 'Public'}
           </span>
         </div>
-      ) : (
-        <div className="relative flex aspect-[16/9] w-full items-center justify-center" style={{ background: coverColor }}>
-          <Zap className="h-10 w-10 text-white/40" strokeWidth={1.5} aria-hidden="true" />
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="p-4">
-        <div className="mb-3 flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <DareTimeRing
-              name={ringName}
-              avatarUrl={ringAvatarUrl}
-              username={ringUsername}
-              target={target}
-              windowStart={dare.created_at}
-              size={44}
-              showLabel={!isExpired}
-            />
-            <div className="min-w-0 pt-1">
-              <p className="text-sm font-semibold text-[var(--pact-text)] truncate">
-                {relationLabel}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-shrink-0 items-center gap-2">
-            {statusPill && (
-              <span
-                className="rounded-full px-2.5 py-1 text-xs font-bold"
-                style={{ background: 'var(--pact-surface-2)', color: statusPill.color }}
-              >
-                {statusPill.label}
-              </span>
-            )}
-            {/* Visible label, not just a `title` tooltip — this app runs as
-                a mobile web view where hover tooltips are unreachable, so a
-                touch user previously had no way to know what this icon
-                meant. */}
-            <span
-              className="flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold"
-              style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-text-faint)' }}
-              title={isPrivate ? 'Private Dare' : 'Public Dare'}
-            >
-              {isPrivate ? <Lock className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-              {isPrivate ? 'Private' : 'Public'}
+        <div className="mb-3 h-px bg-[var(--hairline)]" />
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <DareTimeRing
+            name={ringName}
+            avatarUrl={ringAvatarUrl}
+            username={ringUsername}
+            target={target}
+            windowStart={dare.created_at}
+            size={44}
+            showLabel={!isExpired}
+          />
+          {statusPill && (
+            <span className="flex-shrink-0 text-xs font-semibold" style={{ color: statusPill.color }}>
+              {statusPill.label}
             </span>
-          </div>
+          )}
         </div>
 
-        <h3 className="mb-1 font-bold text-base text-[var(--pact-text)] truncate">{dare.title}</h3>
-        <p className="text-sm text-[var(--pact-text-dim)] truncate">{dare.description}</p>
+        <h3 className="mb-1 truncate font-serif text-[22px] font-medium leading-tight text-[var(--ink)]">{dare.title}</h3>
+        <p className="truncate text-[13px] text-[var(--muted)]">{dare.description}</p>
+        {hasProofPhoto && (
+          <div className="relative mt-3 flex items-center gap-3 rounded-[4px] border border-dashed border-[var(--seat-border)] p-3">
+            <div className="relative h-[52px] w-[52px] flex-shrink-0 overflow-hidden rounded-[3px] bg-[var(--tan)]">
+              <Image src={dare.proof_url as string} alt={`Proof for ${dare.title}`} fill className="object-cover" sizes="52px" />
+            </div>
+            <p className="text-[13px] font-semibold text-[var(--ink)]">Proof submitted</p>
+          </div>
+        )}
         {/* Public dares show the same "N accepted" framing as the rest of
             the app's social-proof copy — `recipient_count` on a public dare
             counts everyone who has claimed it, a real field, not a fabricated
@@ -204,22 +166,9 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
 
       {/* Fast inline actions — no need to open the detail page for these */}
       {!isExpired && (isPending || isAccepted || isPublicUnclaimed) && (
-        <div className="flex gap-2 border-t px-4 py-3" style={{ borderColor: 'var(--pact-hairline)' }}>
+        <div className="flex gap-2 border-t border-[var(--hairline-soft)] px-5 py-3">
           {isPending && (
             <>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  acceptMutation.mutate(dare.id);
-                }}
-                disabled={acceptMutation.isPending}
-                className=" flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold disabled:opacity-50"
-                style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                Accept
-              </button>
               <button
                 type="button"
                 onClick={(e) => {
@@ -227,11 +176,22 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
                   declineMutation.mutate(dare.id);
                 }}
                 disabled={declineMutation.isPending}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-full border py-2 text-sm font-semibold transition disabled:opacity-50"
-                style={{ borderColor: 'var(--pact-hairline)', color: 'var(--pact-text-dim)' }}
+                className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-full border border-[var(--dash)] text-[13px] font-semibold text-[var(--ink-soft)] transition disabled:opacity-50"
               >
-                <XCircle className="h-4 w-4" />
+                <XCircle className="h-4 w-4" aria-hidden="true" />
                 Decline
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  acceptMutation.mutate(dare.id);
+                }}
+                disabled={acceptMutation.isPending}
+                className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-full bg-[var(--navy)] text-sm font-semibold text-[var(--card)] hover:bg-[var(--navy-hover)] disabled:opacity-50"
+              >
+                <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                Accept
               </button>
             </>
           )}
@@ -243,10 +203,9 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
                 e.stopPropagation();
                 setProofModalOpen(true);
               }}
-              className=" flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold"
-              style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
+              className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-full bg-[var(--navy)] text-sm font-semibold text-[var(--card)] hover:bg-[var(--navy-hover)]"
             >
-              <Upload className="h-4 w-4" />
+              <Upload className="h-4 w-4" aria-hidden="true" />
               Upload Proof
             </button>
           )}
@@ -259,10 +218,9 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
                 claimMutation.mutate(dare.id);
               }}
               disabled={claimMutation.isPending}
-              className=" flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold disabled:opacity-50"
-              style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
+              className="flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-full bg-[var(--navy)] text-sm font-semibold text-[var(--card)] hover:bg-[var(--navy-hover)] disabled:opacity-50"
             >
-              <Zap className="h-4 w-4" />
+              <Zap className="h-4 w-4" aria-hidden="true" />
               {claimMutation.isPending ? 'Claiming...' : 'Claim Dare'}
             </button>
           )}
