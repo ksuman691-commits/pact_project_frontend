@@ -15,6 +15,8 @@ interface CircleChipProps {
   circleId: number | string
   circleName: string
   variant?: ChipVariant
+  /** Use over a photo/dark hero where the default ink colour would vanish. */
+  onDark?: boolean
   className?: string
 }
 
@@ -30,7 +32,7 @@ const SIZES: Record<ChipVariant, { disc: number; font: number; name: number; gap
  * controls size/weight only — all three link to the same
  * `/circles/{id}` destination.
  */
-export default function CircleChip({ circleId, circleName, variant = 'lead', className = '' }: CircleChipProps) {
+export default function CircleChip({ circleId, circleName, variant = 'lead', onDark = false, className = '' }: CircleChipProps) {
   const s = SIZES[variant]
   const muted = variant === 'muted'
   return (
@@ -41,7 +43,7 @@ export default function CircleChip({ circleId, circleName, variant = 'lead', cla
       style={{
         gap: s.gap,
         paddingRight: s.padRight || undefined,
-        color: muted ? 'var(--muted)' : 'var(--ink-soft)',
+        color: onDark ? '#fff' : muted ? 'var(--muted)' : 'var(--ink-soft)',
         margin: variant === 'muted' ? '-8px 0 -6px' : undefined,
       }}
     >

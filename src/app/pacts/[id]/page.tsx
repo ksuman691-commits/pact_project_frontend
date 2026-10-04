@@ -327,13 +327,14 @@ export default function PactDetailPage() {
                   circleId={pact.circle_id}
                   circleName={pact.circle_name}
                   variant="lead"
+                  onDark
                   className="mb-2"
                 />
               )}
               {categoryLabel && (
-                <p className="text-xs font-bold text-white/80">{categoryLabel}</p>
+                <p className="text-xs font-bold" style={{ color: 'rgba(255,255,255,0.8)' }}>{categoryLabel}</p>
               )}
-              <h1 className="mt-1 text-2xl font-black leading-tight text-white text-balance">{pact.title}</h1>
+              <h1 className="mt-1 text-2xl font-black leading-tight text-balance" style={{ color: '#fff' }}>{pact.title}</h1>
             </div>
           </div>
 
@@ -396,7 +397,7 @@ export default function PactDetailPage() {
                 />
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-1.5 text-base font-black text-[var(--pact-text)]">
-                    Day {progress.completed} of {progress.total}
+                    Day {Math.min(progress.total, progress.completed + progress.missed + 1)} of {progress.total}
                   </p>
                   <p className="mt-1 text-sm text-[var(--pact-text-muted)]">{pact.timeRemaining || 'Ends soon'}</p>
                 </div>
