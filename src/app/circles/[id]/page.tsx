@@ -116,7 +116,7 @@ export default function CircleDetailPage() {
       setUploadingPhoto(false)
     }
   }
-  return <main className="min-h-screen bg-[var(--pact-bg)] pb-24 text-[var(--pact-text)]"><DetailPageHeader title={circle.name || 'Circle'} fallbackHref="/circles" maxWidthClassName="max-w-4xl" /><div className="mx-auto max-w-4xl px-5 pb-12 pt-8">
+  return <main className="min-h-screen bg-[var(--pact-bg)] pb-28 text-[var(--pact-text)]"><DetailPageHeader title={circle.name || 'Circle'} fallbackHref="/circles" maxWidthClassName="max-w-4xl" /><div className="mx-auto max-w-4xl px-5 pb-12 pt-8">
     <header className="border-b border-[var(--pact-hairline)] pb-8">
       {/* Photo-forward cover, always a full-width banner — either the
           circle's real photo_url, or (when there is none) a gradient banner
@@ -142,7 +142,11 @@ export default function CircleDetailPage() {
           </div>
         </div>
         {isOwner && (
-          <label className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm" style={{ background: 'rgba(16,24,40,0.45)', border: '1px solid rgba(255,255,255,0.25)' }} aria-label="Change circle cover photo">
+          // Top-right, not bottom-right: the bottom edge is already claimed
+          // by the name/member-count overlay (inset-x-5 bottom-4), and a
+          // bottom-right placement sat directly on top of that text,
+          // truncating it mid-word.
+          <label className="absolute right-4 top-4 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm" style={{ background: 'rgba(16,24,40,0.45)', border: '1px solid rgba(255,255,255,0.25)' }} aria-label="Change circle cover photo">
             {uploadingPhoto ? <LogoSpinner size={12} color="#fff" /> : <Camera className="h-3.5 w-3.5" aria-hidden="true" />}
             Change cover
             <input type="file" accept="image/*" className="sr-only" onChange={handlePhotoChange} disabled={uploadingPhoto} />
@@ -152,7 +156,19 @@ export default function CircleDetailPage() {
       {/* Italicized — a bio-style tagline in the circle's own voice, not
       another metadata fact like the stats line below it. */}
       <p className="max-w-xl text-sm italic leading-relaxed text-[var(--pact-text-muted)]">{circle.description || 'A place to show up for each other.'}</p>
-      <p className="mt-4 text-sm text-[var(--pact-text-muted)]">Started {new Date(circle.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })} · {pacts.length} pacts made together</p><p className="mt-3 text-sm text-[var(--pact-text)]">{circle.member_count ?? members.length} people · {activeMembers} active this week · {groupStreak}d group streak</p>
+      <p className="mt-4 text-sm text-[var(--pact-text-muted)]">Started {new Date(circle.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })} · {pacts.length} pacts made together</p>
+      <div className="mt-3 flex items-center gap-2.5">
+        {/* Facepile: at minimum the creator's avatar, so the member count
+            isn't just a bare number with no face behind it. Caps at 4 plus
+            a "+N" remainder chip, same overlap/ring treatment as other
+            avatar stacks in the app. */}
+        <div className="flex -space-x-2">
+          {members.slice(0, 4).map((member: any) => (
+            <UserAvatarLink key={member.user_id} name={member.username} avatarUrl={member.avatar_url} username={member.username} size={28} className="ring-2 ring-[var(--pact-bg)]" />
+          ))}
+        </div>
+        <p className="text-sm text-[var(--pact-text)]">{circle.member_count ?? members.length} {(circle.member_count ?? members.length) === 1 ? 'person' : 'people'} · {activeMembers} active this week · {groupStreak}d group streak</p>
+      </div>
     </header>
     {isNewCircle ? <>
       {/* New/empty-circle state: one hero CTA instead of the full widget
@@ -164,8 +180,11 @@ export default function CircleDetailPage() {
         <h2 className="mt-4 text-2xl font-black tracking-[-0.03em]">Let&apos;s get this circle moving</h2>
         <p className="mx-auto mt-2 max-w-sm text-sm text-[var(--pact-text-muted)]">Invite a few people or start your first pact together — this is where it all begins.</p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <button onClick={() => setInviteModal(true)} className="rounded-full bg-[var(--pact-violet)] px-6 py-3 text-sm font-bold text-white">Invite members</button>
-          {isMember && <button onClick={() => router.push(`/pacts/create?circleId=${circleId}`)} className="rounded-full border border-[var(--pact-hairline)] px-6 py-3 text-sm font-bold text-[var(--pact-text)]">Create a pact</button>}
+          {/* Create a pact is the core action of the app, so it carries the
+              solid/filled treatment; Invite members is the secondary,
+              outline action — swapped from the original weighting. */}
+          {isMember && <button onClick={() => router.push(`/pacts/create?circleId=${circleId}`)} className="rounded-full bg-[var(--pact-violet)] px-6 py-3 text-sm font-bold text-white">Create a pact</button>}
+          <button onClick={() => setInviteModal(true)} className="rounded-full border border-[var(--pact-hairline)] px-6 py-3 text-sm font-bold text-[var(--pact-text)]">Invite members</button>
         </div>
       </section>
       <div className="mt-6"><CircleQRQuietLine circle={circle} onOpen={() => setQrOpen(true)} /></div>
