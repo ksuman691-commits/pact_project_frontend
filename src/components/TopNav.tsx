@@ -135,7 +135,7 @@ export default function TopNav({
                 >
                   {CATEGORIES.map((category) => (
                     <option key={category.id} value={category.id}>
-                      {category.emoji} {category.name}
+                      {category.name}
                     </option>
                   ))}
                 </select>

@@ -76,10 +76,9 @@ export default function ReviewStep() {
         type="button"
         onClick={handleCreate}
         disabled={isSubmitting}
-        className="mt-8 w-full rounded-full px-6 py-4 text-center text-base font-semibold text-[var(--pact-bg)] transition-opacity disabled:opacity-60"
-        style={{ background: 'var(--pact-pink)' }}
+        className="mt-8 min-h-[52px] w-full rounded-full bg-[var(--navy)] px-6 py-4 text-center text-base font-semibold text-[var(--card)] transition-colors hover:bg-[var(--navy-hover)] disabled:opacity-60"
       >
-        {isSubmitting ? 'Creating…' : '🔥 Create Pact →'}
+        {isSubmitting ? 'Creating…' : 'Create pact'}
       </button>
     </div>
   );

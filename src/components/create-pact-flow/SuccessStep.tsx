@@ -38,21 +38,11 @@ export default function SuccessStep() {
 
   return (
     <div className="pact-step-enter flex flex-1 flex-col items-center pt-4 text-center">
-      {/* Decorative stamp — spins via conic-gradient ring, respects prefers-reduced-motion (pop-in always plays) */}
-      <div className="pact-stamp-ring relative flex h-24 w-24 items-center justify-center rounded-full">
-        <div
-          className="absolute inset-0 rounded-full"
-          style={{
-            background:
-              'conic-gradient(from 0deg, var(--pact-pink), var(--pact-gold), var(--pact-violet), var(--pact-pink))',
-          }}
-        />
-        <div
-          className="absolute inset-[6px] flex items-center justify-center rounded-full text-3xl"
-          style={{ background: 'var(--pact-bg)' }}
-        >
-          🔥
-        </div>
+      <div
+        className="flex h-20 w-20 items-center justify-center rounded-full border border-[var(--hairline)] bg-[var(--card)] font-display text-2xl text-[var(--navy)]"
+        aria-hidden="true"
+      >
+        {(createdPact.title || 'P').trim().slice(0, 1).toUpperCase()}
       </div>
 
       <h1 className="mt-6 text-2xl font-bold">You just made a pact.</h1>

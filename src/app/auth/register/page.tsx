@@ -5,8 +5,16 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import AuthShell from '@/components/AuthShell';
+import AuthShell, { authInputClass, authPrimaryButtonClass } from '@/components/AuthShell';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
+
+const FIELDS = [
+  { name: 'full_name', type: 'text', label: 'Full name' },
+  { name: 'username', type: 'text', label: 'Username' },
+  { name: 'email', type: 'email', label: 'Email' },
+  { name: 'password', type: 'password', label: 'Password' },
+  { name: 'confirmPassword', type: 'password', label: 'Confirm password' },
+] as const;
 
 export default function Register() {
   const router = useRouter();
@@ -38,7 +46,7 @@ export default function Register() {
 
     try {
       await register(formData.username, formData.email, formData.full_name, formData.password);
-      toast.success('Account created successfully!');
+      toast.success('Account created');
       router.push('/profile');
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Registration failed');
@@ -46,80 +54,43 @@ export default function Register() {
   };
 
   return (
-    <AuthShell heading="create account" subheading="join circlepact to start your first pact">
-        <form onSubmit={handleSubmit} className="mt-8 space-y-3">
+    <AuthShell heading="Create your account." subheading="Join CirclePact and make your first pact.">
+      <form onSubmit={handleSubmit} className="mt-8 space-y-3">
+        {FIELDS.map((field) => (
           <input
-            type="text"
-            name="full_name"
-            value={formData.full_name}
+            key={field.name}
+            type={field.type}
+            name={field.name}
+            value={formData[field.name]}
             onChange={handleChange}
             required
-            aria-label="full name"
-            className="w-full rounded-[18px] border border-[#E8DED7] bg-white px-5 py-3.5 text-sm text-[#2F211D] outline-none placeholder:text-[#B4A59D] focus:border-[#E5373B]"
-            placeholder="full name"
+            aria-label={field.label}
+            className={authInputClass}
+            placeholder={field.label}
           />
-          <input
-            type="text"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            required
-            aria-label="username"
-            className="w-full rounded-[18px] border border-[#E8DED7] bg-white px-5 py-3.5 text-sm text-[#2F211D] outline-none placeholder:text-[#B4A59D] focus:border-[#E5373B]"
-            placeholder="username"
-          />
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            aria-label="email"
-            className="w-full rounded-[18px] border border-[#E8DED7] bg-white px-5 py-3.5 text-sm text-[#2F211D] outline-none placeholder:text-[#B4A59D] focus:border-[#E5373B]"
-            placeholder="email"
-          />
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            aria-label="password"
-            className="w-full rounded-[18px] border border-[#E8DED7] bg-white px-5 py-3.5 text-sm text-[#2F211D] outline-none placeholder:text-[#B4A59D] focus:border-[#E5373B]"
-            placeholder="password"
-          />
-          <input
-            type="password"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-            aria-label="confirm password"
-            className="w-full rounded-[18px] border border-[#E8DED7] bg-white px-5 py-3.5 text-sm text-[#2F211D] outline-none placeholder:text-[#B4A59D] focus:border-[#E5373B]"
-            placeholder="confirm password"
-          />
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full rounded-[18px] bg-[#E5373B] py-3.5 text-sm font-semibold lowercase text-white transition hover:bg-[#C92F34] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isLoading ? 'creating account...' : 'create account'}
-          </button>
-        </form>
+        ))}
+        <button type="submit" disabled={isLoading} className={authPrimaryButtonClass}>
+          {isLoading ? 'Creating account…' : 'Create account'}
+        </button>
+      </form>
 
-        <div className="my-7 flex items-center gap-3 text-xs text-[#B4A59D]">
-          <span className="h-px flex-1 bg-[#EEE5DF]" />
-          <span>or</span>
-          <span className="h-px flex-1 bg-[#EEE5DF]" />
-        </div>
+      <div className="my-7 flex items-center gap-3 text-xs text-[var(--muted)]">
+        <span className="h-px flex-1 bg-[var(--hairline)]" />
+        <span>or</span>
+        <span className="h-px flex-1 bg-[var(--hairline)]" />
+      </div>
 
+      <div className="rounded-[6px] bg-[var(--card)]">
         <GoogleSignInButton />
+      </div>
 
-        <p className="mt-7 text-center text-xs text-[#A99991]">by continuing you agree to our terms</p>
-        <p className="mt-4 text-center text-sm text-[#8E7C73]">
-          already have an account?{' '}
-          <Link href="/auth/login" className="font-semibold text-[#E5373B] hover:underline">sign in</Link>
-        </p>
+      <p className="mt-7 text-center text-xs text-[var(--muted)]">By continuing you agree to our terms.</p>
+      <p className="mt-4 text-center text-sm text-[var(--muted)]">
+        Already have an account?{' '}
+        <Link href="/auth/login" className="font-semibold text-[var(--navy)] hover:text-[var(--navy-hover)] hover:underline">
+          Sign in
+        </Link>
+      </p>
     </AuthShell>
   );
 }

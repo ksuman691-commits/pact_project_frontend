@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useUserJoinedPacts, useUserPacts, useUserVotedPacts } from '@/hooks/useFeedQueries';
 import { useCircles } from '@/hooks/useCircles';
+import { useUserStats } from '@/hooks/useUserQueries';
 import ProfileHero from '@/components/ProfileHero';
 import ProfileStats from '@/components/ProfileStats';
 import ProfileTabs, { PactsTab } from '@/components/ProfileTabs';
@@ -46,6 +47,8 @@ export default function Profile() {
   const followers = followersQuery.data?.data || [];
   const following = followingQuery.data?.data || [];
   const isAtRisk = useAtRiskPact(userId);
+  const userStatsQuery = useUserStats(userId || 0);
+  const realStreak = userStatsQuery.data?.data?.current_streak;
   const circlesQuery = useCircles();
   const myCircles = (circlesQuery.data || []) as any[];
 
@@ -138,7 +141,7 @@ export default function Profile() {
     pactsCreated: createdPacts.length,
     pactsCompleted: completedPacts,
     winRate,
-    currentStreak: null as number | null,
+    currentStreak: typeof realStreak === 'number' ? realStreak : null,
     reputation: Math.round(user.reputation_score || 0),
     followers: followers.length,
     following: following.length,
