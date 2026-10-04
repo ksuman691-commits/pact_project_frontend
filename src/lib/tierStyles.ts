@@ -44,7 +44,7 @@ export const TIER_STYLES: Record<TierKey, TierStyle> = {
   strong: {
     key: 'strong',
     label: 'Strong',
-    ringGradient: '#1877F2',
+    ringGradient: 'var(--navy)',
     ringWidth: 3,
     glowColor: 'rgba(249, 115, 22, 0.45)',
     glowBlur: 14,

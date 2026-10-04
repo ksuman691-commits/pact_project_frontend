@@ -23,7 +23,7 @@ export default function Achievements({ achievements }: AchievementsProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-2">
         <h3 className="font-bold text-[#14121F]">Achievements</h3>
-        <span className="text-sm font-semibold text-[#A78BFA]">
+        <span className="text-sm font-semibold text-[var(--navy)]">
           {unlockedCount}/{achievements.length}
         </span>
       </div>
@@ -34,7 +34,7 @@ export default function Achievements({ achievements }: AchievementsProps) {
             key={achievement.id}
             className={`rounded-[24px] p-4 flex flex-col items-center text-center transition-all ${
               achievement.unlocked
-                ? 'bg-gradient-to-br   border border-[var(--line)]'
+                ? 'bg-[var(--card)] border-[var(--line)]'
                 : 'bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] opacity-50'
             }`}
           >
@@ -54,7 +54,7 @@ export default function Achievements({ achievements }: AchievementsProps) {
               <div className="w-full mt-2">
                 <div className="w-full h-1 bg-[var(--line)] rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-[#EDE9FE]0"
+                    className="h-full bg-[var(--card-muted)]0"
                     style={{ width: `${achievement.progress}%` }}
                   />
                 </div>

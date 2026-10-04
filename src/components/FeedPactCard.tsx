@@ -696,7 +696,7 @@ export default function FeedPactCard({
         particleCount: 90,
         spread: 70,
         origin: { y: 0.68 },
-        colors: ['#10b981', '#fbbf24', '#f472b6', '#8b5cf6'],
+        colors: ['#10b981', '#fbbf24', 'var(--navy)', 'var(--navy)'],
       });
     } catch (error: any) {
       // The join endpoint's rejection ("You cannot join this pact", 403) is

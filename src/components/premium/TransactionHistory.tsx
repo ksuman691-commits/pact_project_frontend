@@ -20,7 +20,7 @@ export default function TransactionHistory({ transactions, isLoading }: Transact
   const getIcon = (type: Transaction['type']) => {
     switch (type) {
       case 'deposit':
-        return <ArrowDownLeft className="w-4 h-4 text-[#A78BFA]" />;
+        return <ArrowDownLeft className="w-4 h-4 text-[var(--navy)]" />;
       case 'withdraw':
         return <ArrowUpRight className="w-4 h-4 text-[var(--warn-text)]" />;
       case 'lock':
@@ -38,7 +38,7 @@ export default function TransactionHistory({ transactions, isLoading }: Transact
     switch (type) {
       case 'deposit':
       case 'reward':
-        return 'text-[#A78BFA]';
+        return 'text-[var(--navy)]';
       case 'withdraw':
       case 'penalty':
         return 'text-[var(--warn-text)]';
@@ -102,7 +102,7 @@ export default function TransactionHistory({ transactions, isLoading }: Transact
               </p>
               <p className={`text-xs font-medium ${
                 tx.status === 'completed'
-                  ? 'text-[#A78BFA]'
+                  ? 'text-[var(--navy)]'
                   : tx.status === 'pending'
                   ? 'text-[var(--warn-text)]'
                   : 'text-[var(--warn-text)]'

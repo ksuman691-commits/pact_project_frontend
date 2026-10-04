@@ -117,7 +117,7 @@ export default function CategorySection({ onCategorySelect, onCreatePact }: Cate
             }`}
           >
             <div
-              className={`bg-gradient-to-br ${category.color} rounded-[24px] p-4 w-32 h-32 flex flex-col items-center justify-center text-white shadow-lg hover:shadow-xl transition-shadow`}
+              className={`bg-[var(--navy)] rounded-[24px] p-4 w-32 h-32 flex flex-col items-center justify-center text-white shadow-lg hover:shadow-xl transition-shadow`}
             >
               <div className="mb-2 text-white">{category.icon}</div>
               <p className="text-sm font-semibold text-center">{category.name}</p>
@@ -134,7 +134,7 @@ export default function CategorySection({ onCategorySelect, onCreatePact }: Cate
             onCreatePact?.();
             setSelectedCategory(null);
           }}
-          className="w-full py-4 bg-gradient-to-r   text-white font-bold rounded-[24px] shadow-lg hover:shadow-xl hover: hover: transition-all active:scale-95 flex items-center justify-center gap-2"
+          className="w-full py-4 bg-[var(--navy)] text-white font-bold rounded-[24px] shadow-lg hover:bg-[var(--navy-hover)] transition-all active:scale-95 flex items-center justify-center gap-2"
         >
           <span>Create Pact in {CATEGORIES.find(c => c.id === selectedCategory)?.name || 'Category'}</span>
         </button>

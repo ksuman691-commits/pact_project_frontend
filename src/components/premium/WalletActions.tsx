@@ -37,7 +37,7 @@ export default function WalletActions({ onDeposit, onWithdraw, isLoading }: Wall
         <button
           onClick={() => setShowDepositForm(!showDepositForm)}
           disabled={isLoading}
-          className="w-full py-4 rounded-[24px] bg-[#EDE9FE]0 hover:bg-[#A78BFA] disabled:opacity-50 text-white font-bold flex items-center justify-center gap-2 transition-all"
+          className="w-full py-4 rounded-[24px] bg-[var(--card-muted)]0 hover:bg-[var(--navy)] disabled:opacity-50 text-white font-bold flex items-center justify-center gap-2 transition-all"
         >
           <Plus className="w-5 h-5" />
           Add Money
@@ -57,7 +57,7 @@ export default function WalletActions({ onDeposit, onWithdraw, isLoading }: Wall
             <button
               onClick={handleDeposit}
               disabled={isLoading || !depositAmount}
-              className="w-full py-2 bg-[#EDE9FE]0 hover:bg-[#A78BFA] disabled:opacity-50 text-white font-semibold rounded-[28px] transition-all text-sm"
+              className="w-full py-2 bg-[var(--card-muted)]0 hover:bg-[var(--navy)] disabled:opacity-50 text-white font-semibold rounded-[28px] transition-all text-sm"
             >
               Confirm Deposit
             </button>

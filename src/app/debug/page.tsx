@@ -17,7 +17,7 @@ export default function DebugPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br   py-8">
+      <div className="min-h-screen bg-[var(--paper)] py-8">
         <div className="max-w-2xl mx-auto px-4">
           <h1 className="text-3xl font-bold text-[#14121F] mb-8">Debug Auth State</h1>
 

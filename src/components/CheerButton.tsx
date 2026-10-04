@@ -130,7 +130,7 @@ export default function CheerButton({
         onClick={() => setIsCameraOpen(true)}
         disabled={isUploading}
         className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-60 ${className}`}
-        style={{ background: 'linear-gradient(135deg, var(--pact-gold), #f59e0b)' }}
+        style={{ background: 'var(--navy)' }}
       >
         {isUploading ? (
           <Loader2 className="h-4 w-4 animate-spin" />

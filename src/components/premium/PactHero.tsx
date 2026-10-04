@@ -19,10 +19,10 @@ export default function PactHero({
   const progressPercent = (daysCompleted / totalDays) * 100;
 
   return (
-    <div className="relative bg-gradient-to-br    text-white pt-12 pb-8 px-4 overflow-hidden">
+    <div className="relative bg-[var(--ink)] text-white pt-12 pb-8 px-4 overflow-hidden">
       {/* Decorative background */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-[#EDE9FE]0" />
+        <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-[var(--card-muted)]0" />
         <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-[var(--navy)]" />
       </div>
 

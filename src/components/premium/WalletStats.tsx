@@ -26,7 +26,7 @@ export default function WalletStats({ balance, locked, earned, pending }: Wallet
       {/* Available */}
       <PremiumCard glass className="bg-white border-[var(--line)]">
         <div className="flex items-start justify-between mb-2">
-          <Zap className="w-5 h-5 text-[#1877F2]" />
+          <Zap className="w-5 h-5 text-[var(--navy)]" />
           <span className="text-xs font-bold text-[var(--navy)]">Available</span>
         </div>
         <p className="text-2xl font-black text-[var(--ink)]">${available.toFixed(2)}</p>

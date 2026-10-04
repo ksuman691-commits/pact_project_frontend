@@ -4,10 +4,10 @@
 // of the app's category vocabulary instead of a generic gray box.
 const CATEGORY_THEME: Record<string, { gradient: string; emoji: string }> = {
   fitness: { gradient: 'linear-gradient(135deg, #22c55e, #0ea5e9)', emoji: '💪' },
-  startup: { gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)', emoji: '🚀' },
+  startup: { gradient: 'linear-gradient(135deg, #6366f1, var(--navy))', emoji: '🚀' },
   habits: { gradient: 'linear-gradient(135deg, #f97316, #ef4444)', emoji: '🔥' },
-  social: { gradient: 'linear-gradient(135deg, #ec4899, #f43f5e)', emoji: '🎉' },
-  creator: { gradient: 'linear-gradient(135deg, #f59e0b, #ec4899)', emoji: '🎨' },
+  social: { gradient: 'linear-gradient(135deg, var(--navy), #f43f5e)', emoji: '🎉' },
+  creator: { gradient: 'linear-gradient(135deg, #f59e0b, var(--navy))', emoji: '🎨' },
   study: { gradient: 'linear-gradient(135deg, #14b8a6, #0ea5e9)', emoji: '🧠' },
   coding: { gradient: 'linear-gradient(135deg, #64748b, #334155)', emoji: '💻' },
 };

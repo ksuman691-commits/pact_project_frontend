@@ -38,7 +38,7 @@ export default function DailyTasksSection() {
         <div
           key={pact.id}
           onClick={() => router.push(`/pacts/${pact.id}`)}
-          className="bg-gradient-to-r   rounded-[24px] p-4 cursor-pointer hover:shadow-md transition-all border border-[rgba(20,18,31,0.06)] flex items-center justify-between"
+          className="bg-[var(--card)] rounded-[24px] p-4 cursor-pointer hover:shadow-md transition-all border border-[rgba(20,18,31,0.06)] flex items-center justify-between"
         >
           <div className="flex-1">
             <h4 className="font-semibold text-[#14121F] text-sm mb-1">{pact.title}</h4>
@@ -55,7 +55,7 @@ export default function DailyTasksSection() {
           </div>
 
           <button
-            className="ml-4 px-3 py-1.5 rounded-full bg-[#EDE9FE]0 hover:bg-[#A78BFA] text-white text-xs font-semibold transition-all"
+            className="ml-4 px-3 py-1.5 rounded-full bg-[var(--card-muted)]0 hover:bg-[var(--navy)] text-white text-xs font-semibold transition-all"
           >
             Upload
           </button>

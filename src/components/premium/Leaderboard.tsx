@@ -45,14 +45,14 @@ export default function Leaderboard({ members, isLoading }: LeaderboardProps) {
         {members.map((member, index) => (
           <div
             key={member.id}
-            className="flex items-center justify-between p-3 bg-gradient-to-r  to-transparent rounded-[28px] hover: transition-all"
+            className="flex items-center justify-between p-3 bg-transparent rounded-[28px] hover: transition-all"
           >
             <div className="flex items-center gap-3 flex-1">
               <div className="w-8 h-8 flex items-center justify-center">
                 {getMedalIcon(index + 1)}
               </div>
 
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br  " />
+              <div className="w-10 h-10 rounded-full bg-[var(--line)]" />
 
               <div className="flex-1">
                 <p className="text-sm font-bold text-[#14121F]">{member.fullName}</p>
@@ -70,7 +70,7 @@ export default function Leaderboard({ members, isLoading }: LeaderboardProps) {
               </div>
 
               <div>
-                <p className="text-sm font-bold text-[#A78BFA]">${member.moneyEarned}</p>
+                <p className="text-sm font-bold text-[var(--navy)]">${member.moneyEarned}</p>
                 <p className="text-xs text-[#9CA3AF]">{member.wins} wins</p>
               </div>
             </div>

@@ -180,7 +180,7 @@ export default function TransactionHistory({
                 <div className="text-right">
                   <p className={`font-bold text-lg ${
                     transaction.type === 'deposit' || transaction.type === 'reward'
-                      ? 'text-[#A78BFA]'
+                      ? 'text-[var(--navy)]'
                       : 'text-[var(--ink)]'
                   }`}>
                     {transaction.type === 'deposit' || transaction.type === 'reward' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
