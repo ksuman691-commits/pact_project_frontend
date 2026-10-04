@@ -35,6 +35,7 @@ import ProofUploadModal from '@/components/ProofUploadModal';
 import { useSponsor } from '@/hooks/useSponsor';
 import PremiumJoinButton from '@/components/PremiumJoinButton';
 import PactJoinRequestsModal from '@/components/PactJoinRequestsModal';
+import CircleChip from '@/components/classic/CircleChip';
 import { usePact, usePactProofs, usePactCheers } from '@/hooks/usePacts';
 import { useSkipPact } from '@/hooks/usePactActions';
 import { useAuthStore } from '@/store/auth';
@@ -320,6 +321,14 @@ export default function PactDetailPage() {
                     />
                   ))}
                 </div>
+              )}
+              {pact.circle_id != null && pact.circle_name && (
+                <CircleChip
+                  circleId={pact.circle_id}
+                  circleName={pact.circle_name}
+                  variant="lead"
+                  className="mb-2"
+                />
               )}
               {categoryLabel && (
                 <p className="text-xs font-bold text-white/80">{categoryLabel}</p>
