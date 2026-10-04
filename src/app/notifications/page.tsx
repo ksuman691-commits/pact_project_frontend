@@ -169,7 +169,7 @@ export default function NotificationsPage() {
                     <button
                       onClick={() => acceptFollow.mutate(pendingFollowId)}
                       disabled={acceptFollow.isPending || rejectFollow.isPending}
-                      className="px-3 py-1.5 text-xs rounded-md bg-[#A78BFA] text-white hover:bg-emerald-700 disabled:opacity-60"
+                      className="px-3 py-1.5 text-xs rounded-md bg-navy text-white hover:bg-navy-hover disabled:opacity-60"
                     >
                       Accept
                     </button>

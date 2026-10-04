@@ -7,8 +7,10 @@ export interface RingMember {
   name?: string | null;
   avatarUrl?: string | null;
   /** True when this member submitted proof this week — the only signal
-   * that lights their seat and contributes to the arc. Never total
-   * membership, logins, or "active now" presence. */
+   * that lights their seat with a tick badge. Never total membership,
+   * logins, or "active now" presence. Omit (leave undefined) rather than
+   * defaulting to false when this is genuinely unknown — the caller
+   * decides whether to pass `activityKnown` at all. */
   activeThisWeek: boolean;
 }
 
@@ -16,8 +18,12 @@ interface RingProps {
   circleName: string;
   members: RingMember[];
   totalMemberCount: number;
-  /** 'tile' = 120px (list cards), 'detail' = 240px (circle detail hero). */
+  /** 'tile' = sized by member count (104–140px), 'detail' = fixed 200px hero. */
   size?: 'tile' | 'detail';
+  /** Whether per-member weekly-activity data is actually available. When
+   * false, seats render in a single neutral state with no ticks — we never
+   * fabricate "nobody sent proof" from a missing field. */
+  activityKnown?: boolean;
   coverPhotoUrl?: string | null;
   className?: string;
 }
@@ -40,36 +46,37 @@ function initials(name?: string | null) {
 }
 
 /**
- * "A circle should feel like a circle": members placed as seats on a ring
- * around a monogram disc. The lit arc length and lit-seat count are both
- * driven by the same real signal — members who showed proof *this week* —
- * never total membership. Zero active members draws no arc at all (a
- * round linecap on a zero-length dash would otherwise paint a fake dot).
+ * v2 "hand-made" ring: no activity arc (the v1 arc is removed entirely —
+ * a thin track circle only). Real signal now lives on each seat: a lit
+ * (blue) seat with a small tick badge means that member sent proof for a
+ * pact this week; everything else stays in the plain unlit state. If
+ * `activityKnown` is false, every seat renders unlit with no badge — we
+ * show "N members" rather than claim the circle is quiet.
  */
 export default function Ring({
   circleName,
   members,
   totalMemberCount,
   size = 'tile',
+  activityKnown = true,
   coverPhotoUrl,
   className = '',
 }: RingProps) {
   const isDetail = size === 'detail';
-  const outer = isDetail ? 240 : 120;
-  const r = isDetail ? 100 : 48;
-  const seatSize = isDetail ? 40 : 24;
-  const strokeWidth = isDetail ? 3 : 2;
+  const outer = isDetail ? 200 : Math.min(140, 104 + Math.min(totalMemberCount, 6) * 6);
+  const r = outer * 0.4;
+  const seatSize = isDetail ? 40 : Math.max(26, Math.round(outer * 0.22));
+  const strokeWidth = isDetail ? 1.8 : 1.6;
   const cx = outer / 2;
   const cy = outer / 2;
-  const circumference = 2 * Math.PI * r;
 
-  const activeCount = members.filter((m) => m.activeThisWeek).length;
-  const arcFraction = totalMemberCount > 0 ? activeCount / totalMemberCount : 0;
-  const arcLength = circumference * arcFraction;
+  const activeCount = activityKnown ? members.filter((m) => m.activeThisWeek).length : 0;
 
-  // Order so active members come first (contiguous with the lit arc),
-  // cap displayed seats at 8 with a "+N" overflow bubble.
-  const sorted = [...members].sort((a, b) => Number(b.activeThisWeek) - Number(a.activeThisWeek));
+  // Order so active members come first (contiguous), cap at 8 seats with a
+  // "+N" overflow bubble.
+  const sorted = activityKnown
+    ? [...members].sort((a, b) => Number(b.activeThisWeek) - Number(a.activeThisWeek))
+    : members;
   const maxSeats = 8;
   const visible = sorted.slice(0, maxSeats);
   const overflow = Math.max(0, totalMemberCount - visible.length);
@@ -97,8 +104,9 @@ export default function Ring({
     } as RingMember & { x: number; y: number; key: string });
   }
 
-  const discSize = isDetail ? outer - r * 2 + seatSize - 4 : outer - r * 2 + seatSize - 4;
-  const discDiameter = isDetail ? 150 : 72;
+  const discDiameter = outer * 0.27 * 2;
+  const monogramSize = outer * 0.17;
+  const badgeSize = isDetail ? 18 : 14;
 
   return (
     <div
@@ -106,26 +114,15 @@ export default function Ring({
       style={{ width: outer, height: outer }}
       role="img"
       aria-label={
-        activeCount > 0
-          ? `${circleName}: ${totalMemberCount} members, ${activeCount} showed up this week`
-          : `${circleName}: ${totalMemberCount} members, quiet this week`
+        activityKnown
+          ? activeCount > 0
+            ? `${circleName}: ${totalMemberCount} members, ${activeCount} sent proof this week`
+            : `${circleName}: ${totalMemberCount} members, nobody has sent proof this week`
+          : `${circleName}: ${totalMemberCount} members`
       }
     >
       <svg width={outer} height={outer} className="absolute inset-0">
         <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--hairline)" strokeWidth={strokeWidth} />
-        {arcLength > 0 && (
-          <circle
-            cx={cx}
-            cy={cy}
-            r={r}
-            fill="none"
-            stroke="var(--navy)"
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-            strokeDasharray={`${arcLength} ${circumference - arcLength}`}
-            transform={`rotate(-90 ${cx} ${cy})`}
-          />
-        )}
       </svg>
 
       {/* Center disc: monogram, or cover photo if provided */}
@@ -136,7 +133,7 @@ export default function Ring({
           height: discDiameter,
           left: cx - discDiameter / 2,
           top: cy - discDiameter / 2,
-          background: isDetail ? 'var(--card)' : 'var(--paper)',
+          background: 'var(--card)',
           borderColor: 'var(--hairline)',
         }}
       >
@@ -144,8 +141,8 @@ export default function Ring({
           <Image src={coverPhotoUrl} alt="" fill sizes={`${discDiameter}px`} className="object-cover" />
         ) : (
           <span
-            className="font-serif"
-            style={{ color: 'var(--navy)', fontSize: isDetail ? 44 : 22, fontWeight: 500 }}
+            className="font-sans"
+            style={{ color: 'var(--navy)', fontSize: monogramSize, fontWeight: 700, letterSpacing: '-0.02em' }}
           >
             {monogram(circleName)}
           </span>
@@ -153,42 +150,59 @@ export default function Ring({
       </div>
 
       {seats.map((seat: any) => {
-        const lit = seat.activeThisWeek;
+        const lit = activityKnown && seat.activeThisWeek;
         const isOverflow = seat.userId === 'overflow';
         return (
           <div
             key={seat.key}
-            className="absolute flex items-center justify-center overflow-hidden rounded-full"
-            style={{
-              width: seatSize,
-              height: seatSize,
-              left: seat.x,
-              top: seat.y,
-              background: lit ? 'var(--navy)' : 'var(--card)',
-              border: lit
-                ? `${isDetail ? 3 : 2}px solid ${isDetail ? 'var(--paper)' : 'var(--card)'}`
-                : `1.5px solid var(--seat-border)`,
-            }}
-            title={isOverflow ? `${overflow} more members` : seat.name || undefined}
+            className="absolute"
+            style={{ width: seatSize, height: seatSize, left: seat.x, top: seat.y }}
           >
-            {!isOverflow && seat.avatarUrl ? (
-              <Image
-                src={seat.avatarUrl}
-                alt={seat.name || ''}
-                fill
-                sizes={`${seatSize}px`}
-                className="object-cover"
-              />
-            ) : (
-              <span
-                className="font-sans font-semibold"
+            <div
+              className="flex h-full w-full items-center justify-center overflow-hidden rounded-full"
+              style={{
+                background: lit ? 'var(--navy)' : 'var(--card)',
+                border: lit ? `2px solid var(--paper)` : `1.5px solid var(--seat-border)`,
+              }}
+              title={isOverflow ? `${overflow} more members` : seat.name || undefined}
+            >
+              {!isOverflow && seat.avatarUrl ? (
+                <Image
+                  src={seat.avatarUrl}
+                  alt={seat.name || ''}
+                  fill
+                  sizes={`${seatSize}px`}
+                  className="object-cover"
+                />
+              ) : (
+                <span
+                  className="font-sans font-semibold"
+                  style={{
+                    fontSize: isDetail ? 14 : 9,
+                    color: lit ? 'var(--card)' : 'var(--muted)',
+                  }}
+                >
+                  {isOverflow ? seat.name : initials(seat.name)}
+                </span>
+              )}
+            </div>
+            {lit && (
+              <div
+                className="absolute flex items-center justify-center rounded-full"
                 style={{
-                  fontSize: isDetail ? 14 : 9,
-                  color: lit ? 'var(--card)' : 'var(--muted)',
+                  width: badgeSize,
+                  height: badgeSize,
+                  right: -5,
+                  bottom: -5,
+                  background: 'var(--card)',
+                  border: `1.5px solid var(--navy)`,
                 }}
+                aria-hidden="true"
               >
-                {isOverflow ? seat.name : initials(seat.name)}
-              </span>
+                <svg width={badgeSize * 0.57} height={badgeSize * 0.57} viewBox="0 0 10 10" fill="none">
+                  <path d="M2 5.2 L4.1 7.3 L8 2.8" stroke="var(--navy)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
             )}
           </div>
         );

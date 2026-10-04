@@ -110,7 +110,7 @@ export default function TopNav({
                 <Link
                   href="/feed"
                   className={`flex flex-col items-center gap-1 py-1 text-xs font-medium transition-colors ${
-                    isActive('/') ? 'text-[var(--pact-pink,#A78BFA)]' : 'text-[var(--pact-text-faint,#94a3b8)] hover:text-[var(--pact-text-dim,#6B7280)]'
+                    isActive('/') ? 'text-navy' : 'text-[var(--pact-text-faint,#94a3b8)] hover:text-[var(--pact-text-dim,#6B7280)]'
                   }`}
                 >
                   <Home className="h-6 w-6" strokeWidth={isActive('/') ? 2.4 : 2} />

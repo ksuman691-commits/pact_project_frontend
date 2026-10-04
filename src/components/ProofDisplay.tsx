@@ -75,7 +75,7 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
         <div className="p-4 bg-white">
           <div className="flex items-start justify-between mb-2">
             <span className="text-sm font-semibold text-[#14121F]">{proof.timestamp}</span>
-            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium">
+            <span className="text-xs bg-card-muted text-ink-soft px-2 py-1 rounded-full font-medium">
               🎥 Video
             </span>
           </div>
@@ -95,7 +95,7 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
 
     return (
       <div className="rounded-[24px] bg-white border border-[rgba(20,18,31,0.06)] overflow-hidden">
-        <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-[rgba(20,18,31,0.06)]">
+        <div className="p-4 bg-card border-b border-[rgba(20,18,31,0.06)]">
           <div className="flex items-start justify-between mb-3">
             <div>
               <span className="text-sm font-semibold text-[#14121F] block">{proof.timestamp}</span>
@@ -112,13 +112,13 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
           <div className="mb-2">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-medium text-[#6B7280]">Progress</span>
-              <span className="text-sm font-bold text-[#A78BFA]">
+              <span className="text-sm font-bold text-navy">
                 {completedCount}/{totalCount}
               </span>
             </div>
             <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all"
+                className="h-full bg-navy transition-all"
                 style={{ width: `${completionPercent}%` }}
               />
             </div>
@@ -132,7 +132,7 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
             <div key={item.id} className="p-4 flex items-start gap-3 hover:bg-[#F4F2FB] transition">
               <div className="flex-shrink-0 mt-0.5">
                 {item.completed ? (
-                  <CheckCircle2 className="w-5 h-5 text-[#A78BFA]" strokeWidth={2} />
+                  <CheckCircle2 className="w-5 h-5 text-navy" strokeWidth={2} />
                 ) : (
                   <Circle className="w-5 h-5 text-slate-400" strokeWidth={2} />
                 )}
