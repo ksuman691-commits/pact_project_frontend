@@ -118,26 +118,16 @@ export default function Avatar({
 
   return (
     <div className={`relative inline-flex items-center justify-center ${className}`} style={{ width: outerSize, height: outerSize }}>
-      {/* Layer 1: soft breathing glow, independently timed from the ring rotation. */}
+      {/* Flat ring band: no glow or motion, since those would imply energy the data does not show. */}
       <div
-        className={`pointer-events-none absolute inset-0 rounded-full blur-md ${atRisk ? '' : 'avatar-ring-breathe'}`}
-        style={{
-          background: atRisk
-            ? 'radial-gradient(circle, rgba(239,68,68,0.55), transparent 70%)'
-            : 'radial-gradient(circle, rgba(24,119,242,0.4), rgba(24,119,242,0.4) 55%, transparent 75%)',
-        }}
-      />
-
-      {/* Layer 2: rotating multi-hue conic-gradient ring band. */}
-      <div
-        className={`absolute rounded-full ${atRisk ? 'animate-tier-pulse' : 'avatar-ring-spin'}`}
+        className="absolute rounded-full"
         style={{
           inset: ringBand,
-          background: atRisk ? 'var(--pact-danger)' : 'var(--pact-pink)',
+          background: atRisk ? 'var(--missed-border)' : 'var(--navy)',
           padding: ringBand,
         }}
       >
-        <div className="h-full w-full rounded-full" style={{ background: 'var(--pact-bg, #ffffff)' }} />
+        <div className="h-full w-full rounded-full" style={{ background: 'var(--paper)' }} />
       </div>
 
       {/* Layer 3: optional literal progress arc (e.g. streak vs goal), animates in on mount. */}

@@ -51,26 +51,26 @@ export default function WeeklyStreakStrip({ activityDates, className = '' }: Wee
 
   return (
     <div className={className}>
-      <p className="mb-2 text-xs font-medium text-[var(--pact-text-faint)]">This week</p>
-      <div className="flex gap-1.5">
+      <p className="mb-2 text-xs text-[var(--muted)]">This week</p>
+      <div className="grid grid-cols-7 gap-1.5">
         {cells.map((cell) => (
           <div
             key={cell.key}
             title={cell.label}
-            className={`flex size-8 flex-1 items-center justify-center rounded-full text-[11px] font-bold transition-colors ${
-              cell.isToday ? 'ring-1 ring-[var(--pact-pink)] ring-offset-1 ring-offset-[var(--pact-bg)]' : ''
-            }`}
+            aria-label={`${cell.label}: ${cell.isFuture ? 'upcoming' : cell.active ? 'showed up' : 'no activity'}`}
+            className="flex h-8 items-center justify-center rounded-[3px] font-mono text-[11px]"
             style={{
-              // No dedicated green/red tokens exist in this palette (see
-              // globals.css) — pact-mint and pact-danger are the closest
-              // semantic equivalents already used elsewhere for "good" and
-              // "bad" states.
-              background: cell.isFuture
-                ? 'var(--pact-surface-2)'
-                : cell.active
-                  ? 'var(--pact-mint)'
-                  : 'var(--pact-danger)',
-              color: cell.isFuture ? 'var(--pact-text-faint)' : 'var(--pact-bg)',
+              // Past days with no activity are plain outlines, not "missed":
+              // no activity is not the same as a broken commitment.
+              background: cell.active ? 'var(--navy)' : 'transparent',
+              border: cell.active
+                ? `1px solid var(--navy)`
+                : cell.isFuture
+                  ? '1px dashed var(--dash)'
+                  : '1px solid var(--hairline)',
+              color: cell.active ? 'var(--card)' : 'var(--muted)',
+              outline: cell.isToday ? '1.5px solid var(--ink)' : undefined,
+              outlineOffset: cell.isToday ? 1 : undefined,
             }}
           >
             {cell.letter}
