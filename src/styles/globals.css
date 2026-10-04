@@ -41,17 +41,17 @@
   --bg-card-alt: var(--card);
   --accent-primary: var(--navy);
   --accent-primary-hover: var(--navy-hover);
-  --accent-primary-soft: #1D2D5018;
+  --accent-primary-soft: #1F3A9318;
   --text-primary: var(--ink);
   --text-secondary: var(--muted);
   --text-tertiary: var(--muted);
   --status-warning-bg: var(--warn-bg);
   --status-warning-text: var(--warn-text);
-  --status-info-bg: #1D2D5018;
+  --status-info-bg: #1F3A9318;
   --status-info-text: var(--navy);
-  --status-pink-bg: #1D2D5018;
+  --status-pink-bg: #1F3A9318;
   --status-pink-text: var(--navy);
-  --status-success-bg: #1D2D5018;
+  --status-success-bg: #1F3A9318;
   --status-success-text: var(--navy);
   --border-hairline: var(--hairline);
 
@@ -173,11 +173,11 @@ body {
 
 /* Progress Bar */
 .progress-bar {
-  @apply h-1.5 bg-[#EDE9FE] rounded-full overflow-hidden;
+  @apply h-1.5 bg-[var(--hairline)] rounded-full overflow-hidden;
 }
 
 .progress-fill {
-  @apply h-full bg-[#1877F2] rounded-full transition-all;
+  @apply h-full bg-[var(--navy)] rounded-full transition-all;
 }
 
 /* Cards with proper spacing */

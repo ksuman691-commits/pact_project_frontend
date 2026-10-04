@@ -116,7 +116,7 @@ export default function VerifyAgePage() {
   }
 
   return (
-    <AuthShell heading="confirm your age" subheading="one quick step before you get started">
+    <AuthShell heading="Confirm your age">
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <div>
           <label htmlFor="date_of_birth" className="mb-1.5 block text-xs font-semibold text-[#8E7C73]">

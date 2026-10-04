@@ -19,7 +19,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition">
-            <LogoMark size={32} withWordmark wordmarkPlacement="right" />
+            <LogoMark size={20} />
           </Link>
 
           <div className="flex items-center gap-4">

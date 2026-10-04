@@ -108,7 +108,7 @@ export default function EditProfilePage() {
                       className="w-24 h-24 rounded-3xl object-cover"
                     />
                   ) : (
-                    <LogoMark size={40} />
+                    <LogoMark size={18} />
                   )}
                 </div>
                 <div>

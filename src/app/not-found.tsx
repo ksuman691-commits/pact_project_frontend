@@ -14,7 +14,7 @@ export default function NotFound() {
   return (
     <div className="pact-flow flex min-h-dvh flex-col items-center justify-center px-6 py-16 text-center">
       <div className="mb-8 flex justify-center text-[var(--pact-text)]">
-        <LogoMark size={48} withWordmark wordmarkPlacement="below" />
+        <LogoMark size={28} />
       </div>
 
       <div

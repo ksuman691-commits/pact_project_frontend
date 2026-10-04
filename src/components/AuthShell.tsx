@@ -1,34 +1,35 @@
 import type { ReactNode } from 'react';
-import LogoMark from '@/components/LogoMark';
 
 interface AuthShellProps {
   heading: string;
-  subheading: string;
+  subheading?: string;
   children: ReactNode;
 }
 
 export const authInputClass =
-  'h-12 w-full rounded-[6px] border border-[var(--hairline)] bg-[var(--card)] px-4 font-sans text-sm text-[var(--ink)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--navy)] focus:ring-2 focus:ring-[var(--navy)]/30';
+  'h-12 w-full rounded-[6px] border border-[var(--hairline)] bg-[var(--card)] px-3.5 text-[14px] text-[var(--ink)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--navy)] focus:ring-2 focus:ring-[var(--navy)]';
+
+export const authLabelClass = 'mb-1.5 block text-[13px] font-medium text-[var(--ink-soft)]';
 
 export const authPrimaryButtonClass =
-  'h-12 w-full rounded-full bg-[var(--navy)] font-sans text-base font-semibold text-[var(--card)] transition hover:bg-[var(--navy-hover)] disabled:cursor-not-allowed disabled:opacity-60';
+  'h-[52px] w-full rounded-full bg-[var(--navy)] text-[16px] font-semibold text-[var(--card)] transition hover:bg-[var(--navy-hover)] disabled:cursor-not-allowed disabled:opacity-60';
 
 /**
- * Shared shell for /auth/login and /auth/register. Presentation only; auth
- * logic stays in the page components.
+ * Shared cover for /auth/login and /auth/register: an ink page with the
+ * wordmark centred in the top half and a paper panel holding the form.
+ * Presentation only; auth logic stays in the page components.
  */
 export default function AuthShell({ heading, subheading, children }: AuthShellProps) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[var(--paper)] px-6 py-12 text-[var(--ink)]">
-      <section className="w-full max-w-md">
-        <div className="flex flex-col items-start gap-3">
-          <LogoMark size={40} />
-          <h1 className="font-display text-[34px] font-medium leading-[1.08] tracking-[-0.01em] text-[var(--ink)]">
-            {heading}
-          </h1>
-          <p className="text-sm leading-6 text-[var(--muted)]">{subheading}</p>
-        </div>
+    <main className="mx-auto flex min-h-screen max-w-md flex-col bg-[#17181D]">
+      <header className="flex min-h-[320px] flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+        <h1 className="m-0 text-[66px] font-bold leading-none tracking-[-0.045em] text-[#F4EFE4]">CirclePact</h1>
+        <p className="m-0 text-[17px] text-[#CFC5B0]">Say it. Do it. Let people see.</p>
+      </header>
 
+      <section className="rounded-t-[6px] bg-[var(--paper)] px-6 py-7 text-[var(--ink)]">
+        <h2 className="mb-1.5 text-[24px] font-bold tracking-[-0.03em]">{heading}</h2>
+        {subheading ? <p className="mb-5 text-[14px] text-[var(--muted)]">{subheading}</p> : null}
         {children}
       </section>
     </main>

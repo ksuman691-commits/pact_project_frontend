@@ -137,8 +137,8 @@ export default function TransactionHistory({
             onClick={() => setSelectedFilter(filter)}
             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
               selectedFilter === filter
-                ? 'bg-[#A78BFA] text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-[var(--navy)] text-[var(--card)] shadow-md'
+                : 'bg-[var(--card-muted)] text-[var(--ink-soft)] hover:bg-[var(--hairline-soft)]'
             }`}
           >
             {filter}

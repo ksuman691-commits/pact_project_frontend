@@ -120,7 +120,7 @@ export default function ProofsSection({
 
                 {/* Day Badge */}
                 {proof.day && (
-                  <div className="absolute top-2 left-2 bg-[#A78BFA] text-white text-xs font-bold px-2 py-1 rounded-full">
+                  <div className="absolute top-2 left-2 bg-[var(--navy)] text-[var(--card)] text-xs font-bold px-2 py-1 rounded-full">
                     Day {proof.day}
                   </div>
                 )}

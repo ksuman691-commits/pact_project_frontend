@@ -1,11 +1,11 @@
 {
   "name": "CirclePact",
   "short_name": "CirclePact",
-  "description": "Real goals. Real proof. Real people. Accountability, together.",
+  "description": "Say it. Do it. Let people see.",
   "start_url": "/feed",
   "display": "standalone",
-  "background_color": "#0f0a1a",
-  "theme_color": "#0f0a1a",
+  "background_color": "#17181D",
+  "theme_color": "#17181D",
   "orientation": "portrait",
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },

@@ -50,7 +50,7 @@ export default function GoogleSignInButton() {
           size="large"
           text="continue_with"
           shape="pill"
-          width="360"
+          width="340"
         />
       </GoogleOAuthProvider>
     </div>
