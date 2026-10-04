@@ -11,7 +11,7 @@ import CreateDareModal from '@/components/CreateDareModal';
 import CuratedContentGrid from '@/components/CuratedContentGrid';
 import { useDareFeed, useMyDares } from '@/hooks/useDareQueries';
 import { useFeaturedDare } from '@/hooks/useFeaturedDare';
-import { useAuthStore } from '@/store/auth';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { getTimeRing, isDareExpired, parseApiDate } from '@/lib/dareCountdown';
 import { getDisplayName } from '@/lib/displayName';
 
@@ -52,7 +52,7 @@ function DaresPageInner() {
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>('for-you');
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const { user } = useAuthStore();
+  const { user, isInitialized } = useRequireAuth();
 
   // Deep-link support for the dashboard stat cards: /dares?tab=for-you jumps
   // straight to a tab, /dares?status=accepted shows a cross-tab status
@@ -73,7 +73,18 @@ function DaresPageInner() {
   // GET /api/dares/mine already returns dares where the viewer is either
   // the creator or a recipient — "For You" and "Sent by You" are both
   // client-side filters over this single result, not separate endpoints.
-  const myDaresQuery = useMyDares();
+  //
+  // `enabled` MUST gate on isInitialized/user, matching BottomNav and the
+  // profile page's own use of this same hook (see its doc comment): this
+  // page mounts unconditionally on direct navigation/hard reload, before
+  // auth has finished rehydrating from localStorage. Firing unconditionally
+  // here raced the token refresh/verify in `initAuth()` and intermittently
+  // lost that race in production — the request either went out without a
+  // ready token or collided with initAuth's own refresh, got a 401 with no
+  // retry, and left the list (and its "WAITING ON YOU" / "RECEIVED &
+  // ACCEPTED" counts) stuck empty for the rest of the session even though
+  // the backend had the correct data the whole time.
+  const myDaresQuery = useMyDares({ enabled: isInitialized && !!user });
   const mineAll = useMemo(
     () => myDaresQuery.data?.pages?.flatMap((page) => page.data) || [],
     [myDaresQuery.data],

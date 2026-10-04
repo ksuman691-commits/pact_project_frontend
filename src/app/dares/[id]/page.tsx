@@ -15,7 +15,7 @@ import DareShareSheet from '@/components/DareShareSheet';
 import Avatar from '@/components/Avatar';
 import DareTimeRing from '@/components/DareTimeRing';
 import { formatCountdown, formatRelativeTime, parseApiDate, urgencyColor } from '@/lib/dareCountdown';
-import { useAuthStore } from '@/store/auth';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 
 const STATUS_PILL: Record<string, { label: string; color: string }> = {
   pending: { label: 'Pending', color: 'var(--pact-gold)' },
@@ -38,12 +38,18 @@ function StatGroup({ icon: Icon, value, label, color }: { icon: any; value: numb
 export default function DareDetailPage() {
   const params = useParams();
   const dareId = parseInt(params.id as string);
-  const { user } = useAuthStore();
+  const { user, isInitialized } = useRequireAuth();
   useSeedBackHistory('/dares');
 
-  const dareQuery = useDareDetail(dareId);
-  const recipientsQuery = useDareRecipients(dareId);
-  const statsQuery = useDareStats(dareId);
+  // `enabled: isInitialized` guards against the same auth-rehydration race
+  // documented in useDareQueries.ts: this page mounts unconditionally on
+  // direct navigation/hard reload, before auth has finished rehydrating
+  // from localStorage. Firing these fetches first is what could leave
+  // `dare` permanently undefined after an unretried 401 even though the
+  // account was genuinely 'accepted' on the backend the whole time.
+  const dareQuery = useDareDetail(dareId, { enabled: isInitialized });
+  const recipientsQuery = useDareRecipients(dareId, { enabled: isInitialized });
+  const statsQuery = useDareStats(dareId, { enabled: isInitialized });
 
   const acceptMutation = useAcceptDare();
   const declineMutation = useDeclineDare();
@@ -60,7 +66,12 @@ export default function DareDetailPage() {
   const handleDecline = () => declineMutation.mutate(dareId, { onSuccess: () => dareQuery.refetch() });
   const handleClaim = () => claimMutation.mutate(dareId, { onSuccess: () => dareQuery.refetch() });
 
-  if (dareQuery.isLoading) {
+  // While auth hasn't finished rehydrating, the queries above are
+  // deliberately disabled (see the enabled: isInitialized comment), so
+  // react-query's own isLoading would read false and briefly fall through
+  // to the "not found" state below instead of staying in loading. Fold
+  // !isInitialized into this check so the shimmer covers that gap too.
+  if (!isInitialized || dareQuery.isLoading) {
     return (
       <div className="pact-flow min-h-screen">
         <DetailPageHeader title="Loading dare…" fallbackHref="/dares" />

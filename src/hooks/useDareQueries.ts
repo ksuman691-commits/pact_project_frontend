@@ -39,35 +39,43 @@ export function useMyDares(options?: { enabled?: boolean }) {
   });
 }
 
-export function useDareDetail(dareId: number | null | undefined) {
+// `options.enabled` lets callers gate the fetch on auth being ready (e.g.
+// `isInitialized && !!user` from useRequireAuth), the same way useMyDares
+// does for BottomNav/profile/the dares list. The dare detail page mounts
+// unconditionally on direct navigation/hard reload before auth has finished
+// rehydrating — without this gate the fetch could race initAuth's own
+// token verify/refresh, get an unretried 401, and leave `dare` permanently
+// undefined, which silently hides the Upload Proof button (it's driven by
+// `dare.my_recipient_status`) even though the account is fully accepted.
+export function useDareDetail(dareId: number | null | undefined, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: dareId ? queryKeys.dares.detail(dareId) : ['dares-detail-null'],
     queryFn: () => {
       if (!dareId) throw new Error('Dare ID is required');
       return dareService.getById(dareId);
     },
-    enabled: !!dareId,
+    enabled: !!dareId && (options?.enabled ?? true),
   });
 }
 
-export function useDareRecipients(dareId: number | null | undefined) {
+export function useDareRecipients(dareId: number | null | undefined, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: dareId ? queryKeys.dares.recipients(dareId) : ['dare-recipients-null'],
     queryFn: () => {
       if (!dareId) throw new Error('Dare ID is required');
       return dareService.getRecipients(dareId);
     },
-    enabled: !!dareId,
+    enabled: !!dareId && (options?.enabled ?? true),
   });
 }
 
-export function useDareStats(dareId: number | null | undefined) {
+export function useDareStats(dareId: number | null | undefined, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: dareId ? queryKeys.dares.stats(dareId) : ['dare-stats-null'],
     queryFn: () => {
       if (!dareId) throw new Error('Dare ID is required');
       return dareService.getStats(dareId);
     },
-    enabled: !!dareId,
+    enabled: !!dareId && (options?.enabled ?? true),
   });
 }
