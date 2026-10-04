@@ -32,9 +32,9 @@ export default function Leaderboard({ members, isLoading }: LeaderboardProps) {
   }
 
   const getMedalIcon = (rank: number) => {
-    if (rank === 1) return <Trophy className="w-5 h-5 text-amber-500" />;
-    if (rank === 2) return <Medal className="w-5 h-5 text-slate-400" />;
-    if (rank === 3) return <Medal className="w-5 h-5 text-orange-600" />;
+    if (rank === 1) return <Trophy className="w-5 h-5 text-[var(--warn-text)]" />;
+    if (rank === 2) return <Medal className="w-5 h-5 text-[var(--muted)]" />;
+    if (rank === 3) return <Medal className="w-5 h-5 text-[var(--warn-text)]" />;
     return <span className="text-sm font-bold text-[#9CA3AF]">#{rank}</span>;
   };
 
@@ -45,14 +45,14 @@ export default function Leaderboard({ members, isLoading }: LeaderboardProps) {
         {members.map((member, index) => (
           <div
             key={member.id}
-            className="flex items-center justify-between p-3 bg-gradient-to-r from-slate-50 to-transparent rounded-[28px] hover:from-slate-100 transition-all"
+            className="flex items-center justify-between p-3 bg-gradient-to-r  to-transparent rounded-[28px] hover: transition-all"
           >
             <div className="flex items-center gap-3 flex-1">
               <div className="w-8 h-8 flex items-center justify-center">
                 {getMedalIcon(index + 1)}
               </div>
 
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-300 to-purple-400" />
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br  " />
 
               <div className="flex-1">
                 <p className="text-sm font-bold text-[#14121F]">{member.fullName}</p>
@@ -63,7 +63,7 @@ export default function Leaderboard({ members, isLoading }: LeaderboardProps) {
             <div className="flex items-center gap-4 text-right">
               <div>
                 <div className="flex items-center gap-1 justify-end mb-1">
-                  <Flame className="w-3.5 h-3.5 text-orange-500" />
+                  <Flame className="w-3.5 h-3.5 text-[var(--warn-text)]" />
                   <p className="text-sm font-bold text-[#14121F]">{member.streak}</p>
                 </div>
                 <p className="text-xs text-[#9CA3AF]">{member.winRate}%</p>

@@ -50,7 +50,7 @@ export default function WalletActions({ onDeposit, onWithdraw, isLoading }: Wall
               placeholder="Amount"
               value={depositAmount}
               onChange={(e) => setDepositAmount(e.target.value)}
-              className="w-full px-3 py-2 border border-[rgba(20,18,31,0.06)] rounded-[28px] mb-3 focus:outline-none focus:border-emerald-500"
+              className="w-full px-3 py-2 border border-[rgba(20,18,31,0.06)] rounded-[28px] mb-3 focus:outline-none focus:border-[var(--muted)]"
               min="0"
               step="0.01"
             />
@@ -70,7 +70,7 @@ export default function WalletActions({ onDeposit, onWithdraw, isLoading }: Wall
         <button
           onClick={() => setShowWithdrawForm(!showWithdrawForm)}
           disabled={isLoading}
-          className="w-full py-4 rounded-[24px] bg-slate-200 hover:bg-slate-300 disabled:opacity-50 text-[#14121F] font-bold flex items-center justify-center gap-2 transition-all"
+          className="w-full py-4 rounded-[24px] bg-[var(--line)] hover:bg-[var(--line)] disabled:opacity-50 text-[#14121F] font-bold flex items-center justify-center gap-2 transition-all"
         >
           <Minus className="w-5 h-5" />
           Withdraw
@@ -83,14 +83,14 @@ export default function WalletActions({ onDeposit, onWithdraw, isLoading }: Wall
               placeholder="Amount"
               value={withdrawAmount}
               onChange={(e) => setWithdrawAmount(e.target.value)}
-              className="w-full px-3 py-2 border border-[rgba(20,18,31,0.06)] rounded-[28px] mb-3 focus:outline-none focus:border-slate-500"
+              className="w-full px-3 py-2 border border-[rgba(20,18,31,0.06)] rounded-[28px] mb-3 focus:outline-none focus:border-[var(--muted)]"
               min="0"
               step="0.01"
             />
             <button
               onClick={handleWithdraw}
               disabled={isLoading || !withdrawAmount}
-              className="w-full py-2 bg-slate-600 hover:bg-slate-700 disabled:opacity-50 text-white font-semibold rounded-[28px] transition-all text-sm"
+              className="w-full py-2 bg-[var(--line)] hover:bg-[var(--ink)] disabled:opacity-50 text-white font-semibold rounded-[28px] transition-all text-sm"
             >
               Confirm Withdrawal
             </button>

@@ -24,7 +24,7 @@ export default function DailyTasksSection() {
     return (
       <PremiumCard>
         <div className="text-center py-8">
-          <CheckCircle2 className="w-12 h-12 text-emerald-200 mx-auto mb-2" />
+          <CheckCircle2 className="w-12 h-12 text-[var(--navy)] mx-auto mb-2" />
           <p className="text-[#6B7280] font-medium">No pacts due today</p>
           <p className="text-xs text-[#9CA3AF]">Great job staying ahead!</p>
         </div>
@@ -38,7 +38,7 @@ export default function DailyTasksSection() {
         <div
           key={pact.id}
           onClick={() => router.push(`/pacts/${pact.id}`)}
-          className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-[24px] p-4 cursor-pointer hover:shadow-md transition-all border border-[rgba(20,18,31,0.06)] flex items-center justify-between"
+          className="bg-gradient-to-r   rounded-[24px] p-4 cursor-pointer hover:shadow-md transition-all border border-[rgba(20,18,31,0.06)] flex items-center justify-between"
         >
           <div className="flex-1">
             <h4 className="font-semibold text-[#14121F] text-sm mb-1">{pact.title}</h4>

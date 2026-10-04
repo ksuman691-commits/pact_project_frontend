@@ -58,13 +58,13 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
         <div className="rounded-[28px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-3">
-              <div className="h-4 w-32 animate-pulse rounded-full bg-slate-200" />
-              <div className="h-10 w-24 animate-pulse rounded-full bg-slate-200" />
+              <div className="h-4 w-32 animate-pulse rounded-full bg-[var(--line)]" />
+              <div className="h-10 w-24 animate-pulse rounded-full bg-[var(--line)]" />
             </div>
-            <div className="h-10 w-10 animate-pulse rounded-full bg-slate-200" />
+            <div className="h-10 w-10 animate-pulse rounded-full bg-[var(--line)]" />
           </div>
-          <div className="mt-6 h-2 rounded-full bg-slate-200">
-            <div className="h-full w-2/3 rounded-full bg-slate-300" />
+          <div className="mt-6 h-2 rounded-full bg-[var(--line)]">
+            <div className="h-full w-2/3 rounded-full bg-[var(--line)]" />
           </div>
         </div>
 
@@ -78,10 +78,10 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
         <div className="rounded-[20px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] p-4">
           <div className="flex items-center justify-between gap-4">
             <div className="space-y-2">
-              <div className="h-4 w-28 animate-pulse rounded-full bg-slate-200" />
-              <div className="h-7 w-16 animate-pulse rounded-full bg-slate-200" />
+              <div className="h-4 w-28 animate-pulse rounded-full bg-[var(--line)]" />
+              <div className="h-7 w-16 animate-pulse rounded-full bg-[var(--line)]" />
             </div>
-            <div className="h-8 w-24 animate-pulse rounded-full bg-slate-200" />
+            <div className="h-8 w-24 animate-pulse rounded-full bg-[var(--line)]" />
           </div>
         </div>
       </div>
@@ -90,12 +90,12 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
 
   if (error || !stats) {
     return (
-      <div className="rounded-[24px] bg-red-50 border border-red-200 p-6">
+      <div className="rounded-[24px] bg-[var(--warn-bg)] border border-[var(--line)] p-6">
         <div className="flex items-center gap-3 mb-2">
-          <AlertCircle className="w-6 h-6 text-red-600" />
-          <h3 className="font-semibold text-red-900">Unable to load verification results</h3>
+          <AlertCircle className="w-6 h-6 text-[var(--warn-text)]" />
+          <h3 className="font-semibold text-[var(--ink)]">Unable to load verification results</h3>
         </div>
-        <p className="text-sm text-red-700">{error || 'No verifications yet'}</p>
+        <p className="text-sm text-[var(--warn-text)]">{error || 'No verifications yet'}</p>
       </div>
     );
   }

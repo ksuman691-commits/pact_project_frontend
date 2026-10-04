@@ -43,8 +43,8 @@ export default function PactCard({
           </div>
           <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
             pact.status === 'active'
-              ? 'bg-emerald-100 text-emerald-700'
-              : 'bg-[#FAF9FE] text-slate-700'
+              ? 'bg-[var(--card)] text-[var(--navy)]'
+              : 'bg-[#FAF9FE] text-[var(--ink-soft)]'
           }`}>
             {pact.status}
           </div>
@@ -53,18 +53,18 @@ export default function PactCard({
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-3 gap-2">
           {/* Confidence */}
-          <div className="bg-blue-50 rounded-md p-2.5 border border-blue-100">
-            <p className="text-xs font-medium text-blue-700 mb-0.5">Confidence</p>
-            <p className="text-lg font-bold text-blue-900">{confidence}%</p>
+          <div className="bg-[var(--card)] rounded-md p-2.5 border border-[var(--line)]">
+            <p className="text-xs font-medium text-[var(--navy)] mb-0.5">Confidence</p>
+            <p className="text-lg font-bold text-[var(--ink)]">{confidence}%</p>
           </div>
 
           {/* Time Remaining */}
-          <div className="bg-orange-50 rounded-md p-2.5 border border-orange-100">
+          <div className="bg-[var(--warn-bg)] rounded-md p-2.5 border border-[var(--line)]">
             <div className="flex items-center gap-1 mb-0.5">
-              <Clock className="w-3 h-3 text-orange-700" />
-              <p className="text-xs font-medium text-orange-700">Days</p>
+              <Clock className="w-3 h-3 text-[var(--warn-text)]" />
+              <p className="text-xs font-medium text-[var(--warn-text)]">Days</p>
             </div>
-            <p className="text-lg font-bold text-orange-900">{daysRemaining}</p>
+            <p className="text-lg font-bold text-[var(--ink)]">{daysRemaining}</p>
           </div>
 
           {/* Participants */}
@@ -80,22 +80,22 @@ export default function PactCard({
         {/* Cheer / Skip */}
         <div className="flex gap-2">
           <div className="flex-1 bg-card rounded-md p-2 border border-hairline text-center">
-            <p className="text-xs text-emerald-700 font-medium">Cheers</p>
-            <p className="text-sm font-bold text-emerald-900">{cheers}</p>
+            <p className="text-xs text-[var(--navy)] font-medium">Cheers</p>
+            <p className="text-sm font-bold text-[var(--ink)]">{cheers}</p>
           </div>
-          <div className="flex-1 bg-red-50 rounded-md p-2 border border-red-100 text-center">
-            <p className="text-xs text-red-700 font-medium">Skipped</p>
-            <p className="text-sm font-bold text-red-900">{skipped}</p>
+          <div className="flex-1 bg-[var(--warn-bg)] rounded-md p-2 border border-[var(--line)] text-center">
+            <p className="text-xs text-[var(--warn-text)] font-medium">Skipped</p>
+            <p className="text-sm font-bold text-[var(--ink)]">{skipped}</p>
           </div>
         </div>
 
         {/* Progress Bar */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-slate-700">Progress</p>
+            <p className="text-xs font-semibold text-[var(--ink-soft)]">Progress</p>
             <p className="text-xs font-bold text-[#14121F]">{progressPercent}%</p>
           </div>
-          <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-[var(--line)] rounded-full overflow-hidden">
             <div
               className="h-full bg-navy rounded-full"
               style={{ width: `${progressPercent}%` }}

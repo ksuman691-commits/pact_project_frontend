@@ -116,7 +116,7 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
                 {completedCount}/{totalCount}
               </span>
             </div>
-            <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-[var(--line)] rounded-full overflow-hidden">
               <div
                 className="h-full bg-navy transition-all"
                 style={{ width: `${completionPercent}%` }}
@@ -127,14 +127,14 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
         </div>
 
         {/* Checklist items */}
-        <div className="divide-y divide-slate-200">
+        <div className="divide-y divide-[var(--line)]">
           {proof.items.map((item) => (
             <div key={item.id} className="p-4 flex items-start gap-3 hover:bg-[#F4F2FB] transition">
               <div className="flex-shrink-0 mt-0.5">
                 {item.completed ? (
                   <CheckCircle2 className="w-5 h-5 text-navy" strokeWidth={2} />
                 ) : (
-                  <Circle className="w-5 h-5 text-slate-400" strokeWidth={2} />
+                  <Circle className="w-5 h-5 text-[var(--muted)]" strokeWidth={2} />
                 )}
               </div>
               <span
@@ -155,8 +155,8 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
 
   // Fallback: no proof data
   return (
-    <div className="rounded-[24px] bg-[#F4F2FB] border-2 border-dashed border-slate-300 p-6 flex flex-col items-center justify-center min-h-[200px]">
-      <AlertCircle className="w-8 h-8 text-slate-400 mb-2" />
+    <div className="rounded-[24px] bg-[#F4F2FB] border-2 border-dashed border-[var(--line)] p-6 flex flex-col items-center justify-center min-h-[200px]">
+      <AlertCircle className="w-8 h-8 text-[var(--muted)] mb-2" />
       <p className="text-sm font-medium text-[#6B7280]">No proof submitted yet</p>
       <p className="text-xs text-[#9CA3AF] mt-1">
         The pact creator has not uploaded any proof yet.

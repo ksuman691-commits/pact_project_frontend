@@ -112,13 +112,13 @@ export default function NotificationsPage() {
               <Link
                 href="/notifications/preferences"
                 aria-label="Notification preferences"
-                className="inline-flex items-center justify-center p-2 rounded-full bg-[#FAF9FE] text-slate-700 hover:bg-slate-200 transition"
+                className="inline-flex items-center justify-center p-2 rounded-full bg-[#FAF9FE] text-[var(--ink-soft)] hover:bg-[var(--line)] transition"
               >
                 <Settings className="w-4 h-4" />
               </Link>
               <button
                 onClick={() => markAllAsRead.mutate()}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-full bg-[#FAF9FE] text-slate-700 hover:bg-slate-200 transition"
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-full bg-[#FAF9FE] text-[var(--ink-soft)] hover:bg-[var(--line)] transition"
               >
                 <CheckCheck className="w-4 h-4" />
                 Mark all read
@@ -131,8 +131,8 @@ export default function NotificationsPage() {
           {isLoading ? (
             <div className="text-[#9CA3AF] text-sm">Loading notifications...</div>
           ) : notifications.length === 0 ? (
-            <div className="rounded-[24px] border border-dashed border-slate-300 bg-white p-8 text-center">
-              <Bell className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+            <div className="rounded-[24px] border border-dashed border-[var(--line)] bg-white p-8 text-center">
+              <Bell className="w-10 h-10 text-[var(--muted)] mx-auto mb-3" />
               <p className="font-semibold text-[#14121F]">No notifications yet</p>
               <p className="text-sm text-[#9CA3AF] mt-1">You will see join requests and activity updates here.</p>
             </div>
@@ -147,7 +147,7 @@ export default function NotificationsPage() {
                 className={`w-full text-left rounded-[24px] border p-4 transition ${
                   notification.is_read
                     ? 'bg-white border-[rgba(20,18,31,0.06)]'
-                    : 'bg-blue-50 border-blue-200'
+                    : 'bg-[var(--card)] border-[var(--line)]'
                 }`}
               >
                 <button
@@ -160,7 +160,7 @@ export default function NotificationsPage() {
                     <p className="text-sm text-[#6B7280] mt-1">{notification.description}</p>
                   </div>
                   {!notification.is_read && (
-                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600 mt-1" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-[var(--navy)] mt-1" />
                   )}
                 </div>
                 </button>
@@ -176,7 +176,7 @@ export default function NotificationsPage() {
                     <button
                       onClick={() => rejectFollow.mutate(pendingFollowId)}
                       disabled={acceptFollow.isPending || rejectFollow.isPending}
-                      className="px-3 py-1.5 text-xs rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:opacity-60"
+                      className="px-3 py-1.5 text-xs rounded-md bg-[var(--line)] text-[var(--ink)] hover:bg-[var(--line)] disabled:opacity-60"
                     >
                       Reject
                     </button>
@@ -191,7 +191,7 @@ export default function NotificationsPage() {
             <button
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
-              className="w-full py-3 rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-white text-slate-700 font-semibold hover:bg-[#F4F2FB] disabled:opacity-60"
+              className="w-full py-3 rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-white text-[var(--ink-soft)] font-semibold hover:bg-[#F4F2FB] disabled:opacity-60"
             >
               {isFetchingNextPage ? 'Loading...' : 'Load more'}
             </button>

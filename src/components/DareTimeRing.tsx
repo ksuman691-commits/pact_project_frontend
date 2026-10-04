@@ -55,7 +55,7 @@ export default function DareTimeRing({
 
   const avatarCore = (
     <div
-      className="relative overflow-hidden rounded-full bg-slate-900 text-white flex items-center justify-center font-bold"
+      className="relative overflow-hidden rounded-full bg-[var(--ink)] text-white flex items-center justify-center font-bold"
       style={{ width: size, height: size, fontSize: Math.max(11, Math.round(size * 0.36)) }}
     >
       {avatarUrl ? (

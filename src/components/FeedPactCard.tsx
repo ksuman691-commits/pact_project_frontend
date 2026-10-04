@@ -825,7 +825,7 @@ export default function FeedPactCard({
                 <button type="button" aria-label="close more options menu" onClick={() => setMoreMenuOpen(false)} className="fixed inset-0 z-40 cursor-default" />
                 <div role="menu" className="absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)] py-1.5 shadow-xl">
                   {uploadAllowed && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); handleProofUploadClick(); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--pact-text)] transition hover:bg-white/5"><FileImage className="h-4 w-4" />Upload proof{proofCount > 0 && <span className="ml-auto text-xs text-[var(--pact-text-faint)]">{formatCompactCount(proofCount)}</span>}</button>}
-                  {canReport && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); setReportSheetOpen(true); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-rose-300 transition hover:bg-white/5"><Flag className="h-4 w-4" />Report pact</button>}
+                  {canReport && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); setReportSheetOpen(true); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--warn-text)] transition hover:bg-white/5"><Flag className="h-4 w-4" />Report pact</button>}
                 </div>
               </>}
             </div>
@@ -859,7 +859,7 @@ export default function FeedPactCard({
                 />
               )}
               {showStatusBadgeOnly && (
-                <span className={`text-[10px] font-bold uppercase tracking-[0.12em] ${isCreator ? 'text-amber-500' : 'text-emerald-500'}`}>
+                <span className={`text-[10px] font-bold uppercase tracking-[0.12em] ${isCreator ? 'text-[var(--warn-text)]' : 'text-[var(--navy)]'}`}>
                   {isCreator ? 'Creator' : 'Joined'}
                 </span>
               )}
@@ -935,7 +935,7 @@ export default function FeedPactCard({
               )}
             </button>
             {cheerError && (
-              <span role="status" className="text-xs text-rose-300" aria-live="polite">
+              <span role="status" className="text-xs text-[var(--warn-text)]" aria-live="polite">
                 {cheerError}
               </span>
             )}
@@ -1044,7 +1044,7 @@ export default function FeedPactCard({
             onClick={() => setReportSheetOpen(false)}
           />
 
-          <div className="relative z-10 w-full max-w-md overflow-hidden rounded-t-[28px] border border-white/10 bg-slate-950 text-white shadow-2xl">
+          <div className="relative z-10 w-full max-w-md overflow-hidden rounded-t-[28px] border border-white/10 bg-[var(--ink)] text-white shadow-2xl">
             <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-white/20" />
             <div className="px-5 pb-5 pt-4">
               <div className="mb-5 flex items-start justify-between gap-4">
@@ -1067,7 +1067,7 @@ export default function FeedPactCard({
                     key={option.value}
                     type="button"
                     onClick={() => void handleReport(option.value)}
-                    className="flex w-full items-center justify-between gap-4 rounded-[24px] border border-white/8 bg-white/5 px-4 py-4 text-left transition hover:border-red-400/40 hover:bg-white/8"
+                    className="flex w-full items-center justify-between gap-4 rounded-[24px] border border-white/8 bg-white/5 px-4 py-4 text-left transition hover:border-[var(--line)] hover:bg-white/8"
                   >
                     <span className="min-w-0">
                       <span className="block text-sm font-bold text-white">{option.title}</span>

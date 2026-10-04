@@ -65,7 +65,7 @@ export default function ProofsSection({
                     sizes="(max-width: 768px) 33vw, 160px"
                   />
                 ) : (
-                  <div className="relative h-full w-full bg-slate-900">
+                  <div className="relative h-full w-full bg-[var(--ink)]">
                     <video src={proof.url} className="h-full w-full object-cover" muted playsInline />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/25">
                       <Play className="h-8 w-8 fill-white text-white" />
@@ -97,7 +97,7 @@ export default function ProofsSection({
                     sizes="(max-width: 768px) 50vw, 33vw"
                   />
                 ) : (
-                  <div className="w-full h-full bg-slate-900 flex items-center justify-center relative">
+                  <div className="w-full h-full bg-[var(--ink)] flex items-center justify-center relative">
                     <video
                       src={proof.url}
                       className="w-full h-full object-cover"
@@ -114,7 +114,7 @@ export default function ProofsSection({
                     <p className="font-medium">Day {proof.day}</p>
                   )}
                   {proof.description && (
-                    <p className="text-gray-200 line-clamp-2">{proof.description}</p>
+                    <p className="text-[var(--muted)] line-clamp-2">{proof.description}</p>
                   )}
                 </div>
 
@@ -137,7 +137,7 @@ export default function ProofsSection({
         {/* Timeline View (Alternative) */}
         {variant !== 'immersive' && proofs.length > 6 && (
           <div className="mt-6">
-            <p className="text-sm font-medium text-slate-700 mb-3">Timeline</p>
+            <p className="text-sm font-medium text-[var(--ink-soft)] mb-3">Timeline</p>
             <div className="space-y-2">
               {proofs.map((proof, index) => (
                 <button
@@ -155,7 +155,7 @@ export default function ProofsSection({
                         sizes="48px"
                       />
                     ) : (
-                      <div className="w-full h-full bg-slate-900 flex items-center justify-center">
+                      <div className="w-full h-full bg-[var(--ink)] flex items-center justify-center">
                         <Play className="w-4 h-4 text-white fill-white" />
                       </div>
                     )}

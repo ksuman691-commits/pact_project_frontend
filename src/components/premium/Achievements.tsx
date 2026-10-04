@@ -34,15 +34,15 @@ export default function Achievements({ achievements }: AchievementsProps) {
             key={achievement.id}
             className={`rounded-[24px] p-4 flex flex-col items-center text-center transition-all ${
               achievement.unlocked
-                ? 'bg-gradient-to-br from-amber-50 to-yellow-100 border border-amber-200'
+                ? 'bg-gradient-to-br   border border-[var(--line)]'
                 : 'bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] opacity-50'
             }`}
           >
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
                 achievement.unlocked
-                  ? 'bg-amber-200 text-amber-900'
-                  : 'bg-slate-200 text-[#9CA3AF]'
+                  ? 'bg-[var(--warn-bg)] text-[var(--ink)]'
+                  : 'bg-[var(--line)] text-[#9CA3AF]'
               }`}
             >
               {achievement.icon}
@@ -52,7 +52,7 @@ export default function Achievements({ achievements }: AchievementsProps) {
 
             {achievement.progress !== undefined && !achievement.unlocked && (
               <div className="w-full mt-2">
-                <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden">
+                <div className="w-full h-1 bg-[var(--line)] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-[#EDE9FE]0"
                     style={{ width: `${achievement.progress}%` }}
@@ -63,7 +63,7 @@ export default function Achievements({ achievements }: AchievementsProps) {
             )}
 
             {achievement.unlocked && achievement.unlockedAt && (
-              <p className="text-xs text-amber-700 mt-2">
+              <p className="text-xs text-[var(--warn-text)] mt-2">
                 {new Date(achievement.unlockedAt).toLocaleDateString()}
               </p>
             )}

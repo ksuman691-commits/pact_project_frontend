@@ -310,7 +310,7 @@ export default function PactGallery({
                   />
                 )
               ) : (
-                <div className="relative h-full w-full bg-slate-900">
+                <div className="relative h-full w-full bg-[var(--ink)]">
                   <video src={tile.url} className="h-full w-full object-cover" muted playsInline />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/25">
                     <Play className="h-10 w-10 fill-white text-white" />

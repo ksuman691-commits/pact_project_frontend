@@ -17,7 +17,7 @@ export default function DebugPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8">
+      <div className="min-h-screen bg-gradient-to-br   py-8">
         <div className="max-w-2xl mx-auto px-4">
           <h1 className="text-3xl font-bold text-[#14121F] mb-8">Debug Auth State</h1>
 
@@ -48,11 +48,11 @@ export default function DebugPage() {
               <p className="text-sm text-[#6B7280] mb-4">
                 Should be sent as: <code className="bg-[#FAF9FE] px-2 py-1">Authorization: Bearer {'{token}'}</code>
               </p>
-              <div className="bg-blue-50 border border-blue-200 p-4 rounded text-sm">
+              <div className="bg-[var(--card)] border border-[var(--line)] p-4 rounded text-sm">
                 {localToken ? (
-                  <p className="text-blue-700">✓ Token will be sent in Authorization header</p>
+                  <p className="text-[var(--navy)]">✓ Token will be sent in Authorization header</p>
                 ) : (
-                  <p className="text-red-700">✗ No token - requests will fail with 401</p>
+                  <p className="text-[var(--warn-text)]">✗ No token - requests will fail with 401</p>
                 )}
               </div>
             </div>

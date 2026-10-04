@@ -51,11 +51,11 @@ export default function PactParticipants({ pactId, canViewParticipants = true }:
 
   if (!canViewParticipants) {
     return (
-      <div className="bg-amber-50 border border-amber-200 rounded-[28px] p-4 flex items-start gap-3">
-        <AlertCircle size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
+      <div className="bg-[var(--warn-bg)] border border-[var(--line)] rounded-[28px] p-4 flex items-start gap-3">
+        <AlertCircle size={20} className="text-[var(--warn-text)] flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-medium text-amber-800">Private Pact</p>
-          <p className="text-xs text-amber-700 mt-1">Participants list is only visible to circle members</p>
+          <p className="text-sm font-medium text-[var(--ink)]">Private Pact</p>
+          <p className="text-xs text-[var(--warn-text)] mt-1">Participants list is only visible to circle members</p>
         </div>
       </div>
     );
@@ -67,8 +67,8 @@ export default function PactParticipants({ pactId, canViewParticipants = true }:
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-[28px] p-4">
-        <p className="text-sm text-red-700">{error}</p>
+      <div className="bg-[var(--warn-bg)] border border-[var(--line)] rounded-[28px] p-4">
+        <p className="text-sm text-[var(--warn-text)]">{error}</p>
       </div>
     );
   }
