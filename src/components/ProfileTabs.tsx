@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Target, Award, Users, Heart, Circle, Plus } from 'lucide-react';
+import { Target, Award, Users, Heart, Circle, Plus, Zap } from 'lucide-react';
 import PactCard from './PactCard';
+import DareCard from './DareCard';
 import AnimatedTabs from '@/components/pact-ui/AnimatedTabs';
 import ScrollableRow from '@/components/pact-ui/ScrollableRow';
 import UserAvatarLink from '@/components/UserAvatarLink';
@@ -21,6 +22,7 @@ export default function ProfileTabs({ children, onTabChange, initialTab = 'pacts
   const tabs = [
     { id: 'circles', label: 'Circles', icon: Circle },
     { id: 'pacts', label: 'Pacts', icon: Target },
+    { id: 'dares', label: 'Dares', icon: Zap },
     { id: 'achievements', label: 'Achievements', icon: Award },
     { id: 'followers', label: 'Followers', icon: Users },
     { id: 'following', label: 'Following', icon: Heart },
@@ -218,6 +220,36 @@ export function PactsTab({
           targetName={profileName}
         />
       )}
+    </div>
+  );
+}
+
+// Scoped to "dares I completed" (my_recipient_status === 'completed') —
+// the only completion signal actually derivable from the live API. "Dares
+// I sent that someone else completed" is a separate, already-filed gap
+// (the Dare row's own aggregate `status` never flips on a per-recipient
+// completion — see BACKEND_SPEC_DARE_SENT_STATUS_AGGREGATE.md) and is
+// intentionally left out of this tab rather than showing an unreliable
+// number.
+export function DaresTab({ dares }: { dares: any[] }) {
+  const completedDares = dares.filter((d) => d.my_recipient_status === 'completed');
+
+  if (completedDares.length === 0) {
+    return (
+      <div className="pact-card rounded-3xl border border-dashed px-6 py-10 text-center" style={{ borderColor: 'var(--pact-hairline)' }}>
+        <p className="text-base font-semibold text-[var(--pact-text)]">No completed dares yet</p>
+        <p className="mt-2 text-sm text-[var(--pact-text-dim)]">
+          Dares you complete will show up here, with their proof photo ready to share.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-4">
+      {completedDares.map((dare) => (
+        <DareCard key={dare.id} dare={dare} viewerContext="for-you" />
+      ))}
     </div>
   );
 }

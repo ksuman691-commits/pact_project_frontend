@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useUserJoinedPacts, useUserPacts, useUserVotedPacts } from '@/hooks/useFeedQueries';
+import { useMyDares } from '@/hooks/useDareQueries';
 import { useCircles } from '@/hooks/useCircles';
 import ProfileHero from '@/components/ProfileHero';
 import ProfileStats from '@/components/ProfileStats';
-import ProfileTabs, { PactsTab } from '@/components/ProfileTabs';
+import ProfileTabs, { PactsTab, DaresTab } from '@/components/ProfileTabs';
 import AchievementsBadges from '@/components/AchievementsBadges';
 import ActivityStrip from '@/components/pact-ui/ActivityStrip';
 import WeeklyStreakStrip from '@/components/pact-ui/WeeklyStreakStrip';
@@ -20,8 +21,22 @@ import { useFollowers, useFollowing } from '@/hooks/useFollows';
 import { useAtRiskPact } from '@/hooks/useAtRiskPact';
 import { useSmartBack } from '@/hooks/useSmartBack';
 
+// useSearchParams() opts the subtree into client-side rendering and must sit
+// under its own Suspense boundary or `next build` fails to prerender this
+// page — the actual profile UI only ever needs the param for the one-time
+// ?tab=dares deep link from DareShareSheet, so a null fallback here is
+// invisible in practice (resolves on the same tick, no real loading state).
 export default function Profile() {
+  return (
+    <Suspense fallback={null}>
+      <ProfileContent />
+    </Suspense>
+  );
+}
+
+function ProfileContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isInitialized } = useRequireAuth();
   // Own profile has no natural single parent route the way a circle/pact
   // detail page does, so this always falls back to /feed — same behavior
@@ -34,13 +49,25 @@ export default function Profile() {
   const [showFollowingModal, setShowFollowingModal] = useState(false);
   const [showPactsModal, setShowPactsModal] = useState(false);
 
+  // Lets DareShareSheet's "View on your profile" action land directly on
+  // the Dares tab via a ?tab=dares deep link, instead of dropping the user
+  // on the default Pacts tab and making them find it themselves.
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'dares') {
+      setActiveTab('dares');
+    }
+  }, [searchParams]);
+
   const userId = user?.id;
   const { data: createdPactsData } = useUserPacts(userId || 0);
   const { data: joinedPactsData } = useUserJoinedPacts(userId || 0);
   const { data: votedPactsData } = useUserVotedPacts(userId || 0);
+  const myDaresQuery = useMyDares({ enabled: isInitialized && !!user });
   const createdPacts = (createdPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[];
   const joinedPacts = (joinedPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[];
   const votedPacts = (votedPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[];
+  const myDares = (myDaresQuery.data?.pages || []).flatMap((page: any) => page.data || []) as any[];
   const followersQuery = useFollowers(userId || 0);
   const followingQuery = useFollowing(userId || 0);
   const followers = followersQuery.data?.data || [];
@@ -225,6 +252,7 @@ export default function Profile() {
               <PactsTab pacts={createdPacts} joinedPacts={joinedPacts} votedPacts={votedPacts} allowJoinedUploads={true} />
             </div>
           )}
+          {activeTab === 'dares' && <DaresTab dares={myDares} />}
           {activeTab === 'achievements' && <AchievementsBadges achievements={allAchievements} />}
           {activeTab === 'circles' && (
             myCircles.length === 0 ? (
