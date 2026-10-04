@@ -7,21 +7,15 @@ import { Plus, Search } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import BottomNav from '@/components/BottomNav'
 import CuratedContentGrid from '@/components/CuratedContentGrid'
-import { ActivePactCard, BrokenPactCard } from '@/components/classic/PactCard'
-import { pactAdvancedService, userService } from '@/services/api'
+import { ActivePactCard, BrokenPactCard, DarePactCard, FinishedPactRow } from '@/components/classic/PactCard'
+import { pactAdvancedService, dareService } from '@/services/api'
 import { useAuthStore } from '@/store/auth'
 
-// "Discover" added alongside the existing My-Pacts filters: it's not a
-// fourth way to slice the viewer's own pacts (like All/Active/Done are), so
-// it's rendered as its own branch below rather than folded into `filtered`.
-// This is also where the former standalone "Curated" bottom-nav destination
-// now lives, since both were "browse pacts you haven't joined yet."
+// "Discover" is not a slice of the viewer's own pacts, so it is rendered as
+// its own branch below rather than folded into `filtered`.
 const filters = ['All', 'Active', 'Done', 'Discover'] as const
 
-// useSearchParams() (for the ?filter= deep link from the stat card / the
-// Circles page's "Pacts active" stat) requires a Suspense boundary around
-// any client component that calls it, or `next build` fails prerendering
-// this page — see the same requirement on the Dares page below.
+// useSearchParams() requires a Suspense boundary or `next build` fails.
 export default function PactsPage() {
   return (
     <Suspense fallback={null}>
@@ -30,75 +24,99 @@ export default function PactsPage() {
   )
 }
 
+function deadlineOf(p: any) {
+  const t = new Date(p.end_date || p.deadline || '').getTime()
+  return Number.isNaN(t) ? Number.MAX_SAFE_INTEGER : t
+}
+
+function summaryLine(going: number, waiting: number, broken: number) {
+  const parts = [
+    going > 0 ? `${going} going` : null,
+    waiting > 0 ? `${waiting} waiting on a reply` : null,
+    broken > 0 ? `${broken} broken` : null,
+  ].filter(Boolean)
+  return parts.length ? parts.join(' · ') : null
+}
+
 function PactsPageInner() {
   const searchParams = useSearchParams()
-  const { user } = useAuthStore(); const [filter, setFilter] = useState<(typeof filters)[number]>('All'); const [search, setSearch] = useState('')
-  // Deep-link support for the "Active" stat (and the Circles page's "Pacts
-  // active" stat, which also lands here): /pacts?filter=Active seeds the
-  // existing tab state on mount, same read-once pattern as the pact detail
-  // page's ?joinRequests= param.
+  const { user } = useAuthStore()
+  const [filter, setFilter] = useState<(typeof filters)[number]>('All')
+  const [search, setSearch] = useState('')
+
+  // /pacts?filter=Active seeds the tab on mount (stat card deep link).
   useEffect(() => {
     const filterParam = searchParams.get('filter')
     if (filterParam && (filters as readonly string[]).includes(filterParam)) {
       setFilter(filterParam as (typeof filters)[number])
     }
   }, [searchParams])
-  const query = useQuery({ queryKey: ['my-pacts', user?.id], queryFn: () => pactAdvancedService.getMyPacts(0, 100), enabled: !!user?.id }); const statsQuery = useQuery({ queryKey: ['user-stats', user?.id], queryFn: () => userService.getStats(user!.id!), enabled: !!user?.id }); const pacts = query.data?.data || []; const stats = statsQuery.data?.data || {}
-  const filtered = useMemo(() => filter === 'Discover' ? [] : pacts.filter((p: any) => (filter === 'All' || (filter === 'Active' ? p.status === 'active' : p.status !== 'active')) && (p.title || '').toLowerCase().includes(search.toLowerCase())), [pacts, filter, search])
-  // Cap the list to the top 3 (existing sort/filter order) by default, with
-  // a "View all N" button below expanding it in place — no navigation.
-  // Resets to collapsed whenever the filter/search changes so switching tabs
-  // doesn't leave a stale "expanded" list from a different view.
-  const [showAllPacts, setShowAllPacts] = useState(false)
-  useEffect(() => { setShowAllPacts(false) }, [filter, search])
-  const visiblePacts = showAllPacts ? filtered : filtered.slice(0, 3)
-  const grouped = visiblePacts.reduce((g: Record<string, any[]>, p: any) => { (g[p.circle_name || 'Personal pacts'] ||= []).push(p); return g }, {})
-  const activeCount = pacts.filter((p: any) => p.status === 'active').length
-  const winRate = Number(stats.win_rate ?? stats.completion_rate ?? 0)
-  // "Most active" is a best-effort proxy, not a real activity metric: the
-  // backend has no per-pact weekly-activity field, so this scores each pact
-  // by proof_count + active_cheer_count (both already used elsewhere, e.g.
-  // FeedPactCard) and surfaces the highest-scoring one. See
-  // BACKEND_SPEC_PACT_ACTIVITY_METRIC.md for the real field this should be
-  // replaced with once it exists.
-  const mostActivePact = useMemo(() => {
-    if (!pacts.length) return null
-    return [...pacts].sort((a: any, b: any) => {
-      const scoreA = Number(a.proof_count ?? 0) + Number(a.active_cheer_count ?? 0)
-      const scoreB = Number(b.proof_count ?? 0) + Number(b.active_cheer_count ?? 0)
-      return scoreB - scoreA
-    })[0]
-  }, [pacts])
+
+  const query = useQuery({ queryKey: ['my-pacts', user?.id], queryFn: () => pactAdvancedService.getMyPacts(0, 100), enabled: !!user?.id })
+  const daresQuery = useQuery({ queryKey: ['my-dares-page', user?.id], queryFn: () => dareService.getMine(0, 50), enabled: !!user?.id })
+
+  const pacts: any[] = query.data?.data || []
+  const allDares: any[] = (daresQuery.data as any)?.data || []
+
+  // A dare needs attention when the viewer sent it and it is still pending.
+  const dareRows = useMemo(
+    () => allDares.filter((d) => d.creator_id === user?.id && d.status === 'pending' && !d.my_recipient_status),
+    [allDares, user?.id],
+  )
+
+  const matchesSearch = (title: string) => (title || '').toLowerCase().includes(search.toLowerCase())
+  const isBroken = (p: any) => p.status === 'failed' || p.status === 'cancelled'
+  const isActive = (p: any) => p.status === 'active'
+
+  const active = useMemo(
+    () => pacts.filter((p) => isActive(p) && matchesSearch(p.title)).sort((a, b) => deadlineOf(a) - deadlineOf(b)),
+    [pacts, search], // eslint-disable-line react-hooks/exhaustive-deps
+  )
+  const broken = useMemo(() => pacts.filter((p) => isBroken(p) && matchesSearch(p.title)), [pacts, search]) // eslint-disable-line react-hooks/exhaustive-deps
+  const finished = useMemo(
+    () => pacts.filter((p) => !isActive(p) && !isBroken(p) && matchesSearch(p.title)),
+    [pacts, search], // eslint-disable-line react-hooks/exhaustive-deps
+  )
+
+  const showActive = filter === 'All' || filter === 'Active'
+  const showDone = filter === 'All' || filter === 'Done'
+  const showDares = filter === 'All' || filter === 'Active'
+
+  const summary = summaryLine(
+    pacts.filter(isActive).length,
+    dareRows.length,
+    pacts.filter(isBroken).length,
+  )
+
+  const nothingToShow =
+    (!showActive || active.length === 0) && (!showDares || dareRows.length === 0) && (!showDone || (broken.length === 0 && finished.length === 0))
+
   return (
     <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
       <div className="mx-auto max-w-2xl">
-        <header className="flex flex-col gap-2 px-6 pb-2 pt-7">
-          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--muted)]">PACTS</p>
-          <h1 className="text-balance font-serif text-[34px] font-medium leading-[1.08] tracking-[-0.01em] text-[var(--ink)]">
-            Promises, kept in public.
-          </h1>
-          <p className="text-[14px] leading-[1.5] text-[var(--muted)]">
-            Every mark below is a proof someone saw. Nothing is counted that wasn&apos;t witnessed.
-          </p>
+        <header className="flex flex-col gap-2 px-6 pb-1.5 pt-9">
+          <h1 className="text-[34px] font-bold leading-none tracking-[-0.035em]">Your pacts</h1>
+          {summary && <p className="text-[14px] text-[var(--muted)]">{summary}</p>}
         </header>
 
-        <div className="flex items-center justify-between gap-3 px-6 py-4">
+        <div className="flex items-center justify-between gap-3 px-6 pb-3 pt-5">
           {filter !== 'Discover' && (
-            <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-[var(--hairline)] bg-[var(--card)] px-4 text-[14px] text-[var(--muted)]">
+            <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--card)] px-4 text-[14px] text-[var(--muted)]">
               <Search className="h-4 w-4 shrink-0" strokeWidth={1.7} />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search pacts"
-                className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-[var(--muted)]"
+                aria-label="Search pacts"
+                className="min-w-0 flex-1 bg-transparent text-[var(--ink)] outline-none placeholder:text-[var(--muted)]"
               />
             </label>
           )}
           <Link
             href="/pacts/create"
-            className="flex h-11 shrink-0 items-center gap-2 rounded-full bg-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--card)] transition hover:bg-[var(--navy-hover)]"
+            className="ml-auto flex h-11 shrink-0 items-center gap-2 rounded-full bg-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--card)] transition hover:bg-[var(--navy-hover)]"
           >
-            <Plus className="h-4 w-4" strokeWidth={1.8} />
+            <Plus className="h-4 w-4" strokeWidth={2} />
             New pact
           </Link>
         </div>
@@ -107,11 +125,10 @@ function PactsPageInner() {
           {filters.map((item) => (
             <button
               key={item}
+              type="button"
               onClick={() => setFilter(item)}
               className={`h-9 shrink-0 rounded-full px-4 text-[13px] font-semibold transition ${
-                filter === item
-                  ? 'bg-[var(--navy)] text-[var(--card)]'
-                  : 'border border-[var(--hairline)] text-[var(--ink-soft)]'
+                filter === item ? 'bg-[var(--navy)] text-[var(--card)]' : 'border border-[var(--line)] text-[var(--ink-soft)]'
               }`}
             >
               {item}
@@ -120,12 +137,12 @@ function PactsPageInner() {
         </nav>
 
         {query.isError && filter !== 'Discover' && (
-          <div className="flex flex-col gap-3 px-6 py-12 text-center text-[13px] text-[var(--muted)]">
+          <div className="flex flex-col items-start gap-3 px-6 py-8 text-[14px] text-[var(--muted)]">
             <p>We couldn&apos;t load your pacts.</p>
             <button
               type="button"
               onClick={() => query.refetch()}
-              className="mx-auto h-10 rounded-full border border-[var(--navy)] px-4 font-semibold text-[var(--navy)]"
+              className="h-11 rounded-full border-[1.5px] border-[var(--navy)] px-5 font-semibold text-[var(--navy)]"
             >
               Try again
             </button>
@@ -137,34 +154,30 @@ function PactsPageInner() {
             <CuratedContentGrid type="pact" />
           </div>
         ) : query.isLoading ? (
-          <p className="px-6 py-12 text-[13px] text-[var(--muted)]">Loading pacts…</p>
-        ) : Object.keys(grouped).length === 0 ? (
-          <p className="px-6 py-12 text-center font-serif text-[14px] italic text-[var(--muted)]">
-            Nothing here yet. The first pact sets the tone.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-4 px-4 pb-2">
-            {(Object.entries(grouped) as [string, any[]][]).map(([name, rows]) => (
-              <section key={name} className="flex flex-col gap-[18px]">
-                <h2 className="px-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--muted)]">{name}</h2>
-                {rows.map((pact: any) =>
-                  pact.status === 'failed' || pact.status === 'cancelled' ? (
-                    <BrokenPactCard key={pact.id} pact={pact} />
-                  ) : (
-                    <ActivePactCard key={pact.id} pact={pact} />
-                  )
-                )}
-              </section>
-            ))}
-            {!showAllPacts && filtered.length > visiblePacts.length && (
-              <button
-                type="button"
-                onClick={() => setShowAllPacts(true)}
-                className="mx-auto h-11 rounded-full border border-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--navy)]"
-              >
-                View all {filtered.length}
-              </button>
+          <p className="px-6 py-10 text-[14px] text-[var(--muted)]">Loading pacts…</p>
+        ) : nothingToShow && !query.isError ? (
+          <div className="flex flex-col items-start gap-3 px-6 py-8">
+            <p className="text-[14px] text-[var(--muted)]">{pacts.length === 0 ? 'You have no pacts yet.' : 'No pacts match that.'}</p>
+            {pacts.length === 0 && (
+              <Link href="/pacts/create" className="flex h-11 items-center rounded-full bg-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--card)]">
+                Make a pact
+              </Link>
             )}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-[30px] px-4 pt-4">
+            {showActive && active.map((pact) => <ActivePactCard key={pact.id} pact={pact} />)}
+
+            {showDares && dareRows.length > 0 && (
+              <div className="flex flex-col border-b border-[var(--line)] pb-3">
+                {dareRows.map((dare) => (
+                  <DarePactCard key={dare.id} dare={dare} />
+                ))}
+              </div>
+            )}
+
+            {showDone && broken.map((pact) => <BrokenPactCard key={pact.id} pact={pact} />)}
+            {showDone && finished.map((pact) => <FinishedPactRow key={pact.id} pact={pact} />)}
           </div>
         )}
       </div>

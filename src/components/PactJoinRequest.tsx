@@ -80,8 +80,8 @@ export default function PactJoinRequest({
 
   if (isCreator) {
     return (
-      <div className="bg-blue-50 border border-blue-200 rounded-[28px] p-4">
-        <p className="text-sm text-blue-800 font-medium">👑 You are the creator of this pact</p>
+      <div className="bg-[var(--card)] border border-[var(--hairline)] rounded-[14px] p-4">
+        <p className="text-sm text-[var(--ink)] font-medium">You are the creator of this pact</p>
       </div>
     );
   }
@@ -91,7 +91,7 @@ export default function PactJoinRequest({
       <button
         onClick={handleLeavePact}
         disabled={loading}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 rounded-[28px] font-medium transition disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-red-50"
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[var(--card)] hover:bg-[var(--hairline)] border border-[var(--hairline)] text-[var(--ink-soft)] rounded-full font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
       >
         <LogOut size={18} />
         {loading ? 'Leaving...' : 'Leave Pact'}
@@ -105,25 +105,25 @@ export default function PactJoinRequest({
         <button
           onClick={() => (canJoinDirectly ? handleDirectJoin() : setShowRequestForm(true))}
           disabled={loading}
-          className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-[28px] font-medium transition flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-blue-600"
+          className="w-full px-4 py-3 bg-[var(--navy)] hover:bg-[var(--navy-hover)] text-[var(--card)] rounded-full font-medium transition flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <MessageSquare size={18} />
           {loading ? 'joining...' : 'Join Pact'}
         </button>
       ) : (
-        <div className="space-y-3 bg-blue-50 border border-blue-200 rounded-[28px] p-4">
+        <div className="space-y-3 bg-[var(--card)] border border-[var(--hairline)] rounded-[14px] p-4">
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Optional: Why do you want to join this pact?"
-            className="w-full p-2 border border-blue-300 rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2 border border-[var(--hairline)] rounded-[6px] bg-[var(--card)] text-sm text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--navy)]"
             rows={3}
           />
           <div className="flex gap-2">
             <button
               onClick={handleSendRequest}
               disabled={loading}
-              className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-blue-600"
+              className="flex-1 px-4 py-2 bg-[var(--navy)] hover:bg-[var(--navy-hover)] text-[var(--card)] rounded-full font-medium transition flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Send size={16} />
               {loading ? 'Sending...' : 'Send Request'}
@@ -133,12 +133,12 @@ export default function PactJoinRequest({
                 setShowRequestForm(false);
                 setMessage('');
               }}
-              className="flex-1 px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded font-medium transition"
+              className="flex-1 px-4 py-2 bg-[var(--card)] border border-[var(--hairline)] text-[var(--ink-soft)] rounded-full font-medium transition"
             >
               Cancel
             </button>
           </div>
-          <p className="text-xs text-[#6B7280]">
+          <p className="text-xs text-[var(--muted)]">
             Your request will be reviewed by the pact creator
           </p>
         </div>

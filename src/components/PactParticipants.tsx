@@ -83,20 +83,20 @@ export default function PactParticipants({ pactId, canViewParticipants = true }:
       </div>
 
       {participants.length === 0 ? (
-        <p className="text-sm text-[#9CA3AF] text-center py-8">No participants yet</p>
+        <p className="text-sm text-[var(--muted)] text-center py-8">No participants yet</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {participants.map((participant) => (
             <div
               key={participant.participant_id}
-              className="flex items-center justify-between p-3 bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] rounded-[28px] hover:bg-[#FAF9FE] transition"
+              className="flex items-center justify-between p-3 bg-[var(--card)] border border-[var(--hairline)] rounded-[14px] hover:bg-[var(--paper)] transition"
             >
               <div className="flex-1">
-                <p className="font-medium text-[#14121F]">{participant.full_name}</p>
-                <p className="text-xs text-[#6B7280]">@{participant.username}</p>
+                <p className="font-medium text-[var(--ink)]">{participant.full_name}</p>
+                <p className="text-xs text-[var(--muted)]">@{participant.username}</p>
               </div>
               <div className="text-right">
-                <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded capitalize">
+                <span className="inline-block px-2 py-1 bg-[var(--paper)] text-[var(--navy)] text-xs font-medium rounded-full capitalize">
                   {participant.role}
                 </span>
               </div>

@@ -38,28 +38,28 @@ const getTransactionIcon = (type: string) => {
 const getTransactionColor = (type: string) => {
   switch (type) {
     case 'deposit':
-      return 'text-[#A78BFA] bg-[#EDE9FE]';
+      return 'text-[var(--navy)] bg-[var(--paper)]';
     case 'withdraw':
-      return 'text-red-600 bg-red-50';
+      return 'text-[var(--ink-soft)] bg-[var(--card-muted)]';
     case 'stake':
-      return 'text-orange-600 bg-orange-50';
+      return 'text-[var(--warn-text)] bg-[var(--warn-bg)]';
     case 'reward':
-      return 'text-blue-600 bg-blue-50';
+      return 'text-[var(--navy)] bg-[var(--paper)]';
     default:
-      return 'text-gray-600 bg-gray-50';
+      return 'text-[var(--muted)] bg-[var(--card-muted)]';
   }
 };
 
 const getStatusColor = (status: string) => {
   switch (status) {
     case 'completed':
-      return 'text-emerald-700 bg-emerald-100';
+      return 'text-[var(--navy)] bg-[var(--paper)]';
     case 'pending':
-      return 'text-orange-700 bg-orange-100';
+      return 'text-[var(--warn-text)] bg-[var(--warn-bg)]';
     case 'failed':
-      return 'text-red-700 bg-red-100';
+      return 'text-[var(--ink-soft)] bg-[var(--card-muted)]';
     default:
-      return 'text-gray-700 bg-gray-100';
+      return 'text-[var(--muted)] bg-[var(--card-muted)]';
   }
 };
 

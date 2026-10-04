@@ -41,15 +41,15 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
             priority
           />
         </div>
-        <div className="p-4 bg-white">
+        <div className="p-4 bg-[var(--card)]">
           <div className="flex items-start justify-between mb-2">
-            <span className="text-sm font-semibold text-[#14121F]">{proof.timestamp}</span>
-            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
-              📷 Photo
+            <span className="text-sm font-semibold text-[var(--ink)]">{proof.timestamp}</span>
+            <span className="text-xs bg-[var(--paper)] text-[var(--navy)] px-2 py-1 rounded-full font-medium">
+              Photo
             </span>
           </div>
           {proof.description && (
-            <p className="text-sm text-[#6B7280]">{proof.description}</p>
+            <p className="text-sm text-[var(--muted)]">{proof.description}</p>
           )}
         </div>
       </div>
@@ -59,7 +59,7 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
   // Video display
   if (proof.type === 'video' && proof.url) {
     return (
-      <div className="rounded-[24px] overflow-hidden bg-slate-900 border border-[rgba(20,18,31,0.06)]">
+      <div className="rounded-[14px] overflow-hidden bg-[var(--ink)] border border-[var(--hairline)]">
         <div className="relative aspect-video w-full bg-black flex items-center justify-center group cursor-pointer">
           <video
             src={proof.url}
@@ -72,15 +72,15 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
             </div>
           )}
         </div>
-        <div className="p-4 bg-white">
+        <div className="p-4 bg-[var(--card)]">
           <div className="flex items-start justify-between mb-2">
-            <span className="text-sm font-semibold text-[#14121F]">{proof.timestamp}</span>
+            <span className="text-sm font-semibold text-[var(--ink)]">{proof.timestamp}</span>
             <span className="text-xs bg-card-muted text-ink-soft px-2 py-1 rounded-full font-medium">
-              🎥 Video
+              Video
             </span>
           </div>
           {proof.description && (
-            <p className="text-sm text-[#6B7280]">{proof.description}</p>
+            <p className="text-sm text-[var(--muted)]">{proof.description}</p>
           )}
         </div>
       </div>
@@ -94,24 +94,24 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
     const completionPercent = Math.round((completedCount / totalCount) * 100);
 
     return (
-      <div className="rounded-[24px] bg-white border border-[rgba(20,18,31,0.06)] overflow-hidden">
-        <div className="p-4 bg-card border-b border-[rgba(20,18,31,0.06)]">
+      <div className="rounded-[14px] bg-[var(--card)] border border-[var(--hairline)] overflow-hidden">
+        <div className="p-4 bg-[var(--card)] border-b border-[var(--hairline)]">
           <div className="flex items-start justify-between mb-3">
             <div>
-              <span className="text-sm font-semibold text-[#14121F] block">{proof.timestamp}</span>
+              <span className="text-sm font-semibold text-[var(--ink)] block">{proof.timestamp}</span>
               {proof.description && (
-                <p className="text-sm text-[#6B7280] mt-1">{proof.description}</p>
+                <p className="text-sm text-[var(--muted)] mt-1">{proof.description}</p>
               )}
             </div>
-            <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium">
-              ✓ Checklist
+            <span className="text-xs bg-[var(--paper)] text-[var(--navy)] px-2 py-1 rounded-full font-medium">
+              Checklist
             </span>
           </div>
 
           {/* Progress bar */}
           <div className="mb-2">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-[#6B7280]">Progress</span>
+              <span className="text-xs font-medium text-[var(--muted)]">Progress</span>
               <span className="text-sm font-bold text-navy">
                 {completedCount}/{totalCount}
               </span>
