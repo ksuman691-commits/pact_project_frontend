@@ -6,8 +6,8 @@
    "Classic" design system — CirclePact honest-accountability redesign.
    Single source of truth for color. Every token below is referenced by
    both the Tailwind color extension (tailwind.config.ts) and the legacy
-   --bg-*/--accent-*/--pact-* variable names that pre-existing components
-   already consume, so repointing the values here re-themes the whole app
+   bg-, accent-, and pact- prefixed variable names that pre-existing
+   components already consume, so repointing the values here re-themes the whole app
    without having to touch every component file individually.
    ========================================================================== */
 :root {

@@ -19,6 +19,11 @@ const authItems = [
   { href: '/dares', label: 'Dares', icon: Zap },
 ]
 
+// Classic redesign: the floating gradient pill (which has twice caused
+// content below it to be hidden/overlapped) is replaced with a flat,
+// edge-to-edge bar fixed to the bottom of the viewport. Every page's
+// scrollable content is expected to reserve bottom padding (see
+// `pb-nav-safe` usage across pages) so nothing sits underneath it.
 export default function BottomNav() {
   const pathname = usePathname()
   const { user, isInitialized } = useAuthStore()
@@ -54,112 +59,68 @@ export default function BottomNav() {
   const isActive = (href: string) => pathname === href || pathname?.startsWith(href + '/')
 
   return (
-    // Floating pill, not an edge-to-edge strip — the dark page background
-    // (each route's own .pact-flow wrapper) shows through around and beneath
-    // it instead of the old light strip. See globals.css: --pact-* tokens
-    // were previously scoped to .pact-flow only, so this nav (rendered in
-    // the root layout, outside any page's .pact-flow div) fell back to the
-    // hardcoded light defaults baked into the old inline styles below.
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-      {/* Static rainbow border matching the supplied reference: the gradient
-          stays fixed around the pill instead of rotating or breathing like
-          the Avatar ring. The inner surface is inset by `margin` so only the
-          narrow purple/pink/gold outline remains visible. */}
-      <div className="relative w-full max-w-[280px] overflow-hidden rounded-full">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 rounded-full"
-          style={{
-            background:
-              'var(--pact-pink)',
-          }}
-        />
-        <div
-          aria-hidden="true"
-          className="avatar-ring-spin pointer-events-none absolute inset-0 rounded-full"
-          style={{
-            background:
-              'conic-gradient(from 0deg, var(--pact-pink), var(--pact-gold), var(--pact-mint), var(--pact-violet), var(--pact-pink))',
-          }}
-        />
-        <div
-          className="relative flex items-center gap-1 rounded-full border px-2 py-2.5 backdrop-blur-xl"
-          style={{
-            margin: 2,
-            background: 'var(--pact-surface)',
-            borderColor: 'var(--pact-hairline)',
-            boxShadow: '0 12px 32px var(--pact-shadow-violet)',
-          }}
-        >
-          {authItems.map((item) => {
-          const Icon = item.icon
-          const active = isActive(item.href)
-          const isDares = item.href === '/dares'
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="relative flex flex-1 flex-col items-center justify-center gap-0.5 py-1"
-              title={item.label}
-              aria-label={item.label}
-              aria-current={active ? 'page' : undefined}
-            >
-              <span className="relative flex h-11 w-11 items-center justify-center rounded-full transition-transform active:scale-90">
-                {/* Active-tab illumination: soft violet/pink aura behind the
-                    icon, breathing at the same cadence as PremiumJoinButton's
-                    aura so "you are here" reads consistently across the app. */}
-                {active && (
-                  <span
-                    aria-hidden="true"
-                    className="pact-bottomnav-active-glow pointer-events-none absolute inset-0 rounded-full blur-md"
-                    style={{ background: 'radial-gradient(circle, rgba(24,119,242,0.55), rgba(24,119,242,0.4) 55%, transparent 78%)' }}
-                  />
-                )}
+    <nav
+      className="fixed inset-x-0 bottom-0 z-40 flex border-t"
+      style={{
+        background: 'var(--card)',
+        borderColor: 'var(--hairline)',
+        paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
+        paddingTop: '8px',
+        paddingLeft: '8px',
+        paddingRight: '8px',
+      }}
+    >
+      {authItems.map((item) => {
+        const Icon = item.icon
+        const active = isActive(item.href)
+        const isDares = item.href === '/dares'
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="relative flex flex-1 flex-col items-center justify-center gap-1"
+            style={{ minHeight: 44 }}
+            title={item.label}
+            aria-label={item.label}
+            aria-current={active ? 'page' : undefined}
+          >
+            <span className="relative flex items-center justify-center">
+              <Icon
+                className="h-5 w-5"
+                strokeWidth={1.8}
+                style={{ color: active ? 'var(--navy)' : 'var(--muted)' }}
+              />
+              {/* Dares indicator: only shows when the viewer actually has a
+                  pending dare waiting on their response — a plain navy dot,
+                  not a glowing/pulsing badge, since it is backed by real
+                  data but doesn't need decoration to be legible. */}
+              {isDares && pendingForYouCount > 0 && (
                 <span
-                  className="relative z-10 flex h-full w-full items-center justify-center rounded-full transition-colors"
-                  style={
-                    active
-                      ? {
-                          background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))',
-                          color: 'var(--pact-text)',
-                          boxShadow: '0 4px 14px var(--pact-shadow-violet)',
-                        }
-                      : { color: 'var(--pact-text-faint)' }
-                  }
-                >
-                  <Icon className="h-5 w-5" strokeWidth={2} />
-                </span>
-                {/* Dares "live" indicator: a small pulsing dot that now only
-                    shows when the viewer actually has a pending dare waiting
-                    on their response (getMine() filtered client-side, same
-                    as the /dares "For You" tab) — no longer a purely
-                    decorative always-on pulse. Corner-positioned so it stays
-                    visually distinct from the active-tab glow above even
-                    when Dares is the active tab. */}
-                {isDares && pendingForYouCount > 0 && (
-                  <span
-                    aria-hidden="true"
-                    className="pact-bottomnav-live-dot pointer-events-none absolute -top-0.5 right-0 z-20 h-2 w-2 rounded-full"
-                    style={{ background: 'var(--pact-mint)', boxShadow: '0 0 6px var(--pact-mint)' }}
-                  />
-                )}
-              </span>
-              {/* Text label under each icon — small (10px), matching the
-                  app's Inter font system. Shares the same active/inactive
-                  emphasis logic as the icon above it (gradient-toned when
-                  active, faint when inactive) so the label lights up in
-                  step with the icon rather than staying flat. */}
-              <span
-                className="text-[10px] font-medium leading-none transition-colors"
-                style={active ? { color: 'var(--pact-violet)' } : { color: 'var(--pact-text-faint)' }}
-              >
-                {item.label}
-              </span>
-            </Link>
-          )
-          })}
-        </div>
-      </div>
+                  aria-hidden="true"
+                  className="pact-bottomnav-live-dot absolute -top-0.5 -right-1.5 h-[6px] w-[6px] rounded-full"
+                  style={{ background: 'var(--navy)' }}
+                />
+              )}
+            </span>
+            {/* Active-state indicator: a small dot above the label instead
+                of a filled/glowing icon background. */}
+            <span
+              aria-hidden="true"
+              className="h-[5px] w-[5px] rounded-full"
+              style={{ background: active ? 'var(--navy)' : 'transparent' }}
+            />
+            <span
+              className="text-[12px] leading-none"
+              style={{
+                color: active ? 'var(--navy)' : 'var(--muted)',
+                fontWeight: active ? 600 : 400,
+              }}
+            >
+              {item.label}
+            </span>
+          </Link>
+        )
+      })}
     </nav>
   )
 }

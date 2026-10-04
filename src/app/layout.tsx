@@ -1,6 +1,6 @@
 import '@/styles/globals.css';
 import type { Metadata, Viewport } from 'next';
-import { Bricolage_Grotesque, IBM_Plex_Mono, Inter } from 'next/font/google';
+import { Fraunces, Figtree, IBM_Plex_Mono } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import AuthInitializer from '@/components/AuthInitializer';
 import AgeVerificationGate from '@/components/AgeVerificationGate';
@@ -9,19 +9,24 @@ import InAppNavigationTracker from '@/components/InAppNavigationTracker';
 import QueryProvider from '@/providers/QueryProvider';
 import BottomNav from '@/components/BottomNav';
 
-// Scoped to the "Create a Pact" immersive flow only (see .pact-flow in
-// globals.css) — the rest of the app keeps its existing light theme fonts.
-const bricolageGrotesque = Bricolage_Grotesque({
+// "Classic" redesign type system — site-wide, not scoped to a single flow.
+// Kept under the pre-existing --font-pact-* variable names so every
+// .pact-flow surface (create-pact/create-circle wizards) inherits these
+// fonts automatically without needing per-component edits.
+const fraunces = Fraunces({
   subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  style: ['normal', 'italic'],
   variable: '--font-pact-display',
 });
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ['latin'],
-  weight: ['400', '500', '600'],
+  weight: ['400', '500'],
   variable: '--font-pact-mono',
 });
-const inter = Inter({
+const figtree = Figtree({
   subsets: ['latin'],
+  weight: ['400', '500', '600'],
   variable: '--font-pact-body',
 });
 
@@ -37,7 +42,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#A78BFA',
+  themeColor: '#F4EFE4',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -50,9 +55,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="bg-[#F4F2FB]">
+    <html lang="en" className="bg-paper">
       <body
-        className={`${bricolageGrotesque.variable} ${ibmPlexMono.variable} ${inter.variable} bg-[#F4F2FB] text-[#14121F] antialiased`}
+        className={`${fraunces.variable} ${ibmPlexMono.variable} ${figtree.variable} font-sans bg-paper text-ink antialiased`}
       >
         <QueryProvider>
           <InAppNavigationTracker />
@@ -61,7 +66,19 @@ export default function RootLayout({
           <NotificationRealtimeBridge />
           {children}
           <BottomNav />
-          <Toaster position="top-center" />
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              style: {
+                background: 'var(--ink)',
+                color: 'var(--card)',
+                border: '1px solid var(--ink)',
+                borderRadius: '6px',
+                fontFamily: 'var(--font-pact-body), sans-serif',
+                fontSize: '14px',
+              },
+            }}
+          />
         </QueryProvider>
       </body>
     </html>
