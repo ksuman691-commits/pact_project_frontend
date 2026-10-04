@@ -3,14 +3,13 @@
 import Link from 'next/link'
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Plus, Search, CheckCircle2 } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import BottomNav from '@/components/BottomNav'
-import PactProgressRing, { getPactProgress } from '@/components/PactProgressRing'
 import CuratedContentGrid from '@/components/CuratedContentGrid'
+import { ActivePactCard, BrokenPactCard } from '@/components/classic/PactCard'
 import { pactAdvancedService, userService } from '@/services/api'
 import { useAuthStore } from '@/store/auth'
-import { hasPactMomentum } from '@/lib/pactMomentum'
 
 // "Discover" added alongside the existing My-Pacts filters: it's not a
 // fourth way to slice the viewer's own pacts (like All/Active/Done are), so
@@ -70,45 +69,106 @@ function PactsPageInner() {
       return scoreB - scoreA
     })[0]
   }, [pacts])
-  return <main className="min-h-screen bg-[var(--pact-bg)] pb-28 text-[var(--pact-text)]"><div className="mx-auto max-w-5xl px-5 pb-10 pt-8 md:px-10 md:pt-14"><header className="border-b border-[var(--pact-hairline)] pb-8"><p className="text-xs font-bold uppercase tracking-[0.28em] text-[var(--pact-violet)]">Pacts</p><h1 className="mt-3 text-balance text-5xl font-black tracking-[-0.07em] text-[var(--pact-text)] md:text-7xl">{activeCount}<span className="ml-3 text-2xl font-medium tracking-[-0.03em] text-[var(--pact-text-muted)] md:text-3xl">Pacts in motion right now</span></h1>
-    {/* Unified stat card — matches the Circles/Dares landing pages' stat card treatment.
-        "Active" is self-referential (sets the tab already on this page rather than navigating),
-        "Win rate" goes to the profile stats, "Most active" deep-links to that pact's own detail page. */}
-    <div className="mt-6 flex items-stretch divide-x divide-[var(--pact-hairline)] rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)]">
-      <button type="button" onClick={() => setFilter('Active')} className="flex-1 px-4 py-3 text-center transition hover:bg-[var(--pact-surface-2)]">
-        <p className="text-lg font-black text-[var(--pact-text)]">{activeCount}</p>
-        <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">Active</p>
-      </button>
-      <Link href="/profile" className="flex-1 px-4 py-3 text-center transition hover:bg-[var(--pact-surface-2)]">
-        <p className="text-lg font-black text-[var(--pact-text)]">{Math.round(winRate)}%</p>
-        <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">Win rate</p>
-      </Link>
-      {mostActivePact ? (
-        <Link href={`/pacts/${mostActivePact.id}`} className="flex-1 px-4 py-3 text-center transition hover:bg-[var(--pact-surface-2)]">
-          <p className="truncate text-sm font-black text-[var(--pact-text)]">{mostActivePact.title}</p>
-          <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">Most active</p>
-        </Link>
-      ) : (
-        <div className="flex-1 px-4 py-3 text-center">
-          <p className="truncate text-sm font-black text-[var(--pact-text)]">—</p>
-          <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">Most active</p>
+  return (
+    <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
+      <div className="mx-auto max-w-2xl">
+        <header className="flex flex-col gap-2 px-6 pb-2 pt-7">
+          <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--muted)]">PACTS</p>
+          <h1 className="text-balance font-serif text-[34px] font-medium leading-[1.08] tracking-[-0.01em] text-[var(--ink)]">
+            Promises, kept in public.
+          </h1>
+          <p className="text-[14px] leading-[1.5] text-[var(--muted)]">
+            Every mark below is a proof someone saw. Nothing is counted that wasn&apos;t witnessed.
+          </p>
+        </header>
+
+        <div className="flex items-center justify-between gap-3 px-6 py-4">
+          {filter !== 'Discover' && (
+            <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-[var(--hairline)] bg-[var(--card)] px-4 text-[14px] text-[var(--muted)]">
+              <Search className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search pacts"
+                className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-[var(--muted)]"
+              />
+            </label>
+          )}
+          <Link
+            href="/pacts/create"
+            className="flex h-11 shrink-0 items-center gap-2 rounded-full bg-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--card)] transition hover:bg-[var(--navy-hover)]"
+          >
+            <Plus className="h-4 w-4" strokeWidth={1.8} />
+            New pact
+          </Link>
         </div>
-      )}
-    </div>
-  </header>
-  {/* "New Pact" gets its own centered row directly under the stat card,
-      matching the Dares/Circles landing pages' treatment — a prominent,
-      full-width CTA rather than a small icon-only button tucked in a
-      corner. */}
-  <div className="flex justify-center pt-6">
-    <Link
-      href="/pacts/create"
-      className="pact-btn-glow flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold text-[var(--pact-text)]"
-      style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
-    >
-      <Plus className="h-4 w-4" />
-      New Pact
-    </Link>
-  </div>
-  {query.isError && filter !== 'Discover' && <div className="flex flex-col gap-3 py-12 text-center text-sm text-[var(--pact-text-muted)]"><p>We couldn&apos;t load your pacts.</p><button type="button" onClick={() => query.refetch()} className="mx-auto rounded-full border border-[var(--pact-violet)] px-4 py-2 font-semibold text-[var(--pact-text)]">Try again</button></div>}<div className="flex items-center gap-5 border-b border-[var(--pact-hairline)] py-5">{filter !== 'Discover' && <label className="flex min-w-0 flex-1 items-center gap-2 text-sm text-[var(--pact-text-muted)]"><Search className="h-4 w-4" /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search pacts" className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-[var(--pact-text-faint)]" /></label>}<nav className="flex gap-4 text-sm" aria-label="Pact filters">{filters.map(item => <button key={item} onClick={() => setFilter(item)} className={`border-b pb-1 ${filter === item ? 'border-[var(--pact-violet)] font-bold text-[var(--pact-text)]' : 'border-transparent text-[var(--pact-text-faint)]'}`}>{item}</button>)}</nav></div>{filter === 'Discover' ? <div className="py-8"><CuratedContentGrid type="pact" /></div> : query.isLoading ? <p className="py-12 text-sm text-[var(--pact-text-muted)]">Loading pacts…</p> : Object.keys(grouped).length === 0 ? <p className="border-b border-[var(--pact-hairline)] py-12 text-center text-sm text-[var(--pact-text-muted)]">No pacts in this view.</p> : <div>{(Object.entries(grouped) as [string, any[]][]).map(([name, rows]) => <section key={name} className="pt-8"><h2 className="mb-3 text-[11px] font-black uppercase tracking-[0.28em] text-[var(--pact-violet)]">{name}</h2><div className="flex flex-col gap-3">{rows.map((pact: any) => { const progress = getPactProgress(pact); return <Link href={`/pacts/${pact.id}`} key={pact.id} className="flex items-center gap-4 rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)] p-4 transition hover:border-[var(--pact-violet)] hover:bg-[var(--pact-surface-2)]"><PactProgressRing completed={progress.completed} total={progress.total} missed={progress.missed} size={58} momentum={hasPactMomentum(pact)} /><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h3 className="truncate font-bold text-[var(--pact-text)]">{pact.title}</h3>{pact.status === 'completed' && <CheckCircle2 className="h-4 w-4 text-[var(--pact-violet)]" />}</div><p className="mt-1 text-sm text-[var(--pact-text-muted)]">Day {progress.completed} of {progress.total}</p></div>{progress.missed > 0 && <span className="text-xs text-[var(--pact-danger)]">{progress.missed} missed</span>}</Link>})}</div></section>)}{filtered.length > 3 && <button type="button" onClick={() => setShowAllPacts(v => !v)} className="mt-8 w-full rounded-full border border-[var(--pact-hairline)] py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-[var(--pact-text-muted)] transition hover:border-[var(--pact-violet)] hover:text-[var(--pact-text)]">{showAllPacts ? 'Show less' : `View all ${filtered.length}`}</button>}</div>}</div><BottomNav /></main>
+
+        <nav className="flex gap-2 overflow-x-auto px-6 pb-4" aria-label="Pact filters">
+          {filters.map((item) => (
+            <button
+              key={item}
+              onClick={() => setFilter(item)}
+              className={`h-9 shrink-0 rounded-full px-4 text-[13px] font-semibold transition ${
+                filter === item
+                  ? 'bg-[var(--navy)] text-[var(--card)]'
+                  : 'border border-[var(--hairline)] text-[var(--ink-soft)]'
+              }`}
+            >
+              {item}
+            </button>
+          ))}
+        </nav>
+
+        {query.isError && filter !== 'Discover' && (
+          <div className="flex flex-col gap-3 px-6 py-12 text-center text-[13px] text-[var(--muted)]">
+            <p>We couldn&apos;t load your pacts.</p>
+            <button
+              type="button"
+              onClick={() => query.refetch()}
+              className="mx-auto h-10 rounded-full border border-[var(--navy)] px-4 font-semibold text-[var(--navy)]"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
+        {filter === 'Discover' ? (
+          <div className="px-6 py-4">
+            <CuratedContentGrid type="pact" />
+          </div>
+        ) : query.isLoading ? (
+          <p className="px-6 py-12 text-[13px] text-[var(--muted)]">Loading pacts…</p>
+        ) : Object.keys(grouped).length === 0 ? (
+          <p className="px-6 py-12 text-center font-serif text-[14px] italic text-[var(--muted)]">
+            Nothing here yet. The first pact sets the tone.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-4 px-4 pb-2">
+            {(Object.entries(grouped) as [string, any[]][]).map(([name, rows]) => (
+              <section key={name} className="flex flex-col gap-[18px]">
+                <h2 className="px-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--muted)]">{name}</h2>
+                {rows.map((pact: any) =>
+                  pact.status === 'failed' || pact.status === 'cancelled' ? (
+                    <BrokenPactCard key={pact.id} pact={pact} />
+                  ) : (
+                    <ActivePactCard key={pact.id} pact={pact} />
+                  )
+                )}
+              </section>
+            ))}
+            {!showAllPacts && filtered.length > visiblePacts.length && (
+              <button
+                type="button"
+                onClick={() => setShowAllPacts(true)}
+                className="mx-auto h-11 rounded-full border border-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--navy)]"
+              >
+                View all {filtered.length}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+      <BottomNav />
+    </main>
+  )
 }
