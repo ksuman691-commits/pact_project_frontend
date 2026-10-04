@@ -91,6 +91,7 @@ export default function CircleDetailPage() {
   const privacyKey = ((circle as any).visibility || (circle as any).privacy || 'public') as string
   const privacyLabel = PRIVACY_LABEL[privacyKey] || 'Anyone can join'
   const startedLabel = circle.created_at ? new Date(circle.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : null
+  const memberCount = circle.member_count ?? members.length
   // Weekly activity is only shown when the API gives a real boolean for
   // every member (see BACKEND_SPEC_MEMBER_ACTIVITY.md). Otherwise: no ticks,
   // no statuses, just the member list.
@@ -128,7 +129,7 @@ export default function CircleDetailPage() {
         )}
         <h1 className="text-balance text-[34px] font-bold leading-none tracking-[-0.035em]">{circle.name}</h1>
         {circle.description && <p className="max-w-[300px] text-[15px] leading-[1.45] text-[var(--ink-soft)]">{circle.description}</p>}
-        <p className="text-[13px] text-[var(--muted)]">{privacyLabel}{startedLabel ? ` · started ${startedLabel}` : ''}</p>
+        <p className="text-[13px] text-[var(--muted)]">{memberCount} {memberCount === 1 ? 'person' : 'people'} · {privacyLabel}{startedLabel ? ` · started ${startedLabel}` : ''}</p>
       </div>
 
       <div className="mx-4 mt-[22px] flex flex-col gap-2.5">

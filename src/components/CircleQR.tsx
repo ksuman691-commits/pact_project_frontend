@@ -13,7 +13,12 @@ export const circleWallUrl = (id: number) => {
 
 const INK = '#17181D';
 
-/** The full, scannable QR code: ink modules on white-warm ground, crisp edges. */
+/**
+ * The full, scannable QR code: ink modules on white-warm ground, crisp
+ * edges. Circle QR codes are available in full, immediately, from the
+ * moment a circle is created — no member-count or "maturity" threshold
+ * gates them.
+ */
 export function CircleQR({ url, size = 208, label = 'CirclePact QR code' }: { url: string; size?: number; label?: string }) {
   const matrix = useMemo(() => {
     const qr = QRCode.create(url, { errorCorrectionLevel: 'H' }) as any;
@@ -35,6 +40,7 @@ function slugify(name: string) {
   return name.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
 }
 
+/** Loads an SVG string as a rasterizable <img>, resolving once it's decoded. */
 function loadSvgAsImage(svgMarkup: string): Promise<{ image: HTMLImageElement; revoke: () => void }> {
   return new Promise((resolve, reject) => {
     const svgUrl = URL.createObjectURL(new Blob([svgMarkup], { type: 'image/svg+xml' }));

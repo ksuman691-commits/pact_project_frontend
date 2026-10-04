@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
-import { Upload, Users, CheckCircle2, XCircle, Clock, CalendarClock, ShieldCheck, Zap, CheckCheck } from 'lucide-react';
+import { Upload, Users, CheckCircle2, XCircle, Clock, CalendarClock, ShieldCheck, Zap, CheckCheck, Share2 } from 'lucide-react';
 import DetailPageHeader from '@/components/DetailPageHeader';
 import { useSeedBackHistory } from '@/hooks/useSeedBackHistory';
 import { useDareDetail, useDareRecipients, useDareStats } from '@/hooks/useDareQueries';
@@ -11,10 +11,11 @@ import { useAcceptDare, useDeclineDare, useClaimDare } from '@/hooks/useDareMuta
 import DareRecipientsModal from '@/components/DareRecipientsModal';
 import DareProofUploadModal from '@/components/DareProofUploadModal';
 import DareVerificationModal from '@/components/DareVerificationModal';
+import DareShareSheet from '@/components/DareShareSheet';
 import Avatar from '@/components/Avatar';
 import DareTimeRing from '@/components/DareTimeRing';
 import { formatCountdown, formatRelativeTime, parseApiDate, urgencyColor } from '@/lib/dareCountdown';
-import { useAuthStore } from '@/store/auth';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 
 const STATUS_PILL: Record<string, { label: string; color: string }> = {
   pending: { label: 'Pending', color: 'var(--pact-gold)' },
@@ -37,12 +38,18 @@ function StatGroup({ icon: Icon, value, label, color }: { icon: any; value: numb
 export default function DareDetailPage() {
   const params = useParams();
   const dareId = parseInt(params.id as string);
-  const { user } = useAuthStore();
+  const { user, isInitialized } = useRequireAuth();
   useSeedBackHistory('/dares');
 
-  const dareQuery = useDareDetail(dareId);
-  const recipientsQuery = useDareRecipients(dareId);
-  const statsQuery = useDareStats(dareId);
+  // `enabled: isInitialized` guards against the same auth-rehydration race
+  // documented in useDareQueries.ts: this page mounts unconditionally on
+  // direct navigation/hard reload, before auth has finished rehydrating
+  // from localStorage. Firing these fetches first is what could leave
+  // `dare` permanently undefined after an unretried 401 even though the
+  // account was genuinely 'accepted' on the backend the whole time.
+  const dareQuery = useDareDetail(dareId, { enabled: isInitialized });
+  const recipientsQuery = useDareRecipients(dareId, { enabled: isInitialized });
+  const statsQuery = useDareStats(dareId, { enabled: isInitialized });
 
   const acceptMutation = useAcceptDare();
   const declineMutation = useDeclineDare();
@@ -51,6 +58,7 @@ export default function DareDetailPage() {
   const [proofModalOpen, setProofModalOpen] = useState(false);
   const [verifyModalOpen, setVerifyModalOpen] = useState(false);
   const [recipientsModalOpen, setRecipientsModalOpen] = useState(false);
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
 
   const dare = dareQuery.data?.data;
 
@@ -58,7 +66,12 @@ export default function DareDetailPage() {
   const handleDecline = () => declineMutation.mutate(dareId, { onSuccess: () => dareQuery.refetch() });
   const handleClaim = () => claimMutation.mutate(dareId, { onSuccess: () => dareQuery.refetch() });
 
-  if (dareQuery.isLoading) {
+  // While auth hasn't finished rehydrating, the queries above are
+  // deliberately disabled (see the enabled: isInitialized comment), so
+  // react-query's own isLoading would read false and briefly fall through
+  // to the "not found" state below instead of staying in loading. Fold
+  // !isInitialized into this check so the shimmer covers that gap too.
+  if (!isInitialized || dareQuery.isLoading) {
     return (
       <div className="pact-flow min-h-screen">
         <DetailPageHeader title="Loading dare…" fallbackHref="/dares" />
@@ -140,6 +153,17 @@ export default function DareDetailPage() {
               <CheckCheck className="h-2.5 w-2.5" />
               Completed
             </span>
+            {/* Share action — only surfaced once there's actually a proof
+                photo to share, same gating as the Completed pill above. */}
+            <button
+              onClick={() => setShareSheetOpen(true)}
+              aria-label="Share this dare"
+              className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md transition hover:opacity-90"
+              style={{ background: 'rgba(0,0,0,0.45)' }}
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              Share
+            </button>
           </div>
         )}
 
@@ -343,6 +367,12 @@ export default function DareDetailPage() {
         ) : null}
       </div>
 
+      <DareShareSheet
+        isOpen={shareSheetOpen}
+        onClose={() => setShareSheetOpen(false)}
+        dareId={dareId}
+        dareTitle={dare.title}
+      />
       <DareProofUploadModal isOpen={proofModalOpen} onClose={() => setProofModalOpen(false)} dareId={dareId} />
       <DareVerificationModal isOpen={verifyModalOpen} onClose={() => setVerifyModalOpen(false)} dareId={dareId} />
       <DareRecipientsModal
