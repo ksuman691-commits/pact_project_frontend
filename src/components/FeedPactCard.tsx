@@ -25,6 +25,7 @@ import PremiumJoinButton from './PremiumJoinButton';
 import GoalMatchStrip from './GoalMatchStrip';
 import PactGallery, { buildGalleryTiles } from './PactGallery';
 import ActivePactFireBadge from './ActivePactFireBadge';
+import CircleChip from './classic/CircleChip';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useCreateCheer } from '@/hooks/usePactMutations';
 import { useGoalMatches } from '@/hooks/usePactMatches';
@@ -843,9 +844,11 @@ export default function FeedPactCard({
               the photo like before. */}
           <div className="mt-3 flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
+              {circleLabel && pact.circle_id != null && (
+                <CircleChip circleId={pact.circle_id} circleName={circleLabel} variant="feed" className="mb-1" />
+              )}
               {pactCategoryLabel && <p className="text-[11px] font-bold text-[var(--pact-text-faint)]">{pactCategoryLabel}</p>}
               <h2 className="mt-0.5 text-lg font-black leading-tight text-[var(--pact-text)] text-balance">{pact.title}</h2>
-              {circleLabel && <p className="mt-0.5 text-xs font-medium text-[var(--pact-text-faint)]">{circleLabel}</p>}
             </div>
             <div className="flex flex-shrink-0 items-center" onClick={(event) => event.stopPropagation()}>
               {showRing && (

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import TallyGrid, { type TallyCellStatus } from './TallyGrid'
+import CircleChip, { PersonalPactLabel } from './CircleChip'
 import { getPactProgress } from '@/components/PactProgressRing'
 
 function buildDays(total: number, completed: number, missed: number): TallyCellStatus[] {
@@ -77,6 +78,12 @@ export function ActivePactCard({ pact }: { pact: any }) {
       )}
 
       <div className="flex flex-col gap-4">
+        {isGroup ? (
+          <CircleChip circleId={pact.circle_id} circleName={pact.circle_name} variant="lead" />
+        ) : (
+          <PersonalPactLabel />
+        )}
+
         <div>
           <h3 className="pr-24 text-balance text-[26px] font-bold leading-[1.08] tracking-[-0.03em] text-[var(--ink)]">{pact.title}</h3>
           {subtitle && <p className="mt-1.5 pr-24 text-[14px] text-[var(--muted)]">{subtitle}</p>}
@@ -94,17 +101,37 @@ export function ActivePactCard({ pact }: { pact: any }) {
             : 'No proof yet today.'}
         </p>
 
-        <div className="flex items-center justify-between border-t border-[var(--line)] pt-3">
-          <div className="flex min-w-0 items-center gap-2">
-            <div className="flex shrink-0 -space-x-2">
-              <div className="flex h-[26px] w-[26px] items-center justify-center rounded-full border-2 border-[var(--card)] bg-[var(--navy)] text-[10px] font-semibold text-[var(--card)]">
-                {initials(ownerName)}
+        {(Array.isArray(pact.witnesses) && pact.witnesses.length > 0) || pact.time_left_label ? (
+          <div className="flex items-center justify-between border-t border-[var(--line)] pt-3">
+            {Array.isArray(pact.witnesses) && pact.witnesses.length > 0 ? (
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="flex shrink-0 -space-x-2">
+                  {pact.witnesses.slice(0, 3).map((w: any, i: number) => (
+                    <div
+                      key={w.user_id ?? w.id ?? i}
+                      className="flex h-[26px] w-[26px] items-center justify-center overflow-hidden rounded-full border-[1.5px] text-[10px] font-semibold"
+                      style={
+                        i === 0
+                          ? { background: 'var(--navy)', borderColor: 'var(--card)', color: 'var(--card)' }
+                          : i === 1
+                            ? { background: 'var(--ink)', borderColor: 'var(--card)', color: 'var(--card)' }
+                            : { background: 'var(--card)', borderColor: 'var(--seat-border)', color: 'var(--muted)' }
+                      }
+                    >
+                      {initials(w.full_name || w.username)}
+                    </div>
+                  ))}
+                </div>
+                <span className="truncate text-[13px] text-[var(--muted)]">
+                  {pact.witnesses.length} witness{pact.witnesses.length === 1 ? '' : 'es'}
+                </span>
               </div>
-            </div>
-            <span className="truncate text-[13px] text-[var(--muted)]">{isGroup ? `for ${pact.circle_name}` : 'just you'}</span>
+            ) : (
+              <span />
+            )}
+            {pact.time_left_label && <span className="shrink-0 pl-3 text-[13px] font-semibold text-[var(--navy)]">{pact.time_left_label}</span>}
           </div>
-          {pact.time_left_label && <span className="shrink-0 pl-3 text-[13px] font-semibold text-[var(--navy)]">{pact.time_left_label}</span>}
-        </div>
+        ) : null}
       </div>
     </Link>
   )
@@ -115,6 +142,7 @@ export function BrokenPactCard({ pact }: { pact: any }) {
   const brokenDay = Math.min(total, completed + 1)
   return (
     <div className="px-1 py-2">
+      {pact.circle_name && <CircleChip circleId={pact.circle_id} circleName={pact.circle_name} variant="muted" />}
       <h3 className="text-[18px] font-semibold text-[var(--ink-soft)]">{pact.title}</h3>
       <p className="mt-1 text-[14px] text-[var(--muted)]">
         Broken on day {brokenDay}. You kept {completed} and missed the rest. It stays on your record.
@@ -133,6 +161,9 @@ export function FinishedPactRow({ pact }: { pact: any }) {
   const { total, completed } = getPactProgress(pact)
   return (
     <Link href={`/pacts/${pact.id}`} className="block px-1 py-2">
+      {pact.circle_name && (
+        <CircleChip circleId={pact.circle_id} circleName={pact.circle_name} variant="muted" className="mb-1" />
+      )}
       <h3 className="text-[18px] font-semibold text-[var(--ink)]">{pact.title}</h3>
       <p className="mt-1 text-[14px] text-[var(--muted)]">
         Finished. You kept {Math.min(completed, total)} of {total} days.
