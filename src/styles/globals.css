@@ -2,51 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Soft Neumorphic Design System */
+/* ==========================================================================
+   "Classic" design system — CirclePact honest-accountability redesign.
+   Single source of truth for color. Every token below is referenced by
+   both the Tailwind color extension (tailwind.config.ts) and the legacy
+   --bg-*/--accent-*/--pact-* variable names that pre-existing components
+   already consume, so repointing the values here re-themes the whole app
+   without having to touch every component file individually.
+   ========================================================================== */
 :root {
-  /* Light visual system */
-  --bg-base: #F7F5F0;
-  --bg-card: #FFFFFF;
-  --bg-card-alt: #FFFFFF;
-  --accent-primary: #1877F2;
-  --accent-primary-hover: #0F67D8;
-  --accent-primary-soft: #1877F224;
-  --text-primary: #101828;
-  --text-secondary: #667085;
-  --text-tertiary: #98A2B3;
-  --status-warning-bg: #FFF1D6;
-  --status-warning-text: #1C2B4A;
-  --status-info-bg: #1877F224;
-  --status-info-text: #1877F2;
-  --status-pink-bg: #1877F224;
-  --status-pink-text: #1C2B4A;
-  --status-success-bg: #E7F6F0;
-  --status-success-text: #1C2B4A;
-  --border-hairline: #EAECF0;
+  /* ---- Classic palette (see redesign spec) ---- */
+  --paper: #F4EFE4;
+  --card: #FBF8F1;
+  --card-muted: #F0EBDF;
+  --ink: #17181D;
+  --ink-soft: #3B3D44;
+  --muted: #5A5C63;
+  --navy: #1D2D50;
+  --navy-hover: #0F1A33;
+  --hairline: #DCD3C1;
+  --hairline-soft: #E6DECD;
+  --seat-border: #CFC5B0;
+  --dash: #BFB49E;
+  --witness-empty: #9C927E;
+  --tan: #E9E2D3;
+  --warn-bg: #F1E6CF;
+  --warn-text: #6E4B12;
+  --missed-border: #8C5A1E;
+  --missed-stripe: #C9A777;
+  --card-text: #FBF8F1;
 
-  /* Dark "pact" palette — was previously declared only inside .pact-flow,
-     which meant anything rendered outside a page's .pact-flow wrapper (like
-     BottomNav, which lives at the root layout level as a sibling of
-     {children}) fell through to hardcoded light fallback values instead of
-     this palette. Promoted to :root so it's available everywhere; .pact-flow
-     below keeps its own structural rules (background-image, font, min-height)
-     which still just reference these same variables. */
-  --pact-bg: #F7F5F0;
-  --pact-surface: #FFFFFF;
-  --pact-surface-raised: #FFFFFF;
-  --pact-surface-2: #FFFFFF;
-  --pact-surface-3: #F2F4F7;
-  --pact-pink: #1877F2;
-  --pact-gold: #0BA5EC;
-  --pact-violet: #1C2B4A;
-  --pact-mint: #0BA5EC;
-  --pact-danger: #D92D20;
-  --pact-text: #101828;
-  --pact-text-muted: #667085;
-  --pact-text-dim: #667085;
-  --pact-text-faint: #98A2B3;
-  --pact-hairline: #E4E7EC;
-  --pact-shadow-violet: rgba(24, 119, 242, 0.16);
+  /* ---- Legacy light-theme variables, repointed ---- */
+  --bg-base: var(--paper);
+  --bg-card: var(--card);
+  --bg-card-alt: var(--card);
+  --accent-primary: var(--navy);
+  --accent-primary-hover: var(--navy-hover);
+  --accent-primary-soft: #1D2D5018;
+  --text-primary: var(--ink);
+  --text-secondary: var(--muted);
+  --text-tertiary: var(--muted);
+  --status-warning-bg: var(--warn-bg);
+  --status-warning-text: var(--warn-text);
+  --status-info-bg: #1D2D5018;
+  --status-info-text: var(--navy);
+  --status-pink-bg: #1D2D5018;
+  --status-pink-text: var(--navy);
+  --status-success-bg: #1D2D5018;
+  --status-success-text: var(--navy);
+  --border-hairline: var(--hairline);
+
+  /* ---- "pact-flow" immersive variables, repointed to the same palette so
+     the create-pact / create-circle wizards inherit Classic automatically.
+     Previously a distinct dark purple/pink theme — now just Classic with
+     navy as the single accent (no gold/violet/mint distinction). ---- */
+  --pact-bg: var(--paper);
+  --pact-surface: var(--card);
+  --pact-surface-raised: var(--card);
+  --pact-surface-2: var(--card);
+  --pact-surface-3: var(--card-muted);
+  --pact-pink: var(--navy);
+  --pact-gold: var(--navy);
+  --pact-violet: var(--navy);
+  --pact-mint: var(--navy);
+  --pact-danger: var(--missed-border);
+  --pact-text: var(--ink);
+  --pact-text-muted: var(--muted);
+  --pact-text-dim: var(--muted);
+  --pact-text-faint: var(--muted);
+  --pact-hairline: var(--hairline);
+  --pact-shadow-violet: rgba(23, 24, 29, 0.14);
 }
 
 * {
@@ -54,7 +79,7 @@
 }
 
 html {
-  @apply bg-[#F7F5F0];
+  @apply bg-[var(--paper)];
   /* Disable Chrome-for-Android's native pull-to-refresh/overscroll-glow so it
      doesn't fight with (and visually mask) PullToRefresh.tsx's custom gesture.
      This is a browser-level compositor behavior that JS preventDefault() calls
@@ -64,7 +89,7 @@ html {
 }
 
 body {
-  @apply font-sans bg-[#F7F5F0] text-[#101828] antialiased;
+  @apply font-sans bg-[var(--paper)] text-[var(--ink)] antialiased;
   overscroll-behavior-y: contain;
 }
 
@@ -207,116 +232,44 @@ section + section {
   display: none;
 }
 
-/* Shared tier system: peak-tier shimmer sweep + at-risk pulse (see src/lib/tierStyles.ts) */
-@keyframes tier-shimmer-sweep {
-  0% {
-    transform: translateX(-60%) rotate(20deg);
-  }
-  100% {
-    transform: translateX(60%) rotate(20deg);
-  }
-}
-
+/* ---- Classic redesign: decorative glow/shimmer/gradient motifs removed. ----
+   These classes are still applied by existing component markup (Avatar,
+   PremiumJoinButton, tier badges, BottomNav) but are redefined here as
+   inert/flat so no "fake energy" renders anywhere, without having to touch
+   every call site individually. Honest accountability: nothing glows,
+   pulses, or spins just for decoration. */
 .tier-shimmer-sweep {
-  width: 50%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
-  animation: tier-shimmer-sweep 3s linear infinite;
+  display: none;
 }
 
-/* Masks the shimmer so only the ring band lights up, not the avatar center */
 .tier-shimmer-mask {
-  -webkit-mask-image: radial-gradient(circle, transparent 60%, black 64%, black 100%);
-  mask-image: radial-gradient(circle, transparent 60%, black 64%, black 100%);
-}
-
-@keyframes tier-ring-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.45;
-  }
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 .animate-tier-pulse {
-  animation: tier-ring-pulse 1.5s ease-in-out infinite;
-}
-
-/* Global Avatar ring (see src/components/Avatar.tsx): a rotating multi-hue
-   conic-gradient band with a separate, independently-timed breathing glow
-   layer underneath. Two distinct animated layers, not one static ring. */
-@keyframes avatar-ring-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  animation: none;
+  opacity: 1;
 }
 
 .avatar-ring-spin {
-  animation: avatar-ring-spin 15s linear infinite;
-}
-
-@keyframes avatar-ring-breathe {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: scale(0.96);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.08);
-  }
+  animation: none;
 }
 
 .avatar-ring-breathe {
-  animation: avatar-ring-breathe 3.5s ease-in-out infinite;
-}
-
-/* PremiumJoinButton's signature aura glow (see src/components/PremiumJoinButton.tsx).
-   Same breathing technique as the Avatar ring glow above, but on its own
-   faster ~2.2s cycle so the Join button reads as its own motif. */
-@keyframes join-btn-breathe {
-  0%,
-  100% {
-    opacity: 0.5;
-    transform: scale(0.94);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.1);
-  }
+  animation: none;
+  opacity: 1;
+  transform: none;
 }
 
 .join-btn-breathe {
-  animation: join-btn-breathe 2.2s ease-in-out infinite;
-}
-
-/* PremiumJoinButton's "bling" shine sweep — a diagonal highlight that slides
-   across the gradient pill on a loop, layered on top of join-btn-breathe's
-   aura glow so the button reads as genuinely premium rather than just a
-   static gradient. The button clips this with overflow-hidden. */
-@keyframes join-btn-shine {
-  0% {
-    transform: translateX(-150%) skewX(-20deg);
-  }
-  100% {
-    transform: translateX(250%) skewX(-20deg);
-  }
+  animation: none;
+  opacity: 0;
 }
 
 .join-btn-shine {
-  animation: join-btn-shine 2.6s ease-in-out infinite;
-  animation-delay: 0.6s;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .join-btn-breathe,
-  .join-btn-shine {
-    animation: none;
-  }
+  animation: none;
+  display: none;
 }
 
 /* BottomNav (see src/components/BottomNav.tsx): active-tab illumination and
@@ -328,20 +281,15 @@ section + section {
    classes (not reused directly) so reduced-motion can be scoped to just the
    nav without touching Avatar/PremiumJoinButton. */
 .pact-bottomnav-active-glow {
-  animation: join-btn-breathe 2.2s ease-in-out infinite;
+  /* Classic redesign: BottomNav itself no longer renders this blur layer
+     (rebuilt as a flat bar with a plain navy dot for "active"), but keep
+     the class inert in case anything still references it. */
+  display: none;
 }
 
 .pact-bottomnav-live-dot {
-  animation: avatar-ring-breathe 3.5s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pact-bottomnav-active-glow,
-  .pact-bottomnav-live-dot {
-    animation: none;
-    opacity: 1;
-    transform: none;
-  }
+  animation: none;
+  opacity: 1;
 }
 
 /* ==========================================================================
@@ -549,34 +497,23 @@ section + section {
   animation: pact-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Distinct entrance for a just-created pact returning to the feed: rises in
-   like a normal list item but carries a violet/pink glow pulse that settles
-   after ~1.4s, so the user's own new post reads as "just landed" rather than
-   blending into the standard staggered fade. */
+/* Classic redesign: a just-created pact no longer carries a colored glow
+   pulse ("fake energy" implying importance/success that isn't data-backed)
+   — it enters with the same plain fade-up as any other list item. */
 @keyframes pact-new-glow {
   0% {
     opacity: 0;
     transform: translateY(14px) scale(0.98);
-    box-shadow: 0 0 0 0 rgba(24, 119, 242, 0);
-  }
-  30% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    box-shadow: 0 0 0 4px rgba(24, 119, 242, 0.3), 0 0 44px rgba(24, 119, 242, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 4px rgba(24, 119, 242, 0.16), 0 0 30px rgba(24, 119, 242, 0.22);
   }
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
-    box-shadow: 0 0 0 0 rgba(24, 119, 242, 0);
   }
 }
 
 .pact-flow .pact-new-item {
-  animation: pact-new-glow 1400ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  border-radius: 24px;
+  animation: pact-new-glow 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  border-radius: 6px;
 }
 
 @media (prefers-reduced-motion: reduce) {

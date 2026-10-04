@@ -9,21 +9,37 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-        },
-        success: {
-          500: '#10b981',
-          600: '#059669',
-        },
-        danger: {
-          500: '#ef4444',
-          600: '#dc2626',
-        },
+        // "Classic" redesign tokens — see src/styles/globals.css :root for the
+        // exact hex values. Referenced via CSS vars so the whole app can use
+        // Tailwind utilities (bg-paper, text-ink, border-hairline, etc.)
+        // instead of stray hex literals.
+        paper: 'var(--paper)',
+        card: 'var(--card)',
+        'card-muted': 'var(--card-muted)',
+        ink: 'var(--ink)',
+        'ink-soft': 'var(--ink-soft)',
+        muted: 'var(--muted)',
+        navy: 'var(--navy)',
+        'navy-hover': 'var(--navy-hover)',
+        hairline: 'var(--hairline)',
+        'hairline-soft': 'var(--hairline-soft)',
+        'seat-border': 'var(--seat-border)',
+        dash: 'var(--dash)',
+        'witness-empty': 'var(--witness-empty)',
+        tan: 'var(--tan)',
+        'warn-bg': 'var(--warn-bg)',
+        'warn-text': 'var(--warn-text)',
+        'missed-border': 'var(--missed-border)',
+        'missed-stripe': 'var(--missed-stripe)',
+      },
+      fontFamily: {
+        sans: ['var(--font-classic-body)', "'Helvetica Neue'", 'sans-serif'],
+        serif: ['var(--font-classic-display)', 'Georgia', 'serif'],
+        mono: ['var(--font-classic-mono)', 'ui-monospace', 'monospace'],
+      },
+      borderRadius: {
+        card: '6px',
+        thumb: '3px',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
