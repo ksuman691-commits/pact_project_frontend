@@ -75,7 +75,6 @@ export default function Profile() {
       icon: '🔥',
       rarity: 'rare' as const,
       unlocked: false,
-      progress: 30,
     },
     {
       id: 'winner',
@@ -93,7 +92,6 @@ export default function Profile() {
       icon: '⭐',
       rarity: 'epic' as const,
       unlocked: false,
-      progress: 70,
     },
     {
       id: 'legendary',
@@ -102,7 +100,6 @@ export default function Profile() {
       icon: '👑',
       rarity: 'legendary' as const,
       unlocked: false,
-      progress: 20,
     },
   ];
 
@@ -141,7 +138,7 @@ export default function Profile() {
     pactsCreated: createdPacts.length,
     pactsCompleted: completedPacts,
     winRate,
-    currentStreak: 12,
+    currentStreak: null as number | null,
     reputation: Math.round(user.reputation_score || 0),
     followers: followers.length,
     following: following.length,
@@ -150,7 +147,7 @@ export default function Profile() {
   return (
     <div className="pact-flow pact-page-enter min-h-screen">
       {/* Top Bar */}
-      <div className="sticky top-0 z-40 backdrop-blur-xl border-b" style={{ background: 'rgba(20,9,31,0.85)', borderColor: 'var(--pact-hairline)' }}>
+      <div className="sticky top-0 z-40 backdrop-blur-xl border-b" style={{ background: 'var(--paper)', borderColor: 'var(--hairline)' }}>
         <div className="px-4 py-4 flex items-center gap-2 max-w-md mx-auto">
           <button
             type="button"
@@ -160,7 +157,7 @@ export default function Profile() {
           >
             <ChevronLeft className="h-5 w-5 text-[var(--pact-text)]" />
           </button>
-          <h1 className="flex-1 text-xl font-bold text-[var(--pact-text)]">My Profile</h1>
+          <h1 className="flex-1 font-display text-xl font-medium text-[var(--ink)]">My Profile</h1>
           <div className="flex gap-2">
             <button
               onClick={handleEditProfile}
@@ -192,7 +189,7 @@ export default function Profile() {
           user={profileUser}
           isOwnProfile={true}
           onEdit={handleEditProfile}
-          streak={stats.currentStreak}
+          streak={stats.currentStreak ?? undefined}
           atRisk={isAtRisk}
         />
 
@@ -233,8 +230,8 @@ export default function Profile() {
                 <p className="mt-2 text-sm text-[var(--pact-text-dim)]">Join a circle to start building accountability together.</p>
                 <button
                   onClick={() => router.push('/circles')}
-                  className="pact-btn-glow mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
-                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
+                  className=" mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
+                  style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}
                 >
                   Browse circles
                 </button>
@@ -245,7 +242,7 @@ export default function Profile() {
                   <button
                     key={circle.id}
                     onClick={() => router.push(`/circles/${circle.id}`)}
-                    className="pact-card pact-btn-glow rounded-2xl p-4 text-left transition"
+                    className="pact-card  rounded-2xl p-4 text-left transition"
                   >
                     <p className="font-semibold text-[var(--pact-text)] truncate">{circle.name}</p>
                     <p className="text-xs text-[var(--pact-text-faint)] mt-1">{circle.member_count ?? 0} members</p>

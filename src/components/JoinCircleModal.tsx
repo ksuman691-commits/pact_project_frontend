@@ -144,8 +144,8 @@ export default function JoinCircleModal({
           <button
             onClick={handleJoin}
             disabled={loading}
-            className="pact-btn-glow flex-1 px-4 py-2.5 rounded-[28px] font-medium text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+            className=" flex-1 px-4 py-2.5 rounded-[28px] font-medium text-[var(--card-text)] transition disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: 'var(--navy)' }}
           >
             {loading ? 'Joining...' : 'Request to Join'}
           </button>

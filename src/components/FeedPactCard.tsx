@@ -905,7 +905,6 @@ export default function FeedPactCard({
               )}
               {bottomRightText && (
                 <span className="flex flex-shrink-0 items-center gap-1 text-xs font-bold text-[var(--pact-text-dim)]">
-                  {bottomRightShowFlame && <Flame className="h-3.5 w-3.5 text-[var(--pact-gold)]" />}
                   {bottomRightText}
                 </span>
               )}

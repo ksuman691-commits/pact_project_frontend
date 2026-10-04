@@ -214,7 +214,7 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
                   acceptMutation.mutate(dare.id);
                 }}
                 disabled={acceptMutation.isPending}
-                className="pact-btn-glow flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold disabled:opacity-50"
+                className=" flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold disabled:opacity-50"
                 style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
               >
                 <CheckCircle2 className="h-4 w-4" />
@@ -243,7 +243,7 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
                 e.stopPropagation();
                 setProofModalOpen(true);
               }}
-              className="pact-btn-glow flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold"
+              className=" flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold"
               style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
             >
               <Upload className="h-4 w-4" />
@@ -259,7 +259,7 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
                 claimMutation.mutate(dare.id);
               }}
               disabled={claimMutation.isPending}
-              className="pact-btn-glow flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold disabled:opacity-50"
+              className=" flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-semibold disabled:opacity-50"
               style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
             >
               <Zap className="h-4 w-4" />

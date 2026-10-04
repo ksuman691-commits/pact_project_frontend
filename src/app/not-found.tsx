@@ -35,8 +35,8 @@ export default function NotFound() {
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <Link
           href="/feed"
-          className="pact-btn-glow inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition"
-          style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
+          className=" inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition"
+          style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}
         >
           Back to Feed
         </Link>

@@ -29,40 +29,21 @@ export default function StreakStatsHero({ streak, winRate, pactsCompleted, circl
   }
 
   return (
-    <div
-      className="pact-card rounded-[28px] px-5 py-5 sm:px-6 sm:py-6"
-      style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}
-    >
-      <div className="flex items-center gap-4">
-        <div
-          className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full"
-          style={{ background: 'linear-gradient(135deg, #FBBF24, #F97316 55%, #EF4444)' }}
-          aria-hidden="true"
-        >
-          <Flame className="h-7 w-7 fill-white text-white" strokeWidth={2.2} />
-        </div>
-        <div className="min-w-0">
-          <div className="flex items-baseline gap-2">
-            <span className="text-5xl font-black leading-none tracking-[-0.04em] text-[var(--pact-text)]">{streak}</span>
-            <span className="text-sm font-semibold text-[var(--pact-text-muted)]">day{streak === 1 ? '' : 's'} streak</span>
+    <section aria-label="Your record" className="flex flex-col gap-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--muted)]">Your record</p>
+      <div className="grid grid-cols-4 divide-x divide-[var(--hairline-soft)] rounded-[6px] border border-[var(--hairline)] bg-[var(--card)]">
+        {[
+          { value: `${streak}`, label: streak === 1 ? 'day running' : 'days running' },
+          { value: `${winRate}%`, label: 'kept' },
+          { value: `${pactsCompleted}`, label: 'completed' },
+          { value: `${circlesCount}`, label: circlesCount === 1 ? 'circle' : 'circles' },
+        ].map((stat) => (
+          <div key={stat.label} className="flex flex-col items-center gap-1 px-1 py-4 text-center">
+            <span className="font-display text-[28px] leading-none text-[var(--ink)]">{stat.value}</span>
+            <span className="text-[11px] text-[var(--muted)]">{stat.label}</span>
           </div>
-        </div>
+        ))}
       </div>
-
-      <div className="mt-5 grid grid-cols-3 divide-x divide-[var(--pact-hairline)] rounded-2xl border border-[var(--pact-hairline)]" style={{ background: 'var(--pact-surface-2)' }}>
-        <div className="px-3 py-3 text-center">
-          <p className="text-lg font-black text-[var(--pact-text)]">{winRate}%</p>
-          <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--pact-text-faint)]">Win Rate</p>
-        </div>
-        <div className="px-3 py-3 text-center">
-          <p className="text-lg font-black text-[var(--pact-text)]">{pactsCompleted}</p>
-          <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--pact-text-faint)]">Completed</p>
-        </div>
-        <div className="px-3 py-3 text-center">
-          <p className="text-lg font-black text-[var(--pact-text)]">{circlesCount}</p>
-          <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--pact-text-faint)]">Circles</p>
-        </div>
-      </div>
-    </div>
+    </section>
   )
 }

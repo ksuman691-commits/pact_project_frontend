@@ -79,7 +79,7 @@ function TemplateCard({ item, onSend }: { item: CuratedContent; onSend: () => vo
         <div className="flex items-center justify-between gap-3">
           <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold capitalize text-primary">{item.category}</span>
           {item.trending_until && new Date(item.trending_until) >= new Date() ? (
-            <span className="flex items-center gap-1 text-xs font-semibold text-orange-600"><Flame className="size-3.5" /> Trending</span>
+            <span className="text-xs font-semibold text-[var(--navy)]">Trending</span>
           ) : null}
         </div>
         <h3 className="mt-5 text-xl font-bold text-balance">{item.title}</h3>
@@ -126,9 +126,9 @@ export default function CuratedContentGrid({ type }: { type: 'pact' | 'dare' }) 
         </div>
         <button
           onClick={() => setTrending(!trending)}
-          className={`ml-auto flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold ${trending ? 'border-orange-300 bg-orange-50 text-orange-700' : 'border-border bg-card text-muted-foreground'}`}
+          className={`ml-auto flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold ${trending ? 'border-[var(--navy)] bg-[var(--navy)] text-[var(--card-text)]' : 'border-[var(--hairline)] bg-[var(--card)] text-[var(--ink-soft)]'}`}
         >
-          <Flame className="size-3.5" /> Trending
+          Trending
         </button>
       </div>
 

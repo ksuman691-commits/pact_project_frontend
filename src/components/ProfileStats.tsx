@@ -16,7 +16,7 @@ interface ProfileStatsProps {
     pactsCreated: number;
     pactsCompleted: number;
     winRate: number;
-    currentStreak: number;
+    currentStreak: number | null;
     reputation: number;
     followers?: number;
     following?: number;
@@ -86,7 +86,7 @@ export default function ProfileStats({
         <StatTile label="Pacts" value={stats.pactsCreated} onClick={onPactClick} />
         <StatTile label="Followers" value={stats.followers ?? 0} onClick={onFollowersClick} />
         <StatTile label="Following" value={stats.following ?? 0} onClick={onFollowingClick} />
-        <StatTile label="Streak" value={`${stats.currentStreak}d`} />
+        <StatTile label="Streak" value={stats.currentStreak === null ? '—' : `${stats.currentStreak}d`} />
       </div>
 
       {/* Win rate — kept as its own supporting card since it needs the

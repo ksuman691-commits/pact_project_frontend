@@ -29,7 +29,7 @@ export default function HomeActionsRow({ onNavigateCircles, onCreatePact, disabl
         disabled={disabled}
         aria-label="Open My Circles"
         data-testid="my-circles-button"
-        className="pact-btn-glow relative z-20 flex flex-1 touch-manipulation items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+        className=" relative z-20 flex flex-1 touch-manipulation items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
         style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
       >
         <Users className="h-4 w-4" strokeWidth={2.4} />
@@ -38,7 +38,7 @@ export default function HomeActionsRow({ onNavigateCircles, onCreatePact, disabl
       <button
         onClick={onCreatePact}
         disabled={disabled}
-        className="pact-btn-glow flex flex-1 items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+        className=" flex flex-1 items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
         style={{ borderColor: 'var(--pact-violet)', background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
       >
         <Plus className="h-4 w-4" strokeWidth={2.2} />

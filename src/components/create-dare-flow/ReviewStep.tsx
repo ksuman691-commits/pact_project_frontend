@@ -50,7 +50,7 @@ export default function ReviewStep() {
           type="button"
           onClick={submit}
           disabled={isSubmitting}
-          className="pact-btn-glow w-full rounded-full py-3 font-bold disabled:opacity-60"
+          className=" w-full rounded-full py-3 font-bold disabled:opacity-60"
           style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
         >
           {isSubmitting ? 'Creating...' : 'Create Dare'}

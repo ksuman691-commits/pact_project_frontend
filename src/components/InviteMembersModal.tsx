@@ -105,7 +105,7 @@ function SearchInviteTab({ circleId, existingMemberIds }: { circleId: number; ex
                     style={
                       invited
                         ? { background: 'transparent', border: '1px solid var(--pact-hairline)', color: 'var(--pact-text-muted)' }
-                        : { background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: '#fff' }
+                        : { background: 'var(--navy)', color: '#fff' }
                     }
                   >
                     {inviting ? (
@@ -245,8 +245,8 @@ export default function InviteMembersModal({ isOpen, onClose, circleId, circleNa
                     />
                     <button
                       onClick={copyLink}
-                      className="px-4 py-3 rounded-[28px] text-white transition"
-                      style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+                      className="px-4 py-3 rounded-[28px] text-[var(--card-text)] transition"
+                      style={{ background: 'var(--navy)' }}
                     >
                       {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                     </button>

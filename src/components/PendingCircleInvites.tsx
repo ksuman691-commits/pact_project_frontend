@@ -79,8 +79,8 @@ export default function PendingCircleInvites() {
                 type="button"
                 onClick={() => acceptMutation.mutate({ circleId: invite.circle_id, inviteId: invite.id })}
                 disabled={accepting || declining}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white transition disabled:opacity-60"
-                style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--card-text)] transition disabled:opacity-60"
+                style={{ background: 'var(--navy)' }}
                 aria-label={`Accept invite to ${circleName}`}
               >
                 {accepting ? <Loader className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}

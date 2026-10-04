@@ -247,7 +247,7 @@ export default function DareVerificationModal({
           <button
             onClick={currentQuestion === questions.length - 1 ? handleSubmit : handleNext}
             disabled={verifyMutation.isPending || !canProceed()}
-            className="pact-btn-glow flex-1 px-4 py-2.5 rounded-[28px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className=" flex-1 px-4 py-2.5 rounded-[28px] disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
           >
             {verifyMutation.isPending

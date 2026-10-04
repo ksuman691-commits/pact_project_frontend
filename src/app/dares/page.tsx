@@ -229,8 +229,8 @@ function DaresPageInner() {
         <div className="flex justify-center pt-6">
           <button
             onClick={() => setCreateModalOpen(true)}
-            className="pact-btn-glow flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold text-[var(--pact-text)]"
-            style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+            className=" flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold text-[var(--card-text)]"
+            style={{ background: 'var(--navy)' }}
           >
             <Plus className="h-4 w-4" />
             New Dare
@@ -269,7 +269,7 @@ function DaresPageInner() {
                   {!!t.count && (
                     <span
                       className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-[var(--pact-bg)]"
-                      style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+                      style={{ background: 'var(--navy)' }}
                     >
                       {t.count}
                     </span>
@@ -333,8 +333,8 @@ function DaresPageInner() {
               {!statusFilter && tab === 'for-you' && (
                 <button
                   onClick={() => setTab('discover')}
-                  className="pact-btn-glow inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--pact-text)]"
-                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+                  className=" inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--card-text)]"
+                  style={{ background: 'var(--navy)' }}
                 >
                   Browse Discover
                 </button>
@@ -342,8 +342,8 @@ function DaresPageInner() {
               {!statusFilter && tab === 'sent' && (
                 <button
                   onClick={() => setCreateModalOpen(true)}
-                  className="pact-btn-glow inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--pact-text)]"
-                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+                  className=" inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--card-text)]"
+                  style={{ background: 'var(--navy)' }}
                 >
                   <Plus className="w-4 h-4" />
                   Send Your First Dare
@@ -352,8 +352,8 @@ function DaresPageInner() {
               {!statusFilter && tab === 'discover' && (
                 <button
                   onClick={() => setCreateModalOpen(true)}
-                  className="pact-btn-glow inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--pact-text)]"
-                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+                  className=" inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--card-text)]"
+                  style={{ background: 'var(--navy)' }}
                 >
                   <Plus className="w-4 h-4" />
                   Create a Dare
@@ -394,7 +394,7 @@ function DaresPageInner() {
               <button
                 onClick={() => currentQuery.fetchNextPage()}
                 disabled={currentQuery.isFetchingNextPage}
-                className="pact-btn-glow px-6 py-2.5 rounded-full border text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                className=" px-6 py-2.5 rounded-full border text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ borderColor: 'var(--pact-violet)', background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
               >
                 {currentQuery.isFetchingNextPage ? 'Loading…' : 'Load More'}
@@ -417,7 +417,7 @@ function DaresPageInner() {
               <p className="mb-4" style={{ color: 'var(--pact-pink)' }}>Failed to load dares</p>
               <button
                 onClick={() => currentQuery.refetch()}
-                className="pact-btn-glow px-4 py-2 rounded-full border border-[var(--pact-hairline)] text-sm font-semibold text-[var(--pact-text)] hover:bg-[var(--pact-surface)]"
+                className=" px-4 py-2 rounded-full border border-[var(--pact-hairline)] text-sm font-semibold text-[var(--pact-text)] hover:bg-[var(--pact-surface)]"
               >
                 Try Again
               </button>

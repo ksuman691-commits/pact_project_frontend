@@ -41,8 +41,8 @@ export default function YourCirclesRail({ circles, isLoading }: YourCirclesRailP
         <p className="mt-1 text-sm text-[var(--pact-text-muted)]">Join or create a circle to hold each other accountable.</p>
         <Link
           href="/circles"
-          className="mt-4 inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-bold text-[var(--pact-text)]"
-          style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+          className="mt-4 inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-bold text-[var(--card-text)]"
+          style={{ background: 'var(--navy)' }}
         >
           Browse circles
         </Link>

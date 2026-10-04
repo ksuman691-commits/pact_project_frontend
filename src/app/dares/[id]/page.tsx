@@ -276,8 +276,8 @@ export default function DareDetailPage() {
               <button
                 onClick={handleClaim}
                 disabled={claimMutation.isPending}
-                className="pact-btn-glow col-span-2 flex items-center justify-center gap-2 rounded-full py-3 font-semibold disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-bg)' }}
+                className=" col-span-2 flex items-center justify-center gap-2 rounded-full py-3 font-semibold disabled:opacity-50"
+                style={{ background: 'var(--navy)', color: 'var(--pact-bg)' }}
               >
                 <Zap className="h-4 w-4" />
                 {claimMutation.isPending ? 'Claiming...' : 'Claim Dare'}
@@ -286,8 +286,8 @@ export default function DareDetailPage() {
               <>
                 <button
                   onClick={() => setProofModalOpen(true)}
-                  className="pact-btn-glow flex items-center justify-center gap-2 rounded-full py-3 font-semibold"
-                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-bg)' }}
+                  className=" flex items-center justify-center gap-2 rounded-full py-3 font-semibold"
+                  style={{ background: 'var(--navy)', color: 'var(--pact-bg)' }}
                 >
                   <Upload className="h-4 w-4" />
                   Upload Proof
@@ -306,8 +306,8 @@ export default function DareDetailPage() {
                 <button
                   onClick={handleAccept}
                   disabled={acceptMutation.isPending}
-                  className="pact-btn-glow flex items-center justify-center gap-2 rounded-full py-3 font-semibold disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-bg)' }}
+                  className=" flex items-center justify-center gap-2 rounded-full py-3 font-semibold disabled:opacity-50"
+                  style={{ background: 'var(--navy)', color: 'var(--pact-bg)' }}
                 >
                   <CheckCircle2 className="h-4 w-4" />
                   {acceptMutation.isPending ? 'Accepting...' : 'Accept'}

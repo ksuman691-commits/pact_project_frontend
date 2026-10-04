@@ -240,8 +240,8 @@ export default function PactDetailPage() {
             <p className="mt-2 text-sm text-[var(--pact-text-muted)]">This pact could not be loaded or is no longer available.</p>
             <button
               onClick={() => router.push('/feed')}
-              className="pact-btn-glow mt-6 rounded-full px-5 py-3 text-sm font-semibold"
-              style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-bg)' }}
+              className=" mt-6 rounded-full px-5 py-3 text-sm font-semibold"
+              style={{ background: 'var(--navy)', color: 'var(--pact-bg)' }}
             >
               Back to feed
             </button>
@@ -389,7 +389,6 @@ export default function PactDetailPage() {
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-1.5 text-base font-black text-[var(--pact-text)]">
                     Day {progress.completed} of {progress.total}
-                    {hasPactMomentum(pact) && <Flame className="h-4 w-4 text-[var(--pact-gold)]" />}
                   </p>
                   <p className="mt-1 text-sm text-[var(--pact-text-muted)]">{pact.timeRemaining || 'Ends soon'}</p>
                 </div>
@@ -607,8 +606,8 @@ export default function PactDetailPage() {
           <button
             type="button"
             onClick={() => setProofUploadOpen(true)}
-            className="pact-btn-glow flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-bold shadow-xl"
-            style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-bg)' }}
+            className=" flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-bold shadow-xl"
+            style={{ background: 'var(--navy)', color: 'var(--pact-bg)' }}
           >
             <Camera className="h-4 w-4" />
             Upload today&apos;s proof

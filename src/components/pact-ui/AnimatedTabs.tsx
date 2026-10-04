@@ -58,7 +58,7 @@ export default function AnimatedTabs({
                 layoutId={layoutId}
                 className="absolute inset-0 rounded-full"
                 style={{
-                  background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))',
+                  background: 'var(--navy)',
                   boxShadow: '0 4px 16px var(--pact-shadow-violet)',
                 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 32 }}

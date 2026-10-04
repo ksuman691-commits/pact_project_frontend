@@ -71,7 +71,7 @@ export default function ProfileHero({
             {isOwnProfile ? (
               <button
                 onClick={onEdit}
-                className="pact-btn-glow flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition"
+                className=" flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition"
                 style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
               >
                 <Edit2 className="w-4 h-4" />
@@ -81,12 +81,12 @@ export default function ProfileHero({
               <>
                 <button
                   onClick={onFollow}
-                  className="pact-btn-glow flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-full transition"
+                  className=" flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-full transition"
                   style={
                     isFollowing
                       ? { background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }
                       : {
-                          background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))',
+                          background: 'var(--navy)',
                           color: 'var(--pact-text)',
                         }
                   }
@@ -96,7 +96,7 @@ export default function ProfileHero({
                 </button>
                 <button
                   onClick={onMessage}
-                  className="pact-btn-glow flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-full transition"
+                  className=" flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-full transition"
                   style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
                 >
                   <MessageCircle className="w-4 h-4" />

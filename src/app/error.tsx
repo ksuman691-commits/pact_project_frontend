@@ -53,8 +53,8 @@ export default function ErrorBoundary({
         <button
           type="button"
           onClick={reset}
-          className="pact-btn-glow inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition"
-          style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
+          className=" inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition"
+          style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}
         >
           <RotateCw className="h-4 w-4" />
           Try again

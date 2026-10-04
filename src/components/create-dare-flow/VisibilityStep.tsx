@@ -44,7 +44,7 @@ export default function VisibilityStep() {
           <button
             type="button"
             onClick={goNext}
-            className="pact-btn-glow w-full rounded-full py-3 font-bold"
+            className=" w-full rounded-full py-3 font-bold"
             style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
           >
             Continue

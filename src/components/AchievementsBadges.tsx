@@ -59,7 +59,7 @@ export default function AchievementsBadges({ achievements }: AchievementsBadgesP
             return (
               <div
                 key={achievement.id}
-                className="pact-btn-glow relative rounded-3xl transition cursor-pointer group"
+                className=" relative rounded-3xl transition cursor-pointer group"
                 style={getRingStyle(achievement.rarity, false)}
               >
                 <div className="pact-card p-4 rounded-[22px] text-center h-full">
@@ -122,7 +122,7 @@ export default function AchievementsBadges({ achievements }: AchievementsBadgesP
                             className="h-2 rounded-full transition-all"
                             style={{
                               width: `${achievement.progress}%`,
-                              background: 'linear-gradient(90deg, var(--pact-pink), var(--pact-violet))',
+                              background: 'var(--navy)',
                             }}
                           />
                         </div>
