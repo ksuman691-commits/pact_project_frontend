@@ -41,7 +41,6 @@ import { useAuthStore } from '@/store/auth';
 import { pactService } from '@/services/api';
 import { getCategoryTheme } from '@/lib/categoryTheme';
 import { hasPactMomentum, getCrossedStreakMilestone } from '@/lib/pactMomentum';
-import confetti from 'canvas-confetti';
 
 function PactDetailSkeleton() {
   return (
@@ -235,7 +234,7 @@ export default function PactDetailPage() {
         <DetailPageHeader title="Pact not found" backHref="/feed" maxWidthClassName="max-w-md" />
         <div className="pact-flow flex min-h-screen items-center justify-center px-4">
           <div className="pact-card max-w-sm rounded-[28px] p-8 text-center">
-            <AlertCircle className="mx-auto h-10 w-10 text-rose-400" />
+            <AlertCircle className="mx-auto h-10 w-10 text-warn-text" />
             <h2 className="mt-4 text-xl font-black text-[var(--pact-text)]">Pact not found</h2>
             <p className="mt-2 text-sm text-[var(--pact-text-muted)]">This pact could not be loaded or is no longer available.</p>
             <button
@@ -352,12 +351,12 @@ export default function PactDetailPage() {
                     </div>
                   </>
                 ) : pact.join_block_reason === 'already_joined' ? (
-                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-400/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-emerald-300">
+                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-card/60 bg-card px-3 py-1 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-navy">
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Joined
                   </span>
                 ) : pact.join_block_reason === 'creator' ? (
-                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-amber-300">
+                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-card/60 bg-card px-3 py-1 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-navy">
                     <Crown className="h-3.5 w-3.5" />
                     Creator
                   </span>
@@ -530,7 +529,7 @@ export default function PactDetailPage() {
               />
 
               <div className="border-t border-[var(--pact-hairline)] px-4 py-4">
-                <div className="rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] px-3.5 py-3">
+                <div className="rounded-md border border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] px-3.5 py-3">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--pact-text-faint)]">Participants</p>
                     <span className="text-xs text-[var(--pact-text-faint)]">{participants.length}</span>
@@ -545,7 +544,7 @@ export default function PactDetailPage() {
                         key={participant.id || participant.user_id || participant.username}
                         href={href}
                         aria-label={`Open ${displayName}'s profile`}
-                        className="flex shrink-0 flex-col items-center gap-1.5 rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)] px-3 py-2.5 text-center transition hover:border-[var(--pact-violet)]/50 hover:bg-[var(--pact-surface-2)] active:scale-95"
+                        className="flex shrink-0 flex-col items-center gap-1.5 rounded-md border border-[var(--pact-hairline)] bg-[var(--pact-surface)] px-3 py-2.5 text-center transition hover:border-[var(--pact-violet)]/50 hover:bg-[var(--pact-surface-2)] active:scale-95"
                       >
                         <Avatar name={displayName} avatarUrl={participant.avatar_url || participant.avatar} size={36} />
                         <p className="max-w-[4.5rem] truncate text-[11px] font-semibold text-[var(--pact-text)]">{displayName}</p>
@@ -635,13 +634,7 @@ export default function PactDetailPage() {
                   const nextProgress = getPactProgress(pact, freshProofs);
                   const milestone = getCrossedStreakMilestone(previousCompleted, nextProgress.completed, nextProgress.missed);
                   if (milestone) {
-                    confetti({
-                      particleCount: 90,
-                      spread: 70,
-                      origin: { y: 0.68 },
-                      colors: ['#10b981', '#fbbf24', '#f472b6', '#8b5cf6'],
-                    });
-                    toast.success(`${milestone}-day streak! Keep it going.`);
+                    toast.success(`${milestone} days kept in a row.`);
                   }
                 }
               }}
