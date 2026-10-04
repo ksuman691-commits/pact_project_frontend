@@ -100,14 +100,6 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
     );
   }
 
-  // Determine confidence level color
-  const getConfidenceColor = (score: number): string => {
-    if (score >= 80) return 'from-emerald-500 to-green-600';
-    if (score >= 60) return 'from-yellow-500 to-orange-600';
-    if (score >= 40) return 'from-orange-500 to-red-600';
-    return 'from-red-500 to-red-600';
-  };
-
   const getConfidenceLevel = (score: number): string => {
     if (score >= 80) return 'High';
     if (score >= 60) return 'Moderate';
@@ -118,21 +110,21 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
   return (
     <div className="space-y-4">
       {/* Main Confidence Card */}
-      <div className={`rounded-[24px] bg-gradient-to-br ${getConfidenceColor(stats.confidence_score)} p-6 text-white`}>
+      <div className="rounded-[14px] bg-[var(--navy)] p-6 text-[var(--card)]">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <p className="text-sm font-medium text-white/90">Verified Confidence</p>
-            <p className="text-4xl font-black mt-1">{Math.round(stats.confidence_score)}%</p>
+            <p className="text-sm font-medium text-[var(--card)]/80">Verified Confidence</p>
+            <p className="text-4xl font-bold mt-1">{Math.round(stats.confidence_score)}%</p>
           </div>
-          <CheckCircle2 className="w-10 h-10 text-white/80" strokeWidth={1.5} />
+          <CheckCircle2 className="w-10 h-10 text-[var(--card)]/70" strokeWidth={1.5} />
         </div>
-        <p className="text-sm text-white/80 mb-4">
+        <p className="text-sm text-[var(--card)]/75 mb-4">
           {getConfidenceLevel(stats.confidence_score)} confidence level based on {stats.total_verifications} verification
           {stats.total_verifications !== 1 ? 's' : ''}
         </p>
-        <div className="w-full h-2 bg-white/30 rounded-full overflow-hidden">
+        <div className="w-full h-2 bg-[var(--card)]/25 rounded-full overflow-hidden">
           <div
-            className="h-full bg-white transition-all"
+            className="h-full bg-[var(--card)] transition-all"
             style={{ width: `${stats.confidence_score}%` }}
           />
         </div>
@@ -140,45 +132,21 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
 
       {/* Score Breakdown */}
       <div className="grid grid-cols-2 gap-3">
-        <ScoreCard
-          label="Completion"
-          score={stats.completion_score}
-          weight={40}
-          color="bg-blue-50 border-blue-200"
-          textColor="text-blue-900"
-        />
-        <ScoreCard
-          label="Authenticity"
-          score={stats.authenticity_score}
-          weight={30}
-          color="bg-purple-50 border-purple-200"
-          textColor="text-purple-900"
-        />
-        <ScoreCard
-          label="Rule Adherence"
-          score={stats.rule_adherence_score}
-          weight={20}
-          color="bg-[#EDE9FE] border-emerald-200"
-          textColor="text-emerald-900"
-        />
-        <ScoreCard
-          label="Reputation"
-          score={stats.reputation_confidence_score}
-          weight={10}
-          color="bg-orange-50 border-orange-200"
-          textColor="text-orange-900"
-        />
+        <ScoreCard label="Completion" score={stats.completion_score} weight={40} />
+        <ScoreCard label="Authenticity" score={stats.authenticity_score} weight={30} />
+        <ScoreCard label="Rule Adherence" score={stats.rule_adherence_score} weight={20} />
+        <ScoreCard label="Reputation" score={stats.reputation_confidence_score} weight={10} />
       </div>
 
       {/* Verification Count */}
-      <div className="rounded-[28px] bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] p-4 flex items-center justify-between">
+      <div className="rounded-[14px] bg-[var(--card)] border border-[var(--hairline)] p-4 flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-[#6B7280]">Total Verifications</p>
-          <p className="text-2xl font-bold text-[#14121F] mt-1">{stats.total_verifications}</p>
+          <p className="text-sm font-medium text-[var(--muted)]">Total Verifications</p>
+          <p className="text-2xl font-bold text-[var(--ink)] mt-1">{stats.total_verifications}</p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-[#6B7280] font-medium">COMMUNITY REVIEWED</p>
-          <p className="text-sm text-slate-700 mt-2">
+          <p className="text-xs text-[var(--muted)] font-medium">Community reviewed</p>
+          <p className="text-sm text-[var(--ink-soft)] mt-2">
             {stats.total_verifications === 0
               ? 'Awaiting reviews'
               : `${Math.round((stats.confidence_score / 100) * stats.total_verifications)} approved`}
@@ -196,38 +164,24 @@ function ScoreCard({
   label,
   score,
   weight,
-  color,
-  textColor,
 }: {
   label: string;
   score: number;
   weight: number;
-  color: string;
-  textColor: string;
 }) {
   return (
-    <div className={`rounded-[28px] border ${color} p-4`}>
+    <div className="rounded-[14px] border border-[var(--hairline)] bg-[var(--card)] p-4">
       <div className="flex items-center justify-between mb-2">
-        <p className={`text-sm font-semibold ${textColor}`}>{label}</p>
-        <span className="text-xs font-medium text-[#6B7280]">{weight}% weight</span>
+        <p className="text-sm font-semibold text-[var(--ink)]">{label}</p>
+        <span className="text-xs font-medium text-[var(--muted)]">{weight}% weight</span>
       </div>
-      <p className={`text-2xl font-bold ${textColor}`}>{Math.round(score)}%</p>
-      <div className="w-full h-1.5 bg-slate-300/50 rounded-full overflow-hidden mt-2">
+      <p className="text-2xl font-bold text-[var(--ink)]">{Math.round(score)}%</p>
+      <div className="w-full h-1.5 bg-[var(--hairline)] rounded-full overflow-hidden mt-2">
         <div
-          className={`h-full bg-gradient-to-r ${getScoreGradient(label)}`}
+          className="h-full bg-[var(--navy)]"
           style={{ width: `${score}%` }}
         />
       </div>
     </div>
   );
-}
-
-function getScoreGradient(label: string): string {
-  const gradients: Record<string, string> = {
-    Completion: 'from-blue-400 to-blue-600',
-    Authenticity: 'from-purple-400 to-purple-600',
-    'Rule Adherence': 'from-emerald-400 to-emerald-600',
-    Reputation: 'from-orange-400 to-orange-600',
-  };
-  return gradients[label] || 'from-slate-400 to-slate-600';
 }
