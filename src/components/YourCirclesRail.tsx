@@ -53,7 +53,7 @@ export default function YourCirclesRail({ circles, isLoading }: YourCirclesRailP
   return (
     <div>
       <div className="flex items-baseline justify-between px-1 pb-3">
-        <h2 className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--pact-text-muted)]">Your circles</h2>
+        <h2 className="text-xs font-bold text-[var(--pact-text-muted)]">Your circles</h2>
         <Link
           href="/circles"
           className="flex items-center gap-1 text-xs font-semibold text-[var(--pact-violet)]"

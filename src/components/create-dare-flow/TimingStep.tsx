@@ -26,7 +26,7 @@ export default function TimingStep() {
 
       <div className="mt-6 space-y-6">
         <div>
-          <label className="pact-mono mb-2 flex items-center gap-2 text-xs uppercase tracking-wide text-[var(--pact-text-dim)]">
+          <label className="mb-2 flex items-center gap-2 text-xs text-[var(--pact-text-dim)]">
             <Clock className="h-4 w-4" />
             Respond By
           </label>
@@ -45,11 +45,11 @@ export default function TimingStep() {
               </button>
             ))}
           </div>
-          <p className="pact-mono mt-2 text-xs text-[var(--pact-text-faint)]">Users have {draft.respondByHours} hours to accept</p>
+          <p className="mt-2 text-xs text-[var(--pact-text-faint)]">Users have {draft.respondByHours} hours to accept</p>
         </div>
 
         <div>
-          <label className="pact-mono mb-2 flex items-center gap-2 text-xs uppercase tracking-wide text-[var(--pact-text-dim)]">
+          <label className="mb-2 flex items-center gap-2 text-xs text-[var(--pact-text-dim)]">
             <Clock className="h-4 w-4" />
             Complete By
           </label>
@@ -68,7 +68,7 @@ export default function TimingStep() {
               </button>
             ))}
           </div>
-          <p className="pact-mono mt-2 text-xs text-[var(--pact-text-faint)]">Users must complete within {draft.completeByHours} hours</p>
+          <p className="mt-2 text-xs text-[var(--pact-text-faint)]">Users must complete within {draft.completeByHours} hours</p>
         </div>
       </div>
 

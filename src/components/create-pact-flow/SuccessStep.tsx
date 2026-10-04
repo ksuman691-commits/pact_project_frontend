@@ -55,7 +55,7 @@ export default function SuccessStep() {
 
       {sponsor && (
         <div className="mt-6 w-full text-left">
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--pact-text-faint)]">Tools that might help</p>
+          <p className="mb-2 text-[10px] font-bold text-[var(--pact-text-faint)]">Tools that might help</p>
           <SponsoredCard sponsor={sponsor} />
         </div>
       )}

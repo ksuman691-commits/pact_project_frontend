@@ -158,7 +158,7 @@ export default function PactJoinRequestsModal({ pactId, isOpen, onClose, onReque
                     onClick={() => handleApprove(request.id)}
                     disabled={handlingRequestId === request.id}
                     className="flex flex-1 items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
-                    style={{ background: 'linear-gradient(135deg, var(--pact-mint), var(--pact-violet))' }}
+                    style={{ background: 'var(--navy)' }}
                   >
                     <CheckCircle2 className="h-4 w-4" />
                     Approve

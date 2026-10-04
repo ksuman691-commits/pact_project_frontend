@@ -48,7 +48,7 @@ export default function SuccessStep() {
           type="button"
           onClick={() => router.push(pactCtaHref)}
           className="w-full rounded-full px-6 py-3.5 text-sm font-semibold text-[var(--pact-bg)]"
-          style={{ background: 'linear-gradient(135deg, var(--flow-accent), var(--flow-accent-2))' }}
+          style={{ background: 'var(--navy)' }}
         >
           {pactCtaLabel}
         </button>

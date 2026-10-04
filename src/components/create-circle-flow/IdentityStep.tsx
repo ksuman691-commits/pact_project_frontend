@@ -80,7 +80,7 @@ export default function IdentityStep() {
             <Camera className="h-4 w-4" style={{ color: 'var(--pact-bg)' }} aria-hidden="true" />
           </span>
         </button>
-        <span className="pact-mono mt-2 text-xs" style={{ color: 'var(--pact-text-muted)' }}>
+        <span className="mt-2 text-xs" style={{ color: 'var(--pact-text-muted)' }}>
           Tap to {draft.photoPreviewUrl ? 'change photo' : 'upload a photo'}
         </span>
         {photoError && (
@@ -89,7 +89,7 @@ export default function IdentityStep() {
           </span>
         )}
 
-        <span className="pact-mono mt-4 block text-xs uppercase tracking-wide" style={{ color: 'var(--pact-text-muted)' }}>
+        <span className="mt-4 block text-xs " style={{ color: 'var(--pact-text-muted)' }}>
           Or pick an emoji
         </span>
         <div className="mt-2 flex flex-wrap justify-center gap-2">
@@ -111,7 +111,7 @@ export default function IdentityStep() {
       </div>
 
       <div className="mt-6">
-        <label className="pact-mono block text-xs uppercase tracking-wide" style={{ color: 'var(--pact-text-muted)' }}>
+        <label className="block text-xs " style={{ color: 'var(--pact-text-muted)' }}>
           Circle name
         </label>
         <input
@@ -157,7 +157,7 @@ export default function IdentityStep() {
       </div>
 
       <div className="mt-6">
-        <label className="pact-mono block text-xs uppercase tracking-wide" style={{ color: 'var(--pact-text-muted)' }}>
+        <label className="block text-xs " style={{ color: 'var(--pact-text-muted)' }}>
           Tagline <span style={{ color: 'var(--pact-text-faint)' }}>(optional)</span>
         </label>
         <input
@@ -179,7 +179,7 @@ export default function IdentityStep() {
         type="button"
         onClick={handleContinue}
         className="mt-8 w-full rounded-full px-6 py-3.5 text-center text-sm font-semibold text-[var(--pact-bg)]"
-        style={{ background: 'linear-gradient(135deg, var(--flow-accent), var(--flow-accent-2))' }}
+        style={{ background: 'var(--navy)' }}
       >
         Continue →
       </button>

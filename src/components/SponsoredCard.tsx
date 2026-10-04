@@ -31,7 +31,7 @@ export default function SponsoredCard({ sponsor }: SponsoredCardProps) {
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--pact-violet)]">Sponsored</p>
+          <p className="text-[10px] font-bold text-[var(--pact-violet)]">Sponsored</p>
           <p className="mt-1 text-sm font-bold text-[var(--pact-text)]">{sponsor.headline}</p>
           {sponsor.subtext && <p className="mt-1 text-xs leading-relaxed text-[var(--pact-text-dim)]">{sponsor.subtext}</p>}
           <p className="mt-2 text-[11px] font-semibold text-[var(--pact-text-faint)]">{sponsor.name}</p>

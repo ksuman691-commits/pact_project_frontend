@@ -38,7 +38,7 @@ function SendToCircle({ item, onClose }: { item: CuratedContent; onClose: () => 
       <div className="w-full max-w-md rounded-t-3xl bg-card p-5 shadow-2xl md:rounded-3xl" onClick={(e) => e.stopPropagation()}>
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Ready to deploy</p>
+            <p className="text-xs font-semibold text-primary">Ready to deploy</p>
             <h2 className="mt-1 text-xl font-bold">Send to a Circle</h2>
             <p className="mt-1 text-sm text-muted-foreground">Choose where this {item.type} should live.</p>
           </div>

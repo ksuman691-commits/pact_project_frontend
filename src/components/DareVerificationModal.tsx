@@ -176,7 +176,7 @@ export default function DareVerificationModal({
 
           {/* Question */}
           <div>
-            <p className="text-xs font-semibold text-[var(--pact-text-faint)] uppercase mb-2">
+            <p className="text-xs font-semibold text-[var(--pact-text-faint)] mb-2">
               Question {currentQuestion + 1} of {questions.length}
             </p>
             <p className="text-lg font-bold text-[var(--pact-text)] leading-snug">{questions[currentQuestion]}</p>
@@ -215,7 +215,7 @@ export default function DareVerificationModal({
           {/* Optional Reason for "No" */}
           {showReasons[currentQuestion] && currentAnswer === 'no' && (
             <div className="rounded-[28px] p-4 border" style={{ background: 'var(--pact-surface-2)', borderColor: 'var(--pact-pink)' }}>
-              <label className="block text-xs font-semibold text-[var(--pact-text-faint)] uppercase mb-2">Why not? (optional)</label>
+              <label className="block text-xs font-semibold text-[var(--pact-text-faint)] mb-2">Why not? (optional)</label>
               <textarea
                 value={currentReason}
                 onChange={(e) => handleReasonChange(e.target.value)}

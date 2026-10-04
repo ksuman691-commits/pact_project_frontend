@@ -74,7 +74,7 @@ export default function ProofsSection({
                 )}
                 <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-1 bg-gradient-to-t from-black/75 to-transparent px-2 pb-2 pt-6 text-[10px] font-semibold text-white">
                   <span>{proof.day ? `Day ${proof.day}` : 'Update'}</span>
-                  <span className="uppercase tracking-wider text-white/75">{proof.type === 'video' ? 'Video' : 'Photo'}</span>
+                  <span className="text-white/75">{proof.type === 'video' ? 'Video' : 'Photo'}</span>
                 </div>
               </button>
             ))}

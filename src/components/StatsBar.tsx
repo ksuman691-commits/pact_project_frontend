@@ -26,7 +26,7 @@ export default function StatsBar({ stats }: StatsBarProps) {
               <p className="text-3xl sm:text-4xl font-black text-[#14121F] leading-tight">
                 {stat.value}
               </p>
-              <p className="text-xs text-[#9CA3AF] font-semibold mt-2 uppercase tracking-wide">
+              <p className="text-xs text-[#9CA3AF] font-semibold mt-2 ">
                 {stat.label}
               </p>
             </div>

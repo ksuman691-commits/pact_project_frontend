@@ -63,7 +63,7 @@ export default function SuggestedPactsSection({
 
   return (
     <div className="mt-10 w-full">
-      <h3 className="pact-mono text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--pact-gold)' }}>
+      <h3 className="text-xs font-semibold " style={{ color: 'var(--pact-gold)' }}>
         Suggested for you
       </h3>
       <div className="mt-3 flex flex-col gap-3">
@@ -118,7 +118,7 @@ function SuggestedPactCard({
       </div>
       <button type="button" onClick={onOpen} className="min-w-0 flex-1 text-left">
         <p className="truncate text-sm font-semibold text-[var(--pact-text)]">{pact.title}</p>
-        <p className="pact-mono mt-0.5 text-xs text-[var(--pact-text-muted)]">
+        <p className="mt-0.5 text-xs text-[var(--pact-text-muted)]">
           {getSocialProofLine(pact)}
         </p>
       </button>

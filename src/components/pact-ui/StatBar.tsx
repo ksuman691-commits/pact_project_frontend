@@ -30,7 +30,7 @@ export default function StatBar({
     <div className={className}>
       <div className="mb-1.5 flex items-center justify-between">
         <span className="text-xs font-medium text-[var(--pact-text-dim)]">{label}</span>
-        <span className="pact-mono text-xs font-semibold text-[var(--pact-text)]">
+        <span className="text-xs font-semibold text-[var(--pact-text)]">
           {displayValue ?? `${animated}%`}
         </span>
       </div>

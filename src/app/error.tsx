@@ -35,7 +35,7 @@ export default function ErrorBoundary({
         <AlertTriangle className="h-9 w-9" style={{ color: 'var(--pact-gold)' }} />
       </div>
 
-      <p className="pact-mono mt-6 text-sm font-semibold tracking-widest" style={{ color: 'var(--pact-text-faint)' }}>
+      <p className="mt-6 text-sm font-semibold " style={{ color: 'var(--pact-text-faint)' }}>
         SOMETHING BROKE
       </p>
       <h1 className="mt-2 text-3xl font-black text-[var(--pact-text)]">Well, that&apos;s on us</h1>
@@ -44,7 +44,7 @@ export default function ErrorBoundary({
       </p>
 
       {process.env.NODE_ENV === 'development' && (
-        <p className="pact-mono mt-4 max-w-md break-words rounded-lg bg-[var(--pact-surface)] px-4 py-2 text-left text-xs text-[var(--pact-text-faint)]">
+        <p className="mt-4 max-w-md break-words rounded-lg bg-[var(--pact-surface)] px-4 py-2 text-left text-xs text-[var(--pact-text-faint)]">
           {error.message}
         </p>
       )}

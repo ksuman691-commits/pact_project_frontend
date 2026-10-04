@@ -46,7 +46,7 @@ export default function InviteStep() {
               <Avatar name={person.username || person.full_name} avatarUrl={person.avatar_url} size={36} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-semibold">{person.full_name || person.username}</span>
-                <span className="pact-mono block truncate text-xs" style={{ color: 'var(--pact-text-muted)' }}>
+                <span className="block truncate text-xs" style={{ color: 'var(--pact-text-muted)' }}>
                   @{person.username}
                 </span>
               </span>
@@ -69,7 +69,7 @@ export default function InviteStep() {
         type="button"
         onClick={confirmInvites}
         className="mt-6 w-full rounded-full px-6 py-3.5 text-center text-sm font-semibold text-[var(--pact-bg)]"
-        style={{ background: 'linear-gradient(135deg, var(--flow-accent), var(--flow-accent-2))' }}
+        style={{ background: 'var(--navy)' }}
       >
         {draft.inviteUserIds.length > 0 ? `Continue with ${draft.inviteUserIds.length} →` : 'Skip →'}
       </button>

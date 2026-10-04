@@ -24,7 +24,7 @@ interface LiveTitleStripProps {
 export default function LiveTitleStrip({ text, placeholder, icon: Icon }: LiveTitleStripProps) {
   return (
     <div
-      className="pact-mono flex items-start gap-2.5 rounded-2xl px-4 py-3 text-sm leading-relaxed"
+      className="flex items-start gap-2.5 rounded-2xl px-4 py-3 text-sm leading-relaxed"
       style={{
         background: 'var(--pact-surface)',
         border: '1px solid var(--pact-hairline)',

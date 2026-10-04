@@ -59,7 +59,7 @@ export default function OnboardingCarousel() {
         <button
           type="button"
           onClick={finish}
-          className="pact-mono text-xs font-semibold uppercase tracking-wide"
+          className="text-xs font-semibold "
           style={{ color: 'var(--pact-text-muted)' }}
         >
           Skip
@@ -107,7 +107,7 @@ export default function OnboardingCarousel() {
           <button
             type="button"
             onClick={() => goTo(index - 1)}
-            className="pact-mono text-xs font-semibold uppercase tracking-wide"
+            className="text-xs font-semibold "
             style={{ color: 'var(--pact-text-faint)' }}
           >
             Back

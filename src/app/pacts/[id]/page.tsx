@@ -322,7 +322,7 @@ export default function PactDetailPage() {
                 </div>
               )}
               {categoryLabel && (
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/80">{categoryLabel}</p>
+                <p className="text-xs font-bold text-white/80">{categoryLabel}</p>
               )}
               <h1 className="mt-1 text-2xl font-black leading-tight text-white text-balance">{pact.title}</h1>
             </div>
@@ -342,7 +342,7 @@ export default function PactDetailPage() {
                 element would have to un-mount mid-scroll for that. */}
             {!isParticipant && (
               <div className="pact-card rounded-[28px] p-5">
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[var(--pact-text-faint)]">Join this pact</p>
+                <p className="text-sm font-semibold text-[var(--pact-text-faint)]">Join this pact</p>
                 {pact.can_join ? (
                   <>
                     <p className="mt-2 text-sm text-[var(--pact-text-muted)]">Join this pact to upload proof updates from the camera or your gallery.</p>
@@ -351,12 +351,12 @@ export default function PactDetailPage() {
                     </div>
                   </>
                 ) : pact.join_block_reason === 'already_joined' ? (
-                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-card/60 bg-card px-3 py-1 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-navy">
+                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-card/60 bg-card px-3 py-1 text-[11px] font-medium text-navy">
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Joined
                   </span>
                 ) : pact.join_block_reason === 'creator' ? (
-                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-card/60 bg-card px-3 py-1 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-navy">
+                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-card/60 bg-card px-3 py-1 text-[11px] font-medium text-navy">
                     <Crown className="h-3.5 w-3.5" />
                     Creator
                   </span>
@@ -402,15 +402,15 @@ export default function PactDetailPage() {
             <section className="grid grid-cols-3 gap-3">
               <div className="pact-card rounded-[22px] px-3 py-4 text-center">
                 <p className="text-xl font-black text-[var(--pact-text)]">{participants.length}</p>
-                <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">Members</p>
+                <p className="mt-0.5 text-[11px] font-bold text-[var(--pact-text-faint)]">Members</p>
               </div>
               <div className="pact-card rounded-[22px] px-3 py-4 text-center">
                 <p className="text-xl font-black text-[var(--pact-text)]">{progress ? progress.completed : 0}</p>
-                <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">Days done</p>
+                <p className="mt-0.5 text-[11px] font-bold text-[var(--pact-text-faint)]">Days done</p>
               </div>
               <div className="pact-card rounded-[22px] px-3 py-4 text-center">
                 <p className="text-xl font-black text-[var(--pact-text)]">{cheers.length}</p>
-                <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">Cheers</p>
+                <p className="mt-0.5 text-[11px] font-bold text-[var(--pact-text-faint)]">Cheers</p>
               </div>
             </section>
 
@@ -473,7 +473,7 @@ export default function PactDetailPage() {
                 wall can never show a different set of photos than the rest
                 of the page implies exists. */}
             <section>
-              <h2 className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--pact-text-faint)]">Proof wall</h2>
+              <h2 className="text-xs font-bold text-[var(--pact-text-faint)]">Proof wall</h2>
               {proofs.length > 0 ? (
                 <div className="mt-3 grid grid-cols-3 gap-2">
                   {proofs.map((proof: any, index: number) => (
@@ -531,7 +531,7 @@ export default function PactDetailPage() {
               <div className="border-t border-[var(--pact-hairline)] px-4 py-4">
                 <div className="rounded-md border border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] px-3.5 py-3">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--pact-text-faint)]">Participants</p>
+                    <p className="text-[11px] font-bold text-[var(--pact-text-faint)]">Participants</p>
                     <span className="text-xs text-[var(--pact-text-faint)]">{participants.length}</span>
                   </div>
               {participants.length > 0 ? (
@@ -574,7 +574,7 @@ export default function PactDetailPage() {
                     <p className="text-xs text-[var(--pact-text-muted)]">Review who&apos;s asked to join this pact.</p>
                   </div>
                 </div>
-                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--pact-text-faint)]">Manage</span>
+                <span className="text-xs font-semibold text-[var(--pact-text-faint)]">Manage</span>
               </button>
             )}
 

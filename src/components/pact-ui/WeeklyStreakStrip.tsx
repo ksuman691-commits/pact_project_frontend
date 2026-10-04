@@ -58,7 +58,7 @@ export default function WeeklyStreakStrip({ activityDates, className = '' }: Wee
             key={cell.key}
             title={cell.label}
             aria-label={`${cell.label}: ${cell.isFuture ? 'upcoming' : cell.active ? 'showed up' : 'no activity'}`}
-            className="flex h-8 items-center justify-center rounded-[3px] font-mono text-[11px]"
+            className="flex h-8 items-center justify-center rounded-[3px] text-[11px]"
             style={{
               // Past days with no activity are plain outlines, not "missed":
               // no activity is not the same as a broken commitment.

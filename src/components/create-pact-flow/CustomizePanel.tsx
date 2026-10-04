@@ -32,7 +32,7 @@ export default function CustomizePanel() {
       {open && (
         <div className="pact-step-enter mt-4 space-y-4 rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)] p-4">
           <div>
-            <label htmlFor="pact-description" className="pact-mono text-xs uppercase tracking-wide text-[var(--pact-text-muted)]">
+            <label htmlFor="pact-description" className="text-xs text-[var(--pact-text-muted)]">
               Description
             </label>
             <textarea
@@ -47,7 +47,7 @@ export default function CustomizePanel() {
           </div>
 
           <div>
-            <label htmlFor="pact-start-date" className="pact-mono text-xs uppercase tracking-wide text-[var(--pact-text-muted)]">
+            <label htmlFor="pact-start-date" className="text-xs text-[var(--pact-text-muted)]">
               Start date
             </label>
             <input
@@ -56,7 +56,7 @@ export default function CustomizePanel() {
               min={todayIso}
               value={draft.startDate ?? todayIso}
               onChange={(e) => updateDraft({ startDate: e.target.value })}
-              className="pact-mono mt-2 w-full rounded-xl border border-[var(--pact-hairline)] bg-[var(--pact-bg)] px-3 py-2.5 text-sm text-[var(--pact-text)] focus:border-[var(--pact-pink)] focus:outline-none"
+              className="mt-2 w-full rounded-xl border border-[var(--pact-hairline)] bg-[var(--pact-bg)] px-3 py-2.5 text-sm text-[var(--pact-text)] focus:border-[var(--pact-pink)] focus:outline-none"
             />
           </div>
 

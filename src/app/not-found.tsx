@@ -24,7 +24,7 @@ export default function NotFound() {
         <Compass className="h-9 w-9" style={{ color: 'var(--pact-violet)' }} />
       </div>
 
-      <p className="pact-mono mt-6 text-sm font-semibold tracking-widest" style={{ color: 'var(--pact-text-faint)' }}>
+      <p className="mt-6 text-sm font-semibold " style={{ color: 'var(--pact-text-faint)' }}>
         404
       </p>
       <h1 className="mt-2 text-3xl font-black text-[var(--pact-text)]">This pact doesn&apos;t exist</h1>

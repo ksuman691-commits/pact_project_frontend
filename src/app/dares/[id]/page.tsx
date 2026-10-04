@@ -134,7 +134,7 @@ export default function DareDetailPage() {
               sizes="(max-width: 768px) 100vw, 640px"
             />
             <span
-              className="absolute left-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
+              className="absolute left-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold text-white"
               style={{ background: 'var(--pact-mint)' }}
             >
               <CheckCheck className="h-2.5 w-2.5" />

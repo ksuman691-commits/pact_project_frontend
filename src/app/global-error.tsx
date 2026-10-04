@@ -30,7 +30,7 @@ export default function GlobalError({
     <html lang="en">
       <body>
         <div className="pact-flow flex min-h-dvh flex-col items-center justify-center px-6 py-16 text-center">
-          <p className="pact-mono text-sm font-semibold tracking-widest" style={{ color: 'var(--pact-text-faint)' }}>
+          <p className="text-sm font-semibold " style={{ color: 'var(--pact-text-faint)' }}>
             CIRCLEPACT
           </p>
           <h1 className="mt-4 text-3xl font-black" style={{ color: 'var(--pact-text)' }}>

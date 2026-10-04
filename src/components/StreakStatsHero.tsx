@@ -30,7 +30,7 @@ export default function StreakStatsHero({ streak, winRate, pactsCompleted, circl
 
   return (
     <section aria-label="Your record" className="flex flex-col gap-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--muted)]">Your record</p>
+      <p className="text-[11px] font-semibold text-[var(--muted)]">Your record</p>
       <div className="grid grid-cols-4 divide-x divide-[var(--hairline-soft)] rounded-[6px] border border-[var(--hairline)] bg-[var(--card)]">
         {[
           { value: `${streak}`, label: streak === 1 ? 'day running' : 'days running' },

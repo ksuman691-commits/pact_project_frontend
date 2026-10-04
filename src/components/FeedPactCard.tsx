@@ -843,7 +843,7 @@ export default function FeedPactCard({
               the photo like before. */}
           <div className="mt-3 flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              {pactCategoryLabel && <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--pact-text-faint)]">{pactCategoryLabel}</p>}
+              {pactCategoryLabel && <p className="text-[11px] font-bold text-[var(--pact-text-faint)]">{pactCategoryLabel}</p>}
               <h2 className="mt-0.5 text-lg font-black leading-tight text-[var(--pact-text)] text-balance">{pact.title}</h2>
               {circleLabel && <p className="mt-0.5 text-xs font-medium text-[var(--pact-text-faint)]">{circleLabel}</p>}
             </div>
@@ -859,7 +859,7 @@ export default function FeedPactCard({
                 />
               )}
               {showStatusBadgeOnly && (
-                <span className={`text-[10px] font-bold uppercase tracking-[0.12em] ${isCreator ? 'text-[var(--warn-text)]' : 'text-[var(--navy)]'}`}>
+                <span className={`text-[10px] font-bold ${isCreator ? 'text-[var(--warn-text)]' : 'text-[var(--navy)]'}`}>
                   {isCreator ? 'Creator' : 'Joined'}
                 </span>
               )}
@@ -1049,7 +1049,7 @@ export default function FeedPactCard({
             <div className="px-5 pb-5 pt-4">
               <div className="mb-5 flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white/50">Report this pact</p>
+                  <p className="text-[11px] font-semibold text-white/50">Report this pact</p>
                   <h3 className="mt-2 text-2xl font-black">Report this pact</h3>
                 </div>
                 <button

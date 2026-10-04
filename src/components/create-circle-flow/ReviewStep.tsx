@@ -82,7 +82,7 @@ export default function ReviewStep() {
         onClick={handleCreate}
         disabled={isSubmitting}
         className="mt-8 w-full rounded-full px-6 py-4 text-center text-base font-semibold text-[var(--pact-bg)] transition-opacity disabled:opacity-60"
-        style={{ background: 'linear-gradient(135deg, var(--flow-accent), var(--flow-accent-2))' }}
+        style={{ background: 'var(--navy)' }}
       >
         {isSubmitting ? 'Creating…' : '👯 Create Circle →'}
       </button>

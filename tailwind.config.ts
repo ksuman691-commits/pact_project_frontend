@@ -33,9 +33,9 @@ const config: Config = {
         'missed-stripe': 'var(--missed-stripe)',
       },
       fontFamily: {
-        sans: ['var(--font-classic-body)', "'Helvetica Neue'", 'sans-serif'],
-        serif: ['var(--font-classic-display)', 'Georgia', 'serif'],
-        mono: ['var(--font-classic-mono)', 'ui-monospace', 'monospace'],
+        sans: ['var(--font-pact-display)', "'Helvetica Neue'", 'sans-serif'],
+        serif: ['var(--font-pact-display)', 'Arial', 'sans-serif'],
+        mono: ['var(--font-pact-display)', 'Arial', 'sans-serif'],
       },
       borderRadius: {
         card: '6px',

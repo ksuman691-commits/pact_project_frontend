@@ -41,7 +41,7 @@ export default function FeaturedDareCard({ dare }: FeaturedDareCardProps) {
       <div className="relative flex aspect-[16/9] w-full items-end p-4" style={{ background: 'var(--navy)' }}>
         <Zap className="pointer-events-none absolute right-4 top-4 h-14 w-14 text-white/25" strokeWidth={1.5} aria-hidden="true" />
         <div className="relative z-10">
-          <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+          <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold text-white">
             <Zap className="h-2.5 w-2.5" />
             Featured dare
           </span>

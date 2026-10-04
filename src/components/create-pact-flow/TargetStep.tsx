@@ -36,7 +36,7 @@ export default function TargetStep() {
       <p className="mt-1 text-sm">Set the number you&apos;re aiming for.</p>
 
       <div className="mt-8 flex flex-1 items-center justify-center">
-        <span className="pact-mono text-5xl font-semibold" style={{ color: 'var(--pact-pink)' }}>
+        <span className="text-5xl font-semibold" style={{ color: 'var(--pact-pink)' }}>
           {draft.target != null ? formatTarget(draft.target, unit) : `— ${unit}`}
         </span>
       </div>
@@ -49,7 +49,7 @@ export default function TargetStep() {
               key={value}
               type="button"
               onClick={() => selectTarget(value)}
-              className={`pact-tile pact-mono rounded-2xl p-4 text-center font-semibold ${selected ? 'selected' : ''}`}
+              className={`pact-tile rounded-2xl p-4 text-center font-semibold ${selected ? 'selected' : ''}`}
             >
               {formatTarget(value, unit)}
             </button>
@@ -68,7 +68,7 @@ export default function TargetStep() {
                 setError(null);
               }}
               placeholder={`Custom ${unit}`}
-              className="pact-mono w-full rounded-full px-4 py-2.5 text-sm outline-none"
+              className="w-full rounded-full px-4 py-2.5 text-sm outline-none"
               style={{
                 background: 'var(--pact-surface-raised)',
                 color: 'var(--pact-text)',

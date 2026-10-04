@@ -111,7 +111,7 @@ function PersonGroup({
 }) {
   return (
     <div>
-      <p className="px-1 pb-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">{title}</p>
+      <p className="px-1 pb-2 text-xs font-bold text-[var(--pact-text-faint)]">{title}</p>
       <div className="flex flex-col gap-2">
         {people.map((person) => (
           <div

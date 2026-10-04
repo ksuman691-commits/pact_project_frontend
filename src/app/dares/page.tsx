@@ -178,7 +178,7 @@ function DaresPageInner() {
       <div className="mx-auto max-w-2xl px-5 pb-10 pt-8 md:px-10 md:pt-14">
         {/* Hero */}
         <header className="border-b border-[var(--pact-hairline)] pb-8">
-          <p className="text-xs font-bold uppercase tracking-[0.28em] text-[var(--pact-violet)]">Dares</p>
+          <p className="text-xs font-bold text-[var(--pact-violet)]">Dares</p>
           <div className="mt-3 flex items-center gap-4">
             <span className="text-6xl font-black leading-none tracking-[-0.07em] text-[var(--pact-text)] md:text-7xl">{mineAll.length}</span>
             <span className="text-balance text-xl font-medium leading-[1.15] tracking-[-0.02em] text-[var(--pact-text-muted)] md:text-2xl">
@@ -194,21 +194,21 @@ function DaresPageInner() {
               className="flex-1 px-4 py-3 text-center transition hover:bg-[var(--pact-surface-2)]"
             >
               <p className="text-lg font-black text-[var(--pact-text)]">{waitingOnYou}</p>
-              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">Waiting on you</p>
+              <p className="mt-0.5 text-[10px] font-semibold text-[var(--pact-text-faint)]">Waiting on you</p>
             </Link>
             <Link
               href="/dares?status=accepted"
               className="flex-1 px-4 py-3 text-center transition hover:bg-[var(--pact-surface-2)]"
             >
               <p className="text-lg font-black text-[var(--pact-text)]">{acceptedCount}</p>
-              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">Received &amp; accepted</p>
+              <p className="mt-0.5 text-[10px] font-semibold text-[var(--pact-text-faint)]">Received &amp; accepted</p>
             </Link>
             <Link
               href="/dares?status=completed"
               className="flex-1 px-4 py-3 text-center transition hover:bg-[var(--pact-surface-2)]"
             >
               <p className="text-lg font-black text-[var(--pact-text)]">{completedCount}</p>
-              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">Completed</p>
+              <p className="mt-0.5 text-[10px] font-semibold text-[var(--pact-text-faint)]">Completed</p>
             </Link>
           </div>
         </header>
@@ -286,7 +286,7 @@ function DaresPageInner() {
         {/* Running out of time */}
         {!isLoading && urgentDares.length > 0 && (
           <section className="border-b border-[var(--pact-hairline)] py-6" aria-label="Running out of time">
-            <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-[var(--pact-text-muted)]">Running out of time</h2>
+            <h2 className="mb-4 text-xs font-bold text-[var(--pact-text-muted)]">Running out of time</h2>
             <div className="flex gap-6 overflow-x-auto pb-1">
               {urgentDares.map(({ dare }: any) => {
                 const isSent = dare.creator_id === user?.id;

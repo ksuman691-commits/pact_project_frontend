@@ -147,7 +147,7 @@ export default function CheerCaptureModal({
       <section role="dialog" aria-modal="true" aria-labelledby="cheer-camera-title" className="relative z-10 flex max-h-[94vh] w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] border border-white/15 bg-[#171421] text-white shadow-2xl sm:rounded-[28px]">
         <header className="flex items-center justify-between px-5 py-4">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--pact-gold)]">24-hour story</p>
+            <p className="text-[11px] font-bold text-[var(--pact-gold)]">24-hour story</p>
             <h2 id="cheer-camera-title" className="mt-1 text-xl font-bold">Send a Cheer</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Close Cheer camera" className="rounded-full p-2 text-white/70 transition hover:bg-white/10 hover:text-white">

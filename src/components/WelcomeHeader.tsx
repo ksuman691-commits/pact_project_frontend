@@ -44,7 +44,7 @@ export default function WelcomeHeader({
               atRisk={atRisk}
             />
             <div className="min-w-0">
-              <p className="pact-mono text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--pact-text-faint)]">Welcome back</p>
+              <p className="text-[11px] font-semibold text-[var(--pact-text-faint)]">Welcome back</p>
               <p className="truncate text-lg font-bold text-[var(--pact-text)]">{userName}</p>
             </div>
           </div>

@@ -14,7 +14,7 @@ const inputClass =
   'w-full px-4 py-3 rounded-[28px] border border-[var(--pact-hairline)] bg-[var(--pact-bg)] text-[var(--pact-text)] placeholder:text-[var(--pact-text-faint)] focus:outline-none focus:border-[var(--pact-pink)]';
 const inputDisabledClass =
   'w-full px-4 py-3 rounded-[28px] border border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] text-[var(--pact-text-faint)] focus:outline-none';
-const labelClass = 'pact-mono block text-xs uppercase tracking-wide text-[var(--pact-text-dim)] mb-2';
+const labelClass = 'block text-xs text-[var(--pact-text-dim)] mb-2';
 
 export default function EditProfilePage() {
   const router = useRouter();

@@ -119,7 +119,7 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
     >
       {/* Header */}
       <div className="p-5 pb-4">
-        <div className="mb-3 flex items-center justify-between gap-3 font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]">
+        <div className="mb-3 flex items-center justify-between gap-3 text-[11px] text-[var(--muted)]">
           <span className="truncate">Dare · {relationLabel}</span>
           <span className="flex flex-shrink-0 items-center gap-1">
             {isPrivate ? <Lock className="h-3 w-3" aria-hidden="true" /> : <Eye className="h-3 w-3" aria-hidden="true" />}
