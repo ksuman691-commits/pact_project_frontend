@@ -102,15 +102,15 @@ export default function VerificationModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-6 border-b border-[rgba(20,18,31,0.06)] flex-shrink-0">
           <div>
-            <h2 className="text-2xl font-black text-[#14121F]">Submit Progress</h2>
-            <p className="text-sm text-[#6B7280] font-medium mt-1">Share how you&apos;re progressing on this pact</p>
+            <h2 className="text-2xl font-black text-ink">Submit Progress</h2>
+            <p className="text-sm text-muted font-medium mt-1">Share how you&apos;re progressing on this pact</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+            className="p-2 hover:bg-hairline rounded-full transition-colors"
             aria-label="Close"
           >
-            <X className="w-6 h-6 text-[#6B7280]" strokeWidth={2} />
+            <X className="w-6 h-6 text-muted" strokeWidth={2} />
           </button>
         </div>
 
@@ -120,24 +120,24 @@ export default function VerificationModal({
             {questions.map((q, idx) => (
               <div key={q.id} className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                    <span className="text-sm font-bold text-blue-600">{idx + 1}</span>
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-card-muted flex items-center justify-center">
+                    <span className="text-sm font-bold text-navy">{idx + 1}</span>
                   </div>
-                  <label className="block font-semibold text-[#14121F]">{q.label}</label>
+                  <label className="block font-semibold text-ink">{q.label}</label>
                 </div>
                 <textarea
                   value={answers[`q${idx + 1}_answer` as keyof typeof answers]}
                   onChange={(e) => handleAnswerChange(idx + 1, e.target.value)}
                   placeholder={q.placeholder}
                   required
-                  className="w-full px-4 py-3 border border-slate-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-hairline rounded-md focus:outline-none focus:ring-2 focus:ring-navy focus:border-transparent resize-none"
                   rows={3}
                 />
                 <textarea
                   value={reasons[`q${idx + 1}_reason` as keyof typeof reasons]}
                   onChange={(e) => handleReasonChange(idx + 1, e.target.value)}
                   placeholder="Optional reason or note..."
-                  className="w-full px-4 py-2 border border-[rgba(20,18,31,0.06)] rounded-[28px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                  className="w-full px-4 py-2 border border-[rgba(20,18,31,0.06)] rounded-md focus:outline-none focus:ring-2 focus:ring-navy focus:border-transparent resize-none text-sm"
                   rows={2}
                 />
               </div>
@@ -149,14 +149,14 @@ export default function VerificationModal({
         <div className="border-t border-[rgba(20,18,31,0.06)] px-6 py-4 flex gap-3 flex-shrink-0 bg-white">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 rounded-[28px] border border-slate-300 text-slate-700 font-semibold hover:bg-[#F4F2FB] transition-colors"
+            className="flex-1 px-4 py-3 rounded-md border border-hairline text-ink-soft font-semibold hover:bg-card-muted transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="flex-1 px-4 py-3 rounded-[28px] bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-3 rounded-full bg-navy text-white font-semibold hover:bg-navy-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {loading ? (
               <>

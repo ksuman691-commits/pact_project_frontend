@@ -171,17 +171,17 @@ export default function ProofVerificationModal({
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
       <div className="bg-white w-full max-h-[90vh] rounded-t-3xl flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-6 border-b border-[rgba(20,18,31,0.06)] flex-shrink-0 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="flex items-center justify-between px-6 py-6 border-b border-[rgba(20,18,31,0.06)] flex-shrink-0 bg-card">
           <div>
-            <h2 className="text-2xl font-black text-[#14121F]">Verify Proof</h2>
-            <p className="text-sm text-[#6B7280] font-medium mt-1">Review and answer 4 verification questions</p>
+            <h2 className="text-2xl font-black text-ink">Verify Proof</h2>
+            <p className="text-sm text-muted font-medium mt-1">Review and answer 4 verification questions</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+            className="p-2 hover:bg-hairline rounded-full transition-colors"
             aria-label="Close"
           >
-            <X className="w-6 h-6 text-[#6B7280]" strokeWidth={2} />
+            <X className="w-6 h-6 text-muted" strokeWidth={2} />
           </button>
         </div>
 
@@ -190,7 +190,7 @@ export default function ProofVerificationModal({
           <div className="px-6 py-6 space-y-6 pb-24">
             {/* Proof Preview */}
             <div>
-              <h3 className="text-sm font-semibold text-[#14121F] mb-3">Proof Being Verified</h3>
+              <h3 className="text-sm font-semibold text-ink mb-3">Proof Being Verified</h3>
               <ProofDisplay proof={proof} />
             </div>
 
@@ -199,12 +199,12 @@ export default function ProofVerificationModal({
               {QUESTIONS.map((q, idx) => (
                 <div key={q.id} className="space-y-3">
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                      <span className="text-sm font-bold text-indigo-600">{idx + 1}</span>
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-card-muted flex items-center justify-center">
+                      <span className="text-sm font-bold text-navy">{idx + 1}</span>
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-[#14121F]">{q.label}</p>
-                      <p className="text-sm text-[#6B7280] mt-1">{q.question}</p>
+                      <p className="font-semibold text-ink">{q.label}</p>
+                      <p className="text-sm text-muted mt-1">{q.question}</p>
                     </div>
                   </div>
 
@@ -213,10 +213,10 @@ export default function ProofVerificationModal({
                     <button
                       type="button"
                       onClick={() => handleAnswerChange(q.id, 'yes')}
-                      className={`flex-1 px-4 py-3 rounded-[28px] font-medium transition-all ${
+                      className={`flex-1 px-4 py-3 rounded-md font-medium transition-all ${
                         answers[q.id + '_answer' as keyof VerificationAnswer] === 'yes'
-                          ? 'bg-green-600 text-white shadow-md'
-                          : 'bg-[#FAF9FE] text-slate-700 hover:bg-slate-200'
+                          ? 'bg-navy text-white shadow-md'
+                          : 'bg-card-muted text-ink-soft hover:bg-hairline'
                       }`}
                     >
                       Yes
@@ -224,10 +224,10 @@ export default function ProofVerificationModal({
                     <button
                       type="button"
                       onClick={() => handleAnswerChange(q.id, 'no')}
-                      className={`flex-1 px-4 py-3 rounded-[28px] font-medium transition-all ${
+                      className={`flex-1 px-4 py-3 rounded-md font-medium transition-all ${
                         answers[q.id + '_answer' as keyof VerificationAnswer] === 'no'
-                          ? 'bg-red-600 text-white shadow-md'
-                          : 'bg-[#FAF9FE] text-slate-700 hover:bg-slate-200'
+                          ? 'bg-ink-soft text-white shadow-md'
+                          : 'bg-card-muted text-ink-soft hover:bg-hairline'
                       }`}
                     >
                       No
@@ -237,7 +237,7 @@ export default function ProofVerificationModal({
                   {/* Reason field - shown when answer is selected */}
                   {answers[q.id + '_answer' as keyof VerificationAnswer] && (
                     <div className="ml-11 space-y-2">
-                      <label className="text-sm font-medium text-[#14121F]">
+                      <label className="text-sm font-medium text-ink">
                         {answers[q.id + '_answer' as keyof VerificationAnswer] === 'no'
                           ? 'Reason (required)'
                           : 'Additional notes (optional)'}
@@ -250,11 +250,11 @@ export default function ProofVerificationModal({
                             ? 'Explain why...'
                             : 'Any additional context...'
                         }
-                        className="w-full px-4 py-3 border border-slate-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none text-sm"
+                        className="w-full px-4 py-3 border border-hairline rounded-md focus:outline-none focus:ring-2 focus:ring-navy focus:border-transparent resize-none text-sm"
                         rows={3}
                       />
                       {answers[q.id + '_answer' as keyof VerificationAnswer] === 'no' && !reasons[q.id + '_reason' as keyof VerificationReasons].trim() && (
-                        <p className="text-xs text-red-600 flex items-center gap-1">
+                        <p className="text-xs text-warn-text flex items-center gap-1">
                           <AlertCircle className="w-3 h-3" />
                           This field is required when answering &quot;No&quot;
                         </p>
@@ -272,14 +272,14 @@ export default function ProofVerificationModal({
           <button
             onClick={onClose}
             disabled={loading}
-            className="flex-1 px-4 py-3 rounded-[28px] border border-slate-300 text-slate-700 font-semibold hover:bg-[#F4F2FB] transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-3 rounded-md border border-hairline text-ink-soft font-semibold hover:bg-card-muted transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="flex-1 px-4 py-3 rounded-[28px] bg-indigo-600 text-white font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-3 rounded-full bg-navy text-white font-semibold hover:bg-navy-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {loading ? (
               <>

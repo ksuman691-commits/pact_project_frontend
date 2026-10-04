@@ -295,12 +295,12 @@ function PactProgressRing({
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
         {compact ? (
           <>
-            <span className="text-[23px] font-black tracking-[-0.04em] text-[var(--pact-text)]" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>D{elapsedDays}</span>
-            <span className="mt-1 text-[11px] font-bold text-[var(--pact-text-dim)]" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>of {totalDays}</span>
+            <span className="text-[23px] font-black tracking-[-0.04em] text-[var(--pact-text)]" style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}>D{elapsedDays}</span>
+            <span className="mt-1 text-[11px] font-bold text-[var(--pact-text-dim)]" style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}>of {totalDays}</span>
           </>
         ) : (
           <>
-            <span className="text-2xl font-bold text-[var(--pact-text)]" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>{percent}%</span>
+            <span className="text-2xl font-bold text-[var(--pact-text)]" style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}>{percent}%</span>
             <span className="mt-0.5 text-[10.5px] text-[var(--pact-text-faint)]">{elapsedDays}/{totalDays} days</span>
           </>
         )}
@@ -929,7 +929,7 @@ export default function FeedPactCard({
                   icon reads as unused/dead, whereas an icon alone with no
                   number reads as neutral/not-yet-engaged. */}
               {cheerCount > 0 && (
-                <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>
+                <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}>
                   {formatCompactCount(cheerCount)}
                 </span>
               )}
@@ -948,7 +948,7 @@ export default function FeedPactCard({
             >
               <MessageCircle className="h-5 w-5" />
               {commentCount > 0 && (
-                <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>
+                <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}>
                   {formatCompactCount(commentCount)}
                 </span>
               )}

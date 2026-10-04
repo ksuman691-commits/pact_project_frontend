@@ -294,16 +294,16 @@ export default function ProofUploadModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50">
-      <div className="w-full sm:max-w-md sm:rounded-[24px] rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto bg-slate-950 border border-white/10">
+    <div className="fixed inset-0 bg-ink/50 flex items-end sm:items-center justify-center z-50">
+      <div className="w-full sm:max-w-md sm:rounded-md rounded-t-xl p-6 max-h-[90vh] overflow-y-auto bg-card border border-hairline">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white">Capture Proof</h2>
+          <h2 className="text-xl font-bold text-ink">Capture Proof</h2>
           <button
             onClick={handleClose}
-            className="p-2 rounded-full bg-white/10 hover:bg-white/15 transition"
+            className="p-2 rounded-full bg-card-muted hover:bg-card-muted transition"
           >
-            <X className="w-5 h-5 text-white/70" />
+            <X className="w-5 h-5 text-muted" />
           </button>
         </div>
 
@@ -311,14 +311,14 @@ export default function ProofUploadModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Description */}
           <div>
-            <label className="block text-sm font-semibold text-white mb-2">
+            <label className="block text-sm font-semibold text-ink mb-2">
               What did you accomplish today?
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe your progress..."
-              className="w-full px-4 py-3 rounded-[24px] outline-none focus:ring-2 focus:ring-violet-500 text-sm resize-none bg-white/5 border border-white/10 text-white placeholder:text-white/40"
+              className="w-full px-4 py-3 rounded-md outline-none focus:ring-2 focus:ring-navy text-sm resize-none bg-card-muted border border-hairline text-ink placeholder:text-muted"
               rows={4}
             />
           </div>
@@ -328,7 +328,7 @@ export default function ProofUploadModal({
               pattern (CheerCaptureModal): default back camera, switchable
               to front, capture-then-review. */}
           <div>
-            <label className="block text-sm font-semibold text-white mb-3">
+            <label className="block text-sm font-semibold text-ink mb-3">
               Capture Evidence {items.length > 0 && `(${items.length} captured)`}
             </label>
 
@@ -338,7 +338,7 @@ export default function ProofUploadModal({
                   <button
                     type="button"
                     onClick={() => startCamera('photo')}
-                    className="px-3 py-2 rounded-[28px] text-sm font-semibold transition bg-white/5 hover:bg-white/10 text-violet-300"
+                    className="px-3 py-2 rounded-md text-sm font-semibold transition bg-card-muted hover:bg-card-muted text-navy"
                   >
                     <span className="inline-flex items-center gap-2">
                       <CameraIcon className="w-4 h-4" />
@@ -348,7 +348,7 @@ export default function ProofUploadModal({
                   <button
                     type="button"
                     onClick={() => startCamera('video')}
-                    className="px-3 py-2 rounded-[28px] text-sm font-semibold transition bg-white/5 hover:bg-white/10 text-pink-300"
+                    className="px-3 py-2 rounded-md text-sm font-semibold transition bg-card-muted hover:bg-card-muted text-navy"
                   >
                     <span className="inline-flex items-center gap-2">
                       <Video className="w-4 h-4" />
@@ -359,8 +359,8 @@ export default function ProofUploadModal({
               )}
 
               {cameraMode && cameraReady && (
-                <div className="rounded-[24px] p-3 space-y-3 border border-white/10 bg-white/5">
-                  <div className="relative w-full aspect-video bg-black rounded-[28px] overflow-hidden">
+                <div className="rounded-md p-3 space-y-3 border border-hairline bg-card-muted">
+                  <div className="relative w-full aspect-video bg-black rounded-md overflow-hidden">
                     <video
                       ref={liveVideoRef}
                       autoPlay
@@ -385,7 +385,7 @@ export default function ProofUploadModal({
                       <button
                         type="button"
                         onClick={capturePhoto}
-                        className="flex-1 px-3 py-2 rounded-[28px] text-white text-sm font-semibold transition bg-gradient-to-r from-pink-500 to-violet-500 hover:brightness-110"
+                        className="flex-1 px-3 py-2 rounded-full text-white text-sm font-semibold transition bg-navy hover:bg-navy-hover"
                       >
                         Capture Photo
                       </button>
@@ -393,8 +393,8 @@ export default function ProofUploadModal({
                       <button
                         type="button"
                         onClick={isRecording ? stopRecording : startRecording}
-                        className={`flex-1 px-3 py-2 rounded-[28px] text-white text-sm font-semibold transition ${
-                          isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-violet-600 hover:bg-violet-700'
+                        className={`flex-1 px-3 py-2 rounded-md text-ink text-sm font-semibold transition ${
+                          isRecording ? 'bg-ink-soft hover:bg-ink' : 'bg-navy hover:bg-navy-hover'
                         }`}
                       >
                         {isRecording ? 'Stop Recording' : 'Start Recording'}
@@ -403,7 +403,7 @@ export default function ProofUploadModal({
                     <button
                       type="button"
                       onClick={stopCamera}
-                      className="px-3 py-2 rounded-[28px] text-sm font-semibold transition border border-white/10 text-white/70 hover:bg-white/5"
+                      className="px-3 py-2 rounded-md text-sm font-semibold transition border border-hairline text-muted hover:bg-card-muted"
                     >
                       Cancel
                     </button>
@@ -412,14 +412,14 @@ export default function ProofUploadModal({
               )}
 
               {items.length === 0 && !cameraMode ? (
-                <div className="rounded-[24px] p-6 text-center border-2 border-dashed border-white/15">
+                <div className="rounded-md p-6 text-center border-2 border-dashed border-hairline">
                   <div className="flex flex-col items-center gap-2">
-                    <CameraIcon className="w-8 h-8 text-white/40" />
+                    <CameraIcon className="w-8 h-8 text-muted" />
                     <div>
-                      <p className="text-sm font-semibold text-white">
+                      <p className="text-sm font-semibold text-ink">
                         Tap Take Photo or Record Video above
                       </p>
-                      <p className="text-xs text-white/50">
+                      <p className="text-xs text-muted">
                         Proof must be captured live — no photos or videos from your library.
                       </p>
                     </div>
@@ -431,7 +431,7 @@ export default function ProofUploadModal({
                     {items.map((item, index) => {
                       const isImage = item.file.type.startsWith('image/');
                       return (
-                        <div key={item.id} className="relative aspect-square overflow-hidden rounded-[16px] bg-white/5">
+                        <div key={item.id} className="relative aspect-square overflow-hidden rounded-md bg-card-muted">
                           {isImage ? (
                             <Image src={item.preview} alt={`Proof preview ${index + 1}`} fill sizes="120px" className="object-cover" />
                           ) : (
@@ -440,7 +440,7 @@ export default function ProofUploadModal({
                           <button
                             type="button"
                             onClick={() => handleRemoveFile(item.id)}
-                            className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full transition"
+                            className="absolute top-1 right-1 bg-ink-soft hover:bg-ink-soft text-white p-1 rounded-full transition"
                             aria-label={`Remove file ${index + 1}`}
                           >
                             <X className="w-3 h-3" />
@@ -452,7 +452,7 @@ export default function ProofUploadModal({
                       <button
                         type="button"
                         onClick={() => startCamera('photo')}
-                        className="flex aspect-square items-center justify-center rounded-[16px] border-2 border-dashed border-white/15 text-white/50 transition hover:border-violet-400/50 hover:bg-white/5"
+                        className="flex aspect-square items-center justify-center rounded-md border-2 border-dashed border-hairline text-muted transition hover:border-navy hover:bg-card-muted"
                         aria-label="Capture another photo"
                       >
                         <CameraIcon className="w-5 h-5" />
@@ -460,7 +460,7 @@ export default function ProofUploadModal({
                     )}
                   </div>
                   {isUploading && uploadProgress && (
-                    <p className="text-xs text-white/50">
+                    <p className="text-xs text-muted">
                       Uploading {uploadProgress.done}/{uploadProgress.total}...
                     </p>
                   )}
@@ -474,14 +474,14 @@ export default function ProofUploadModal({
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 px-4 py-3 font-semibold rounded-[24px] transition border border-white/10 text-white hover:bg-white/5"
+              className="flex-1 px-4 py-3 font-semibold rounded-md transition border border-hairline text-ink hover:bg-card-muted"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isUploading}
-              className="flex-1 px-4 py-3 text-white font-semibold rounded-[24px] transition flex items-center justify-center gap-2 disabled:opacity-50 bg-gradient-to-r from-pink-500 to-violet-500 hover:brightness-110"
+              className="flex-1 px-4 py-3 text-white font-semibold rounded-full transition flex items-center justify-center gap-2 disabled:opacity-50 bg-navy hover:bg-navy-hover"
             >
               {isUploading && <Loader className="w-4 h-4 animate-spin" />}
               {isUploading ? 'Uploading...' : items.length > 1 ? `Submit ${items.length} Photos` : 'Submit Proof'}

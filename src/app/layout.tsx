@@ -1,6 +1,6 @@
 import '@/styles/globals.css';
 import type { Metadata, Viewport } from 'next';
-import { Fraunces, Figtree, IBM_Plex_Mono } from 'next/font/google';
+import { Inter_Tight } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import AuthInitializer from '@/components/AuthInitializer';
 import AgeVerificationGate from '@/components/AgeVerificationGate';
@@ -9,25 +9,15 @@ import InAppNavigationTracker from '@/components/InAppNavigationTracker';
 import QueryProvider from '@/providers/QueryProvider';
 import BottomNav from '@/components/BottomNav';
 
-// "Classic" redesign type system — site-wide, not scoped to a single flow.
+// "Classic" redesign type system v2 — ONE family site-wide (Inter Tight),
+// used for every role (headings, body, buttons, nav, the wordmark logo).
 // Kept under the pre-existing --font-pact-* variable names so every
-// .pact-flow surface (create-pact/create-circle wizards) inherits these
-// fonts automatically without needing per-component edits.
-const fraunces = Fraunces({
+// .pact-flow surface (create-pact/create-circle wizards) inherits it
+// automatically without needing per-component edits.
+const interTight = Inter_Tight({
   subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  style: ['normal', 'italic'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-pact-display',
-});
-const ibmPlexMono = IBM_Plex_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500'],
-  variable: '--font-pact-mono',
-});
-const figtree = Figtree({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--font-pact-body',
 });
 
 export const metadata: Metadata = {
@@ -57,7 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-paper">
       <body
-        className={`${fraunces.variable} ${ibmPlexMono.variable} ${figtree.variable} font-sans bg-paper text-ink antialiased`}
+        className={`${interTight.variable} font-sans bg-paper text-ink antialiased`}
       >
         <QueryProvider>
           <InAppNavigationTracker />
@@ -74,7 +64,7 @@ export default function RootLayout({
                 color: 'var(--card)',
                 border: '1px solid var(--ink)',
                 borderRadius: '6px',
-                fontFamily: 'var(--font-pact-body), sans-serif',
+                fontFamily: 'var(--font-pact-display), sans-serif',
                 fontSize: '14px',
               },
             }}

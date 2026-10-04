@@ -11,26 +11,29 @@
    without having to touch every component file individually.
    ========================================================================== */
 :root {
-  /* ---- Classic palette (see redesign spec) ---- */
-  --paper: #F4EFE4;
+  /* ---- Classic palette v2 (hand-made restyle, supersedes v1 hex values —
+     token NAMES kept stable so every component/page that already
+     references var(--navy) etc. re-themes automatically) ---- */
+  --paper: #F3EEE3;
   --card: #FBF8F1;
   --card-muted: #F0EBDF;
   --ink: #17181D;
   --ink-soft: #3B3D44;
-  --muted: #5A5C63;
-  --navy: #1D2D50;
-  --navy-hover: #0F1A33;
-  --hairline: #DCD3C1;
-  --hairline-soft: #E6DECD;
+  --muted: #6B6A66;
+  --navy: #1F3A93; /* "blue" in the v2 spec — kept under --navy so every call site repaints */
+  --navy-hover: #142766;
+  --hairline: #DCD3C1; /* "line" in the v2 spec — list dividers, nav top edge */
+  --hairline-soft: #E2DACB;
   --seat-border: #CFC5B0;
-  --dash: #BFB49E;
+  --dash: #A29C8D; /* "pencil" in the v2 spec — still-to-come dots, week labels */
   --witness-empty: #9C927E;
-  --tan: #E9E2D3;
+  --tan: #D9CFBA;
   --warn-bg: #F1E6CF;
   --warn-text: #6E4B12;
-  --missed-border: #8C5A1E;
-  --missed-stripe: #C9A777;
+  --missed-border: #6B6A66;
+  --missed-stripe: transparent; /* v2 removes the hatch pattern — missed is an open circle, not a stripe fill */
   --card-text: #FBF8F1;
+  --photo-frame: #FFFDF8;
 
   /* ---- Legacy light-theme variables, repointed ---- */
   --bg-base: var(--paper);
@@ -309,7 +312,7 @@ section + section {
   --flow-accent-2: var(--pact-violet);
   background: var(--pact-bg);
   color: var(--pact-text);
-  font-family: var(--font-pact-body), sans-serif;
+  font-family: var(--font-pact-display), sans-serif;
   min-height: 100dvh;
 }
 
@@ -326,7 +329,7 @@ section + section {
 }
 
 .pact-flow .pact-mono {
-  font-family: var(--font-pact-mono), monospace;
+  font-family: var(--font-pact-display), sans-serif;
 }
 
 .pact-flow .pact-surface {

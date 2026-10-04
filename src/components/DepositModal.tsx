@@ -51,10 +51,10 @@ export default function DepositModal({ isOpen, onClose, onDeposit }: DepositModa
       <div className="bg-white w-full rounded-t-2xl p-6 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Add Funds</h2>
+          <h2 className="text-2xl font-bold text-ink">Add Funds</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-muted hover:text-ink"
           >
             <X className="w-6 h-6" />
           </button>
@@ -62,7 +62,7 @@ export default function DepositModal({ isOpen, onClose, onDeposit }: DepositModa
 
         {/* Amount Input */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-muted mb-2">
             Amount (₹)
           </label>
           <input
@@ -70,22 +70,22 @@ export default function DepositModal({ isOpen, onClose, onDeposit }: DepositModa
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Enter amount"
-            className="w-full px-4 py-3 border border-gray-300 rounded-[28px] focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full px-4 py-3 border border-hairline rounded-md focus:outline-none focus:ring-2 focus:ring-navy"
           />
         </div>
 
         {/* Quick Amount Buttons */}
         <div className="mb-6">
-          <p className="text-sm font-medium text-gray-700 mb-3">Quick amounts</p>
+          <p className="text-sm font-medium text-muted mb-3">Quick amounts</p>
           <div className="grid grid-cols-5 gap-2">
             {QUICK_AMOUNTS.map((quickAmount) => (
               <button
                 key={quickAmount}
                 onClick={() => setAmount(quickAmount.toString())}
-                className={`py-2 px-3 rounded-[28px] text-sm font-medium transition-all ${
+                className={`py-2 px-3 rounded-md text-sm font-medium transition-all ${
                   amount === quickAmount.toString()
-                    ? 'bg-[#A78BFA] text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-navy text-white '
+                    : 'bg-card-muted text-ink-soft hover:bg-hairline'
                 }`}
               >
                 ₹{(quickAmount / 1000).toFixed(0)}k
@@ -96,7 +96,7 @@ export default function DepositModal({ isOpen, onClose, onDeposit }: DepositModa
 
         {/* Payment Method Selection */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-3">
+          <label className="block text-sm font-medium text-muted mb-3">
             Payment Method
           </label>
           <div className="space-y-2">
@@ -104,18 +104,18 @@ export default function DepositModal({ isOpen, onClose, onDeposit }: DepositModa
               <button
                 key={id}
                 onClick={() => setMethod(id)}
-                className={`w-full flex items-center justify-between p-4 border-2 rounded-[28px] transition-all ${
+                className={`w-full flex items-center justify-between p-4 border-2 rounded-md transition-all ${
                   method === id
-                    ? 'border-emerald-500 bg-[#EDE9FE]'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-navy bg-card'
+                    : 'border-hairline hover:border-hairline'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className="w-5 h-5 text-[#A78BFA]" />
-                  <span className="font-medium text-gray-900">{label}</span>
+                  <Icon className="w-5 h-5 text-navy" />
+                  <span className="font-medium text-ink">{label}</span>
                 </div>
                 {method === id && (
-                  <div className="w-5 h-5 rounded-full bg-[#A78BFA] flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-full bg-navy flex items-center justify-center">
                     <div className="w-2 h-2 rounded-full bg-white" />
                   </div>
                 )}
@@ -125,8 +125,8 @@ export default function DepositModal({ isOpen, onClose, onDeposit }: DepositModa
         </div>
 
         {/* Fee Information */}
-        <div className="bg-blue-50 border border-blue-200 rounded-[28px] p-4 mb-6">
-          <p className="text-xs text-blue-900">
+        <div className="bg-card-muted border border-hairline rounded-md p-4 mb-6">
+          <p className="text-xs text-ink">
             <span className="font-medium">Processing Fee:</span> 0% for orders above ₹1000
           </p>
         </div>
@@ -135,14 +135,14 @@ export default function DepositModal({ isOpen, onClose, onDeposit }: DepositModa
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-[28px] text-gray-700 font-medium hover:bg-gray-50 transition"
+            className="flex-1 px-4 py-3 border border-hairline rounded-md text-muted font-medium hover:bg-card-muted transition"
           >
             Cancel
           </button>
           <button
             onClick={handleDeposit}
             disabled={loading}
-            className="flex-1 px-4 py-3 bg-[#A78BFA] text-white rounded-[28px] font-medium hover:bg-emerald-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+            className="flex-1 px-4 py-3 bg-navy text-white rounded-full font-medium hover:bg-navy-hover transition flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading ? 'Processing...' : 'Add Funds'}
             {!loading && <ArrowRight className="w-4 h-4" />}
