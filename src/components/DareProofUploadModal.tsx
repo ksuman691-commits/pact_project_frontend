@@ -237,7 +237,7 @@ export default function DareProofUploadModal({ isOpen, onClose, dareId }: DarePr
           <button
             onClick={handleSubmit}
             disabled={uploadMutation.isPending || (proofType !== 'checklist' && !file)}
-            className="pact-btn-glow flex-1 px-4 py-2.5 rounded-[28px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className=" flex-1 px-4 py-2.5 rounded-[28px] disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
           >
             {uploadMutation.isPending ? 'Uploading...' : 'Submit Proof'}

@@ -122,8 +122,8 @@ export function PactsTab({
           {isOwnProfile ? (
             <button
               onClick={() => (hasOwnCircles ? router.push('/pacts/create') : router.push('/circles/create'))}
-              className="pact-btn-glow mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
-              style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
+              className=" mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
+              style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}
             >
               <Plus className="h-4 w-4" />
               {hasOwnCircles ? 'Create Pact' : 'Create a Circle'}
@@ -131,8 +131,8 @@ export function PactsTab({
           ) : !hasSharedCircle ? (
             <button
               onClick={() => setShowAddToCircle(true)}
-              className="pact-btn-glow mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
-              style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
+              className=" mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
+              style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}
             >
               <Plus className="h-4 w-4" />
               {`Add ${profileName} to a Circle`}
@@ -177,11 +177,11 @@ export function PactsTab({
               key={section.id}
               onClick={() => setActiveSection(section.id)}
               className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition ${
-                isActive ? 'pact-btn-glow' : 'pact-card'
+                isActive ? '' : 'pact-card'
               }`}
               style={
                 isActive
-                  ? { background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }
+                  ? { background: 'var(--navy)', color: 'var(--pact-text)' }
                   : { color: 'var(--pact-text-dim)' }
               }
             >

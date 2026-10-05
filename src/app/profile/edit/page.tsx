@@ -14,7 +14,7 @@ const inputClass =
   'w-full px-4 py-3 rounded-[28px] border border-[var(--pact-hairline)] bg-[var(--pact-bg)] text-[var(--pact-text)] placeholder:text-[var(--pact-text-faint)] focus:outline-none focus:border-[var(--pact-pink)]';
 const inputDisabledClass =
   'w-full px-4 py-3 rounded-[28px] border border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] text-[var(--pact-text-faint)] focus:outline-none';
-const labelClass = 'pact-mono block text-xs uppercase tracking-wide text-[var(--pact-text-dim)] mb-2';
+const labelClass = 'block text-xs text-[var(--pact-text-dim)] mb-2';
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -97,7 +97,7 @@ export default function EditProfilePage() {
               <div className="flex items-center gap-4">
                 <div
                   className="w-24 h-24 rounded-3xl flex items-center justify-center font-bold text-3xl"
-                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
+                  style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}
                 >
                   {avatarPreview ? (
                     <Image
@@ -108,11 +108,11 @@ export default function EditProfilePage() {
                       className="w-24 h-24 rounded-3xl object-cover"
                     />
                   ) : (
-                    <LogoMark size={40} />
+                    <LogoMark size={18} />
                   )}
                 </div>
                 <div>
-                  <label className="pact-btn-glow inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium transition cursor-pointer" style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}>
+                  <label className=" inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium transition cursor-pointer" style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}>
                     <Upload className="w-4 h-4" />
                     {avatarUploading ? 'Uploading...' : 'Upload Photo'}
                     <input
@@ -203,8 +203,8 @@ export default function EditProfilePage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="pact-btn-glow flex-1 px-6 py-3 rounded-full font-medium transition disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
+                className=" flex-1 px-6 py-3 rounded-full font-medium transition disabled:opacity-50"
+                style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}
               >
                 {loading ? 'Saving...' : 'Save Changes'}
               </button>

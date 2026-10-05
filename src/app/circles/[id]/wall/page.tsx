@@ -1,45 +1,42 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
   circlePublicWallService,
   type CirclePublicWallSummary,
   type CirclePublicWallPact,
+  type CirclePublicWallProof,
 } from '@/services/circlePublicWallService';
+import { circleService } from '@/services/api';
+import { useAuthStore } from '@/store/auth';
 import LogoMark from '@/components/LogoMark';
 import LogoSpinner from '@/components/LogoSpinner';
-import { Users, CheckCircle2 } from 'lucide-react';
 
 /**
- * Public, no-login "storefront" for a Circle — reachable by scanning that
- * circle's progressively-revealed QR code (see CircleQRTeaser). Deliberately
- * does NOT use useRequireAuth or DetailPageHeader (its Home link points at
- * /feed, which requires auth) — this page must render fully and never
- * redirect for a signed-out visitor. All data comes through the
- * unauthenticated circlePublicWallService hitting the real, deployed
- * GET /api/circles/{id}/wall endpoint, which returns only the pacts the
- * backend has already restricted server-side to public (+ completed)
- * visibility — this response has no visibility field to re-check client
- * side, so the privacy boundary is enforced entirely by the backend query.
+ * Public, no-login wall for a circle. Reachable by scanning the circle's QR
+ * code. Deliberately does not use useRequireAuth: it must render for a
+ * signed-out visitor. The wall endpoint only returns what the backend has
+ * already restricted to public items.
  */
 export default function CirclePublicWallPage() {
   const params = useParams();
   const circleId = Number(params.id);
+  const user = useAuthStore((s) => s.user);
 
   const [circle, setCircle] = useState<CirclePublicWallSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [isMember, setIsMember] = useState(false);
 
   useEffect(() => {
     let active = true;
     (async () => {
-      const circleResult = await circlePublicWallService.getWall(circleId);
+      const result = await circlePublicWallService.getWall(circleId);
       if (!active) return;
-      setCircle(circleResult);
-      setNotFound(!circleResult);
+      setCircle(result);
+      setNotFound(!result);
       setLoading(false);
     })();
     return () => {
@@ -47,171 +44,194 @@ export default function CirclePublicWallPage() {
     };
   }, [circleId]);
 
-  return (
-    <main className="min-h-screen bg-[var(--pact-bg)] text-[var(--pact-text)]">
-      <TopBar />
+  useEffect(() => {
+    if (!user) {
+      setIsMember(false);
+      return;
+    }
+    let active = true;
+    circleService
+      .getById(circleId)
+      .then((res) => {
+        if (active) setIsMember(!!res.data?.is_member);
+      })
+      .catch(() => {
+        if (active) setIsMember(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [user, circleId]);
 
+  return (
+    <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)]">
+      <TopBar signedIn={!!user} />
       {loading ? (
         <div className="flex min-h-[60vh] items-center justify-center">
-          <LogoSpinner size={32} color="var(--pact-violet)" />
+          <LogoSpinner size={32} />
         </div>
-      ) : notFound ? (
-        <div className="flex min-h-[60vh] flex-col items-center justify-center px-5 text-center">
-          <p className="text-lg font-bold">Circle not found</p>
-          <p className="mt-2 max-w-sm text-sm text-[var(--pact-text-muted)]">
-            This circle&apos;s wall could not be loaded, or the link is no longer valid.
-          </p>
+      ) : notFound || !circle ? (
+        <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
+          <p className="text-[20px] font-bold tracking-[-0.025em]">Circle not found</p>
+          <p className="mt-2 max-w-sm text-[14px] text-[var(--muted)]">This wall could not be loaded, or the link is no longer valid.</p>
         </div>
       ) : (
-        <div className="mx-auto max-w-2xl px-5 pb-20 pt-8">
-          <CircleHero circle={circle!} />
-          <PactList pacts={circle!.pacts} />
-          <BottomCta />
+        <div className="mx-auto w-full max-w-md px-6 pb-24 pt-6">
+          <WallHeader circle={circle} isMember={isMember} signedIn={!!user} />
+          {circle.proofs ? <ProofGallery proofs={circle.proofs} /> : <PublicPactList pacts={circle.pacts} />}
+          <p className="mt-10 text-[13px] text-[var(--muted)]">
+            Only proofs a member chose to make public appear here. Nothing is added automatically.
+          </p>
         </div>
       )}
     </main>
   );
 }
 
-/**
- * Sticky brand bar: logo/wordmark + tagline so a cold visitor immediately
- * understands what app this is, plus a Sign Up / Log In CTA that stays
- * visible without scrolling — the primary conversion path for anyone who
- * lands here from a scanned QR code or shared link.
- */
-function TopBar() {
+function TopBar({ signedIn }: { signedIn: boolean }) {
   return (
-    <header
-      className="sticky top-0 z-40 border-b border-[var(--pact-hairline)]"
-      style={{ background: 'var(--pact-bg)' }}
-    >
-      <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-5 py-3">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <LogoMark size={30} />
-          <div className="min-w-0 leading-tight">
-            <p className="truncate text-sm font-bold lowercase tracking-[-0.03em]">pact</p>
-            <p className="hidden truncate text-[0.68rem] text-[var(--pact-text-faint)] sm:block">
-              Real goals. Real proof. Real people.
-            </p>
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Link
-            href="/auth/login"
-            className="rounded-full px-3 py-2 text-sm font-semibold text-[var(--pact-text-muted)] transition hover:text-[var(--pact-text)]"
-          >
-            Log in
-          </Link>
-          <Link
-            href="/auth/register"
-            className="rounded-full px-4 py-2 text-sm font-bold text-white transition"
-            style={{ background: 'var(--pact-violet)' }}
-          >
-            Sign up
-          </Link>
-        </div>
-      </div>
+    <header className="mx-auto flex w-full max-w-md items-center justify-between px-6 py-4">
+      <LogoMark size={18} />
+      {!signedIn && (
+        <Link href="/auth/login" className="text-[14px] font-semibold text-[var(--navy)]">
+          Sign in
+        </Link>
+      )}
     </header>
   );
 }
 
-function CircleHero({ circle }: { circle: CirclePublicWallSummary }) {
-  const completedCount = circle.pacts.filter((p) => p.progress_percent >= 100).length;
+function monogram(name: string) {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return '';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+function MiniRing({ name }: { name: string }) {
   return (
-    <header className="border-b border-[var(--pact-hairline)] pb-8">
-      <div className="flex items-start gap-4">
-        <div
-          className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full text-3xl"
-          style={{ background: 'linear-gradient(135deg,var(--pact-pink),var(--pact-violet))' }}
-        >
-          {circle.photo_url ? (
-            <Image src={circle.photo_url} alt="" fill sizes="64px" className="object-cover" />
-          ) : (
-            circle.icon_emoji || circle.name?.charAt(0) || '◌'
-          )}
-        </div>
+    <div className="relative h-[72px] w-[72px] shrink-0" aria-hidden="true">
+      <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full">
+        <circle cx="50" cy="50" r="40" fill="none" stroke="var(--hairline)" strokeWidth="1.6" />
+      </svg>
+      <div className="absolute inset-[16%] flex items-center justify-center rounded-full bg-[var(--card)] text-[16px] font-bold text-[var(--navy)]">
+        {monogram(name)}
+      </div>
+    </div>
+  );
+}
+
+function WallHeader({ circle, isMember, signedIn }: { circle: CirclePublicWallSummary; isMember: boolean; signedIn: boolean }) {
+  const subtitle = circle.member_count != null ? `${circle.member_count} ${circle.member_count === 1 ? 'member' : 'members'} · open to join` : null;
+  const joinHref = signedIn ? `/circles/${circle.id}` : `/auth/login?next=${encodeURIComponent(`/circles/${circle.id}`)}`;
+  return (
+    <section className="flex flex-col gap-4">
+      <div className="flex items-center gap-4">
+        <MiniRing name={circle.name} />
         <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--pact-violet)]">Circle Wall</p>
-          <h1 className="mt-1 text-3xl font-black tracking-[-0.05em] text-[var(--pact-text)]">{circle.name}</h1>
+          <h1 className="text-[30px] font-bold leading-[1.05] tracking-[-0.035em]">{circle.name}</h1>
+          {subtitle && <p className="mt-1 text-[13px] text-[var(--muted)]">{subtitle}</p>}
         </div>
       </div>
-      <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[var(--pact-text-muted)]">
-        <span className="flex items-center gap-1.5">
-          <Users className="h-4 w-4" aria-hidden="true" />
-          {circle.pacts.length} public pact{circle.pacts.length === 1 ? '' : 's'}
-        </span>
-        <span className="flex items-center gap-1.5">
-          <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-          {completedCount} completed
-        </span>
-      </div>
-    </header>
+      <p className="text-[15px] text-[var(--ink-soft)]">
+        {circle.description ? `${circle.description} ` : ''}These are proofs members chose to make public.
+      </p>
+      <Link
+        href={joinHref}
+        className="flex min-h-[52px] w-full items-center justify-center rounded-full bg-[var(--navy)] px-6 text-[16px] font-semibold text-[var(--card)] transition-colors hover:bg-[var(--navy-hover)]"
+      >
+        {isMember ? 'Open circle' : 'Ask to join'}
+      </Link>
+    </section>
   );
 }
 
-function PactList({ pacts }: { pacts: CirclePublicWallPact[] }) {
-  if (!pacts.length) {
-    return (
-      <section className="py-10 text-center">
-        <p className="text-sm text-[var(--pact-text-muted)]">
-          This circle doesn&apos;t have any public pacts yet.
-        </p>
-      </section>
-    );
-  }
+function startOfWeek(d: Date) {
+  const copy = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const day = (copy.getDay() + 6) % 7;
+  copy.setDate(copy.getDate() - day);
+  return copy;
+}
 
+function formatDay(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).replace(',', '');
+}
+
+function ProofGallery({ proofs }: { proofs: CirclePublicWallProof[] }) {
+  const groups = useMemo(() => {
+    const thisWeek = startOfWeek(new Date()).getTime();
+    const sorted = [...proofs].sort((a, b) => +new Date(b.submitted_at) - +new Date(a.submitted_at));
+    return {
+      recent: sorted.filter((p) => startOfWeek(new Date(p.submitted_at)).getTime() >= thisWeek),
+      earlier: sorted.filter((p) => startOfWeek(new Date(p.submitted_at)).getTime() < thisWeek),
+    };
+  }, [proofs]);
+
+  if (proofs.length === 0) {
+    return <p className="mt-10 text-[14px] text-[var(--muted)]">No public proofs yet.</p>;
+  }
   return (
-    <section className="py-8">
-      <h2 className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--pact-violet)]">Public pacts</h2>
-      <div className="mt-4">
-        {pacts.map((pact) => {
-          const isCompleted = pact.progress_percent >= 100;
-          return (
-            <Link
-              key={pact.id}
-              href={`/pacts/${pact.id}`}
-              className="flex items-center gap-4 border-t border-[var(--pact-hairline)] py-4 transition hover:border-[var(--pact-violet)]"
-            >
-              <div
-                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold"
-                style={{ borderColor: 'var(--pact-violet)', color: 'var(--pact-violet)' }}
-              >
-                {Math.round(pact.progress_percent)}%
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-bold text-[var(--pact-text)]">{pact.title}</p>
-                <p className="mt-1 truncate text-sm text-[var(--pact-text-muted)]">
-                  {isCompleted ? 'Completed' : pact.category}
-                  {' · '}
-                  {pact.participant_count} participant{pact.participant_count === 1 ? '' : 's'}
-                </p>
-              </div>
-            </Link>
-          );
-        })}
+    <div className="mt-10 flex flex-col gap-10">
+      {groups.recent.length > 0 && <Columns title="This week" proofs={groups.recent} />}
+      {groups.earlier.length > 0 && <Columns title="Earlier" proofs={groups.earlier} />}
+    </div>
+  );
+}
+
+function Columns({ title, proofs }: { title: string; proofs: CirclePublicWallProof[] }) {
+  const left = proofs.filter((_, i) => i % 2 === 0);
+  const right = proofs.filter((_, i) => i % 2 === 1);
+  return (
+    <section>
+      <h2 className="text-[20px] font-bold tracking-[-0.025em]">{title}</h2>
+      <div className="mt-4 flex gap-2.5">
+        <div className="flex min-w-0 flex-1 flex-col gap-[18px]">{left.map((p) => <Tile key={p.id} proof={p} />)}</div>
+        <div className="flex min-w-0 flex-1 flex-col gap-[18px] pt-7">{right.map((p) => <Tile key={p.id} proof={p} />)}</div>
       </div>
     </section>
   );
 }
 
-/**
- * Secondary conversion moment, placed after the visitor has actually seen
- * real proof/content — often stronger than the top-of-page CTA alone.
- */
-function BottomCta() {
+function Tile({ proof }: { proof: CirclePublicWallProof }) {
   return (
-    <section className="mt-4 rounded-3xl border border-[var(--pact-hairline)] px-6 py-8 text-center" style={{ background: 'var(--pact-surface)' }}>
-      <p className="text-lg font-bold text-[var(--pact-text)]">Want to start your own pact?</p>
-      <p className="mt-1.5 text-sm text-[var(--pact-text-muted)]">
-        Join CirclePact and turn your goals into pacts your circle can see, cheer, and hold you to.
-      </p>
-      <Link
-        href="/auth/register"
-        className="mt-5 inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-bold text-white"
-        style={{ background: 'var(--pact-violet)' }}
-      >
-        Join CirclePact
-      </Link>
+    <figure>
+      {/* Natural aspect ratio on purpose: no fixed height, no crop. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={proof.image_url} alt={`Proof for ${proof.pact_title}`} loading="lazy" className="block h-auto w-full rounded-[3px] bg-[var(--tan)]" />
+      <figcaption className="mt-2">
+        <p className="text-[14px] font-semibold leading-tight">{proof.pact_title}</p>
+        <p className="mt-0.5 text-[12px] text-[var(--muted)]">
+          {[proof.member_name, formatDay(proof.submitted_at)].filter(Boolean).join(' · ')}
+        </p>
+      </figcaption>
+    </figure>
+  );
+}
+
+/**
+ * Fallback while the wall endpoint does not return proof images: list the
+ * public pacts as plain rows. No photos are invented.
+ */
+function PublicPactList({ pacts }: { pacts: CirclePublicWallPact[] }) {
+  return (
+    <section className="mt-10">
+      <h2 className="text-[20px] font-bold tracking-[-0.025em]">Public pacts</h2>
+      {pacts.length === 0 ? (
+        <p className="mt-3 text-[14px] text-[var(--muted)]">No public proofs yet.</p>
+      ) : (
+        <ul className="mt-3">
+          {pacts.map((pact) => (
+            <li key={pact.id} className="border-t border-[var(--hairline-soft)] py-3 first:border-t-0">
+              <p className="text-[15px] font-semibold">{pact.title}</p>
+              <p className="mt-0.5 text-[13px] text-[var(--muted)]">
+                {pact.participant_count} {pact.participant_count === 1 ? 'person' : 'people'} · ends {formatDay(pact.end_date)}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

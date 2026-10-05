@@ -39,7 +39,7 @@ export default function DurationStep() {
               key={days}
               type="button"
               onClick={() => selectDurationPreset(days)}
-              className={`pact-tile pact-mono rounded-2xl p-4 text-center font-semibold ${selected ? 'selected' : ''}`}
+              className={`pact-tile rounded-2xl p-4 text-center font-semibold ${selected ? 'selected' : ''}`}
             >
               {days} Days
             </button>

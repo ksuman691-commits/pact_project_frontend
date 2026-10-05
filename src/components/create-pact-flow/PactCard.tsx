@@ -36,7 +36,7 @@ export default function PactCard() {
   return (
     <div className="pact-surface rounded-3xl p-6">
       <span
-        className="pact-mono text-xs font-semibold uppercase tracking-wide"
+        className="text-xs font-semibold "
         style={{ color: 'var(--pact-gold)' }}
       >
         Your Pact
@@ -64,7 +64,7 @@ function MetaRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between text-sm">
       <span style={{ color: 'var(--pact-text-muted)' }}>{label}</span>
-      <span className="pact-mono font-medium">{value}</span>
+      <span className="font-medium">{value}</span>
     </div>
   );
 }

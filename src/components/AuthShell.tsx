@@ -1,39 +1,35 @@
 import type { ReactNode } from 'react';
-import LogoMark from '@/components/LogoMark';
 
 interface AuthShellProps {
   heading: string;
-  subheading: string;
+  subheading?: string;
   children: ReactNode;
 }
 
+export const authInputClass =
+  'h-12 w-full rounded-[6px] border border-[var(--hairline)] bg-[var(--card)] px-3.5 text-[14px] text-[var(--ink)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--navy)] focus:ring-2 focus:ring-[var(--navy)]';
+
+export const authLabelClass = 'mb-1.5 block text-[13px] font-medium text-[var(--ink-soft)]';
+
+export const authPrimaryButtonClass =
+  'h-[52px] w-full rounded-full bg-[var(--navy)] text-[16px] font-semibold text-[var(--card)] transition hover:bg-[var(--navy-hover)] disabled:cursor-not-allowed disabled:opacity-60';
+
 /**
- * Shared visual shell for /auth/login and /auth/register so the two screens
- * feel like one coherent flow instead of two different apps. Owns the
- * background, decorative blobs, card, and logo/heading block; each page
- * supplies its own form + footer content as children. Auth logic
- * (handleSubmit, useAuthStore, redirects) stays entirely in the page
- * components — this component is presentation only.
+ * Shared cover for /auth/login and /auth/register: an ink page with the
+ * wordmark centred in the top half and a paper panel holding the form.
+ * Presentation only; auth logic stays in the page components.
  */
 export default function AuthShell({ heading, subheading, children }: AuthShellProps) {
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#FAF6F0] px-5 py-12 text-[#2F211D]">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-28 -top-32 h-80 w-80 rounded-full bg-[rgba(127,119,221,0.20)]"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-40 -left-32 h-96 w-96 rounded-full bg-[rgba(127,119,221,0.13)]"
-      />
+    <main className="mx-auto flex min-h-screen max-w-md flex-col bg-[#17181D]">
+      <header className="flex min-h-[320px] flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+        <h1 className="m-0 text-[66px] font-bold leading-none tracking-[-0.045em] text-white">CirclePact</h1>
+        <p className="m-0 text-[17px] text-white/70">Say it. Do it. Let people see.</p>
+      </header>
 
-      <section className="relative w-full max-w-md rounded-[30px] bg-white px-7 py-9 shadow-[0_24px_70px_rgba(75,53,42,0.12)] sm:px-10 sm:py-11">
-        <div className="flex flex-col items-center text-center">
-          <LogoMark size={52} />
-          <h1 className="mt-7 text-4xl font-bold lowercase tracking-[-0.05em] text-[#2F211D]">{heading}</h1>
-          <p className="mt-2 text-sm text-[#8E7C73]">{subheading}</p>
-        </div>
-
+      <section className="rounded-t-[6px] bg-[var(--paper)] px-6 py-7 text-[var(--ink)]">
+        <h2 className="mb-1.5 text-[24px] font-bold tracking-[-0.03em]">{heading}</h2>
+        {subheading ? <p className="mb-5 text-[14px] text-[var(--muted)]">{subheading}</p> : null}
         {children}
       </section>
     </main>

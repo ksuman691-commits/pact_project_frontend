@@ -38,28 +38,28 @@ const getTransactionIcon = (type: string) => {
 const getTransactionColor = (type: string) => {
   switch (type) {
     case 'deposit':
-      return 'text-[#A78BFA] bg-[#EDE9FE]';
+      return 'text-[var(--navy)] bg-[var(--paper)]';
     case 'withdraw':
-      return 'text-red-600 bg-red-50';
+      return 'text-[var(--ink-soft)] bg-[var(--card-muted)]';
     case 'stake':
-      return 'text-orange-600 bg-orange-50';
+      return 'text-[var(--warn-text)] bg-[var(--warn-bg)]';
     case 'reward':
-      return 'text-blue-600 bg-blue-50';
+      return 'text-[var(--navy)] bg-[var(--paper)]';
     default:
-      return 'text-gray-600 bg-gray-50';
+      return 'text-[var(--muted)] bg-[var(--card-muted)]';
   }
 };
 
 const getStatusColor = (status: string) => {
   switch (status) {
     case 'completed':
-      return 'text-emerald-700 bg-emerald-100';
+      return 'text-[var(--navy)] bg-[var(--paper)]';
     case 'pending':
-      return 'text-orange-700 bg-orange-100';
+      return 'text-[var(--warn-text)] bg-[var(--warn-bg)]';
     case 'failed':
-      return 'text-red-700 bg-red-100';
+      return 'text-[var(--ink-soft)] bg-[var(--card-muted)]';
     default:
-      return 'text-gray-700 bg-gray-100';
+      return 'text-[var(--muted)] bg-[var(--card-muted)]';
   }
 };
 
@@ -122,11 +122,11 @@ export default function TransactionHistory({
   });
 
   return (
-    <div className="bg-white rounded-[24px] p-6 border border-gray-100 shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
+    <div className="bg-white rounded-[24px] p-6 border border-[var(--line)] shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-gray-900">Transaction History</h3>
-        <Calendar className="w-5 h-5 text-gray-400" />
+        <h3 className="text-xl font-bold text-[var(--ink)]">Transaction History</h3>
+        <Calendar className="w-5 h-5 text-[var(--muted)]" />
       </div>
 
       {/* Filter Tabs */}
@@ -137,8 +137,8 @@ export default function TransactionHistory({
             onClick={() => setSelectedFilter(filter)}
             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
               selectedFilter === filter
-                ? 'bg-[#A78BFA] text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-[var(--navy)] text-[var(--card)] shadow-md'
+                : 'bg-[var(--card-muted)] text-[var(--ink-soft)] hover:bg-[var(--hairline-soft)]'
             }`}
           >
             {filter}
@@ -149,18 +149,18 @@ export default function TransactionHistory({
       {/* Transactions List */}
       <div className="space-y-3">
         {loading ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-[var(--muted)]">
             Loading transactions...
           </div>
         ) : filteredTransactions.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-[var(--muted)]">
             No wallet activity yet
           </div>
         ) : (
           filteredTransactions.map((transaction) => (
             <div
               key={transaction.id}
-              className="flex items-center justify-between p-4 border border-gray-100 rounded-[24px] hover:bg-gray-50 transition"
+              className="flex items-center justify-between p-4 border border-[var(--line)] rounded-[24px] hover:bg-[var(--card)] transition"
             >
               {/* Left: Icon & Description */}
               <div className="flex items-center gap-4 flex-1">
@@ -168,8 +168,8 @@ export default function TransactionHistory({
                   {getTransactionIcon(transaction.type)}
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">{transaction.description}</p>
-                  <p className="text-xs text-gray-600">
+                  <p className="font-medium text-[var(--ink)]">{transaction.description}</p>
+                  <p className="text-xs text-[var(--ink-soft)]">
                     {transaction.date.toLocaleDateString()} at {transaction.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
@@ -180,8 +180,8 @@ export default function TransactionHistory({
                 <div className="text-right">
                   <p className={`font-bold text-lg ${
                     transaction.type === 'deposit' || transaction.type === 'reward'
-                      ? 'text-[#A78BFA]'
-                      : 'text-gray-900'
+                      ? 'text-[var(--navy)]'
+                      : 'text-[var(--ink)]'
                   }`}>
                     {transaction.type === 'deposit' || transaction.type === 'reward' ? '+' : '-'}₹{transaction.amount.toLocaleString()}
                   </p>
@@ -197,7 +197,7 @@ export default function TransactionHistory({
 
       {/* View More Button */}
       {filteredTransactions.length > 0 && (
-        <button className="w-full mt-6 px-4 py-3 border border-gray-300 rounded-[28px] text-gray-700 font-medium hover:bg-gray-50 transition">
+        <button className="w-full mt-6 px-4 py-3 border border-[var(--line)] rounded-[28px] text-[var(--ink-soft)] font-medium hover:bg-[var(--card)] transition">
           View More Transactions
         </button>
       )}

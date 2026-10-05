@@ -147,7 +147,7 @@ export default function DareDetailPage() {
               sizes="(max-width: 768px) 100vw, 640px"
             />
             <span
-              className="absolute left-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
+              className="absolute left-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold text-white"
               style={{ background: 'var(--pact-mint)' }}
             >
               <CheckCheck className="h-2.5 w-2.5" />
@@ -223,7 +223,7 @@ export default function DareDetailPage() {
             interaction is unnecessary friction for information that
             should just be visible on the page. */}
         {recipients.length === 1 && (
-          <div className="flex items-center gap-3 rounded-2xl px-5 py-3" style={{ background: 'var(--pact-surface-2)' }}>
+          <div className="flex items-center gap-3 rounded-md px-5 py-3" style={{ background: 'var(--pact-surface-2)' }}>
             <Avatar
               name={recipients[0].full_name || recipients[0].username}
               avatarUrl={recipients[0].avatar_url}
@@ -242,7 +242,7 @@ export default function DareDetailPage() {
             Recipients is tappable whenever there's more than one, opening
             a modal with the full who-was-dared list (DareRecipientsList,
             re-themed) instead of building a separate component. */}
-        <div className="pact-card flex flex-wrap items-center gap-5 rounded-2xl px-5 py-4">
+        <div className="pact-card flex flex-wrap items-center gap-5 rounded-md px-5 py-4">
           {recipients.length > 1 ? (
             <button
               onClick={() => setRecipientsModalOpen(true)}
@@ -265,7 +265,7 @@ export default function DareDetailPage() {
             absolute datetimes, which are harder to parse at a glance for a
             time-boxed feature. Exact datetime is still available via the
             title attribute on hover/tap. */}
-        <div className="space-y-2 rounded-2xl px-5 py-3" style={{ background: 'var(--pact-surface-2)' }}>
+        <div className="space-y-2 rounded-md px-5 py-3" style={{ background: 'var(--pact-surface-2)' }}>
           <div className="flex items-center gap-2 text-sm">
             <CalendarClock className="h-3.5 w-3.5 flex-shrink-0" style={{ color: 'var(--pact-text-faint)' }} />
             <span className="text-[var(--pact-text-faint)]">Respond by</span>
@@ -300,8 +300,8 @@ export default function DareDetailPage() {
               <button
                 onClick={handleClaim}
                 disabled={claimMutation.isPending}
-                className="pact-btn-glow col-span-2 flex items-center justify-center gap-2 rounded-full py-3 font-semibold disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-bg)' }}
+                className=" col-span-2 flex items-center justify-center gap-2 rounded-full py-3 font-semibold disabled:opacity-50"
+                style={{ background: 'var(--navy)', color: 'var(--pact-bg)' }}
               >
                 <Zap className="h-4 w-4" />
                 {claimMutation.isPending ? 'Claiming...' : 'Claim Dare'}
@@ -310,8 +310,8 @@ export default function DareDetailPage() {
               <>
                 <button
                   onClick={() => setProofModalOpen(true)}
-                  className="pact-btn-glow flex items-center justify-center gap-2 rounded-full py-3 font-semibold"
-                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-bg)' }}
+                  className=" flex items-center justify-center gap-2 rounded-full py-3 font-semibold"
+                  style={{ background: 'var(--navy)', color: 'var(--pact-bg)' }}
                 >
                   <Upload className="h-4 w-4" />
                   Upload Proof
@@ -330,8 +330,8 @@ export default function DareDetailPage() {
                 <button
                   onClick={handleAccept}
                   disabled={acceptMutation.isPending}
-                  className="pact-btn-glow flex items-center justify-center gap-2 rounded-full py-3 font-semibold disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-bg)' }}
+                  className=" flex items-center justify-center gap-2 rounded-full py-3 font-semibold disabled:opacity-50"
+                  style={{ background: 'var(--navy)', color: 'var(--pact-bg)' }}
                 >
                   <CheckCircle2 className="h-4 w-4" />
                   {acceptMutation.isPending ? 'Accepting...' : 'Accept'}
@@ -352,7 +352,7 @@ export default function DareDetailPage() {
 
         {/* Verification stats */}
         {stats && (stats.yes_count || stats.no_count) ? (
-          <div className="rounded-2xl px-5 py-4" style={{ background: 'var(--pact-surface-2)' }}>
+          <div className="rounded-md px-5 py-4" style={{ background: 'var(--pact-surface-2)' }}>
             <h3 className="mb-3 text-sm font-bold text-[var(--pact-text)]">Verification Stats</h3>
             <div className="flex flex-wrap gap-5">
           <StatGroup icon={CheckCircle2} value={stats.yes_count || 0} label="Yes" color="var(--pact-mint)" />

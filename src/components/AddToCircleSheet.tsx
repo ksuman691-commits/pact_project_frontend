@@ -59,7 +59,7 @@ function CircleRow({ circle, targetUserId }: { circle: any; targetUserId: number
         style={
           added
             ? { background: 'transparent', border: '1px solid var(--pact-hairline)', color: 'var(--pact-text-muted)' }
-            : { background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: '#fff' }
+            : { background: 'var(--navy)', color: '#fff' }
         }
       >
         {invite.isPending ? (

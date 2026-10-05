@@ -46,7 +46,7 @@ export default function SuggestedPeopleSection({
 
   return (
     <div className="mt-10 w-full">
-      <h3 className="pact-mono text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--pact-gold)' }}>
+      <h3 className="text-xs font-semibold " style={{ color: 'var(--pact-gold)' }}>
         People you might want to invite
       </h3>
       <div className="mt-3 flex flex-col gap-3">
@@ -59,7 +59,7 @@ export default function SuggestedPeopleSection({
                 <p className="truncate text-sm font-semibold text-[var(--pact-text)]">
                   {person.full_name || person.username}
                 </p>
-                <p className="pact-mono mt-0.5 truncate text-xs text-[var(--pact-text-muted)]">@{person.username}</p>
+                <p className="mt-0.5 truncate text-xs text-[var(--pact-text-muted)]">@{person.username}</p>
               </span>
               <button
                 type="button"

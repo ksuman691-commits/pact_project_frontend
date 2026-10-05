@@ -116,11 +116,11 @@ export default function VerifyAgePage() {
   }
 
   return (
-    <AuthShell heading="confirm your age" subheading="one quick step before you get started">
+    <AuthShell heading="Confirm your age">
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <div>
-          <label htmlFor="date_of_birth" className="mb-1.5 block text-xs font-semibold text-[#8E7C73]">
-            date of birth
+          <label htmlFor="date_of_birth" className="mb-1.5 block text-[13px] font-medium text-ink-soft">
+            Date of birth
           </label>
           <input
             id="date_of_birth"
@@ -133,35 +133,35 @@ export default function VerifyAgePage() {
             }}
             required
             aria-label="date of birth"
-            className="w-full rounded-[18px] border border-[#E8DED7] bg-white px-5 py-3.5 text-sm text-[#2F211D] outline-none focus:border-[#E5373B]"
+            className="h-12 w-full rounded-[6px] border border-[#DCD3C1] bg-card px-3.5 text-sm text-ink outline-none focus:ring-2 focus:ring-navy"
           />
         </div>
 
         {underageMessage && (
-          <p role="alert" className="rounded-[18px] bg-[#FBEAEA] px-4 py-3 text-sm text-[#B3261E]">
+          <p role="alert" className="rounded-[6px] bg-[#F1E6CF] px-4 py-3 text-sm text-[#6E4B12]">
             {underageMessage}
           </p>
         )}
 
-        <label className="flex items-start gap-2.5 text-sm text-[#5B4C45]">
+        <label className="flex items-start gap-2.5 text-sm text-ink-soft">
           <input
             type="checkbox"
             checked={tosAccepted}
             onChange={(e) => setTosAccepted(e.target.checked)}
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#E8DED7] text-[#E5373B] focus:ring-[#E5373B]"
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--seat-border)] accent-[var(--navy)] focus:ring-navy"
           />
           <span>
             I confirm I am {MIN_AGE} or older and agree to CirclePact&apos;s{' '}
-            <span className="font-semibold text-[#2F211D]">Terms of Service</span>.
+            <span className="font-semibold text-ink">Terms of Service</span>.
           </span>
         </label>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-[18px] bg-[#E5373B] py-3.5 text-sm font-semibold lowercase text-white transition hover:bg-[#C92F34] disabled:cursor-not-allowed disabled:opacity-60"
+          className="min-h-[52px] w-full rounded-full bg-navy text-base font-semibold text-card transition hover:bg-[#142766] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? 'verifying...' : 'continue'}
+          {isSubmitting ? 'Verifying…' : 'Continue'}
         </button>
       </form>
     </AuthShell>

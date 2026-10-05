@@ -65,7 +65,7 @@ export default function ConfirmModal({
               disabled={loading}
               className="flex-1 px-4 py-2.5 rounded-[28px] font-semibold text-sm text-white transition disabled:opacity-50"
               style={{
-                background: destructive ? '#E5484D' : 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))',
+                background: destructive ? '#E5484D' : 'var(--navy)',
               }}
             >
               {loading ? 'Please wait…' : confirmLabel}

@@ -42,14 +42,14 @@ function DetailTabButton({
       onClick={onClick}
       className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition ${
         active
-          ? 'bg-white text-slate-950 shadow-[0_12px_30px_rgba(15,23,42,0.12)]'
+          ? 'bg-white text-[var(--ink)] shadow-[0_12px_30px_rgba(15,23,42,0.12)]'
           : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
       }`}
     >
       <Icon className="h-4 w-4" />
       <span>{label}</span>
       {typeof count === 'number' && (
-        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${active ? 'bg-slate-950/10 text-slate-700' : 'bg-white/10 text-white/60'}`}>
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${active ? 'bg-[var(--ink)] text-[var(--ink-soft)]' : 'bg-white/10 text-white/60'}`}>
           {count}
         </span>
       )}

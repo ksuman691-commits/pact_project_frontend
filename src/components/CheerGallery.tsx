@@ -51,7 +51,7 @@ export default function CheerGallery({ cheers }: CheerGalleryProps) {
                 />
               )}
               <span
-                className="absolute left-1.5 top-1.5 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white"
+                className="absolute left-1.5 top-1.5 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
                 style={{ background: 'var(--pact-gold)' }}
               >
                 <PartyPopper className="h-2.5 w-2.5" />

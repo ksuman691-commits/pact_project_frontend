@@ -176,7 +176,7 @@ export default function DareVerificationModal({
 
           {/* Question */}
           <div>
-            <p className="text-xs font-semibold text-[var(--pact-text-faint)] uppercase mb-2">
+            <p className="text-xs font-semibold text-[var(--pact-text-faint)] mb-2">
               Question {currentQuestion + 1} of {questions.length}
             </p>
             <p className="text-lg font-bold text-[var(--pact-text)] leading-snug">{questions[currentQuestion]}</p>
@@ -215,7 +215,7 @@ export default function DareVerificationModal({
           {/* Optional Reason for "No" */}
           {showReasons[currentQuestion] && currentAnswer === 'no' && (
             <div className="rounded-[28px] p-4 border" style={{ background: 'var(--pact-surface-2)', borderColor: 'var(--pact-pink)' }}>
-              <label className="block text-xs font-semibold text-[var(--pact-text-faint)] uppercase mb-2">Why not? (optional)</label>
+              <label className="block text-xs font-semibold text-[var(--pact-text-faint)] mb-2">Why not? (optional)</label>
               <textarea
                 value={currentReason}
                 onChange={(e) => handleReasonChange(e.target.value)}
@@ -247,7 +247,7 @@ export default function DareVerificationModal({
           <button
             onClick={currentQuestion === questions.length - 1 ? handleSubmit : handleNext}
             disabled={verifyMutation.isPending || !canProceed()}
-            className="pact-btn-glow flex-1 px-4 py-2.5 rounded-[28px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className=" flex-1 px-4 py-2.5 rounded-[28px] disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
           >
             {verifyMutation.isPending

@@ -87,7 +87,7 @@ export default function ProfileNudgeCard({ itemId, onDismiss }: ProfileNudgeCard
         onClick={handleAction}
         disabled={uploading}
         className="flex-shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold text-[var(--pact-bg)] transition disabled:opacity-60"
-        style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+        style={{ background: 'var(--navy)' }}
       >
         {uploading ? 'Uploading\u2026' : copy.cta}
       </button>

@@ -52,7 +52,7 @@ export default function TitleStep() {
           type="button"
           onClick={goNext}
           disabled={!draft.title.trim()}
-          className="pact-btn-glow w-full rounded-full py-3 font-bold disabled:opacity-40"
+          className=" w-full rounded-full py-3 font-bold disabled:opacity-40"
           style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
         >
           Continue

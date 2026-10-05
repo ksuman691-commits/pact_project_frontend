@@ -104,7 +104,7 @@ export default function ActivityStep() {
                 {act.label}
               </span>
               {act.milestone && (
-                <span className="pact-mono text-xs" style={{ color: 'var(--pact-gold)' }}>
+                <span className="text-xs" style={{ color: 'var(--pact-gold)' }}>
                   · one-time
                 </span>
               )}

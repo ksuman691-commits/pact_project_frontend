@@ -43,12 +43,12 @@ export default function ActivityStrip({ activityDates, days = 14, className = ''
           <div
             key={cell.key}
             title={cell.label}
-            className={`h-6 flex-1 rounded-sm transition-colors ${cell.isToday ? 'ring-1 ring-[var(--pact-pink)]' : ''}`}
+            className={`h-6 flex-1 rounded-sm transition-colors ${cell.isToday ? 'outline outline-[1.5px] outline-offset-1 outline-[var(--ink)]' : ''}`}
             style={{
               background: cell.active
-                ? 'linear-gradient(180deg, var(--pact-pink), var(--pact-violet))'
-                : 'var(--pact-surface-2)',
-              boxShadow: cell.active ? '0 0 6px var(--pact-shadow-violet)' : undefined,
+                ? 'var(--navy)'
+                : 'transparent',
+              border: cell.active ? undefined : '1px dashed var(--dash)',
             }}
           />
         ))}

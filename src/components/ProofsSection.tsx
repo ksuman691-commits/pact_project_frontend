@@ -65,7 +65,7 @@ export default function ProofsSection({
                     sizes="(max-width: 768px) 33vw, 160px"
                   />
                 ) : (
-                  <div className="relative h-full w-full bg-slate-900">
+                  <div className="relative h-full w-full bg-[var(--ink)]">
                     <video src={proof.url} className="h-full w-full object-cover" muted playsInline />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/25">
                       <Play className="h-8 w-8 fill-white text-white" />
@@ -74,7 +74,7 @@ export default function ProofsSection({
                 )}
                 <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-1 bg-gradient-to-t from-black/75 to-transparent px-2 pb-2 pt-6 text-[10px] font-semibold text-white">
                   <span>{proof.day ? `Day ${proof.day}` : 'Update'}</span>
-                  <span className="uppercase tracking-wider text-white/75">{proof.type === 'video' ? 'Video' : 'Photo'}</span>
+                  <span className="text-white/75">{proof.type === 'video' ? 'Video' : 'Photo'}</span>
                 </div>
               </button>
             ))}
@@ -97,7 +97,7 @@ export default function ProofsSection({
                     sizes="(max-width: 768px) 50vw, 33vw"
                   />
                 ) : (
-                  <div className="w-full h-full bg-slate-900 flex items-center justify-center relative">
+                  <div className="w-full h-full bg-[var(--ink)] flex items-center justify-center relative">
                     <video
                       src={proof.url}
                       className="w-full h-full object-cover"
@@ -114,13 +114,13 @@ export default function ProofsSection({
                     <p className="font-medium">Day {proof.day}</p>
                   )}
                   {proof.description && (
-                    <p className="text-gray-200 line-clamp-2">{proof.description}</p>
+                    <p className="text-[var(--muted)] line-clamp-2">{proof.description}</p>
                   )}
                 </div>
 
                 {/* Day Badge */}
                 {proof.day && (
-                  <div className="absolute top-2 left-2 bg-[#A78BFA] text-white text-xs font-bold px-2 py-1 rounded-full">
+                  <div className="absolute top-2 left-2 bg-[var(--navy)] text-[var(--card)] text-xs font-bold px-2 py-1 rounded-full">
                     Day {proof.day}
                   </div>
                 )}
@@ -137,7 +137,7 @@ export default function ProofsSection({
         {/* Timeline View (Alternative) */}
         {variant !== 'immersive' && proofs.length > 6 && (
           <div className="mt-6">
-            <p className="text-sm font-medium text-slate-700 mb-3">Timeline</p>
+            <p className="text-sm font-medium text-[var(--ink-soft)] mb-3">Timeline</p>
             <div className="space-y-2">
               {proofs.map((proof, index) => (
                 <button
@@ -155,7 +155,7 @@ export default function ProofsSection({
                         sizes="48px"
                       />
                     ) : (
-                      <div className="w-full h-full bg-slate-900 flex items-center justify-center">
+                      <div className="w-full h-full bg-[var(--ink)] flex items-center justify-center">
                         <Play className="w-4 h-4 text-white fill-white" />
                       </div>
                     )}

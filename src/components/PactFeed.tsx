@@ -214,7 +214,7 @@ export default function PactFeed({
           <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-[var(--pact-text-dim)]">{emptyStateMessage}</p>
           <button
             onClick={() => onCreatePact ? onCreatePact() : router.push('/pacts/create')}
-            className="pact-btn-glow mt-6 inline-flex items-center justify-center px-5 py-3 rounded-full font-bold transition-colors"
+            className=" mt-6 inline-flex items-center justify-center px-5 py-3 rounded-full font-bold transition-colors"
             style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
           >
             Create Pact

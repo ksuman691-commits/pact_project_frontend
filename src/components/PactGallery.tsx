@@ -310,7 +310,7 @@ export default function PactGallery({
                   />
                 )
               ) : (
-                <div className="relative h-full w-full bg-slate-900">
+                <div className="relative h-full w-full bg-[var(--ink)]">
                   <video src={tile.url} className="h-full w-full object-cover" muted playsInline />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/25">
                     <Play className="h-10 w-10 fill-white text-white" />
@@ -319,7 +319,7 @@ export default function PactGallery({
               )}
 
               <span
-                className={`absolute left-2.5 top-2.5 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white ${
+                className={`absolute left-2.5 top-2.5 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold text-white ${
                   tile.kind === 'cheer' ? '' : 'bg-[var(--pact-violet)]'
                 }`}
                 style={tile.kind === 'cheer' ? { background: 'var(--pact-gold)' } : undefined}

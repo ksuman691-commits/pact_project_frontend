@@ -5,8 +5,16 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import AuthShell from '@/components/AuthShell';
+import AuthShell, { authInputClass, authLabelClass, authPrimaryButtonClass } from '@/components/AuthShell';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
+
+const FIELDS = [
+  { name: 'full_name', type: 'text', label: 'Full name', autoComplete: 'name' },
+  { name: 'username', type: 'text', label: 'Username', autoComplete: 'username' },
+  { name: 'email', type: 'email', label: 'Email', autoComplete: 'email' },
+  { name: 'password', type: 'password', label: 'Password', autoComplete: 'new-password' },
+  { name: 'confirmPassword', type: 'password', label: 'Confirm password', autoComplete: 'new-password' },
+] as const;
 
 export default function Register() {
   const router = useRouter();
@@ -22,10 +30,7 @@ export default function Register() {
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,7 +43,7 @@ export default function Register() {
 
     try {
       await register(formData.username, formData.email, formData.full_name, formData.password);
-      toast.success('Account created successfully!');
+      toast.success('Account created');
       router.push('/profile');
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Registration failed');
@@ -46,80 +51,38 @@ export default function Register() {
   };
 
   return (
-    <AuthShell heading="create account" subheading="join circlepact to start your first pact">
-        <form onSubmit={handleSubmit} className="mt-8 space-y-3">
-          <input
-            type="text"
-            name="full_name"
-            value={formData.full_name}
-            onChange={handleChange}
-            required
-            aria-label="full name"
-            className="w-full rounded-[18px] border border-[#E8DED7] bg-white px-5 py-3.5 text-sm text-[#2F211D] outline-none placeholder:text-[#B4A59D] focus:border-[#E5373B]"
-            placeholder="full name"
-          />
-          <input
-            type="text"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            required
-            aria-label="username"
-            className="w-full rounded-[18px] border border-[#E8DED7] bg-white px-5 py-3.5 text-sm text-[#2F211D] outline-none placeholder:text-[#B4A59D] focus:border-[#E5373B]"
-            placeholder="username"
-          />
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            aria-label="email"
-            className="w-full rounded-[18px] border border-[#E8DED7] bg-white px-5 py-3.5 text-sm text-[#2F211D] outline-none placeholder:text-[#B4A59D] focus:border-[#E5373B]"
-            placeholder="email"
-          />
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            aria-label="password"
-            className="w-full rounded-[18px] border border-[#E8DED7] bg-white px-5 py-3.5 text-sm text-[#2F211D] outline-none placeholder:text-[#B4A59D] focus:border-[#E5373B]"
-            placeholder="password"
-          />
-          <input
-            type="password"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-            aria-label="confirm password"
-            className="w-full rounded-[18px] border border-[#E8DED7] bg-white px-5 py-3.5 text-sm text-[#2F211D] outline-none placeholder:text-[#B4A59D] focus:border-[#E5373B]"
-            placeholder="confirm password"
-          />
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full rounded-[18px] bg-[#E5373B] py-3.5 text-sm font-semibold lowercase text-white transition hover:bg-[#C92F34] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isLoading ? 'creating account...' : 'create account'}
-          </button>
-        </form>
+    <AuthShell heading="Create your account">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {FIELDS.map((field) => (
+          <div key={field.name}>
+            <label htmlFor={field.name} className={authLabelClass}>{field.label}</label>
+            <input
+              id={field.name}
+              type={field.type}
+              name={field.name}
+              autoComplete={field.autoComplete}
+              value={formData[field.name]}
+              onChange={handleChange}
+              required
+              className={authInputClass}
+            />
+          </div>
+        ))}
+        <button type="submit" disabled={isLoading} className={`${authPrimaryButtonClass} mt-1`}>
+          {isLoading ? 'Creating account…' : 'Create account'}
+        </button>
+      </form>
 
-        <div className="my-7 flex items-center gap-3 text-xs text-[#B4A59D]">
-          <span className="h-px flex-1 bg-[#EEE5DF]" />
-          <span>or</span>
-          <span className="h-px flex-1 bg-[#EEE5DF]" />
-        </div>
-
+      <div className="mt-3 overflow-hidden rounded-full border border-[var(--hairline)] bg-[var(--card)] [&>*]:w-full">
         <GoogleSignInButton />
+      </div>
 
-        <p className="mt-7 text-center text-xs text-[#A99991]">by continuing you agree to our terms</p>
-        <p className="mt-4 text-center text-sm text-[#8E7C73]">
-          already have an account?{' '}
-          <Link href="/auth/login" className="font-semibold text-[#E5373B] hover:underline">sign in</Link>
-        </p>
+      <p className="mt-6 text-center text-[14px] text-[var(--muted)]">
+        Already have an account?{' '}
+        <Link href="/auth/login" className="font-semibold text-[var(--navy)] hover:text-[var(--navy-hover)] hover:underline">
+          Sign in
+        </Link>
+      </p>
     </AuthShell>
   );
 }

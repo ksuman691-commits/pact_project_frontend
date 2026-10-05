@@ -12,7 +12,7 @@ import '@/styles/globals.css';
  * no lucide-react) since the failure could be anywhere in the render tree
  * that those normally depend on — this file has to be as close to
  * bulletproof as possible. Still pulls in globals.css directly so the
- * --pact-* color tokens and .pact-flow/.pact-card/.pact-btn-glow classes
+ * --pact-* color tokens and .pact-flow/.pact-card/. classes
  * are available, since that's just a static stylesheet import.
  */
 export default function GlobalError({
@@ -30,7 +30,7 @@ export default function GlobalError({
     <html lang="en">
       <body>
         <div className="pact-flow flex min-h-dvh flex-col items-center justify-center px-6 py-16 text-center">
-          <p className="pact-mono text-sm font-semibold tracking-widest" style={{ color: 'var(--pact-text-faint)' }}>
+          <p className="text-sm font-semibold " style={{ color: 'var(--pact-text-faint)' }}>
             CIRCLEPACT
           </p>
           <h1 className="mt-4 text-3xl font-black" style={{ color: 'var(--pact-text)' }}>
@@ -42,8 +42,8 @@ export default function GlobalError({
           <button
             type="button"
             onClick={reset}
-            className="pact-btn-glow mt-8 inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition"
-            style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', color: 'var(--pact-text)' }}
+            className=" mt-8 inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition"
+            style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}
           >
             Reload
           </button>

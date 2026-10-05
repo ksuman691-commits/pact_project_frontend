@@ -64,7 +64,7 @@ export default function GoalMatchStrip({ matches, totalCount, category, variant,
   const categoryLabel = category ? CATEGORY_LABELS[category] || category : 'same';
 
   const label = (
-    <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--pact-violet)]">
+    <p className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--pact-violet)]">
       <Users className="h-3 w-3" />
       Others on the same goal
     </p>

@@ -47,7 +47,7 @@ export default function UserAvatarLink({
       href={resolvedHref}
       aria-label={username ? `Open @${username}'s profile` : 'Open profile'}
       onClick={stopPropagation ? (event) => event.stopPropagation() : undefined}
-      className={`inline-flex rounded-full transition-opacity hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 cursor-pointer ${className}`.trim()}
+      className={`inline-flex rounded-full transition-opacity hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--muted)] focus-visible:ring-offset-2 cursor-pointer ${className}`.trim()}
     >
       <Avatar name={name} avatarUrl={avatarUrl} size={size} ring={ring} />
     </Link>

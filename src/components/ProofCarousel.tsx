@@ -188,7 +188,7 @@ export default function ProofCarousel({ proofs, isOpen, onClose, initialIndex = 
             {item.media_type === 'image' ? (
               <Image src={item.url} alt={item.description || 'Proof'} fill className="object-contain" priority={index === initialIndex} />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-slate-950" onClick={(event) => event.stopPropagation()}>
+              <div className="flex h-full w-full items-center justify-center bg-[var(--ink)]" onClick={(event) => event.stopPropagation()}>
                 <video src={item.url} controls autoPlay playsInline className="h-full w-full object-contain" />
               </div>
             )}

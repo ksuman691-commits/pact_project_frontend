@@ -38,10 +38,10 @@ export default function FeaturedDareCard({ dare }: FeaturedDareCardProps) {
       className="pact-card cursor-pointer overflow-hidden rounded-[28px]"
       style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}
     >
-      <div className="relative flex aspect-[16/9] w-full items-end p-4" style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}>
+      <div className="relative flex aspect-[16/9] w-full items-end p-4" style={{ background: 'var(--navy)' }}>
         <Zap className="pointer-events-none absolute right-4 top-4 h-14 w-14 text-white/25" strokeWidth={1.5} aria-hidden="true" />
         <div className="relative z-10">
-          <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+          <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold text-white">
             <Zap className="h-2.5 w-2.5" />
             Featured dare
           </span>
@@ -64,7 +64,7 @@ export default function FeaturedDareCard({ dare }: FeaturedDareCardProps) {
             type="button"
             onClick={(e) => { e.stopPropagation(); claimMutation.mutate(dare.id); }}
             disabled={claimMutation.isPending}
-            className="pact-btn-glow flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-bold disabled:opacity-50"
+            className=" flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-bold disabled:opacity-50"
             style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
           >
             <Zap className="h-4 w-4" />

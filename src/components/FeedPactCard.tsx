@@ -25,6 +25,7 @@ import PremiumJoinButton from './PremiumJoinButton';
 import GoalMatchStrip from './GoalMatchStrip';
 import PactGallery, { buildGalleryTiles } from './PactGallery';
 import ActivePactFireBadge from './ActivePactFireBadge';
+import CircleChip from './classic/CircleChip';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useCreateCheer } from '@/hooks/usePactMutations';
 import { useGoalMatches } from '@/hooks/usePactMatches';
@@ -295,12 +296,12 @@ function PactProgressRing({
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
         {compact ? (
           <>
-            <span className="text-[23px] font-black tracking-[-0.04em] text-[var(--pact-text)]" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>D{elapsedDays}</span>
-            <span className="mt-1 text-[11px] font-bold text-[var(--pact-text-dim)]" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>of {totalDays}</span>
+            <span className="text-[23px] font-black tracking-[-0.04em] text-[var(--pact-text)]" style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}>D{elapsedDays}</span>
+            <span className="mt-1 text-[11px] font-bold text-[var(--pact-text-dim)]" style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}>of {totalDays}</span>
           </>
         ) : (
           <>
-            <span className="text-2xl font-bold text-[var(--pact-text)]" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>{percent}%</span>
+            <span className="text-2xl font-bold text-[var(--pact-text)]" style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}>{percent}%</span>
             <span className="mt-0.5 text-[10.5px] text-[var(--pact-text-faint)]">{elapsedDays}/{totalDays} days</span>
           </>
         )}
@@ -696,7 +697,7 @@ export default function FeedPactCard({
         particleCount: 90,
         spread: 70,
         origin: { y: 0.68 },
-        colors: ['#10b981', '#fbbf24', '#f472b6', '#8b5cf6'],
+        colors: ['#1F3A93', '#17181D', '#A29C8D', '#D9CFBA'],
       });
     } catch (error: any) {
       // The join endpoint's rejection ("You cannot join this pact", 403) is
@@ -825,7 +826,7 @@ export default function FeedPactCard({
                 <button type="button" aria-label="close more options menu" onClick={() => setMoreMenuOpen(false)} className="fixed inset-0 z-40 cursor-default" />
                 <div role="menu" className="absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)] py-1.5 shadow-xl">
                   {uploadAllowed && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); handleProofUploadClick(); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--pact-text)] transition hover:bg-white/5"><FileImage className="h-4 w-4" />Upload proof{proofCount > 0 && <span className="ml-auto text-xs text-[var(--pact-text-faint)]">{formatCompactCount(proofCount)}</span>}</button>}
-                  {canReport && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); setReportSheetOpen(true); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-rose-300 transition hover:bg-white/5"><Flag className="h-4 w-4" />Report pact</button>}
+                  {canReport && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); setReportSheetOpen(true); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--warn-text)] transition hover:bg-white/5"><Flag className="h-4 w-4" />Report pact</button>}
                 </div>
               </>}
             </div>
@@ -843,9 +844,11 @@ export default function FeedPactCard({
               the photo like before. */}
           <div className="mt-3 flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              {pactCategoryLabel && <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--pact-text-faint)]">{pactCategoryLabel}</p>}
+              {circleLabel && pact.circle_id != null && (
+                <CircleChip circleId={pact.circle_id} circleName={circleLabel} variant="feed" className="mb-1" />
+              )}
+              {pactCategoryLabel && <p className="text-[11px] font-bold text-[var(--pact-text-faint)]">{pactCategoryLabel}</p>}
               <h2 className="mt-0.5 text-lg font-black leading-tight text-[var(--pact-text)] text-balance">{pact.title}</h2>
-              {circleLabel && <p className="mt-0.5 text-xs font-medium text-[var(--pact-text-faint)]">{circleLabel}</p>}
             </div>
             <div className="flex flex-shrink-0 items-center" onClick={(event) => event.stopPropagation()}>
               {showRing && (
@@ -859,7 +862,7 @@ export default function FeedPactCard({
                 />
               )}
               {showStatusBadgeOnly && (
-                <span className={`text-[10px] font-bold uppercase tracking-[0.12em] ${isCreator ? 'text-amber-500' : 'text-emerald-500'}`}>
+                <span className={`text-[10px] font-bold ${isCreator ? 'text-[var(--warn-text)]' : 'text-[var(--navy)]'}`}>
                   {isCreator ? 'Creator' : 'Joined'}
                 </span>
               )}
@@ -905,7 +908,6 @@ export default function FeedPactCard({
               )}
               {bottomRightText && (
                 <span className="flex flex-shrink-0 items-center gap-1 text-xs font-bold text-[var(--pact-text-dim)]">
-                  {bottomRightShowFlame && <Flame className="h-3.5 w-3.5 text-[var(--pact-gold)]" />}
                   {bottomRightText}
                 </span>
               )}
@@ -930,13 +932,13 @@ export default function FeedPactCard({
                   icon reads as unused/dead, whereas an icon alone with no
                   number reads as neutral/not-yet-engaged. */}
               {cheerCount > 0 && (
-                <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>
+                <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}>
                   {formatCompactCount(cheerCount)}
                 </span>
               )}
             </button>
             {cheerError && (
-              <span role="status" className="text-xs text-rose-300" aria-live="polite">
+              <span role="status" className="text-xs text-[var(--warn-text)]" aria-live="polite">
                 {cheerError}
               </span>
             )}
@@ -949,7 +951,7 @@ export default function FeedPactCard({
             >
               <MessageCircle className="h-5 w-5" />
               {commentCount > 0 && (
-                <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-mono), monospace' }}>
+                <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}>
                   {formatCompactCount(commentCount)}
                 </span>
               )}
@@ -1045,12 +1047,12 @@ export default function FeedPactCard({
             onClick={() => setReportSheetOpen(false)}
           />
 
-          <div className="relative z-10 w-full max-w-md overflow-hidden rounded-t-[28px] border border-white/10 bg-slate-950 text-white shadow-2xl">
+          <div className="relative z-10 w-full max-w-md overflow-hidden rounded-t-[28px] border border-white/10 bg-[var(--ink)] text-white shadow-2xl">
             <div className="mx-auto mt-3 h-1.5 w-12 rounded-full bg-white/20" />
             <div className="px-5 pb-5 pt-4">
               <div className="mb-5 flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white/50">Report this pact</p>
+                  <p className="text-[11px] font-semibold text-white/50">Report this pact</p>
                   <h3 className="mt-2 text-2xl font-black">Report this pact</h3>
                 </div>
                 <button
@@ -1068,7 +1070,7 @@ export default function FeedPactCard({
                     key={option.value}
                     type="button"
                     onClick={() => void handleReport(option.value)}
-                    className="flex w-full items-center justify-between gap-4 rounded-[24px] border border-white/8 bg-white/5 px-4 py-4 text-left transition hover:border-red-400/40 hover:bg-white/8"
+                    className="flex w-full items-center justify-between gap-4 rounded-[24px] border border-white/8 bg-white/5 px-4 py-4 text-left transition hover:border-[var(--line)] hover:bg-white/8"
                   >
                     <span className="min-w-0">
                       <span className="block text-sm font-bold text-white">{option.title}</span>

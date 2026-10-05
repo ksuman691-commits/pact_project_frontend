@@ -19,11 +19,11 @@ export default function PactHero({
   const progressPercent = (daysCompleted / totalDays) * 100;
 
   return (
-    <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white pt-12 pb-8 px-4 overflow-hidden">
+    <div className="relative bg-[var(--ink)] text-white pt-12 pb-8 px-4 overflow-hidden">
       {/* Decorative background */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-[#EDE9FE]0" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-blue-500" />
+        <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-[var(--card-muted)]0" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-[var(--navy)]" />
       </div>
 
       <div className="relative z-10">
@@ -47,12 +47,12 @@ export default function PactHero({
         <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="bg-white/10 backdrop-blur-sm rounded-[28px] p-3 border border-white/20">
             <p className="text-xs font-medium text-white/70">Days Completed</p>
-            <p className="text-2xl font-bold text-emerald-400">{daysCompleted}</p>
+            <p className="text-2xl font-bold text-[var(--navy)]">{daysCompleted}</p>
           </div>
 
           <div className="bg-white/10 backdrop-blur-sm rounded-[28px] p-3 border border-white/20">
             <p className="text-xs font-medium text-white/70">Days Remaining</p>
-            <p className="text-2xl font-bold text-orange-400">{daysRemaining}</p>
+            <p className="text-2xl font-bold text-[var(--warn-text)]">{daysRemaining}</p>
           </div>
 
         </div>
@@ -71,7 +71,7 @@ export default function PactHero({
                 stroke="currentColor"
                 strokeWidth="4"
                 strokeDasharray={`${progressPercent * 2.83} 282.6`}
-                className="text-emerald-400 transition-all"
+                className="text-[var(--navy)] transition-all"
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">

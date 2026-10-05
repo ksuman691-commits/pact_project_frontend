@@ -66,12 +66,12 @@ export default function PactProgressRing({
               <strong className="text-[0.6em] font-black text-[var(--pact-text)]">
                 {safeCompleted}/{safeTotal}
               </strong>
-              <span className="mt-1 text-[0.4em] font-bold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">{progress}% done</span>
+              <span className="mt-1 text-[0.4em] font-bold text-[var(--pact-text-faint)]">{progress}% done</span>
             </>
           ) : (
             <>
               <strong className="text-[0.78em] font-black text-[var(--pact-text)]">{progress}%</strong>
-              <span className="mt-1 text-[0.48em] font-bold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">done</span>
+              <span className="mt-1 text-[0.48em] font-bold text-[var(--pact-text-faint)]">done</span>
             </>
           )}
         </span>

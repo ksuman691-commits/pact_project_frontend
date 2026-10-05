@@ -20,17 +20,17 @@ export default function TransactionHistory({ transactions, isLoading }: Transact
   const getIcon = (type: Transaction['type']) => {
     switch (type) {
       case 'deposit':
-        return <ArrowDownLeft className="w-4 h-4 text-[#A78BFA]" />;
+        return <ArrowDownLeft className="w-4 h-4 text-[var(--navy)]" />;
       case 'withdraw':
-        return <ArrowUpRight className="w-4 h-4 text-red-600" />;
+        return <ArrowUpRight className="w-4 h-4 text-[var(--warn-text)]" />;
       case 'lock':
-        return <Lock className="w-4 h-4 text-orange-600" />;
+        return <Lock className="w-4 h-4 text-[var(--warn-text)]" />;
       case 'unlock':
-        return <Unlock className="w-4 h-4 text-blue-600" />;
+        return <Unlock className="w-4 h-4 text-[var(--navy)]" />;
       case 'reward':
-        return <ArrowDownLeft className="w-4 h-4 text-amber-600" />;
+        return <ArrowDownLeft className="w-4 h-4 text-[var(--warn-text)]" />;
       case 'penalty':
-        return <ArrowUpRight className="w-4 h-4 text-red-600" />;
+        return <ArrowUpRight className="w-4 h-4 text-[var(--warn-text)]" />;
     }
   };
 
@@ -38,14 +38,14 @@ export default function TransactionHistory({ transactions, isLoading }: Transact
     switch (type) {
       case 'deposit':
       case 'reward':
-        return 'text-[#A78BFA]';
+        return 'text-[var(--navy)]';
       case 'withdraw':
       case 'penalty':
-        return 'text-red-600';
+        return 'text-[var(--warn-text)]';
       case 'lock':
-        return 'text-orange-600';
+        return 'text-[var(--warn-text)]';
       case 'unlock':
-        return 'text-blue-600';
+        return 'text-[var(--navy)]';
     }
   };
 
@@ -102,10 +102,10 @@ export default function TransactionHistory({ transactions, isLoading }: Transact
               </p>
               <p className={`text-xs font-medium ${
                 tx.status === 'completed'
-                  ? 'text-[#A78BFA]'
+                  ? 'text-[var(--navy)]'
                   : tx.status === 'pending'
-                  ? 'text-orange-600'
-                  : 'text-red-600'
+                  ? 'text-[var(--warn-text)]'
+                  : 'text-[var(--warn-text)]'
               }`}>
                 {tx.status}
               </p>

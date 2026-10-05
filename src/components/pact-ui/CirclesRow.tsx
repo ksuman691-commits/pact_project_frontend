@@ -37,7 +37,7 @@ export default function CirclesRow({ circles, className = '' }: CirclesRowProps)
         <button
           key={circle.id}
           onClick={() => router.push(`/circles/${circle.id}`)}
-          className="pact-card pact-btn-glow flex flex-shrink-0 flex-col items-center gap-1.5 rounded-2xl px-3 py-2.5"
+          className="pact-card  flex flex-shrink-0 flex-col items-center gap-1.5 rounded-2xl px-3 py-2.5"
         >
           <Avatar name={circle.name} avatarUrl={circle.avatar_url} size={40} />
           <span className="max-w-[72px] truncate text-xs font-medium text-[var(--pact-text-dim)]">

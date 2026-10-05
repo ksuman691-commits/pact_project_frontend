@@ -88,8 +88,8 @@ function ResultsStep({ vibeId, onBack, onClose }: { vibeId: VibeId; onBack: () =
           <button
             type="button"
             onClick={startCircleWithAll}
-            className="flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-bold text-white transition hover:opacity-90"
-            style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+            className="flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-bold text-[var(--card-text)] transition hover:opacity-90"
+            style={{ background: 'var(--navy)' }}
           >
             <Users className="h-4 w-4" />
             Start a circle with all {people.length}
@@ -111,7 +111,7 @@ function PersonGroup({
 }) {
   return (
     <div>
-      <p className="px-1 pb-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">{title}</p>
+      <p className="px-1 pb-2 text-xs font-bold text-[var(--pact-text-faint)]">{title}</p>
       <div className="flex flex-col gap-2">
         {people.map((person) => (
           <div
@@ -127,8 +127,8 @@ function PersonGroup({
             <button
               type="button"
               onClick={() => onStartCircle(person.id)}
-              className="shrink-0 rounded-full px-3.5 py-2 text-xs font-semibold text-white transition hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+              className="shrink-0 rounded-full px-3.5 py-2 text-xs font-semibold text-[var(--card-text)] transition hover:opacity-90"
+              style={{ background: 'var(--navy)' }}
             >
               Start a circle
             </button>

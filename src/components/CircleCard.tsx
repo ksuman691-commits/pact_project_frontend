@@ -80,8 +80,8 @@ export default function CircleCard({ circle, onJoin, index = 0 }: CircleCardProp
             )}
           </div>
           <div
-            className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white"
-            style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+            className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-[var(--card-text)]"
+            style={{ background: 'var(--navy)' }}
           >
             {circle.avatar || circle.name.charAt(0)}
           </div>
@@ -104,7 +104,7 @@ export default function CircleCard({ circle, onJoin, index = 0 }: CircleCardProp
           </div>
           {typeof circle.pactCount === 'number' && (
             <div className="flex items-center gap-1.5 text-[var(--pact-text-dim)]">
-              <Flame className="h-4 w-4" style={{ color: 'var(--pact-pink)' }} />
+              <Star className="h-4 w-4" style={{ color: 'var(--navy)' }} />
               <span className="font-semibold text-[var(--pact-text)]">{circle.pactCount}</span>
               <span className="text-[var(--pact-text-faint)]">active pact{circle.pactCount === 1 ? '' : 's'}</span>
             </div>
@@ -136,7 +136,7 @@ export default function CircleCard({ circle, onJoin, index = 0 }: CircleCardProp
                 e.stopPropagation();
                 handleCardClick();
               }}
-              className="pact-btn-glow flex w-full items-center justify-between rounded-full px-4 py-2 text-sm font-medium transition"
+              className=" flex w-full items-center justify-between rounded-full px-4 py-2 text-sm font-medium transition"
               style={{ background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
             >
               <span>View Circle</span>

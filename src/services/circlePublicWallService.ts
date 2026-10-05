@@ -10,46 +10,38 @@ export type CirclePublicWallPact = {
   participant_count: number;
 };
 
+/** A proof a member chose to make public. Only present once the backend returns `proofs`. */
+export type CirclePublicWallProof = {
+  id: number;
+  pact_id: number;
+  pact_title: string;
+  image_url: string;
+  member_name: string;
+  submitted_at: string;
+};
+
 export type CirclePublicWallSummary = {
   id: number;
   name: string;
   icon_emoji: string | null;
   photo_url: string | null;
   pacts: CirclePublicWallPact[];
-};
-
-export type CircleQrProgress = {
-  qr_seed: string;
-  /** Always normalized to a 0-100 scale, regardless of the backend's raw units. */
-  reveal_progress: number;
+  /** null when the endpoint does not report it. */
+  description: string | null;
+  member_count: number | null;
+  /** null when the endpoint does not return proofs at all (as opposed to an empty list). */
+  proofs: CirclePublicWallProof[] | null;
 };
 
 /**
- * Public, no-login Circle Wall + QR data, matching the ACTUAL deployed
- * backend contract (verified live on 2026-08-31 against
- * https://pact-project-backend-v2.onrender.com/openapi.json):
+ * Public, no-login Circle Wall, matching the deployed backend contract:
  *
  *   GET /api/circles/{id}/wall
- *     -> { id, name, photo_url, icon_emoji, pacts: [{ id, title, category,
- *          progress_percent, start_date, end_date, participant_count }] }
- *     No auth required at runtime (OpenAPI lists an optional bearer scheme
- *     but the route does not enforce it - verified with an unauthenticated
- *     curl returning 200). The pact list has NO visibility field - the
- *     backend is expected to have already restricted it server-side to
- *     public (+ completed) pacts only, per BACKEND_SPEC_CIRCLE_WALL.md.
+ *     -> { id, name, photo_url, icon_emoji, pacts: [...] }
  *
- *   GET /api/circles/{id}/qr-progress
- *     -> { qr_seed, reveal_progress }
- *     Confirmed public (no security scheme in OpenAPI). qr_seed is a
- *     stable per-circle random string (not a lookup token - no endpoint
- *     accepts it as a parameter), used here only to seed a cosmetic
- *     rotation of the QR reveal start offset so circles don't all reveal
- *     in the exact same visual pattern.
- *
- * This is a DIFFERENT, leaner shape than the original
- * BACKEND_SPEC_CIRCLE_WALL.md draft (which specced /public-wall and
- * /public-wall/pacts) - the backend team implemented their own contract.
- * Frontend now follows what was actually shipped.
+ * `description`, `member_count` and `proofs` are not returned yet (see
+ * BACKEND_SPEC_PUBLIC_WALL_PROOFS.md). They are parsed when present and are
+ * null otherwise, so the page can say nothing instead of guessing.
  */
 export const circlePublicWallService = {
   getWall: async (circleId: number): Promise<CirclePublicWallSummary | null> => {
@@ -68,27 +60,28 @@ export const circlePublicWallService = {
             participant_count: Number(p?.participant_count ?? 0),
           }))
         : [];
+      const proofs: CirclePublicWallProof[] | null = Array.isArray(raw.proofs)
+        ? raw.proofs
+            .filter((p: any) => typeof p?.image_url === 'string' && p.image_url)
+            .map((p: any) => ({
+              id: Number(p.id),
+              pact_id: Number(p.pact_id),
+              pact_title: String(p.pact_title ?? ''),
+              image_url: String(p.image_url),
+              member_name: String(p.member_name ?? ''),
+              submitted_at: String(p.submitted_at ?? ''),
+            }))
+        : null;
       return {
         id: Number(raw.id ?? circleId),
         name: String(raw.name ?? ''),
         icon_emoji: raw.icon_emoji ?? null,
         photo_url: raw.photo_url ?? null,
         pacts,
+        description: typeof raw.description === 'string' && raw.description.trim() ? raw.description : null,
+        member_count: typeof raw.member_count === 'number' ? raw.member_count : null,
+        proofs,
       };
-    } catch {
-      return null;
-    }
-  },
-  getQrProgress: async (circleId: number): Promise<CircleQrProgress | null> => {
-    try {
-      const response = await publicApi.get(`/api/circles/${circleId}/qr-progress`);
-      const raw = response.data;
-      if (!raw || typeof raw?.qr_seed !== 'string') return null;
-      const rawProgress = Number(raw.reveal_progress ?? 0);
-      // Backend units are unconfirmed (could be a 0-1 fraction or 0-100).
-      // Normalize defensively: anything <= 1 is treated as a fraction.
-      const normalized = rawProgress <= 1 ? rawProgress * 100 : rawProgress;
-      return { qr_seed: raw.qr_seed, reveal_progress: Math.max(0, Math.min(100, normalized)) };
     } catch {
       return null;
     }

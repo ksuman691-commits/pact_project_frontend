@@ -189,7 +189,7 @@ function DaresPageInner() {
       <div className="mx-auto max-w-2xl px-5 pb-10 pt-8 md:px-10 md:pt-14">
         {/* Hero */}
         <header className="border-b border-[var(--pact-hairline)] pb-8">
-          <p className="text-xs font-bold uppercase tracking-[0.28em] text-[var(--pact-violet)]">Dares</p>
+          <p className="text-xs font-bold text-[var(--pact-violet)]">Dares</p>
           <div className="mt-3 flex items-center gap-4">
             <span className="text-6xl font-black leading-none tracking-[-0.07em] text-[var(--pact-text)] md:text-7xl">{mineAll.length}</span>
             <span className="text-balance text-xl font-medium leading-[1.15] tracking-[-0.02em] text-[var(--pact-text-muted)] md:text-2xl">
@@ -205,21 +205,21 @@ function DaresPageInner() {
               className="flex-1 px-4 py-3 text-center transition hover:bg-[var(--pact-surface-2)]"
             >
               <p className="text-lg font-black text-[var(--pact-text)]">{waitingOnYou}</p>
-              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">Waiting on you</p>
+              <p className="mt-0.5 text-[10px] font-semibold text-[var(--pact-text-faint)]">Waiting on you</p>
             </Link>
             <Link
               href="/dares?status=accepted"
               className="flex-1 px-4 py-3 text-center transition hover:bg-[var(--pact-surface-2)]"
             >
               <p className="text-lg font-black text-[var(--pact-text)]">{acceptedCount}</p>
-              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">Received &amp; accepted</p>
+              <p className="mt-0.5 text-[10px] font-semibold text-[var(--pact-text-faint)]">Received &amp; accepted</p>
             </Link>
             <Link
               href="/dares?status=completed"
               className="flex-1 px-4 py-3 text-center transition hover:bg-[var(--pact-surface-2)]"
             >
               <p className="text-lg font-black text-[var(--pact-text)]">{completedCount}</p>
-              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--pact-text-faint)]">Completed</p>
+              <p className="mt-0.5 text-[10px] font-semibold text-[var(--pact-text-faint)]">Completed</p>
             </Link>
           </div>
         </header>
@@ -240,8 +240,8 @@ function DaresPageInner() {
         <div className="flex justify-center pt-6">
           <button
             onClick={() => setCreateModalOpen(true)}
-            className="pact-btn-glow flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold text-[var(--pact-text)]"
-            style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+            className=" flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold text-[var(--card-text)]"
+            style={{ background: 'var(--navy)' }}
           >
             <Plus className="h-4 w-4" />
             New Dare
@@ -280,7 +280,7 @@ function DaresPageInner() {
                   {!!t.count && (
                     <span
                       className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-[var(--pact-bg)]"
-                      style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+                      style={{ background: 'var(--navy)' }}
                     >
                       {t.count}
                     </span>
@@ -297,7 +297,7 @@ function DaresPageInner() {
         {/* Running out of time */}
         {!isLoading && urgentDares.length > 0 && (
           <section className="border-b border-[var(--pact-hairline)] py-6" aria-label="Running out of time">
-            <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-[var(--pact-text-muted)]">Running out of time</h2>
+            <h2 className="mb-4 text-xs font-bold text-[var(--pact-text-muted)]">Running out of time</h2>
             <div className="flex gap-6 overflow-x-auto pb-1">
               {urgentDares.map(({ dare }: any) => {
                 const isSent = dare.creator_id === user?.id;
@@ -344,8 +344,8 @@ function DaresPageInner() {
               {!statusFilter && tab === 'for-you' && (
                 <button
                   onClick={() => setTab('discover')}
-                  className="pact-btn-glow inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--pact-text)]"
-                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+                  className=" inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--card-text)]"
+                  style={{ background: 'var(--navy)' }}
                 >
                   Browse Discover
                 </button>
@@ -353,8 +353,8 @@ function DaresPageInner() {
               {!statusFilter && tab === 'sent' && (
                 <button
                   onClick={() => setCreateModalOpen(true)}
-                  className="pact-btn-glow inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--pact-text)]"
-                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+                  className=" inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--card-text)]"
+                  style={{ background: 'var(--navy)' }}
                 >
                   <Plus className="w-4 h-4" />
                   Send Your First Dare
@@ -363,8 +363,8 @@ function DaresPageInner() {
               {!statusFilter && tab === 'discover' && (
                 <button
                   onClick={() => setCreateModalOpen(true)}
-                  className="pact-btn-glow inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--pact-text)]"
-                  style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+                  className=" inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--card-text)]"
+                  style={{ background: 'var(--navy)' }}
                 >
                   <Plus className="w-4 h-4" />
                   Create a Dare
@@ -405,7 +405,7 @@ function DaresPageInner() {
               <button
                 onClick={() => currentQuery.fetchNextPage()}
                 disabled={currentQuery.isFetchingNextPage}
-                className="pact-btn-glow px-6 py-2.5 rounded-full border text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                className=" px-6 py-2.5 rounded-full border text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ borderColor: 'var(--pact-violet)', background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
               >
                 {currentQuery.isFetchingNextPage ? 'Loading…' : 'Load More'}
@@ -428,7 +428,7 @@ function DaresPageInner() {
               <p className="mb-4" style={{ color: 'var(--pact-pink)' }}>Failed to load dares</p>
               <button
                 onClick={() => currentQuery.refetch()}
-                className="pact-btn-glow px-4 py-2 rounded-full border border-[var(--pact-hairline)] text-sm font-semibold text-[var(--pact-text)] hover:bg-[var(--pact-surface)]"
+                className=" px-4 py-2 rounded-full border border-[var(--pact-hairline)] text-sm font-semibold text-[var(--pact-text)] hover:bg-[var(--pact-surface)]"
               >
                 Try Again
               </button>

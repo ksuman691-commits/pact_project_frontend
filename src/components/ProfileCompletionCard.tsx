@@ -80,7 +80,7 @@ export default function ProfileCompletionCard({ percent, checklist, onDismiss }:
         <div className="flex items-center gap-4 pr-6">
           <div
             className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full"
-            style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+            style={{ background: 'var(--navy)' }}
           >
             <PartyPopper className="h-6 w-6" style={{ color: 'var(--pact-bg)' }} />
           </div>
@@ -132,7 +132,7 @@ export default function ProfileCompletionCard({ percent, checklist, onDismiss }:
               type="button"
               onClick={handleAction}
               className="flex-1 rounded-full px-4 py-2 text-sm font-semibold text-[var(--pact-bg)] transition"
-              style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+              style={{ background: 'var(--navy)' }}
             >
               {STEP_COPY[currentStep.id]?.cta}
             </button>

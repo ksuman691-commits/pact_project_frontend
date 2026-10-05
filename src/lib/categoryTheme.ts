@@ -3,16 +3,16 @@
 // when it has no proof photo yet) gets a color/emoji that matches the rest
 // of the app's category vocabulary instead of a generic gray box.
 const CATEGORY_THEME: Record<string, { gradient: string; emoji: string }> = {
-  fitness: { gradient: 'linear-gradient(135deg, #22c55e, #0ea5e9)', emoji: '💪' },
-  startup: { gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)', emoji: '🚀' },
-  habits: { gradient: 'linear-gradient(135deg, #f97316, #ef4444)', emoji: '🔥' },
-  social: { gradient: 'linear-gradient(135deg, #ec4899, #f43f5e)', emoji: '🎉' },
-  creator: { gradient: 'linear-gradient(135deg, #f59e0b, #ec4899)', emoji: '🎨' },
-  study: { gradient: 'linear-gradient(135deg, #14b8a6, #0ea5e9)', emoji: '🧠' },
-  coding: { gradient: 'linear-gradient(135deg, #64748b, #334155)', emoji: '💻' },
+  fitness: { gradient: 'var(--navy)', emoji: '💪' },
+  startup: { gradient: 'var(--navy)', emoji: '🚀' },
+  habits: { gradient: 'var(--navy)', emoji: '🔥' },
+  social: { gradient: 'var(--navy)', emoji: '🎉' },
+  creator: { gradient: 'var(--navy)', emoji: '🎨' },
+  study: { gradient: 'var(--navy)', emoji: '🧠' },
+  coding: { gradient: 'var(--navy)', emoji: '💻' },
 };
 
-const DEFAULT_THEME = { gradient: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))', emoji: '✨' };
+const DEFAULT_THEME = { gradient: 'var(--navy)', emoji: '✨' };
 
 /** Case-insensitive lookup — pact.category values vary in casing across the API. */
 export function getCategoryTheme(category?: string | null) {
