@@ -73,7 +73,7 @@ async function buildPoster(circle: CircleLike, url: string, qrSvg: SVGElement): 
   const ctx = canvas.getContext('2d');
   if (!ctx) return null;
 
-  ctx.fillStyle = '#F3EEE3';
+  ctx.fillStyle = '#F7F5F0';
   ctx.fillRect(0, 0, width, height);
 
   ctx.textAlign = 'center';
@@ -101,7 +101,7 @@ async function buildPoster(circle: CircleLike, url: string, qrSvg: SVGElement): 
   ctx.font = `700 64px ${FONT}`;
   ctx.fillText(circle.name, width / 2, fy + frame + 120);
 
-  ctx.fillStyle = '#6B6A66';
+  ctx.fillStyle = '#667085';
   ctx.font = `400 30px ${FONT}`;
   ctx.fillText('Scan to see the circle\u2019s public wall', width / 2, fy + frame + 175);
   ctx.font = `400 26px ${FONT}`;

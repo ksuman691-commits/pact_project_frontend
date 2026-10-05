@@ -14,26 +14,26 @@
   /* ---- Classic palette v2 (hand-made restyle, supersedes v1 hex values —
      token NAMES kept stable so every component/page that already
      references var(--navy) etc. re-themes automatically) ---- */
-  --paper: #F3EEE3;
-  --card: #FBF8F1;
-  --card-muted: #F0EBDF;
-  --ink: #17181D;
-  --ink-soft: #3B3D44;
-  --muted: #6B6A66;
-  --navy: #1F3A93; /* "blue" in the v2 spec — kept under --navy so every call site repaints */
-  --navy-hover: #142766;
-  --hairline: #DCD3C1; /* "line" in the v2 spec — list dividers, nav top edge */
-  --hairline-soft: #E2DACB;
-  --seat-border: #CFC5B0;
-  --dash: #A29C8D; /* "pencil" in the v2 spec — still-to-come dots, week labels */
-  --witness-empty: #9C927E;
-  --tan: #D9CFBA;
-  --warn-bg: #F1E6CF;
-  --warn-text: #6E4B12;
-  --missed-border: #6B6A66;
-  --missed-stripe: transparent; /* v2 removes the hatch pattern — missed is an open circle, not a stripe fill */
-  --card-text: #FBF8F1;
-  --photo-frame: #FFFDF8;
+  --paper: #F7F5F0;
+  --card: #FFFFFF;
+  --card-muted: #F2F4F7;
+  --ink: #101828;
+  --ink-soft: #1C2B4A;
+  --muted: #667085;
+  --navy: #1877F2;
+  --navy-hover: #145FCC;
+  --hairline: #E4E7EC;
+  --hairline-soft: #EAECF0;
+  --seat-border: #D0D5DD;
+  --dash: #98A2B3;
+  --witness-empty: #98A2B3;
+  --tan: #D0D5DD;
+  --warn-bg: #FFF4E5;
+  --warn-text: #B54708;
+  --missed-border: #98A2B3;
+  --missed-stripe: transparent;
+  --card-text: #FFFFFF;
+  --photo-frame: #FFFFFF; 
 
   /* ---- Legacy light-theme variables, repointed ---- */
   --bg-base: var(--paper);

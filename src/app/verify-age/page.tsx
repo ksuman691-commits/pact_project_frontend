@@ -148,7 +148,7 @@ export default function VerifyAgePage() {
             type="checkbox"
             checked={tosAccepted}
             onChange={(e) => setTosAccepted(e.target.checked)}
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#CFC5B0] accent-[#1F3A93] focus:ring-navy"
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--seat-border)] accent-[var(--navy)] focus:ring-navy"
           />
           <span>
             I confirm I am {MIN_AGE} or older and agree to CirclePact&apos;s{' '}
