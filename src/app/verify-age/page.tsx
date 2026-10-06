@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import AuthShell from '@/components/AuthShell';
 import { useAuthStore } from '@/store/auth';
-import { isAgeVerifiedLocally } from '@/lib/ageVerification';
 
 const MIN_AGE = 18;
 
@@ -43,8 +42,7 @@ export default function VerifyAgePage() {
       router.replace('/auth/login');
       return;
     }
-    const isVerified = Boolean(user.date_of_birth) || isAgeVerifiedLocally(user.user_uuid);
-    if (isVerified) {
+    if (user.date_of_birth) {
       router.replace('/feed');
     }
   }, [isInitialized, user, router]);
@@ -98,10 +96,13 @@ export default function VerifyAgePage() {
       // case — this only fires if the backend's own calculation disagrees
       // (e.g. clock skew, or a client-side bypass attempt), per
       // BACKEND_SPEC_CONTENT_MODERATION.md's 403 { code: 'underage_user' }
-      // response. Any other failure is swallowed by the store itself
-      // (falls back to local-only verification), so reaching this catch
-      // block at all means it was specifically an underage rejection.
+      // response. Any other failure (after the store's retries) means the
+      // backend never saved the date, so the user must try again.
       const detail = err?.response?.data?.detail;
+      if (err?.response?.status !== 403 || detail?.code !== 'underage_user') {
+        toast.error("Couldn't save your date of birth. Please try again.");
+        return;
+      }
       setUnderageMessage(
         detail?.message ||
           `You must be ${MIN_AGE} or older to use CirclePact. Based on the date you entered, you don't currently meet that requirement.`

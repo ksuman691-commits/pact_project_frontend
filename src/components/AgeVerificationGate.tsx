@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
-import { isAgeVerifiedLocally } from '@/lib/ageVerification';
 
 // Mounted once in the root layout, alongside AuthInitializer — this is the
 // single choke point every new user passes through after their first
@@ -25,8 +24,9 @@ export default function AgeVerificationGate() {
     if (!isInitialized || !user) return;
     if (pathname === '/verify-age') return;
 
-    const isVerified = Boolean(user.date_of_birth) || isAgeVerifiedLocally(user.user_uuid);
-    if (!isVerified) {
+    // Only a date of birth the backend returned counts; a local flag can
+    // disagree with the backend, which then rejects every create call.
+    if (!user.date_of_birth) {
       router.replace('/verify-age');
     }
   }, [isInitialized, user, pathname, router]);

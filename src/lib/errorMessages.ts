@@ -22,6 +22,14 @@ const KNOWN_MESSAGE_MAP: Record<string, string> = {
   'respond_by must be before complete_by': 'The response deadline needs to be before the completion deadline.',
 };
 
+// Some backend errors send `detail` as an object { code, message } instead of
+// a string (e.g. the age gate's 403s). The code is stable, so it wins over
+// the backend's wording.
+const ERROR_CODE_MESSAGE_MAP: Record<string, string> = {
+  missing_date_of_birth: 'Add your date of birth to create pacts.',
+  underage_user: 'You must be 18 or older to use CirclePact.',
+};
+
 // Any message containing a raw snake_case identifier (e.g. "circle_id",
 // "user_ids") reads as an internal API detail rather than something a user
 // should see — treat it as unsafe even if it isn't in the map above yet.
@@ -63,6 +71,10 @@ export function toErrorMessage(error: any, fallback: string): string {
   }
 
   if (detail && typeof detail === 'object') {
+    if (typeof detail.code === 'string' && ERROR_CODE_MESSAGE_MAP[detail.code]) {
+      return ERROR_CODE_MESSAGE_MAP[detail.code];
+    }
+    if (typeof detail.message === 'string') return humanize(detail.message, fallback);
     if (typeof detail.msg === 'string') return humanize(detail.msg, fallback);
     return fallback;
   }

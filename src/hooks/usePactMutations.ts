@@ -4,10 +4,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { pactService, joinRequestService, socialService, verificationService, cheerService } from '@/services/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { toErrorMessage } from '@/lib/errorMessages';
+import { useMissingDobRedirect } from '@/hooks/useMissingDobRedirect';
 import toast from 'react-hot-toast';
 
 export function useCreatePact() {
   const queryClient = useQueryClient();
+  const redirectIfMissingDob = useMissingDobRedirect();
 
   return useMutation({
     mutationFn: (data: any) => pactService.create(data),
@@ -22,6 +24,7 @@ export function useCreatePact() {
     },
     onError: (error: any) => {
       toast.error(toErrorMessage(error, 'Failed to create pact'));
+      redirectIfMissingDob(error);
     },
   });
 }

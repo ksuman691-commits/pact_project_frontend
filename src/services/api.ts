@@ -304,8 +304,8 @@ export const authService = {
   // age calculation rejected the date of birth — callers must NOT treat
   // that as a fallback-to-local-success case (see
   // useAuthStore.completeAgeVerification).
-  verifyAge: async (date_of_birth: string) => {
-    const response = await api.patch('/api/users/me', { date_of_birth });
+  verifyAge: async (date_of_birth: string, timeout?: number) => {
+    const response = await api.patch('/api/users/me', { date_of_birth }, { timeout });
     return { ...response, data: mapUser(response.data) };
   },
 };
