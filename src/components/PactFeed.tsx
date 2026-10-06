@@ -121,7 +121,7 @@ export default function PactFeed({
   const normalizedCategory = (category || 'all').toLowerCase()
 
   // Fetch feed data with infinite scroll (will integrate with API later)
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isFetching, refetch } =
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isFetching, isError, refetch } =
     usePersonalizedFeed(normalizedCategory)
 
   const isBusy = isLoading || isFetching || isFetchingNextPage
@@ -207,6 +207,20 @@ export default function PactFeed({
               </div>
             </div>
           ))}
+        </div>
+      ) : isError && pacts.length === 0 ? (
+        <div className="pact-card rounded-[24px] px-5 py-10 text-center">
+          <p className="text-lg font-bold text-[var(--pact-text)]">The feed did not load</p>
+          <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-[var(--pact-text-dim)]">
+            The server took too long to answer. Check your connection and try again.
+          </p>
+          <button
+            onClick={() => refetch()}
+            className="mt-6 inline-flex items-center justify-center px-5 py-3 rounded-full font-bold transition-colors"
+            style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
+          >
+            Try again
+          </button>
         </div>
       ) : pacts.length === 0 ? (
         <div className="pact-card rounded-[24px] px-5 py-10 text-center">

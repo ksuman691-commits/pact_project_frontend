@@ -15,6 +15,7 @@ export function usePersonalizedFeed(category = 'all') {
       lastPage.data?.length === ITEMS_PER_PAGE ? pages.length * ITEMS_PER_PAGE : undefined,
     initialPageParam: 0,
     staleTime: 1000 * 60 * 2,
+    retry: 1,
   });
 }
 

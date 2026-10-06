@@ -587,7 +587,7 @@ export const followService = {
 // Feed Services (Personalized feed, trending, discover)
 export const feedService = {
   getPersonalized: (skip?: number, limit?: number, category?: string) =>
-    api.get('/api/feed', { params: { skip, limit, category } }).then((response) => normalizeListResponse(response, mapPact)),
+    api.get('/api/feed', { params: { skip, limit, category }, timeout: 20000 }).then((response) => normalizeListResponse(response, mapPact)),
   getTrending: (skip?: number, limit?: number) =>
     api.get('/api/feed', { params: { skip, limit, category: 'trending' } }).then((response) => normalizeListResponse(response, mapPact)),
   getDiscover: (skip?: number, limit?: number) =>
