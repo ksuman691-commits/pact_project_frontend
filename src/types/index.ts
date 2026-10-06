@@ -45,6 +45,15 @@ export interface CuratedContentListResponse {
   has_more: boolean;
 }
 
+export interface CircleMemberPreview {
+  user_id: number;
+  name: string;
+  avatar_url?: string | null;
+  /** true = sent proof this week, false = didn't, null = unknown (never treat as missed). */
+  sent_proof_this_week: boolean | null;
+  reason?: 'connected' | 'active' | 'new' | 'member';
+}
+
 export interface Circle {
   id: number;
   circle_uuid?: string; // UUID for public API
@@ -56,6 +65,8 @@ export interface Circle {
   is_public?: boolean;
   visibility?: 'public' | 'private';
   member_count?: number;
+  /** Up to 5 members, already ranked by the backend. Absent until it ships. */
+  members_preview?: CircleMemberPreview[];
   created_at: string;
   updated_at?: string;
   members?: User[];

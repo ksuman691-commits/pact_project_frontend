@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 
 export interface RingMember {
@@ -33,6 +34,27 @@ function monogram(name: string) {
   if (words.length === 0) return '??';
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
   return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+/**
+ * Photo layered over the initials. If the URL 404s or the signed link has
+ * expired, the image removes itself and the initials underneath show —
+ * never a broken-image icon. A plain <img> (not next/image) so a failed
+ * load can be caught without Next's optimizer rejecting unknown hosts.
+ */
+function SeatPhoto({ url }: { url: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={url}
+      alt=""
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="absolute inset-0 h-full w-full object-cover"
+    />
+  );
 }
 
 function initials(name?: string | null) {
@@ -77,9 +99,11 @@ export default function Ring({
   const sorted = activityKnown
     ? [...members].sort((a, b) => Number(b.activeThisWeek) - Number(a.activeThisWeek))
     : members;
-  const maxSeats = 8;
+  // "+N" only ever appears when the circle has more than 5 members; at 5 or
+  // fewer, every member we have is a seat and no bubble is drawn.
+  const maxSeats = 5;
   const visible = sorted.slice(0, maxSeats);
-  const overflow = Math.max(0, totalMemberCount - visible.length);
+  const overflow = totalMemberCount > maxSeats ? totalMemberCount - visible.length : 0;
   const seatCount = visible.length + (overflow > 0 ? 1 : 0);
 
   const seats = visible.map((m, i) => {
@@ -159,32 +183,23 @@ export default function Ring({
             style={{ width: seatSize, height: seatSize, left: seat.x, top: seat.y }}
           >
             <div
-              className="flex h-full w-full items-center justify-center overflow-hidden rounded-full"
+              className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full"
               style={{
                 background: lit ? 'var(--navy)' : 'var(--card)',
                 border: lit ? `2px solid var(--paper)` : `1.5px solid var(--seat-border)`,
               }}
               title={isOverflow ? `${overflow} more members` : seat.name || undefined}
             >
-              {!isOverflow && seat.avatarUrl ? (
-                <Image
-                  src={seat.avatarUrl}
-                  alt={seat.name || ''}
-                  fill
-                  sizes={`${seatSize}px`}
-                  className="object-cover"
-                />
-              ) : (
-                <span
-                  className="font-sans font-semibold"
-                  style={{
-                    fontSize: isDetail ? 14 : 9,
-                    color: lit ? 'var(--card)' : 'var(--muted)',
-                  }}
-                >
-                  {isOverflow ? seat.name : initials(seat.name)}
-                </span>
-              )}
+              <span
+                className="font-sans font-semibold"
+                style={{
+                  fontSize: isDetail ? 14 : 9,
+                  color: lit ? 'var(--card)' : 'var(--muted)',
+                }}
+              >
+                {isOverflow ? seat.name : initials(seat.name)}
+              </span>
+              {!isOverflow && seat.avatarUrl && <SeatPhoto url={seat.avatarUrl} />}
             </div>
             {lit && (
               <div

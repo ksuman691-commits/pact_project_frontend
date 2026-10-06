@@ -220,7 +220,7 @@ export default function CirclesPage() {
                   <CircleTile key={circle.id} circle={circle} activity={activity} />
                 ))}
               </div>
-              <div className="flex flex-1 flex-col gap-[34px] pt-11">
+              <div className="flex flex-1 flex-col gap-[34px]">
                 {rightColumn.map(({ circle, activity }) => (
                   <CircleTile key={circle.id} circle={circle} activity={activity} />
                 ))}

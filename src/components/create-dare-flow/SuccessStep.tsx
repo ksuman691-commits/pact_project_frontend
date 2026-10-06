@@ -28,12 +28,12 @@ export default function SuccessStep({ onDone }: { onDone: () => void }) {
           type="button"
           onClick={() => {
             onDone();
-            router.push('/feed');
+            router.push(`/dares?tab=sent${createdDare?.id ? `&created=${createdDare.id}` : ''}`);
           }}
           className=" w-full rounded-full py-3 font-bold"
           style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
         >
-          Back to Feed
+          See it in Sent by You
         </button>
         <button
           type="button"

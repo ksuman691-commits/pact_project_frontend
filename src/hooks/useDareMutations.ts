@@ -11,15 +11,15 @@ export function useCreateDare() {
 
   return useMutation({
     mutationFn: (data: any) => dareService.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.dares.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.dares.feed() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.dares.mine() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.feed.all });
-      // No success toast here — the create-dare flow transitions to its own
-      // stamp-style SuccessStep screen, so a toast on top of that would be a
-      // redundant leftover from before the tap-flow conversion.
-    },
+    // Returned so mutateAsync resolves only after the dares lists have
+    // refetched; the success screen then links to a list that already holds
+    // the new dare. `dares.all` is the prefix of the feed/mine keys, so it
+    // covers every dares query, including ones not currently mounted.
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.dares.all, refetchType: 'all' }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.feed.all }),
+      ]),
     onError: (error: any) => {
       toast.error(toErrorMessage(error, 'Failed to create dare'));
     },
