@@ -4,10 +4,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { dareService } from '@/services/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { toErrorMessage } from '@/lib/errorMessages';
+import { useMissingDobRedirect } from '@/hooks/useMissingDobRedirect';
 import toast from 'react-hot-toast';
 
 export function useCreateDare() {
   const queryClient = useQueryClient();
+  const redirectIfMissingDob = useMissingDobRedirect();
 
   return useMutation({
     mutationFn: (data: any) => dareService.create(data),
@@ -22,6 +24,7 @@ export function useCreateDare() {
       ]),
     onError: (error: any) => {
       toast.error(toErrorMessage(error, 'Failed to create dare'));
+      redirectIfMissingDob(error);
     },
   });
 }

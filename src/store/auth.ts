@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { User } from '@/types';
 import { authService, clearToken, getRefreshToken, setAuthTokens, setToken } from '@/services/api';
-import { markAgeVerifiedLocally } from '@/lib/ageVerification';
 
 interface AuthState {
   user: User | null;
@@ -97,31 +96,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   // Called once, right after a first-time user passes the client-side
   // 18+ check on /verify-age — never before that check, so this action
-  // never has to re-validate age itself. PATCH /api/users/me is now live
-  // (see BACKEND_SPEC_CONTENT_MODERATION.md; backend extended the generic
-  // profile-update endpoint rather than the originally-specced dedicated
-  // route), so it's called FIRST and treated as the source of truth — no
-  // more optimistic local-write-before-the-call. A 403
-  // { code: 'underage_user' } response means the backend's own age
-  // calculation disagreed with the client's and genuinely rejects the
-  // user; that must propagate to the caller (VerifyAgePage) so it can
-  // show the rejection instead of letting the user through. Any other
-  // failure (network hiccup, unexpected 5xx) still degrades to a
-  // local-only verification rather than trapping the user behind a step
-  // the backend transiently couldn't complete.
+  // never has to re-validate age itself. PATCH /api/users/me is the source
+  // of truth: the user only counts as verified once the backend returned
+  // their saved date of birth. Failures are never papered over locally —
+  // a local-only "verified" state made every later create call 403 with
+  // missing_date_of_birth. Transient failures (the free Render backend can
+  // take 50s+ to wake) are retried; if it still fails the error propagates
+  // so VerifyAgePage can tell the user to try again. An underage_user 403
+  // is the backend's real rejection and is never retried.
   completeAgeVerification: async (dateOfBirth) => {
-    try {
-      const response = await authService.verifyAge(dateOfBirth);
-      set({ user: response.data });
-      markAgeVerifiedLocally(response.data?.user_uuid ?? get().user?.user_uuid);
-    } catch (err: any) {
-      if (err?.response?.status === 403 && err?.response?.data?.detail?.code === 'underage_user') {
-        throw err;
+    const ATTEMPTS = 3;
+    const ATTEMPT_TIMEOUT_MS = 20000;
+    const RETRY_DELAY_MS = 2000;
+
+    for (let attempt = 1; attempt <= ATTEMPTS; attempt += 1) {
+      try {
+        const response = await authService.verifyAge(dateOfBirth, ATTEMPT_TIMEOUT_MS);
+        set({ user: response.data });
+        return;
+      } catch (err: any) {
+        const status = err?.response?.status;
+        const isUnderage = status === 403 && err?.response?.data?.detail?.code === 'underage_user';
+        const isTransient = !status || status >= 500 || status === 408 || status === 429;
+        if (isUnderage || !isTransient || attempt === ATTEMPTS) {
+          throw err;
+        }
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
       }
-      const currentUser = get().user;
-      set({ user: currentUser ? { ...currentUser, date_of_birth: dateOfBirth } : currentUser });
-      markAgeVerifiedLocally(currentUser?.user_uuid);
-      console.log('[v0] PATCH /api/users/me failed for a non-underage reason — proceeding with local-only verification', err);
     }
   },
 
