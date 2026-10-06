@@ -174,7 +174,9 @@ export default function Ring({
       </div>
 
       {seats.map((seat: any) => {
-        const lit = activityKnown && seat.activeThisWeek;
+        // Per-seat: lit only on an explicit "sent proof" (true). Unknown stays
+        // a plain hollow seat even when the circle-level count isn't known.
+        const lit = seat.activeThisWeek === true;
         const isOverflow = seat.userId === 'overflow';
         return (
           <div
