@@ -9,6 +9,7 @@ import ConnectSimilarFolksModal from '@/components/ConnectSimilarFolksModal'
 import Ring from '@/components/classic/Ring'
 import Seat from '@/components/classic/Seat'
 import { readCircleActivity } from '@/lib/circleActivity'
+import { useRequireAuth } from '@/hooks/useRequireAuth'
 
 const SORT_OPTIONS = ['Most active', 'Alphabetical (A-Z)', 'Member count'] as const
 const membershipFilters = ['All', 'Open to join', 'Invite only'] as const
@@ -42,7 +43,8 @@ function CircleTile({ circle, activity }: { circle: any; activity: ReturnType<ty
 
 export default function CirclesPage() {
   const [connectModalOpen, setConnectModalOpen] = useState(false)
-  const circlesQuery = useCircles()
+  const { user, isInitialized } = useRequireAuth()
+  const circlesQuery = useCircles(isInitialized && !!user)
   const circles = (circlesQuery.data || []) as any[]
   const isLoading = circlesQuery.isLoading
   const [search, setSearch] = useState('')

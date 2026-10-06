@@ -77,20 +77,20 @@ export default function TallyGrid({ days, className = '' }: TallyGridProps) {
 
       <div className="mt-2 flex items-center gap-3.5 pl-[38px] text-[12px]" style={{ color: 'var(--muted)' }}>
         <span className="flex items-center gap-1.5">
-          <svg width="16" height="10" viewBox="0 0 16 10" aria-hidden="true">
-            <path d="M1,8 Q8,2 15,8" fill="none" stroke="var(--navy)" strokeWidth={2.4} strokeLinecap="round" />
+          <svg width="10" height="18" viewBox="0 0 24 44" aria-hidden="true">
+            <path d="M12,4 Q13,22 12,40" fill="none" stroke="#1F3A93" strokeWidth={4.5} strokeLinecap="round" />
           </svg>
           Done ({kept})
         </span>
         <span className="flex items-center gap-1.5">
-          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
-            <circle cx={6} cy={6} r={4} fill="none" stroke="var(--muted)" strokeWidth={1.4} />
+          <svg width="10" height="18" viewBox="0 0 24 44" aria-hidden="true">
+            <circle cx={12} cy={22} r={7} fill="none" stroke="#6B6A66" strokeWidth={2.4} />
           </svg>
           Missed ({missed})
         </span>
         <span className="flex items-center gap-1.5">
-          <svg width="16" height="10" viewBox="0 0 16 10" aria-hidden="true">
-            <path d="M1,8 Q8,2 15,8" fill="none" stroke="var(--dash)" strokeWidth={2} strokeDasharray="0.1 4" strokeLinecap="round" />
+          <svg width="10" height="18" viewBox="0 0 24 44" aria-hidden="true">
+            <path d="M12,4 Q13,22 12,40" fill="none" stroke="#A29C8D" strokeWidth={3.4} strokeDasharray="0.1 8" strokeLinecap="round" />
           </svg>
           Still to come ({upcoming})
         </span>
