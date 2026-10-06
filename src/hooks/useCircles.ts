@@ -4,15 +4,16 @@ import { queryKeys } from '@/lib/queryKeys';
 
 const ITEMS_PER_PAGE = 10;
 
-export function useCircles() {
+export function useCircles(enabled = true) {
   return useQuery({
     queryKey: queryKeys.circles.list(),
     queryFn: async () => {
       const response = await circleService.list();
       return response.data;
     },
-    staleTime: 1000 * 60 * 5,
-    refetchOnMount: 'always',
+  enabled,
+  staleTime: 1000 * 60 * 5,
+  refetchOnMount: 'always',
   });
 }
 

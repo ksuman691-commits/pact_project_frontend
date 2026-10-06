@@ -39,7 +39,7 @@ export default function CircleChip({ circleId, circleName, variant = 'lead', onD
     <Link
       href={`/circles/${circleId}`}
       aria-label={`Open the circle ${circleName}`}
-      className={`flex items-center no-underline ${variant === 'muted' ? 'min-h-[44px]' : ''} ${className}`}
+      className={`flex items-center no-underline ${variant === 'muted' ? 'min-h-[44px]' : variant === 'lead' ? 'min-h-[44px]' : ''} ${className}`}
       style={{
         gap: s.gap,
         paddingRight: s.padRight || undefined,

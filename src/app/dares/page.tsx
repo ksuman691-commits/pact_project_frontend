@@ -189,13 +189,10 @@ function DaresPageInner() {
       <div className="mx-auto max-w-2xl px-5 pb-10 pt-8 md:px-10 md:pt-14">
         {/* Hero */}
         <header className="border-b border-[var(--pact-hairline)] pb-8">
-          <p className="text-xs font-bold text-[var(--pact-violet)]">Dares</p>
-          <div className="mt-3 flex items-center gap-4">
-            <span className="text-6xl font-black leading-none tracking-[-0.07em] text-[var(--pact-text)] md:text-7xl">{mineAll.length}</span>
-            <span className="text-balance text-xl font-medium leading-[1.15] tracking-[-0.02em] text-[var(--pact-text-muted)] md:text-2xl">
-              Dares keeping<br />you on your toes
-            </span>
-          </div>
+          <h1 className="text-[34px] font-bold leading-none tracking-[-0.035em] text-[var(--pact-text)]">Dares</h1>
+          <p className="mt-3 text-[14px] text-[var(--pact-text-muted)]">
+            {[waitingOnYou > 0 ? `${waitingOnYou} waiting on you` : '', sentByYou.length > 0 ? `${sentByYou.length} sent by you` : ''].filter(Boolean).join(' · ') || 'No active dares yet'}
+          </p>
 
           {/* Unified stat card — each stat is a real link into the filtered
               view it describes, not just a static number. */}
@@ -332,7 +329,7 @@ function DaresPageInner() {
           )}
 
           {!isLoading && dares.length === 0 && (
-            <div className="pact-card rounded-[28px] text-center py-12" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
+            <div className="pact-card rounded-[14px] text-center py-12" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
               <p className="text-[var(--pact-text-dim)] mb-4">
                 {statusFilter ? `No ${statusFilter} dares.` : emptyCopy[tab]}
               </p>
