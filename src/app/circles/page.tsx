@@ -78,6 +78,7 @@ export default function CirclesPage() {
 
   const allActivityKnown = withActivity.length > 0 && withActivity.every(({ activity }) => activity.known)
   const anyActivityKnown = withActivity.some(({ activity }) => activity.known)
+  const anySeatTicked = withActivity.some(({ activity }) => activity.ringMembers.some((m) => m.activeThisWeek))
   const activeCircles = withActivity.filter(({ activity }) => activity.known && activity.activeCount > 0).length
 
   const summary = (() => {
@@ -98,16 +99,18 @@ export default function CirclesPage() {
           {summary && <p className="text-[14px] text-[var(--muted)]">{summary}</p>}
         </header>
 
-        {anyActivityKnown && (
+        {(anyActivityKnown || anySeatTicked) && (
           <div className="mx-6 mt-4 flex flex-col gap-2 rounded-[10px] bg-[var(--card)] px-3.5 py-3 text-[13px] text-[var(--ink-soft)]">
             <div className="flex items-center gap-3">
               <Seat name="Sam Lee" size={26} lit />
               <span>Ticked: sent proof for a pact this week</span>
             </div>
-            <div className="flex items-center gap-3">
-              <Seat name="Sam Lee" size={26} />
-              <span>Plain: hasn&apos;t sent proof yet this week</span>
-            </div>
+            {anyActivityKnown && (
+              <div className="flex items-center gap-3">
+                <Seat name="Sam Lee" size={26} />
+                <span>Plain: hasn&apos;t sent proof yet this week</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -220,7 +223,7 @@ export default function CirclesPage() {
                   <CircleTile key={circle.id} circle={circle} activity={activity} />
                 ))}
               </div>
-              <div className="flex flex-1 flex-col gap-[34px] pt-11">
+              <div className="flex flex-1 flex-col gap-[34px]">
                 {rightColumn.map(({ circle, activity }) => (
                   <CircleTile key={circle.id} circle={circle} activity={activity} />
                 ))}

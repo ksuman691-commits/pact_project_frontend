@@ -93,6 +93,13 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
     ? `${getDisplayName(firstRecipient.user_id, firstRecipient.full_name || firstRecipient.username)}${extraRecipients > 0 ? ` +${extraRecipients}` : ''}`
     : `${recipientCount} ${recipientCount === 1 ? 'person' : 'people'}`;
 
+  // The creator's own copy of a dare nobody has answered yet: "Awaiting
+  // response" is ambiguous about who owes the next move, so name them.
+  const waitingOnRecipient = viewerContext === 'sent' && isCreator && !isExpired && dare.status === 'pending';
+  const pillLabel = waitingOnRecipient
+    ? `Waiting for ${recipientSummary} to respond`
+    : statusPill?.label;
+
   const senderName = getDisplayName(dare.creator_id, dare.creator_full_name || dare.creator_username);
   const relationLabel = viewerContext === 'sent' ? `To ${recipientSummary}` : viewerContext === 'discover' ? `By ${senderName}` : `From ${senderName}`;
   const ringName = viewerContext === 'sent' ? firstRecipient?.full_name || firstRecipient?.username || 'User' : senderName;
@@ -138,8 +145,8 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
             showLabel={!isExpired}
           />
           {statusPill && (
-            <span className="flex-shrink-0 text-xs font-semibold" style={{ color: statusPill.color }}>
-              {statusPill.label}
+            <span className="min-w-0 truncate text-right text-xs font-semibold" style={{ color: statusPill.color }}>
+              {pillLabel}
             </span>
           )}
         </div>

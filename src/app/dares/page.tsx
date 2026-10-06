@@ -61,11 +61,14 @@ function DaresPageInner() {
   const tabParam = searchParams.get('tab');
   const statusParam = searchParams.get('status');
   const statusFilter: StatusFilter | null = statusParam === 'accepted' || statusParam === 'completed' ? statusParam : null;
+  // `created` changes on every new dare, so landing on ?tab=sent again still
+  // re-selects the tab even if the user had switched away from it.
+  const createdParam = searchParams.get('created');
   useEffect(() => {
     if (tabParam === 'for-you' || tabParam === 'sent' || tabParam === 'discover' || tabParam === 'expired') {
       setTab(tabParam);
     }
-  }, [tabParam]);
+  }, [tabParam, createdParam]);
 
   const clearStatusFilter = () => router.push('/dares');
 
@@ -138,6 +141,10 @@ function DaresPageInner() {
   // and there is currently no way to show that without a per-dare
   // recipients fetch. See BACKEND_SPEC_DARE_SENT_STATUS_AGGREGATE.md for
   // the aggregate field this needs from the backend to fix properly.
+  // Dares the viewer sent that no recipient has answered yet. Dare.status is
+  // only ever written at creation ("pending") for the creator's own row, so
+  // this is exactly "sent, unanswered" for dares that haven't expired.
+  const sentWaiting = useMemo(() => sentByYou.filter((d: any) => d.status === 'pending').length, [sentByYou]);
   const waitingOnYou = useMemo(() => mineAll.filter((d: any) => d.my_recipient_status === 'pending').length, [mineAll]);
   const acceptedDares = useMemo(() => mineAll.filter((d: any) => d.my_recipient_status === 'accepted'), [mineAll]);
   const completedDares = useMemo(() => mineAll.filter((d: any) => d.my_recipient_status === 'completed'), [mineAll]);
@@ -191,7 +198,9 @@ function DaresPageInner() {
         <header className="border-b border-[var(--pact-hairline)] pb-8">
           <h1 className="text-[34px] font-bold leading-none tracking-[-0.035em] text-[var(--pact-text)]">Dares</h1>
           <p className="mt-3 text-[14px] text-[var(--pact-text-muted)]">
-            {[waitingOnYou > 0 ? `${waitingOnYou} waiting on you` : '', sentByYou.length > 0 ? `${sentByYou.length} sent by you` : ''].filter(Boolean).join(' · ') || 'No active dares yet'}
+            {myDaresQuery.isLoading
+              ? '\u00A0'
+              : [waitingOnYou > 0 ? `${waitingOnYou} waiting on you` : '', sentWaiting > 0 ? `${sentWaiting} sent, waiting` : ''].filter(Boolean).join(' · ') || 'No active dares yet'}
           </p>
 
           {/* Unified stat card — each stat is a real link into the filtered
