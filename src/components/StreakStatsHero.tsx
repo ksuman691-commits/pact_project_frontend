@@ -6,7 +6,7 @@ interface StreakStatsHeroProps {
   /** `current_streak` from GET /api/users/{id}/stats — consecutive days, real field. */
   streak: number
   /** `win_rate` from the same response — percentage of created pacts that finished completed. */
-  winRate: number
+  winRate: number | null
   /** `pacts_completed` — lifetime count of the viewer's own completed pacts. */
   pactsCompleted: number
   /** `circles_count` — number of circles the viewer belongs to. */
@@ -34,7 +34,7 @@ export default function StreakStatsHero({ streak, winRate, pactsCompleted, circl
       <div className="grid grid-cols-4 divide-x divide-[var(--hairline-soft)] rounded-[6px] border border-[var(--hairline)] bg-[var(--card)]">
         {[
           { value: `${streak}`, label: streak === 1 ? 'day running' : 'days running' },
-          { value: `${winRate}%`, label: 'kept' },
+          { value: winRate == null ? '—' : `${winRate}%`, label: 'kept' },
           { value: `${pactsCompleted}`, label: 'completed' },
           { value: `${circlesCount}`, label: circlesCount === 1 ? 'circle' : 'circles' },
         ].map((stat) => (

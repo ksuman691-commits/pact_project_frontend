@@ -8,6 +8,8 @@ import StreakStatsHero from '@/components/StreakStatsHero'
 import FeaturedDareCard from '@/components/FeaturedDareCard'
 import HomeActionsRow from '@/components/HomeActionsRow'
 import YourCirclesRail from '@/components/YourCirclesRail'
+import StoryCirclesRow from '@/components/stories/StoryCirclesRow'
+import { STORIES_ENABLED } from '@/lib/stories'
 import CreatePactFlowModal from '@/components/create-pact-flow/CreatePactFlowModal'
 import PactFeed from '@/components/PactFeed'
 import PullToRefresh from '@/components/PullToRefresh'
@@ -30,7 +32,8 @@ export default function FeedPageClient() {
   const { data: unreadCountData } = useUnreadNotificationCount()
   const { data: userStatsData, isLoading: statsLoading } = useUserStats(user?.id || 0)
   const currentStreak = userStatsData?.data?.current_streak ?? 0
-  const winRate = userStatsData?.data?.win_rate ?? 0
+  // The backend returns win_rate 0 when nothing has been counted yet; show a dash instead of 0%.
+  const winRate = (userStatsData?.data?.pacts_created ?? 0) > 0 ? userStatsData?.data?.win_rate ?? null : null
   const pactsCompleted = userStatsData?.data?.pacts_completed ?? 0
   const circlesCount = userStatsData?.data?.circles_count ?? 0
   const { data: circlesData, isLoading: circlesLoading } = useCircles()
@@ -168,7 +171,11 @@ export default function FeedPageClient() {
 
         {isInitialized && user && (
           <div className="max-w-md mx-auto px-4 pb-4">
-            <YourCirclesRail circles={circles} isLoading={circlesLoading} />
+            {STORIES_ENABLED ? (
+              <StoryCirclesRow circles={circles} isLoading={circlesLoading} />
+            ) : (
+              <YourCirclesRail circles={circles} isLoading={circlesLoading} />
+            )}
           </div>
         )}
 

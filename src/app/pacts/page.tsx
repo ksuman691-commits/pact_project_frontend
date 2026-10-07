@@ -10,6 +10,11 @@ import CuratedContentGrid from '@/components/CuratedContentGrid'
 import { ActivePactCard, BrokenPactCard, DarePactCard, FinishedPactRow } from '@/components/classic/PactCard'
 import { pactAdvancedService, dareService } from '@/services/api'
 import { useAuthStore } from '@/store/auth'
+import { DayMarksKey } from '@/components/stories/DayMarks'
+import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
+import StoryPactCard from '@/components/stories/StoryPactCard'
+import { usePactsStoriesToday } from '@/hooks/useStories'
+import { isStoriesUnavailable, STORIES_ENABLED } from '@/lib/stories'
 
 // "Discover" is not a slice of the viewer's own pacts, so it is rendered as
 // its own branch below rather than folded into `filtered`.
@@ -88,6 +93,17 @@ function PactsPageInner() {
     pacts.filter(isBroken).length,
   )
 
+  const allActive = useMemo(() => pacts.filter(isActive), [pacts]) // eslint-disable-line react-hooks/exhaustive-deps
+  const activeIds = useMemo(() => allActive.map((p) => Number(p.id)), [allActive])
+  const storyQueries = usePactsStoriesToday(STORIES_ENABLED ? activeIds : [])
+  const storiesUnavailable = storyQueries.length > 0 && storyQueries.every((q) => q.isError && isStoriesUnavailable(q.error))
+  const storiesKnown = storyQueries.length > 0 && storyQueries.every((q) => q.isSuccess)
+  const postedCount = storiesKnown ? storyQueries.filter((q) => q.data?.some((s) => s.user_id === user?.id)).length : null
+  const storySummary = `${allActive.length} ${allActive.length === 1 ? 'pact' : 'pacts'}.${
+    postedCount != null ? ` ${postedCount} ${postedCount === 1 ? 'story' : 'stories'} posted today.` : ''
+  }`
+  const [capturePact, setCapturePact] = useState<any | null>(null)
+
   const nothingToShow =
     (!showActive || active.length === 0) && (!showDares || dareRows.length === 0) && (!showDone || (broken.length === 0 && finished.length === 0))
 
@@ -96,7 +112,16 @@ function PactsPageInner() {
       <div className="mx-auto max-w-2xl">
         <header className="flex flex-col gap-2 px-6 pb-1.5 pt-9">
           <h1 className="text-[34px] font-bold leading-none tracking-[-0.035em]">Your pacts</h1>
-          {summary && <p className="text-[14px] text-[var(--muted)]">{summary}</p>}
+          {STORIES_ENABLED ? (
+            <>
+              {query.isSuccess && <p className="text-[14px] text-[var(--muted)]">{storySummary}</p>}
+              <div className="pt-1">
+                <DayMarksKey />
+              </div>
+            </>
+          ) : (
+            summary && <p className="text-[14px] text-[var(--muted)]">{summary}</p>
+          )}
         </header>
 
         <div className="flex items-center justify-between gap-3 px-6 pb-3 pt-5">
@@ -166,7 +191,21 @@ function PactsPageInner() {
           </div>
         ) : (
           <div className="flex flex-col gap-[30px] px-4 pt-4">
-            {showActive && active.map((pact) => <ActivePactCard key={pact.id} pact={pact} />)}
+            {showActive &&
+              active.map((pact) =>
+                STORIES_ENABLED ? (
+                  <StoryPactCard
+                    key={pact.id}
+                    pact={pact}
+                    myUserId={user?.id}
+                    stories={storyQueries[activeIds.indexOf(Number(pact.id))]?.data}
+                    storiesUnavailable={storiesUnavailable}
+                    onPost={() => setCapturePact(pact)}
+                  />
+                ) : (
+                  <ActivePactCard key={pact.id} pact={pact} />
+                ),
+              )}
 
             {showDares && dareRows.length > 0 && (
               <div className="flex flex-col border-b border-[var(--line)] pb-3">
@@ -182,6 +221,9 @@ function PactsPageInner() {
         )}
       </div>
       <BottomNav />
+      {STORIES_ENABLED && capturePact && (
+        <StoryCaptureSheet isOpen onClose={() => setCapturePact(null)} pactId={Number(capturePact.id)} pactTitle={capturePact.title} />
+      )}
     </main>
   )
 }
