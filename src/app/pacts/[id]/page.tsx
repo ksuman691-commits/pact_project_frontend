@@ -44,6 +44,7 @@ import { useAuthStore } from '@/store/auth';
 import { pactService } from '@/services/api';
 import { getCategoryTheme } from '@/lib/categoryTheme';
 import { hasPactMomentum, getCrossedStreakMilestone } from '@/lib/pactMomentum';
+import PactMomentsDetail from '@/components/PactMomentsDetail';
 
 function PactDetailSkeleton() {
   return (
@@ -127,7 +128,7 @@ export default function PactDetailPage() {
   // proofs per day are allowed. This page already fetches the full list
   // (usePactProofs(pactId, 50)), unlike the feed card which only ever gets
   // the 5-newest recent_proofs slice.
-  const progress = pact ? getPactProgress(pact, proofs) : null;
+  const progress = pact ? getPactProgress(pact, proofs) : { completed: 0, total: 7, missed: 0 };
   const categoryTheme = getCategoryTheme(pact?.category);
   // Same "Uppercase, underscores → spaces" formatting FeedPactCard uses for
   // its category chip, so the hero's overlaid tag reads identically to
@@ -252,6 +253,19 @@ export default function PactDetailPage() {
       </>
     );
   }
+
+  return (
+    <PactMomentsDetail
+      pact={pact}
+      moments={proofs}
+      participants={participants}
+      progress={progress}
+      onBack={handleBack}
+      onInvite={handleInvite}
+      onAddMoment={() => setProofUploadOpen(true)}
+      onCheer={() => undefined}
+    />
+  );
 
   if (STORIES_ENABLED) {
     return (
@@ -623,7 +637,7 @@ export default function PactDetailPage() {
               </div>
             </section>
 
-            {sponsor && <SponsoredCard sponsor={sponsor} />}
+            {sponsor && <SponsoredCard sponsor={sponsor as NonNullable<typeof sponsor>} />}
 
             {isCreator && (
               <button
