@@ -36,6 +36,8 @@ import { useSponsor } from '@/hooks/useSponsor';
 import PremiumJoinButton from '@/components/PremiumJoinButton';
 import PactJoinRequestsModal from '@/components/PactJoinRequestsModal';
 import CircleChip from '@/components/classic/CircleChip';
+import PactStoryLayout from '@/components/stories/PactStoryLayout';
+import { STORIES_ENABLED } from '@/lib/stories';
 import { usePact, usePactProofs, usePactCheers } from '@/hooks/usePacts';
 import { useSkipPact } from '@/hooks/usePactActions';
 import { useAuthStore } from '@/store/auth';
@@ -247,6 +249,58 @@ export default function PactDetailPage() {
             </button>
           </div>
         </div>
+      </>
+    );
+  }
+
+  if (STORIES_ENABLED) {
+    return (
+      <>
+        <PactStoryLayout
+          pact={pact}
+          proofs={proofs}
+          memberCount={participants.length}
+          isParticipant={isParticipant}
+          myUserId={user?.id}
+          onBack={handleBack}
+          onInvite={handleInvite}
+        >
+          {!isParticipant && (
+            <div className="flex flex-col gap-3 rounded-[6px] border border-[var(--hairline)] bg-[var(--card)] p-4">
+              <p className="text-[14px] font-semibold">Join this pact</p>
+              {pact.can_join ? (
+                <PremiumJoinButton onClick={handleJoinRequest} loading={isJoiningPact} size="md" />
+              ) : (
+                <p className="text-[14px] text-[var(--muted)]">
+                  {pact.join_block_reason === 'full'
+                    ? 'This pact is full.'
+                    : pact.join_block_reason === 'not_active'
+                      ? 'This pact is no longer active.'
+                      : "Joining isn't available right now."}
+                </p>
+              )}
+            </div>
+          )}
+          {isCreator && (
+            <button
+              type="button"
+              onClick={() => setShowJoinRequestsModal(true)}
+              className="self-start text-[14px] font-semibold text-[var(--navy)] underline-offset-4 hover:underline"
+            >
+              Join requests
+            </button>
+          )}
+        </PactStoryLayout>
+        {isCreator && (
+          <PactJoinRequestsModal
+            pactId={pact.id}
+            isOpen={showJoinRequestsModal}
+            onClose={() => setShowJoinRequestsModal(false)}
+            onRequestHandled={() => {
+              void refetchPact();
+            }}
+          />
+        )}
       </>
     );
   }
