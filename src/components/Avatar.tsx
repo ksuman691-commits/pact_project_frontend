@@ -24,9 +24,8 @@ interface AvatarProps {
   /** Diameter of the avatar circle itself, in px (ring adds its own space around this). */
   size?: number;
   /**
-   * Shows the decorative animated ring: a slowly rotating multi-hue conic
-   * gradient band, plus a separately-timed breathing glow underneath. Pass
-   * an object to also draw a progress arc and/or the at-risk state.
+  * Shows a flat navy ring band. Pass an object to also draw a progress arc
+  * and/or the at-risk state.
    */
   ring?: boolean | AvatarRingConfig;
   className?: string;

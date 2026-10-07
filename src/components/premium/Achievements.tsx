@@ -34,15 +34,15 @@ export default function Achievements({ achievements }: AchievementsProps) {
             key={achievement.id}
             className={`rounded-[24px] p-4 flex flex-col items-center text-center transition-all ${
               achievement.unlocked
-                ? 'bg-[var(--card)] border-[var(--line)]'
-                : 'bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] opacity-50'
+                ? 'bg-[var(--card)] border-[var(--hairline)]'
+                : 'bg-[var(--card-muted)] border border-[var(--hairline)] opacity-50'
             }`}
           >
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
                 achievement.unlocked
                   ? 'bg-[var(--warn-bg)] text-[var(--ink)]'
-                  : 'bg-[var(--line)] text-[#9CA3AF]'
+                  : 'bg-[var(--hairline)] text-[#9CA3AF]'
               }`}
             >
               {achievement.icon}
@@ -52,7 +52,7 @@ export default function Achievements({ achievements }: AchievementsProps) {
 
             {achievement.progress !== undefined && !achievement.unlocked && (
               <div className="w-full mt-2">
-                <div className="w-full h-1 bg-[var(--line)] rounded-full overflow-hidden">
+                <div className="w-full h-1 bg-[var(--hairline)] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-[var(--card-muted)]0"
                     style={{ width: `${achievement.progress}%` }}

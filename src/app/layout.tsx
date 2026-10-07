@@ -32,6 +32,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  // Keep this literal synchronized with --paper; theme-color metadata cannot resolve CSS variables.
   themeColor: '#F4EFE4',
   width: 'device-width',
   initialScale: 1,

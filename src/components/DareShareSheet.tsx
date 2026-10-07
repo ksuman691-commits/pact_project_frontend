@@ -100,8 +100,7 @@ export default function DareShareSheet({ isOpen, onClose, dareId, dareTitle }: D
         <div className="space-y-2 p-4">
           <button
             onClick={handleShare}
-            className="pact-btn-glow flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left font-semibold text-white transition"
-            style={{ background: 'linear-gradient(135deg, var(--pact-pink), var(--pact-violet))' }}
+            className="flex w-full items-center gap-3 rounded-2xl bg-[var(--navy)] px-4 py-3.5 text-left font-semibold text-[var(--card-text)] transition hover:bg-[var(--navy-hover)]"
           >
             <Share2 className="h-5 w-5" />
             Share

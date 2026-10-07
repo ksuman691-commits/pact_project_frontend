@@ -30,8 +30,8 @@ const SIZE_STYLES = {
 };
 
 /**
- * The app's single premium "Join" CTA — a gradient pill with an inset "+"
- * badge and a soft breathing aura behind it, used everywhere a user can
+ * The app's single premium "Join" CTA — a flat navy pill with an inset "+"
+ * badge, used everywhere a user can
  * join a pact or circle (feed cards, the swipe-right nudge, circle/pact
  * previews). Keep this as the one Join button in the app rather than
  * one-off styled buttons per screen.
@@ -53,49 +53,29 @@ export default function PremiumJoinButton({
 
   return (
     <span className={`relative inline-flex ${fullWidth ? 'w-full' : ''} ${className}`}>
-      {/* Soft pulsing aura glow behind the button — same breathing technique as
-          the Avatar ring glow (avatar-ring-breathe), but on its own ~2.2s cycle
-          so this button reads as its own signature motif rather than a copy. */}
-      {!isDisabled && (
-        <span
-          aria-hidden="true"
-          className="join-btn-breathe pointer-events-none absolute inset-0 rounded-full blur-lg"
-          style={{ background: 'radial-gradient(circle, rgba(24,119,242,0.55), rgba(24,119,242,0.45) 55%, transparent 75%)' }}
-        />
-      )}
       <motion.button
         type={type}
         onClick={onClick}
         disabled={isDisabled}
         whileTap={isDisabled ? undefined : { scale: 0.95 }}
         transition={{ duration: 0.15 }}
-        className={`relative z-10 inline-flex items-center justify-center overflow-hidden rounded-full font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${fullWidth ? 'w-full' : ''}`}
+        className={`relative z-10 inline-flex items-center justify-center rounded-full bg-[var(--navy)] font-bold text-[var(--card-text)] transition hover:bg-[var(--navy-hover)] disabled:cursor-not-allowed disabled:opacity-60 ${fullWidth ? 'w-full' : ''}`}
         style={{
           padding: s.padding,
           gap: s.gap,
           fontSize: s.text,
           fontFamily: 'var(--font-pact-display), sans-serif',
-          background: joined ? 'var(--pact-surface-3)' : 'var(--pact-pink)',
-          boxShadow: isDisabled ? 'none' : '0 8px 20px rgba(24,119,242,0.35)',
+          boxShadow: 'none',
         }}
       >
-        {/* Diagonal light sweep looping across the pill — the "bling" motif
-            layered on top of the breathing aura outside this button. */}
-        {!isDisabled && (
-          <span
-            aria-hidden="true"
-            className="join-btn-shine pointer-events-none absolute inset-y-0 left-0 w-1/3"
-            style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent)' }}
-          />
-        )}
         <span
-          className="relative flex flex-shrink-0 items-center justify-center rounded-full bg-white/90"
+          className="relative flex flex-shrink-0 items-center justify-center rounded-full bg-[var(--card)]"
           style={{ width: s.badge, height: s.badge }}
         >
           {joined ? (
-            <Check className="text-[var(--pact-surface-3)]" style={{ width: s.badge * 0.6, height: s.badge * 0.6 }} strokeWidth={3} />
+            <Check className="text-[var(--navy)]" style={{ width: s.badge * 0.6, height: s.badge * 0.6 }} strokeWidth={3} />
           ) : (
-            <Plus className="text-[var(--pact-violet)]" style={{ width: s.badge * 0.6, height: s.badge * 0.6 }} strokeWidth={3} />
+            <Plus className="text-[var(--navy)]" style={{ width: s.badge * 0.6, height: s.badge * 0.6 }} strokeWidth={3} />
           )}
         </span>
         <span className="relative">{loading ? loadingLabel : label}</span>

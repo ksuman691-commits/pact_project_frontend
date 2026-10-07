@@ -58,7 +58,7 @@ export default function WithdrawModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end z-50">
-      <div className="bg-white w-full rounded-t-2xl p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-[var(--card)] w-full rounded-t-2xl p-6 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-ink">Withdraw Funds</h2>
@@ -117,7 +117,7 @@ export default function WithdrawModal({
                 </div>
                 {method === id && (
                   <div className="w-5 h-5 rounded-full bg-navy flex items-center justify-center flex-shrink-0 ml-3">
-                    <div className="w-2 h-2 rounded-full bg-white" />
+                    <div className="w-2 h-2 rounded-full bg-[var(--card-text)]" />
                   </div>
                 )}
               </button>

@@ -17,13 +17,13 @@ export default function PageWrapper({
   onCreatePactClick,
 }: PageWrapperProps) {
   return (
-    <div className="min-h-screen bg-[#F4F2FB]">
+    <div className="min-h-screen bg-[var(--paper)]">
       <TopNav
         showBack={showBack}
         showCategories={showCategories}
         onCreatePactClick={onCreatePactClick}
       />
-      <div className="mx-auto max-w-md bg-white min-h-screen">
+      <div className="mx-auto max-w-md bg-[var(--card)] min-h-screen">
         {children}
       </div>
     </div>

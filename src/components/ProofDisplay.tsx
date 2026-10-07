@@ -30,7 +30,7 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
   // Photo display
   if (proof.type === 'image' && proof.url) {
     return (
-      <div className="rounded-[24px] overflow-hidden bg-[#FAF9FE] border border-[rgba(20,18,31,0.06)]">
+      <div className="rounded-[24px] overflow-hidden bg-[var(--card)] border border-[var(--hairline)]">
         <div className="relative aspect-video w-full">
           <Image
             src={proof.url}
@@ -116,7 +116,7 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
                 {completedCount}/{totalCount}
               </span>
             </div>
-            <div className="w-full h-2 bg-[var(--line)] rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-[var(--hairline)] rounded-full overflow-hidden">
               <div
                 className="h-full bg-navy transition-all"
                 style={{ width: `${completionPercent}%` }}
@@ -127,9 +127,9 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
         </div>
 
         {/* Checklist items */}
-        <div className="divide-y divide-[var(--line)]">
+        <div className="divide-y divide-[var(--hairline)]">
           {proof.items.map((item) => (
-            <div key={item.id} className="p-4 flex items-start gap-3 hover:bg-[#F4F2FB] transition">
+            <div key={item.id} className="p-4 flex items-start gap-3 hover:bg-[var(--card-muted)] transition">
               <div className="flex-shrink-0 mt-0.5">
                 {item.completed ? (
                   <CheckCircle2 className="w-5 h-5 text-navy" strokeWidth={2} />
@@ -155,7 +155,7 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
 
   // Fallback: no proof data
   return (
-    <div className="rounded-[24px] bg-[#F4F2FB] border-2 border-dashed border-[var(--line)] p-6 flex flex-col items-center justify-center min-h-[200px]">
+    <div className="rounded-[24px] bg-[var(--card-muted)] border-2 border-dashed border-[var(--hairline)] p-6 flex flex-col items-center justify-center min-h-[200px]">
       <AlertCircle className="w-8 h-8 text-[var(--muted)] mb-2" />
       <p className="text-sm font-medium text-[#6B7280]">No proof submitted yet</p>
       <p className="text-xs text-[#9CA3AF] mt-1">

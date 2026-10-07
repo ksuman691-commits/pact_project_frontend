@@ -104,21 +104,21 @@ export default function NotificationsPage() {
   return (
     <>
       <TopNav showBack={true} showCategories={false} />
-      <div className="min-h-screen bg-[#F4F2FB] max-w-md mx-auto pb-20">
-        <div className="bg-white border-b border-[rgba(20,18,31,0.06)] sticky top-24 z-30">
+      <div className="min-h-screen bg-[var(--paper)] max-w-md mx-auto pb-20">
+        <div className="bg-[var(--card)] border-b border-[var(--hairline)] sticky top-24 z-30">
           <div className="px-4 py-4 flex items-center justify-between">
             <h1 className="text-xl font-bold text-[#14121F]">Notifications</h1>
             <div className="flex items-center gap-2">
               <Link
                 href="/notifications/preferences"
                 aria-label="Notification preferences"
-                className="inline-flex items-center justify-center p-2 rounded-full bg-[#FAF9FE] text-[var(--ink-soft)] hover:bg-[var(--line)] transition"
+                className="inline-flex items-center justify-center p-2 rounded-full bg-[var(--card)] text-[var(--ink-soft)] hover:bg-[var(--card-muted)] transition"
               >
                 <Settings className="w-4 h-4" />
               </Link>
               <button
                 onClick={() => markAllAsRead.mutate()}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-full bg-[#FAF9FE] text-[var(--ink-soft)] hover:bg-[var(--line)] transition"
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-full bg-[var(--card)] text-[var(--ink-soft)] hover:bg-[var(--card-muted)] transition"
               >
                 <CheckCheck className="w-4 h-4" />
                 Mark all read
@@ -131,7 +131,7 @@ export default function NotificationsPage() {
           {isLoading ? (
             <div className="text-[#9CA3AF] text-sm">Loading notifications...</div>
           ) : notifications.length === 0 ? (
-            <div className="rounded-[24px] border border-dashed border-[var(--line)] bg-white p-8 text-center">
+            <div className="rounded-[24px] border border-dashed border-[var(--hairline)] bg-[var(--card)] p-8 text-center">
               <Bell className="w-10 h-10 text-[var(--muted)] mx-auto mb-3" />
               <p className="font-semibold text-[#14121F]">No notifications yet</p>
               <p className="text-sm text-[#9CA3AF] mt-1">You will see join requests and activity updates here.</p>
@@ -146,8 +146,8 @@ export default function NotificationsPage() {
                 key={notification.id}
                 className={`w-full text-left rounded-[24px] border p-4 transition ${
                   notification.is_read
-                    ? 'bg-white border-[rgba(20,18,31,0.06)]'
-                    : 'bg-[var(--card)] border-[var(--line)]'
+                    ? 'bg-[var(--card)] border-[var(--hairline)]'
+                    : 'bg-[var(--card)] border-[var(--hairline)]'
                 }`}
               >
                 <button
@@ -176,7 +176,7 @@ export default function NotificationsPage() {
                     <button
                       onClick={() => rejectFollow.mutate(pendingFollowId)}
                       disabled={acceptFollow.isPending || rejectFollow.isPending}
-                      className="px-3 py-1.5 text-xs rounded-md bg-[var(--line)] text-[var(--ink)] hover:bg-[var(--line)] disabled:opacity-60"
+                      className="px-3 py-1.5 text-xs rounded-md bg-[var(--hairline)] text-[var(--ink)] hover:bg-[var(--hairline)] disabled:opacity-60"
                     >
                       Reject
                     </button>
@@ -191,7 +191,7 @@ export default function NotificationsPage() {
             <button
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
-              className="w-full py-3 rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-white text-[var(--ink-soft)] font-semibold hover:bg-[#F4F2FB] disabled:opacity-60"
+              className="w-full py-3 rounded-[24px] border border-[var(--hairline)] bg-[var(--card)] text-[var(--ink-soft)] font-semibold hover:bg-[var(--card-muted)] disabled:opacity-60"
             >
               {isFetchingNextPage ? 'Loading...' : 'Load more'}
             </button>

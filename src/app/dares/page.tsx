@@ -205,7 +205,7 @@ function DaresPageInner() {
 
           {/* Unified stat card — each stat is a real link into the filtered
               view it describes, not just a static number. */}
-          <div className="mt-6 flex items-stretch divide-x divide-[var(--pact-hairline)] rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)]">
+          <div className="mt-6 flex items-stretch divide-x divide-[var(--pact-hairline)] rounded-card border border-[var(--pact-hairline)] bg-[var(--pact-surface)]">
             <Link
               href="/dares?tab=for-you"
               className="flex-1 px-4 py-3 text-center transition hover:bg-[var(--pact-surface-2)]"
@@ -332,13 +332,13 @@ function DaresPageInner() {
           {isLoading && (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="pact-shimmer h-28 rounded-[28px]" />
+                <div key={i} className="pact-shimmer h-28 rounded-card" />
               ))}
             </div>
           )}
 
           {!isLoading && dares.length === 0 && (
-            <div className="pact-card rounded-[14px] text-center py-12" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
+            <div className="pact-card rounded-card text-center py-12" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
               <p className="text-[var(--pact-text-dim)] mb-4">
                 {statusFilter ? `No ${statusFilter} dares.` : emptyCopy[tab]}
               </p>

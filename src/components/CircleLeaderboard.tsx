@@ -77,7 +77,7 @@ export default function CircleLeaderboard({
               className="px-4 py-2 rounded-[28px] font-medium text-sm transition"
               style={
                 sortBy === tab.key
-                  ? { background: 'var(--pact-violet)', color: '#ffffff' }
+                  ? { background: 'var(--pact-violet)', color: 'var(--card-text)' }
                   : { background: 'var(--pact-surface-2)', color: 'var(--pact-text-dim)' }
               }
             >

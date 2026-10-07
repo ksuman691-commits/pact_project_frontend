@@ -55,33 +55,33 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="rounded-[28px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] p-6">
+        <div className="rounded-[28px] border border-[var(--hairline)] bg-[var(--card)] p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-3">
-              <div className="h-4 w-32 animate-pulse rounded-full bg-[var(--line)]" />
-              <div className="h-10 w-24 animate-pulse rounded-full bg-[var(--line)]" />
+              <div className="h-4 w-32 animate-pulse rounded-full bg-[var(--hairline)]" />
+              <div className="h-10 w-24 animate-pulse rounded-full bg-[var(--hairline)]" />
             </div>
-            <div className="h-10 w-10 animate-pulse rounded-full bg-[var(--line)]" />
+            <div className="h-10 w-10 animate-pulse rounded-full bg-[var(--hairline)]" />
           </div>
-          <div className="mt-6 h-2 rounded-full bg-[var(--line)]">
-            <div className="h-full w-2/3 rounded-full bg-[var(--line)]" />
+          <div className="mt-6 h-2 rounded-full bg-[var(--hairline)]">
+            <div className="h-full w-2/3 rounded-full bg-[var(--hairline)]" />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="h-24 animate-pulse rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB]" />
-          <div className="h-24 animate-pulse rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB]" />
-          <div className="h-24 animate-pulse rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB]" />
-          <div className="h-24 animate-pulse rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB]" />
+          <div className="h-24 animate-pulse rounded-[24px] border border-[var(--hairline)] bg-[var(--card-muted)]" />
+          <div className="h-24 animate-pulse rounded-[24px] border border-[var(--hairline)] bg-[var(--card-muted)]" />
+          <div className="h-24 animate-pulse rounded-[24px] border border-[var(--hairline)] bg-[var(--card-muted)]" />
+          <div className="h-24 animate-pulse rounded-[24px] border border-[var(--hairline)] bg-[var(--card-muted)]" />
         </div>
 
-        <div className="rounded-[20px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] p-4">
+        <div className="rounded-[20px] border border-[var(--hairline)] bg-[var(--card)] p-4">
           <div className="flex items-center justify-between gap-4">
             <div className="space-y-2">
-              <div className="h-4 w-28 animate-pulse rounded-full bg-[var(--line)]" />
-              <div className="h-7 w-16 animate-pulse rounded-full bg-[var(--line)]" />
+              <div className="h-4 w-28 animate-pulse rounded-full bg-[var(--hairline)]" />
+              <div className="h-7 w-16 animate-pulse rounded-full bg-[var(--hairline)]" />
             </div>
-            <div className="h-8 w-24 animate-pulse rounded-full bg-[var(--line)]" />
+            <div className="h-8 w-24 animate-pulse rounded-full bg-[var(--hairline)]" />
           </div>
         </div>
       </div>
@@ -90,7 +90,7 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
 
   if (error || !stats) {
     return (
-      <div className="rounded-[24px] bg-[var(--warn-bg)] border border-[var(--line)] p-6">
+      <div className="rounded-[24px] bg-[var(--warn-bg)] border border-[var(--hairline)] p-6">
         <div className="flex items-center gap-3 mb-2">
           <AlertCircle className="w-6 h-6 text-[var(--warn-text)]" />
           <h3 className="font-semibold text-[var(--ink)]">Unable to load verification results</h3>

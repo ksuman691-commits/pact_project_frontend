@@ -169,9 +169,9 @@ export default function ProofVerificationModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-      <div className="bg-white w-full max-h-[90vh] rounded-t-3xl flex flex-col overflow-hidden">
+      <div className="bg-[var(--card)] w-full max-h-[90vh] rounded-t-3xl flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-6 border-b border-[rgba(20,18,31,0.06)] flex-shrink-0 bg-card">
+        <div className="flex items-center justify-between px-6 py-6 border-b border-[var(--hairline)] flex-shrink-0 bg-[var(--card)]">
           <div>
             <h2 className="text-2xl font-black text-ink">Verify Proof</h2>
             <p className="text-sm text-muted font-medium mt-1">Review and answer 4 verification questions</p>
@@ -195,7 +195,7 @@ export default function ProofVerificationModal({
             </div>
 
             {/* Questions */}
-            <div className="space-y-6 border-t border-[rgba(20,18,31,0.06)] pt-6">
+            <div className="space-y-6 border-t border-[var(--hairline)] pt-6">
               {QUESTIONS.map((q, idx) => (
                 <div key={q.id} className="space-y-3">
                   <div className="flex items-start gap-3">
@@ -268,7 +268,7 @@ export default function ProofVerificationModal({
         </form>
 
         {/* Footer - Submit Button */}
-        <div className="border-t border-[rgba(20,18,31,0.06)] px-6 py-4 flex gap-3 flex-shrink-0 bg-white">
+        <div className="border-t border-[var(--hairline)] px-6 py-4 flex gap-3 flex-shrink-0 bg-[var(--card)]">
           <button
             onClick={onClose}
             disabled={loading}

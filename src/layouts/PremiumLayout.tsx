@@ -25,9 +25,9 @@ export default function PremiumLayout({ children, showNav = true }: PremiumLayou
 
   if (!isInitialized) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#F7F5F0]">
+      <div className="flex items-center justify-center h-screen bg-[var(--paper)]">
         <div className="text-center">
-          <div className="w-12 h-12 rounded-full border-4 border-[var(--line)] border-t-emerald-600 animate-spin mx-auto mb-4" />
+          <div className="w-12 h-12 rounded-full border-4 border-[var(--hairline)] border-t-emerald-600 animate-spin mx-auto mb-4" />
           <p className="text-[#6B7280] font-medium">Loading CirclePact...</p>
         </div>
       </div>
@@ -35,8 +35,8 @@ export default function PremiumLayout({ children, showNav = true }: PremiumLayou
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F5F0]">
-      <div className="max-w-md mx-auto min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-[var(--paper)]">
+      <div className="max-w-md mx-auto min-h-screen bg-[var(--card)] flex flex-col">
         {showNav && <TopNav onCreatePactClick={() => setPactModalOpen(true)} showCategories={true} />}
         <main className="flex-1 overflow-y-auto">
           {children}

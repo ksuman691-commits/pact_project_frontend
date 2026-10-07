@@ -71,7 +71,7 @@ export default function CustomizePanel() {
               style={{ background: draft.remindersEnabled ? 'var(--pact-pink)' : 'var(--pact-hairline)' }}
             >
               <span
-                className="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform"
+                className="absolute top-0.5 h-5 w-5 rounded-full bg-[var(--card)] transition-transform"
                 style={{ transform: draft.remindersEnabled ? 'translateX(22px)' : 'translateX(2px)' }}
               />
             </button>

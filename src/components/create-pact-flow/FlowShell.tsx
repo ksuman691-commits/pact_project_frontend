@@ -20,11 +20,8 @@ interface FlowShellProps {
   titleStripText: string;
   titleStripPlaceholder: string;
   /**
-   * Which flow's chrome accent to use. Defaults to the Pact flow's
-   * pink→violet pairing (via the CSS defaults on .pact-flow) — pass
-   * "circle" to switch progress dots / title strip / CTA gradients to
-   * Circle's violet→mint pairing instead. Create Dare never sets this,
-   * so it keeps the default pink→violet chrome unchanged.
+  * Which flow's chrome accent to use. The current palette uses flat navy
+  * for both flows; retain this switch for future flow-specific accents.
    */
   accent?: 'pact' | 'circle';
   /** Small icon shown in the live-title strip to hint at the flow's own

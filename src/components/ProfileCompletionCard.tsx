@@ -62,7 +62,7 @@ export default function ProfileCompletionCard({ percent, checklist, onDismiss }:
   };
 
   const ringStyle = {
-    background: `conic-gradient(var(--pact-pink) ${percent}%, var(--pact-surface-2) ${percent}% 100%)`,
+    background: `conic-gradient(var(--navy) ${percent}%, var(--hairline) ${percent}% 100%)`,
   };
 
   return (

@@ -73,7 +73,7 @@ async function buildPoster(circle: CircleLike, url: string, qrSvg: SVGElement): 
   const ctx = canvas.getContext('2d');
   if (!ctx) return null;
 
-  ctx.fillStyle = '#F7F5F0';
+  ctx.fillStyle = '#F4EFE4';
   ctx.fillRect(0, 0, width, height);
 
   ctx.textAlign = 'center';
@@ -91,7 +91,7 @@ async function buildPoster(circle: CircleLike, url: string, qrSvg: SVGElement): 
   ctx.shadowBlur = 40;
   ctx.shadowOffsetY = 18;
   roundedRect(ctx, fx, fy, frame, frame, 28);
-  ctx.fillStyle = '#FFFDF8';
+  ctx.fillStyle = '#FBF8F1';
   ctx.fill();
   ctx.restore();
   ctx.drawImage(image, fx + 56, fy + 56, frame - 112, frame - 112);
@@ -113,7 +113,7 @@ async function buildPoster(circle: CircleLike, url: string, qrSvg: SVGElement): 
 const buttonPrimary =
   'flex min-h-[52px] w-full items-center justify-center rounded-full bg-[var(--navy)] px-6 text-[16px] font-semibold text-[var(--card)] transition-colors hover:bg-[var(--navy-hover)]';
 const buttonSecondary =
-  'flex min-h-[48px] items-center justify-center rounded-full border-[1.5px] border-[var(--navy)] bg-transparent px-4 text-[15px] font-semibold text-[var(--navy)] transition-colors hover:bg-[var(--navy)]/5';
+  'flex min-h-[48px] items-center justify-center rounded-full border-[1.5px] border-[var(--hairline)] bg-transparent px-4 text-[15px] font-semibold text-[var(--navy)] transition-colors hover:bg-[var(--navy)]/5 focus-visible:border-[var(--navy)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navy)]/20';
 
 export function CircleQRFullView({ circle, onClose }: { circle: CircleLike; onClose: () => void }) {
   const qrBox = useRef<HTMLDivElement>(null);

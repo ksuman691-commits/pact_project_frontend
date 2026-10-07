@@ -44,7 +44,7 @@ export default function PactCard({
           <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
             pact.status === 'active'
               ? 'bg-[var(--card)] text-[var(--navy)]'
-              : 'bg-[#FAF9FE] text-[var(--ink-soft)]'
+              : 'bg-[var(--card-muted)] text-[var(--ink-soft)]'
           }`}>
             {pact.status}
           </div>
@@ -53,13 +53,13 @@ export default function PactCard({
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-3 gap-2">
           {/* Confidence */}
-          <div className="bg-[var(--card)] rounded-md p-2.5 border border-[var(--line)]">
+          <div className="bg-[var(--card)] rounded-md p-2.5 border border-[var(--hairline)]">
             <p className="text-xs font-medium text-[var(--navy)] mb-0.5">Confidence</p>
             <p className="text-lg font-bold text-[var(--ink)]">{confidence}%</p>
           </div>
 
           {/* Time Remaining */}
-          <div className="bg-[var(--warn-bg)] rounded-md p-2.5 border border-[var(--line)]">
+          <div className="bg-[var(--warn-bg)] rounded-md p-2.5 border border-[var(--hairline)]">
             <div className="flex items-center gap-1 mb-0.5">
               <Clock className="w-3 h-3 text-[var(--warn-text)]" />
               <p className="text-xs font-medium text-[var(--warn-text)]">Days</p>
@@ -83,7 +83,7 @@ export default function PactCard({
             <p className="text-xs text-[var(--navy)] font-medium">Cheers</p>
             <p className="text-sm font-bold text-[var(--ink)]">{cheers}</p>
           </div>
-          <div className="flex-1 bg-[var(--warn-bg)] rounded-md p-2 border border-[var(--line)] text-center">
+          <div className="flex-1 bg-[var(--warn-bg)] rounded-md p-2 border border-[var(--hairline)] text-center">
             <p className="text-xs text-[var(--warn-text)] font-medium">Skipped</p>
             <p className="text-sm font-bold text-[var(--ink)]">{skipped}</p>
           </div>
@@ -95,7 +95,7 @@ export default function PactCard({
             <p className="text-xs font-semibold text-[var(--ink-soft)]">Progress</p>
             <p className="text-xs font-bold text-[#14121F]">{progressPercent}%</p>
           </div>
-          <div className="w-full h-2 bg-[var(--line)] rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-[var(--hairline)] rounded-full overflow-hidden">
             <div
               className="h-full bg-navy rounded-full"
               style={{ width: `${progressPercent}%` }}

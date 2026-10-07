@@ -15,8 +15,8 @@ interface StatsBarProps {
 export default function StatsBar({ stats }: StatsBarProps) {
   return (
     <div className="max-w-md mx-auto px-4 py-6 mb-6">
-      <div className="bg-white rounded-3xl border border-[rgba(20,18,31,0.06)] shadow-[0_4px_12px_rgba(94,84,142,0.08)] py-6 px-4">
-        <div className="grid grid-cols-4 gap-3 divide-x divide-[var(--line)]">
+      <div className="bg-[var(--card)] rounded-3xl border border-[var(--hairline)] shadow-[0_4px_12px_rgba(94,84,142,0.08)] py-6 px-4">
+        <div className="grid grid-cols-4 gap-3 divide-x divide-[var(--hairline)]">
           {stats.map((stat, idx) => (
             <div
               key={idx}

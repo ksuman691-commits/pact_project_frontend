@@ -65,7 +65,7 @@ export function ActivePactCard({ pact }: { pact: any }) {
   return (
     <Link
       href={`/pacts/${pact.id}`}
-      className="relative block rounded-[14px] bg-[var(--card)] px-5 pb-[18px] pt-[22px] shadow-[0_1px_2px_rgba(60,45,20,0.08),0_14px_28px_-16px_rgba(60,45,20,0.30)]"
+      className="relative block rounded-card bg-[var(--card)] px-5 pb-[18px] pt-[22px] shadow-[0_1px_2px_rgba(60,45,20,0.08),0_14px_28px_-16px_rgba(60,45,20,0.30)]"
     >
       {pact.proof_url && (
         <div
@@ -102,7 +102,7 @@ export function ActivePactCard({ pact }: { pact: any }) {
         </p>
 
         {(Array.isArray(pact.witnesses) && pact.witnesses.length > 0) || pact.time_left_label ? (
-          <div className="flex items-center justify-between border-t border-[var(--line)] pt-3">
+          <div className="flex items-center justify-between border-t border-[var(--hairline)] pt-3">
             {Array.isArray(pact.witnesses) && pact.witnesses.length > 0 ? (
               <div className="flex min-w-0 items-center gap-2">
                 <div className="flex shrink-0 -space-x-2">
@@ -149,7 +149,7 @@ export function BrokenPactCard({ pact }: { pact: any }) {
       </p>
       <Link
         href="/pacts/create"
-        className="mt-3 inline-flex h-11 items-center rounded-full border-[1.5px] border-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--navy)]"
+        className="mt-3 inline-flex h-11 items-center rounded-full border-[1.5px] border-[var(--hairline)] px-5 text-[14px] font-semibold text-[var(--navy)] focus-visible:border-[var(--navy)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navy)]/20"
       >
         Start it again
       </Link>

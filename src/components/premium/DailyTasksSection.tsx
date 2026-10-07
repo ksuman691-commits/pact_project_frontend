@@ -14,7 +14,7 @@ export default function DailyTasksSection() {
     return (
       <div className="space-y-2">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-16 bg-[#FAF9FE] rounded-[24px] animate-pulse" />
+          <div key={i} className="h-16 bg-[var(--card-muted)] rounded-[24px] animate-pulse" />
         ))}
       </div>
     );
@@ -38,7 +38,7 @@ export default function DailyTasksSection() {
         <div
           key={pact.id}
           onClick={() => router.push(`/pacts/${pact.id}`)}
-          className="bg-[var(--card)] rounded-[24px] p-4 cursor-pointer hover:shadow-md transition-all border border-[rgba(20,18,31,0.06)] flex items-center justify-between"
+          className="bg-[var(--card)] rounded-[24px] p-4 cursor-pointer hover:shadow-md transition-all border border-[var(--hairline)] flex items-center justify-between"
         >
           <div className="flex-1">
             <h4 className="font-semibold text-[#14121F] text-sm mb-1">{pact.title}</h4>

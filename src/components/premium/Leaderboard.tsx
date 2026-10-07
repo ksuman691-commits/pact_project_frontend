@@ -24,7 +24,7 @@ export default function Leaderboard({ members, isLoading }: LeaderboardProps) {
       <PremiumCard>
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-16 bg-[#FAF9FE] rounded-[28px] animate-pulse" />
+            <div key={i} className="h-16 bg-[var(--card-muted)] rounded-[28px] animate-pulse" />
           ))}
         </div>
       </PremiumCard>
@@ -52,7 +52,7 @@ export default function Leaderboard({ members, isLoading }: LeaderboardProps) {
                 {getMedalIcon(index + 1)}
               </div>
 
-              <div className="w-10 h-10 rounded-full bg-[var(--line)]" />
+              <div className="w-10 h-10 rounded-full bg-[var(--hairline)]" />
 
               <div className="flex-1">
                 <p className="text-sm font-bold text-[#14121F]">{member.fullName}</p>

@@ -452,7 +452,7 @@ export default function ProofUploadModal({
                       <button
                         type="button"
                         onClick={() => startCamera('photo')}
-                        className="flex aspect-square items-center justify-center rounded-md border-2 border-dashed border-hairline text-muted transition hover:border-navy hover:bg-card-muted"
+                        className="flex aspect-square items-center justify-center rounded-md border-2 border-dashed border-hairline text-muted transition hover:border-hairline-soft hover:bg-card-muted"
                         aria-label="Capture another photo"
                       >
                         <CameraIcon className="w-5 h-5" />

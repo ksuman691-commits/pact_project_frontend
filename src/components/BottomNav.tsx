@@ -19,7 +19,7 @@ const authItems = [
   { href: '/dares', label: 'Dares', icon: Zap },
 ]
 
-// Classic redesign: the floating gradient pill (which has twice caused
+// Classic redesign: the floating pill (which has twice caused
 // content below it to be hidden/overlapped) is replaced with a flat,
 // edge-to-edge bar fixed to the bottom of the viewport. Every page's
 // scrollable content is expected to reserve bottom padding (see

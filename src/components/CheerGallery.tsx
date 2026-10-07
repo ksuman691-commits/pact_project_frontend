@@ -40,7 +40,7 @@ export default function CheerGallery({ cheers }: CheerGalleryProps) {
             className="relative w-32 flex-shrink-0 overflow-hidden rounded-2xl border shadow-sm"
             style={{ borderColor: 'var(--pact-gold)' }}
           >
-            <div className="relative aspect-square w-full bg-[#FAF9FE]">
+            <div className="relative aspect-square w-full bg-[var(--card-muted)]">
               {cheer.photo_url && (
                 <Image
                   src={cheer.photo_url}

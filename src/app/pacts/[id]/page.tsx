@@ -260,7 +260,7 @@ export default function PactDetailPage() {
           {/* Hero: a swipeable carousel of every proof/cheer photo (freshest
               first), or a category-colored placeholder when there's none
               yet, with the back/home chevrons overlaid on top and category +
-              title + a dot row overlaid at the bottom via a gradient scrim —
+              title + a dot row overlaid at the bottom via a flat dark veil —
               replaces the old bare header bar + standalone progress ring
               that repeated this same information twice in two different,
               disconnected layouts. This used to render only the single
@@ -280,11 +280,11 @@ export default function PactDetailPage() {
                 onActiveIndexChange={setHeroActiveIndex}
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center" style={{ background: categoryTheme.gradient }}>
+              <div className="flex h-full w-full items-center justify-center" style={{ background: categoryTheme.color }}>
                 <span className="text-6xl opacity-90">{categoryTheme.emoji}</span>
               </div>
             )}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/40" />
+            <div className="pointer-events-none absolute inset-0 bg-black/35" />
 
             <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-4">
               <button

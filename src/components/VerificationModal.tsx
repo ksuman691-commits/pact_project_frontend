@@ -98,9 +98,9 @@ export default function VerificationModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-      <div className="bg-white w-full max-h-[90vh] rounded-t-3xl flex flex-col overflow-hidden">
+      <div className="bg-[var(--card)] w-full max-h-[90vh] rounded-t-3xl flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-6 border-b border-[rgba(20,18,31,0.06)] flex-shrink-0">
+        <div className="flex items-center justify-between px-6 py-6 border-b border-[var(--hairline)] flex-shrink-0">
           <div>
             <h2 className="text-2xl font-black text-ink">Submit Progress</h2>
             <p className="text-sm text-muted font-medium mt-1">Share how you&apos;re progressing on this pact</p>
@@ -137,7 +137,7 @@ export default function VerificationModal({
                   value={reasons[`q${idx + 1}_reason` as keyof typeof reasons]}
                   onChange={(e) => handleReasonChange(idx + 1, e.target.value)}
                   placeholder="Optional reason or note..."
-                  className="w-full px-4 py-2 border border-[rgba(20,18,31,0.06)] rounded-md focus:outline-none focus:ring-2 focus:ring-navy focus:border-transparent resize-none text-sm"
+                  className="w-full px-4 py-2 border border-[var(--hairline)] rounded-md focus:outline-none focus:ring-2 focus:ring-navy focus:border-transparent resize-none text-sm"
                   rows={2}
                 />
               </div>
@@ -146,7 +146,7 @@ export default function VerificationModal({
         </form>
 
         {/* Footer - Submit Button */}
-        <div className="border-t border-[rgba(20,18,31,0.06)] px-6 py-4 flex gap-3 flex-shrink-0 bg-white">
+        <div className="border-t border-[var(--hairline)] px-6 py-4 flex gap-3 flex-shrink-0 bg-[var(--card)]">
           <button
             onClick={onClose}
             className="flex-1 px-4 py-3 rounded-md border border-hairline text-ink-soft font-semibold hover:bg-card-muted transition-colors"

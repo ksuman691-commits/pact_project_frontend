@@ -45,13 +45,13 @@ export default function PactHero({
 
         {/* Timeline */}
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-white/10 backdrop-blur-sm rounded-[28px] p-3 border border-white/20">
-            <p className="text-xs font-medium text-white/70">Days Completed</p>
+          <div className="bg-[var(--card)] rounded-[28px] p-3 border border-[var(--hairline)]">
+            <p className="text-xs font-medium text-[var(--muted)]">Days Completed</p>
             <p className="text-2xl font-bold text-[var(--navy)]">{daysCompleted}</p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-[28px] p-3 border border-white/20">
-            <p className="text-xs font-medium text-white/70">Days Remaining</p>
+          <div className="bg-[var(--card)] rounded-[28px] p-3 border border-[var(--hairline)]">
+            <p className="text-xs font-medium text-[var(--muted)]">Days Remaining</p>
             <p className="text-2xl font-bold text-[var(--warn-text)]">{daysRemaining}</p>
           </div>
 

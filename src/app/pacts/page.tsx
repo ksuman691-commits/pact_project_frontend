@@ -101,7 +101,7 @@ function PactsPageInner() {
 
         <div className="flex items-center justify-between gap-3 px-6 pb-3 pt-5">
           {filter !== 'Discover' && (
-            <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--card)] px-4 text-[14px] text-[var(--muted)]">
+            <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-[var(--hairline)] bg-[var(--card)] px-4 text-[14px] text-[var(--muted)]">
               <Search className="h-4 w-4 shrink-0" strokeWidth={1.7} />
               <input
                 value={search}
@@ -128,7 +128,7 @@ function PactsPageInner() {
               type="button"
               onClick={() => setFilter(item)}
               className={`h-9 shrink-0 rounded-full px-4 text-[13px] font-semibold transition ${
-                filter === item ? 'bg-[var(--navy)] text-[var(--card)]' : 'border border-[var(--line)] text-[var(--ink-soft)]'
+                filter === item ? 'bg-[var(--navy)] text-[var(--card)]' : 'border border-[var(--hairline)] text-[var(--ink-soft)]'
               }`}
             >
               {item}
@@ -142,7 +142,7 @@ function PactsPageInner() {
             <button
               type="button"
               onClick={() => query.refetch()}
-              className="h-11 rounded-full border-[1.5px] border-[var(--navy)] px-5 font-semibold text-[var(--navy)]"
+              className="h-11 rounded-full border-[1.5px] border-[var(--hairline)] px-5 font-semibold text-[var(--navy)] focus-visible:border-[var(--navy)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navy)]/20"
             >
               Try again
             </button>
@@ -169,7 +169,7 @@ function PactsPageInner() {
             {showActive && active.map((pact) => <ActivePactCard key={pact.id} pact={pact} />)}
 
             {showDares && dareRows.length > 0 && (
-              <div className="flex flex-col border-b border-[var(--line)] pb-3">
+              <div className="flex flex-col border-b border-[var(--hairline)] pb-3">
                 {dareRows.map((dare) => (
                   <DarePactCard key={dare.id} dare={dare} />
                 ))}

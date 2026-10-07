@@ -15,7 +15,7 @@ export default function WalletStats({ balance, locked, earned, pending }: Wallet
   return (
     <div className="grid grid-cols-2 gap-3">
       {/* Total Balance */}
-      <PremiumCard glass className="bg-white border-[var(--line)]">
+      <PremiumCard glass className="bg-[var(--card)] border-[var(--hairline)]">
         <div className="flex items-start justify-between mb-2">
           <DollarSign className="w-5 h-5 text-[var(--navy)]" />
           <span className="text-xs font-bold text-[var(--navy)]">Total</span>
@@ -24,7 +24,7 @@ export default function WalletStats({ balance, locked, earned, pending }: Wallet
       </PremiumCard>
 
       {/* Available */}
-      <PremiumCard glass className="bg-white border-[var(--line)]">
+      <PremiumCard glass className="bg-[var(--card)] border-[var(--hairline)]">
         <div className="flex items-start justify-between mb-2">
           <Zap className="w-5 h-5 text-[var(--navy)]" />
           <span className="text-xs font-bold text-[var(--navy)]">Available</span>
@@ -33,7 +33,7 @@ export default function WalletStats({ balance, locked, earned, pending }: Wallet
       </PremiumCard>
 
       {/* Locked */}
-      <PremiumCard glass className="bg-white border-[var(--line)]">
+      <PremiumCard glass className="bg-[var(--card)] border-[var(--hairline)]">
         <div className="flex items-start justify-between mb-2">
           <Lock className="w-5 h-5 text-[var(--warn-text)]" />
           <span className="text-xs font-bold text-[var(--warn-text)]">Locked</span>
@@ -42,7 +42,7 @@ export default function WalletStats({ balance, locked, earned, pending }: Wallet
       </PremiumCard>
 
       {/* Earned */}
-      <PremiumCard glass className="bg-white border-[var(--line)]">
+      <PremiumCard glass className="bg-[var(--card)] border-[var(--hairline)]">
         <div className="flex items-start justify-between mb-2">
           <TrendingUp className="w-5 h-5 text-[var(--warn-text)]" />
           <span className="text-xs font-bold text-[var(--warn-text)]">Won</span>

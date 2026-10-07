@@ -88,7 +88,7 @@ export default function TopNav({
       {/* Top Navigation Bar */}
       {/* Falls back to the original light-theme values so pages other than
           Feed (which don't wrap this in .pact-flow) render unchanged. */}
-      <nav className={`${fixed ? 'fixed inset-x-0 top-0 z-50 mx-auto max-w-md' : 'relative max-w-md mx-auto'} overflow-visible border-b border-[var(--pact-hairline,rgba(20,18,31,0.06))]/80 bg-[var(--pact-bg,#ffffff)]/95 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur`}>
+      <nav className={`${fixed ? 'fixed inset-x-0 top-0 z-50 mx-auto max-w-md' : 'relative max-w-md mx-auto'} overflow-visible border-b border-[var(--hairline)] bg-[var(--paper)] shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur`}>
         <div className={`px-4 ${compact ? 'py-2' : 'py-3'}`}>
           {/* Navigation Links */}
           <div className={`flex items-center ${compact ? 'mb-1' : 'mb-3'}`}>
@@ -124,14 +124,14 @@ export default function TopNav({
 
           {/* Category filter - Only show when showCategories is true */}
           {showCategories && (
-            <div className={`${compact ? 'pt-2' : 'pt-4'} border-t border-[var(--pact-hairline,rgba(20,18,31,0.06))] -mx-4 px-4 bg-[var(--pact-bg,#ffffff)]`}>
+            <div className={`${compact ? 'pt-2' : 'pt-4'} border-t border-[var(--hairline)] -mx-4 px-4 bg-[var(--paper)]`}>
               <div className={`relative inline-block ${compact ? 'pb-2' : 'pb-4'}`}>
                 <select
                   value={selectedCategoryId}
                   onChange={(event) => handleCategoryClick(event.target.value)}
                   disabled={isLoadingCategories}
                   aria-label="Filter pacts by category"
-                  className="appearance-none cursor-pointer rounded-full border border-[var(--pact-hairline,rgba(20,18,31,0.06))] bg-[var(--pact-surface-2,#FAF9FE)] py-1.5 pl-3.5 pr-9 text-xs font-semibold text-[var(--pact-text-dim,#334155)] transition-colors hover:bg-[var(--pact-surface-3,#e2e8f0)] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="appearance-none cursor-pointer rounded-full border border-[var(--hairline)] bg-[var(--card)] py-1.5 pl-3.5 pr-9 text-xs font-semibold text-[var(--ink-soft)] transition-colors hover:bg-[var(--card-muted)] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {CATEGORIES.map((category) => (
                     <option key={category.id} value={category.id}>

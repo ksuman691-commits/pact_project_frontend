@@ -24,7 +24,7 @@ export default function DebugPage() {
           <div className="space-y-6">
             <div className="legacy-light-card">
               <h2 className="text-xl font-bold text-[#14121F] mb-4">Auth Store State</h2>
-              <div className="space-y-3 text-sm bg-[#FAF9FE] p-4 rounded">
+              <div className="space-y-3 text-sm bg-[var(--card-muted)] p-4 rounded">
                 <p><span className="font-bold">isInitialized:</span> {String(isInitialized)}</p>
                 <p><span className="font-bold">token:</span> {token ? '✓ Set' : '✗ Not set'}</p>
                 <p><span className="font-bold">user:</span> {user ? `✓ ${user.full_name}` : '✗ Not set'}</p>
@@ -33,7 +33,7 @@ export default function DebugPage() {
 
             <div className="legacy-light-card">
               <h2 className="text-xl font-bold text-[#14121F] mb-4">localStorage Token</h2>
-              <div className="space-y-3 text-sm bg-[#FAF9FE] p-4 rounded">
+              <div className="space-y-3 text-sm bg-[var(--card-muted)] p-4 rounded">
                 <p><span className="font-bold">access_token:</span> {localToken ? '✓ Stored' : '✗ Not stored'}</p>
                 {localToken && (
                   <p className="text-xs text-[#6B7280] break-all">
@@ -46,9 +46,9 @@ export default function DebugPage() {
             <div className="legacy-light-card">
               <h2 className="text-xl font-bold text-[#14121F] mb-4">Authorization Header</h2>
               <p className="text-sm text-[#6B7280] mb-4">
-                Should be sent as: <code className="bg-[#FAF9FE] px-2 py-1">Authorization: Bearer {'{token}'}</code>
+                Should be sent as: <code className="bg-[var(--card-muted)] px-2 py-1">Authorization: Bearer {'{token}'}</code>
               </p>
-              <div className="bg-[var(--card)] border border-[var(--line)] p-4 rounded text-sm">
+              <div className="bg-[var(--card)] border border-[var(--hairline)] p-4 rounded text-sm">
                 {localToken ? (
                   <p className="text-[var(--navy)]">✓ Token will be sent in Authorization header</p>
                 ) : (

@@ -11,7 +11,7 @@ interface ConfirmModalProps {
   description?: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  /** Renders the confirm button as a destructive (red) action instead of the default pink/violet gradient. */
+  /** Renders the confirm button as a destructive (red) action instead of the default navy action. */
   destructive?: boolean;
   loading?: boolean;
 }

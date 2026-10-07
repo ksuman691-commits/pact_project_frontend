@@ -231,12 +231,11 @@ function getDurationProgress(pact: any) {
   return { percent, elapsedDays, totalDays };
 }
 
-/** Gradient-stroke circular progress ring — the hero visual for pacts with no proof photo yet. */
+/** Flat-stroke circular progress ring — the hero visual for pacts with no proof photo yet. */
 function PactProgressRing({
   percent,
   elapsedDays,
   totalDays,
-  gradientId,
   compact = false,
   mutedGlow = false,
   momentum = false,
@@ -244,7 +243,6 @@ function PactProgressRing({
   percent: number;
   elapsedDays: number;
   totalDays: number;
-  gradientId: string;
   compact?: boolean;
   /**
    * The corner-badge ring's ambient glow was tuned against a busy photo
@@ -285,7 +283,7 @@ function PactProgressRing({
           cy={center}
           r={radius}
           fill="none"
-          stroke="var(--pact-pink)"
+          stroke="var(--navy)"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -856,7 +854,6 @@ export default function FeedPactCard({
                   percent={progressInfo!.percent}
                   elapsedDays={progressInfo!.elapsedDays}
                   totalDays={progressInfo!.totalDays}
-                  gradientId={`hero-ring-gradient-${pact.id}`}
                   compact
                   momentum={hasPactMomentum(pact)}
                 />
@@ -1070,7 +1067,7 @@ export default function FeedPactCard({
                     key={option.value}
                     type="button"
                     onClick={() => void handleReport(option.value)}
-                    className="flex w-full items-center justify-between gap-4 rounded-[24px] border border-white/8 bg-white/5 px-4 py-4 text-left transition hover:border-[var(--line)] hover:bg-white/8"
+                    className="flex w-full items-center justify-between gap-4 rounded-[24px] border border-white/8 bg-white/5 px-4 py-4 text-left transition hover:border-[var(--hairline)] hover:bg-white/8"
                   >
                     <span className="min-w-0">
                       <span className="block text-sm font-bold text-white">{option.title}</span>

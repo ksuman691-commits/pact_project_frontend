@@ -10,8 +10,8 @@ export type TierKey = 'none' | 'building' | 'strong' | 'peak';
 export interface TierStyle {
   key: TierKey;
   label: string;
-  /** CSS background value (solid color or gradient) used for the ring band. */
-  ringGradient: string;
+  /** Flat palette color used for the ring band. */
+  ringColor: string;
   /** Ring band thickness in px. */
   ringWidth: number;
   /** rgba color used for the outer glow box-shadow. */
@@ -26,7 +26,7 @@ export const TIER_STYLES: Record<TierKey, TierStyle> = {
   none: {
     key: 'none',
     label: 'None',
-    ringGradient: '#CBD5E1', // slate-300
+    ringColor: 'var(--dash)',
     ringWidth: 2,
     glowColor: 'transparent',
     glowBlur: 0,
@@ -35,7 +35,7 @@ export const TIER_STYLES: Record<TierKey, TierStyle> = {
   building: {
     key: 'building',
     label: 'Building',
-    ringGradient: '#FB923C', // amber/orange-400
+    ringColor: 'var(--tan)',
     ringWidth: 1,
     glowColor: 'transparent',
     glowBlur: 0,
@@ -44,7 +44,7 @@ export const TIER_STYLES: Record<TierKey, TierStyle> = {
   strong: {
     key: 'strong',
     label: 'Strong',
-    ringGradient: 'var(--navy)',
+    ringColor: 'var(--navy-hover)',
     ringWidth: 3,
     glowColor: 'transparent',
     glowBlur: 14,
@@ -53,7 +53,7 @@ export const TIER_STYLES: Record<TierKey, TierStyle> = {
   peak: {
     key: 'peak',
     label: 'Peak',
-    ringGradient: '#0BA5EC',
+    ringColor: 'var(--navy)',
     ringWidth: 3,
     glowColor: 'transparent',
     glowBlur: 20,

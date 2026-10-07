@@ -28,7 +28,7 @@ export default function ProfileStats({
       </div>
 
       {/* Failed */}
-      <div className="bg-[var(--warn-bg)] rounded-md p-3 border border-[var(--line)]">
+      <div className="bg-[var(--warn-bg)] rounded-md p-3 border border-[var(--hairline)]">
         <div className="flex items-center gap-2 mb-2">
           <XCircle className="w-4 h-4 text-[var(--warn-text)]" />
           <p className="text-xs font-semibold text-[var(--warn-text)]">Failed</p>
@@ -37,7 +37,7 @@ export default function ProfileStats({
       </div>
 
       {/* Win Rate */}
-      <div className="bg-[var(--card)] rounded-md p-3 border border-[var(--line)]">
+      <div className="bg-[var(--card)] rounded-md p-3 border border-[var(--hairline)]">
         <div className="flex items-center gap-2 mb-2">
           <TrendingUp className="w-4 h-4 text-[var(--navy)]" />
           <p className="text-xs font-semibold text-[var(--navy)]">Win Rate</p>
@@ -46,7 +46,7 @@ export default function ProfileStats({
       </div>
 
       {/* Streak */}
-      <div className="bg-[var(--warn-bg)] rounded-md p-3 border border-[var(--line)]">
+      <div className="bg-[var(--warn-bg)] rounded-md p-3 border border-[var(--hairline)]">
         <div className="flex items-center gap-2 mb-2">
           <Flame className="w-4 h-4 text-[var(--warn-text)]" />
           <p className="text-xs font-semibold text-[var(--warn-text)]">Streak</p>

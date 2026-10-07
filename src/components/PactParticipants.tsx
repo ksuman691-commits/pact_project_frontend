@@ -51,7 +51,7 @@ export default function PactParticipants({ pactId, canViewParticipants = true }:
 
   if (!canViewParticipants) {
     return (
-      <div className="bg-[var(--warn-bg)] border border-[var(--line)] rounded-[28px] p-4 flex items-start gap-3">
+      <div className="bg-[var(--warn-bg)] border border-[var(--hairline)] rounded-[28px] p-4 flex items-start gap-3">
         <AlertCircle size={20} className="text-[var(--warn-text)] flex-shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-medium text-[var(--ink)]">Private Pact</p>
@@ -67,7 +67,7 @@ export default function PactParticipants({ pactId, canViewParticipants = true }:
 
   if (error) {
     return (
-      <div className="bg-[var(--warn-bg)] border border-[var(--line)] rounded-[28px] p-4">
+      <div className="bg-[var(--warn-bg)] border border-[var(--hairline)] rounded-[28px] p-4">
         <p className="text-sm text-[var(--warn-text)]">{error}</p>
       </div>
     );

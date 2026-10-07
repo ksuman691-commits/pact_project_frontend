@@ -121,7 +121,7 @@ export default function CircleDetailPage() {
       <div className="flex flex-col items-center gap-3 px-6 pt-1 text-center">
         <Ring circleName={circle.name} members={activity.ringMembers} totalMemberCount={activity.totalMembers} size="detail" activityKnown={activity.known} coverPhotoUrl={(circle as any).photo_url} />
         {isOwner && (
-          <label className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full border-[1.5px] border-[var(--navy)] px-4 text-[13px] font-semibold text-[var(--navy)]" aria-label="Change circle cover photo">
+          <label className="flex h-9 cursor-pointer items-center gap-1.5 rounded-full border-[1.5px] border-[var(--hairline)] px-4 text-[13px] font-semibold text-[var(--navy)] focus-within:border-[var(--navy)]" aria-label="Change circle cover photo">
             {uploadingPhoto ? <LogoSpinner size={12} color="var(--navy)" /> : <Camera className="h-3.5 w-3.5" strokeWidth={1.7} aria-hidden="true" />}
             Change cover
             <input type="file" accept="image/*" className="sr-only" onChange={handlePhotoChange} disabled={uploadingPhoto} />
@@ -141,7 +141,7 @@ export default function CircleDetailPage() {
               <Plus className="h-4 w-4" strokeWidth={2} />
               {pacts.length === 0 ? 'Make the first pact' : 'Make a pact'}
             </button>
-            <button onClick={() => setInviteModal(true)} className="flex h-12 w-full items-center justify-center gap-2 rounded-full border-[1.5px] border-[var(--navy)] text-[15px] font-semibold text-[var(--navy)]">
+            <button onClick={() => setInviteModal(true)} className="flex h-12 w-full items-center justify-center gap-2 rounded-full border-[1.5px] border-[var(--hairline)] text-[15px] font-semibold text-[var(--navy)] transition focus-visible:border-[var(--navy)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navy)]/20">
               <Users className="h-4 w-4" strokeWidth={1.8} />
               Invite someone
             </button>
@@ -158,7 +158,7 @@ export default function CircleDetailPage() {
             const displayName = member.full_name || member.username
             const lit = activity.known ? litById.get(member.user_id) === true : false
             return (
-              <li key={member.user_id} className="flex items-center gap-3 border-b border-[var(--line)] py-2.5 last:border-b-0">
+              <li key={member.user_id} className="flex items-center gap-3 border-b border-[var(--hairline)] py-2.5 last:border-b-0">
                 <Link href={`/profile/${member.username}`} className="flex min-w-0 flex-1 items-center gap-3">
                   <Seat name={displayName} avatarUrl={member.avatar_url} size={40} lit={lit} />
                   <span className="min-w-0">
@@ -191,7 +191,7 @@ export default function CircleDetailPage() {
         ) : recentEvents.length > 0 ? (
           <ul className="mt-2">
             {recentEvents.map((pact: any) => (
-              <li key={pact.id} className="flex items-baseline justify-between gap-3 border-b border-[var(--line)] py-3 last:border-b-0">
+              <li key={pact.id} className="flex items-baseline justify-between gap-3 border-b border-[var(--hairline)] py-3 last:border-b-0">
                 <Link href={`/pacts/${pact.id}`} className="min-w-0 text-[14px] leading-[1.4]">
                   <span className="font-semibold">{pact.creator_full_name || pact.creator_username || 'Someone'}</span> started a pact: {pact.title}
                 </Link>

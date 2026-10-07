@@ -18,7 +18,7 @@ export default function CircleStats({
   return (
     <div className="grid grid-cols-2 gap-3">
       {/* Members */}
-      <PremiumCard glass className="bg-[var(--card)] border-[var(--line)]">
+      <PremiumCard glass className="bg-[var(--card)] border-[var(--hairline)]">
         <div className="flex items-start justify-between mb-2">
           <Users className="w-5 h-5 text-[var(--navy)]" />
           <span className="text-xs font-bold text-[var(--navy)]">Members</span>
@@ -27,7 +27,7 @@ export default function CircleStats({
       </PremiumCard>
 
       {/* Active Pacts */}
-      <PremiumCard glass className="bg-[var(--card)] border-[var(--line)]">
+      <PremiumCard glass className="bg-[var(--card)] border-[var(--hairline)]">
         <div className="flex items-start justify-between mb-2">
           <Target className="w-5 h-5 text-[var(--navy)]" />
           <span className="text-xs font-bold text-[var(--navy)]">Active</span>
@@ -36,7 +36,7 @@ export default function CircleStats({
       </PremiumCard>
 
       {/* Total Wins */}
-      <PremiumCard glass className="bg-[var(--card)] border-[var(--line)]">
+      <PremiumCard glass className="bg-[var(--card)] border-[var(--hairline)]">
         <div className="flex items-start justify-between mb-2">
           <TrendingUp className="w-5 h-5 text-[var(--navy)]" />
           <span className="text-xs font-bold text-[var(--navy)]">Wins</span>
@@ -45,7 +45,7 @@ export default function CircleStats({
       </PremiumCard>
 
       {/* Avg Win Rate */}
-      <PremiumCard glass className="bg-[var(--card)] border-[var(--line)]">
+      <PremiumCard glass className="bg-[var(--card)] border-[var(--hairline)]">
         <div className="flex items-start justify-between mb-2">
           <Zap className="w-5 h-5 text-[var(--warn-text)]" />
           <span className="text-xs font-bold text-[var(--warn-text)]">Win Rate</span>

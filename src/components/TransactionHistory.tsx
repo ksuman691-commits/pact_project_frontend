@@ -122,7 +122,7 @@ export default function TransactionHistory({
   });
 
   return (
-    <div className="bg-white rounded-[24px] p-6 border border-[var(--line)] shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
+    <div className="bg-[var(--card)] rounded-[24px] p-6 border border-[var(--hairline)] shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-bold text-[var(--ink)]">Transaction History</h3>
@@ -160,7 +160,7 @@ export default function TransactionHistory({
           filteredTransactions.map((transaction) => (
             <div
               key={transaction.id}
-              className="flex items-center justify-between p-4 border border-[var(--line)] rounded-[24px] hover:bg-[var(--card)] transition"
+              className="flex items-center justify-between p-4 border border-[var(--hairline)] rounded-[24px] hover:bg-[var(--card)] transition"
             >
               {/* Left: Icon & Description */}
               <div className="flex items-center gap-4 flex-1">
@@ -197,7 +197,7 @@ export default function TransactionHistory({
 
       {/* View More Button */}
       {filteredTransactions.length > 0 && (
-        <button className="w-full mt-6 px-4 py-3 border border-[var(--line)] rounded-[28px] text-[var(--ink-soft)] font-medium hover:bg-[var(--card)] transition">
+        <button className="w-full mt-6 px-4 py-3 border border-[var(--hairline)] rounded-[28px] text-[var(--ink-soft)] font-medium hover:bg-[var(--card)] transition">
           View More Transactions
         </button>
       )}

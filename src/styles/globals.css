@@ -14,26 +14,26 @@
   /* ---- Classic palette v2 (hand-made restyle, supersedes v1 hex values —
      token NAMES kept stable so every component/page that already
      references var(--navy) etc. re-themes automatically) ---- */
-  --paper: #F7F5F0;
-  --card: #FFFFFF;
-  --card-muted: #F2F4F7;
-  --ink: #101828;
-  --ink-soft: #1C2B4A;
-  --muted: #667085;
-  --navy: #1877F2;
-  --navy-hover: #145FCC;
-  --hairline: #E4E7EC;
-  --hairline-soft: #EAECF0;
-  --seat-border: #D0D5DD;
-  --dash: #98A2B3;
-  --witness-empty: #98A2B3;
-  --tan: #D0D5DD;
-  --warn-bg: #FFF4E5;
-  --warn-text: #B54708;
-  --missed-border: #98A2B3;
+  --paper: #F4EFE4;
+  --card: #FBF8F1;
+  --card-muted: #F0EBDF;
+  --ink: #17181D;
+  --ink-soft: #3B3D44;
+  --muted: #5A5C63;
+  --navy: #1F3A93;
+  --navy-hover: #142766;
+  --hairline: #DCD3C1;
+  --hairline-soft: #E6DECD;
+  --seat-border: #CFC5B0;
+  --dash: #A29C8D;
+  --witness-empty: #9C927E;
+  --tan: #CFC5B0;
+  --warn-bg: #F1E6CF;
+  --warn-text: #6E4B12;
+  --missed-border: #6B6A66;
   --missed-stripe: transparent;
   --card-text: #FFFFFF;
-  --photo-frame: #FFFFFF; 
+  --photo-frame: #FBF8F1;
 
   /* ---- Legacy light-theme variables, repointed ---- */
   --bg-base: var(--paper);
@@ -103,7 +103,7 @@ body {
    the moment it renders outside a .pact-flow-wrapped page. Opt in
    explicitly with this class instead. */
 .legacy-light-card {
-  @apply bg-white rounded-[28px] shadow-[0_8px_24px_rgba(16,24,40,0.06),0_2px_6px_rgba(16,24,40,0.03)] p-6;
+  @apply bg-[var(--card)] rounded-[28px] shadow-[0_8px_24px_rgba(16,24,40,0.06),0_2px_6px_rgba(16,24,40,0.03)] p-6;
 }
 
 /* Primary Button - Pill Shaped */
@@ -113,7 +113,7 @@ body {
 
 /* Secondary Button */
 .btn-secondary {
-  @apply px-6 py-3 min-h-[44px] bg-transparent text-[var(--navy)] rounded-full font-semibold hover:bg-[var(--card)] border border-[var(--navy)] transition-all;
+  @apply px-6 py-3 min-h-[44px] bg-transparent text-[var(--navy)] rounded-full font-semibold hover:bg-[var(--card)] border border-[var(--hairline)] transition-all;
 }
 
 /* Ghost Button */
@@ -123,7 +123,7 @@ body {
 
 /* Icon Button - Perfect Circle */
 .icon-btn {
-  @apply w-12 h-12 rounded-full bg-white shadow-[0_4px_12px_rgba(94,84,142,0.08)] flex items-center justify-center text-[#667085] hover:shadow-[0_6px_16px_rgba(94,84,142,0.12)] transition-all;
+  @apply w-12 h-12 rounded-full bg-[var(--card)] shadow-[0_4px_12px_rgba(94,84,142,0.08)] flex items-center justify-center text-[#667085] hover:shadow-[0_6px_16px_rgba(94,84,142,0.12)] transition-all;
 }
 
 /* Icon Button - Active State */
@@ -182,7 +182,7 @@ body {
 
 /* Cards with proper spacing */
 .card-sm {
-  @apply bg-white rounded-2xl shadow-[0_4px_12px_rgba(94,84,142,0.06)] p-4;
+  @apply bg-[var(--card)] rounded-2xl shadow-[0_4px_12px_rgba(94,84,142,0.06)] p-4;
 }
 
 /* Large stat text */
@@ -222,7 +222,7 @@ section {
 }
 
 section + section {
-  @apply border-t border-[rgba(20,18,31,0.06)] pt-6;
+  @apply border-t border-[var(--hairline)] pt-6;
 }
 
 /* Scrollbar styling */
@@ -303,11 +303,8 @@ section + section {
 .pact-flow {
   /* Color tokens now live in :root (see above) — this block keeps only the
      structural rules specific to the full-page immersive flow. */
-  /* Per-flow chrome accent — defaults to the Pact flow's pink→violet
-     pairing. CreateCircleFlow overrides both on its own root wrapper so
-     its chrome (progress dots, live-title strip, CTA gradients) reads as
-     a distinct violet→mint flow without touching the shared vibe-tile
-     grid or any other flow (e.g. Create Dare) that never overrides these. */
+    /* Per-flow chrome accent. Both tokens currently resolve to navy; retaining
+      the variables keeps flow-specific accents configurable without gradients. */
   --flow-accent: var(--pact-pink);
   --flow-accent-2: var(--pact-violet);
   background: var(--pact-bg);

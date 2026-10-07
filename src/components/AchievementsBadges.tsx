@@ -37,7 +37,7 @@ const iconSizeConfig: Record<AchievementRarity, string> = {
 function getRingStyle(rarity: AchievementRarity, locked: boolean): React.CSSProperties {
   const tier = getTierStyle(getRarityTier(rarity));
   return {
-    background: tier.ringGradient,
+    background: tier.ringColor,
     padding: `${tier.ringWidth}px`,
     boxShadow: !locked && tier.glowBlur > 0 ? `0 0 ${tier.glowBlur}px ${tier.glowColor}` : undefined,
   };

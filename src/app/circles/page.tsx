@@ -129,7 +129,7 @@ export default function CirclesPage() {
           <button
             type="button"
             onClick={() => setConnectModalOpen(true)}
-            className="flex h-11 items-center gap-2 rounded-full border-[1.5px] border-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--navy)]"
+            className="flex h-11 items-center gap-2 rounded-full border-[1.5px] border-[var(--hairline)] px-5 text-[14px] font-semibold text-[var(--navy)] transition focus-visible:border-[var(--navy)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navy)]/20"
           >
             <Sparkles className="h-4 w-4" strokeWidth={1.8} />
             Connect me
@@ -137,7 +137,7 @@ export default function CirclesPage() {
         </div>
 
         <div className="flex items-center gap-2.5 px-6 pt-5">
-          <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--card)] px-4 text-[14px] text-[var(--muted)]">
+          <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-[var(--hairline)] bg-[var(--card)] px-4 text-[14px] text-[var(--muted)]">
             <Search className="h-4 w-4 shrink-0" strokeWidth={1.7} />
             <input
               value={search}
@@ -152,12 +152,12 @@ export default function CirclesPage() {
               type="button"
               onClick={() => setSortOpen((v) => !v)}
               aria-label="Sort circles"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--card)] text-[var(--ink-soft)]"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--hairline)] bg-[var(--card)] text-[var(--ink-soft)] focus-visible:border-[var(--navy)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navy)]/20"
             >
               <SlidersHorizontal className="h-4 w-4" strokeWidth={1.7} />
             </button>
             {sortOpen && (
-              <div className="absolute right-0 top-12 z-10 w-48 rounded-[10px] border border-[var(--line)] bg-[var(--card)] py-1.5 shadow-[0_14px_28px_-16px_rgba(60,45,20,0.3)]">
+              <div className="absolute right-0 top-12 z-10 w-48 rounded-[10px] border border-[var(--hairline)] bg-[var(--card)] py-1.5 shadow-[0_14px_28px_-16px_rgba(60,45,20,0.3)]">
                 {SORT_OPTIONS.map((option) => (
                   <button
                     key={option}
@@ -183,7 +183,7 @@ export default function CirclesPage() {
               type="button"
               onClick={() => setMembershipFilter(item)}
               className={`h-9 shrink-0 rounded-full px-4 text-[13px] font-semibold transition ${
-                membershipFilter === item ? 'bg-[var(--navy)] text-[var(--card)]' : 'border border-[var(--line)] text-[var(--ink-soft)]'
+                membershipFilter === item ? 'bg-[var(--navy)] text-[var(--card)]' : 'border border-[var(--hairline)] text-[var(--ink-soft)]'
               }`}
             >
               {item} ({filterCount(item)})
@@ -200,7 +200,7 @@ export default function CirclesPage() {
               <button
                 type="button"
                 onClick={() => circlesQuery.refetch()}
-                className="h-11 rounded-full border-[1.5px] border-[var(--navy)] px-5 font-semibold text-[var(--navy)]"
+                className="h-11 rounded-full border-[1.5px] border-[var(--hairline)] px-5 font-semibold text-[var(--navy)] focus-visible:border-[var(--navy)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--navy)]/20"
               >
                 Try again
               </button>

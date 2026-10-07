@@ -121,7 +121,7 @@ export default function DareCard({ dare, viewerContext = 'for-you' }: DareCardPr
       onKeyDown={(e) => {
         if (e.key === 'Enter') router.push(`/dares/${dare.id}`);
       }}
-      className={`cursor-pointer overflow-hidden rounded-[6px] transition ${isExpired ? 'bg-[var(--card-muted)]' : 'bg-[var(--card)]'}`}
+      className={`cursor-pointer overflow-hidden rounded-card transition ${isExpired ? 'bg-[var(--card-muted)]' : 'bg-[var(--card)]'}`}
       style={{ border: '1px solid var(--hairline)' }}
     >
       {/* Header */}

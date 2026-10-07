@@ -27,7 +27,7 @@ export default function PendingCircleInvites() {
         const accepting = acceptMutation.isPending && acceptMutation.variables?.inviteId === invite.id;
         const declining = declineMutation.isPending && declineMutation.variables?.inviteId === invite.id;
         return (
-          <div key={invite.id} className="flex items-center gap-3 border-b border-[var(--line)] py-3.5">
+          <div key={invite.id} className="flex items-center gap-3 border-b border-[var(--hairline)] py-3.5">
             <p className="min-w-0 flex-1 text-[14px] leading-[1.35] text-[var(--ink)]">
               <span className="font-semibold">{inviterName}</span> invited you to <span className="font-semibold">{circleName}</span>
             </p>
