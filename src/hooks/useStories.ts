@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createStory, getTodayStories, markStorySeen, putStoryVideo, requestStoryUploadUrl } from '@/lib/api/stories'
-import { isStoriesUnavailable, storyErrorMessage, STORIES_ENABLED, type PactStory } from '@/lib/stories'
+import { isStoriesUnavailable, storyErrorMessage, STORIES_ENABLED, STORY_MAX_SECONDS, type PactStory } from '@/lib/stories'
 import { queryKeys } from '@/lib/queryKeys'
 import { circleService } from '@/services/api'
 
@@ -85,7 +85,10 @@ export function usePostStory(pactId: number) {
         setPhase('uploading')
         await putStoryVideo(upload_url, blob, contentType, setProgress)
         setPhase('saving')
-        await createStory(pactId, { object_key, duration_seconds: Math.round(durationSeconds * 10) / 10 })
+        await createStory(pactId, {
+          object_key,
+          duration_seconds: Math.min(STORY_MAX_SECONDS, Math.max(1, Math.round(durationSeconds))),
+        })
         setPhase('done')
         void Promise.all([
           queryClient.invalidateQueries({ queryKey: storyKeys.pactToday(pactId) }),
