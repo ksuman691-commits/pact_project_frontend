@@ -9,7 +9,7 @@ export const STORY_LIMITS_TEXT = 'Up to 15 seconds. MP4, WebM or MOV, 30 MB max.
 export const STORIES_COMING_SOON = 'Stories are coming soon'
 
 // Phone cameras stop a "15 second" clip a few frames late.
-const DURATION_TOLERANCE_SECONDS = 0.3
+const DURATION_TOLERANCE_SECONDS = 0.5
 
 export interface PactStory {
   id: number
@@ -70,9 +70,12 @@ function detailText(detail: any): string | null {
 export function storyErrorMessage(error: any): string {
   if (isStoriesUnavailable(error)) return `${STORIES_COMING_SOON}.`
   if (error instanceof StorageUploadError) return error.message
+  const status = statusOf(error)
+  const detail = error?.response?.data?.detail
+  if (status === 429) return "You've posted the maximum stories for this pact today"
+  if (status === 422 && Array.isArray(detail)) return 'Something went wrong with that video, try again'
   const fromBackend = detailText(error?.response?.data?.detail)
   if (fromBackend) return fromBackend
-  const status = statusOf(error)
   if (status) return `The server answered with status ${status}. Your video is still here, try again.`
   if (error?.code === 'ECONNABORTED') return 'The server took too long to answer. Your video is still here, try again.'
   return "Can't reach the server. Check your connection, your video is still here."

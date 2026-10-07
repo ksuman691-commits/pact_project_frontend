@@ -123,10 +123,10 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
       return
     }
     if (!isDurationAllowed(duration)) {
-      setNotice(`That video is ${Math.round(duration)} seconds. Stories can be up to ${STORY_MAX_SECONDS} seconds. Trim it or record a new one.`)
+      setNotice('Stories can be 15 seconds at most')
       return
     }
-    replaceClip({ blob, contentType, duration: Math.min(duration, STORY_MAX_SECONDS), url: URL.createObjectURL(blob) })
+    replaceClip({ blob, contentType, duration, url: URL.createObjectURL(blob) })
     reset()
     setStep('preview')
   }
@@ -171,7 +171,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
       const seconds = (performance.now() - startedAtRef.current) / 1000
       const type = (recorder.mimeType || mimeType || 'video/webm').split(';')[0]
       stopStream()
-      void acceptBlob(new Blob(chunks, { type }), Math.min(seconds, STORY_MAX_SECONDS))
+      void acceptBlob(new Blob(chunks, { type }), seconds)
     }
     recorderRef.current = recorder
     startedAtRef.current = performance.now()
