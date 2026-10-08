@@ -33,7 +33,7 @@ interface CheerButtonProps {
    * cheer (creator, non-participants) still get a clickable "view cheers"
    * affordance via onViewCheers instead of the control disappearing.
    */
-  variant?: 'pill' | 'icon';
+  variant?: 'pill' | 'icon' | 'stage';
   cheerCount?: number;
   onViewCheers?: () => void;
 }
@@ -70,6 +70,43 @@ export default function CheerButton({
       setIsUploading(false);
     }
   };
+
+  if (variant === 'stage') {
+    const stageClass = `flex size-12 flex-col items-center justify-center rounded-full bg-[var(--card)] text-[var(--ink)] shadow-lg transition ${className}`;
+    const content = (
+      <>
+        {isUploading ? <Loader2 className="size-4 animate-spin" /> : hasCheered ? <Check className="size-4" /> : <PartyPopper className="size-4" />}
+        <span className="text-[11px] font-bold leading-none">{cheerCount}</span>
+      </>
+    );
+    if (!canCheer || hasCheered) {
+      return (
+        <button
+          type="button"
+          onClick={onViewCheers}
+          disabled={!onViewCheers}
+          aria-label={hasCheered ? "You've already cheered" : 'View cheers'}
+          className={`${stageClass} disabled:cursor-default disabled:bg-[var(--card)]/80 disabled:text-[var(--ink)]/70`}
+        >
+          {content}
+        </button>
+      );
+    }
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setIsCameraOpen(true)}
+          disabled={isUploading}
+          aria-label="Send a cheer"
+          className={`${stageClass} active:scale-95 disabled:opacity-70`}
+        >
+          {content}
+        </button>
+        <CheerCaptureModal isOpen={isCameraOpen} isSubmitting={isUploading} onClose={() => setIsCameraOpen(false)} onCapture={handleCapture} />
+      </>
+    );
+  }
 
   if (variant === 'icon') {
     // Viewers who can't cheer themselves (creator, non-participants) still

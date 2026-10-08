@@ -102,8 +102,8 @@ export default function PactMomentsDetail({
             </span>
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="text-[20px] font-extrabold leading-6">Day {day} of {total}</h1>
-            <p className="text-[13px] font-semibold leading-[18px] text-[var(--muted)]">{dayLabel}</p>
+            <h1 className="whitespace-nowrap text-[20px] font-extrabold leading-6">Day {day} of {total}</h1>
+            <p className="whitespace-nowrap text-[13px] font-semibold leading-[18px] text-[var(--muted)]">{dayLabel}</p>
           </div>
           <div className="flex items-center">
             {visiblePeople.map((person, index) => (
@@ -131,7 +131,6 @@ export default function PactMomentsDetail({
         >
           <div className="absolute left-[20%] top-[13%] size-56 rounded-full bg-[var(--navy-hover)]/40" />
           <div className="absolute bottom-0 left-[-5%] right-[-5%] h-[35%] rounded-[50%_50%_0_0] bg-[var(--navy-hover)]" />
-          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-black/40" />
 
           {hasMoments && current?.url && (
             current.type === 'video' ? (
@@ -139,6 +138,10 @@ export default function PactMomentsDetail({
             ) : (
               <img src={current.url} alt={caption} className="absolute inset-0 size-full object-cover" />
             )
+          )}
+
+          {hasMoments && (
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[70%] bg-gradient-to-t from-black/75 via-black/35 to-transparent" />
           )}
 
           {hasMoments && (
@@ -155,19 +158,19 @@ export default function PactMomentsDetail({
                 </span>
                 You - Day {current.day || day}
               </div>
-              <div className="absolute right-4 top-1/2 flex -translate-y-1/2 flex-col gap-2">
+              <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+5rem)] right-4 z-10 flex flex-col gap-2">
                 <CheerButton
                   pactId={Number(pact.id)}
                   canCheer={canCheer}
                   hasCheered={hasCheered}
-                  variant="icon"
+                  variant="stage"
                   cheerCount={cheerCount}
                 />
                 <button type="button" aria-label="Comment on this moment" className="flex size-12 items-center justify-center rounded-full bg-[var(--card)] text-[var(--ink)] shadow-lg">
                   <MessageCircle className="size-5" />
                 </button>
               </div>
-              <div className="absolute inset-x-5 bottom-5 text-white">
+              <div className="absolute inset-x-5 bottom-5 z-10 text-white">
                 <p className="mt-0.5 text-[17px] font-extrabold leading-[22px]">{caption}</p>
               </div>
             </>
@@ -178,12 +181,12 @@ export default function PactMomentsDetail({
               <button
                 type="button"
                 onClick={onAddMoment}
-                className="flex min-h-[56px] items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-7 text-[16px] font-bold text-white shadow-lg"
+                className="flex min-h-[56px] items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[var(--card)] px-4 text-[14px] font-bold text-[var(--navy)] shadow-lg"
               >
                 <Camera className="size-5" aria-hidden="true" />
                 Add a moment
               </button>
-              <p className="text-[14px] text-white/85">No moments yet</p>
+              <p className="text-[14px] opacity-85">No moments yet</p>
             </div>
           )}
 
@@ -195,23 +198,23 @@ export default function PactMomentsDetail({
         </section>
 
         {(hasMoments || isEnded) && (
-          <footer className="flex min-h-14 items-center gap-2">
+          <footer className="flex min-h-14 flex-wrap items-center gap-2">
             {hasMoments ? (
-              <div className="flex min-w-0 flex-1 gap-2 overflow-hidden">
-                {moments.slice(0, 4).map((moment, index) => (
+              <div className="flex min-w-0 flex-1 basis-[calc(100%-170px)] gap-1.5 overflow-hidden max-[340px]:basis-full">
+                {moments.slice(0, 3).map((moment, index) => (
                   <button
                     key={moment.id}
                     type="button"
                     onClick={() => setActiveIndex(index)}
                     aria-label={`Open moment ${index + 1}`}
-                    className={`relative size-11 shrink-0 overflow-hidden rounded-xl bg-[var(--card-muted)] ${index === activeIndex ? 'border-2 border-[var(--navy)]' : ''}`}
+                    className={`relative size-7 shrink-0 overflow-hidden rounded-md bg-[var(--card-muted)] ${index === activeIndex ? 'border-2 border-[var(--navy)]' : ''}`}
                   >
                     {moment.url && <img src={moment.url} alt="" className="size-full object-cover" />}
                   </button>
                 ))}
-                {moments.length > 4 && (
-                  <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[var(--card-muted)] text-xs font-extrabold">
-                    +{moments.length - 4}
+                {moments.length > 3 && (
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[var(--card-muted)] text-[10px] font-extrabold">
+                    +{moments.length - 3}
                   </span>
                 )}
               </div>
@@ -223,7 +226,7 @@ export default function PactMomentsDetail({
                 type="button"
                 onClick={onAddMoment}
                 aria-label="Add a moment"
-                className="flex h-14 shrink-0 items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-5 text-[14px] font-bold text-white"
+                className="ml-auto flex h-14 shrink-0 items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-5 text-[14px] font-bold text-white"
               >
                 <Camera className="size-5" aria-hidden="true" />
                 Add a moment
