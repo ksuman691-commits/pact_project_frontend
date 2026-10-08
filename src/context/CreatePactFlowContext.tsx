@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type {
   Activity,
   AudienceLabel,
@@ -17,8 +17,6 @@ import { categoryToVibe } from '@/lib/createPactFlow/toApiPayload';
 import { createEmptyDraft } from '@/types/createPactFlow';
 import { pactService } from '@/services/api';
 
-const AUTO_ADVANCE_DELAY_MS = 150;
-
 interface CreatePactFlowContextValue {
   draft: PactDraft;
   updateDraft: (patch: Partial<PactDraft>) => void;
@@ -32,13 +30,13 @@ interface CreatePactFlowContextValue {
   pickVibe: (vibeId: VibeId) => void;
   pickActivity: (index: number) => void;
   submitCustomActivity: (label: string) => void;
-  surpriseMe: () => void;
   selectTarget: (value: number) => void;
   selectDurationPreset: (days: number) => void;
   selectCustomEndDate: (iso: string) => void;
   selectProofMethod: (method: ProofMethod) => void;
   selectProofFrequency: (frequency: ProofFrequency) => void;
   selectAudience: (label: AudienceLabel, circleId?: number | null) => void;
+  goNext: () => void;
   goToReview: () => void;
   goToSuccess: () => void;
 
@@ -139,14 +137,6 @@ export function CreatePactFlowProvider({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdPact, setCreatedPact] = useState<CreatedPact | null>(null);
   const [idempotencyKey, setIdempotencyKey] = useState(makeIdempotencyKey);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
-
   // Best-effort duration prefill from the originating pact (goal-match
   // "Create a matching pact" CTA only — initialPactId is unset otherwise).
   // start_date/end_date are plain dates, so diffing them into days is a
@@ -181,172 +171,94 @@ export function CreatePactFlowProvider({
   }, [draft.vibeId, draft.activityIndex]);
 
   const resolvedSteps = useMemo(() => resolveSteps(draft, activity), [draft, activity]);
-  const currentStep = resolvedSteps[stepIndex] ?? 'vibe';
+  const currentStep = resolvedSteps[stepIndex] ?? 'what';
 
   const updateDraft = useCallback((patch: Partial<PactDraft>) => {
     setDraft((prev) => ({ ...prev, ...patch }));
   }, []);
 
   const goBack = useCallback(() => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setStepIndex((i) => Math.max(i - 1, 0));
   }, []);
 
-  /** Update the draft immediately (so the tap registers visually), then
-   * advance one step after a short delay — never instant/jarring. */
-  const commitAndAdvance = useCallback(
-    (updater: (prev: PactDraft) => PactDraft, jumpToIndex?: (steps: FlowStep[]) => number) => {
-      let nextDraft: PactDraft;
-      setDraft((prev) => {
-        nextDraft = updater(prev);
-        return nextDraft;
-      });
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => {
-        if (jumpToIndex) {
-          const nextActivity =
-            nextDraft.vibeId && nextDraft.activityIndex != null
-              ? ACTIVITIES[nextDraft.vibeId][nextDraft.activityIndex] ?? null
-              : null;
-          const steps = resolveSteps(nextDraft, nextActivity);
-          setStepIndex(Math.max(jumpToIndex(steps), 0));
-        } else {
-          setStepIndex((i) => i + 1);
-        }
-      }, AUTO_ADVANCE_DELAY_MS);
-    },
-    [],
-  );
-
-  const pickVibe = useCallback(
-    (vibeId: VibeId) => {
-      // Changing vibe resets activity/target (downstream fields invalidated).
-      commitAndAdvance((prev) => ({
-        ...prev,
-        vibeId,
-        activityIndex: null,
-        customActivityLabel: undefined,
-        target: null,
-      }));
-    },
-    [commitAndAdvance],
-  );
-
-  const pickActivity = useCallback(
-    (index: number) => {
-      commitAndAdvance((prev) => {
-        if (!prev.vibeId) return prev;
-        const chosen = ACTIVITIES[prev.vibeId][index];
-        return {
-          ...prev,
-          activityIndex: index,
-          customActivityLabel: undefined,
-          target: chosen?.milestone ? null : (chosen?.defaultTarget ?? prev.target),
-        };
-      });
-    },
-    [commitAndAdvance],
-  );
-
-  const submitCustomActivity = useCallback(
-    (label: string) => {
-      commitAndAdvance((prev) => {
-        if (!prev.vibeId) return prev;
-        const customIdx = ACTIVITIES[prev.vibeId].findIndex((a) => a.custom);
-        return {
-          ...prev,
-          activityIndex: customIdx,
-          customActivityLabel: label.trim(),
-          target: CUSTOM_ACTIVITY_DEFAULTS.defaultTarget,
-        };
-      });
-    },
-    [commitAndAdvance],
-  );
-
-  const surpriseMe = useCallback(() => {
-    const vibeIds = Object.keys(ACTIVITIES) as VibeId[];
-    const vibeId = vibeIds[Math.floor(Math.random() * vibeIds.length)];
-    const nonCustom = ACTIVITIES[vibeId].map((a, i) => ({ a, i })).filter(({ a }) => !a.custom);
-    const pick = nonCustom[Math.floor(Math.random() * nonCustom.length)];
-
-    commitAndAdvance(
-      (prev) => ({
-        ...prev,
-        vibeId,
-        activityIndex: pick.i,
-        customActivityLabel: undefined,
-        target: pick.a.milestone ? null : pick.a.defaultTarget ?? null,
-      }),
-      (steps) => {
-        const idx = pick.a.milestone ? steps.indexOf('duration') : steps.indexOf('target');
-        return idx >= 0 ? idx : 0;
-      },
+  const pickVibe = useCallback((vibeId: VibeId) => {
+    // Changing vibe resets activity/target (downstream fields invalidated).
+    setDraft((prev) =>
+      prev.vibeId === vibeId
+        ? prev
+        : { ...prev, vibeId, activityIndex: null, customActivityLabel: undefined, target: null },
     );
-  }, [commitAndAdvance]);
+  }, []);
 
-  const selectTarget = useCallback(
-    (value: number) => {
-      commitAndAdvance((prev) => ({ ...prev, target: value }));
-    },
-    [commitAndAdvance],
-  );
-
-  const selectDurationPreset = useCallback(
-    (days: number) => {
-      commitAndAdvance((prev) => ({ ...prev, durationDays: days, customEndDate: undefined }));
-    },
-    [commitAndAdvance],
-  );
-
-  const selectCustomEndDate = useCallback(
-    (iso: string) => {
-      commitAndAdvance((prev) => ({ ...prev, customEndDate: iso, durationDays: null }));
-    },
-    [commitAndAdvance],
-  );
-
-  const selectProofMethod = useCallback(
-    (method: ProofMethod) => {
-      if (method === 'Activity data') {
-        // Auto-advance immediately — no frequency needed.
-        commitAndAdvance((prev) => ({ ...prev, proofMethod: method, proofFrequency: null }));
-      } else {
-        // Stay on this screen — frequency chips appear below; don't advance yet.
-        updateDraft({ proofMethod: method });
-      }
-    },
-    [commitAndAdvance, updateDraft],
-  );
-
-  const selectProofFrequency = useCallback(
-    (frequency: ProofFrequency) => {
-      commitAndAdvance((prev) => ({ ...prev, proofFrequency: frequency }));
-    },
-    [commitAndAdvance],
-  );
-
-  const selectAudience = useCallback(
-    (label: AudienceLabel, circleId?: number | null) => {
-      const preset = AUDIENCES.find((a) => a.label === label);
-      commitAndAdvance((prev) => ({
+  const pickActivity = useCallback((index: number) => {
+    setDraft((prev) => {
+      if (!prev.vibeId) return prev;
+      const chosen = ACTIVITIES[prev.vibeId][index];
+      return {
         ...prev,
-        audience: label,
-        visibility: preset?.visibility ?? prev.visibility,
-        // "Just me" is explicitly solo tracking ("No circle, just for
-        // you") and clears any circle. Both "My Circle" (private) and
-        // "Everyone" (public) keep whichever circle is already known —
-        // switching to Public must only widen who can see the pact, not
-        // detach it from its circle, or it could never show up on that
-        // circle's public Wall.
-        circleId: label === 'Just me' ? null : circleId ?? prev.circleId ?? null,
-      }));
-    },
-    [commitAndAdvance],
-  );
+        activityIndex: index,
+        customActivityLabel: undefined,
+        target: chosen?.milestone ? null : (chosen?.defaultTarget ?? prev.target),
+      };
+    });
+  }, []);
+
+  const submitCustomActivity = useCallback((label: string) => {
+    setDraft((prev) => {
+      if (!prev.vibeId) return prev;
+      const customIdx = ACTIVITIES[prev.vibeId].findIndex((a) => a.custom);
+      return {
+        ...prev,
+        activityIndex: customIdx,
+        customActivityLabel: label.trim(),
+        target: CUSTOM_ACTIVITY_DEFAULTS.defaultTarget,
+      };
+    });
+  }, []);
+
+  const selectTarget = useCallback((value: number) => {
+    setDraft((prev) => ({ ...prev, target: value }));
+  }, []);
+
+  const selectDurationPreset = useCallback((days: number) => {
+    setDraft((prev) => ({ ...prev, durationDays: days, customEndDate: undefined }));
+  }, []);
+
+  const selectCustomEndDate = useCallback((iso: string) => {
+    setDraft((prev) => ({ ...prev, customEndDate: iso, durationDays: null }));
+  }, []);
+
+  const selectProofMethod = useCallback((method: ProofMethod) => {
+    setDraft((prev) => ({
+      ...prev,
+      proofMethod: method,
+      // Activity data syncs automatically, so it has no frequency.
+      proofFrequency: method === 'Activity data' ? null : prev.proofFrequency ?? 'Every day',
+    }));
+  }, []);
+
+  const selectProofFrequency = useCallback((frequency: ProofFrequency) => {
+    setDraft((prev) => ({ ...prev, proofFrequency: frequency }));
+  }, []);
+
+  const selectAudience = useCallback((label: AudienceLabel, circleId?: number | null) => {
+    const preset = AUDIENCES.find((a) => a.label === label);
+    setDraft((prev) => ({
+      ...prev,
+      audience: label,
+      visibility: preset?.visibility ?? prev.visibility,
+      // "Just me" is solo tracking and clears any circle. "My Circle" and
+      // "Everyone" keep the known circle so a public pact can still appear
+      // on that circle's Wall.
+      circleId: label === 'Just me' ? null : circleId ?? prev.circleId ?? null,
+    }));
+  }, []);
+
+  const goNext = useCallback(() => {
+    setStepIndex((i) => Math.min(i + 1, resolvedSteps.length - 1));
+  }, [resolvedSteps]);
 
   const goToReview = useCallback(() => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setStepIndex((i) => {
       const reviewIdx = resolvedSteps.indexOf('review');
       return reviewIdx >= 0 ? reviewIdx : i;
@@ -357,7 +269,6 @@ export function CreatePactFlowProvider({
   // transitions to the SuccessStep screen. 'success' is always the last
   // resolved step (see resolveSteps).
   const goToSuccess = useCallback(() => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setStepIndex(resolvedSteps.length - 1);
   }, [resolvedSteps]);
 
@@ -380,13 +291,13 @@ export function CreatePactFlowProvider({
     pickVibe,
     pickActivity,
     submitCustomActivity,
-    surpriseMe,
     selectTarget,
     selectDurationPreset,
     selectCustomEndDate,
     selectProofMethod,
     selectProofFrequency,
     selectAudience,
+    goNext,
     goToReview,
     goToSuccess,
     reset,

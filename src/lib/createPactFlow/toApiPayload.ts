@@ -48,6 +48,7 @@ export function categoryToVibe(category?: string | null): VibeId | null {
 // (a self-reported check-in) — see plan notes for the bridging rationale.
 function mapProofMethod(proofMethod: PactDraft['proofMethod']): 'photo' | 'video' | 'checklist' {
   switch (proofMethod) {
+    case 'Moment':
     case 'Photo':
       return 'photo';
     case 'Video':
