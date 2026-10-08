@@ -49,7 +49,7 @@ export function PrimaryButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[var(--navy)] text-base font-extrabold text-white transition-colors hover:bg-[var(--navy-hover)] disabled:opacity-40"
+      className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[var(--navy)] text-base font-extrabold text-white disabled:opacity-40"
     >
       {children}
     </button>

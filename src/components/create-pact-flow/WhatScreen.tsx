@@ -38,7 +38,7 @@ function ChasingLine({ category }: { category: string }) {
 }
 
 export default function WhatScreen({ onExit }: { onExit?: () => void }) {
-  const { draft, activity, pickVibe, pickActivity, submitCustomActivity, selectTarget, goNext } = useCreatePactFlow();
+  const { draft, activity, pickVibe, pickActivity, submitCustomActivity, surpriseMe, selectTarget, goNext } = useCreatePactFlow();
   const [customActivityOpen, setCustomActivityOpen] = useState(false);
   const [customActivity, setCustomActivity] = useState('');
   const [activityError, setActivityError] = useState<string | null>(null);
@@ -106,6 +106,17 @@ export default function WhatScreen({ onExit }: { onExit?: () => void }) {
                 {vibe.label}
               </Chip>
             ))}
+            <Chip
+              dashed
+              onClick={() => {
+                surpriseMe();
+                setCustomActivityOpen(false);
+                setCustomTargetOpen(false);
+                setTargetMessage(null);
+              }}
+            >
+              Surprise me
+            </Chip>
           </div>
         </div>
       )}

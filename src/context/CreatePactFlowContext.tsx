@@ -30,6 +30,7 @@ interface CreatePactFlowContextValue {
   pickVibe: (vibeId: VibeId) => void;
   pickActivity: (index: number) => void;
   submitCustomActivity: (label: string) => void;
+  surpriseMe: () => void;
   selectTarget: (value: number) => void;
   selectDurationPreset: (days: number) => void;
   selectCustomEndDate: (iso: string) => void;
@@ -216,6 +217,20 @@ export function CreatePactFlowProvider({
     });
   }, []);
 
+  const surpriseMe = useCallback(() => {
+    const vibeIds = Object.keys(ACTIVITIES) as VibeId[];
+    const vibeId = vibeIds[Math.floor(Math.random() * vibeIds.length)];
+    const nonCustom = ACTIVITIES[vibeId].map((a, i) => ({ a, i })).filter(({ a }) => !a.custom);
+    const pick = nonCustom[Math.floor(Math.random() * nonCustom.length)];
+    setDraft((prev) => ({
+      ...prev,
+      vibeId,
+      activityIndex: pick.i,
+      customActivityLabel: undefined,
+      target: pick.a.milestone ? null : pick.a.defaultTarget ?? null,
+    }));
+  }, []);
+
   const selectTarget = useCallback((value: number) => {
     setDraft((prev) => ({ ...prev, target: value }));
   }, []);
@@ -291,6 +306,7 @@ export function CreatePactFlowProvider({
     pickVibe,
     pickActivity,
     submitCustomActivity,
+    surpriseMe,
     selectTarget,
     selectDurationPreset,
     selectCustomEndDate,
