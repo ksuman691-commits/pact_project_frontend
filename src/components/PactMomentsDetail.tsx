@@ -63,7 +63,8 @@ export default function PactMomentsDetail({
   const currentDayIndex = completed + missed
   const day = isEnded ? total : Math.min(total, currentDayIndex + 1)
   const percent = total ? Math.round((completed / total) * 100) : 0
-  const dayLabel = isEnded ? 'Ended' : pact?.timeRemaining || `${Math.max(0, total - day)} days to go`
+  const daysLeft = Math.max(0, total - day)
+  const dayLabel = isEnded ? 'Ended' : daysLeft === 0 ? 'Last day' : `${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} left`
   const visiblePeople = participants.slice(0, 3)
   const overflow = Math.max(0, participants.length - 3)
   const caption = current?.description || "Today's moment"
@@ -152,7 +153,7 @@ export default function PactMomentsDetail({
                   <button type="button" aria-label="Next moment" onClick={() => step(1)} className="absolute inset-y-0 right-0 w-1/3" />
                 </>
               )}
-              <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-black/35 px-2.5 py-1.5 text-xs font-bold text-white backdrop-blur">
+              <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-black/50 px-2.5 py-1.5 text-xs font-bold text-white backdrop-blur">
                 <span className="flex size-5 items-center justify-center rounded-full bg-[var(--card)] text-[10px] text-[var(--ink)]">
                   {String(pact?.creator_username || 'Y').charAt(0).toUpperCase()}
                 </span>
