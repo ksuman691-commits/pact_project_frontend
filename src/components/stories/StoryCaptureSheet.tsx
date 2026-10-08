@@ -222,7 +222,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
         {step === 'idle' && (
           <>
             <p className="text-[15px] leading-relaxed text-[var(--ink)]">
-              Record a short video of today&apos;s work. It counts as today&apos;s proof and disappears after 24 hours.
+              Record a short video of today&apos;s work. It shares your progress and disappears after 24 hours.
             </p>
             <p className="rounded-[6px] border border-[var(--hairline)] bg-[var(--card)] px-4 py-3 text-[14px] text-[var(--muted)]">{STORY_LIMITS_TEXT}</p>
 
@@ -322,7 +322,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
                 <span className="flex h-14 w-14 items-center justify-center rounded-full" style={{ border: '3px solid var(--navy)', color: 'var(--navy)' }}>
                   <Check className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
                 </span>
-                <p className="text-[16px] font-semibold">Posted. It counts as today&apos;s proof.</p>
+                <p className="text-[16px] font-semibold">Moment posted.</p>
                 <button type="button" onClick={closeSheet} className="h-12 w-full rounded-full text-[15px] font-semibold" style={{ background: 'var(--navy)', color: '#fff' }}>
                   Done
                 </button>
