@@ -72,7 +72,7 @@ export default function ProofsSection({
                     </div>
                   </div>
                 )}
-                <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-1 bg-gradient-to-t from-black/75 to-transparent px-2 pb-2 pt-6 text-[10px] font-semibold text-white">
+                <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-1 bg-black/55 px-2 pb-2 pt-6 text-[10px] font-semibold text-white">
                   <span>{proof.day ? `Day ${proof.day}` : 'Update'}</span>
                   <span className="text-white/75">{proof.type === 'video' ? 'Video' : 'Photo'}</span>
                 </div>
@@ -85,7 +85,7 @@ export default function ProofsSection({
               <button
                 key={proof.id}
                 onClick={() => handleProofClick(index)}
-                className="group relative aspect-square rounded-[28px] overflow-hidden cursor-pointer bg-[#FAF9FE]"
+                className="group relative aspect-square rounded-[28px] overflow-hidden cursor-pointer bg-[var(--card-muted)]"
               >
                 {/* Media Display */}
                 {proof.type === 'image' ? (
@@ -109,7 +109,7 @@ export default function ProofsSection({
                 )}
 
                 {/* Overlay Info */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3 text-white text-xs">
+                <div className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3 text-white text-xs">
                   {proof.day && (
                     <p className="font-medium">Day {proof.day}</p>
                   )}
@@ -143,9 +143,9 @@ export default function ProofsSection({
                 <button
                   key={proof.id}
                   onClick={() => handleProofClick(index)}
-                  className="w-full flex items-center gap-3 p-2 hover:bg-[#F4F2FB] rounded-[28px] transition group"
+                  className="w-full flex items-center gap-3 p-2 hover:bg-[var(--card-muted)] rounded-[28px] transition group"
                 >
-                  <div className="relative w-12 h-12 rounded-[28px] overflow-hidden flex-shrink-0 bg-[#FAF9FE]">
+                  <div className="relative w-12 h-12 rounded-[28px] overflow-hidden flex-shrink-0 bg-[var(--card-muted)]">
                     {proof.type === 'image' ? (
                       <Image
                         src={proof.url}
@@ -161,21 +161,21 @@ export default function ProofsSection({
                     )}
                   </div>
                   <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-[#14121F]">
+                    <p className="text-sm font-medium text-[var(--ink)]">
                       {proof.day ? `Day ${proof.day}` : 'Update'}
                     </p>
                     {proof.description && (
-                      <p className="text-xs text-[#6B7280] line-clamp-1">
+                      <p className="text-xs text-[var(--muted)] line-clamp-1">
                         {proof.description}
                       </p>
                     )}
                     {proof.uploadedAt && (
-                      <p className="text-xs text-[#9CA3AF]">
+                      <p className="text-xs text-[var(--muted)]">
                         {new Date(proof.uploadedAt).toLocaleDateString()}
                       </p>
                     )}
                   </div>
-                  <div className="text-xs text-[#9CA3AF] flex-shrink-0">
+                  <div className="text-xs text-[var(--muted)] flex-shrink-0">
                     {proof.type === 'video' ? '🎥' : '📷'}
                   </div>
                 </button>

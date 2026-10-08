@@ -122,7 +122,7 @@ export default function TransactionHistory({
   });
 
   return (
-    <div className="bg-white rounded-[24px] p-6 border border-[var(--line)] shadow-[0_4px_12px_rgba(94,84,142,0.08)]">
+    <div className="bg-[var(--card)] rounded-[24px] p-6 border border-[var(--hairline)] shadow-[0_4px_12px_rgba(23,24,29,0.08)]">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-bold text-[var(--ink)]">Transaction History</h3>

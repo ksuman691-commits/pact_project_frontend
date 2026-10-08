@@ -169,7 +169,7 @@ export default function CheerCaptureModal({
                 <button
                   type="button"
                   onClick={requestCamera}
-                  className="rounded-full bg-[var(--pact-gold)] px-4 py-2.5 text-sm font-bold text-[#171421] transition hover:brightness-105"
+                  className="rounded-full bg-[var(--pact-gold)] px-4 py-2.5 text-sm font-bold text-white transition hover:brightness-105"
                 >
                   Enable Camera Access
                 </button>
@@ -184,12 +184,12 @@ export default function CheerCaptureModal({
               <button type="button" onClick={retake} disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/10 disabled:opacity-50">
                 <RotateCcw className="h-4 w-4" /> Retake
               </button>
-              <button type="button" onClick={() => onCapture(capturedFile)} disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-[#171421] transition disabled:opacity-60" style={{ background: 'var(--pact-gold)' }}>
+              <button type="button" onClick={() => onCapture(capturedFile)} disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-white transition disabled:opacity-60" style={{ background: 'var(--pact-gold)' }}>
                 {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Send Cheer
               </button>
             </>
           ) : (
-            <button type="button" onClick={capture} disabled={Boolean(error)} aria-label="Take Cheer selfie" className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-white/80 bg-[var(--pact-gold)] text-[#171421] shadow-lg transition hover:scale-105 disabled:opacity-40">
+            <button type="button" onClick={capture} disabled={Boolean(error)} aria-label="Take Cheer selfie" className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-white/80 bg-[var(--pact-gold)] text-white shadow-lg transition hover:scale-105 disabled:opacity-40">
               <Camera className="h-7 w-7" />
             </button>
           )}

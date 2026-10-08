@@ -43,7 +43,7 @@ export default function GlobalError({
             type="button"
             onClick={reset}
             className=" mt-8 inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition"
-            style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}
+            style={{ background: 'var(--navy)', color: '#fff' }}
           >
             Reload
           </button>

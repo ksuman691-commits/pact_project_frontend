@@ -139,7 +139,7 @@ export default function VerifyAgePage() {
         </div>
 
         {underageMessage && (
-          <p role="alert" className="rounded-[6px] bg-[#F1E6CF] px-4 py-3 text-sm text-[#6E4B12]">
+          <p role="alert" className="rounded-[6px] bg-[var(--card-muted)] px-4 py-3 text-sm text-[var(--navy)]">
             {underageMessage}
           </p>
         )}

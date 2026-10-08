@@ -123,7 +123,7 @@ export function PactsTab({
             <button
               onClick={() => (hasOwnCircles ? router.push('/pacts/create') : router.push('/circles/create'))}
               className=" mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
-              style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}
+              style={{ background: 'var(--navy)', color: '#fff' }}
             >
               <Plus className="h-4 w-4" />
               {hasOwnCircles ? 'Create Pact' : 'Create a Circle'}
@@ -132,7 +132,7 @@ export function PactsTab({
             <button
               onClick={() => setShowAddToCircle(true)}
               className=" mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
-              style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}
+              style={{ background: 'var(--navy)', color: '#fff' }}
             >
               <Plus className="h-4 w-4" />
               {`Add ${profileName} to a Circle`}
@@ -181,7 +181,7 @@ export function PactsTab({
               }`}
               style={
                 isActive
-                  ? { background: 'var(--navy)', color: 'var(--pact-text)' }
+                  ? { background: 'var(--navy)', color: '#fff' }
                   : { color: 'var(--pact-text-dim)' }
               }
             >

@@ -262,7 +262,7 @@ function ProfileContent() {
                 <button
                   onClick={() => router.push('/circles')}
                   className=" mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
-                  style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}
+                  style={{ background: 'var(--navy)', color: '#fff' }}
                 >
                   Browse circles
                 </button>

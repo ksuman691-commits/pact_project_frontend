@@ -73,7 +73,7 @@ async function buildPoster(circle: CircleLike, url: string, qrSvg: SVGElement): 
   const ctx = canvas.getContext('2d');
   if (!ctx) return null;
 
-  ctx.fillStyle = '#F7F5F0';
+  ctx.fillStyle = '#F4EFE4';
   ctx.fillRect(0, 0, width, height);
 
   ctx.textAlign = 'center';
@@ -91,7 +91,7 @@ async function buildPoster(circle: CircleLike, url: string, qrSvg: SVGElement): 
   ctx.shadowBlur = 40;
   ctx.shadowOffsetY = 18;
   roundedRect(ctx, fx, fy, frame, frame, 28);
-  ctx.fillStyle = '#FFFDF8';
+  ctx.fillStyle = '#FBF8F1';
   ctx.fill();
   ctx.restore();
   ctx.drawImage(image, fx + 56, fy + 56, frame - 112, frame - 112);
@@ -101,7 +101,7 @@ async function buildPoster(circle: CircleLike, url: string, qrSvg: SVGElement): 
   ctx.font = `700 64px ${FONT}`;
   ctx.fillText(circle.name, width / 2, fy + frame + 120);
 
-  ctx.fillStyle = '#667085';
+  ctx.fillStyle = '#5A5C63';
   ctx.font = `400 30px ${FONT}`;
   ctx.fillText('Scan to see the circle\u2019s public wall', width / 2, fy + frame + 175);
   ctx.font = `400 26px ${FONT}`;

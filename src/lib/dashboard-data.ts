@@ -63,7 +63,7 @@ export const goals: DashGoal[] = [
 
 export const circles: DashCircle[] = [
   { id: 1, name: 'Morning Movers', members: 8, isOwner: true, color: 'bg-emerald-500' },
-  { id: 2, name: 'Book Club', members: 12, isOwner: false, color: 'bg-sky-500' },
+  { id: 2, name: 'Book Club', members: 12, isOwner: false, color: 'bg-navy' },
   { id: 3, name: 'Clean Eats', members: 6, isOwner: false, color: 'bg-amber-500' },
 ]
 

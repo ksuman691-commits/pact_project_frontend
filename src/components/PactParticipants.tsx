@@ -62,7 +62,7 @@ export default function PactParticipants({ pactId, canViewParticipants = true }:
   }
 
   if (loading) {
-    return <div className="text-center py-8 text-[#9CA3AF]">Loading participants...</div>;
+    return <div className="text-center py-8 text-[var(--muted)]">Loading participants...</div>;
   }
 
   if (error) {
@@ -76,8 +76,8 @@ export default function PactParticipants({ pactId, canViewParticipants = true }:
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
-        <Users size={20} className="text-[#6B7280]" />
-        <h3 className="text-lg font-semibold text-[#14121F]">
+        <Users size={20} className="text-[var(--muted)]" />
+        <h3 className="text-lg font-semibold text-[var(--ink)]">
           Participants ({participants.length})
         </h3>
       </div>

@@ -88,7 +88,7 @@ export default function TopNav({
       {/* Top Navigation Bar */}
       {/* Falls back to the original light-theme values so pages other than
           Feed (which don't wrap this in .pact-flow) render unchanged. */}
-      <nav className={`${fixed ? 'fixed inset-x-0 top-0 z-50 mx-auto max-w-md' : 'relative max-w-md mx-auto'} overflow-visible border-b border-[var(--pact-hairline,rgba(20,18,31,0.06))]/80 bg-[var(--pact-bg,#ffffff)]/95 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur`}>
+      <nav className={`${fixed ? 'fixed inset-x-0 top-0 z-50 mx-auto max-w-md' : 'relative max-w-md mx-auto'} overflow-visible border-b border-[var(--pact-hairline,var(--hairline))]/80 bg-[var(--pact-bg,var(--paper))]/95 shadow-[0_8px_30px_rgba(23,24,29,0.06)] backdrop-blur`}>
         <div className={`px-4 ${compact ? 'py-2' : 'py-3'}`}>
           {/* Navigation Links */}
           <div className={`flex items-center ${compact ? 'mb-1' : 'mb-3'}`}>
@@ -97,7 +97,7 @@ export default function TopNav({
               {showBack && (
                 <button
                   onClick={handleBack}
-                  className="flex flex-col items-center gap-1 py-1 text-xs font-medium text-[var(--pact-text-faint,#94a3b8)] hover:text-[var(--pact-text-dim,#6B7280)] transition-colors"
+                  className="flex flex-col items-center gap-1 py-1 text-xs font-medium text-[var(--pact-text-faint,var(--muted))] hover:text-[var(--pact-text-dim,var(--muted))] transition-colors"
                   aria-label="Go back"
                 >
                   <ArrowLeft className="h-6 w-6" strokeWidth={2} />
@@ -110,7 +110,7 @@ export default function TopNav({
                 <Link
                   href="/feed"
                   className={`flex flex-col items-center gap-1 py-1 text-xs font-medium transition-colors ${
-                    isActive('/') ? 'text-navy' : 'text-[var(--pact-text-faint,#94a3b8)] hover:text-[var(--pact-text-dim,#6B7280)]'
+                    isActive('/') ? 'text-navy' : 'text-[var(--pact-text-faint,var(--muted))] hover:text-[var(--pact-text-dim,var(--muted))]'
                   }`}
                 >
                   <Home className="h-6 w-6" strokeWidth={isActive('/') ? 2.4 : 2} />
@@ -124,14 +124,14 @@ export default function TopNav({
 
           {/* Category filter - Only show when showCategories is true */}
           {showCategories && (
-            <div className={`${compact ? 'pt-2' : 'pt-4'} border-t border-[var(--pact-hairline,rgba(20,18,31,0.06))] -mx-4 px-4 bg-[var(--pact-bg,#ffffff)]`}>
+            <div className={`${compact ? 'pt-2' : 'pt-4'} border-t border-[var(--pact-hairline,var(--hairline))] -mx-4 px-4 bg-[var(--pact-bg,var(--paper))]`}>
               <div className={`relative inline-block ${compact ? 'pb-2' : 'pb-4'}`}>
                 <select
                   value={selectedCategoryId}
                   onChange={(event) => handleCategoryClick(event.target.value)}
                   disabled={isLoadingCategories}
                   aria-label="Filter pacts by category"
-                  className="appearance-none cursor-pointer rounded-full border border-[var(--pact-hairline,rgba(20,18,31,0.06))] bg-[var(--pact-surface-2,#FAF9FE)] py-1.5 pl-3.5 pr-9 text-xs font-semibold text-[var(--pact-text-dim,#334155)] transition-colors hover:bg-[var(--pact-surface-3,#e2e8f0)] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="appearance-none cursor-pointer rounded-full border border-[var(--pact-hairline,var(--hairline))] bg-[var(--pact-surface-2,var(--card))] py-1.5 pl-3.5 pr-9 text-xs font-semibold text-[var(--pact-text-dim,var(--muted))] transition-colors hover:bg-[var(--pact-surface-3,var(--card-muted))] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {CATEGORIES.map((category) => (
                     <option key={category.id} value={category.id}>
@@ -140,7 +140,7 @@ export default function TopNav({
                   ))}
                 </select>
                 <ChevronDown
-                  className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--pact-text-faint,#94a3b8)]"
+                  className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--pact-text-faint,var(--muted))]"
                   aria-hidden="true"
                 />
               </div>

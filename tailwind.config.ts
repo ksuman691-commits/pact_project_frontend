@@ -41,9 +41,6 @@ const config: Config = {
         card: '6px',
         thumb: '3px',
       },
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-      },
     },
   },
   plugins: [],

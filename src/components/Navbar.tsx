@@ -15,7 +15,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-white shadow-[0_4px_12px_rgba(94,84,142,0.08)] border-b border-[rgba(20,18,31,0.06)]">
+    <nav className="bg-[var(--card)] shadow-[0_4px_12px_rgba(23,24,29,0.08)] border-b border-[var(--hairline)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition">
@@ -25,17 +25,17 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
             {user ? (
               <>
-                <Link href="/profile" className="text-[#6B7280] hover:text-[#14121F]">
+                <Link href="/profile" className="text-[var(--muted)] hover:text-[var(--ink)]">
                   My Profile
                 </Link>
-                <Link href="/pacts" className="text-[#6B7280] hover:text-[#14121F]">
+                <Link href="/pacts" className="text-[var(--muted)] hover:text-[var(--ink)]">
                   Pacts
                 </Link>
-                <Link href="/circles" className="text-[#6B7280] hover:text-[#14121F]">
+                <Link href="/circles" className="text-[var(--muted)] hover:text-[var(--ink)]">
                   Circles
                 </Link>
                 <div className="flex items-center gap-3 pl-4 border-l border-[rgba(20,18,31,0.06)]">
-                  <span className="text-sm text-[#6B7280]">{user.username}</span>
+                  <span className="text-sm text-[var(--muted)]">{user.username}</span>
                   <button
                     onClick={handleLogout}
                     className="btn-secondary text-sm"

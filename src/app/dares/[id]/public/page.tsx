@@ -156,7 +156,7 @@ function CreatorRow({ share }: { share: DarePublicShare }) {
     <section className="flex items-center gap-3 border-t border-[var(--pact-hairline)] py-5">
       <div
         className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full text-sm font-bold text-white"
-        style={{ background: 'linear-gradient(135deg,var(--pact-pink),var(--pact-violet))' }}
+        style={{ background: 'var(--navy)' }}
       >
         {share.creator_avatar_url ? (
           <Image src={share.creator_avatar_url} alt="" fill sizes="40px" className="object-cover" crossOrigin="anonymous" />

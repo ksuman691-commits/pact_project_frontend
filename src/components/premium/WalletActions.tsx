@@ -70,7 +70,7 @@ export default function WalletActions({ onDeposit, onWithdraw, isLoading }: Wall
         <button
           onClick={() => setShowWithdrawForm(!showWithdrawForm)}
           disabled={isLoading}
-          className="w-full py-4 rounded-[24px] bg-[var(--line)] hover:bg-[var(--line)] disabled:opacity-50 text-[#14121F] font-bold flex items-center justify-center gap-2 transition-all"
+          className="w-full py-4 rounded-[24px] bg-[var(--line)] hover:bg-[var(--line)] disabled:opacity-50 text-[var(--ink)] font-bold flex items-center justify-center gap-2 transition-all"
         >
           <Minus className="w-5 h-5" />
           Withdraw

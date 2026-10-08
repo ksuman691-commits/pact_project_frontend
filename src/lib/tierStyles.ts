@@ -26,7 +26,7 @@ export const TIER_STYLES: Record<TierKey, TierStyle> = {
   none: {
     key: 'none',
     label: 'None',
-    ringGradient: '#CBD5E1', // slate-300
+    ringGradient: 'var(--seat-border)',
     ringWidth: 2,
     glowColor: 'transparent',
     glowBlur: 0,
@@ -35,7 +35,7 @@ export const TIER_STYLES: Record<TierKey, TierStyle> = {
   building: {
     key: 'building',
     label: 'Building',
-    ringGradient: '#FB923C', // amber/orange-400
+    ringGradient: 'var(--navy-hover)',
     ringWidth: 1,
     glowColor: 'transparent',
     glowBlur: 0,
@@ -53,7 +53,7 @@ export const TIER_STYLES: Record<TierKey, TierStyle> = {
   peak: {
     key: 'peak',
     label: 'Peak',
-    ringGradient: '#0BA5EC',
+    ringGradient: 'var(--navy)',
     ringWidth: 3,
     glowColor: 'transparent',
     glowBlur: 20,

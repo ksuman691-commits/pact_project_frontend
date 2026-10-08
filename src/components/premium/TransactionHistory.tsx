@@ -59,7 +59,7 @@ export default function TransactionHistory({ transactions, isLoading }: Transact
       <PremiumCard>
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-12 bg-[#FAF9FE] rounded-[28px] animate-pulse" />
+            <div key={i} className="h-12 bg-[var(--card-muted)] rounded-[28px] animate-pulse" />
           ))}
         </div>
       </PremiumCard>
@@ -70,8 +70,8 @@ export default function TransactionHistory({ transactions, isLoading }: Transact
     return (
       <PremiumCard>
         <div className="text-center py-8">
-          <p className="text-[#6B7280] font-medium">No wallet activity yet</p>
-          <p className="text-xs text-[#9CA3AF]">Transactions will appear here once you start using your wallet</p>
+          <p className="text-[var(--ink)] font-medium">No wallet activity yet</p>
+          <p className="text-xs text-[var(--muted)]">Transactions will appear here once you start using your wallet</p>
         </div>
       </PremiumCard>
     );
@@ -79,20 +79,20 @@ export default function TransactionHistory({ transactions, isLoading }: Transact
 
   return (
     <PremiumCard>
-      <h3 className="font-bold text-[#14121F] mb-4">Recent Transactions</h3>
+      <h3 className="font-bold text-[var(--ink)] mb-4">Recent Transactions</h3>
       <div className="space-y-3">
         {transactions.map((tx) => (
           <div
             key={tx.id}
-            className="flex items-center justify-between p-3 bg-[#F4F2FB] rounded-[28px] hover:bg-[#FAF9FE] transition-all"
+            className="flex items-center justify-between p-3 bg-[var(--card-muted)] rounded-[28px] hover:bg-[var(--hairline)] transition-all"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white border border-[rgba(20,18,31,0.06)] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-[var(--card)] border border-[var(--hairline)] flex items-center justify-center">
                 {getIcon(tx.type)}
               </div>
               <div className="flex-1">
-                <p className="text-sm font-semibold text-[#14121F]">{tx.description}</p>
-                <p className="text-xs text-[#9CA3AF]">{new Date(tx.date).toLocaleDateString()}</p>
+                <p className="text-sm font-semibold text-[var(--ink)]">{tx.description}</p>
+                <p className="text-xs text-[var(--muted)]">{new Date(tx.date).toLocaleDateString()}</p>
               </div>
             </div>
 

@@ -261,7 +261,7 @@ export default function PublicProfilePage() {
       ? { background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }
       : outgoingStatus === 'pending'
       ? { background: 'var(--pact-surface-2)', color: 'var(--pact-text-dim)' }
-      : { background: 'var(--navy)', color: 'var(--pact-text)' };
+      : { background: 'var(--navy)', color: '#fff' };
 
   const profilePactsHeading = isOwnProfile
     ? 'Your pacts'
@@ -419,7 +419,7 @@ export default function PublicProfilePage() {
                   <button
                     onClick={() => (isOwnProfile ? router.push('/circles/create') : setShowAddToCircle(true))}
                     className=" mt-5 rounded-full px-4 py-2 text-sm font-semibold"
-                    style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}
+                    style={{ background: 'var(--navy)', color: '#fff' }}
                   >
                     {isOwnProfile ? 'Create a Circle' : `Add ${profileUser.full_name || `@${profileUser.username}`} to a Circle`}
                   </button>

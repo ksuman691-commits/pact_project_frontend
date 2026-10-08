@@ -33,7 +33,7 @@ export default function GoogleSignInButton() {
 
   if (!GOOGLE_CLIENT_ID) {
     return (
-      <div className="flex h-11 w-full items-center justify-center rounded-[18px] border border-[#E8DED7] bg-[#FAF6F0] text-sm text-[#A99991]">
+      <div className="flex h-11 w-full items-center justify-center rounded-[18px] border border-[var(--hairline)] bg-[var(--card-muted)] text-sm text-[var(--muted)]">
         Google sign-in unavailable until Client ID is configured
       </div>
     );

@@ -13,10 +13,10 @@ export default function StreakDisplay({ streak, todayComplete, onUploadProof }: 
     <PremiumCard glass>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-[#6B7280] mb-1">Today Streak</p>
+          <p className="text-sm font-medium text-[var(--muted)] mb-1">Today Streak</p>
           <div className="flex items-baseline gap-2">
-            <p className="text-4xl font-black text-[#14121F]">{streak}</p>
-            <p className="text-lg text-[#6B7280]">days</p>
+            <p className="text-4xl font-black text-[var(--ink)]">{streak}</p>
+            <p className="text-lg text-[var(--muted)]">days</p>
           </div>
         </div>
 

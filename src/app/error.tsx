@@ -54,7 +54,7 @@ export default function ErrorBoundary({
           type="button"
           onClick={reset}
           className=" inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition"
-          style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}
+          style={{ background: 'var(--navy)', color: '#fff' }}
         >
           <RotateCw className="h-4 w-4" />
           Try again

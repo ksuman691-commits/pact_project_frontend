@@ -36,15 +36,15 @@ export default function PactCard({
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h3 className="font-bold text-[#14121F] text-base leading-tight mb-1">
+            <h3 className="font-bold text-[var(--ink)] text-base leading-tight mb-1">
               {pact.title}
             </h3>
-            <p className="text-xs text-[#6B7280]">{pact.description}</p>
+            <p className="text-xs text-[var(--muted)]">{pact.description}</p>
           </div>
           <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
             pact.status === 'active'
               ? 'bg-[var(--card)] text-[var(--navy)]'
-              : 'bg-[#FAF9FE] text-[var(--ink-soft)]'
+              : 'bg-[var(--card-muted)] text-[var(--ink-soft)]'
           }`}>
             {pact.status}
           </div>
@@ -93,7 +93,7 @@ export default function PactCard({
         <div>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold text-[var(--ink-soft)]">Progress</p>
-            <p className="text-xs font-bold text-[#14121F]">{progressPercent}%</p>
+            <p className="text-xs font-bold text-[var(--ink)]">{progressPercent}%</p>
           </div>
           <div className="w-full h-2 bg-[var(--line)] rounded-full overflow-hidden">
             <div

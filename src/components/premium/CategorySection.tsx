@@ -100,10 +100,10 @@ export default function CategorySection({ onCategorySelect, onCreatePact }: Cate
   return (
     <div className="px-4 py-6">
       <div className="mb-4">
-        <h2 className="text-xs font-bold text-[#6B7280] mb-4">
+        <h2 className="text-xs font-bold text-[var(--muted)] mb-4">
           Create Pact by Category
         </h2>
-        <p className="text-xs text-[#9CA3AF] mb-4">Select a category to create your pact</p>
+        <p className="text-xs text-[var(--muted)] mb-4">Select a category to create your pact</p>
       </div>
 
       {/* Horizontal scrollable categories */}

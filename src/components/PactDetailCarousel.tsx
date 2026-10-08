@@ -42,7 +42,7 @@ function DetailTabButton({
       onClick={onClick}
       className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap transition ${
         active
-          ? 'bg-white text-[var(--ink)] shadow-[0_12px_30px_rgba(15,23,42,0.12)]'
+          ? 'bg-[var(--card)] text-[var(--ink)] shadow-[0_12px_30px_rgba(23,24,29,0.12)]'
           : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
       }`}
     >
