@@ -15,7 +15,9 @@ export function usePersonalizedFeed(category = 'all') {
       lastPage.data?.length === ITEMS_PER_PAGE ? pages.length * ITEMS_PER_PAGE : undefined,
     initialPageParam: 0,
     staleTime: 1000 * 60 * 2,
+    // One automatic background retry, then the feed shows its Tap to retry state.
     retry: 1,
+    retryDelay: 1000,
   });
 }
 

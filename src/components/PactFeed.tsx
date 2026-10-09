@@ -215,11 +215,13 @@ export default function PactFeed({
             The server took too long to answer. Check your connection and try again.
           </p>
           <button
+            type="button"
             onClick={() => refetch()}
-            className="mt-6 inline-flex items-center justify-center px-5 py-3 rounded-full font-bold transition-colors"
+            disabled={isFetching}
+            className="mt-6 inline-flex min-h-[44px] items-center justify-center px-5 py-3 rounded-full font-bold transition-colors disabled:opacity-60"
             style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
           >
-            Try again
+            {isFetching ? 'Retrying…' : 'Tap to retry'}
           </button>
         </div>
       ) : pacts.length === 0 ? (
