@@ -59,7 +59,7 @@ export default function PactFlowShell({ children, onExit, accent, eyebrow = 'I w
 
       <div>
         <div className="text-[13px] font-bold text-[var(--muted)]">{eyebrow}</div>
-        <h1 className="mt-0.5 text-[32px] font-extrabold leading-[38px] tracking-[-0.8px]">
+        <h1 className="mt-0.5 text-[32px] font-extrabold leading-[38px] tracking-[-0.8px] [text-wrap:balance]">
           {what ? (
             <>
               <span className={accent === 'what' ? 'text-[var(--navy)]' : 'text-[var(--ink)]'}>{what}</span>
