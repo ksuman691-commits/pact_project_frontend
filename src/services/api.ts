@@ -310,6 +310,11 @@ export const authService = {
   },
 };
 
+export const profileTimezoneService = {
+  get: () => api.get<{ timezone: string }>('/api/profile/timezone'),
+  update: (timezone: string) => api.put<{ timezone: string }>('/api/profile/timezone', { timezone }),
+};
+
 // Circle Services
 export const circleService = {
   create: async (data: any) => {

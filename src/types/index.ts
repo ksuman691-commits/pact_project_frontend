@@ -82,6 +82,14 @@ export interface Pact {
   deadline?: string;
   end_date?: string;
   start_date?: string;
+  duration_days?: number;
+  days_required?: number | null;
+  days_completed?: number;
+  outcome?: 'completed' | 'not_completed' | null;
+  completion_rule?: 'manual' | 'moments_75';
+  timezone?: string;
+  is_milestone?: boolean;
+  day_strip?: PactDayStripEntry[];
   status: 'pending' | 'active' | 'completed' | 'failed' | 'cancelled';
   verification_type?: string;
   verification_method?: string;
@@ -102,6 +110,14 @@ export interface Pact {
   creator_avatar_url?: string;
   circle_name?: string;
   circle_icon_emoji?: string;
+}
+
+export interface PactDayStripEntry {
+  day: number;
+  date: string;
+  has_moment: boolean;
+  type: 'photo' | 'video' | null;
+  thumbnail_url: string | null;
 }
 
 // Mutual-goal matching — GET /api/pacts/{pact_id}/matches (see
