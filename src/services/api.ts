@@ -592,7 +592,7 @@ export const followService = {
 // Feed Services (Personalized feed, trending, discover)
 export const feedService = {
   getPersonalized: (skip?: number, limit?: number, category?: string) =>
-    api.get('/api/feed', { params: { skip, limit, category }, timeout: 20000 }).then((response) => normalizeListResponse(response, mapPact)),
+    api.get('/api/feed', { params: { skip, limit, category }, timeout: 12000 }).then((response) => normalizeListResponse(response, mapPact)),
   getTrending: (skip?: number, limit?: number) =>
     api.get('/api/feed', { params: { skip, limit, category: 'trending' } }).then((response) => normalizeListResponse(response, mapPact)),
   getDiscover: (skip?: number, limit?: number) =>
@@ -606,7 +606,7 @@ export const pactAdvancedService = {
   getPublicPacts: (skip?: number, limit?: number) =>
     api.get('/api/pacts', { params: { skip, limit } }).then((response) => normalizeListResponse(response, mapPact)),
   getMyPacts: async (skip?: number, limit?: number) => {
-    const response = await api.get('/api/my-pacts', { params: { skip, limit } });
+    const response = await api.get('/api/my-pacts', { params: { skip, limit }, timeout: 12000 });
     return normalizeListResponse(response, mapPact);
   },
   getPactsByUser: async (userId: number, skip?: number, limit?: number) => {

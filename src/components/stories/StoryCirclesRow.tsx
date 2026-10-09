@@ -2,11 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useQuery } from '@tanstack/react-query'
 import { Video, X } from 'lucide-react'
 import { useCircleStoriesToday } from '@/hooks/useStories'
-import { pactAdvancedService } from '@/services/api'
-import { useAuthStore } from '@/store/auth'
+import { useMyPacts } from '@/hooks/useMyPacts'
 import StoryCaptureSheet from './StoryCaptureSheet'
 import StoryRing, { ringStateFrom, type RingState } from './StoryRing'
 import StoryViewer from './StoryViewer'
@@ -27,14 +25,31 @@ function labelFor(state: RingState, count: number | null | undefined) {
   return 'none yet'
 }
 
-function PostTodaySheet({ onClose, onPick }: { onClose: () => void; onPick: (pact: any) => void }) {
-  const { user } = useAuthStore()
-  const query = useQuery({
-    queryKey: ['my-pacts', user?.id],
-    queryFn: () => pactAdvancedService.getMyPacts(0, 100),
-    enabled: !!user?.id,
-  })
+function groupPactsByCircle(pacts: any[], circles: StoryCircle[]) {
+  type Group = { key: string; name: string; pacts: any[] }
+  const groups = new Map<string, Group>()
+  const nameFor = (p: any) => p.circle_name || circles.find((c) => c.id === p.circle_id)?.name || null
+  for (const p of pacts) {
+    const name = nameFor(p)
+    const key = p.circle_id != null ? `c${p.circle_id}` : name ? `n${name}` : 'personal'
+    const group: Group = groups.get(key) ?? { key, name: name || 'Personal', pacts: [] }
+    group.pacts.push(p)
+    groups.set(key, group)
+  }
+  // Circle groups follow the Home circles row order; personal pacts go last.
+  const order = (g: { key: string }) => {
+    const i = circles.findIndex((c) => `c${c.id}` === g.key)
+    return g.key === 'personal' ? Number.MAX_SAFE_INTEGER : i === -1 ? circles.length : i
+  }
+  return Array.from(groups.values()).sort((a, b) => order(a) - order(b))
+}
+
+function PostTodaySheet({ circles, onClose, onPick }: { circles: StoryCircle[]; onClose: () => void; onPick: (pact: any) => void }) {
+  // Already warmed by the Home row, so this normally renders from cache.
+  const query = useMyPacts()
   const active: any[] = ((query.data as any)?.data || []).filter((p: any) => p.status === 'active')
+  const groups = groupPactsByCircle(active, circles)
+  const showSkeleton = query.isLoading || (query.isFetching && !query.data && !query.isError)
 
   return (
     <div className="fixed inset-0 z-[70] flex items-end" role="dialog" aria-modal="true" aria-label="Choose a pact">
@@ -46,10 +61,22 @@ function PostTodaySheet({ onClose, onPick }: { onClose: () => void; onPick: (pac
             <X className="h-5 w-5" />
           </button>
         </div>
-        {query.isLoading ? (
-          <p className="py-4 text-[14px] text-[var(--muted)]">Loading your pacts…</p>
-        ) : query.isError ? (
-          <p className="py-4 text-[14px] text-[var(--muted)]">We couldn&apos;t load your pacts.</p>
+        {showSkeleton ? (
+          <ul className="flex flex-col" aria-busy="true" aria-label="Loading your pacts">
+            {[0, 1, 2].map((i) => (
+              <li key={i} className="flex min-h-[56px] flex-col justify-center gap-2 border-b border-[var(--hairline)] py-2 last:border-b-0">
+                <span className="pact-shimmer h-4 w-2/3 rounded" />
+                <span className="pact-shimmer h-3 w-1/3 rounded" />
+              </li>
+            ))}
+          </ul>
+        ) : query.isError && !query.data ? (
+          <div className="flex flex-col items-start gap-3 py-2">
+            <p className="text-[14px] text-[var(--muted)]">We couldn&apos;t load your pacts.</p>
+            <button type="button" onClick={() => void query.refetch()} className="flex h-11 items-center rounded-full bg-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--paper)]">
+              Tap to retry
+            </button>
+          </div>
         ) : active.length === 0 ? (
           <div className="flex flex-col items-start gap-3 py-2">
             <p className="text-[14px] text-[var(--muted)]">You have no active pacts.</p>
@@ -58,16 +85,22 @@ function PostTodaySheet({ onClose, onPick }: { onClose: () => void; onPick: (pac
             </Link>
           </div>
         ) : (
-          <ul className="flex flex-col overflow-y-auto">
-            {active.map((pact) => (
-              <li key={pact.id} className="border-b border-[var(--hairline)] last:border-b-0">
-                <button type="button" onClick={() => onPick(pact)} className="flex min-h-[56px] w-full flex-col items-start justify-center py-2 text-left">
-                  <span className="text-[15px] font-semibold">{pact.title}</span>
-                  {pact.circle_name && <span className="text-[13px] text-[var(--muted)]">{pact.circle_name}</span>}
-                </button>
-              </li>
+          <div className="flex flex-col gap-3 overflow-y-auto">
+            {groups.map((group) => (
+              <div key={group.key} role="group" aria-label={group.name}>
+                <h3 className="pb-1 text-[13px] font-semibold text-[var(--muted)]">{group.name}</h3>
+                <ul className="flex flex-col">
+                  {group.pacts.map((pact) => (
+                    <li key={pact.id} className="border-b border-[var(--hairline)] last:border-b-0">
+                      <button type="button" onClick={() => onPick(pact)} className="flex min-h-[56px] w-full items-center py-2 text-left">
+                        <span className="text-[15px] font-semibold">{pact.title}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
     </div>
@@ -79,6 +112,8 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
   const [capturePact, setCapturePact] = useState<any | null>(null)
   const [viewing, setViewing] = useState<StoryCircle | null>(null)
   const circleStories = useCircleStoriesToday(viewing?.id ?? null)
+  // Warm the sheet's data on Home mount so the chooser opens from cache.
+  useMyPacts()
 
   return (
     <section aria-label="Your circles" className="flex flex-col gap-3">
@@ -134,6 +169,7 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
 
       {pickerOpen && (
         <PostTodaySheet
+          circles={circles}
           onClose={() => setPickerOpen(false)}
           onPick={(pact) => {
             setPickerOpen(false)
