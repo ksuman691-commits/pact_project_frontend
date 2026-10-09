@@ -114,22 +114,23 @@ export default function PactMomentsDetail({
               const isToday = !visualDayEnded && entry.date === localToday
               const isPast = entry.date < localToday
               const isDashed = presentationEnded ? !entry.has_moment : isPast && !entry.has_moment
+              const hasPhotoThumbnail = entry.has_moment && entry.type === 'photo' && Boolean(entry.thumbnail_url)
+              const isPlayTile = entry.has_moment && !hasPhotoThumbnail
               return (
                 <div
                   key={entry.day}
                   aria-label={`Day ${entry.day}${entry.has_moment ? ', moment shared' : isToday ? ', today' : isPast ? ', missed' : ', upcoming'}`}
-                  className={`relative aspect-square overflow-hidden rounded-[9px] bg-[var(--card-muted)] ${isToday ? 'ring-2 ring-[var(--navy)] ring-offset-1' : ''} ${isDashed ? 'border-2 border-dashed border-[var(--missed-border)] bg-transparent' : ''}`}
+                  className={`relative aspect-square overflow-hidden rounded-[9px] ${isPlayTile ? 'bg-[var(--navy)]' : 'bg-[var(--card-muted)]'} ${isToday ? 'ring-2 ring-[var(--navy)] ring-offset-1' : ''} ${isDashed ? 'border-2 border-dashed border-[var(--missed-border)] bg-transparent' : ''}`}
                 >
-                  {entry.has_moment && entry.type === 'photo' && entry.thumbnail_url ? (
-                    <img src={entry.thumbnail_url} alt="" className="size-full object-cover" />
-                  ) : entry.has_moment ? (
-                    <span className="flex size-full items-center justify-center bg-[var(--navy)] text-[var(--card)]">
+                  {hasPhotoThumbnail ? (
+                    <img src={entry.thumbnail_url ?? undefined} alt="" className="size-full object-cover" />
+                  ) : isPlayTile ? (
+                    <span className="flex size-full items-center justify-center text-[var(--card)]">
                       <Play className="size-4 fill-current" aria-hidden="true" />
                     </span>
                   ) : null}
-                  {entry.has_moment && <span className="pointer-events-none absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-black/60 to-transparent" />}
-                  <span className={`absolute inset-x-0 top-0.5 z-10 text-center text-[10px] font-extrabold leading-3 ${entry.has_moment ? 'text-white' : 'text-[var(--navy)]'}`}>DAY {entry.day}</span>
-                  {isToday && <span className="absolute inset-x-0 bottom-0 bg-[var(--navy)] py-0.5 text-center text-[10px] font-bold text-white">TODAY</span>}
+                  {hasPhotoThumbnail && <span className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/60 to-transparent" />}
+                  <span className={`absolute inset-x-0 bottom-1 z-10 text-center text-[10px] font-extrabold leading-3 ${hasPhotoThumbnail || isPlayTile ? 'text-white' : 'text-[var(--navy)]'}`}>DAY {entry.day}</span>
                 </div>
               )
             })}
@@ -190,7 +191,7 @@ export default function PactMomentsDetail({
         >
           {!hasMoments && (
             <>
-              <div className="absolute left-[60px] top-[90px] size-[190px] rounded-full bg-[#FFE3A8]/90" />
+              <div className="absolute left-[60px] top-0 size-[190px] rounded-full bg-[#FFE3A8]/90" />
               <div className={`absolute bottom-0 left-[-20px] right-[-20px] h-[210px] rounded-[50%_50%_0_0] ${completionView === 'partial' || completionView === 'provisional_not_completed' ? 'bg-[#3C2650]' : 'bg-[#3C2650]'}`} />
               <div className="absolute inset-x-0 bottom-0 h-[190px] bg-[linear-gradient(180deg,rgba(18,19,26,0)_0%,rgba(18,19,26,0.72)_100%)]" />
             </>
@@ -208,7 +209,7 @@ export default function PactMomentsDetail({
                     <h2 className="text-[28px] font-extrabold leading-8 text-white">Completed</h2>
                     <p className="mt-1 text-[17px] font-bold text-white">{completed} of {total} days</p>
                   </div>
-                  <button type="button" aria-label="Watch recap" onClick={() => { setActiveIndex(0); setWatchingRecap(true) }} className="flex size-24 items-center justify-center rounded-full bg-white text-[var(--navy)] shadow-[0_0_0_10px_rgba(255,255,255,0.28),0_0_0_22px_rgba(255,255,255,0.14)]">
+                  <button type="button" aria-label="Watch recap" onClick={() => { setActiveIndex(0); setWatchingRecap(true) }} className="mt-9 flex size-24 items-center justify-center rounded-full bg-white text-[var(--navy)] shadow-[0_0_0_10px_rgba(255,255,255,0.28),0_0_0_22px_rgba(255,255,255,0.14)]">
                     <Play className="ml-1 size-10 fill-current" aria-hidden="true" />
                   </button>
                   <span className="mt-5 text-[13px] font-bold text-white">Watch recap</span>
