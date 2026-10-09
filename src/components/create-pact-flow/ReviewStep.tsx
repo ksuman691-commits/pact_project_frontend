@@ -98,7 +98,8 @@ export default function ReviewStep({ onExit }: { onExit?: () => void }) {
       : undefined;
   const audienceValue = [circleName, audienceOption?.displayLabel].filter(Boolean).join(' \u00b7 ');
 
-  // Line 1 must match the chosen cadence; only the daily rule has an N-of-M threshold.
+  // Line 1 matches the selected cadence; the backend's completion threshold
+  // applies to every non-milestone pact regardless of proof frequency.
   const firstLine =
     frequency === 'Every day'
       ? 'Share a moment each day'
@@ -147,7 +148,7 @@ export default function ReviewStep({ onExit }: { onExit?: () => void }) {
             <>
               <CountsLine icon={Camera}>{firstLine}</CountsLine>
               <CountsLine icon={Clock}>The day counts automatically at midnight</CountsLine>
-              {frequency === 'Every day' && total > 0 && (
+              {total > 0 && (
                 <CountsLine icon={Check}>
                   Show up on {requiredDays(total)} of {total} days to complete it
                 </CountsLine>
