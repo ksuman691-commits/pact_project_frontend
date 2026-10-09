@@ -11,6 +11,7 @@ import { usePact, usePactCheers, usePactProofs } from '@/hooks/usePacts';
 import { useAuthStore } from '@/store/auth';
 import { pactService } from '@/services/api';
 import { getPactProgress } from '@/components/PactProgressRing';
+import { resolvePactCompletionViewState } from '@/lib/pactCompletionState';
 
 function PactDetailSkeleton() {
   return (
@@ -60,6 +61,7 @@ export default function PactDetailPage() {
   const participants = useMemo(() => pact?.participants || [], [pact?.participants]);
   const cheers = useMemo(() => cheersData?.data || [], [cheersData?.data]);
   const progress = pact ? getPactProgress(pact, moments) : { completed: 0, total: 7, missed: 0 };
+  const completionView = pact ? resolvePactCompletionViewState(pact, new Date(), progress.completed) : null;
   const isCreator = Boolean(user && pact?.creator_id === user.id);
   const isParticipant = Boolean(
     user && (isCreator || participants.some((participant: any) => participant.id === user.id || participant.user_id === user.id)),
@@ -67,7 +69,7 @@ export default function PactDetailPage() {
   const canCheer = isParticipant && !isCreator;
   const hasCheered = Boolean(user && cheers.some((cheer: any) => cheer.sender_id === user.id));
   const cheerCount = Number(pact?.active_cheer_count ?? cheersData?.pagination?.total ?? cheers.length);
-  const isEnded = pact?.status !== 'active';
+  const isEnded = pact?.status !== 'active' || completionView !== null;
 
   const handleInvite = async () => {
     if (!pact) return;
@@ -92,6 +94,36 @@ export default function PactDetailPage() {
       }
     } catch {
       toast.error('Could not copy the link');
+    }
+  };
+
+  const handleShareRecap = async () => {
+    if (!pact) return;
+    const url = `${window.location.origin}/pacts/${pact.id}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `${pact.title} — CirclePact`, url });
+        return;
+      } catch {
+        // Native sharing may be unavailable or dismissed; use clipboard fallback.
+      }
+    }
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      toast.success('Recap link copied');
+    } catch {
+      toast.error('Could not share the recap');
     }
   };
 
@@ -140,6 +172,8 @@ export default function PactDetailPage() {
         hasCheered={hasCheered}
         onInvite={() => void handleInvite()}
         onAddMoment={() => setStoryCaptureOpen(true)}
+        onRestart={() => router.push(`/pacts/create?pactId=${pact.id}`)}
+        onShareRecap={() => void handleShareRecap()}
       />
       <StoryCaptureSheet
         isOpen={storyCaptureOpen && !isEnded}
