@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Camera, Check, MessageCircle, Play, RotateCcw, Share2, UserPlus } from 'lucide-react'
+import { Camera, Check, Image as ImageIcon, MessageCircle, Play, Plus, RotateCcw, Share2, UserPlus, X } from 'lucide-react'
 import CheerButton from '@/components/CheerButton'
 import { pactLocalToday, resolvePactCompletionViewState } from '@/lib/pactCompletionState'
 import type { PactDayStripEntry } from '@/types'
@@ -67,6 +67,7 @@ export default function PactMomentsDetail({
   const completionView = resolvePactCompletionViewState(pact, new Date(), fallbackCompleted)
   const completionLooksSuccessful = completionView === 'completed' || completionView === 'provisional_completed'
   const presentationEnded = completionView !== null
+  const visualDayEnded = presentationEnded || isEnded
   const strip = Array.isArray(pact?.day_strip) ? (pact.day_strip as PactDayStripEntry[]) : null
   const total = Math.max(1, Number(strip ? pact?.duration_days ?? progress?.total ?? 7 : progress?.total ?? 7))
   const completed = Math.min(total, Number(pact?.days_completed ?? fallbackCompleted))
@@ -110,7 +111,7 @@ export default function PactMomentsDetail({
         {showModernStrip ? (
           <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${strip.length}, minmax(0, 1fr))` }} aria-label="Pact day strip">
             {strip.map((entry) => {
-              const isToday = !presentationEnded && entry.date === localToday
+              const isToday = !visualDayEnded && entry.date === localToday
               const isPast = entry.date < localToday
               const isDashed = presentationEnded ? !entry.has_moment : isPast && !entry.has_moment
               return (
@@ -126,7 +127,9 @@ export default function PactMomentsDetail({
                       <Play className="size-4 fill-current" aria-hidden="true" />
                     </span>
                   ) : null}
-                  {isToday && <span className="absolute inset-x-0 bottom-0 bg-[var(--navy)] py-0.5 text-center text-[8px] font-bold text-white">TODAY</span>}
+                  {entry.has_moment && <span className="pointer-events-none absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-black/60 to-transparent" />}
+                  <span className={`absolute inset-x-0 top-0.5 z-10 text-center text-[10px] font-extrabold leading-3 ${entry.has_moment ? 'text-white' : 'text-[var(--navy)]'}`}>DAY {entry.day}</span>
+                  {isToday && <span className="absolute inset-x-0 bottom-0 bg-[var(--navy)] py-0.5 text-center text-[10px] font-bold text-white">TODAY</span>}
                 </div>
               )
             })}
@@ -135,7 +138,7 @@ export default function PactMomentsDetail({
           <div className="flex gap-[5px]" aria-label={`${total} pact days`}>
             {Array.from({ length: total }).map((_, index) => {
               const isDone = index < completed
-              const isToday = !presentationEnded && index === currentDay - 1
+              const isToday = !visualDayEnded && index === currentDay - 1
               return (
                 <span key={index} className="flex h-1 flex-1 overflow-hidden rounded-[2px] bg-[var(--hairline)]">
                   {isDone ? (
@@ -182,36 +185,59 @@ export default function PactMomentsDetail({
         </header>}
 
         <section
-          className="relative min-h-0 flex-1 overflow-hidden rounded-[24px] bg-[var(--navy)]"
+          className={`relative min-h-0 flex-1 overflow-hidden rounded-[24px] ${!hasMoments && !presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : 'bg-[var(--navy)]'}`}
           aria-label="Moments"
         >
-          <div className="absolute left-[20%] top-[13%] size-56 rounded-full bg-[var(--navy-hover)]/40" />
-          <div className="absolute bottom-0 left-[-5%] right-[-5%] h-[35%] rounded-[50%_50%_0_0] bg-[var(--navy-hover)]" />
+          {!hasMoments && (
+            <>
+              <div className="absolute left-[60px] top-[90px] size-[190px] rounded-full bg-[#FFE3A8]/90" />
+              <div className={`absolute bottom-0 left-[-20px] right-[-20px] h-[210px] rounded-[50%_50%_0_0] ${completionView === 'partial' || completionView === 'provisional_not_completed' ? 'bg-[#3C2650]' : 'bg-[#3C2650]'}`} />
+              <div className="absolute inset-x-0 bottom-0 h-[190px] bg-[linear-gradient(180deg,rgba(18,19,26,0)_0%,rgba(18,19,26,0.72)_100%)]" />
+            </>
+          )}
+          {hasMoments && <div className="absolute inset-x-0 bottom-0 h-[190px] bg-[linear-gradient(180deg,rgba(18,19,26,0)_0%,rgba(18,19,26,0.72)_100%)]" />}
 
-          {presentationEnded && !(completionLooksSuccessful && watchingRecap) ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[var(--card)] px-6 text-center text-[var(--ink)]">
+          {presentationEnded && !watchingRecap ? (
+            <div className={`absolute inset-0 z-10 flex flex-col items-center justify-center px-6 text-center text-white ${completionView === 'partial' || completionView === 'provisional_not_completed' || completionView === 'empty' ? 'bg-[linear-gradient(180deg,rgba(18,19,26,0.72)_0%,rgba(18,19,26,0.72)_100%)]' : ''}`}>
               {completionLooksSuccessful ? (
                 <>
-                  <span className="flex size-[72px] items-center justify-center rounded-full border-[7px] border-[var(--navy)] bg-[var(--card)] text-[var(--navy)]">
-                    <Check className="size-8" strokeWidth={3} aria-hidden="true" />
+                  <span className="mb-3 flex size-12 items-center justify-center rounded-full border-[3px] border-white text-white">
+                    <Check className="size-6" strokeWidth={3} aria-hidden="true" />
                   </span>
-                  <h2 className="text-[25px] font-extrabold">Completed</h2>
-                  <p className="text-[15px] font-semibold text-[var(--muted)]">{completed} of {total} days</p>
+                  <div className="mb-3 text-center">
+                    <h2 className="text-[28px] font-extrabold leading-8 text-white">Completed</h2>
+                    <p className="mt-1 text-[17px] font-bold text-white">{completed} of {total} days</p>
+                  </div>
+                  <button type="button" aria-label="Watch recap" onClick={() => { setActiveIndex(0); setWatchingRecap(true) }} className="flex size-24 items-center justify-center rounded-full bg-white text-[var(--navy)] shadow-[0_0_0_10px_rgba(255,255,255,0.28),0_0_0_22px_rgba(255,255,255,0.14)]">
+                    <Play className="ml-1 size-10 fill-current" aria-hidden="true" />
+                  </button>
+                  <span className="mt-5 text-[13px] font-bold text-white">Watch recap</span>
                 </>
               ) : completionView === 'partial' || completionView === 'provisional_not_completed' ? (
                 <>
-                  <h2 className="text-[25px] font-extrabold">Ended</h2>
-                  <p className="text-[15px] font-semibold text-[var(--muted)]">{completed} of {total} days done</p>
+                  <h2 className="text-[28px] font-extrabold leading-8 text-white">Ended</h2>
+                  <p className="mt-1 text-[17px] font-bold text-white">{completed} of {total} days done</p>
+                  <button type="button" onClick={() => { setActiveIndex(0); setWatchingRecap(true) }} className="mt-6 rounded-full border border-white/80 px-5 py-3 text-[15px] font-extrabold text-white">
+                    Watch your moments
+                  </button>
                 </>
               ) : (
                 <>
-                  <h2 className="text-[25px] font-extrabold">Nothing was shared</h2>
-                  <p className="max-w-[250px] text-[15px] font-semibold text-[var(--muted)]">This pact ended without moments</p>
+                  <span className="mb-5 flex size-20 items-center justify-center rounded-full border-2 border-dashed border-white text-white">
+                    <ImageIcon className="size-9" aria-hidden="true" />
+                  </span>
+                  <h2 className="text-[26px] font-extrabold leading-8 text-white">Nothing was shared</h2>
+                  <p className="mt-2 max-w-[260px] text-[16px] font-semibold leading-5 text-white">This pact ended without moments</p>
                 </>
               )}
             </div>
           ) : (
             <>
+          {presentationEnded && watchingRecap && (
+            <button type="button" onClick={() => setWatchingRecap(false)} aria-label="Close recap" className="absolute right-4 top-4 z-30 flex size-11 items-center justify-center rounded-full bg-white text-[var(--navy)]">
+              <X className="size-5" />
+            </button>
+          )}
           {hasMoments && current?.url && (
             current.type === 'video' ? (
               <video src={current.url} className="absolute inset-0 size-full object-cover" muted playsInline />
@@ -257,16 +283,15 @@ export default function PactMomentsDetail({
           )}
 
           {!hasMoments && !isEnded && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-5 text-center text-white">
-              <button
-                type="button"
-                onClick={onAddMoment}
-                className="flex min-h-[56px] items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[var(--card)] px-4 text-[14px] font-bold text-[var(--navy)] shadow-lg"
-              >
-                <Camera className="size-5" aria-hidden="true" />
-                Add a moment
+            <div className="absolute inset-0 z-10 px-5 text-center text-white">
+              <button type="button" aria-label="Add a moment" onClick={onAddMoment} className="absolute left-1/2 top-[100px] flex size-[104px] -translate-x-1/2 items-center justify-center rounded-full border-0 bg-[var(--navy)] text-white shadow-[0_0_0_10px_rgba(255,255,255,0.28),0_0_0_22px_rgba(255,255,255,0.14)]">
+                <Plus className="size-11" strokeWidth={2.2} aria-hidden="true" />
               </button>
-              <p className="text-[14px] opacity-85">No moments yet</p>
+              <div className="absolute left-0 right-0 top-[232px] text-[24px] font-extrabold tracking-[-0.4px] text-white">Add a moment</div>
+              <div className="absolute inset-x-5 bottom-[22px] text-left text-white">
+                <div className="text-[12px] font-bold opacity-80">No moments yet</div>
+                <div className="mt-0.5 text-[17px] font-extrabold leading-[22px]">Make something worth showing.</div>
+              </div>
             </div>
           )}
 
@@ -283,21 +308,11 @@ export default function PactMomentsDetail({
           <footer className="flex min-h-14 flex-wrap items-center gap-2">
             {presentationEnded && completionLooksSuccessful && !watchingRecap ? (
               <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveIndex(0)
-                    setWatchingRecap(true)
-                  }}
-                  className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-5 text-[14px] font-bold text-white"
-                >
-                  <Play className="size-4 fill-current" aria-hidden="true" />
-                  Watch recap
-                </button>
-                <button type="button" onClick={onShareRecap} aria-label="Share recap" className="flex size-12 items-center justify-center rounded-full border border-[var(--hairline)] bg-[var(--card)] text-[var(--navy)]">
+                <button type="button" onClick={onShareRecap} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-5 text-[14px] font-extrabold text-white">
                   <Share2 className="size-5" />
+                  Share recap
                 </button>
-                <button type="button" onClick={onRestart} aria-label="Start again" className="flex size-12 items-center justify-center rounded-full border border-[var(--hairline)] bg-[var(--card)] text-[var(--navy)]">
+                <button type="button" onClick={onRestart} aria-label="Start again" className="flex size-12 items-center justify-center rounded-full bg-[var(--navy)] text-white">
                   <RotateCcw className="size-5" />
                 </button>
               </>
