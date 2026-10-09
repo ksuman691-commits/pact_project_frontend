@@ -117,7 +117,7 @@ export const AUDIENCES: {
     emoji: '🌎',
     label: 'Everyone',
     displayLabel: 'Public',
-    desc: 'Visible to everyone — including your proof photos. Shows up in Discover & matching.',
+    desc: 'Visible to everyone, including your moments. Shows up in Discover & matching.',
     visibility: 'Everyone',
   },
   {

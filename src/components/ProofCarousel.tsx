@@ -197,7 +197,7 @@ export default function ProofCarousel({ proofs, isOpen, onClose, initialIndex = 
       </div>
 
       {(current.description || current.uploader || current.day) && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 to-transparent p-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] text-white">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-black/60 p-6 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] text-white">
           {current.day ? <p className="mb-1 text-sm text-white/70">Day {current.day}</p> : null}
           {current.description && <p className="mb-1 text-base font-medium">{current.description}</p>}
           <div className="flex items-center gap-2 text-sm text-white/70">

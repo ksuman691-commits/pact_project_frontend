@@ -50,7 +50,7 @@ export default function AnimatedTabs({
             key={tab.id}
             onClick={() => onChange(tab.id)}
             className={`relative flex-shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-              isActive ? 'text-[var(--pact-text)]' : 'text-[var(--pact-text-faint)] hover:text-[var(--pact-text-dim)]'
+              isActive ? 'text-white' : 'text-[var(--pact-text-faint)] hover:text-[var(--pact-text-dim)]'
             }`}
           >
             {isActive && (

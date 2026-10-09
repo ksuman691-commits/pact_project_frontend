@@ -42,7 +42,7 @@ export default function CircleLeaderboard({
   });
 
   const getRankBadge = (rank: number) => {
-    if (rank === 1) return { bg: 'var(--navy)', color: '#14121F' };
+    if (rank === 1) return { bg: 'var(--navy)', color: '#fff' };
     if (rank === 2) return { bg: 'var(--pact-surface-2)', color: 'var(--pact-text-dim)' };
     if (rank === 3) return { bg: 'var(--pact-surface-2)', color: 'var(--pact-gold)' };
     return null;

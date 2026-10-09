@@ -87,7 +87,7 @@ export default function UserFollowModal({
                   <div className="flex items-center gap-3 flex-1">
                     <div
                       className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm"
-                      style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}
+                      style={{ background: 'var(--navy)', color: '#fff' }}
                     >
                       {user.avatar ? user.avatar : user.name.charAt(0)}
                     </div>

@@ -62,7 +62,7 @@ export default function ProfileCompletionCard({ percent, checklist, onDismiss }:
   };
 
   const ringStyle = {
-    background: `conic-gradient(var(--pact-pink) ${percent}%, var(--pact-surface-2) ${percent}% 100%)`,
+    background: 'var(--navy)',
   };
 
   return (
@@ -118,7 +118,7 @@ export default function ProfileCompletionCard({ percent, checklist, onDismiss }:
                     item.done
                       ? { background: 'var(--pact-mint)' }
                       : item.id === currentStep.id
-                        ? { border: '1.5px solid var(--pact-pink)', background: 'transparent' }
+                        ? { border: '1.5px solid var(--navy)', background: 'transparent' }
                         : { border: '1.5px solid var(--pact-hairline)', background: 'transparent' }
                   }
                 >

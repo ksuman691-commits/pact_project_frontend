@@ -63,7 +63,7 @@ export default function PostStoryButton({ size, posted, comingSoon, label = "Pos
       type="button"
       onClick={onClick}
       className={`${base} hover:bg-[var(--navy-hover)] active:scale-[0.97]`}
-      style={{ ...style, background: 'var(--navy)', color: 'var(--paper)' }}
+      style={{ ...style, background: 'var(--navy)', color: '#fff' }}
     >
       <Video style={{ width: iconSize, height: iconSize }} strokeWidth={2} aria-hidden="true" />
       <span className="text-balance">{label}</span>

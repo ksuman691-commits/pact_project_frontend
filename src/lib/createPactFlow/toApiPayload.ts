@@ -48,6 +48,7 @@ export function categoryToVibe(category?: string | null): VibeId | null {
 // (a self-reported check-in) — see plan notes for the bridging rationale.
 function mapProofMethod(proofMethod: PactDraft['proofMethod']): 'photo' | 'video' | 'checklist' {
   switch (proofMethod) {
+    case 'Moment':
     case 'Photo':
       return 'photo';
     case 'Video':
@@ -102,6 +103,7 @@ export interface CreatePactApiPayload {
   max_participants: number;
   visibility: 'public' | 'private' | 'circle_only';
   circle_id: number | null;
+  is_milestone: boolean;
 }
 
 // Backend rejects datetimes with a non-zero time component ("Datetimes
@@ -142,6 +144,7 @@ export function toCreatePactApiPayload(draft: PactDraft, activity: Activity): Cr
     min_participants: min,
     max_participants: max,
     visibility,
+    is_milestone: Boolean(activity.milestone),
     // Only "Only me" (solo tracking, explicitly "No circle, just for you" in
     // the AUDIENCES copy) clears the circle association. A "Public" pact
     // started from within a circle should keep its circle_id — Public only

@@ -55,7 +55,7 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="rounded-[28px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] p-6">
+        <div className="rounded-[28px] border border-[var(--hairline)] bg-[var(--card-muted)] p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-3">
               <div className="h-4 w-32 animate-pulse rounded-full bg-[var(--line)]" />
@@ -69,13 +69,13 @@ export default function VerificationResults({ pactId }: VerificationResultsProps
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="h-24 animate-pulse rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB]" />
-          <div className="h-24 animate-pulse rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB]" />
-          <div className="h-24 animate-pulse rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB]" />
-          <div className="h-24 animate-pulse rounded-[24px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB]" />
+          <div className="h-24 animate-pulse rounded-[24px] border border-[var(--hairline)] bg-[var(--card-muted)]" />
+          <div className="h-24 animate-pulse rounded-[24px] border border-[var(--hairline)] bg-[var(--card-muted)]" />
+          <div className="h-24 animate-pulse rounded-[24px] border border-[var(--hairline)] bg-[var(--card-muted)]" />
+          <div className="h-24 animate-pulse rounded-[24px] border border-[var(--hairline)] bg-[var(--card-muted)]" />
         </div>
 
-        <div className="rounded-[20px] border border-[rgba(20,18,31,0.06)] bg-[#F4F2FB] p-4">
+        <div className="rounded-[20px] border border-[var(--hairline)] bg-[var(--card-muted)] p-4">
           <div className="flex items-center justify-between gap-4">
             <div className="space-y-2">
               <div className="h-4 w-28 animate-pulse rounded-full bg-[var(--line)]" />

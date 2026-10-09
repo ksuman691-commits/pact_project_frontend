@@ -26,8 +26,7 @@ export default function OnboardingBadge({ icon: Icon, accent }: OnboardingBadgeP
       />
       <div
         aria-hidden="true"
-        className="avatar-ring-spin pointer-events-none absolute inset-3 rounded-full"
-        style={{ background: `conic-gradient(from 0deg, ${accent}, transparent 70%, ${accent})`, padding: 3 }}
+        className="avatar-ring-spin pointer-events-none absolute inset-3 rounded-full border-[3px] border-[var(--navy)]"
       >
         <div className="h-full w-full rounded-full" style={{ background: 'var(--pact-bg)' }} />
       </div>

@@ -97,7 +97,7 @@ export default function EditProfilePage() {
               <div className="flex items-center gap-4">
                 <div
                   className="w-24 h-24 rounded-3xl flex items-center justify-center font-bold text-3xl"
-                  style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}
+                  style={{ background: 'var(--navy)', color: '#fff' }}
                 >
                   {avatarPreview ? (
                     <Image
@@ -112,7 +112,7 @@ export default function EditProfilePage() {
                   )}
                 </div>
                 <div>
-                  <label className=" inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium transition cursor-pointer" style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}>
+                  <label className=" inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium transition cursor-pointer" style={{ background: 'var(--navy)', color: '#fff' }}>
                     <Upload className="w-4 h-4" />
                     {avatarUploading ? 'Uploading...' : 'Upload Photo'}
                     <input
@@ -204,7 +204,7 @@ export default function EditProfilePage() {
                 type="submit"
                 disabled={loading}
                 className=" flex-1 px-6 py-3 rounded-full font-medium transition disabled:opacity-50"
-                style={{ background: 'var(--navy)', color: 'var(--pact-text)' }}
+                style={{ background: 'var(--navy)', color: '#fff' }}
               >
                 {loading ? 'Saving...' : 'Save Changes'}
               </button>
@@ -218,7 +218,7 @@ export default function EditProfilePage() {
           <p className="text-sm mb-4" style={{ color: 'var(--pact-text-dim)' }}>These actions cannot be undone</p>
           <button
             className="px-4 py-2 rounded-full font-medium transition"
-            style={{ background: 'var(--pact-pink)', color: 'var(--pact-text)' }}
+            style={{ background: 'var(--pact-pink)', color: '#fff' }}
           >
             Delete Account
           </button>

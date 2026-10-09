@@ -30,7 +30,7 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
   // Photo display
   if (proof.type === 'image' && proof.url) {
     return (
-      <div className="rounded-[24px] overflow-hidden bg-[#FAF9FE] border border-[rgba(20,18,31,0.06)]">
+      <div className="rounded-[24px] overflow-hidden bg-[var(--card-muted)] border border-[var(--hairline)]">
         <div className="relative aspect-video w-full">
           <Image
             src={proof.url}
@@ -123,13 +123,13 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
               />
             </div>
           </div>
-          <p className="text-xs text-[#6B7280]">{completionPercent}% complete</p>
+          <p className="text-xs text-[var(--muted)]">{completionPercent}% complete</p>
         </div>
 
         {/* Checklist items */}
         <div className="divide-y divide-[var(--line)]">
           {proof.items.map((item) => (
-            <div key={item.id} className="p-4 flex items-start gap-3 hover:bg-[#F4F2FB] transition">
+            <div key={item.id} className="p-4 flex items-start gap-3 hover:bg-[var(--card-muted)] transition">
               <div className="flex-shrink-0 mt-0.5">
                 {item.completed ? (
                   <CheckCircle2 className="w-5 h-5 text-navy" strokeWidth={2} />
@@ -140,8 +140,8 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
               <span
                 className={`text-sm font-medium ${
                   item.completed
-                    ? 'text-[#14121F] line-through opacity-60'
-                    : 'text-[#14121F]'
+                    ? 'text-[var(--ink)] line-through opacity-60'
+                    : 'text-[var(--ink)]'
                 }`}
               >
                 {item.label}
@@ -155,10 +155,10 @@ export default function ProofDisplay({ proof, onVerify }: ProofDisplayProps) {
 
   // Fallback: no proof data
   return (
-    <div className="rounded-[24px] bg-[#F4F2FB] border-2 border-dashed border-[var(--line)] p-6 flex flex-col items-center justify-center min-h-[200px]">
+    <div className="rounded-[24px] bg-[var(--card-muted)] border-2 border-dashed border-[var(--hairline)] p-6 flex flex-col items-center justify-center min-h-[200px]">
       <AlertCircle className="w-8 h-8 text-[var(--muted)] mb-2" />
-      <p className="text-sm font-medium text-[#6B7280]">No proof submitted yet</p>
-      <p className="text-xs text-[#9CA3AF] mt-1">
+      <p className="text-sm font-medium text-[var(--muted)]">No proof submitted yet</p>
+      <p className="text-xs text-[var(--muted)] mt-1">
         The pact creator has not uploaded any proof yet.
       </p>
     </div>

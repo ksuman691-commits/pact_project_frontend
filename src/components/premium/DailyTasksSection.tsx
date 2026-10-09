@@ -14,7 +14,7 @@ export default function DailyTasksSection() {
     return (
       <div className="space-y-2">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-16 bg-[#FAF9FE] rounded-[24px] animate-pulse" />
+          <div key={i} className="h-16 bg-[var(--card-muted)] rounded-[24px] animate-pulse" />
         ))}
       </div>
     );
@@ -25,8 +25,8 @@ export default function DailyTasksSection() {
       <PremiumCard>
         <div className="text-center py-8">
           <CheckCircle2 className="w-12 h-12 text-[var(--navy)] mx-auto mb-2" />
-          <p className="text-[#6B7280] font-medium">No pacts due today</p>
-          <p className="text-xs text-[#9CA3AF]">Great job staying ahead!</p>
+          <p className="text-[var(--ink)] font-medium">No pacts due today</p>
+          <p className="text-xs text-[var(--muted)]">Great job staying ahead!</p>
         </div>
       </PremiumCard>
     );
@@ -41,8 +41,8 @@ export default function DailyTasksSection() {
           className="bg-[var(--card)] rounded-[24px] p-4 cursor-pointer hover:shadow-md transition-all border border-[rgba(20,18,31,0.06)] flex items-center justify-between"
         >
           <div className="flex-1">
-            <h4 className="font-semibold text-[#14121F] text-sm mb-1">{pact.title}</h4>
-            <div className="flex items-center gap-4 text-xs text-[#6B7280]">
+            <h4 className="font-semibold text-[var(--ink)] text-sm mb-1">{pact.title}</h4>
+            <div className="flex items-center gap-4 text-xs text-[var(--muted)]">
               <div className="flex items-center gap-1">
                 <AlertCircle className="w-3.5 h-3.5" />
                 <span>Active today</span>

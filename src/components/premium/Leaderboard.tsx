@@ -24,7 +24,7 @@ export default function Leaderboard({ members, isLoading }: LeaderboardProps) {
       <PremiumCard>
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-16 bg-[#FAF9FE] rounded-[28px] animate-pulse" />
+            <div key={i} className="h-16 bg-[var(--card-muted)] rounded-[28px] animate-pulse" />
           ))}
         </div>
       </PremiumCard>
@@ -35,12 +35,12 @@ export default function Leaderboard({ members, isLoading }: LeaderboardProps) {
     if (rank === 1) return <Trophy className="w-5 h-5 text-[var(--warn-text)]" />;
     if (rank === 2) return <Medal className="w-5 h-5 text-[var(--muted)]" />;
     if (rank === 3) return <Medal className="w-5 h-5 text-[var(--warn-text)]" />;
-    return <span className="text-sm font-bold text-[#9CA3AF]">#{rank}</span>;
+    return <span className="text-sm font-bold text-[var(--muted)]">#{rank}</span>;
   };
 
   return (
     <PremiumCard>
-      <h3 className="font-bold text-[#14121F] mb-4">Circle Leaderboard</h3>
+      <h3 className="font-bold text-[var(--ink)] mb-4">Circle Leaderboard</h3>
       <div className="space-y-3">
         {members.map((member, index) => (
           <div
@@ -55,8 +55,8 @@ export default function Leaderboard({ members, isLoading }: LeaderboardProps) {
               <div className="w-10 h-10 rounded-full bg-[var(--line)]" />
 
               <div className="flex-1">
-                <p className="text-sm font-bold text-[#14121F]">{member.fullName}</p>
-                <p className="text-xs text-[#9CA3AF]">@{member.username}</p>
+                <p className="text-sm font-bold text-[var(--ink)]">{member.fullName}</p>
+                <p className="text-xs text-[var(--muted)]">@{member.username}</p>
               </div>
             </div>
 
@@ -64,14 +64,14 @@ export default function Leaderboard({ members, isLoading }: LeaderboardProps) {
               <div>
                 <div className="flex items-center gap-1 justify-end mb-1">
                   <Flame className="w-3.5 h-3.5 text-[var(--warn-text)]" />
-                  <p className="text-sm font-bold text-[#14121F]">{member.streak}</p>
+                  <p className="text-sm font-bold text-[var(--ink)]">{member.streak}</p>
                 </div>
-                <p className="text-xs text-[#9CA3AF]">{member.winRate}%</p>
+                <p className="text-xs text-[var(--muted)]">{member.winRate}%</p>
               </div>
 
               <div>
                 <p className="text-sm font-bold text-[var(--navy)]">${member.moneyEarned}</p>
-                <p className="text-xs text-[#9CA3AF]">{member.wins} wins</p>
+                <p className="text-xs text-[var(--muted)]">{member.wins} wins</p>
               </div>
             </div>
           </div>

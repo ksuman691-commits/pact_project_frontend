@@ -14,46 +14,55 @@
   /* ---- Classic palette v2 (hand-made restyle, supersedes v1 hex values —
      token NAMES kept stable so every component/page that already
      references var(--navy) etc. re-themes automatically) ---- */
-  --paper: #F7F5F0;
-  --card: #FFFFFF;
-  --card-muted: #F2F4F7;
-  --ink: #101828;
-  --ink-soft: #1C2B4A;
-  --muted: #667085;
-  --navy: #1877F2;
-  --navy-hover: #145FCC;
-  --hairline: #E4E7EC;
-  --hairline-soft: #EAECF0;
-  --seat-border: #D0D5DD;
-  --dash: #98A2B3;
-  --witness-empty: #98A2B3;
-  --tan: #D0D5DD;
-  --warn-bg: #FFF4E5;
-  --warn-text: #B54708;
-  --missed-border: #98A2B3;
+  --paper: #F4EFE4;
+  --card: #FBF8F1;
+  --card-muted: #F0EBDF;
+  --ink: #17181D;
+  --ink-soft: #17181D;
+  --muted: #5A5C63;
+  --navy: #1F3A93;
+  --navy-hover: #142766;
+  --hairline: #DCD3C1;
+  --hairline-soft: #DCD3C1;
+  --seat-border: #CFC5B0;
+  --dash: var(--seat-border);
+  --witness-empty: var(--seat-border);
+  --tan: var(--hairline);
+  --warn-bg: var(--card-muted);
+  --warn-text: var(--muted);
+  --missed-border: var(--seat-border);
   --missed-stripe: transparent;
   --card-text: #FFFFFF;
-  --photo-frame: #FFFFFF; 
+  --photo-frame: var(--card);
 
   /* ---- Legacy light-theme variables, repointed ---- */
+  --primary: var(--navy);
+  --primary-hover: var(--navy-hover);
+  --accent: var(--navy);
+  --accent-hover: var(--navy-hover);
+  --brand: var(--navy);
+  --brand-hover: var(--navy-hover);
+  --pact-primary: var(--navy);
+  --pact-primary-hover: var(--navy-hover);
   --bg-base: var(--paper);
   --bg-card: var(--card);
   --bg-card-alt: var(--card);
   --accent-primary: var(--navy);
   --accent-primary-hover: var(--navy-hover);
-  --accent-primary-soft: #1F3A9318;
+  --accent-primary-soft: var(--card-muted);
   --text-primary: var(--ink);
   --text-secondary: var(--muted);
   --text-tertiary: var(--muted);
   --status-warning-bg: var(--warn-bg);
   --status-warning-text: var(--warn-text);
-  --status-info-bg: #1F3A9318;
+  --status-info-bg: var(--card-muted);
   --status-info-text: var(--navy);
-  --status-pink-bg: #1F3A9318;
+  --status-pink-bg: var(--card-muted);
   --status-pink-text: var(--navy);
-  --status-success-bg: #1F3A9318;
+  --status-success-bg: var(--card-muted);
   --status-success-text: var(--navy);
   --border-hairline: var(--hairline);
+  --line: var(--hairline);
 
   /* ---- "pact-flow" immersive variables, repointed to the same palette so
      the create-pact / create-circle wizards inherit Classic automatically.
@@ -103,7 +112,7 @@ body {
    the moment it renders outside a .pact-flow-wrapped page. Opt in
    explicitly with this class instead. */
 .legacy-light-card {
-  @apply bg-white rounded-[28px] shadow-[0_8px_24px_rgba(16,24,40,0.06),0_2px_6px_rgba(16,24,40,0.03)] p-6;
+  @apply bg-[var(--card)] rounded-[28px] shadow-[0_8px_24px_rgba(23,24,29,0.06),0_2px_6px_rgba(23,24,29,0.03)] p-6;
 }
 
 /* Primary Button - Pill Shaped */
@@ -123,12 +132,12 @@ body {
 
 /* Icon Button - Perfect Circle */
 .icon-btn {
-  @apply w-12 h-12 rounded-full bg-white shadow-[0_4px_12px_rgba(94,84,142,0.08)] flex items-center justify-center text-[#667085] hover:shadow-[0_6px_16px_rgba(94,84,142,0.12)] transition-all;
+  @apply w-12 h-12 rounded-full bg-[var(--card)] shadow-[0_4px_12px_rgba(23,24,29,0.08)] flex items-center justify-center text-[var(--muted)] hover:shadow-[0_6px_16px_rgba(23,24,29,0.12)] transition-all;
 }
 
 /* Icon Button - Active State */
 .icon-btn.active {
-  @apply bg-[#101828] text-white shadow-[0_4px_12px_rgba(20,18,31,0.15)];
+  @apply bg-[var(--ink)] text-white shadow-[0_4px_12px_rgba(23,24,29,0.15)];
 }
 
 /* Status Pills / Badges */
@@ -137,19 +146,19 @@ body {
 }
 
 .badge-warning {
-  @apply bg-[#FDECC8] text-[#92622A];
+  @apply bg-[var(--card-muted)] text-[var(--ink)];
 }
 
 .badge-info {
-  @apply bg-[#DBEAFE] text-[#1E40AF];
+  @apply bg-[var(--card-muted)] text-[var(--navy)];
 }
 
 .badge-pink {
-  @apply bg-[#FBD5E8] text-[#9D2B6B];
+  @apply bg-[var(--card-muted)] text-[var(--ink)];
 }
 
 .badge-success {
-  @apply bg-[#D9F2E3] text-[#1B7A46];
+  @apply bg-[var(--card-muted)] text-[var(--ink)];
 }
 
 /* Input Fields - Pill Shaped */
@@ -182,38 +191,40 @@ body {
 
 /* Cards with proper spacing */
 .card-sm {
-  @apply bg-white rounded-2xl shadow-[0_4px_12px_rgba(94,84,142,0.06)] p-4;
+  @apply bg-[var(--card)] rounded-2xl shadow-[0_4px_12px_rgba(23,24,29,0.06)] p-4;
 }
 
 /* Large stat text */
 .stat-number {
-  @apply text-5xl font-bold text-[#101828] leading-tight;
+  @apply text-5xl font-bold text-[var(--ink)] leading-tight;
 }
 
 .stat-label {
-  @apply text-sm font-medium text-[#667085] mt-1;
+  @apply text-sm font-medium text-[var(--muted)] mt-1;
 }
 
 /* Heading sizes */
 h1 {
-  @apply text-3xl font-bold text-[#101828] leading-tight;
+  @apply text-3xl font-bold text-[var(--ink)] leading-tight;
 }
 
 h2 {
-  @apply text-2xl font-bold text-[#101828] leading-snug;
+  @apply text-2xl font-bold text-[var(--ink)] leading-snug;
 }
 
 h3 {
-  @apply text-xl font-semibold text-[#101828] leading-snug;
+  @apply text-xl font-semibold text-[var(--ink)] leading-snug;
 }
 
 h4, h5, h6 {
-  @apply font-semibold text-[#101828];
+  @apply font-semibold text-[var(--ink)];
 }
 
 /* Body text */
+/* No color here: body already sets --ink, and a direct color would override
+   text-white inherited from dark parents. */
 p {
-  @apply text-[#101828] leading-relaxed;
+  @apply leading-relaxed;
 }
 
 /* Generous spacing between sections */

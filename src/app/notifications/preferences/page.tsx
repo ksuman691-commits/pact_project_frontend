@@ -160,7 +160,7 @@ export default function NotificationPreferencesPage() {
                   style={{ background: isOn ? 'var(--pact-pink)' : 'var(--pact-hairline)' }}
                 >
                   <span
-                    className="absolute top-1 h-5 w-5 rounded-full bg-white transition-all"
+                    className="absolute top-1 h-5 w-5 rounded-full bg-[var(--card)] transition-all"
                     style={{ left: isOn ? '1.5rem' : '0.25rem' }}
                   />
                 </button>

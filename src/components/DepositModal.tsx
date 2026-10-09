@@ -48,7 +48,7 @@ export default function DepositModal({ isOpen, onClose, onDeposit }: DepositModa
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end z-50">
-      <div className="bg-white w-full rounded-t-2xl p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-[var(--card)] w-full rounded-t-2xl p-6 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-ink">Add Funds</h2>

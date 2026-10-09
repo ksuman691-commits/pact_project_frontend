@@ -30,7 +30,8 @@ export interface Activity {
   custom?: boolean; // true = "Something else" — user types the label
 }
 
-export type ProofMethod = 'Photo' | 'Video' | 'Check-in' | 'Activity data';
+// 'Moment' is the default "Photo or video" daily moment; the rest are opt-in under Customize.
+export type ProofMethod = 'Moment' | 'Photo' | 'Video' | 'Check-in' | 'Activity data';
 export type ProofFrequency = 'Every day' | 'Every 2 days' | 'Every week' | 'At the end of the Pact';
 export type AudienceLabel = 'Just me' | 'My Circle' | 'Everyone';
 export type VisibilityLabel = 'Only me' | 'My Circle' | 'Everyone';
@@ -77,15 +78,7 @@ export interface CreatedPact {
   createdAt: string;
 }
 
-export type FlowStep =
-  | 'vibe'
-  | 'activity'
-  | 'target'
-  | 'duration'
-  | 'proof'
-  | 'audience'
-  | 'review'
-  | 'success';
+export type FlowStep = 'what' | 'when' | 'review' | 'success';
 
 export function createEmptyDraft(): PactDraft {
   return {
@@ -93,8 +86,8 @@ export function createEmptyDraft(): PactDraft {
     activityIndex: null,
     target: null,
     durationDays: null,
-    proofMethod: null,
-    proofFrequency: null,
+    proofMethod: 'Moment',
+    proofFrequency: 'Every day',
     audience: null,
     visibility: 'Only me',
     taggedParticipantId: null,

@@ -22,7 +22,7 @@ export default function Achievements({ achievements }: AchievementsProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-bold text-[#14121F]">Achievements</h3>
+        <h3 className="font-bold text-[var(--ink)]">Achievements</h3>
         <span className="text-sm font-semibold text-[var(--navy)]">
           {unlockedCount}/{achievements.length}
         </span>
@@ -35,20 +35,20 @@ export default function Achievements({ achievements }: AchievementsProps) {
             className={`rounded-[24px] p-4 flex flex-col items-center text-center transition-all ${
               achievement.unlocked
                 ? 'bg-[var(--card)] border-[var(--line)]'
-                : 'bg-[#F4F2FB] border border-[rgba(20,18,31,0.06)] opacity-50'
+                : 'bg-[var(--card-muted)] border border-[var(--hairline)] opacity-50'
             }`}
           >
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
                 achievement.unlocked
                   ? 'bg-[var(--warn-bg)] text-[var(--ink)]'
-                  : 'bg-[var(--line)] text-[#9CA3AF]'
+                  : 'bg-[var(--line)] text-[var(--muted)]'
               }`}
             >
               {achievement.icon}
             </div>
 
-            <h4 className="text-xs font-bold text-[#14121F]">{achievement.title}</h4>
+            <h4 className="text-xs font-bold text-[var(--ink)]">{achievement.title}</h4>
 
             {achievement.progress !== undefined && !achievement.unlocked && (
               <div className="w-full mt-2">
@@ -58,7 +58,7 @@ export default function Achievements({ achievements }: AchievementsProps) {
                     style={{ width: `${achievement.progress}%` }}
                   />
                 </div>
-                <p className="text-xs text-[#9CA3AF] mt-1">{achievement.progress}%</p>
+                <p className="text-xs text-[var(--muted)] mt-1">{achievement.progress}%</p>
               </div>
             )}
 

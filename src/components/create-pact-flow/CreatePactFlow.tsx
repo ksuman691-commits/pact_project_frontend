@@ -6,12 +6,8 @@ import { CreatePactFlowProvider, useCreatePactFlow } from '@/context/CreatePactF
 import { generateTitle, LIVE_TITLE_PLACEHOLDER } from '@/lib/createPactFlow/generate';
 import FlowShell from './FlowShell';
 import TaggedParticipantBanner from './TaggedParticipantBanner';
-import VibeStep from './VibeStep';
-import ActivityStep from './ActivityStep';
-import TargetStep from './TargetStep';
-import DurationStep from './DurationStep';
-import ProofStep from './ProofStep';
-import AudienceStep from './AudienceStep';
+import WhatScreen from './WhatScreen';
+import WhenScreen from './WhenScreen';
 import ReviewStep from './ReviewStep';
 import SuccessStep from './SuccessStep';
 
@@ -33,6 +29,10 @@ interface CreatePactFlowProps {
 function StepRouter({ onExit }: CreatePactFlowProps) {
   const { currentStep, draft, activity, stepIndex, resolvedSteps, canGoBack, goBack } = useCreatePactFlow();
 
+  if (currentStep === 'what') return <WhatScreen onExit={onExit} />;
+  if (currentStep === 'when') return <WhenScreen onExit={onExit} />;
+  if (currentStep === 'review') return <ReviewStep onExit={onExit} />;
+
   return (
     <FlowShell
       onExit={onExit}
@@ -40,20 +40,13 @@ function StepRouter({ onExit }: CreatePactFlowProps) {
       totalSteps={resolvedSteps.length - 1}
       canGoBack={canGoBack}
       onBack={goBack}
-      showChrome={currentStep !== 'success'}
+      showChrome={false}
       titleStripText={generateTitle(draft, activity)}
       titleStripPlaceholder={LIVE_TITLE_PLACEHOLDER}
       titleStripIcon={Target}
       banner={draft.taggedParticipantId ? <TaggedParticipantBanner userId={draft.taggedParticipantId} /> : null}
     >
-      {currentStep === 'vibe' && <VibeStep />}
-      {currentStep === 'activity' && <ActivityStep />}
-      {currentStep === 'target' && <TargetStep />}
-      {currentStep === 'duration' && <DurationStep />}
-      {currentStep === 'proof' && <ProofStep />}
-      {currentStep === 'audience' && <AudienceStep />}
-      {currentStep === 'review' && <ReviewStep />}
-      {currentStep === 'success' && <SuccessStep />}
+      <SuccessStep />
     </FlowShell>
   );
 }

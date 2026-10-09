@@ -26,18 +26,36 @@ export function resolveDurationDays(draft: PactDraft): number {
   return 0;
 }
 
+function activityPhrase(draft: PactDraft, activity: Activity): string {
+  let phrase = resolveActivityLabel(draft, activity);
+  if (!activity.milestone && draft.target != null && activity.unit) {
+    phrase += ' ' + formatTarget(draft.target, activity.unit);
+  }
+  return phrase;
+}
+
 export function generateTitle(draft: PactDraft, activity: Activity | null): string {
   if (!activity) return '';
-  const label = resolveActivityLabel(draft, activity);
-  let title = `${activity.emoji} ${label}`;
-  if (!activity.milestone && draft.target != null && activity.unit) {
-    title += ' ' + formatTarget(draft.target, activity.unit);
-  }
+  let title = `${activity.emoji} ${activityPhrase(draft, activity)}`;
   const days = resolveDurationDays(draft);
   if (days > 0) {
     title += ` in ${days} Days`;
   }
   return title;
+}
+
+/** Emoji-free pieces of the title for the "I will ..." sentence. */
+export function generateSentenceParts(
+  draft: PactDraft,
+  activity: Activity | null,
+): { what: string; when: string } {
+  if (!activity) return { what: '', when: '' };
+  const phrase = activityPhrase(draft, activity);
+  const days = resolveDurationDays(draft);
+  return {
+    what: phrase.charAt(0).toLowerCase() + phrase.slice(1),
+    when: days > 0 ? `in ${days} ${days === 1 ? 'day' : 'days'}` : '',
+  };
 }
 
 export function generateDescription(draft: PactDraft): string {

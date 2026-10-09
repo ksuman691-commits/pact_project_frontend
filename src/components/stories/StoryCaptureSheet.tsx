@@ -222,7 +222,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
         {step === 'idle' && (
           <>
             <p className="text-[15px] leading-relaxed text-[var(--ink)]">
-              Record a short video of today&apos;s work. It counts as today&apos;s proof and disappears after 24 hours.
+              Record a short video of today&apos;s work. It shares your progress and disappears after 24 hours.
             </p>
             <p className="rounded-[6px] border border-[var(--hairline)] bg-[var(--card)] px-4 py-3 text-[14px] text-[var(--muted)]">{STORY_LIMITS_TEXT}</p>
 
@@ -237,7 +237,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
                   onClick={() => cameraInputRef.current?.click()}
                   disabled={checking}
                   className="flex h-[176px] w-[176px] flex-col items-center justify-center gap-2 rounded-full text-[17px] font-semibold disabled:opacity-60"
-                  style={{ background: 'var(--navy)', color: 'var(--paper)' }}
+                  style={{ background: 'var(--navy)', color: '#fff' }}
                 >
                   <Video className="h-7 w-7" strokeWidth={2} aria-hidden="true" />
                   {checking ? 'Checking video…' : 'Record a video'}
@@ -296,7 +296,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
                 onClick={recording ? finishRecording : startRecording}
                 aria-label={recording ? 'Stop recording' : 'Start recording'}
                 className="relative flex h-[76px] w-[76px] items-center justify-center rounded-full"
-                style={{ background: 'var(--navy)', color: 'var(--paper)' }}
+                style={{ background: 'var(--navy)', color: '#fff' }}
               >
                 {recording ? <Square className="h-6 w-6" fill="currentColor" /> : <Circle className="h-7 w-7" fill="currentColor" />}
               </button>
@@ -322,8 +322,8 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
                 <span className="flex h-14 w-14 items-center justify-center rounded-full" style={{ border: '3px solid var(--navy)', color: 'var(--navy)' }}>
                   <Check className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
                 </span>
-                <p className="text-[16px] font-semibold">Posted. It counts as today&apos;s proof.</p>
-                <button type="button" onClick={closeSheet} className="h-12 w-full rounded-full text-[15px] font-semibold" style={{ background: 'var(--navy)', color: 'var(--paper)' }}>
+                <p className="text-[16px] font-semibold">Moment posted.</p>
+                <button type="button" onClick={closeSheet} className="h-12 w-full rounded-full text-[15px] font-semibold" style={{ background: 'var(--navy)', color: '#fff' }}>
                   Done
                 </button>
               </div>
@@ -357,7 +357,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
                     disabled={comingSoon}
                     onClick={() => void post({ blob: clip.blob, contentType: clip.contentType, durationSeconds: clip.duration })}
                     className="h-12 flex-1 rounded-full text-[15px] font-semibold disabled:bg-[var(--card-muted)] disabled:text-[var(--muted)]"
-                    style={comingSoon ? undefined : { background: 'var(--navy)', color: 'var(--paper)' }}
+                    style={comingSoon ? undefined : { background: 'var(--navy)', color: '#fff' }}
                   >
                     {comingSoon ? STORIES_COMING_SOON : phase === 'error' ? 'Try again' : 'Post'}
                   </button>
