@@ -85,14 +85,14 @@ function PostTodaySheet({ circles, onClose, onPick }: { circles: StoryCircle[]; 
             </Link>
           </div>
         ) : (
-          <div className="flex flex-col gap-3 overflow-y-auto">
+          <div className="flex flex-col gap-2 overflow-y-auto">
             {groups.map((group) => (
               <div key={group.key} role="group" aria-label={group.name}>
-                <h3 className="pb-1 text-[13px] font-semibold text-[var(--muted)]">{group.name}</h3>
-                <ul className="flex flex-col">
+                <h3 className="pb-1 text-[12px] font-medium text-[var(--muted)]">{group.name}</h3>
+                <ul className="flex flex-col gap-2">
                   {group.pacts.map((pact) => (
                     <li key={pact.id} className="border-b border-[var(--hairline)] last:border-b-0">
-                      <button type="button" onClick={() => onPick(pact)} className="flex min-h-[56px] w-full items-center py-2 text-left">
+                      <button type="button" onClick={() => onPick(pact)} className="flex min-h-[44px] w-full items-center py-1 text-left">
                         <span className="text-[15px] font-semibold">{pact.title}</span>
                       </button>
                     </li>

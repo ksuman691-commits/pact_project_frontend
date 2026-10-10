@@ -48,6 +48,7 @@ function PactsPageInner() {
   const { user } = useAuthStore()
   const [filter, setFilter] = useState<(typeof filters)[number]>('All')
   const [search, setSearch] = useState('')
+  const [pactLimit, setPactLimit] = useState(30)
 
   // /pacts?filter=Active seeds the tab on mount (stat card deep link).
   useEffect(() => {
@@ -57,7 +58,12 @@ function PactsPageInner() {
     }
   }, [searchParams])
 
-  const query = useQuery({ queryKey: ['my-pacts', user?.id], queryFn: () => pactAdvancedService.getMyPacts(0, 100), enabled: !!user?.id })
+  const query = useQuery({
+    queryKey: ['my-pacts', user?.id],
+    queryFn: () => pactAdvancedService.getMyPacts(0, pactLimit),
+    enabled: !!user?.id,
+    placeholderData: (previousData) => previousData,
+  })
   const daresQuery = useQuery({ queryKey: ['my-dares-page', user?.id], queryFn: () => dareService.getMine(0, 50), enabled: !!user?.id })
 
   const pacts: any[] = query.data?.data || []
@@ -217,6 +223,16 @@ function PactsPageInner() {
 
             {showDone && broken.map((pact) => <BrokenPactCard key={pact.id} pact={pact} />)}
             {showDone && finished.map((pact) => <FinishedPactRow key={pact.id} pact={pact} />)}
+            {pacts.length >= pactLimit && pactLimit < 100 && (
+              <button
+                type="button"
+                onClick={() => setPactLimit((current) => (current === 30 ? 60 : 100))}
+                disabled={query.isFetching}
+                className="mx-auto flex h-11 items-center rounded-full border-[1.5px] border-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--navy)] disabled:opacity-60"
+              >
+                {query.isFetching ? 'Loading…' : 'Load more'}
+              </button>
+            )}
           </div>
         )}
       </div>

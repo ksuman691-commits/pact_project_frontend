@@ -53,7 +53,7 @@ export function generateSentenceParts(
   const phrase = activityPhrase(draft, activity);
   const days = resolveDurationDays(draft);
   return {
-    what: phrase.charAt(0).toLowerCase() + phrase.slice(1),
+    what: phrase.charAt(0).toUpperCase() + phrase.slice(1),
     when: days > 0 ? `in ${days} ${days === 1 ? 'day' : 'days'}` : '',
   };
 }
