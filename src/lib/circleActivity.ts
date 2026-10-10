@@ -16,9 +16,11 @@ function readFlag(member: any): boolean | undefined {
   return typeof member?.sent_proof_this_week === 'boolean' ? member.sent_proof_this_week : undefined
 }
 
-function toRingMember(m: any, flag: boolean | undefined): RingMember {
+function toRingMember(m: any, flag: boolean | undefined, viewerId?: number | string | null): RingMember {
+  const userId = m.user_id ?? m.id ?? m.username
   return {
-    userId: m.user_id ?? m.id ?? m.username,
+    userId,
+    isYou: viewerId != null && String(userId) === String(viewerId),
     name: m.name || m.full_name || m.username,
     avatarUrl: m.avatar_url || null,
     // Only an explicit true lights a seat; null/undefined means unknown.
@@ -36,7 +38,7 @@ function toRingMember(m: any, flag: boolean | undefined): RingMember {
  * A missing or null flag means "unknown", never "false". See
  * BACKEND_SPEC_MEMBER_ACTIVITY.md.
  */
-export function readCircleActivity(circle: any, memberList?: any[]): CircleActivity {
+export function readCircleActivity(circle: any, memberList?: any[], viewerId?: number | string | null): CircleActivity {
   const hasList = Array.isArray(memberList) && memberList.length > 0
   const source: any[] =
     (hasList && memberList) ||
@@ -46,7 +48,7 @@ export function readCircleActivity(circle: any, memberList?: any[]): CircleActiv
   const members = hasList ? source : source.slice(0, MAX_PREVIEW_SEATS)
 
   const flags = members.map(readFlag)
-  const ringMembers = members.map((m, i) => toRingMember(m, flags[i]))
+  const ringMembers = members.map((m, i) => toRingMember(m, flags[i], viewerId))
 
   if (ringMembers.length === 0 && circle?.owner_username) {
     ringMembers.push({

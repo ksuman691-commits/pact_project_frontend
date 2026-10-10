@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { TickBadge } from './Seat';
 
 export interface RingMember {
   userId: number | string;
@@ -13,6 +14,8 @@ export interface RingMember {
    * defaulting to false when this is genuinely unknown — the caller
    * decides whether to pass `activityKnown` at all. */
   activeThisWeek: boolean;
+  /** True for the signed-in viewer; drawn with a ring and a small "You" label. */
+  isYou?: boolean;
 }
 
 interface RingProps {
@@ -130,7 +133,7 @@ export default function Ring({
 
   const discDiameter = outer * 0.27 * 2;
   const monogramSize = outer * 0.17;
-  const badgeSize = isDetail ? 18 : 14;
+  const badgeSize = Math.max(12, Math.round(seatSize * 0.42));
 
   return (
     <div
@@ -140,8 +143,8 @@ export default function Ring({
       aria-label={
         activityKnown
           ? activeCount > 0
-            ? `${circleName}: ${totalMemberCount} members, ${activeCount} sent proof this week`
-            : `${circleName}: ${totalMemberCount} members, nobody has sent proof this week`
+            ? `${circleName}: ${totalMemberCount} members, ${activeCount} shared a moment this week`
+            : `${circleName}: ${totalMemberCount} members, nobody has shared a moment this week`
           : `${circleName}: ${totalMemberCount} members`
       }
     >
@@ -189,6 +192,7 @@ export default function Ring({
               style={{
                 background: lit ? 'var(--navy)' : 'var(--card)',
                 border: lit ? `2px solid var(--paper)` : `1.5px solid var(--seat-border)`,
+                boxShadow: seat.isYou ? '0 0 0 2px var(--navy)' : undefined,
               }}
               title={isOverflow ? `${overflow} more members` : seat.name || undefined}
             >
@@ -203,23 +207,14 @@ export default function Ring({
               </span>
               {!isOverflow && seat.avatarUrl && <SeatPhoto url={seat.avatarUrl} />}
             </div>
-            {lit && (
-              <div
-                className="absolute flex items-center justify-center rounded-full"
-                style={{
-                  width: badgeSize,
-                  height: badgeSize,
-                  right: -5,
-                  bottom: -5,
-                  background: 'var(--card)',
-                  border: `1.5px solid var(--navy)`,
-                }}
-                aria-hidden="true"
+            {lit && <TickBadge size={badgeSize} />}
+            {seat.isYou && (
+              <span
+                className="absolute left-1/2 -translate-x-1/2 rounded-full bg-[var(--navy)] px-1 font-sans font-bold leading-[11px] text-[var(--card)]"
+                style={{ top: seatSize - 4, fontSize: 8 }}
               >
-                <svg width={badgeSize * 0.57} height={badgeSize * 0.57} viewBox="0 0 10 10" fill="none">
-                  <path d="M2 5.2 L4.1 7.3 L8 2.8" stroke="var(--navy)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
+                You
+              </span>
             )}
           </div>
         );
