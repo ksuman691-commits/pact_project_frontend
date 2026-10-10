@@ -92,8 +92,6 @@ export default function CirclesPage() {
   }, [searchFiltered, membershipFilter, sort, viewerId])
 
   const allActivityKnown = withActivity.length > 0 && withActivity.every(({ activity }) => activity.known)
-  const anyActivityKnown = withActivity.some(({ activity }) => activity.known)
-  const anySeatTicked = withActivity.some(({ activity }) => activity.ringMembers.some((m) => m.activeThisWeek))
   const activeCircles = withActivity.filter(({ activity }) => activity.known && activity.activeCount > 0).length
 
   const summary = (() => {
@@ -113,10 +111,6 @@ export default function CirclesPage() {
           <h1 className="text-[34px] font-bold leading-none tracking-[-0.035em]">Your circles</h1>
           {summary && <p className="text-[14px] text-[var(--muted)]">{summary}</p>}
         </header>
-
-        {(anyActivityKnown || anySeatTicked) && (
-          <p className="mx-6 mt-4 text-[13px] text-[var(--ink-soft)]">✓ shared a moment this week</p>
-        )}
 
         <div className="mt-4">
           <PendingCircleInvites />
