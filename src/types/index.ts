@@ -118,6 +118,8 @@ export interface PactDayStripEntry {
   has_moment: boolean;
   type: 'photo' | 'video' | null;
   thumbnail_url: string | null;
+  /** Signed playback URL for video days (backend sends it on the day strip). */
+  video_url?: string | null;
 }
 
 // Mutual-goal matching — GET /api/pacts/{pact_id}/matches (see

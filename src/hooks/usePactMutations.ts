@@ -102,6 +102,34 @@ export function useCreateCheer(pactId: number) {
   });
 }
 
+/**
+ * Toggle the current user's cheer on a pact: `true` sends one, `false` undoes
+ * it. The caller owns optimistic UI; this hook refetches the cheer list and
+ * pact (for the count) and keeps the mutation pending until that finishes so
+ * the optimistic value is only dropped once fresh data is in.
+ */
+export function useToggleCheer(pactId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (shouldCheer: boolean) =>
+      shouldCheer ? cheerService.create(pactId) : cheerService.remove(pactId),
+    onError: (error: any, shouldCheer) => {
+      // 409 on send / 404 on undo mean the server already agrees with the
+      // state the user wanted; just resync instead of showing an error.
+      const status = error?.response?.status;
+      if ((shouldCheer && status === 409) || (!shouldCheer && status === 404)) return;
+      toast.error(toErrorMessage(error, shouldCheer ? "Couldn't send your cheer" : "Couldn't undo your cheer"));
+    },
+    onSettled: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.pacts.cheers(pactId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.pacts.detail(pactId) }),
+      ]);
+    },
+  });
+}
+
 export function useJoinPact(pactId: number) {
   const queryClient = useQueryClient();
 

@@ -85,6 +85,7 @@ const mapProof = (raw: any) => ({
   proof_url: raw?.proof_url ?? raw?.file_url ?? null,
   file_url: raw?.file_url ?? raw?.proof_url ?? null,
   uploaded_at: raw?.uploaded_at ?? raw?.created_at ?? null,
+  submitted_by: raw?.submitted_by ?? raw?.user_id ?? null,
 });
 
 const mapCheer = (raw: any) => ({
@@ -419,9 +420,12 @@ export const pactService = {
   personalized: (skip = 0, limit = 20) => api.get('/api/pacts/feed/personalized', { params: { skip, limit } }),
 };
 
-// Cheers (photo-only encouragement posts from non-creator members)
+// Cheers: a one-tap like from a non-creator member. One per user per pact;
+// DELETE /cheers/me undoes it. A photo is still accepted by the backend for
+// older clients but is no longer sent.
 export const cheerService = {
-  create: (pactId: number, file: File) => {
+  create: (pactId: number, file?: File) => {
+    if (!file) return api.post(`/api/pacts/${pactId}/cheers`);
     const formData = new FormData();
     formData.append('file', file);
     // The api instance sets a default 'Content-Type: application/json'
@@ -433,6 +437,7 @@ export const cheerService = {
       headers: { 'Content-Type': undefined },
     });
   },
+  remove: (pactId: number) => api.delete(`/api/pacts/${pactId}/cheers/me`),
   list: async (pactId: number, skip = 0, limit = 50) => {
     const response = await api.get(`/api/pacts/${pactId}/cheers`, { params: { skip, limit } });
     return normalizeListResponse(response, mapCheer);

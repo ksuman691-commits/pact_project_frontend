@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { Camera, Check, Image as ImageIcon, MessageCircle, Play, Plus, RotateCcw, Share2, UserPlus, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Camera, Check, Image as ImageIcon, MessageCircle, Play, Plus, RotateCcw, Share2, UserPlus, Volume2, VolumeX, X } from 'lucide-react'
 import CheerButton from '@/components/CheerButton'
+import CommentsBottomSheet from '@/components/CommentsBottomSheet'
 import { pactLocalToday, resolvePactCompletionViewState } from '@/lib/pactCompletionState'
 import type { PactDayStripEntry } from '@/types'
 
@@ -13,6 +14,7 @@ type Moment = {
   description?: string
   day?: number
   uploadedAt?: string
+  userId?: number | string | null
 }
 
 type Props = {
@@ -24,6 +26,8 @@ type Props = {
   isEnded: boolean
   canCheer: boolean
   hasCheered: boolean
+  /** Lets the moment say "You" when the viewer posted it. */
+  currentUserId?: number | null
   onInvite: () => void
   onAddMoment: () => void
   onRestart: () => void
@@ -47,6 +51,112 @@ function Avatar({ person, index }: { person: any; index: number }) {
   )
 }
 
+/**
+ * Plays a story-style moment: starts on its own (muted, as browsers require),
+ * loops, taps in the middle third pause/resume, and a button unmutes.
+ * Signed URLs expire, so a load failure offers a retry instead of a dead frame.
+ */
+function MomentVideo({ src, label, hasNeighbours }: { src: string; label: string; hasNeighbours: boolean }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [paused, setPaused] = useState(false)
+  const [muted, setMuted] = useState(true)
+  const [failed, setFailed] = useState(false)
+  const [attempt, setAttempt] = useState(0)
+
+  useEffect(() => {
+    setPaused(false)
+    setFailed(false)
+  }, [src])
+
+  // React does not reliably update the muted attribute after mount, so set the property.
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.muted = muted
+  }, [muted, src, attempt])
+
+  const togglePlay = () => {
+    const video = videoRef.current
+    if (!video) return
+    if (video.paused) {
+      void video.play().catch(() => setPaused(true))
+    } else {
+      video.pause()
+    }
+  }
+
+  return (
+    <>
+      <video
+        key={`${src}#${attempt}`}
+        ref={videoRef}
+        src={src}
+        aria-label={label}
+        className="absolute inset-0 size-full object-cover"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        onPlay={() => setPaused(false)}
+        onPause={() => setPaused(true)}
+        onError={() => setFailed(true)}
+      />
+      {!failed && (
+        <button
+          type="button"
+          onClick={togglePlay}
+          aria-label={paused ? 'Play video' : 'Pause video'}
+          className={`absolute inset-y-0 z-[5] ${hasNeighbours ? 'left-1/3 right-1/3' : 'inset-x-0'}`}
+        />
+      )}
+      {paused && !failed && (
+        <span className="pointer-events-none absolute left-1/2 top-1/2 z-[6] flex size-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white">
+          <Play className="ml-1 size-7 fill-current" aria-hidden="true" />
+        </span>
+      )}
+      {!failed && (
+        <button
+          type="button"
+          onClick={() => setMuted((value) => !value)}
+          aria-label={muted ? 'Unmute' : 'Mute'}
+          className="absolute left-4 top-[56px] z-20 flex size-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur"
+        >
+          {muted ? <VolumeX className="size-4" aria-hidden="true" /> : <Volume2 className="size-4" aria-hidden="true" />}
+        </button>
+      )}
+      {failed && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black/60 px-6 text-center text-white">
+          <p className="text-[15px] font-bold">Couldn&apos;t load this video</p>
+          <button
+            type="button"
+            onClick={() => {
+              setFailed(false)
+              setAttempt((value) => value + 1)
+            }}
+            className="rounded-full bg-white px-5 py-2.5 text-[14px] font-extrabold text-[var(--navy)]"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+    </>
+  )
+}
+
+/** Small preview tile. Videos can't go in an <img>, so they get a play tile. */
+function MomentThumb({ moment }: { moment: Moment }) {
+  const [broken, setBroken] = useState(false)
+  if (moment.type === 'video' || !moment.url || broken) {
+    return (
+      <span className="flex size-full items-center justify-center bg-[var(--navy)] text-white">
+        <Play className="size-3 fill-current" aria-hidden="true" />
+      </span>
+    )
+  }
+  return <img src={moment.url} alt="" className="size-full object-cover" onError={() => setBroken(true)} />
+}
+
+const momentTime = (moment: Moment) => new Date(moment.uploadedAt || 0).getTime()
+
 export default function PactMomentsDetail({
   pact,
   moments,
@@ -56,13 +166,18 @@ export default function PactMomentsDetail({
   isEnded,
   canCheer,
   hasCheered,
+  currentUserId,
   onInvite,
   onAddMoment,
   onRestart,
   onShareRecap,
 }: Props) {
-  const [activeIndex, setActiveIndex] = useState(0)
+  // null means "follow the newest moment" until the person picks one.
+  const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const [watchingRecap, setWatchingRecap] = useState(false)
+  const [commentOpen, setCommentOpen] = useState(false)
+  const [liveCommentCount, setLiveCommentCount] = useState<number | null>(null)
+  const touchStartX = useRef<number | null>(null)
   const fallbackCompleted = progress?.completed || 0
   const completionView = resolvePactCompletionViewState(pact, new Date(), fallbackCompleted)
   const completionLooksSuccessful = completionView === 'completed' || completionView === 'provisional_completed'
@@ -88,22 +203,68 @@ export default function PactMomentsDetail({
   const dayLabel = presentationEnded ? 'Ended' : daysLeft === 0 ? 'Last day' : `${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} to go`
   const visiblePeople = participants.slice(0, 3)
   const overflow = Math.max(0, participants.length - 3)
-  const recapMoments = [...moments].sort((left, right) => {
-    const leftDay = left.day ?? 0
-    const rightDay = right.day ?? 0
-    if (leftDay !== rightDay) return leftDay - rightDay
-    return new Date(left.uploadedAt || 0).getTime() - new Date(right.uploadedAt || 0).getTime()
-  })
-  const displayMoments = completionLooksSuccessful && watchingRecap ? recapMoments : moments
+  // One ordered list (oldest to newest, left to right like the day strip). Days the
+  // strip knows about but the proofs list doesn't (it is capped) are added from
+  // the strip's own media URLs so those chips still play something.
+  const displayMoments = useMemo(() => {
+    const real = [...moments]
+    const haveDays = new Set(real.map((moment) => moment.day).filter((value) => value != null))
+    const fromStrip: Moment[] = []
+    for (const entry of strip ?? []) {
+      if (!entry.has_moment || haveDays.has(entry.day)) continue
+      const isVideo = entry.type === 'video'
+      const url = isVideo ? entry.video_url : entry.thumbnail_url
+      if (!url) continue
+      fromStrip.push({ id: `strip-${entry.day}`, url, type: isVideo ? 'video' : 'image', day: entry.day, uploadedAt: `${entry.date}T12:00:00Z`, userId: null })
+    }
+    return [...real, ...fromStrip].sort((left, right) => momentTime(left) - momentTime(right) || String(left.id).localeCompare(String(right.id)))
+  }, [moments, strip])
   const hasMoments = displayMoments.length > 0
-  const current = displayMoments[activeIndex] || displayMoments[0]
+  const safeIndex = hasMoments ? Math.min(activeIndex ?? displayMoments.length - 1, displayMoments.length - 1) : -1
+  const current = hasMoments ? displayMoments[safeIndex] : undefined
   const caption = current?.description || "Today's moment"
-  const showModernStrip = strip !== null
+  const showModernStrip = strip !== null && strip.length > 0
+  const commentCount = liveCommentCount ?? Number(pact?.comment_count ?? 0)
+
+  const authorId = current?.userId ?? pact?.creator_id
+  const authorName = (() => {
+    if (authorId != null && currentUserId != null && Number(authorId) === Number(currentUserId)) return 'You'
+    const match = participants.find((person) => Number(person?.id ?? person?.user_id) === Number(authorId))
+    return match?.username || match?.full_name || (Number(authorId) === Number(pact?.creator_id) ? pact?.creator_username : null) || 'Member'
+  })()
 
   const step = (amount: number) => {
     if (displayMoments.length < 2) return
-    setActiveIndex((index) => (index + amount + displayMoments.length) % displayMoments.length)
+    setActiveIndex((safeIndex + amount + displayMoments.length) % displayMoments.length)
   }
+
+  const momentIndexForDay = (dayNumber: number) => {
+    for (let index = displayMoments.length - 1; index >= 0; index -= 1) {
+      if (displayMoments[index].day === dayNumber) return index
+    }
+    return -1
+  }
+
+  const openDay = (dayNumber: number) => {
+    const index = momentIndexForDay(dayNumber)
+    if (index < 0) return
+    setActiveIndex(index)
+    if (presentationEnded) setWatchingRecap(true)
+  }
+
+  const onTouchStart = (event: React.TouchEvent) => {
+    touchStartX.current = event.touches[0]?.clientX ?? null
+  }
+  const onTouchEnd = (event: React.TouchEvent) => {
+    const start = touchStartX.current
+    touchStartX.current = null
+    if (start == null) return
+    const delta = (event.changedTouches[0]?.clientX ?? start) - start
+    if (Math.abs(delta) > 50) step(delta < 0 ? 1 : -1)
+  }
+
+  const footerWindowStart = Math.min(Math.max(0, safeIndex - 1), Math.max(0, displayMoments.length - 3))
+  const footerMoments = displayMoments.slice(footerWindowStart, footerWindowStart + 3)
 
   return (
     <main className="min-h-[calc(100vh-72px)] bg-[var(--paper)] px-[14px] pb-3 pt-5 text-[var(--ink)]">
@@ -116,11 +277,17 @@ export default function PactMomentsDetail({
               const isDashed = presentationEnded ? !entry.has_moment : isPast && !entry.has_moment
               const hasPhotoThumbnail = entry.has_moment && entry.type === 'photo' && Boolean(entry.thumbnail_url)
               const isPlayTile = entry.has_moment && !hasPhotoThumbnail
+              const hasPlayableMoment = momentIndexForDay(entry.day) >= 0
+              const isSelected = !!current && current.day === entry.day
               return (
-                <div
+                <button
                   key={entry.day}
+                  type="button"
+                  disabled={!hasPlayableMoment}
+                  onClick={() => openDay(entry.day)}
+                  aria-pressed={isSelected}
                   aria-label={`Day ${entry.day}${entry.has_moment ? ', moment shared' : isToday ? ', today' : isPast ? ', missed' : ', upcoming'}`}
-                  className={`relative aspect-square overflow-hidden rounded-[9px] ${isPlayTile ? 'bg-[var(--navy)]' : 'bg-[var(--card-muted)]'} ${isToday ? 'ring-2 ring-[var(--navy)] ring-offset-1' : ''} ${isDashed ? 'border-2 border-dashed border-[var(--missed-border)] bg-transparent' : ''}`}
+                  className={`relative aspect-square overflow-hidden rounded-[9px] p-0 transition active:scale-95 disabled:cursor-default disabled:active:scale-100 ${isPlayTile ? 'bg-[var(--navy)]' : 'bg-[var(--card-muted)]'} ${isSelected ? 'ring-2 ring-[var(--navy)] ring-offset-2' : isToday ? 'ring-1 ring-[var(--navy)]/60 ring-offset-1' : ''} ${isDashed ? 'border-2 border-dashed border-[var(--missed-border)] bg-transparent' : ''}`}
                 >
                   {hasPhotoThumbnail ? (
                     <img src={entry.thumbnail_url ?? undefined} alt="" className="size-full object-cover" />
@@ -131,7 +298,7 @@ export default function PactMomentsDetail({
                   ) : null}
                   {hasPhotoThumbnail && <span className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/60 to-transparent" />}
                   <span className={`absolute inset-x-0 bottom-1 z-10 text-center text-[10px] font-extrabold leading-3 ${hasPhotoThumbnail || isPlayTile ? 'text-white' : 'text-[var(--navy)]'}`}>DAY {entry.day}</span>
-                </div>
+                </button>
               )
             })}
           </div>
@@ -156,7 +323,12 @@ export default function PactMomentsDetail({
         )}
 
         {!presentationEnded && <header className="flex items-center gap-3">
-          <div className="relative flex size-11 shrink-0 items-center justify-center rounded-full bg-[var(--navy)]">
+          <div
+            role="img"
+            aria-label={`${completed} of ${total} days done`}
+            className="relative flex size-11 shrink-0 items-center justify-center rounded-full"
+            style={{ background: `conic-gradient(var(--navy) ${percent * 3.6}deg, var(--hairline) 0deg)` }}
+          >
             <span className="flex size-[35px] items-center justify-center rounded-full bg-[var(--card)] text-[11px] font-extrabold">
               {percent}%
             </span>
@@ -186,7 +358,9 @@ export default function PactMomentsDetail({
         </header>}
 
         <section
-          className={`relative min-h-0 flex-1 overflow-hidden rounded-[24px] ${!hasMoments && !presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : 'bg-[var(--navy)]'}`}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+          className={`relative min-h-0 flex-1 touch-pan-y overflow-hidden rounded-[24px] ${!hasMoments && !presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : 'bg-[var(--navy)]'}`}
           aria-label="Moments"
         >
           {!hasMoments && (
@@ -235,13 +409,13 @@ export default function PactMomentsDetail({
           ) : (
             <>
           {presentationEnded && watchingRecap && (
-            <button type="button" onClick={() => setWatchingRecap(false)} aria-label="Close recap" className="absolute right-4 top-4 z-30 flex size-11 items-center justify-center rounded-full bg-white text-[var(--navy)]">
+            <button type="button" onClick={() => { setWatchingRecap(false); setActiveIndex(null) }} aria-label="Close recap" className="absolute right-4 top-4 z-30 flex size-11 items-center justify-center rounded-full bg-white text-[var(--navy)]">
               <X className="size-5" />
             </button>
           )}
           {hasMoments && current?.url && (
             current.type === 'video' ? (
-              <video src={current.url} className="absolute inset-0 size-full object-cover" muted playsInline />
+              <MomentVideo src={current.url} label={caption} hasNeighbours={displayMoments.length > 1} />
             ) : (
               <img src={current.url} alt={caption} className="absolute inset-0 size-full object-cover" />
             )
@@ -261,9 +435,9 @@ export default function PactMomentsDetail({
               )}
               <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-black/50 px-2.5 py-1.5 text-xs font-bold text-white backdrop-blur">
                 <span className="flex size-5 items-center justify-center rounded-full bg-[var(--card)] text-[10px] text-[var(--ink)]">
-                  {String(pact?.creator_username || 'Y').charAt(0).toUpperCase()}
+                  {String(authorName).charAt(0).toUpperCase()}
                 </span>
-                You - Day {current.day || day}
+                {authorName}{current?.day ? ` - Day ${current.day}` : ''}
               </div>
               <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+5rem)] right-4 z-10 flex flex-col gap-2">
                 <CheerButton
@@ -273,11 +447,18 @@ export default function PactMomentsDetail({
                   variant="stage"
                   cheerCount={cheerCount}
                 />
-                <button type="button" aria-label="Comment on this moment" className="flex size-12 items-center justify-center rounded-full bg-[var(--card)] text-[var(--ink)] shadow-lg">
-                  <MessageCircle className="size-5" />
+                <button
+                  type="button"
+                  onClick={() => setCommentOpen(true)}
+                  aria-label={commentCount > 0 ? `Comments, ${commentCount}` : 'Comment on this moment'}
+                  className="flex size-12 flex-col items-center justify-center gap-0.5 rounded-full bg-[var(--card)] text-[var(--ink)] shadow-lg active:scale-95"
+                >
+                  <MessageCircle className="size-4" />
+                  <span className="text-[11px] font-bold leading-none">{commentCount}</span>
                 </button>
               </div>
-              <div className="absolute inset-x-5 bottom-5 z-10 text-white">
+              <div className="pointer-events-none absolute bottom-5 left-5 right-[84px] z-10 text-white">
+                {pact?.title && <p className="truncate text-[12px] font-bold uppercase tracking-wide opacity-80">{pact.title}</p>}
                 <p className="mt-0.5 text-[17px] font-extrabold leading-[22px]">{caption}</p>
               </div>
             </>
@@ -323,30 +504,33 @@ export default function PactMomentsDetail({
               </button>
             ) : presentationEnded && watchingRecap ? (
               <>
-                <button type="button" onClick={() => setWatchingRecap(false)} aria-label="Close recap" className="flex size-12 items-center justify-center rounded-full border border-[var(--hairline)] text-[var(--navy)]">
+                <button type="button" onClick={() => { setWatchingRecap(false); setActiveIndex(null) }} aria-label="Close recap" className="flex size-12 items-center justify-center rounded-full border border-[var(--hairline)] text-[var(--navy)]">
                   <span aria-hidden="true">×</span>
                 </button>
                 <div className="flex min-w-0 flex-1 gap-1.5 overflow-hidden">
                   {displayMoments.map((moment, index) => (
-                    <button key={moment.id} type="button" onClick={() => setActiveIndex(index)} aria-label={`Open recap moment ${index + 1}`} className={`relative size-8 shrink-0 overflow-hidden rounded-md bg-[var(--card-muted)] ${index === activeIndex ? 'border-2 border-[var(--navy)]' : ''}`}>
-                      {moment.url && moment.type !== 'video' ? <img src={moment.url} alt="" className="size-full object-cover" /> : <span className="flex size-full items-center justify-center bg-[var(--navy)] text-white"><Play className="size-3 fill-current" /></span>}
+                    <button key={moment.id} type="button" onClick={() => setActiveIndex(index)} aria-label={`Open recap moment ${index + 1}`} className={`relative size-8 shrink-0 overflow-hidden rounded-md bg-[var(--card-muted)] ${index === safeIndex ? 'border-2 border-[var(--navy)]' : ''}`}>
+                      <MomentThumb moment={moment} />
                     </button>
                   ))}
                 </div>
               </>
             ) : hasMoments ? (
               <div className="flex min-w-0 flex-1 basis-[calc(100%-170px)] gap-1.5 overflow-hidden max-[340px]:basis-full">
-                {displayMoments.slice(0, 3).map((moment, index) => (
-                  <button
-                    key={moment.id}
-                    type="button"
-                    onClick={() => setActiveIndex(index)}
-                    aria-label={`Open moment ${index + 1}`}
-                    className={`relative size-7 shrink-0 overflow-hidden rounded-md bg-[var(--card-muted)] ${index === activeIndex ? 'border-2 border-[var(--navy)]' : ''}`}
-                  >
-                    {moment.url && <img src={moment.url} alt="" className="size-full object-cover" />}
-                  </button>
-                ))}
+                {footerMoments.map((moment, offset) => {
+                  const index = footerWindowStart + offset
+                  return (
+                    <button
+                      key={moment.id}
+                      type="button"
+                      onClick={() => setActiveIndex(index)}
+                      aria-label={`Open moment ${index + 1}`}
+                      className={`relative size-7 shrink-0 overflow-hidden rounded-md bg-[var(--card-muted)] ${index === safeIndex ? 'border-2 border-[var(--navy)]' : ''}`}
+                    >
+                      <MomentThumb moment={moment} />
+                    </button>
+                  )
+                })}
                 {displayMoments.length > 3 && (
                   <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[var(--card-muted)] text-[10px] font-extrabold">
                     +{displayMoments.length - 3}
@@ -370,6 +554,15 @@ export default function PactMomentsDetail({
           </footer>
         )}
       </div>
+      {pact?.id != null && (
+        <CommentsBottomSheet
+          pactId={Number(pact.id)}
+          commentCount={commentCount}
+          isOpen={commentOpen}
+          onClose={() => setCommentOpen(false)}
+          onCountChange={setLiveCommentCount}
+        />
+      )}
     </main>
   )
 }

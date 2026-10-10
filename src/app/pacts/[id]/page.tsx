@@ -170,6 +170,7 @@ export default function PactDetailPage() {
         isEnded={isEnded}
         canCheer={canCheer}
         hasCheered={hasCheered}
+        currentUserId={user?.id ?? null}
         onInvite={() => void handleInvite()}
         onAddMoment={() => setStoryCaptureOpen(true)}
         onRestart={() => router.push(`/pacts/create?pactId=${pact.id}`)}

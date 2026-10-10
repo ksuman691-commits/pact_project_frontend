@@ -1,5 +1,14 @@
 # Backend Handoff: Cheer Deduplication
 
+> **Status update (Oct 2026): implemented.** Backend branch
+> `feat/photoless-cheers-and-story-day` adds the unique constraint (migration
+> `0020_pact_cheers_one_per_user`, which dedupes existing rows first), a `409` on
+> duplicate cheers, and `DELETE /api/pacts/{pact_id}/cheers/me`. Cheers are now a
+> one-tap like with no photo (`POST /cheers` needs no body). The frontend uses
+> `useToggleCheer` (tap to cheer, tap again to undo) and no longer opens the
+> camera modal. **Deploy the backend before this frontend**: a photo-less POST
+> is rejected by the old backend. The text below is the original investigation.
+
 **Owner:** Backend team (`pact-project-backend-v2`, separate repo — not in this
 frontend repo)
 **Status:** Confirmed root cause, fix not yet implemented server-side

@@ -13,7 +13,6 @@ import {
   ArrowLeft,
   Camera,
   PartyPopper,
-  Loader2,
   MoreVertical,
   Flame,
 } from 'lucide-react';
@@ -27,7 +26,7 @@ import PactGallery, { buildGalleryTiles } from './PactGallery';
 import ActivePactFireBadge from './ActivePactFireBadge';
 import CircleChip from './classic/CircleChip';
 import { useReportPact } from '@/hooks/usePactActions';
-import { useCreateCheer } from '@/hooks/usePactMutations';
+import { useToggleCheer } from '@/hooks/usePactMutations';
 import { useGoalMatches } from '@/hooks/usePactMatches';
 import { useAuthStore } from '@/store/auth';
 import { getDisplayName } from '@/lib/displayName';
@@ -335,7 +334,7 @@ export default function FeedPactCard({
   const router = useRouter();
   const { user } = useAuthStore();
   const reportMutation = useReportPact(pact.id);
-  const createCheer = useCreateCheer(pact.id);
+  const toggleCheer = useToggleCheer(pact.id);
   const [proofUploadModal, setProofUploadModal] = useState(false);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
@@ -356,11 +355,12 @@ export default function FeedPactCard({
   const didCelebrateRef = useRef(false);
   const [displayVote, setDisplayVote] = useState<string | null>(null);
   const [displayCheerCount, setDisplayCheerCount] = useState(0);
-  const [optimisticCheer, setOptimisticCheer] = useState(false);
+  // Whether the current user has cheered. Seeded from the page-level flag and
+  // flipped optimistically on tap; the server is reconciled via useToggleCheer.
+  const [cheered, setCheered] = useState(hasCheered);
   const [cheerError, setCheerError] = useState<string | null>(null);
   const [isCheerBouncing, setIsCheerBouncing] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
-  const [isCheering, setIsCheering] = useState(false);
   const [activeProofIndex, setActiveProofIndex] = useState(0);
   // Local "have I joined" state, synced from the server flags below but also
   // flipped optimistically the moment a join succeeds — without this, the
@@ -370,7 +370,6 @@ export default function FeedPactCard({
   // and no refetch happens on this card), so a second tap hit the backend's
   // "already joined" rejection instead of being a no-op.
   const [displayJoined, setDisplayJoined] = useState(false);
-  const cheerInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setExitDirection(null);
@@ -406,6 +405,10 @@ export default function FeedPactCard({
   useEffect(() => {
     setDisplayCheerCount(Number(pact.active_cheer_count ?? 0));
   }, [pact.active_cheer_count, pact.id]);
+
+  useEffect(() => {
+    setCheered(hasCheered);
+  }, [hasCheered]);
 
   // Re-sync from the server whenever fresh pact data actually arrives (e.g.
   // this card gets recycled to a different pact, or a parent list refetches
@@ -576,36 +579,29 @@ export default function FeedPactCard({
     }
   };
 
+  // One tap cheers, a second tap undoes it. No photo is involved.
   const handleCheerTap = () => {
-    if (isCheering || optimisticCheer) return;
+    if (toggleCheer.isPending) return;
+    const next = !cheered;
     setCheerError(null);
-    setOptimisticCheer(true);
-    setDisplayCheerCount((count) => count + 1);
+    setCheered(next);
+    setDisplayCheerCount((count) => Math.max(0, count + (next ? 1 : -1)));
     setIsCheerBouncing(true);
     window.setTimeout(() => setIsCheerBouncing(false), 150);
-    cheerInputRef.current?.click();
-  };
-
-  const handleCheerFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) {
-      setOptimisticCheer(false);
-      setDisplayCheerCount((count) => Math.max(0, count - 1));
-      return;
-    }
-
-    setIsCheering(true);
-    try {
-      await createCheer.mutateAsync(file);
-      setOptimisticCheer(false);
-    } catch {
-      setOptimisticCheer(false);
-      setDisplayCheerCount((count) => Math.max(0, count - 1));
-      setCheerError('Could not send cheer. Try again.');
-    } finally {
-      setIsCheering(false);
-    }
+    if (typeof navigator !== 'undefined') navigator.vibrate?.(10);
+    toggleCheer.mutate(next, {
+      onError: (error: any) => {
+        const status = error?.response?.status;
+        const serverAlreadyAgrees = (next && status === 409) || (!next && status === 404);
+        // The server's own count already reflects the state the user wanted,
+        // so only the optimistic count change needs to be taken back.
+        setDisplayCheerCount((count) => Math.max(0, count + (next ? -1 : 1)));
+        if (!serverAlreadyAgrees) {
+          setCheered(!next);
+          setCheerError(next ? 'Could not send cheer. Try again.' : 'Could not undo cheer. Try again.');
+        }
+      },
+    });
   };
 
   // Single tap anywhere on the hero (image / progress ring / placeholder)
@@ -921,12 +917,13 @@ export default function FeedPactCard({
             <button
               type="button"
               onClick={handleCheerTap}
-              disabled={isCheering || optimisticCheer}
-              aria-label="cheer this pact"
+              disabled={toggleCheer.isPending}
+              aria-pressed={cheered}
+              aria-label={cheered ? 'undo cheer' : 'cheer this pact'}
               className={`flex items-center gap-1.5 text-[var(--pact-text-dim)] transition hover:text-[var(--pact-gold)] disabled:opacity-60 ${isCheerBouncing ? 'scale-125' : 'scale-100'}`}
               style={{ transitionDuration: '150ms' }}
             >
-              {isCheering ? <Loader2 className="h-5 w-5 animate-spin" /> : <PartyPopper className={`h-5 w-5 ${optimisticCheer ? 'text-[var(--pact-gold)]' : ''}`} />}
+              <PartyPopper className={`h-5 w-5 ${cheered ? 'text-[var(--pact-gold)]' : ''}`} />
               {/* Hide the count entirely at 0 rather than showing a bare
                   "0" next to the icon — a page full of "0"s next to every
                   icon reads as unused/dead, whereas an icon alone with no
@@ -1008,17 +1005,6 @@ export default function FeedPactCard({
           </button>
         )}
       </motion.div>
-
-      {/* Hidden file input backing the fast single-photo cheer flow
-          triggered by swipe-right / double-tap / the cheer icon. */}
-      <input
-        ref={cheerInputRef}
-        type="file"
-        accept="image/*"
-        capture="user"
-        className="hidden"
-        onChange={handleCheerFileChange}
-      />
 
       {uploadAllowed && (
         <ProofUploadModal
