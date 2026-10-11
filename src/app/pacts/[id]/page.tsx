@@ -54,6 +54,7 @@ export default function PactDetailPage() {
           uploadedAt: moment.uploaded_at || moment.created_at,
           userId: moment.submitted_by || moment.user_id,
           username: moment.username || moment.submitted_by_username,
+          authorName: moment.full_name || moment.name || moment.username || moment.submitted_by_username,
         }))
         .sort((left: any, right: any) => new Date(right.uploadedAt || 0).getTime() - new Date(left.uploadedAt || 0).getTime()),
     [momentsData?.data],
@@ -170,6 +171,7 @@ export default function PactDetailPage() {
         isEnded={isEnded}
         canCheer={canCheer}
         hasCheered={hasCheered}
+        viewerId={user?.id}
         onInvite={() => void handleInvite()}
         onAddMoment={() => setStoryCaptureOpen(true)}
         onRestart={() => router.push(`/pacts/create?pactId=${pact.id}`)}
