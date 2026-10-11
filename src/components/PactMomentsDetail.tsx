@@ -1,22 +1,17 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Camera, Check, Image as ImageIcon, MessageCircle, Play, Plus, RotateCcw, Share2, UserRound, UserPlus, X } from 'lucide-react'
 import CheerButton from '@/components/CheerButton'
 import CircleChip from '@/components/classic/CircleChip'
 import { getCategoryTheme } from '@/lib/categoryTheme'
 import { pactLocalToday, resolvePactCompletionViewState } from '@/lib/pactCompletionState'
+import MomentViewer from '@/components/MomentViewer'
+import type { ViewerMoment } from '@/components/MomentViewer'
 import type { PactDayStripEntry } from '@/types'
 
-type Moment = {
-  id: number | string
-  url?: string
-  type?: string
-  description?: string
-  day?: number
-  uploadedAt?: string
-}
+type Moment = ViewerMoment & { userId?: number | string }
 
 type Props = {
   pact: any
@@ -31,6 +26,7 @@ type Props = {
   onAddMoment: () => void
   onRestart: () => void
   onShareRecap: () => void
+  viewerId?: number | string
 }
 
 function Avatar({ person, index }: { person: any; index: number }) {
@@ -64,65 +60,6 @@ function SafePhoto({ src, alt = '', className = '' }: { src: string; alt?: strin
   )
 }
 
-function VideoMoment({ src, momentId }: { src: string; momentId: number | string }) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const [showPlayButton, setShowPlayButton] = useState(false)
-
-  useEffect(() => {
-    const video = videoRef.current
-    if (!video) return
-    video.muted = true
-    setShowPlayButton(false)
-    void video.play().then(() => setShowPlayButton(false)).catch(() => setShowPlayButton(true))
-  }, [momentId, src])
-
-  const play = () => {
-    const video = videoRef.current
-    if (!video) return
-    video.muted = true
-    void video.play().then(() => setShowPlayButton(false)).catch(() => setShowPlayButton(true))
-  }
-
-  const togglePlayback = (event: MouseEvent<HTMLDivElement>) => {
-    if (event.target !== videoRef.current) return
-    const video = videoRef.current
-    if (!video) return
-    if (video.paused) play()
-    else {
-      video.pause()
-      setShowPlayButton(false)
-    }
-  }
-
-  return (
-    <div className="absolute inset-0 bg-[var(--navy)]" onClick={togglePlayback}>
-      <video
-        key={momentId}
-        ref={videoRef}
-        src={src}
-        className="absolute inset-0 size-full object-cover"
-        muted
-        playsInline
-        autoPlay
-        loop
-        preload="auto"
-        onError={() => setShowPlayButton(true)}
-      />
-      {showPlayButton && (
-        <button
-          type="button"
-          aria-label="Play video moment"
-          onClick={(event) => { event.stopPropagation(); play() }}
-            className="absolute left-1/2 top-1/2 z-20 flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full shadow-lg"
-            style={{ backgroundColor: '#F4EFE4', color: '#1F3A93' }}
-        >
-          <Play className="ml-0.5 size-5 fill-current" aria-hidden="true" />
-        </button>
-      )}
-    </div>
-  )
-}
-
 export default function PactMomentsDetail({
   pact,
   moments,
@@ -136,15 +73,21 @@ export default function PactMomentsDetail({
   onAddMoment,
   onRestart,
   onShareRecap,
+  viewerId,
 }: Props) {
   const [activeIndex, setActiveIndex] = useState(0)
+  const [selectedDay, setSelectedDay] = useState<number | null>(null)
+  const [selectedMomentId, setSelectedMomentId] = useState<number | string | null>(null)
+  const [viewerOpen, setViewerOpen] = useState(false)
   const [watchingRecap, setWatchingRecap] = useState(false)
+  const stripRef = useRef<HTMLDivElement>(null)
+  const selectedTileRef = useRef<HTMLButtonElement>(null)
   const fallbackCompleted = progress?.completed || 0
   const completionView = resolvePactCompletionViewState(pact, new Date(), fallbackCompleted)
   const completionLooksSuccessful = completionView === 'completed' || completionView === 'provisional_completed'
   const presentationEnded = completionView !== null
   const visualDayEnded = presentationEnded || isEnded
-  const strip = Array.isArray(pact?.day_strip) ? (pact.day_strip as PactDayStripEntry[]) : null
+  const strip = Array.isArray(pact?.day_strip) ? (pact.day_strip as (PactDayStripEntry & { video_url?: string | null })[]) : null
   const total = Math.max(1, Number(strip ? pact?.duration_days ?? progress?.total ?? 7 : progress?.total ?? 7))
   const completed = Math.min(total, Number(pact?.days_completed ?? fallbackCompleted))
   const missed = progress?.missed || 0
@@ -171,15 +114,42 @@ export default function PactMomentsDetail({
     return new Date(left.uploadedAt || 0).getTime() - new Date(right.uploadedAt || 0).getTime()
   })
   const displayMoments = completionLooksSuccessful && watchingRecap ? recapMoments : moments
+  const orderedMoments = useMemo(() => [...moments].sort((a, b) => (a.day ?? 0) - (b.day ?? 0) || new Date(a.uploadedAt || 0).getTime() - new Date(b.uploadedAt || 0).getTime()), [moments])
   const hasMoments = displayMoments.length > 0
-  const current = displayMoments[activeIndex] || displayMoments[0]
+  const effectiveDay = selectedDay ?? currentDay
+  const dayMoment = displayMoments.find((moment) => moment.day === effectiveDay)
+  const current = displayMoments.find((moment) => moment.id === selectedMomentId) || dayMoment || displayMoments[activeIndex] || displayMoments[0]
   const caption = current?.description || "Today's moment"
   const titleEmoji = pact?.icon_emoji || (/^\s*\p{Extended_Pictographic}/u.test(pact?.title || '') ? '' : getCategoryTheme(pact?.category).emoji)
   const showModernStrip = strip !== null
+  const friends = [...new Map(participants.filter((person) => String(person.user_id ?? person.id) !== String(viewerId ?? pact?.creator_id)).map((person) => [String(person.user_id ?? person.id), person])).values()]
+  const requiredDays = Number(pact?.days_required || 0)
+  const isMoments75 = pact?.completion_rule === 'moments_75' && requiredDays > 0
 
-  const step = (amount: number) => {
-    if (displayMoments.length < 2) return
-    setActiveIndex((index) => (index + amount + displayMoments.length) % displayMoments.length)
+  useEffect(() => {
+    const container = stripRef.current
+    const tile = selectedTileRef.current
+    if (!container || !tile) return
+    const containerRect = container.getBoundingClientRect()
+    const tileRect = tile.getBoundingClientRect()
+    const target = container.scrollLeft + tileRect.left - containerRect.left - (container.clientWidth - tileRect.width) / 2
+    container.scrollTo({ left: Math.max(0, target), behavior: 'smooth' })
+  }, [effectiveDay, strip])
+
+  const openViewer = () => {
+    if (!current || !orderedMoments.length) return
+    const index = Math.max(0, orderedMoments.findIndex((moment) => moment.id === current.id))
+    setActiveIndex(index)
+    setViewerOpen(true)
+  }
+
+  const selectDay = (entry: (PactDayStripEntry & { video_url?: string | null })) => {
+    setSelectedDay(entry.day)
+    const index = displayMoments.findIndex((moment) => moment.day === entry.day)
+    if (index >= 0) {
+      setActiveIndex(index)
+      setSelectedMomentId(displayMoments[index].id)
+    }
   }
 
   return (
@@ -191,7 +161,7 @@ export default function PactMomentsDetail({
           ) : (
             <span className="flex min-h-11 items-center gap-2 text-[13px] font-semibold text-[var(--muted)]">
               <UserRound className="size-4" aria-hidden="true" />
-              Just you
+              {friends.length === 0 ? 'Just you' : `You + ${friends.length} friend${friends.length === 1 ? '' : 's'}`}
             </span>
           )}
           <h1 className="line-clamp-2 font-sans text-[24px] font-bold leading-[1.08] tracking-[-0.03em] text-[var(--ink)]">
@@ -200,29 +170,35 @@ export default function PactMomentsDetail({
         </div>
 
         {showModernStrip ? (
-          <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${strip.length}, minmax(0, 1fr))` }} aria-label="Pact day strip">
+          <div ref={stripRef} className="flex shrink-0 gap-2 overflow-x-auto py-1" aria-label="Pact day strip">
             {strip.map((entry) => {
               const isToday = !visualDayEnded && entry.date === localToday
               const isPast = entry.date < localToday
-              const isDashed = presentationEnded ? !entry.has_moment : isPast && !entry.has_moment
-              const hasPhotoThumbnail = entry.has_moment && entry.type === 'photo' && Boolean(entry.thumbnail_url)
-              const isPlayTile = entry.has_moment && !hasPhotoThumbnail
+              const isSelected = effectiveDay === entry.day
+              const isMissed = !entry.has_moment && isPast
+              const isFuture = !entry.has_moment && !isPast && !isToday
+              const videoUrl = entry.video_url || undefined
               return (
-                <div
+                <button
                   key={entry.day}
-                  aria-label={`Day ${entry.day}${entry.has_moment ? ', moment shared' : isToday ? ', today' : isPast ? ', missed' : ', upcoming'}`}
-                  className={`relative aspect-square overflow-hidden rounded-[9px] ${isPlayTile ? 'bg-[var(--navy)]' : 'bg-[var(--card-muted)]'} ${isToday ? 'ring-2 ring-[var(--navy)] ring-offset-1' : ''} ${isDashed ? 'border-2 border-dashed border-[var(--missed-border)] bg-transparent' : ''}`}
+                  ref={isSelected ? selectedTileRef : undefined}
+                  type="button"
+                  aria-label={`Day ${entry.day}${entry.has_moment ? `, ${entry.type === 'video' ? 'video' : 'photo'}` : isToday ? ', today' : isMissed ? ', missed' : ', upcoming'}`}
+                  aria-pressed={isSelected}
+                  onClick={() => selectDay(entry)}
+                  disabled={!entry.has_moment}
+                  className={`relative h-20 w-16 shrink-0 overflow-hidden rounded-[9px] transition-transform active:scale-95 ${entry.has_moment ? 'cursor-pointer bg-[var(--navy)]' : isMissed ? 'bg-[var(--paper)]' : 'bg-[var(--card-muted)]'} ${isToday && !entry.has_moment ? 'ring-2 ring-[var(--navy)] ring-offset-1' : ''} ${isFuture ? 'border border-dashed border-[var(--seat-border)]' : ''} ${isSelected && entry.has_moment ? 'ring-2 ring-[var(--navy)] ring-offset-1' : ''}`}
                 >
-                  {hasPhotoThumbnail ? (
+                  {entry.has_moment && entry.type === 'photo' && entry.thumbnail_url ? (
                     <SafePhoto src={entry.thumbnail_url!} className="size-full object-cover" />
-                  ) : isPlayTile ? (
-                    <span className="flex size-full items-center justify-center text-[var(--card)]">
-                      <Play className="size-4 fill-current" aria-hidden="true" />
-                    </span>
+                  ) : entry.has_moment && entry.type === 'video' && videoUrl ? (
+                    <video src={`${videoUrl}#t=0.1`} muted playsInline preload="metadata" className="size-full object-cover" />
+                  ) : entry.has_moment ? (
+                    <span className="flex size-full items-center justify-center text-[var(--card)]"><Play className="size-5 fill-current" aria-hidden="true" /></span>
                   ) : null}
-                  {hasPhotoThumbnail && <span className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/60 to-transparent" />}
-                  <span className={`absolute inset-x-0 bottom-1 z-10 text-center text-[10px] font-extrabold leading-3 ${hasPhotoThumbnail || isPlayTile ? 'text-white' : 'text-[var(--navy)]'}`}>DAY {entry.day}</span>
-                </div>
+                  {entry.has_moment && entry.type === 'video' && <span className="absolute right-1 top-1 z-10 flex size-5 items-center justify-center rounded-full bg-black/60 text-white"><Play className="size-3 fill-current" aria-hidden="true" /></span>}
+                  <span className={`absolute inset-x-0 bottom-1 z-10 text-center text-[10px] font-extrabold leading-3 ${entry.has_moment ? 'text-white' : 'text-[var(--muted)]'}`}>DAY {entry.day}</span>
+                </button>
               )
             })}
           </div>
@@ -249,12 +225,12 @@ export default function PactMomentsDetail({
         {!presentationEnded && <header className="flex items-center gap-3">
           <div className="relative flex size-11 shrink-0 items-center justify-center rounded-full bg-[var(--navy)]">
             <span className="flex size-[35px] items-center justify-center rounded-full bg-[var(--card)] text-[11px] font-extrabold">
-              {percent}%
+              {isMoments75 ? `${completed}/${requiredDays}` : `${percent}%`}
             </span>
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="whitespace-nowrap text-[20px] font-extrabold leading-6">Day {day} of {total}</h1>
-            <p className="whitespace-nowrap text-[13px] font-semibold leading-[18px] text-[var(--muted)]">{dayLabel}</p>
+            <p className="whitespace-nowrap text-[13px] font-semibold leading-[18px] text-[var(--muted)]">{isMoments75 ? 'days covered' : dayLabel}</p>
           </div>
           <div className="flex items-center">
             {!presentationEnded && visiblePeople.map((person, index) => (
@@ -277,7 +253,11 @@ export default function PactMomentsDetail({
         </header>}
 
         <section
-          className={`relative min-h-0 flex-1 overflow-hidden rounded-[24px] ${!hasMoments && !presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : 'bg-[var(--navy)]'}`}
+          onClick={(event) => {
+            if ((event.target as HTMLElement).closest('button,a')) return
+            openViewer()
+          }}
+          className={`relative min-h-0 flex-1 cursor-pointer overflow-hidden rounded-[24px] ${!hasMoments && !presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : 'bg-[var(--navy)]'}`}
           aria-label="Moments"
         >
           {!hasMoments && (
@@ -332,7 +312,7 @@ export default function PactMomentsDetail({
           )}
           {hasMoments && current?.url && (
             current.type === 'video' ? (
-              <VideoMoment key={current.id} src={current.url} momentId={current.id} />
+              <video key={current.id} src={current.url} className="absolute inset-0 size-full object-cover" muted playsInline autoPlay loop preload="auto" />
             ) : (
               <SafePhoto src={current.url} alt={caption} className="absolute inset-0 size-full object-cover" />
             )
@@ -344,17 +324,11 @@ export default function PactMomentsDetail({
 
           {hasMoments && (
             <>
-              {displayMoments.length > 1 && current?.type !== 'video' && (
-                <>
-                  <button type="button" aria-label="Previous moment" onClick={() => step(-1)} className="absolute inset-y-0 left-0 w-1/3" />
-                  <button type="button" aria-label="Next moment" onClick={() => step(1)} className="absolute inset-y-0 right-0 w-1/3" />
-                </>
-              )}
               <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-black/50 px-2.5 py-1.5 text-xs font-bold text-white backdrop-blur">
                 <span className="flex size-5 items-center justify-center rounded-full bg-[var(--card)] text-[10px] text-[var(--ink)]">
                   {String(pact?.creator_username || 'Y').charAt(0).toUpperCase()}
                 </span>
-                You - Day {current.day || day}
+                {current.authorName || current.username || 'You'} - Day {current.day || day}
               </div>
               <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+5rem)] right-4 z-10 flex flex-col gap-2">
                 <CheerButton
@@ -413,41 +387,9 @@ export default function PactMomentsDetail({
                 Start again
               </button>
             ) : presentationEnded && watchingRecap ? (
-              <>
-                <button type="button" onClick={() => setWatchingRecap(false)} aria-label="Close recap" className="flex size-12 items-center justify-center rounded-full border border-[var(--hairline)] text-[var(--navy)]">
-                  <span aria-hidden="true">×</span>
-                </button>
-                <div className="flex min-w-0 flex-1 gap-1.5 overflow-hidden">
-                  {displayMoments.map((moment, index) => (
-                    <button key={moment.id} type="button" onClick={() => setActiveIndex(index)} aria-label={`Open recap moment ${index + 1}`} className={`relative size-8 shrink-0 overflow-hidden rounded-md bg-[var(--card-muted)] ${index === activeIndex ? 'border-2 border-[var(--navy)]' : ''}`}>
-                      {moment.url && moment.type !== 'video' ? <SafePhoto src={moment.url} className="size-full object-cover" /> : <span className="flex size-full items-center justify-center bg-[var(--navy)] text-white"><Play className="size-3 fill-current" /></span>}
-                    </button>
-                  ))}
-                </div>
-              </>
-            ) : hasMoments ? (
-              <div className="flex min-w-0 flex-1 basis-[calc(100%-170px)] gap-1.5 overflow-hidden max-[340px]:basis-full">
-                {displayMoments.slice(0, 3).map((moment, index) => (
-                  <button
-                    key={moment.id}
-                    type="button"
-                    onClick={() => setActiveIndex(index)}
-                    aria-label={`Open moment ${index + 1}`}
-                    className={`relative size-7 shrink-0 overflow-hidden rounded-md bg-[var(--card-muted)] ${index === activeIndex ? 'border-2 border-[var(--navy)]' : ''}`}
-                  >
-                    {moment.type === 'video' ? (
-                      <span className="flex size-full items-center justify-center bg-[var(--navy)] text-white"><Play className="size-3 fill-current" aria-hidden="true" /></span>
-                    ) : moment.url ? (
-                      <SafePhoto src={moment.url} className="size-full object-cover" />
-                    ) : null}
-                  </button>
-                ))}
-                {displayMoments.length > 3 && (
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-[var(--card-muted)] text-[10px] font-extrabold">
-                    +{displayMoments.length - 3}
-                  </span>
-                )}
-              </div>
+              <button type="button" onClick={() => setWatchingRecap(false)} aria-label="Close recap" className="flex size-12 items-center justify-center rounded-full border border-[var(--hairline)] text-[var(--navy)]">
+                <span aria-hidden="true">×</span>
+              </button>
             ) : (
               <div className="flex flex-1" />
             )}
@@ -465,6 +407,22 @@ export default function PactMomentsDetail({
           </footer>
         )}
       </div>
+      {viewerOpen && current && (
+        <MomentViewer
+          moments={orderedMoments}
+          startIndex={Math.max(0, orderedMoments.findIndex((moment) => moment.id === current.id))}
+          pactId={Number(pact.id)}
+          cheerCount={cheerCount}
+          canCheer={canCheer}
+          hasCheered={hasCheered}
+          onClose={() => setViewerOpen(false)}
+          onIndexChange={(index) => {
+            setActiveIndex(index)
+            setSelectedDay(orderedMoments[index]?.day ?? null)
+            setSelectedMomentId(orderedMoments[index]?.id ?? null)
+          }}
+        />
+      )}
     </main>
   )
 }
