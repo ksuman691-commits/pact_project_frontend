@@ -1,8 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import { Camera, Check, Image as ImageIcon, MessageCircle, Play, Plus, RotateCcw, Share2, UserPlus, X } from 'lucide-react'
+import Image from 'next/image'
+import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import { Camera, Check, Image as ImageIcon, MessageCircle, Play, Plus, RotateCcw, Share2, UserRound, UserPlus, X } from 'lucide-react'
 import CheerButton from '@/components/CheerButton'
+import CircleChip from '@/components/classic/CircleChip'
+import { getCategoryTheme } from '@/lib/categoryTheme'
 import { pactLocalToday, resolvePactCompletionViewState } from '@/lib/pactCompletionState'
 import type { PactDayStripEntry } from '@/types'
 
@@ -31,11 +34,16 @@ type Props = {
 }
 
 function Avatar({ person, index }: { person: any; index: number }) {
+  const [failed, setFailed] = useState(false)
   const label = String(person?.full_name || person?.name || person?.username || 'M').charAt(0).toUpperCase()
-  return person?.avatar_url || person?.avatar ? (
-    <img
+  return (person?.avatar_url || person?.avatar) && !failed ? (
+    <Image
       src={person.avatar_url || person.avatar}
       alt=""
+      width={34}
+      height={34}
+      unoptimized
+      onError={() => setFailed(true)}
       className={`size-[34px] rounded-full border-2 border-[var(--card)] object-cover ${index ? '-ml-2' : ''}`}
     />
   ) : (
@@ -44,6 +52,74 @@ function Avatar({ person, index }: { person: any; index: number }) {
     >
       {label}
     </span>
+  )
+}
+
+function SafePhoto({ src, alt = '', className = '' }: { src: string; alt?: string; className?: string }) {
+  const [failed, setFailed] = useState(false)
+  return failed ? (
+    <span aria-hidden="true" className={`block bg-[var(--paper)] ${className}`} />
+  ) : (
+    <Image src={src} alt={alt} fill unoptimized onError={() => setFailed(true)} className={className} />
+  )
+}
+
+function VideoMoment({ src, momentId }: { src: string; momentId: number | string }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [showPlayButton, setShowPlayButton] = useState(false)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+    video.muted = true
+    setShowPlayButton(false)
+    void video.play().then(() => setShowPlayButton(false)).catch(() => setShowPlayButton(true))
+  }, [momentId, src])
+
+  const play = () => {
+    const video = videoRef.current
+    if (!video) return
+    video.muted = true
+    void video.play().then(() => setShowPlayButton(false)).catch(() => setShowPlayButton(true))
+  }
+
+  const togglePlayback = (event: MouseEvent<HTMLDivElement>) => {
+    if (event.target !== videoRef.current) return
+    const video = videoRef.current
+    if (!video) return
+    if (video.paused) play()
+    else {
+      video.pause()
+      setShowPlayButton(false)
+    }
+  }
+
+  return (
+    <div className="absolute inset-0 bg-[var(--navy)]" onClick={togglePlayback}>
+      <video
+        key={momentId}
+        ref={videoRef}
+        src={src}
+        className="absolute inset-0 size-full object-cover"
+        muted
+        playsInline
+        autoPlay
+        loop
+        preload="auto"
+        onError={() => setShowPlayButton(true)}
+      />
+      {showPlayButton && (
+        <button
+          type="button"
+          aria-label="Play video moment"
+          onClick={(event) => { event.stopPropagation(); play() }}
+            className="absolute left-1/2 top-1/2 z-20 flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full shadow-lg"
+            style={{ backgroundColor: '#F4EFE4', color: '#1F3A93' }}
+        >
+          <Play className="ml-0.5 size-5 fill-current" aria-hidden="true" />
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -98,6 +174,7 @@ export default function PactMomentsDetail({
   const hasMoments = displayMoments.length > 0
   const current = displayMoments[activeIndex] || displayMoments[0]
   const caption = current?.description || "Today's moment"
+  const titleEmoji = pact?.icon_emoji || (/^\s*\p{Extended_Pictographic}/u.test(pact?.title || '') ? '' : getCategoryTheme(pact?.category).emoji)
   const showModernStrip = strip !== null
 
   const step = (amount: number) => {
@@ -108,6 +185,20 @@ export default function PactMomentsDetail({
   return (
     <main className="min-h-[calc(100vh-72px)] bg-[var(--paper)] px-[14px] pb-3 pt-5 text-[var(--ink)]">
       <div className="mx-auto flex h-[calc(100vh-92px)] max-w-[390px] flex-col gap-[14px] rounded-[32px] border border-[var(--hairline)] bg-[var(--card)] p-[18px_16px_16px]">
+        <div className="shrink-0">
+          {pact?.circle_id != null && pact?.circle_name ? (
+            <CircleChip circleId={pact.circle_id} circleName={pact.circle_name} variant="feed" className="max-w-full" />
+          ) : (
+            <span className="flex min-h-11 items-center gap-2 text-[13px] font-semibold text-[var(--muted)]">
+              <UserRound className="size-4" aria-hidden="true" />
+              Just you
+            </span>
+          )}
+          <h1 className="line-clamp-2 font-sans text-[24px] font-bold leading-[1.08] tracking-[-0.03em] text-[var(--ink)]">
+            {titleEmoji ? `${titleEmoji} ` : ''}{pact?.title}
+          </h1>
+        </div>
+
         {showModernStrip ? (
           <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${strip.length}, minmax(0, 1fr))` }} aria-label="Pact day strip">
             {strip.map((entry) => {
@@ -123,7 +214,7 @@ export default function PactMomentsDetail({
                   className={`relative aspect-square overflow-hidden rounded-[9px] ${isPlayTile ? 'bg-[var(--navy)]' : 'bg-[var(--card-muted)]'} ${isToday ? 'ring-2 ring-[var(--navy)] ring-offset-1' : ''} ${isDashed ? 'border-2 border-dashed border-[var(--missed-border)] bg-transparent' : ''}`}
                 >
                   {hasPhotoThumbnail ? (
-                    <img src={entry.thumbnail_url ?? undefined} alt="" className="size-full object-cover" />
+                    <SafePhoto src={entry.thumbnail_url!} className="size-full object-cover" />
                   ) : isPlayTile ? (
                     <span className="flex size-full items-center justify-center text-[var(--card)]">
                       <Play className="size-4 fill-current" aria-hidden="true" />
@@ -241,9 +332,9 @@ export default function PactMomentsDetail({
           )}
           {hasMoments && current?.url && (
             current.type === 'video' ? (
-              <video src={current.url} className="absolute inset-0 size-full object-cover" muted playsInline />
+              <VideoMoment key={current.id} src={current.url} momentId={current.id} />
             ) : (
-              <img src={current.url} alt={caption} className="absolute inset-0 size-full object-cover" />
+              <SafePhoto src={current.url} alt={caption} className="absolute inset-0 size-full object-cover" />
             )
           )}
 
@@ -253,7 +344,7 @@ export default function PactMomentsDetail({
 
           {hasMoments && (
             <>
-              {displayMoments.length > 1 && (
+              {displayMoments.length > 1 && current?.type !== 'video' && (
                 <>
                   <button type="button" aria-label="Previous moment" onClick={() => step(-1)} className="absolute inset-y-0 left-0 w-1/3" />
                   <button type="button" aria-label="Next moment" onClick={() => step(1)} className="absolute inset-y-0 right-0 w-1/3" />
@@ -329,7 +420,7 @@ export default function PactMomentsDetail({
                 <div className="flex min-w-0 flex-1 gap-1.5 overflow-hidden">
                   {displayMoments.map((moment, index) => (
                     <button key={moment.id} type="button" onClick={() => setActiveIndex(index)} aria-label={`Open recap moment ${index + 1}`} className={`relative size-8 shrink-0 overflow-hidden rounded-md bg-[var(--card-muted)] ${index === activeIndex ? 'border-2 border-[var(--navy)]' : ''}`}>
-                      {moment.url && moment.type !== 'video' ? <img src={moment.url} alt="" className="size-full object-cover" /> : <span className="flex size-full items-center justify-center bg-[var(--navy)] text-white"><Play className="size-3 fill-current" /></span>}
+                      {moment.url && moment.type !== 'video' ? <SafePhoto src={moment.url} className="size-full object-cover" /> : <span className="flex size-full items-center justify-center bg-[var(--navy)] text-white"><Play className="size-3 fill-current" /></span>}
                     </button>
                   ))}
                 </div>
@@ -344,7 +435,11 @@ export default function PactMomentsDetail({
                     aria-label={`Open moment ${index + 1}`}
                     className={`relative size-7 shrink-0 overflow-hidden rounded-md bg-[var(--card-muted)] ${index === activeIndex ? 'border-2 border-[var(--navy)]' : ''}`}
                   >
-                    {moment.url && <img src={moment.url} alt="" className="size-full object-cover" />}
+                    {moment.type === 'video' ? (
+                      <span className="flex size-full items-center justify-center bg-[var(--navy)] text-white"><Play className="size-3 fill-current" aria-hidden="true" /></span>
+                    ) : moment.url ? (
+                      <SafePhoto src={moment.url} className="size-full object-cover" />
+                    ) : null}
                   </button>
                 ))}
                 {displayMoments.length > 3 && (
