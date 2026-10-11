@@ -6,7 +6,7 @@ export const STORY_MAX_SECONDS = 15
 export const STORY_MAX_BYTES = 30 * 1024 * 1024
 export const STORY_ALLOWED_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'] as const
 export const STORY_LIMITS_TEXT = 'Up to 15 seconds. MP4, WebM or MOV, 30 MB max.'
-export const STORIES_COMING_SOON = 'Stories are coming soon'
+export const STORIES_COMING_SOON = 'Moment sharing is coming soon'
 
 // Phone cameras stop a "15 second" clip a few frames late.
 const DURATION_TOLERANCE_SECONDS = 0.5
@@ -72,13 +72,13 @@ export function storyErrorMessage(error: any): string {
   if (error instanceof StorageUploadError) return error.message
   const status = statusOf(error)
   const detail = error?.response?.data?.detail
-  if (status === 429) return "You've posted the maximum stories for this pact today"
-  if (status === 422 && Array.isArray(detail)) return 'Something went wrong with that video, try again'
+  if (status === 429) return "You've shared the maximum moments for this pact today"
+  if (status === 422 && Array.isArray(detail)) return 'Something went wrong with that moment, try again'
   const fromBackend = detailText(error?.response?.data?.detail)
   if (fromBackend) return fromBackend
-  if (status) return `The server answered with status ${status}. Your video is still here, try again.`
-  if (error?.code === 'ECONNABORTED') return 'The server took too long to answer. Your video is still here, try again.'
-  return "Can't reach the server. Check your connection, your video is still here."
+  if (status) return `The server answered with status ${status}. Your moment is still here, try again.`
+  if (error?.code === 'ECONNABORTED') return 'The server took too long to answer. Your moment is still here, try again.'
+  return "Can't reach the server. Check your connection; your moment is still here."
 }
 
 const EXTENSION_TYPES: Record<string, string> = { mp4: 'video/mp4', m4v: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime', qt: 'video/quicktime' }

@@ -3,13 +3,15 @@
 import Link from 'next/link'
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import { Plus, Search } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import BottomNav from '@/components/BottomNav'
 import CuratedContentGrid from '@/components/CuratedContentGrid'
 import { ActivePactCard, BrokenPactCard, DarePactCard, FinishedPactRow } from '@/components/classic/PactCard'
-import { pactAdvancedService, dareService } from '@/services/api'
+import { pactAdvancedService, dareService, pactService } from '@/services/api'
 import { useAuthStore } from '@/store/auth'
+import toast from 'react-hot-toast'
 import { DayMarksKey } from '@/components/stories/DayMarks'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
 import StoryPactCard from '@/components/stories/StoryPactCard'
@@ -45,6 +47,7 @@ function summaryLine(going: number, waiting: number, broken: number) {
 
 function PactsPageInner() {
   const searchParams = useSearchParams()
+  const queryClient = useQueryClient()
   const { user } = useAuthStore()
   const [filter, setFilter] = useState<(typeof filters)[number]>('All')
   const [search, setSearch] = useState('')
@@ -93,22 +96,36 @@ function PactsPageInner() {
   const showDone = filter === 'All' || filter === 'Done'
   const showDares = filter === 'All' || filter === 'Active'
 
+  const participantPacts = useMemo(() => pacts.filter((pact: any) => pact.is_joined_by_me !== false), [pacts])
   const summary = summaryLine(
-    pacts.filter(isActive).length,
+    participantPacts.filter(isActive).length,
     dareRows.length,
-    pacts.filter(isBroken).length,
+    participantPacts.filter(isBroken).length,
   )
 
-  const allActive = useMemo(() => pacts.filter(isActive), [pacts]) // eslint-disable-line react-hooks/exhaustive-deps
+  const allActive = useMemo(() => participantPacts.filter(isActive), [participantPacts]) // eslint-disable-line react-hooks/exhaustive-deps
   const activeIds = useMemo(() => allActive.map((p) => Number(p.id)), [allActive])
   const storyQueries = usePactsStoriesToday(STORIES_ENABLED ? activeIds : [])
   const storiesUnavailable = storyQueries.length > 0 && storyQueries.every((q) => q.isError && isStoriesUnavailable(q.error))
   const storiesKnown = storyQueries.length > 0 && storyQueries.every((q) => q.isSuccess)
   const postedCount = storiesKnown ? storyQueries.filter((q) => q.data?.some((s) => s.user_id === user?.id)).length : null
   const storySummary = `${allActive.length} ${allActive.length === 1 ? 'pact' : 'pacts'}.${
-    postedCount != null ? ` ${postedCount} ${postedCount === 1 ? 'story' : 'stories'} posted today.` : ''
+    postedCount != null ? ` ${postedCount} ${postedCount === 1 ? 'moment' : 'moments'} shared today.` : ''
   }`
   const [capturePact, setCapturePact] = useState<any | null>(null)
+
+  const joinCapturePact = async () => {
+    if (!capturePact?.can_join) return false
+    try {
+      await pactService.join(Number(capturePact.id))
+      await queryClient.invalidateQueries({ queryKey: ['my-pacts'] })
+      setCapturePact((current: any) => current ? { ...current, is_joined_by_me: true, can_join: false, join_block_reason: 'already_joined' } : current)
+      return true
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || 'Could not join this pact')
+      return false
+    }
+  }
 
   const nothingToShow =
     (!showActive || active.length === 0) && (!showDares || dareRows.length === 0) && (!showDone || (broken.length === 0 && finished.length === 0))
@@ -198,7 +215,7 @@ function PactsPageInner() {
         ) : (
           <div className="flex flex-col gap-[30px] px-4 pt-4">
             {showActive &&
-              active.map((pact) =>
+              active.filter((pact: any) => pact.is_joined_by_me !== false).map((pact) =>
                 STORIES_ENABLED ? (
                   <StoryPactCard
                     key={pact.id}
@@ -238,7 +255,7 @@ function PactsPageInner() {
       </div>
       <BottomNav />
       {STORIES_ENABLED && capturePact && (
-        <StoryCaptureSheet isOpen onClose={() => setCapturePact(null)} pactId={Number(capturePact.id)} pactTitle={capturePact.title} />
+        <StoryCaptureSheet isOpen onClose={() => setCapturePact(null)} pactId={Number(capturePact.id)} pactTitle={capturePact.title} canJoin={Boolean(capturePact.can_join)} onJoin={joinCapturePact} />
       )}
     </main>
   )

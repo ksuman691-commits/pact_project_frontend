@@ -14,6 +14,7 @@ interface CommentsBottomSheetProps {
    * resolves, so the caller can correct the badge count that list endpoints
    * currently always send as 0 (see BACKEND_SPEC_COMMENT_COUNT.md). */
   onCountChange?: (count: number) => void;
+  aboveViewer?: boolean;
 }
 
 /**
@@ -37,6 +38,7 @@ export default function CommentsBottomSheet({
   isOpen,
   onClose,
   onCountChange,
+  aboveViewer = false,
 }: CommentsBottomSheetProps) {
   if (typeof document === 'undefined') return null;
 
@@ -52,14 +54,14 @@ export default function CommentsBottomSheet({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[60] cursor-default bg-black/60"
+            className={`fixed inset-0 ${aboveViewer ? 'z-[110]' : 'z-[60]'} cursor-default bg-black/60`}
           />
           <motion.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-x-0 bottom-0 z-[61] mx-auto flex h-[70vh] max-w-md flex-col overflow-hidden rounded-t-[24px] border border-b-0 border-[var(--pact-hairline)] bg-[var(--pact-surface-raised)]"
+            className={`fixed inset-x-0 bottom-0 ${aboveViewer ? 'z-[111]' : 'z-[61]'} mx-auto flex h-[70vh] max-w-md flex-col overflow-hidden rounded-t-[24px] border border-b-0 border-[var(--pact-hairline)] bg-[var(--pact-surface-raised)]`}
             role="dialog"
             aria-label={`Chat, ${commentCount}`}
           >

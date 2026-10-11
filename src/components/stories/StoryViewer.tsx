@@ -114,10 +114,10 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
     go(event.clientX - rect.left < rect.width / 3 ? -1 : 1)
   }
 
-  const emptyText = unavailable ? `${STORIES_COMING_SOON}.` : isLoading ? 'Loading stories…' : 'No stories yet today.'
+  const emptyText = unavailable ? `${STORIES_COMING_SOON}.` : isLoading ? 'Loading moments…' : 'No moments yet today.'
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Stories" className="fixed inset-0 z-[90] flex flex-col bg-[var(--ink)] text-[var(--paper)]">
+    <div role="dialog" aria-modal="true" aria-label="Moments" className="fixed inset-0 z-[90] flex flex-col bg-[var(--ink)] text-[var(--paper)]">
       <div className="flex gap-1 px-3 pt-[max(0.75rem,env(safe-area-inset-top))]" aria-hidden="true">
         {stories.map((s, i) => (
           <span key={s.id} className="h-[3px] flex-1 overflow-hidden rounded-full" style={{ background: 'rgba(244,239,228,0.3)' }}>
@@ -132,7 +132,7 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
           <div className="min-w-0">
             {story && <p className="truncate text-[14px] font-semibold">{story.name || 'Member'}</p>}
             <div className="flex items-center gap-2 text-[12px]" style={{ color: 'rgba(244,239,228,0.75)' }}>
-              {story && postedAgo(story.created_at) && <span>posted {postedAgo(story.created_at)}</span>}
+              {story && postedAgo(story.created_at) && <span>shared {postedAgo(story.created_at)}</span>}
               {circleId != null && circleName && (
                 <Link href={`/circles/${circleId}`} onClick={close} className="flex items-center gap-1.5 font-semibold text-[var(--paper)]">
                   <span
@@ -148,7 +148,7 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
             </div>
           </div>
         </div>
-        <button type="button" onClick={close} aria-label="Close stories" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
+        <button type="button" onClick={close} aria-label="Close moments" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
           <X className="h-6 w-6" />
         </button>
       </div>

@@ -26,7 +26,14 @@ type Props = {
   onAddMoment: () => void
   onRestart: () => void
   onShareRecap: () => void
+  onComment: (aboveViewer?: boolean) => void
   viewerId?: number | string
+  isParticipant: boolean
+  canJoin: boolean
+  joinBlockReason?: string | null
+  isJoining?: boolean
+  onJoin: () => void
+  onStartOwnVersion: () => void
 }
 
 function Avatar({ person, index }: { person: any; index: number }) {
@@ -73,7 +80,14 @@ export default function PactMomentsDetail({
   onAddMoment,
   onRestart,
   onShareRecap,
+  onComment,
   viewerId,
+  isParticipant,
+  canJoin,
+  joinBlockReason,
+  isJoining = false,
+  onJoin,
+  onStartOwnVersion,
 }: Props) {
   const [activeIndex, setActiveIndex] = useState(0)
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
@@ -125,6 +139,13 @@ export default function PactMomentsDetail({
   const friends = [...new Map(participants.filter((person) => String(person.user_id ?? person.id) !== String(viewerId ?? pact?.creator_id)).map((person) => [String(person.user_id ?? person.id), person])).values()]
   const requiredDays = Number(pact?.days_required || 0)
   const isMoments75 = pact?.completion_rule === 'moments_75' && requiredDays > 0
+  const joinMessage: Record<string, string> = {
+    unauthenticated: 'Sign in to join this pact',
+    creator: 'You created this pact',
+    already_joined: 'You are already in this pact',
+    not_active: 'Joining is closed',
+    full: 'This pact is full',
+  }
 
   useEffect(() => {
     const container = stripRef.current
@@ -338,7 +359,7 @@ export default function PactMomentsDetail({
                   variant="stage"
                   cheerCount={cheerCount}
                 />
-                <button type="button" aria-label="Comment on this moment" className="flex size-12 items-center justify-center rounded-full bg-[var(--card)] text-[var(--ink)] shadow-lg">
+                <button type="button" onClick={() => onComment(false)} aria-label="Comment on this moment" className="flex size-12 items-center justify-center rounded-full bg-[var(--card)] text-[var(--ink)] shadow-lg">
                   <MessageCircle className="size-5" />
                 </button>
               </div>
@@ -348,7 +369,7 @@ export default function PactMomentsDetail({
             </>
           )}
 
-          {!hasMoments && !isEnded && (
+          {!hasMoments && !isEnded && isParticipant && (
             <div className="absolute inset-0 z-10 px-5 text-center text-white">
               <button type="button" aria-label="Add a moment" onClick={onAddMoment} className="absolute left-1/2 top-[100px] flex size-[104px] -translate-x-1/2 items-center justify-center rounded-full border-0 bg-[var(--navy)] text-white shadow-[0_0_0_10px_rgba(255,255,255,0.28),0_0_0_22px_rgba(255,255,255,0.14)]">
                 <Plus className="size-11" strokeWidth={2.2} aria-hidden="true" />
@@ -370,7 +391,7 @@ export default function PactMomentsDetail({
           )}
         </section>
 
-        {(hasMoments || isEnded || presentationEnded) && (
+        {(hasMoments || isEnded || presentationEnded || !isParticipant) && (
           <footer className="flex min-h-14 flex-wrap items-center gap-2">
             {presentationEnded && completionLooksSuccessful && !watchingRecap ? (
               <>
@@ -393,7 +414,7 @@ export default function PactMomentsDetail({
             ) : (
               <div className="flex flex-1" />
             )}
-            {!presentationEnded && hasMoments && !isEnded && (
+            {!presentationEnded && isParticipant && hasMoments && !isEnded && (
               <button
                 type="button"
                 onClick={onAddMoment}
@@ -405,6 +426,20 @@ export default function PactMomentsDetail({
               </button>
             )}
           </footer>
+        )}
+        {!isParticipant && !presentationEnded && (
+          <div className="flex shrink-0 flex-col gap-2">
+            {canJoin ? (
+              <button type="button" onClick={onJoin} disabled={isJoining} className="h-12 w-full rounded-full bg-[var(--navy)] px-5 text-[15px] font-bold text-white disabled:opacity-60">
+                {isJoining ? 'Joining…' : 'Join this pact'}
+              </button>
+            ) : (
+              <p className="text-center text-[13px] text-[var(--muted)]">{joinMessage[joinBlockReason || ''] || 'Joining is unavailable'}</p>
+            )}
+            <button type="button" onClick={onStartOwnVersion} className="h-11 w-full rounded-full border border-[var(--hairline)] text-[14px] font-semibold text-[var(--ink-soft)]">
+              Start my own version
+            </button>
+          </div>
         )}
       </div>
       {viewerOpen && current && (
@@ -421,6 +456,7 @@ export default function PactMomentsDetail({
             setSelectedDay(orderedMoments[index]?.day ?? null)
             setSelectedMomentId(orderedMoments[index]?.id ?? null)
           }}
+          onComment={() => onComment(true)}
         />
       )}
     </main>

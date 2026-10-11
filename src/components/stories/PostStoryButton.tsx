@@ -16,7 +16,7 @@ interface PostStoryButtonProps {
 }
 
 /** The one story action. Always a circle, flat navy, cream label. */
-export default function PostStoryButton({ size, posted, comingSoon, label = "Post today's story", onClick, postedHref, onPostedClick }: PostStoryButtonProps) {
+export default function PostStoryButton({ size, posted, comingSoon, label = "Post today's moment", onClick, postedHref, onPostedClick }: PostStoryButtonProps) {
   const big = size >= 140
   const iconSize = big ? 26 : size >= 88 ? 18 : 16
   const textSize = big ? 17 : size >= 88 ? 12 : 11
@@ -27,19 +27,19 @@ export default function PostStoryButton({ size, posted, comingSoon, label = "Pos
     const content = (
       <>
         <Check style={{ width: iconSize, height: iconSize }} strokeWidth={2.5} aria-hidden="true" />
-        <span>Posted</span>
+        <span>Moment shared</span>
       </>
     )
     const postedStyle = { ...style, border: '3px solid var(--navy)', background: 'var(--card)', color: 'var(--navy)' }
     if (postedHref) {
       return (
-        <Link href={postedHref} className={base} style={postedStyle} aria-label="Today's story is posted. Open the pact">
+        <Link href={postedHref} className={base} style={postedStyle} aria-label="Today's moment is shared. Open the pact">
           {content}
         </Link>
       )
     }
     return (
-      <button type="button" onClick={onPostedClick} className={base} style={postedStyle} aria-label="Today's story is posted. Watch it">
+      <button type="button" onClick={onPostedClick} className={base} style={postedStyle} aria-label="Today's moment is shared. Watch it">
         {content}
       </button>
     )

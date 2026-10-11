@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useRequireAuth } from '@/hooks/useRequireAuth'
-import { circleService, circleJoinRequestService, circleAdvancedService } from '@/services/api'
+import { circleService, circleJoinRequestService, circleAdvancedService, pactService } from '@/services/api'
 import { Circle, Pact } from '@/types'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
@@ -14,6 +14,7 @@ import ConfirmModal from '@/components/ConfirmModal'
 import LogoSpinner from '@/components/LogoSpinner'
 import { CircleQRFullView } from '@/components/CircleQR'
 import FeedPactCard from '@/components/FeedPactCard'
+import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
 import { useSkipPact } from '@/hooks/usePactActions'
 import Ring from '@/components/classic/Ring'
 import Seat from '@/components/classic/Seat'
@@ -34,6 +35,7 @@ export default function CircleDetailPage() {
   // — not persisted, so it resets on reload (there's no "already nudged
   // today" read endpoint yet to hydrate this from).
   const [nudgedIds, setNudgedIds] = useState<Set<number>>(new Set())
+  const [capturePact, setCapturePact] = useState<any | null>(null)
   // Grid layout (mockup): a handful of members shown up front with a "See
   // all" expand toggle, rather than the full roster always rendered flat.
   const skipMutation = useSkipPact()
@@ -73,6 +75,40 @@ export default function CircleDetailPage() {
     }
   }
   const handleLeave = async () => { setLeaving(true); try { await circleService.leave(circleId); router.push('/circles') } finally { setLeaving(false); setLeaveModal(false) } }
+  const startOwnVersion = (pact: any) => {
+    const query = new URLSearchParams()
+    query.set('note', pact.description || pact.title)
+    if (pact.category) query.set('category', pact.category)
+    query.set('pactId', String(pact.id))
+    router.push(`/pacts/create?${query.toString()}`)
+  }
+  const joinPactForCapture = async (pact: any) => {
+    if (!pact?.can_join) return false
+    try {
+      await pactService.join(Number(pact.id))
+      const refreshed = await circleService.listPacts(circleId)
+      const nextPacts = refreshed.data || []
+      setPacts(nextPacts)
+      setCapturePact((current: any) => current ? (nextPacts.find((item: any) => Number(item.id) === Number(current.id)) || { ...current, is_joined_by_me: true, can_join: false, join_block_reason: 'already_joined' }) : current)
+      return true
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || 'Could not join this pact')
+      return false
+    }
+  }
+  const handleCirclePactJoined = async (pact: any) => {
+    const joined = { ...pact, is_joined_by_me: true, can_join: false, join_block_reason: 'already_joined' }
+    setCapturePact(joined)
+    try {
+      const refreshed = await circleService.listPacts(circleId)
+      const nextPacts = refreshed.data || []
+      setPacts(nextPacts)
+      const freshPact = nextPacts.find((item: any) => Number(item.id) === Number(pact.id))
+      if (freshPact) setCapturePact(freshPact)
+    } catch {
+      // The successful join should still open capture if refreshing the list fails.
+    }
+  }
   const isOwner = !!user && !!circle && user.id === (circle as any).owner_id
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; e.target.value = ''; if (!file) return
@@ -214,7 +250,10 @@ export default function CircleDetailPage() {
               userVote={(pact as any).user_vote || (pact as any).userVote}
               onVote={handleSkipPact}
               detailHref={`/pacts/${pact.id}`}
-              canUploadProof={isMember}
+              canUploadProof={Boolean((pact as any).is_joined_by_me || pact.creator_id === user.id)}
+              onAddMoment={() => setCapturePact(pact)}
+              onJoined={() => handleCirclePactJoined(pact)}
+              onStartOwnVersion={() => startOwnVersion(pact)}
               canReport={pact.creator_id !== user?.id}
               showVoteActions={false}
               dismissOnVote={false}
@@ -227,5 +266,15 @@ export default function CircleDetailPage() {
         <div className="mt-10 text-center"><button onClick={() => setLeaveModal(true)} className="h-11 px-4 text-[14px] text-[var(--muted)]">Leave circle</button></div>
       )}
     </div>
+    {capturePact && (
+      <StoryCaptureSheet
+        isOpen
+        onClose={() => setCapturePact(null)}
+        pactId={Number(capturePact.id)}
+        pactTitle={capturePact.title}
+        canJoin={Boolean(capturePact.can_join)}
+        onJoin={() => joinPactForCapture(capturePact)}
+      />
+    )}
     {circle && qrOpen && <CircleQRFullView circle={circle} onClose={() => setQrOpen(false)} />} {circle && <InviteMembersModal isOpen={inviteModal} onClose={() => setInviteModal(false)} circleId={circle.id} circleName={circle.name} existingMemberIds={members.map((m: any) => m.user_id)} />}<ConfirmModal isOpen={leaveModal} onClose={() => setLeaveModal(false)} onConfirm={handleLeave} title="Leave circle?" description={`You'll lose access to ${circle.name}'s pacts until you rejoin.`} confirmLabel="Leave Circle" destructive loading={leaving} /></main>
 }

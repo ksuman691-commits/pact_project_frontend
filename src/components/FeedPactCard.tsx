@@ -53,6 +53,9 @@ interface FeedPactCardProps {
   dismissOnVote?: boolean;
   showVoteActions?: boolean;
   canUploadProof?: boolean;
+  onAddMoment?: () => void;
+  onJoined?: () => void | Promise<void>;
+  onStartOwnVersion?: () => void;
   canReport?: boolean;
   /**
    * Pages that render their own dedicated cheer widget alongside this card
@@ -325,6 +328,9 @@ export default function FeedPactCard({
   dismissOnVote = true,
   showVoteActions,
   canUploadProof,
+  onAddMoment,
+  onJoined,
+  onStartOwnVersion,
   canReport = true,
   hasCheered = false,
   chromeless = false,
@@ -519,6 +525,11 @@ export default function FeedPactCard({
   const showRing = (isParticipant || isCreator) && Boolean(progressInfo);
   const showStatusBadgeOnly = (isParticipant || isCreator) && !progressInfo;
   const showJoinCta = !isParticipant && !isCreator && (joinAllowed || showJoinedState);
+  const joinBlockMessage: Record<string, string> = {
+    unauthenticated: 'Sign in to join this pact',
+    not_active: 'Joining is closed',
+    full: 'This pact is full',
+  };
   // Pact category is a plain lowercase enum value ("fitness", "coding",
   // etc.) with no emoji/label mapping anywhere in the frontend today — just
   // capitalize it for display rather than inventing icons that don't exist
@@ -667,10 +678,11 @@ export default function FeedPactCard({
 
   const handleProofUploadClick = () => {
     if (!uploadAllowed) {
-      toast.error('Join this pact to upload proof');
+      toast.error('Join this pact to share a moment');
       return;
     }
-    setProofUploadModal(true);
+    if (onAddMoment) onAddMoment();
+    else setProofUploadModal(true);
   };
 
   const handleJoinPact = async () => {
@@ -690,6 +702,7 @@ export default function FeedPactCard({
       // "Join" until a manual refresh, and a second tap then hit the
       // backend's "already joined" rejection instead of being a no-op.
       setDisplayJoined(true);
+      await onJoined?.();
       const creatorName = creatorLabel || 'this creator';
       toast.success(`You joined ${creatorName}'s pact`);
       didCelebrateRef.current = true;
@@ -773,11 +786,11 @@ export default function FeedPactCard({
                 <button
                   type="button"
                   onClick={(event) => { event.stopPropagation(); handleProofUploadClick(); }}
-                  aria-label="Add today's proof photo"
+                  aria-label={onAddMoment ? 'Add a moment' : "Add today's proof photo"}
                   className="flex h-full w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] text-[var(--pact-text-faint)] transition hover:border-[var(--pact-violet)]/50 hover:text-[var(--pact-violet)]"
                 >
                   <Camera className="h-5 w-5" />
-                  <span className="text-xs font-bold">+ Add today</span>
+                  <span className="text-xs font-bold">{onAddMoment ? 'Add a moment' : '+ Add today'}</span>
                 </button>
               ) : undefined}
             />
@@ -792,16 +805,16 @@ export default function FeedPactCard({
                 <button
                   type="button"
                   onClick={handleProofUploadClick}
-                  aria-label="Add today's proof photo"
+                  aria-label={onAddMoment ? 'Add a moment' : "Add today's proof photo"}
                   className="flex h-full w-full flex-col items-center justify-center gap-2 border-2 border-dashed border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] text-[var(--pact-text-faint)] transition hover:border-[var(--pact-violet)]/50 hover:text-[var(--pact-violet)]"
                 >
                   <Camera className="h-6 w-6" />
-                  <span className="text-sm font-bold">+ Add today</span>
+                  <span className="text-sm font-bold">{onAddMoment ? 'Add a moment' : '+ Add today'}</span>
                 </button>
               ) : (
                 <div className="flex h-full w-full flex-col items-center justify-center gap-2 border-2 border-dashed border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] text-[var(--pact-text-faint)]">
                   <Camera className="h-6 w-6" />
-                  <span className="text-sm font-semibold">No proof yet</span>
+                  <span className="text-sm font-semibold">{onAddMoment ? 'No moment yet' : 'No proof yet'}</span>
                 </div>
               )}
             </div>
@@ -825,7 +838,7 @@ export default function FeedPactCard({
               {moreMenuOpen && <>
                 <button type="button" aria-label="close more options menu" onClick={() => setMoreMenuOpen(false)} className="fixed inset-0 z-40 cursor-default" />
                 <div role="menu" className="absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)] py-1.5 shadow-xl">
-                  {uploadAllowed && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); handleProofUploadClick(); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--pact-text)] transition hover:bg-white/5"><FileImage className="h-4 w-4" />Upload proof{proofCount > 0 && <span className="ml-auto text-xs text-[var(--pact-text-faint)]">{formatCompactCount(proofCount)}</span>}</button>}
+                  {uploadAllowed && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); handleProofUploadClick(); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--pact-text)] transition hover:bg-white/5"><FileImage className="h-4 w-4" />{onAddMoment ? 'Add a moment' : 'Upload proof'}{proofCount > 0 && <span className="ml-auto text-xs text-[var(--pact-text-faint)]">{formatCompactCount(proofCount)}</span>}</button>}
                   {canReport && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); setReportSheetOpen(true); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--warn-text)] transition hover:bg-white/5"><Flag className="h-4 w-4" />Report pact</button>}
                 </div>
               </>}
@@ -849,6 +862,12 @@ export default function FeedPactCard({
               )}
               {pactCategoryLabel && <p className="text-[11px] font-bold text-[var(--pact-text-faint)]">{pactCategoryLabel}</p>}
               <h2 className="mt-0.5 text-lg font-black leading-tight text-[var(--pact-text)] text-balance">{pact.title}</h2>
+              {!isParticipant && !isCreator && onStartOwnVersion && (
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  {!joinAllowed && <span className="text-[11px] text-[var(--pact-text-faint)]">{joinBlockMessage[pact.join_block_reason] || 'Joining is unavailable'}</span>}
+                  <button type="button" onClick={(event) => { event.stopPropagation(); onStartOwnVersion(); }} className="text-[11px] font-semibold text-[var(--pact-text-dim)] underline underline-offset-2">Start my own version</button>
+                </div>
+              )}
             </div>
             <div className="flex flex-shrink-0 items-center" onClick={(event) => event.stopPropagation()}>
               {showRing && (
@@ -1020,7 +1039,7 @@ export default function FeedPactCard({
         onChange={handleCheerFileChange}
       />
 
-      {uploadAllowed && (
+      {uploadAllowed && !onAddMoment && (
         <ProofUploadModal
           isOpen={proofUploadModal}
           onClose={() => setProofUploadModal(false)}
