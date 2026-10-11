@@ -68,16 +68,23 @@ export function useMarkStorySeen() {
 
 export type PostPhase = 'idle' | 'requesting' | 'uploading' | 'saving' | 'done' | 'error'
 
+function isRetryablePostError(error: any) {
+  const status = error?.response?.status
+  return error?.code === 'ECONNABORTED' || status == null || status === 408 || status >= 500
+}
+
 export function usePostStory(pactId: number) {
   const queryClient = useQueryClient()
   const [phase, setPhase] = useState<PostPhase>('idle')
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [retryable, setRetryable] = useState(false)
   const [unavailable, setUnavailable] = useState(false)
 
   const post = useCallback(
     async ({ blob, contentType, durationSeconds }: { blob: Blob; contentType: string; durationSeconds: number }) => {
       setError(null)
+      setRetryable(false)
       setProgress(0)
       try {
         setPhase('requesting')
@@ -99,6 +106,7 @@ export function usePostStory(pactId: number) {
       } catch (err) {
         setUnavailable(isStoriesUnavailable(err))
         setError(storyErrorMessage(err))
+        setRetryable(isRetryablePostError(err))
         setPhase('error')
       }
     },
@@ -109,7 +117,8 @@ export function usePostStory(pactId: number) {
     setPhase('idle')
     setProgress(0)
     setError(null)
+    setRetryable(false)
   }, [])
 
-  return { phase, progress, error, unavailable, post, reset }
+  return { phase, progress, error, retryable, unavailable, post, reset }
 }

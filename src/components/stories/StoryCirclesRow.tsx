@@ -47,7 +47,7 @@ function groupPactsByCircle(pacts: any[], circles: StoryCircle[]) {
 function PostTodaySheet({ circles, onClose, onPick }: { circles: StoryCircle[]; onClose: () => void; onPick: (pact: any) => void }) {
   // Already warmed by the Home row, so this normally renders from cache.
   const query = useMyPacts()
-  const active: any[] = ((query.data as any)?.data || []).filter((p: any) => p.status === 'active')
+  const active: any[] = ((query.data as any)?.data || []).filter((p: any) => p.status === 'active' && p.is_joined_by_me !== false)
   const groups = groupPactsByCircle(active, circles)
   const showSkeleton = query.isLoading || (query.isFetching && !query.data && !query.isError)
 
@@ -56,7 +56,7 @@ function PostTodaySheet({ circles, onClose, onPick }: { circles: StoryCircle[]; 
       <button type="button" aria-label="Close" className="absolute inset-0 bg-[var(--ink)]/40" onClick={onClose} />
       <div className="relative mx-auto flex max-h-[75vh] w-full max-w-md flex-col gap-3 rounded-t-[14px] bg-[var(--paper)] px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 text-[var(--ink)]">
         <div className="flex items-center justify-between">
-          <p className="text-[17px] font-bold tracking-[-0.02em]">Post today&apos;s story to</p>
+          <p className="text-[17px] font-bold tracking-[-0.02em]">Post today&apos;s moment to</p>
           <button type="button" onClick={onClose} aria-label="Close" className="flex h-11 w-11 items-center justify-center rounded-full">
             <X className="h-5 w-5" />
           </button>
@@ -134,7 +134,7 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
               <Video className="h-5 w-5" aria-hidden="true" />
               <span className="text-[11px] font-semibold">Post today</span>
             </span>
-            <span className="sr-only">Post today&apos;s story</span>
+            <span className="sr-only">Post today&apos;s moment</span>
           </button>
         </li>
 

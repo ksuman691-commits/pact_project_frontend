@@ -32,12 +32,12 @@ export default function StoryPactCard({ pact, myUserId, stories, storiesUnavaila
     ? `${STORIES_COMING_SOON}.`
     : posted
       ? hoursLeft != null
-        ? `Your story expires in ${hoursLeft} ${hoursLeft === 1 ? 'hour' : 'hours'}`
+        ? `Your moment expires in ${hoursLeft} ${hoursLeft === 1 ? 'hour' : 'hours'}`
         : null
       : stories
-        ? 'No story from you yet today.'
+        ? 'No moment from you yet today.'
         : null
-  const circleLine = pact.circle_id != null && members != null && postersToday != null ? `${postersToday} of ${members} posted today` : null
+  const circleLine = pact.circle_id != null && members != null && postersToday != null ? `${postersToday} of ${members} shared a moment today` : null
 
   return (
     <article className="relative flex items-center gap-4 rounded-[6px] border border-[var(--hairline)] bg-[var(--card)] p-4">

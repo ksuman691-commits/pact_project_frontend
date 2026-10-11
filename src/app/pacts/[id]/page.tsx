@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import DetailPageHeader from '@/components/DetailPageHeader';
 import PactMomentsDetail from '@/components/PactMomentsDetail';
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet';
+import CommentsBottomSheet from '@/components/CommentsBottomSheet';
 import { usePact, usePactCheers, usePactProofs } from '@/hooks/usePacts';
 import { useAuthStore } from '@/store/auth';
 import { pactService } from '@/services/api';
@@ -34,8 +36,14 @@ function PactDetailSkeleton() {
 export default function PactDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const [storyCaptureOpen, setStoryCaptureOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsAboveViewer, setCommentsAboveViewer] = useState(false);
+  const [liveCommentCount, setLiveCommentCount] = useState<number | null>(null);
+  const [joinedLocally, setJoinedLocally] = useState(false);
+  const [joining, setJoining] = useState(false);
   const pactId = Number(params.id);
   const { data: pactData, isLoading, isError, refetch: refetchPact } = usePact(pactId);
   const { data: momentsData } = usePactProofs(pactId, 50);
@@ -64,13 +72,46 @@ export default function PactDetailPage() {
   const progress = pact ? getPactProgress(pact, moments) : { completed: 0, total: 7, missed: 0 };
   const completionView = pact ? resolvePactCompletionViewState(pact, new Date(), progress.completed) : null;
   const isCreator = Boolean(user && pact?.creator_id === user.id);
-  const isParticipant = Boolean(
-    user && (isCreator || participants.some((participant: any) => participant.id === user.id || participant.user_id === user.id)),
-  );
+  const isParticipant = Boolean(user && (joinedLocally || pact?.is_joined_by_me || isCreator || participants.some((participant: any) => participant.id === user.id || participant.user_id === user.id)));
   const canCheer = isParticipant && !isCreator;
   const hasCheered = Boolean(user && cheers.some((cheer: any) => cheer.sender_id === user.id));
   const cheerCount = Number(pact?.active_cheer_count ?? cheersData?.pagination?.total ?? cheers.length);
   const isEnded = pact?.status !== 'active' || completionView !== null;
+
+  const joinPact = async (): Promise<boolean> => {
+    if (!pact || joining || !pact.can_join) return false;
+    setJoining(true);
+    try {
+      await pactService.join(pact.id);
+      setJoinedLocally(true);
+      await Promise.all([
+        refetchPact(),
+        queryClient.invalidateQueries({ queryKey: ['my-pacts'] }),
+      ]);
+      return true;
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || 'Could not join this pact');
+      return false;
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  const handleJoinAndAddMoment = async () => {
+    if (await joinPact()) {
+      setStoryCaptureOpen(true);
+    }
+  };
+
+  const handleStartOwnVersion = () => {
+    if (!pact) return;
+    const params = new URLSearchParams();
+    const goalText = pact.description || pact.title;
+    if (goalText) params.set('note', goalText);
+    if (pact.category) params.set('category', pact.category);
+    params.set('pactId', String(pact.id));
+    router.push(`/pacts/create?${params.toString()}`);
+  };
 
   const handleInvite = async () => {
     if (!pact) return;
@@ -172,16 +213,33 @@ export default function PactDetailPage() {
         canCheer={canCheer}
         hasCheered={hasCheered}
         viewerId={user?.id}
+        isParticipant={isParticipant}
+        canJoin={Boolean(pact.can_join)}
+        joinBlockReason={pact.join_block_reason}
+        isJoining={joining}
+        onJoin={() => void handleJoinAndAddMoment()}
+        onStartOwnVersion={handleStartOwnVersion}
         onInvite={() => void handleInvite()}
         onAddMoment={() => setStoryCaptureOpen(true)}
         onRestart={() => router.push(`/pacts/create?pactId=${pact.id}`)}
         onShareRecap={() => void handleShareRecap()}
+        onComment={(aboveViewer = false) => { setCommentsAboveViewer(aboveViewer); setCommentsOpen(true) }}
       />
       <StoryCaptureSheet
         isOpen={storyCaptureOpen && !isEnded}
         onClose={() => setStoryCaptureOpen(false)}
         pactId={pact.id}
         pactTitle={pact.title}
+        canJoin={Boolean(pact.can_join)}
+        onJoin={joinPact}
+      />
+      <CommentsBottomSheet
+        pactId={pact.id}
+        commentCount={liveCommentCount ?? Number(pact.comment_count ?? 0)}
+        isOpen={commentsOpen}
+        onClose={() => setCommentsOpen(false)}
+        onCountChange={setLiveCommentCount}
+        aboveViewer={commentsAboveViewer}
       />
     </>
   );

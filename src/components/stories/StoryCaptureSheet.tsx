@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Check, Circle, ImageIcon, RotateCcw, Square, Video, X } from 'lucide-react'
+import { Check, Circle, RotateCcw, Square, Video, X } from 'lucide-react'
 import { usePactStoriesToday, usePostStory } from '@/hooks/useStories'
 import {
   isDurationAllowed,
@@ -25,14 +25,18 @@ interface StoryCaptureSheetProps {
   onClose: () => void
   pactId: number
   pactTitle?: string
+  canJoin?: boolean
+  onJoin?: () => Promise<boolean>
   /** Lets a page show the sheet in a fixed state for review screenshots. */
   initialClip?: Clip | null
 }
 
 type Step = 'idle' | 'live' | 'preview'
 
-const CAMERA_BLOCKED = 'Camera is blocked. Allow it in Chrome site settings, or choose a video from your gallery.'
+const CAMERA_BLOCKED = 'Camera is blocked. Allow camera access in your browser settings, or choose a video from your library.'
 const RECORDER_TYPES = ['video/mp4', 'video/webm;codecs=vp8,opus', 'video/webm']
+const VIDEO_BITS_PER_SECOND = 2_500_000
+const AUDIO_BITS_PER_SECOND = 64_000
 
 function formatMb(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
@@ -42,7 +46,7 @@ function canRecordInPage() {
   return typeof window !== 'undefined' && typeof window.MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
 }
 
-export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, initialClip = null }: StoryCaptureSheetProps) {
+export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, canJoin = false, onJoin, initialClip = null }: StoryCaptureSheetProps) {
   const [step, setStep] = useState<Step>(initialClip ? 'preview' : 'idle')
   const [clip, setClip] = useState<Clip | null>(initialClip)
   const [notice, setNotice] = useState<string | null>(null)
@@ -52,7 +56,6 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
   const [inPageSupported, setInPageSupported] = useState(false)
 
   const cameraInputRef = useRef<HTMLInputElement>(null)
-  const galleryInputRef = useRef<HTMLInputElement>(null)
   const liveVideoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
@@ -61,7 +64,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
   const stopTimerRef = useRef<number | null>(null)
 
   const today = usePactStoriesToday(pactId, isOpen)
-  const { phase, progress, error, unavailable: postUnavailable, post, reset } = usePostStory(pactId)
+  const { phase, progress, error, retryable, unavailable: postUnavailable, post, reset } = usePostStory(pactId)
   const comingSoon = today.unavailable || postUnavailable
 
   useEffect(() => setInPageSupported(canRecordInPage()), [])
@@ -123,7 +126,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
       return
     }
     if (!isDurationAllowed(duration)) {
-      setNotice('Stories can be 15 seconds at most')
+      setNotice('Moments can be 15 seconds at most')
       return
     }
     replaceClip({ blob, contentType, duration, url: URL.createObjectURL(blob) })
@@ -140,7 +143,10 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
   const openLiveCamera = async () => {
     setNotice(null)
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: true })
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30, max: 30 } },
+        audio: true,
+      })
       streamRef.current = stream
       setStep('live')
       requestAnimationFrame(() => {
@@ -162,7 +168,12 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
     const stream = streamRef.current
     if (!stream) return
     const mimeType = RECORDER_TYPES.find((type) => MediaRecorder.isTypeSupported(type))
-    const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
+    const recorderOptions: MediaRecorderOptions = {
+      videoBitsPerSecond: VIDEO_BITS_PER_SECOND,
+      audioBitsPerSecond: AUDIO_BITS_PER_SECOND,
+      ...(mimeType ? { mimeType } : {}),
+    }
+    const recorder = new MediaRecorder(stream, recorderOptions)
     const chunks: BlobPart[] = []
     recorder.ondataavailable = (event) => {
       if (event.data.size > 0) chunks.push(event.data)
@@ -198,10 +209,10 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
   const ringLength = 2 * Math.PI * ringRadius
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Post today's story" className="fixed inset-0 z-[80] flex flex-col bg-[var(--paper)] text-[var(--ink)]">
+    <div role="dialog" aria-modal="true" aria-label="Post a moment" className="fixed inset-0 z-[80] flex flex-col bg-[var(--paper)] text-[var(--ink)]">
       <header className="flex items-center justify-between gap-3 px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
         <div className="min-w-0">
-          <p className="text-[17px] font-bold tracking-[-0.02em]">Today&apos;s story</p>
+          <p className="text-[17px] font-bold tracking-[-0.02em]">Post a moment</p>
           {pactTitle && <p className="truncate text-[13px] text-[var(--muted)]">{pactTitle}</p>}
         </div>
         <button
@@ -215,14 +226,13 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
         </button>
       </header>
 
-      <input ref={cameraInputRef} type="file" accept="video/*" capture="environment" className="sr-only" onChange={onFilePicked} tabIndex={-1} aria-hidden="true" />
-      <input ref={galleryInputRef} type="file" accept="video/*" className="sr-only" onChange={onFilePicked} tabIndex={-1} aria-hidden="true" />
+      <input ref={cameraInputRef} type="file" accept="video/*" className="sr-only" onChange={onFilePicked} tabIndex={-1} aria-hidden="true" />
 
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 overflow-y-auto px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         {step === 'idle' && (
           <>
             <p className="text-[15px] leading-relaxed text-[var(--ink)]">
-              Record a short video of today&apos;s work. It shares your progress and disappears after 24 hours.
+              Record a short video moment. It shares your progress and disappears after 24 hours.
             </p>
             <p className="rounded-[6px] border border-[var(--hairline)] bg-[var(--card)] px-4 py-3 text-[14px] text-[var(--muted)]">{STORY_LIMITS_TEXT}</p>
 
@@ -232,37 +242,28 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
               </p>
             ) : (
               <div className="flex flex-col items-center gap-4 pt-2">
-                <button
-                  type="button"
-                  onClick={() => cameraInputRef.current?.click()}
-                  disabled={checking}
-                  className="flex h-[176px] w-[176px] flex-col items-center justify-center gap-2 rounded-full text-[17px] font-semibold disabled:opacity-60"
-                  style={{ background: 'var(--navy)', color: '#fff' }}
-                >
-                  <Video className="h-7 w-7" strokeWidth={2} aria-hidden="true" />
-                  {checking ? 'Checking video…' : 'Record a video'}
-                </button>
+                {inPageSupported && (
+                  <button
+                    type="button"
+                    onClick={() => void openLiveCamera()}
+                    disabled={checking}
+                    className="flex h-[176px] w-[176px] flex-col items-center justify-center gap-2 rounded-full text-[17px] font-semibold disabled:opacity-60"
+                    style={{ background: 'var(--navy)', color: '#fff' }}
+                  >
+                    <Circle className="h-7 w-7" strokeWidth={2} aria-hidden="true" />
+                    Record here
+                  </button>
+                )}
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   <button
                     type="button"
-                    onClick={() => galleryInputRef.current?.click()}
+                    onClick={() => cameraInputRef.current?.click()}
                     disabled={checking}
                     className="flex h-11 items-center gap-2 rounded-full border-[1.5px] border-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--navy)]"
                   >
-                    <ImageIcon className="h-4 w-4" aria-hidden="true" />
-                    Choose from gallery
+                    <Video className="h-4 w-4" aria-hidden="true" />
+                    Choose from library
                   </button>
-                  {inPageSupported && (
-                    <button
-                      type="button"
-                      onClick={() => void openLiveCamera()}
-                      disabled={checking}
-                      className="flex h-11 items-center gap-2 rounded-full border border-[var(--hairline)] px-5 text-[14px] font-semibold text-[var(--ink)]"
-                    >
-                      <Circle className="h-4 w-4" aria-hidden="true" />
-                      Record here
-                    </button>
-                  )}
                 </div>
               </div>
             )}
@@ -333,17 +334,27 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
                   <div className="h-full rounded-full bg-[var(--navy)] transition-[width]" style={{ width: `${Math.round((phase === 'saving' ? 1 : progress) * 100)}%` }} />
                 </div>
                 <p className="text-[14px] text-[var(--muted)]">
-                  {phase === 'requesting' ? 'Getting ready to upload…' : phase === 'uploading' ? `Uploading ${Math.round(progress * 100)}%` : 'Saving your story…'}
+                  {phase === 'requesting' ? 'Getting ready to upload…' : phase === 'uploading' ? `Uploading ${Math.round(progress * 100)}%` : 'Saving your moment…'}
                 </p>
               </div>
             ) : (
               <>
-                {phase === 'error' && error && (
+                {phase === 'error' && error && isParticipantPermissionError(error) ? (
+                  <div role="alert" className="w-full rounded-[6px] border border-[var(--hairline)] bg-[var(--card)] px-4 py-3 text-[14px] text-[var(--ink)]">
+                    <p>Join this pact to post a moment</p>
+                    <div className="mt-3 flex gap-3">
+                      {canJoin && onJoin && <button type="button" onClick={async () => { const joined = await onJoin(); if (joined && clip) await post({ blob: clip.blob, contentType: clip.contentType, durationSeconds: clip.duration }) }} className="h-10 flex-1 rounded-full bg-[var(--navy)] text-sm font-semibold text-white">Join this pact</button>}
+                      <button type="button" onClick={closeSheet} className="h-10 flex-1 rounded-full border border-[var(--hairline)] text-sm font-semibold">Close</button>
+                    </div>
+                  </div>
+                ) : phase === 'error' && error && (
                   <p role="alert" className="w-full rounded-[6px] border border-[var(--hairline)] bg-[var(--card)] px-4 py-3 text-[14px] text-[var(--ink)]">
                     {error}
                   </p>
                 )}
-                <div className="flex w-full gap-3">
+                {phase === 'error' && error && !isParticipantPermissionError(error) && !retryable ? (
+                  <button type="button" onClick={closeSheet} className="h-12 w-full rounded-full border border-[var(--hairline)] text-[15px] font-semibold">Close</button>
+                ) : !(phase === 'error' && error && isParticipantPermissionError(error)) && <div className="flex w-full gap-3">
                   <button
                     type="button"
                     onClick={retake}
@@ -361,7 +372,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
                   >
                     {comingSoon ? STORIES_COMING_SOON : phase === 'error' ? 'Try again' : 'Post'}
                   </button>
-                </div>
+                </div>}
               </>
             )}
           </div>
@@ -369,4 +380,8 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
       </div>
     </div>
   )
+}
+
+function isParticipantPermissionError(error: string) {
+  return error.toLowerCase().includes('only pact participants can post stories')
 }
