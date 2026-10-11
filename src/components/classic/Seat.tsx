@@ -19,8 +19,30 @@ function initials(name?: string | null) {
     .join('')
 }
 
+/** Tick badge shared by every avatar: bottom-right corner, 2px cream ring. Parent must be `relative`. */
+export function TickBadge({ size }: { size: number }) {
+  const offset = -Math.round(size * 0.25)
+  return (
+    <span
+      aria-hidden="true"
+      className="absolute flex items-center justify-center rounded-full"
+      style={{
+        width: size,
+        height: size,
+        right: offset,
+        bottom: offset,
+        background: 'var(--navy)',
+        boxShadow: '0 0 0 2px #F4EFE4',
+      }}
+    >
+      <svg width={size * 0.6} height={size * 0.6} viewBox="0 0 10 10" fill="none">
+        <path d="M2 5.2 L4.1 7.3 L8 2.8" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+  )
+}
+
 export default function Seat({ name, avatarUrl, size = 40, lit = false, className = '' }: SeatProps) {
-  const badge = Math.round(size * 0.4)
   return (
     <div className={`relative shrink-0 ${className}`} style={{ width: size, height: size }}>
       <div
@@ -41,24 +63,7 @@ export default function Seat({ name, avatarUrl, size = 40, lit = false, classNam
           </span>
         )}
       </div>
-      {lit && (
-        <span
-          aria-hidden="true"
-          className="absolute flex items-center justify-center rounded-full"
-          style={{
-            width: badge,
-            height: badge,
-            right: -4,
-            bottom: -4,
-            background: 'var(--card)',
-            border: '1.5px solid var(--navy)',
-          }}
-        >
-          <svg width={badge * 0.57} height={badge * 0.57} viewBox="0 0 10 10" fill="none">
-            <path d="M2 5.2 L4.1 7.3 L8 2.8" stroke="var(--navy)" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </span>
-      )}
+      {lit && <TickBadge size={Math.max(12, Math.round(size * 0.42))} />}
     </div>
   )
 }

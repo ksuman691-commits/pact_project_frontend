@@ -69,9 +69,9 @@ const calculateCurrentDay = (startDateRaw: string | undefined, durationDaysRaw: 
 
 export const mapCircle = (raw: any) => ({
   ...raw,
-  is_public: raw?.visibility === 'public',
+  is_public: (raw?.visibility ?? 'public') === 'public',
   memberCount: raw?.member_count ?? 0,
-  visibility: 'public',
+  visibility: raw?.visibility ?? 'public',
 });
 
 const mapSupporter = (raw: any) => ({
@@ -322,7 +322,9 @@ export const circleService = {
     return { ...response, data: mapCircle(response.data) };
   },
   list: async () => {
-    const response = await api.get('/api/circles');
+    // The week for ticks is Mon-Sun in the viewer's timezone.
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const response = await api.get('/api/circles', { params: tz ? { tz } : undefined });
     return normalizeListResponse(response, mapCircle);
   },
   getById: async (id: number) => {

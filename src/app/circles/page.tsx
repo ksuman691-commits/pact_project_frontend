@@ -2,26 +2,30 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { Search, SlidersHorizontal, Plus, Sparkles } from 'lucide-react'
+import { Search, SlidersHorizontal, Plus, Sparkles, Lock } from 'lucide-react'
 import { useCircles } from '@/hooks/useCircles'
 import PendingCircleInvites from '@/components/PendingCircleInvites'
 import ConnectSimilarFolksModal from '@/components/ConnectSimilarFolksModal'
 import Ring from '@/components/classic/Ring'
-import Seat from '@/components/classic/Seat'
 import { readCircleActivity } from '@/lib/circleActivity'
 import { useRequireAuth } from '@/hooks/useRequireAuth'
 
 const SORT_OPTIONS = ['Most active', 'Alphabetical (A-Z)', 'Member count'] as const
-const membershipFilters = ['All', 'Open to join', 'Invite only'] as const
+type Filter = 'all' | 'quiet' | 'mine'
 
-// "Open to join" is visibility === 'public'. The backend stores only
-// public/private, so approval-required circles show under "Invite only".
-const isOpenToJoin = (circle: any) => (circle.visibility ? circle.visibility === 'public' : circle.is_public !== false)
+// The backend stores only public/private; anything not public is invite-only.
+const isInviteOnly = (circle: any) => (circle.visibility ? circle.visibility !== 'public' : circle.is_public === false)
+
+function matchesFilter(item: { circle: any; activity: ReturnType<typeof readCircleActivity> }, filter: Filter, viewerId: unknown) {
+  if (filter === 'all') return true
+  if (filter === 'quiet') return item.activity.known && item.activity.activeCount === 0
+  return viewerId != null && String(item.circle.owner_id) === String(viewerId)
+}
 
 function tileCaption(activity: ReturnType<typeof readCircleActivity>) {
   if (!activity.known) return `${activity.totalMembers} member${activity.totalMembers === 1 ? '' : 's'}`
-  if (activity.activeCount === 0) return 'Nobody has sent proof this week'
-  return `${activity.activeCount} of ${activity.totalMembers} sent proof this week`
+  if (activity.activeCount === 0) return 'Nobody has shared a moment this week'
+  return `${activity.activeCount} of ${activity.totalMembers} shared a moment this week`
 }
 
 function CircleTile({ circle, activity }: { circle: any; activity: ReturnType<typeof readCircleActivity> }) {
@@ -37,6 +41,12 @@ function CircleTile({ circle, activity }: { circle: any; activity: ReturnType<ty
       />
       <span className="w-full break-words text-[17px] font-bold leading-[1.15] tracking-[-0.02em] text-[var(--ink)]">{circle.name}</span>
       <span className="text-[12px] text-[var(--muted)]">{tileCaption(activity)}</span>
+      {isInviteOnly(circle) && (
+        <span className="flex items-center gap-1 text-[11px] text-[var(--muted)]">
+          <Lock className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
+          Invite only
+        </span>
+      )}
     </Link>
   )
 }
@@ -50,22 +60,27 @@ export default function CirclesPage() {
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<(typeof SORT_OPTIONS)[number]>('Most active')
   const [sortOpen, setSortOpen] = useState(false)
-  const [membershipFilter, setMembershipFilter] = useState<(typeof membershipFilters)[number]>('All')
+  const [membershipFilter, setMembershipFilter] = useState<Filter>('all')
+  const viewerId = (user as any)?.id
 
-  const withActivity = useMemo(() => circles.map((circle) => ({ circle, activity: readCircleActivity(circle) })), [circles])
+  const withActivity = useMemo(
+    () => circles.map((circle) => ({ circle, activity: readCircleActivity(circle, undefined, viewerId) })),
+    [circles, viewerId],
+  )
 
   const searchFiltered = useMemo(
     () => withActivity.filter(({ circle }) => (circle.name || '').toLowerCase().includes(search.toLowerCase())),
     [withActivity, search],
   )
-  const openCount = searchFiltered.filter(({ circle }) => isOpenToJoin(circle)).length
-  const filterCount = (item: (typeof membershipFilters)[number]) =>
-    item === 'All' ? searchFiltered.length : item === 'Open to join' ? openCount : searchFiltered.length - openCount
+  const filters: { id: Filter; label: string }[] = [
+    { id: 'all', label: 'All' },
+    { id: 'quiet', label: 'Quiet this week' },
+    { id: 'mine', label: 'Created by you' },
+  ]
+  const filterCount = (filter: Filter) => searchFiltered.filter((item) => matchesFilter(item, filter, viewerId)).length
 
   const visible = useMemo(() => {
-    const list = searchFiltered.filter(({ circle }) =>
-      membershipFilter === 'All' ? true : membershipFilter === 'Open to join' ? isOpenToJoin(circle) : !isOpenToJoin(circle),
-    )
+    const list = searchFiltered.filter((item) => matchesFilter(item, membershipFilter, viewerId))
     return [...list].sort((a, b) => {
       if (sort === 'Alphabetical (A-Z)') return (a.circle.name || '').localeCompare(b.circle.name || '')
       if (sort === 'Member count') return b.activity.totalMembers - a.activity.totalMembers
@@ -74,11 +89,9 @@ export default function CirclesPage() {
       const bActive = b.activity.known ? b.activity.activeCount : -1
       return bActive - aActive || b.activity.totalMembers - a.activity.totalMembers
     })
-  }, [searchFiltered, membershipFilter, sort])
+  }, [searchFiltered, membershipFilter, sort, viewerId])
 
   const allActivityKnown = withActivity.length > 0 && withActivity.every(({ activity }) => activity.known)
-  const anyActivityKnown = withActivity.some(({ activity }) => activity.known)
-  const anySeatTicked = withActivity.some(({ activity }) => activity.ringMembers.some((m) => m.activeThisWeek))
   const activeCircles = withActivity.filter(({ activity }) => activity.known && activity.activeCount > 0).length
 
   const summary = (() => {
@@ -98,21 +111,6 @@ export default function CirclesPage() {
           <h1 className="text-[34px] font-bold leading-none tracking-[-0.035em]">Your circles</h1>
           {summary && <p className="text-[14px] text-[var(--muted)]">{summary}</p>}
         </header>
-
-        {(anyActivityKnown || anySeatTicked) && (
-          <div className="mx-6 mt-4 flex flex-col gap-2 rounded-[10px] bg-[var(--card)] px-3.5 py-3 text-[13px] text-[var(--ink-soft)]">
-            <div className="flex items-center gap-3">
-              <Seat name="Sam Lee" size={26} lit />
-              <span>Ticked: sent proof for a pact this week</span>
-            </div>
-            {anyActivityKnown && (
-              <div className="flex items-center gap-3">
-                <Seat name="Sam Lee" size={26} />
-                <span>Plain: hasn&apos;t sent proof yet this week</span>
-              </div>
-            )}
-          </div>
-        )}
 
         <div className="mt-4">
           <PendingCircleInvites />
@@ -177,16 +175,16 @@ export default function CirclesPage() {
         </div>
 
         <nav className="flex gap-2 overflow-x-auto px-6 pb-1 pt-3" aria-label="Circle membership filters">
-          {membershipFilters.map((item) => (
+          {filters.map((item) => (
             <button
-              key={item}
+              key={item.id}
               type="button"
-              onClick={() => setMembershipFilter(item)}
+              onClick={() => setMembershipFilter(item.id)}
               className={`h-9 shrink-0 rounded-full px-4 text-[13px] font-semibold transition ${
-                membershipFilter === item ? 'bg-[var(--navy)] text-[var(--card)]' : 'border border-[var(--line)] text-[var(--ink-soft)]'
+                membershipFilter === item.id ? 'bg-[var(--navy)] text-[var(--card)]' : 'border border-[var(--line)] text-[var(--ink-soft)]'
               }`}
             >
-              {item} ({filterCount(item)})
+              {item.label} ({filterCount(item.id)})
             </button>
           ))}
         </nav>
