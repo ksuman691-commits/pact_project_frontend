@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Video, X } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
+import { useAuthStore } from '@/store/auth'
 import { useCircleStoriesToday } from '@/hooks/useStories'
 import { useMyPacts } from '@/hooks/useMyPacts'
 import StoryCaptureSheet from './StoryCaptureSheet'
@@ -21,8 +22,8 @@ const SIZE = 72
 
 function labelFor(state: RingState, count: number | null | undefined) {
   if (state === 'unseen') return typeof count === 'number' && count > 0 ? `${count} new` : 'new'
-  if (state === 'seen') return 'seen'
-  return 'none yet'
+  if (state === 'seen') return 'Seen'
+  return 'Quiet'
 }
 
 function groupPactsByCircle(pacts: any[], circles: StoryCircle[]) {
@@ -112,13 +113,14 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
   const [capturePact, setCapturePact] = useState<any | null>(null)
   const [viewing, setViewing] = useState<StoryCircle | null>(null)
   const circleStories = useCircleStoriesToday(viewing?.id ?? null)
+  const { user } = useAuthStore()
   // Warm the sheet's data on Home mount so the chooser opens from cache.
   useMyPacts()
 
   return (
     <section aria-label="Your circles" className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between px-1">
-        <h2 className="text-[13px] font-semibold text-[var(--muted)]">Your circles</h2>
+        <h2 className="text-[13px] font-semibold text-[var(--muted)]">Moments</h2>
         <Link href="/circles" className="text-[13px] font-semibold text-[var(--navy)]">
           See all
         </Link>
@@ -126,22 +128,27 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
 
       <ul className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-1">
         <li>
-          <button type="button" onClick={() => setPickerOpen(true)} className="flex w-[76px] flex-col items-center gap-1.5">
-            <span
-              className="flex flex-col items-center justify-center gap-0.5 rounded-full"
-              style={{ width: SIZE + 6, height: SIZE + 6, background: 'var(--navy)', color: 'var(--paper)' }}
-            >
-              <Video className="h-5 w-5" aria-hidden="true" />
-              <span className="text-[11px] font-semibold">Post today</span>
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="flex w-[76px] flex-col items-center gap-1.5"
+            aria-label="Post today's moment"
+          >
+            <span className="relative inline-flex">
+              <StoryRing state="add" size={SIZE} name={user?.full_name} imageUrl={user?.avatar_url} />
+              <span className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-[2.5px] border-[var(--paper)] bg-[var(--navy)] text-white">
+                <Plus className="h-3 w-3" strokeWidth={3.2} aria-hidden="true" />
+              </span>
             </span>
-            <span className="sr-only">Post today&apos;s moment</span>
+            <span className="w-full truncate text-center text-[12px] font-semibold text-[var(--ink)]">Your moment</span>
+            <span className="-mt-0.5 text-[11px] font-semibold text-[var(--navy)]">Post today</span>
           </button>
         </li>
 
         {isLoading
           ? [0, 1, 2].map((i) => (
               <li key={i} className="flex w-[76px] flex-col items-center gap-1.5" aria-hidden="true">
-                <span className="rounded-full border border-dashed border-[var(--seat-border)]" style={{ width: SIZE + 6, height: SIZE + 6 }} />
+                <span className="rounded-full border border-dashed border-[var(--seat-border)]" style={{ width: SIZE, height: SIZE }} />
               </li>
             ))
           : circles.map((circle) => {
@@ -149,9 +156,21 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
               return (
                 <li key={circle.id}>
                   <button type="button" onClick={() => setViewing(circle)} className="flex w-[76px] flex-col items-center gap-1.5">
-                    <StoryRing state={state} size={SIZE} name={circle.name} imageUrl={circle.photo_url} />
+                    <span className="relative inline-flex">
+                      <StoryRing state={state} size={SIZE} name={circle.name} imageUrl={circle.photo_url} count={circle.stories_today_count} />
+                      {state === 'unseen' && typeof circle.stories_today_count === 'number' && circle.stories_today_count > 0 && (
+                        <span
+                          className="absolute -bottom-0.5 -right-0.5 flex h-6 min-w-6 items-center justify-center rounded-full border-[2.5px] border-[var(--paper)] bg-[var(--navy)] px-1 text-[11px] font-bold text-white"
+                          aria-hidden="true"
+                        >
+                          {circle.stories_today_count}
+                        </span>
+                      )}
+                    </span>
                     <span className="w-full truncate text-center text-[12px] font-semibold text-[var(--ink)]">{circle.name}</span>
-                    <span className="text-[11px] text-[var(--muted)]">{labelFor(state, circle.stories_today_count)}</span>
+                    <span className={`-mt-0.5 text-[11px] ${state === 'unseen' ? 'font-bold text-[var(--navy)]' : 'text-[var(--muted)]'}`}>
+                      {labelFor(state, circle.stories_today_count)}
+                    </span>
                   </button>
                 </li>
               )
