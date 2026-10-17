@@ -10,7 +10,7 @@ import {
   MessageCircle,
   Share2,
   FileImage,
-  ArrowLeft,
+  Check,
   Camera,
   PartyPopper,
   Loader2,
@@ -21,11 +21,8 @@ import ProofUploadModal from './ProofUploadModal';
 import CommentsBottomSheet from './CommentsBottomSheet';
 import Avatar from './Avatar';
 import UserAvatarLink from './UserAvatarLink';
-import PremiumJoinButton from './PremiumJoinButton';
 import GoalMatchStrip from './GoalMatchStrip';
 import PactGallery, { buildGalleryTiles } from './PactGallery';
-import ActivePactFireBadge from './ActivePactFireBadge';
-import CircleChip from './classic/CircleChip';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useCreateCheer } from '@/hooks/usePactMutations';
 import { useGoalMatches } from '@/hooks/usePactMatches';
@@ -234,86 +231,48 @@ function getDurationProgress(pact: any) {
   return { percent, elapsedDays, totalDays };
 }
 
-/** Gradient-stroke circular progress ring — the hero visual for pacts with no proof photo yet. */
-function PactProgressRing({
-  percent,
-  elapsedDays,
-  totalDays,
-  gradientId,
-  compact = false,
-  mutedGlow = false,
-  momentum = false,
-}: {
-  percent: number;
-  elapsedDays: number;
-  totalDays: number;
-  gradientId: string;
-  compact?: boolean;
-  /**
-   * The corner-badge ring's ambient glow was tuned against a busy photo
-   * background, where a big soft blob reads as a halo. On the flat, dark
-   * no-photo placeholder there's no texture to blend into, so the same
-   * blob's contrast against solid black made it look like it was taking
-   * over the card instead of sitting quietly in the corner. Shrinking the
-   * spread/opacity/blur here (rather than for the photo case too) keeps the
-   * glow readable as a small badge accent specifically on that background.
-   */
-  mutedGlow?: boolean;
-  /**
-   * Fuses a small fire dot onto this ring's bottom-right edge instead of a
-   * second free-floating badge next to it (see hasPactMomentum in
-   * src/lib/pactMomentum.ts). Callers should not also render
-   * ActivePactFireBadge separately — this ring is the single corner badge.
-   */
-  momentum?: boolean;
-}) {
-  // Shrunk from 92 — with the fire signal now fused onto the ring itself
-  // instead of sitting beside it as a second same-sized badge, the corner
-  // no longer needs to reserve room for two elements, so the ring itself
-  // can come down a size without anything feeling cramped.
-  const size = compact ? 76 : 150;
-  const center = size / 2;
-  const radius = compact ? 39 : 60;
-  const strokeWidth = compact ? 6 : 9;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference * (1 - percent / 100);
+/** "6:12 am" today, "Yesterday", otherwise "17 Oct". */
+function formatPostedAt(raw?: string | null) {
+  if (!raw) return null;
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return null;
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const dayDiff = Math.round((startOfDay(new Date()) - startOfDay(date)) / 86400000);
+  if (dayDiff === 0) return date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase();
+  if (dayDiff === 1) return 'Yesterday';
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
 
-  return (
-    <div className={`relative flex shrink-0 items-center justify-center ${compact ? 'h-[76px] w-[76px]' : 'h-[150px] w-[150px]'}`}>
-      <svg viewBox={`0 0 ${size} ${size}`} className={`relative h-full w-full -rotate-90 ${compact ? 'animate-[pulse_3s_ease-in-out_infinite]' : ''}`} role="img" aria-label={`Day ${elapsedDays} of ${totalDays}`}>
-        <circle cx={center} cy={center} r={radius} fill="var(--pact-surface)" stroke="var(--pact-hairline)" strokeWidth={strokeWidth} />
-        <circle cx={center} cy={center} r={radius} fill="none" stroke="var(--pact-hairline)" strokeWidth={strokeWidth} />
-        <circle
-          cx={center}
-          cy={center}
-          r={radius}
-          fill="none"
-          stroke="var(--pact-pink)"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 900ms ease-out' }}
-        />
-      </svg>
-      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center leading-none">
-        {compact ? (
-          <>
-            <span className="text-[23px] font-black tracking-[-0.04em] text-[var(--pact-text)]" style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}>D{elapsedDays}</span>
-            <span className="mt-1 text-[11px] font-bold text-[var(--pact-text-dim)]" style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}>of {totalDays}</span>
-          </>
-        ) : (
-          <>
-            <span className="text-2xl font-bold text-[var(--pact-text)]" style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}>{percent}%</span>
-            <span className="mt-0.5 text-[10.5px] text-[var(--pact-text-faint)]">{elapsedDays}/{totalDays} days</span>
-          </>
-        )}
+/** One segment per day for short pacts (10 days or fewer), a plain bar for longer ones. */
+function DayBar({ day, total }: { day: number; total: number }) {
+  const filled = Math.max(0, Math.min(total, day));
+  if (total <= 10) {
+    return (
+      <div className="mt-2 flex gap-1" aria-hidden="true">
+        {Array.from({ length: total }, (_, i) => (
+          <span key={i} className="h-1.5 flex-1 rounded-[3px]" style={{ background: i < filled ? 'var(--navy)' : 'var(--hairline)' }} />
+        ))}
       </div>
-      {momentum && (
-        <div className="absolute" style={{ bottom: -size * 0.03, right: -size * 0.03 }}>
-          <ActivePactFireBadge variant="fused" size={Math.max(16, Math.round(size * 0.32))} />
-        </div>
-      )}
+    );
+  }
+  return (
+    <div className="mt-2 h-1.5 overflow-hidden rounded-[3px]" style={{ background: 'var(--hairline)' }} aria-hidden="true">
+      <div className="h-full rounded-[3px]" style={{ width: `${Math.round((filled / total) * 100)}%`, background: 'var(--navy)' }} />
+    </div>
+  );
+}
+
+/** Small progress ring for the no-proof-yet strip. */
+function MiniRing({ percent, label }: { percent: number; label: string }) {
+  const radius = 24;
+  const circumference = 2 * Math.PI * radius;
+  return (
+    <div className="relative h-14 w-14 shrink-0">
+      <svg viewBox="0 0 56 56" className="h-full w-full -rotate-90" aria-hidden="true">
+        <circle cx="28" cy="28" r={radius} fill="none" stroke="var(--hairline)" strokeWidth="5" />
+        <circle cx="28" cy="28" r={radius} fill="none" stroke="var(--navy)" strokeWidth="5" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - percent / 100)} />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-[15px] font-extrabold text-[var(--ink)]">{label}</span>
     </div>
   );
 }
@@ -546,12 +505,15 @@ export default function FeedPactCard({
   // fabricating data. See GoalMatchStrip's own comment for the same
   // "don't let these avatars get mistaken for participants" principle.
   const supporterAvatars = Array.isArray(pact.recent_supporters) ? pact.recent_supporters : [];
-  // "Day N" for members with a real duration to track; time-remaining
-  // (already computed above) for everyone else — real data either way, no
-  // fabricated join/participant count (see FeedPactCard's data-gap notes:
-  // pacts have no participant_count field, unlike circles).
-  const bottomRightText = showRing ? `Day ${progressInfo!.elapsedDays}` : timeRemaining;
-  const bottomRightShowFlame = showRing && hasPactMomentum(pact);
+  // Header subline: circle and when the latest photo went up. Category is the
+  // fallback for pacts that aren't scoped to a circle.
+  const postedAt = formatPostedAt(activeProof?.uploadedAt);
+  const headerSub = [circleLabel, postedAt].filter(Boolean).join(' · ') || pactCategoryLabel;
+  const dayNo = progressInfo ? Math.min(progressInfo.totalDays, Math.max(1, progressInfo.elapsedDays)) : 0;
+  const showMomentum = showRing && hasPactMomentum(pact);
+  // The Add moment pill replaces the old in-carousel "+ Add today" tile. With no
+  // photo yet the dashed strip is the prompt, so the pill stays out of the way.
+  const showAddPill = uploadAllowed && !hideHeroAndTitle && tiles.length > 0;
 
   // Voting/cheering/joining are button-only actions (see the action row
   // below) — photo paging is native scroll inside PactGallery, so the card
@@ -747,284 +709,246 @@ export default function FeedPactCard({
         transition={{ duration: 0.2, ease: 'easeOut' }}
         onClick={handleCardNavigate}
         className={`${chromeless ? '' : 'pact-card'} group relative mx-2 cursor-pointer transition-colors hover:border-[var(--pact-violet)]/60 sm:mx-0 ${
-          chromeless ? '' : 'rounded-[28px]'
+          chromeless ? '' : 'rounded-[24px]'
         } ${moreMenuOpen ? 'overflow-visible' : 'overflow-hidden'}`}
       >
-        {/* Carousel: a self-contained photo/cheer strip with its own dot
-            row below it (via PactGallery's dotsPosition="below") — nothing
-            is overlaid on top of the photos anymore. All context (creator,
-            category, title, ring/Join, avatars, streak) lives in the white
-            body underneath instead. Skipped entirely when hideHeroAndTitle
-            is set — the pact detail page renders its own hero above this
-            card using the same proof set, so this would just be the same
-            photo shown twice. */}
+        {/* Header: who posted, in which circle, and when. */}
+        <div className="flex items-center gap-2.5 py-2.5 pl-3.5 pr-1">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5" onClick={(event) => event.stopPropagation()}>
+            {creatorProfileHref ? <UserAvatarLink name={creatorLabel} avatarUrl={creatorAvatarUrl} username={creatorUsername} size={38} stopPropagation /> : <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={38} />}
+            <div className="min-w-0">
+              <div className="truncate text-[14.5px] font-bold text-[var(--ink)]">{creatorLabel === 'You' ? 'You' : `@${creatorLabel}`}</div>
+              {headerSub && <div className="truncate text-[12.5px] text-[var(--muted)]">{headerSub}</div>}
+            </div>
+          </div>
+          <div className="relative flex-shrink-0" onClick={(event) => event.stopPropagation()}>
+            <button type="button" onClick={() => setMoreMenuOpen((open) => !open)} aria-label="more options" aria-haspopup="menu" aria-expanded={moreMenuOpen} className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--muted)] transition hover:bg-[var(--card-muted)]"><MoreVertical className="h-5 w-5" /></button>
+            {moreMenuOpen && <>
+              <button type="button" aria-label="close more options menu" onClick={() => setMoreMenuOpen(false)} className="fixed inset-0 z-40 cursor-default" />
+              <div role="menu" className="absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)] py-1.5 shadow-xl">
+                {uploadAllowed && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); handleProofUploadClick(); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--pact-text)] transition hover:bg-white/5"><FileImage className="h-4 w-4" />{onAddMoment ? 'Add a moment' : 'Upload proof'}{proofCount > 0 && <span className="ml-auto text-xs text-[var(--pact-text-faint)]">{formatCompactCount(proofCount)}</span>}</button>}
+                {canReport && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); setReportSheetOpen(true); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--warn-text)] transition hover:bg-white/5"><Flag className="h-4 w-4" />Report pact</button>}
+              </div>
+            </>}
+          </div>
+        </div>
+
+        {/* Media: the posted photo leads the card. Skipped when hideHeroAndTitle
+            is set — the pact detail page renders its own hero above this card
+            using the same proof set. Swiping only pages photos (native scroll
+            snap in PactGallery); tapping a photo opens the story viewer. */}
         {!hideHeroAndTitle && (
-        <div className="relative w-full" onClick={handleMediaTap} style={transformStyle}>
-          {tiles.length > 0 ? (
-            <PactGallery
-              proofs={galleryProofs ?? proofs}
-              cheers={galleryCheers ?? []}
-              // Tapping the photo itself now opens the full-screen story
-              // viewer (PactGallery's own ProofCarousel) instead of falling
-              // through to handleMediaTap's card-navigate — this is one of
-              // the two real "tap into a pact's proof photos" entry points
-              // (the other is the pact detail page's Proof Wall grid).
-              // Tiles render as real <button>s when interactive, and
-              // handleMediaTap already special-cases any click whose target
-              // is inside a button/link to skip navigation, so this doesn't
-              // need any change on that side — tapping the rest of the card
-              // (title, footer, blank space) still navigates as before.
-              interactive
-              aspectClassName="aspect-[4/5]"
-              dotsPosition="below"
-              onActiveIndexChange={setActiveProofIndex}
-              // Always available to uploaders, even after today already has
-              // a proof — multiple proofs per day are allowed (no daily
-              // upload limit on the backend), so this shouldn't disappear
-              // just because one photo already went up today.
-              trailingSlot={uploadAllowed ? (
-                <button
-                  type="button"
-                  onClick={(event) => { event.stopPropagation(); handleProofUploadClick(); }}
-                  aria-label={onAddMoment ? 'Add a moment' : "Add today's proof photo"}
-                  className="flex h-full w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] text-[var(--pact-text-faint)] transition hover:border-[var(--pact-violet)]/50 hover:text-[var(--pact-violet)]"
-                >
-                  <Camera className="h-5 w-5" />
-                  <span className="text-xs font-bold">{onAddMoment ? 'Add a moment' : '+ Add today'}</span>
-                </button>
-              ) : undefined}
-            />
+          tiles.length > 0 ? (
+            <div className="relative w-full" onClick={handleMediaTap} style={transformStyle}>
+              <PactGallery
+                proofs={galleryProofs ?? proofs}
+                cheers={galleryCheers ?? []}
+                interactive
+                aspectClassName="aspect-[4/3]"
+                dotsPosition="below"
+                onActiveIndexChange={setActiveProofIndex}
+              />
+              {showRing && progressInfo && (
+                <span className="pointer-events-none absolute left-3 top-3 rounded-xl bg-[var(--ink)] px-2.5 py-1 text-[12px] font-bold text-white">
+                  Day {dayNo} of {progressInfo.totalDays}
+                </span>
+              )}
+              {tiles.length > 1 && (
+                <span className="pointer-events-none absolute right-3 top-3 rounded-xl bg-[var(--ink)]/70 px-2.5 py-1 text-[12px] font-bold text-white">
+                  {Math.min(activeProofIndex + 1, tiles.length)} / {tiles.length}
+                </span>
+              )}
+            </div>
           ) : (
-            /* No proof yet — a single dashed placeholder slide filling the
-               same spot the carousel would otherwise occupy, rather than a
-               full-card blank space with a centered camera icon like
-               before. Uploaders get a tappable CTA; everyone else gets an
-               inert "no proof yet" state. */
-            <div className="aspect-[4/5] w-full">
+            /* No proof yet: a compact strip, not a full-card void. Uploaders
+               get a tappable prompt; everyone else gets an inert note. */
+            <div className="px-3.5" onClick={handleMediaTap} style={transformStyle}>
               {uploadAllowed ? (
                 <button
                   type="button"
                   onClick={handleProofUploadClick}
                   aria-label={onAddMoment ? 'Add a moment' : "Add today's proof photo"}
-                  className="flex h-full w-full flex-col items-center justify-center gap-2 border-2 border-dashed border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] text-[var(--pact-text-faint)] transition hover:border-[var(--pact-violet)]/50 hover:text-[var(--pact-violet)]"
+                  className="flex w-full items-center gap-3.5 rounded-[18px] border-[1.5px] border-dashed border-[var(--seat-border)] bg-[var(--card-muted)] p-4 text-left transition active:scale-[0.99]"
                 >
-                  <Camera className="h-6 w-6" />
-                  <span className="text-sm font-bold">{onAddMoment ? 'Add a moment' : '+ Add today'}</span>
+                  {progressInfo ? <MiniRing percent={progressInfo.percent} label={`D${dayNo}`} /> : <Camera className="h-6 w-6 shrink-0 text-[var(--navy)]" />}
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14.5px] font-bold text-[var(--ink)]">{onAddMoment ? 'No moment yet today' : 'No proof yet today'}</span>
+                    <span className="mt-0.5 block text-[12.5px] leading-[1.35] text-[var(--muted)]">
+                      {progressInfo ? `Show your circle how day ${dayNo} went.` : 'Add your first photo.'}
+                    </span>
+                  </span>
+                  <Camera className="h-5 w-5 shrink-0 text-[var(--navy)]" aria-hidden="true" />
                 </button>
               ) : (
-                <div className="flex h-full w-full flex-col items-center justify-center gap-2 border-2 border-dashed border-[var(--pact-hairline)] bg-[var(--pact-surface-2)] text-[var(--pact-text-faint)]">
-                  <Camera className="h-6 w-6" />
-                  <span className="text-sm font-semibold">{onAddMoment ? 'No moment yet' : 'No proof yet'}</span>
+                <div className="flex w-full items-center gap-3.5 rounded-[18px] border-[1.5px] border-dashed border-[var(--seat-border)] bg-[var(--card-muted)] p-4">
+                  {progressInfo ? <MiniRing percent={progressInfo.percent} label={`D${dayNo}`} /> : <Camera className="h-6 w-6 shrink-0 text-[var(--muted)]" />}
+                  <span className="text-[14.5px] font-bold text-[var(--ink)]">{onAddMoment ? 'No moment yet' : 'No proof yet'}</span>
                 </div>
               )}
             </div>
-          )}
-        </div>
+          )
         )}
 
-        {/* Body: distinct surface area holding all text/context — creator
-            identity, category/title/ring-or-Join, avatar stack + streak or
-            time-left, caption, and actions. The carousel above never
-            carries any of this. */}
-        <div className="px-4 py-3.5">
-          {/* Creator row */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2" onClick={(event) => event.stopPropagation()}>
-              {creatorProfileHref ? <UserAvatarLink name={creatorLabel} avatarUrl={creatorAvatarUrl} username={creatorUsername} size={28} stopPropagation /> : <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={28} />}
-              <p className="truncate text-xs font-bold text-[var(--pact-text-dim)]">{creatorLabel === 'You' ? 'You' : `@${creatorLabel}`}</p>
-            </div>
-            <div className="relative flex-shrink-0" onClick={(event) => event.stopPropagation()}>
-              <button type="button" onClick={() => setMoreMenuOpen((open) => !open)} aria-label="more options" aria-haspopup="menu" aria-expanded={moreMenuOpen} className="rounded-full p-1.5 text-[var(--pact-text-faint)] transition hover:bg-[var(--pact-surface-2)] hover:text-[var(--pact-text-dim)]"><MoreVertical className="h-4 w-4" /></button>
-              {moreMenuOpen && <>
-                <button type="button" aria-label="close more options menu" onClick={() => setMoreMenuOpen(false)} className="fixed inset-0 z-40 cursor-default" />
-                <div role="menu" className="absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)] py-1.5 shadow-xl">
-                  {uploadAllowed && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); handleProofUploadClick(); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--pact-text)] transition hover:bg-white/5"><FileImage className="h-4 w-4" />{onAddMoment ? 'Add a moment' : 'Upload proof'}{proofCount > 0 && <span className="ml-auto text-xs text-[var(--pact-text-faint)]">{formatCompactCount(proofCount)}</span>}</button>}
-                  {canReport && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); setReportSheetOpen(true); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--warn-text)] transition hover:bg-white/5"><Flag className="h-4 w-4" />Report pact</button>}
-                </div>
-              </>}
-            </div>
-          </div>
-
-          {/* Title row, caption, and avatar/streak row: skipped when
-              hideHeroAndTitle is set, since the detail page's own hero
-              already shows category/title and its own progress ring —
-              only the creator row above and the action row below stay. */}
-          {!hideHeroAndTitle && (
-          <>
-          {/* Title row: category + title on the left, personal progress
-              ring (joined/creator, with a real duration) or a Join CTA
-              (not yet joined) on the right — never both, never overlapping
-              the photo like before. */}
-          <div className="mt-3 flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
+        {/* Body: circle, pact title, personal progress, latest caption. */}
+        {!hideHeroAndTitle && (
+          <div className="px-3.5 pb-1 pt-3.5">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               {circleLabel && pact.circle_id != null && (
-                <CircleChip circleId={pact.circle_id} circleName={circleLabel} variant="feed" className="mb-1" />
+                <Link
+                  href={`/circles/${pact.circle_id}`}
+                  onClick={(event) => event.stopPropagation()}
+                  aria-label={`Open the circle ${circleLabel}`}
+                  className="rounded-[10px] bg-[#DCE4F7] px-2.5 py-1 text-[12px] font-bold text-[var(--navy)] no-underline"
+                >
+                  {circleLabel}
+                </Link>
               )}
-              {pactCategoryLabel && <p className="text-[11px] font-bold text-[var(--pact-text-faint)]">{pactCategoryLabel}</p>}
-              <h2 className="mt-0.5 text-lg font-black leading-tight text-[var(--pact-text)] text-balance">{pact.title}</h2>
-              {!isParticipant && !isCreator && onStartOwnVersion && (
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                  {!joinAllowed && <span className="text-[11px] text-[var(--pact-text-faint)]">{joinBlockMessage[pact.join_block_reason] || 'Joining is unavailable'}</span>}
-                  <button type="button" onClick={(event) => { event.stopPropagation(); onStartOwnVersion(); }} className="text-[11px] font-semibold text-[var(--pact-text-dim)] underline underline-offset-2">Start my own version</button>
-                </div>
-              )}
-            </div>
-            <div className="flex flex-shrink-0 items-center" onClick={(event) => event.stopPropagation()}>
-              {showRing && (
-                <PactProgressRing
-                  percent={progressInfo!.percent}
-                  elapsedDays={progressInfo!.elapsedDays}
-                  totalDays={progressInfo!.totalDays}
-                  gradientId={`hero-ring-gradient-${pact.id}`}
-                  compact
-                  momentum={hasPactMomentum(pact)}
-                />
-              )}
+              {pactCategoryLabel && <span className="text-[12px] font-semibold text-[var(--muted)]">{pactCategoryLabel}</span>}
               {showStatusBadgeOnly && (
-                <span className={`text-[10px] font-bold ${isCreator ? 'text-[var(--warn-text)]' : 'text-[var(--navy)]'}`}>
-                  {isCreator ? 'Creator' : 'Joined'}
-                </span>
-              )}
-              {showJoinCta && (
-                <PremiumJoinButton
-                  onClick={handleJoinPact}
-                  loading={isJoining}
-                  disabled={showJoinedState}
-                  joined={showJoinedState}
-                  label={showJoinedState ? 'Joined' : 'Join'}
-                  size="sm"
-                />
+                <span className={`ml-auto text-[11px] font-bold ${isCreator ? 'text-[var(--warn-text)]' : 'text-[var(--navy)]'}`}>{isCreator ? 'Creator' : 'Joined'}</span>
               )}
             </div>
-          </div>
 
-          {(activeProof?.description || media.caption) && (
-            <p className="mt-3 text-[13px] italic leading-relaxed text-[var(--pact-text-dim)]">
-              &ldquo;{activeProof?.description || media.caption}&rdquo;
-            </p>
-          )}
+            <h2 className="mt-2 text-balance text-[20px] font-extrabold leading-[1.2] tracking-[-0.02em] text-[var(--ink)]">{pact.title}</h2>
 
-          {/* Avatar stack (recent supporters — real avatars, not a claim
-              that these people have joined the pact) + streak/time-left,
-              as their own row under the title. Only spread the two ends
-              apart when there's actually an avatar stack to anchor the
-              left side — otherwise (most Discover-state pacts, which have
-              no "believe" votes yet) the lone meta text would float
-              right with nothing to balance it against. */}
-          {(supporterAvatars.length > 0 || bottomRightText) && (
-            <div className={`mt-3 flex items-center gap-3 ${supporterAvatars.length > 0 ? 'justify-between' : 'justify-start'}`}>
-              {supporterAvatars.length > 0 && (
-                <div className="flex items-center -space-x-2">
-                  {supporterAvatars.slice(0, 4).map((supporter: any, index: number) => (
-                    <span key={supporter.id ?? index} className="rounded-full ring-2 ring-[var(--pact-surface)]">
-                      <Avatar name={supporter.username} avatarUrl={supporter.avatar_url} size={26} />
-                    </span>
-                  ))}
-                  {supporterAvatars.length > 4 && (
-                    <span className="ml-2 text-[10px] font-bold text-[var(--pact-text-faint)]">+{supporterAvatars.length - 4}</span>
-                  )}
-                </div>
-              )}
-              {bottomRightText && (
-                <span className="flex flex-shrink-0 items-center gap-1 text-xs font-bold text-[var(--pact-text-dim)]">
-                  {bottomRightText}
-                </span>
-              )}
-            </div>
-          )}
-          </>
-          )}
-
-          {/* Unified action row: same stroke-icon size/style for all three, muted at rest, accented only on hover/active */}
-          <div className="mt-3 flex items-center gap-6" onClick={(event) => event.stopPropagation()}>
-            <button
-              type="button"
-              onClick={handleCheerTap}
-              disabled={isCheering || optimisticCheer}
-              aria-label="cheer this pact"
-              className={`flex items-center gap-1.5 text-[var(--pact-text-dim)] transition hover:text-[var(--pact-gold)] disabled:opacity-60 ${isCheerBouncing ? 'scale-125' : 'scale-100'}`}
-              style={{ transitionDuration: '150ms' }}
-            >
-              {isCheering ? <Loader2 className="h-5 w-5 animate-spin" /> : <PartyPopper className={`h-5 w-5 ${optimisticCheer ? 'text-[var(--pact-gold)]' : ''}`} />}
-              {/* Hide the count entirely at 0 rather than showing a bare
-                  "0" next to the icon — a page full of "0"s next to every
-                  icon reads as unused/dead, whereas an icon alone with no
-                  number reads as neutral/not-yet-engaged. */}
-              {cheerCount > 0 && (
-                <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}>
-                  {formatCompactCount(cheerCount)}
-                </span>
-              )}
-            </button>
-            {cheerError && (
-              <span role="status" className="text-xs text-[var(--warn-text)]" aria-live="polite">
-                {cheerError}
-              </span>
+            {!isParticipant && !isCreator && onStartOwnVersion && (
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                {!joinAllowed && <span className="text-[11px] text-[var(--pact-text-faint)]">{joinBlockMessage[pact.join_block_reason] || 'Joining is unavailable'}</span>}
+                <button type="button" onClick={(event) => { event.stopPropagation(); onStartOwnVersion(); }} className="text-[11px] font-semibold text-[var(--pact-text-dim)] underline underline-offset-2">Start my own version</button>
+              </div>
             )}
 
-            <button
-              type="button"
-              onClick={() => setCommentSheetOpen(true)}
-              aria-label="open chat"
-              className="flex items-center gap-1.5 text-[var(--pact-text-dim)] transition hover:text-[var(--pact-violet)]"
-            >
-              <MessageCircle className="h-5 w-5" />
-              {commentCount > 0 && (
-                <span className="text-xs font-semibold" style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}>
-                  {formatCompactCount(commentCount)}
-                </span>
-              )}
-            </button>
+            {showRing && progressInfo ? (
+              <div className="mt-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-1.5 text-[13px] font-bold text-[var(--navy)]">
+                    {showMomentum && <Flame className="h-3.5 w-3.5" strokeWidth={2.2} aria-hidden="true" />}
+                    Day {dayNo} of {progressInfo.totalDays}
+                  </div>
+                  {timeRemaining && <div className="text-[12.5px] text-[var(--muted)]">{timeRemaining}</div>}
+                </div>
+                <DayBar day={dayNo} total={progressInfo.totalDays} />
+              </div>
+            ) : (
+              timeRemaining && <div className="mt-2 text-[13px] text-[var(--muted)]">{timeRemaining}</div>
+            )}
 
-            <button
-              type="button"
-              onClick={() => void handleCopyShareLink()}
-              aria-label="share pact"
-              className="flex items-center gap-1.5 text-[var(--pact-text-dim)] transition hover:text-[var(--pact-mint)]"
-            >
-              <Share2 className="h-5 w-5" />
-            </button>
-            <div className="ml-auto">
-              {!joinAllowed && !showJoinedState && voteActionsVisible && canSkip && <button type="button" onClick={() => void completeVote('skip')} disabled={isVoting} className="inline-flex items-center gap-1 rounded-full border border-[var(--pact-hairline)] px-3 py-1.5 text-[11px] font-bold text-[var(--pact-text-dim)] transition hover:text-[var(--pact-text)] disabled:opacity-50"><ArrowLeft className="h-3 w-3" />Skip</button>}
-            </div>
+            {(activeProof?.description || media.caption) && (
+              <div className="mt-3 text-[14.5px] leading-[1.45] text-[var(--ink)]">
+                &ldquo;{activeProof?.description || media.caption}&rdquo;
+              </div>
+            )}
+
+            {/* Real avatars of people who've engaged with this pact (recent_supporters).
+                Deliberately not labelled as "who's in this pact". */}
+            {supporterAvatars.length > 0 && (
+              <div className="mt-3 flex items-center -space-x-2">
+                {supporterAvatars.slice(0, 4).map((supporter: any, index: number) => (
+                  <span key={supporter.id ?? index} className="rounded-full ring-2 ring-[var(--card)]">
+                    <Avatar name={supporter.username} avatarUrl={supporter.avatar_url} size={26} />
+                  </span>
+                ))}
+                {supporterAvatars.length > 4 && (
+                  <span className="pl-3 text-[11px] font-bold text-[var(--muted)]">+{supporterAvatars.length - 4}</span>
+                )}
+              </div>
+            )}
           </div>
+        )}
 
-          {/* Placement A: this is the viewer's own pact — surface who else
-              shares the same goal category, right below the action row. */}
-          {isCreator && (
-            <GoalMatchStrip
-              matches={goalMatches}
-              totalCount={goalMatchesTotal}
-              category={pact.category}
-              variant="feed"
-              onStartCircle={handleStartCircleWithMatches}
-            />
-          )}
-
-          {!isCreator && isPublicPact && (
-            <GoalMatchStrip
-              matches={goalMatches}
-              totalCount={goalMatchesTotal}
-              category={pact.category}
-              variant="discover"
-              onStartCircle={handleStartCircleWithMatches}
-            />
-          )}
-
-        </div>
-
-        {/* "View all N in chat" — opens the same chat sheet as the chat icon */}
-        {commentCount > 0 && (
+        {/* Action bar: labelled Cheer / Chat / Share, all 44px high, plus one
+            compact primary action on the right. */}
+        <div className="mt-2 flex items-center border-t border-[var(--hairline)] px-2 py-1" onClick={(event) => event.stopPropagation()}>
           <button
             type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              setCommentSheetOpen(true);
-            }}
-            className="block w-full px-4 pb-3 text-left text-xs text-[var(--pact-text-faint)] transition hover:text-[var(--pact-text-dim)]"
+            onClick={handleCheerTap}
+            disabled={isCheering || optimisticCheer}
+            aria-label="cheer this pact"
+            className={`flex h-11 items-center gap-1.5 px-2.5 text-[13.5px] font-bold text-[var(--navy)] transition disabled:opacity-60 ${isCheerBouncing ? 'scale-110' : 'scale-100'}`}
+            style={{ transitionDuration: '150ms' }}
           >
-            View all {formatCompactCount(commentCount)} in chat
+            {isCheering ? <Loader2 className="h-[22px] w-[22px] animate-spin" /> : <PartyPopper className={`h-[22px] w-[22px] ${optimisticCheer ? 'fill-[var(--navy)]/20' : ''}`} strokeWidth={1.8} />}
+            Cheer
+            {cheerCount > 0 && <span className="font-semibold text-[var(--muted)]">{formatCompactCount(cheerCount)}</span>}
           </button>
+
+          <button
+            type="button"
+            onClick={() => setCommentSheetOpen(true)}
+            aria-label="open chat"
+            className="flex h-11 items-center gap-1.5 px-2.5 text-[13.5px] font-bold text-[var(--navy)] transition active:scale-95"
+          >
+            <MessageCircle className="h-[22px] w-[22px]" strokeWidth={1.8} />
+            Chat
+            {commentCount > 0 && <span className="font-semibold text-[var(--muted)]">{formatCompactCount(commentCount)}</span>}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => void handleCopyShareLink()}
+            aria-label="share pact"
+            className="flex h-11 w-11 items-center justify-center text-[var(--navy)] transition active:scale-95"
+          >
+            <Share2 className="h-[21px] w-[21px]" strokeWidth={1.8} />
+          </button>
+
+          <div className="ml-auto flex items-center">
+            {showAddPill && (
+              <button type="button" onClick={handleProofUploadClick} aria-label={onAddMoment ? 'Add a moment' : "Add today's proof photo"} className="group flex h-11 items-center px-1">
+                <span className="flex h-[34px] items-center gap-1.5 rounded-full bg-[var(--navy)] px-3.5 text-[13px] font-bold text-white transition group-hover:bg-[var(--navy-hover)] group-active:scale-95">
+                  <Camera className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+                  Add moment
+                </span>
+              </button>
+            )}
+            {!showAddPill && showJoinCta && (
+              <button type="button" onClick={handleJoinPact} disabled={showJoinedState || isJoining} aria-label={showJoinedState ? 'Joined' : 'Join pact'} className="group flex h-11 items-center px-1">
+                <span
+                  className={`flex h-[34px] items-center gap-1.5 rounded-full px-5 text-[13px] font-bold transition group-active:scale-95 ${
+                    showJoinedState ? 'border border-[var(--hairline)] bg-[var(--card-muted)] text-[var(--muted)]' : 'bg-[var(--navy)] text-white group-hover:bg-[var(--navy-hover)]'
+                  } ${isJoining ? 'opacity-70' : ''}`}
+                >
+                  {showJoinedState && <Check className="h-3.5 w-3.5" strokeWidth={2.6} aria-hidden="true" />}
+                  {showJoinedState ? 'Joined' : isJoining ? 'Joining…' : 'Join'}
+                </span>
+              </button>
+            )}
+            {!showAddPill && !showJoinCta && !joinAllowed && !showJoinedState && voteActionsVisible && canSkip && (
+              <button type="button" onClick={() => void completeVote('skip')} disabled={isVoting} className="flex h-11 items-center px-3 text-[13px] font-semibold text-[var(--muted)] transition hover:text-[var(--ink)] disabled:opacity-50">
+                Skip
+              </button>
+            )}
+          </div>
+        </div>
+        {cheerError && (
+          <div role="status" aria-live="polite" className="px-3.5 pb-2 text-xs text-[var(--warn-text)]">
+            {cheerError}
+          </div>
+        )}
+
+        {/* Mutual-goal matching: the viewer's own pact (feed variant) or any
+            public pact they don't own (discover variant). */}
+        {(isCreator || isPublicPact) && (
+          <div className="px-3.5 pb-3 pt-1">
+            {isCreator && (
+              <GoalMatchStrip
+                matches={goalMatches}
+                totalCount={goalMatchesTotal}
+                category={pact.category}
+                variant="feed"
+                onStartCircle={handleStartCircleWithMatches}
+              />
+            )}
+            {!isCreator && isPublicPact && (
+              <GoalMatchStrip
+                matches={goalMatches}
+                totalCount={goalMatchesTotal}
+                category={pact.category}
+                variant="discover"
+                onStartCircle={handleStartCircleWithMatches}
+              />
+            )}
+          </div>
         )}
       </motion.div>
 
