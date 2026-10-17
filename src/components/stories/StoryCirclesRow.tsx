@@ -120,8 +120,8 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
   return (
     <section aria-label="Your circles" className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between px-1">
-        <h2 className="text-[13px] font-semibold text-[var(--muted)]">Moments</h2>
-        <Link href="/circles" className="text-[13px] font-semibold text-[var(--navy)]">
+        <h2 className="text-[17px] font-bold tracking-[-0.01em] text-[var(--ink)]">Moments</h2>
+        <Link href="/circles" className="text-[14px] font-bold text-[var(--navy)]">
           See all
         </Link>
       </div>

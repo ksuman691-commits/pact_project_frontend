@@ -30,7 +30,7 @@ export default function WelcomeHeader({
 
   return (
     <>
-    <div className="border-b border-[var(--pact-hairline)]">
+    <div>
       <div className="mx-auto max-w-md px-4 pb-4 pt-4">
         <div className="pact-card flex items-center justify-between gap-4 rounded-[28px] px-4 py-5 sm:py-6">
           <div className="flex min-w-0 flex-1 items-center gap-3">
