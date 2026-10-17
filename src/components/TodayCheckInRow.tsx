@@ -57,7 +57,7 @@ export default function TodayCheckInRow({ onCreatePact }: { onCreatePact?: () =>
       ) : !hasActive ? (
         <div className={card}>
           <div className="min-w-0 flex-1 px-1">
-            <p className="text-[14.5px] font-bold text-[var(--ink)]">No active pact yet</p>
+            <div className="text-[14.5px] font-bold text-[var(--ink)]">No active pact yet</div>
             <p className="mt-0.5 text-[12.5px] text-[var(--muted)]">Start one and show your circle how it goes.</p>
           </div>
           <button
@@ -74,7 +74,7 @@ export default function TodayCheckInRow({ onCreatePact }: { onCreatePact?: () =>
             <Check className="h-5 w-5" strokeWidth={2.6} aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[14.5px] font-bold text-[var(--ink)]">You&apos;re checked in today</p>
+            <div className="text-[14.5px] font-bold text-[var(--ink)]">You&apos;re checked in today</div>
             <p className="mt-0.5 text-[12.5px] text-[var(--muted)]">
               {activePacts.length === 1 ? 'Your moment is up.' : `All ${activePacts.length} active pacts have a moment from you.`}
             </p>
@@ -86,7 +86,7 @@ export default function TodayCheckInRow({ onCreatePact }: { onCreatePact?: () =>
             <Clock className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[14.5px] font-bold text-[var(--ink)]">{pendingPact.title}</p>
+            <div className="truncate text-[14.5px] font-bold text-[var(--ink)]">{pendingPact.title}</div>
             {meta && <p className="mt-0.5 truncate text-[12.5px] text-[var(--muted)]">{meta}</p>}
           </div>
           <button
