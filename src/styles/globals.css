@@ -34,6 +34,8 @@
   --missed-stripe: transparent;
   --card-text: #FFFFFF;
   --photo-frame: var(--card);
+  /* Posted / checked-in confirmation. The only non-navy accent, used for check marks. */
+  --success: #2E7D5B;
 
   /* ---- Legacy light-theme variables, repointed ---- */
   --primary: var(--navy);

@@ -20,7 +20,7 @@ import { Home, ArrowLeft, ChevronDown } from 'lucide-react'
 // has no vibe mapped to it at all in the current create flow — it's a
 // legacy-only bucket kept so older pacts created before the vibe flow
 // existed remain filterable.
-const CATEGORIES = [
+export const CATEGORIES = [
   { id: 'all', name: 'All', emoji: '✨' },
   { id: 'Trending', name: 'Trending', emoji: '🔥' },
   { id: 'fitness', name: 'Glow Up & Wellbeing', emoji: '💪' },
