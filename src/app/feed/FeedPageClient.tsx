@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import TopNav from '@/components/TopNav'
 import WelcomeHeader from '@/components/WelcomeHeader'
-import StreakStatsHero from '@/components/StreakStatsHero'
 import FeaturedDareCard from '@/components/FeaturedDareCard'
 import HomeActionsRow from '@/components/HomeActionsRow'
 import YourCirclesRail from '@/components/YourCirclesRail'
@@ -30,12 +29,8 @@ export default function FeedPageClient() {
   const searchParams = useSearchParams()
   const { user, isInitialized } = useAuthStore()
   const { data: unreadCountData } = useUnreadNotificationCount()
-  const { data: userStatsData, isLoading: statsLoading } = useUserStats(user?.id || 0)
+  const { data: userStatsData } = useUserStats(user?.id || 0)
   const currentStreak = userStatsData?.data?.current_streak ?? 0
-  // The backend returns win_rate 0 when nothing has been counted yet; show a dash instead of 0%.
-  const winRate = (userStatsData?.data?.pacts_created ?? 0) > 0 ? userStatsData?.data?.win_rate ?? null : null
-  const pactsCompleted = userStatsData?.data?.pacts_completed ?? 0
-  const circlesCount = userStatsData?.data?.circles_count ?? 0
   const { data: circlesData, isLoading: circlesLoading } = useCircles()
   const circles = (circlesData || []) as Array<{ id: number; name: string; photo_url?: string | null; emoji?: string | null; icon_emoji?: string | null; member_count?: number }>
   const isAtRisk = useAtRiskPact(user?.id)
@@ -134,29 +129,24 @@ export default function FeedPageClient() {
           atRisk={isAtRisk}
         />
 
-        {/* Topbar -> Hero -> Actions -> Circles rail, matching the approved
-            mockup order. The actions row used to live inside the topbar
-            card above the hero; it's now its own row between the hero and
-            the circles rail. */}
+        {/* Topbar -> Moments row -> Dare -> Actions. The old "Your record" stats
+            block is gone: a row of zeros says nothing to a new user, and the
+            streak already shows in the header. Moments lead the page instead. */}
         {isInitialized && user && (
           <div className="max-w-md mx-auto px-4 pb-4">
-            <StreakStatsHero
-              streak={currentStreak}
-              winRate={winRate}
-              pactsCompleted={pactsCompleted}
-              circlesCount={circlesCount}
-              isLoading={statsLoading}
-            />
+            {STORIES_ENABLED ? (
+              <StoryCirclesRow circles={circles} isLoading={circlesLoading} />
+            ) : (
+              <YourCirclesRail circles={circles} isLoading={circlesLoading} />
+            )}
           </div>
         )}
 
         {/* Dare of the Day: the same real "featured dare" selection the
             Dares page hero uses (see useFeaturedDare) — reused as-is rather
-            than a second, home-feed-specific pick. Sits right under the
-            streak hero and above the actions row/circles rail so it reads
-            as a highlight, not a wall the user has to scroll past before
-            reaching their actual pacts feed; renders nothing when Discover
-            has no open public dare, same as the Dares page's own hero. */}
+            than a second, home-feed-specific pick. Renders nothing when
+            Discover has no open public dare, same as the Dares page's own
+            hero. */}
         {isInitialized && user && featuredDare && (
           <div className="max-w-md mx-auto px-4 pb-4">
             <FeaturedDareCard dare={featuredDare} />
@@ -166,16 +156,6 @@ export default function FeedPageClient() {
         {isInitialized && user && (
           <div className="max-w-md mx-auto px-4 pb-4">
             <HomeActionsRow onNavigateCircles={handleNavigateCircles} onCreatePact={handleCreatePact} />
-          </div>
-        )}
-
-        {isInitialized && user && (
-          <div className="max-w-md mx-auto px-4 pb-4">
-            {STORIES_ENABLED ? (
-              <StoryCirclesRow circles={circles} isLoading={circlesLoading} />
-            ) : (
-              <YourCirclesRail circles={circles} isLoading={circlesLoading} />
-            )}
           </div>
         )}
 
