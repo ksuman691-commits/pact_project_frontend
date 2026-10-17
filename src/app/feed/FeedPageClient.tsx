@@ -2,10 +2,10 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import TopNav from '@/components/TopNav'
+import FeedFilterChips from '@/components/FeedFilterChips'
+import TodayCheckInRow from '@/components/TodayCheckInRow'
 import WelcomeHeader from '@/components/WelcomeHeader'
 import FeaturedDareCard from '@/components/FeaturedDareCard'
-import HomeActionsRow from '@/components/HomeActionsRow'
 import YourCirclesRail from '@/components/YourCirclesRail'
 import StoryCirclesRow from '@/components/stories/StoryCirclesRow'
 import { STORIES_ENABLED } from '@/lib/stories'
@@ -113,10 +113,6 @@ export default function FeedPageClient() {
     router.push('/notifications')
   }
 
-  const handleNavigateCircles = () => {
-    router.push('/circles')
-  }
-
   return (
     <PullToRefresh onRefresh={() => feedRefetchRef.current()} disabled={!isInitialized}>
       <div className="pact-flow pact-page-enter min-h-screen">
@@ -129,16 +125,22 @@ export default function FeedPageClient() {
           atRisk={isAtRisk}
         />
 
-        {/* Topbar -> Moments row -> Dare -> Actions. The old "Your record" stats
+        {/* Header -> Moments -> Today -> Dare -> For you. The old "Your record" stats
             block is gone: a row of zeros says nothing to a new user, and the
             streak already shows in the header. Moments lead the page instead. */}
         {isInitialized && user && (
-          <div className="max-w-md mx-auto px-4 pb-4">
+          <div className="max-w-md mx-auto px-4 pb-5 pt-3">
             {STORIES_ENABLED ? (
               <StoryCirclesRow circles={circles} isLoading={circlesLoading} />
             ) : (
               <YourCirclesRail circles={circles} isLoading={circlesLoading} />
             )}
+          </div>
+        )}
+
+        {isInitialized && user && (
+          <div className="max-w-md mx-auto px-4 pb-5">
+            <TodayCheckInRow onCreatePact={handleCreatePact} />
           </div>
         )}
 
@@ -150,12 +152,6 @@ export default function FeedPageClient() {
         {isInitialized && user && featuredDare && (
           <div className="max-w-md mx-auto px-4 pb-4">
             <FeaturedDareCard dare={featuredDare} />
-          </div>
-        )}
-
-        {isInitialized && user && (
-          <div className="max-w-md mx-auto px-4 pb-4">
-            <HomeActionsRow onNavigateCircles={handleNavigateCircles} onCreatePact={handleCreatePact} />
           </div>
         )}
 
@@ -175,13 +171,9 @@ export default function FeedPageClient() {
           </div>
         )}
 
-        <TopNav
-          showCategories={true}
-          fixed={false}
-          compact={true}
-          isLoadingCategories={feedBusy}
-          activeCategory={category}
-        />
+        <div className="max-w-md mx-auto px-4 pb-3 pt-1">
+          <FeedFilterChips activeCategory={category} disabled={feedBusy} />
+        </div>
 
         {/* pb-28: clearance for the floating pill BottomNav (same convention as
             circles/page.tsx) so the last pact card in the feed isn't covered. */}

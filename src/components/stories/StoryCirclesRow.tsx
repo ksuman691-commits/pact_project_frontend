@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Plus, X } from 'lucide-react'
+import { Check, Plus, X } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import { useCircleStoriesToday } from '@/hooks/useStories'
 import { useMyPacts } from '@/hooks/useMyPacts'
+import { useTodayMoments } from '@/hooks/useTodayMoments'
 import StoryCaptureSheet from './StoryCaptureSheet'
 import StoryRing, { ringStateFrom, type RingState } from './StoryRing'
 import StoryViewer from './StoryViewer'
@@ -114,6 +115,7 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
   const [viewing, setViewing] = useState<StoryCircle | null>(null)
   const circleStories = useCircleStoriesToday(viewing?.id ?? null)
   const { user } = useAuthStore()
+  const { postedToday } = useTodayMoments()
   // Warm the sheet's data on Home mount so the chooser opens from cache.
   useMyPacts()
 
@@ -132,16 +134,25 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
             type="button"
             onClick={() => setPickerOpen(true)}
             className="flex w-[76px] flex-col items-center gap-1.5"
-            aria-label="Post today's moment"
+            aria-label={postedToday ? "You've posted today. Post another moment" : "Post today's moment"}
           >
             <span className="relative inline-flex">
-              <StoryRing state="add" size={SIZE} name={user?.full_name} imageUrl={user?.avatar_url} />
-              <span className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-[2.5px] border-[var(--paper)] bg-[var(--navy)] text-white">
-                <Plus className="h-3 w-3" strokeWidth={3.2} aria-hidden="true" />
+              <StoryRing state={postedToday ? 'unseen' : 'add'} count={1} size={SIZE} name={user?.full_name} imageUrl={user?.avatar_url} />
+              <span
+                className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-[2.5px] border-[var(--paper)] text-white"
+                style={{ background: postedToday ? 'var(--success)' : 'var(--navy)' }}
+              >
+                {postedToday ? (
+                  <Check className="h-3 w-3" strokeWidth={3.4} aria-hidden="true" />
+                ) : (
+                  <Plus className="h-3 w-3" strokeWidth={3.2} aria-hidden="true" />
+                )}
               </span>
             </span>
             <span className="w-full truncate text-center text-[12px] font-semibold text-[var(--ink)]">Your moment</span>
-            <span className="-mt-0.5 text-[11px] font-semibold text-[var(--navy)]">Post today</span>
+            <span className="-mt-0.5 text-[11px] font-bold" style={{ color: postedToday ? 'var(--success)' : 'var(--navy)' }}>
+              {postedToday ? 'Posted today' : 'Post today'}
+            </span>
           </button>
         </li>
 
