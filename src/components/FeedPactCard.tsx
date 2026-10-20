@@ -804,12 +804,13 @@ export default function FeedPactCard({
         {immersive ? (
           /* The photo fills the card. Gradients are pointer-events-none so
              horizontal swipes reach PactGallery; tapping the photo opens the viewer. */
+          <>
           <div className="relative w-full" onClick={handleMediaTap} style={transformStyle}>
             <PactGallery
               proofs={galleryProofs ?? proofs}
               cheers={galleryCheers ?? []}
               interactive
-              aspectClassName="aspect-[4/5]"
+              aspectClassName="aspect-[3/4]"
               dotsPosition="none"
               onActiveIndexChange={setActiveProofIndex}
             />
@@ -821,7 +822,7 @@ export default function FeedPactCard({
               {kebab(true)}
             </div>
 
-            <div className="pointer-events-none absolute inset-x-3.5 bottom-[70px]" style={{ color: '#fff' }}>
+            <div className="pointer-events-none absolute inset-x-3.5 bottom-3.5" style={{ color: '#fff' }}>
               <div className="flex items-center gap-2">
                 {showRing && progressInfo && (
                   <span className="rounded-[10px] px-2.5 py-0.5 text-[12px] font-extrabold" style={{ color: '#fff', backgroundColor: 'rgba(255,255,255,0.28)' }}>
@@ -835,8 +836,9 @@ export default function FeedPactCard({
               <h2 className="mt-1.5 text-balance text-[21px] font-extrabold leading-[1.2] tracking-[-0.02em]" style={{ color: '#fff', textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>{pact.title}</h2>
             </div>
 
-            {actionBar(true)}
           </div>
+            {actionBar(false)}
+          </>
         ) : (
           <>
             <div className="flex items-center gap-2.5 pb-1 pl-3.5 pr-0.5 pt-2">
@@ -889,7 +891,7 @@ export default function FeedPactCard({
         {/* Mutual-goal matching only where people are browsing for company
             (Discover). Kept off the main feed card to keep it quiet. */}
         {!isCreator && isPublicPact && (
-          <div className="px-3.5 pb-3 pt-1">
+          <div className="px-3 pb-2.5 pt-2">
             <GoalMatchStrip
               matches={goalMatches}
               totalCount={goalMatchesTotal}
