@@ -731,17 +731,20 @@ export default function FeedPactCard({
 
   const identity = (onPhoto: boolean) => (
     <div className="pointer-events-auto flex min-w-0 flex-1 items-center gap-2.5" onClick={(event) => event.stopPropagation()}>
-      {creatorProfileHref ? <UserAvatarLink name={creatorLabel} avatarUrl={creatorAvatarUrl} username={creatorUsername} size={34} stopPropagation /> : <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={34} />}
-      <div className={`min-w-0 ${onPhoto ? 'text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.35)]' : ''}`}>
+      <span className={`inline-flex h-[34px] w-[34px] shrink-0 overflow-hidden rounded-full ${onPhoto ? 'ring-2 ring-white/70' : ''}`}>
+        {creatorProfileHref ? <UserAvatarLink name={creatorLabel} avatarUrl={creatorAvatarUrl} username={creatorUsername} size={34} stopPropagation /> : <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={34} />}
+      </span>
+      <div className="min-w-0" style={onPhoto ? { color: '#fff', textShadow: '0 1px 6px rgba(0,0,0,0.45)' } : undefined}>
         <div className={`truncate text-[14.5px] font-bold ${onPhoto ? '' : 'text-[var(--ink)]'}`}>{creatorLabel === 'You' ? 'You' : `@${creatorLabel}`}</div>
-        {headerSub && <div className={`truncate text-[12px] ${onPhoto ? 'opacity-90' : 'text-[var(--muted)]'}`}>{headerSub}</div>}
+        {headerSub && <div className={`truncate text-[12px] ${onPhoto ? '' : 'text-[var(--muted)]'}`} style={onPhoto ? { opacity: 0.92 } : undefined}>{headerSub}</div>}
       </div>
     </div>
   );
 
   const actionBar = (floating: boolean) => (
     <div
-      className={`flex items-center ${floating ? 'absolute inset-x-2.5 bottom-2.5 h-[50px] rounded-full bg-[var(--card)]/95 pl-0.5 pr-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.2)] backdrop-blur' : 'px-1 py-0.5'}`}
+      className={`flex items-center ${floating ? 'absolute inset-x-2.5 bottom-2.5 h-[50px] rounded-full pl-0.5 pr-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.25)]' : 'px-1 py-0.5'}`}
+      style={floating ? { backgroundColor: 'rgba(251,248,241,0.96)' } : undefined}
       onClick={(event) => event.stopPropagation()}
     >
       <button
@@ -818,18 +821,18 @@ export default function FeedPactCard({
               {kebab(true)}
             </div>
 
-            <div className="pointer-events-none absolute inset-x-3.5 bottom-[70px] text-white">
+            <div className="pointer-events-none absolute inset-x-3.5 bottom-[70px]" style={{ color: '#fff' }}>
               <div className="flex items-center gap-2">
                 {showRing && progressInfo && (
-                  <span className="rounded-[10px] bg-white/25 px-2.5 py-0.5 text-[12px] font-extrabold backdrop-blur">
+                  <span className="rounded-[10px] px-2.5 py-0.5 text-[12px] font-extrabold" style={{ color: '#fff', backgroundColor: 'rgba(255,255,255,0.28)' }}>
                     {showMomentum ? '🔥 ' : ''}Day {dayNo}
                   </span>
                 )}
                 {tiles.length > 1 && (
-                  <span className="ml-auto text-[12px] font-bold opacity-90">{Math.min(activeProofIndex + 1, tiles.length)} / {tiles.length}</span>
+                  <span className="ml-auto text-[12px] font-bold" style={{ color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{Math.min(activeProofIndex + 1, tiles.length)} / {tiles.length}</span>
                 )}
               </div>
-              <h2 className="mt-1.5 text-balance text-[21px] font-extrabold leading-[1.2] tracking-[-0.02em] [text-shadow:0_1px_8px_rgba(0,0,0,0.3)]">{pact.title}</h2>
+              <h2 className="mt-1.5 text-balance text-[21px] font-extrabold leading-[1.2] tracking-[-0.02em]" style={{ color: '#fff', textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>{pact.title}</h2>
             </div>
 
             {actionBar(true)}
