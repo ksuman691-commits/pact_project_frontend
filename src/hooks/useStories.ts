@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createStory, getTodayStories, markStorySeen, putStoryVideo, requestStoryUploadUrl } from '@/lib/api/stories'
+import { createStory, getStoryViewers, getTodayStories, markStorySeen, putStoryVideo, requestStoryUploadUrl } from '@/lib/api/stories'
 import { isStoriesUnavailable, storyErrorMessage, STORIES_ENABLED, STORY_MAX_SECONDS, type PactStory } from '@/lib/stories'
 import { queryKeys } from '@/lib/queryKeys'
 import { circleService } from '@/services/api'
@@ -52,6 +52,18 @@ export function useCircleStoriesToday(circleId: number | null) {
   const isLoading = pactsQuery.isLoading || storyQueries.some((q) => q.isLoading)
   const unavailable = storyQueries.length > 0 && storyQueries.every((q) => q.isError && isStoriesUnavailable(q.error))
   return { stories, isLoading, unavailable, isError: pactsQuery.isError }
+}
+
+/** Who has watched one of the viewer's own moments. Polls gently while open. */
+export function useStoryViewers(storyId: number | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ['stories', 'viewers', storyId],
+    queryFn: () => getStoryViewers(storyId as number),
+    enabled: STORIES_ENABLED && enabled && !!storyId,
+    staleTime: 10_000,
+    refetchInterval: enabled ? 20_000 : false,
+    retry: false,
+  })
 }
 
 /** Fire-and-forget; each story is reported at most once per page load. */

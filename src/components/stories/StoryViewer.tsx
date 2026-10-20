@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { X } from 'lucide-react'
-import { useMarkStorySeen } from '@/hooks/useStories'
+import { Eye, X } from 'lucide-react'
+import { useAuthStore } from '@/store/auth'
+import { useMarkStorySeen, useStoryViewers } from '@/hooks/useStories'
 import { monogram, postedAgo, STORIES_COMING_SOON, type PactStory } from '@/lib/stories'
 import { RingFace } from './StoryRing'
 
@@ -26,6 +27,8 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
   const [fraction, setFraction] = useState(0)
   const [paused, setPaused] = useState(false)
   const [broken, setBroken] = useState(false)
+  const [viewersOpen, setViewersOpen] = useState(false)
+  const { user } = useAuthStore()
   const videoRef = useRef<HTMLVideoElement>(null)
   const holdTimer = useRef<number | null>(null)
   const heldRef = useRef(false)
@@ -39,9 +42,13 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
     setFraction(0)
     setBroken(false)
     setPaused(false)
+    setViewersOpen(false)
   }, [index])
 
   const story = stories[index]
+  const isOwn = !!story && user?.id != null && story.user_id === user.id
+  const viewersQuery = useStoryViewers(story?.id ?? null, open && isOwn)
+  const viewers = viewersQuery.data?.viewers ?? []
 
   const reportIfWatched = useCallback(() => {
     const video = videoRef.current
@@ -89,9 +96,9 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
-    if (paused) video.pause()
+    if (paused || viewersOpen) video.pause()
     else void video.play().catch(() => {})
-  }, [paused, index])
+  }, [paused, viewersOpen, index])
 
   if (!open) return null
 
@@ -187,6 +194,59 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
         </div>
       ) : (
         <div className="flex flex-1 items-center justify-center px-8 text-center text-[15px]">{emptyText}</div>
+      )}
+
+      {isOwn && (
+        <button
+          type="button"
+          onClick={() => setViewersOpen(true)}
+          aria-label={`${viewers.length} ${viewers.length === 1 ? 'view' : 'views'}. See who viewed`}
+          className="flex min-h-[56px] items-center gap-3 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 text-left"
+        >
+          <Eye className="h-5 w-5" aria-hidden="true" />
+          <span className="text-[14px] font-semibold">
+            {viewersQuery.isLoading ? 'Views' : viewers.length === 0 ? 'No views yet' : `${viewers.length} ${viewers.length === 1 ? 'view' : 'views'}`}
+          </span>
+          {viewers.length > 0 && (
+            <span className="ml-1 flex -space-x-2">
+              {viewers.slice(0, 4).map((v) => (
+                <span key={v.user_id} className="rounded-full" style={{ boxShadow: '0 0 0 2px var(--ink)' }}>
+                  <RingFace name={v.name} imageUrl={v.avatar_url} size={26} />
+                </span>
+              ))}
+            </span>
+          )}
+        </button>
+      )}
+
+      {viewersOpen && (
+        <div className="fixed inset-0 z-[95] flex items-end" role="dialog" aria-modal="true" aria-label="Viewers">
+          <button type="button" aria-label="Close viewers" className="absolute inset-0 bg-black/50" onClick={() => setViewersOpen(false)} />
+          <div className="relative mx-auto flex max-h-[65vh] w-full max-w-md flex-col rounded-t-[16px] bg-[var(--paper)] px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 text-[var(--ink)]">
+            <div className="flex items-center justify-between pb-2">
+              <h3 className="text-[17px] font-bold tracking-[-0.01em]">Viewed by {viewers.length}</h3>
+              <button type="button" onClick={() => setViewersOpen(false)} aria-label="Close" className="flex h-11 w-11 items-center justify-center rounded-full">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {viewers.length === 0 ? (
+              <div className="py-6 text-[14px] text-[var(--muted)]">Nobody has watched this yet. People in your circle will show up here.</div>
+            ) : (
+              <ul className="flex flex-col overflow-y-auto">
+                {viewers.map((v) => (
+                  <li key={v.user_id} className="flex min-h-[56px] items-center gap-3 border-b border-[var(--hairline)] last:border-b-0">
+                    <RingFace name={v.name} imageUrl={v.avatar_url} size={40} />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[15px] font-semibold">{v.name || v.username || 'Member'}</div>
+                      {v.username && <div className="truncate text-[12.5px] text-[var(--muted)]">@{v.username}</div>}
+                    </div>
+                    <span className="shrink-0 text-[12px] text-[var(--muted)]">{postedAgo(v.viewed_at) || ''}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       )}
     </div>
   )

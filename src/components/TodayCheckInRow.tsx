@@ -6,6 +6,8 @@ import { Check, Clock, Plus } from 'lucide-react'
 import { STORIES_ENABLED } from '@/lib/stories'
 import { useTodayMoments } from '@/hooks/useTodayMoments'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
+import { RingFace } from '@/components/stories/StoryRing'
+import type { MomentPerson } from '@/hooks/useMomentPeople'
 
 function endsInLabel(pact: any): string | null {
   const raw = pact?.end_date || pact?.deadline
@@ -26,7 +28,7 @@ const card = 'flex items-center gap-3 rounded-[20px] border border-[var(--hairli
  * One calm "what do I do now" row under the Moments rail: the most urgent
  * active pact that has no moment from the viewer yet, with a Check in action.
  */
-export default function TodayCheckInRow({ onCreatePact }: { onCreatePact?: () => void }) {
+export default function TodayCheckInRow({ onCreatePact, peers = [] }: { onCreatePact?: () => void; peers?: MomentPerson[] }) {
   const router = useRouter()
   const { activePacts, pendingPact, allDone, isLoading } = useTodayMoments()
   const [capturePact, setCapturePact] = useState<any | null>(null)
@@ -39,6 +41,18 @@ export default function TodayCheckInRow({ onCreatePact }: { onCreatePact?: () =>
   const hasActive = activePacts.length > 0
   const circleName = pendingPact?.circle_name || pendingPact?.circle || null
   const meta = pendingPact ? [circleName, endsInLabel(pendingPact)].filter(Boolean).join(' · ') : ''
+  // Social nudge: who in this pact's circle has already posted today. Shown
+  // as a fact ("Suman and 2 others posted"), never as a guilt trip.
+  const circlePeers = pendingPact?.circle_id != null ? peers.filter((p) => p.circleId === Number(pendingPact.circle_id)) : []
+  const firstPeer = circlePeers[0]?.name?.split(' ')[0] || 'Someone'
+  const socialLine =
+    circlePeers.length === 0
+      ? circleName
+        ? `Be the first in ${circleName} today`
+        : null
+      : circlePeers.length === 1
+        ? `${firstPeer} posted in ${circleName || 'your circle'} today`
+        : `${firstPeer} and ${circlePeers.length - 1} ${circlePeers.length - 1 === 1 ? 'other' : 'others'} posted today`
 
   return (
     <section aria-label="Today" className="flex flex-col gap-3">
@@ -69,16 +83,13 @@ export default function TodayCheckInRow({ onCreatePact }: { onCreatePact?: () =>
           </button>
         </div>
       ) : allDone || !pendingPact ? (
-        <div className={card}>
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white" style={{ background: 'var(--success)' }}>
-            <Check className="h-5 w-5" strokeWidth={2.6} aria-hidden="true" />
+        <div className="flex min-h-[44px] items-center gap-2.5 px-1">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white" style={{ background: 'var(--success)' }}>
+            <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />
           </span>
-          <div className="min-w-0 flex-1">
-            <div className="text-[14.5px] font-bold text-[var(--ink)]">You&apos;re checked in today</div>
-            <p className="mt-0.5 text-[12.5px] text-[var(--muted)]">
-              {activePacts.length === 1 ? 'Your moment is up.' : `All ${activePacts.length} active pacts have a moment from you.`}
-            </p>
-          </div>
+          <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[var(--ink)]">
+            {activePacts.length === 1 ? "You're checked in today" : `All ${activePacts.length} pacts checked in today`}
+          </span>
         </div>
       ) : (
         <div className={card}>
@@ -87,7 +98,20 @@ export default function TodayCheckInRow({ onCreatePact }: { onCreatePact?: () =>
           </span>
           <div className="min-w-0 flex-1">
             <div className="truncate text-[14.5px] font-bold text-[var(--ink)]">{pendingPact.title}</div>
-            {meta && <p className="mt-0.5 truncate text-[12.5px] text-[var(--muted)]">{meta}</p>}
+            {(socialLine || meta) && (
+              <div className="mt-1 flex items-center gap-1.5 text-[12.5px] text-[var(--muted)]">
+                {circlePeers.length > 0 && (
+                  <span className="flex shrink-0 -space-x-1.5">
+                    {circlePeers.slice(0, 3).map((p) => (
+                      <span key={p.userId} className="rounded-full" style={{ boxShadow: '0 0 0 2px var(--card)' }}>
+                        <RingFace name={p.name} imageUrl={p.avatarUrl} size={20} />
+                      </span>
+                    ))}
+                  </span>
+                )}
+                <span className="truncate">{socialLine || meta}</span>
+              </div>
+            )}
           </div>
           <button
             type="button"
