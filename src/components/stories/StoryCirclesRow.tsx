@@ -4,11 +4,11 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Check, Plus, X } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
-import { useCircleStoriesToday } from '@/hooks/useStories'
+import { useMomentPeople, type MomentPerson } from '@/hooks/useMomentPeople'
 import { useMyPacts } from '@/hooks/useMyPacts'
 import { useTodayMoments } from '@/hooks/useTodayMoments'
 import StoryCaptureSheet from './StoryCaptureSheet'
-import StoryRing, { ringStateFrom, type RingState } from './StoryRing'
+import StoryRing from './StoryRing'
 import StoryViewer from './StoryViewer'
 
 interface StoryCircle {
@@ -20,12 +20,6 @@ interface StoryCircle {
 }
 
 const SIZE = 72
-
-function labelFor(state: RingState, count: number | null | undefined) {
-  if (state === 'unseen') return typeof count === 'number' && count > 0 ? `${count} new` : 'new'
-  if (state === 'seen') return 'Seen'
-  return 'Quiet'
-}
 
 function groupPactsByCircle(pacts: any[], circles: StoryCircle[]) {
   type Group = { key: string; name: string; pacts: any[] }
@@ -112,9 +106,9 @@ function PostTodaySheet({ circles, onClose, onPick }: { circles: StoryCircle[]; 
 export default function StoryCirclesRow({ circles, isLoading }: { circles: StoryCircle[]; isLoading?: boolean }) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [capturePact, setCapturePact] = useState<any | null>(null)
-  const [viewing, setViewing] = useState<StoryCircle | null>(null)
-  const circleStories = useCircleStoriesToday(viewing?.id ?? null)
+  const [viewing, setViewing] = useState<MomentPerson | null>(null)
   const { user } = useAuthStore()
+  const { people, isLoading: peopleLoading } = useMomentPeople(circles, user?.id)
   const { postedToday } = useTodayMoments()
   // Warm the sheet's data on Home mount so the chooser opens from cache.
   useMyPacts()
@@ -128,7 +122,7 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
         </Link>
       </div>
 
-      <ul className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-1">
+      <ul className="scrollbar-hide -mx-4 flex gap-4 overflow-x-auto px-4 pb-1">
         <li>
           <button
             type="button"
@@ -156,32 +150,31 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
           </button>
         </li>
 
-        {isLoading
-          ? [0, 1, 2].map((i) => (
+        {isLoading || peopleLoading
+          ? [0, 1].map((i) => (
               <li key={i} className="flex w-[76px] flex-col items-center gap-1.5" aria-hidden="true">
-                <span className="rounded-full border border-dashed border-[var(--seat-border)]" style={{ width: SIZE, height: SIZE }} />
+                <span className="pact-shimmer rounded-full" style={{ width: SIZE, height: SIZE }} />
               </li>
             ))
-          : circles.map((circle) => {
-              const state = ringStateFrom(circle.has_unseen_story, circle.stories_today_count)
+          : people.map((person) => {
+              const firstName = (person.name || 'Member').split(' ')[0]
               return (
-                <li key={circle.id}>
-                  <button type="button" onClick={() => setViewing(circle)} className="flex w-[76px] flex-col items-center gap-1.5">
-                    <span className="relative inline-flex">
-                      <StoryRing state={state} size={SIZE} name={circle.name} imageUrl={circle.photo_url} count={circle.stories_today_count} />
-                      {state === 'unseen' && typeof circle.stories_today_count === 'number' && circle.stories_today_count > 0 && (
-                        <span
-                          className="absolute -bottom-0.5 -right-0.5 flex h-6 min-w-6 items-center justify-center rounded-full border-[2.5px] border-[var(--paper)] bg-[var(--navy)] px-1 text-[11px] font-bold text-white"
-                          aria-hidden="true"
-                        >
-                          {circle.stories_today_count}
-                        </span>
-                      )}
-                    </span>
-                    <span className="w-full truncate text-center text-[12px] font-semibold text-[var(--ink)]">{circle.name}</span>
-                    <span className={`-mt-0.5 text-[11px] ${state === 'unseen' ? 'font-bold text-[var(--navy)]' : 'text-[var(--muted)]'}`}>
-                      {labelFor(state, circle.stories_today_count)}
-                    </span>
+                <li key={person.userId}>
+                  <button
+                    type="button"
+                    onClick={() => setViewing(person)}
+                    className="flex w-[76px] flex-col items-center gap-1"
+                    aria-label={`${firstName}'s moment${person.hasUnseen ? ', new' : ''}, in ${person.circleName}`}
+                  >
+                    <StoryRing
+                      state={person.hasUnseen ? 'unseen' : 'seen'}
+                      size={SIZE}
+                      name={person.name}
+                      imageUrl={person.avatarUrl}
+                      count={person.stories.length}
+                    />
+                    <span className={`w-full truncate text-center text-[12px] ${person.hasUnseen ? 'font-bold' : 'font-semibold'} text-[var(--ink)]`}>{firstName}</span>
+                    <span className="-mt-1 w-full truncate text-center text-[10px] text-[var(--muted)]">{person.circleName}</span>
                   </button>
                 </li>
               )
@@ -213,11 +206,9 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
       <StoryViewer
         open={viewing !== null}
         onClose={() => setViewing(null)}
-        stories={circleStories.stories}
-        circleId={viewing?.id}
-        circleName={viewing?.name}
-        isLoading={circleStories.isLoading}
-        unavailable={circleStories.unavailable}
+        stories={viewing?.stories ?? []}
+        circleId={viewing?.circleId}
+        circleName={viewing?.circleName}
       />
     </section>
   )

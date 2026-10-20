@@ -23,13 +23,6 @@ function greetingFor(hour: number) {
   return 'Good evening'
 }
 
-function dateLabelFor(now: Date) {
-  const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'short' }).format(now)
-  const day = new Intl.DateTimeFormat('en-GB', { day: 'numeric' }).format(now)
-  const month = new Intl.DateTimeFormat('en-GB', { month: 'short' }).format(now)
-  return `${weekday}, ${day} ${month}`
-}
-
 const iconButton =
   'relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--hairline)] bg-[var(--card)] text-[var(--ink)] transition active:scale-95'
 
@@ -67,15 +60,12 @@ export default function WelcomeHeader({
             atRisk={atRisk}
           />
           <div className="min-w-0 flex-1">
-            <div className="flex h-[18px] items-center gap-2">
-              <p className="truncate text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--muted)]">{now ? dateLabelFor(now) : ' '}</p>
-              {typeof streak === 'number' && streak > 0 && (
-                <span className="flex shrink-0 items-center gap-1 rounded-full bg-[var(--navy)] px-2 py-0.5 text-[11px] font-bold text-white">
-                  <Flame className="h-3 w-3" strokeWidth={2.4} aria-hidden="true" />
-                  {streak}-day streak
-                </span>
-              )}
-            </div>
+            {typeof streak === 'number' && streak > 0 && (
+              <span className="mb-0.5 inline-flex items-center gap-1 rounded-full bg-[var(--navy)] px-2 py-0.5 text-[11px] font-bold text-white">
+                <Flame className="h-3 w-3" strokeWidth={2.4} aria-hidden="true" />
+                {streak}-day streak
+              </span>
+            )}
             <h1 className="truncate text-[20px] font-extrabold leading-tight tracking-[-0.015em] text-[var(--ink)]">
               {greeting}, {firstName}
             </h1>
