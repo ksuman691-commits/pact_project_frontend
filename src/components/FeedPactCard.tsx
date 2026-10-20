@@ -12,8 +12,7 @@ import {
   FileImage,
   Check,
   Camera,
-  PartyPopper,
-  Loader2,
+  Heart,
   MoreVertical,
   Flame,
 } from 'lucide-react';
@@ -24,12 +23,11 @@ import UserAvatarLink from './UserAvatarLink';
 import GoalMatchStrip from './GoalMatchStrip';
 import PactGallery, { buildGalleryTiles } from './PactGallery';
 import { useReportPact } from '@/hooks/usePactActions';
-import { useCreateCheer } from '@/hooks/usePactMutations';
 import { useGoalMatches } from '@/hooks/usePactMatches';
 import { useAuthStore } from '@/store/auth';
 import { getDisplayName } from '@/lib/displayName';
 import { hasPactMomentum } from '@/lib/pactMomentum';
-import { pactService } from '@/services/api';
+import { pactService, socialService } from '@/services/api';
 import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
 
@@ -300,7 +298,6 @@ export default function FeedPactCard({
   const router = useRouter();
   const { user } = useAuthStore();
   const reportMutation = useReportPact(pact.id);
-  const createCheer = useCreateCheer(pact.id);
   const [proofUploadModal, setProofUploadModal] = useState(false);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
@@ -320,12 +317,12 @@ export default function FeedPactCard({
   // when it's actually this card's own celebration still in flight.
   const didCelebrateRef = useRef(false);
   const [displayVote, setDisplayVote] = useState<string | null>(null);
-  const [displayCheerCount, setDisplayCheerCount] = useState(0);
-  const [optimisticCheer, setOptimisticCheer] = useState(false);
-  const [cheerError, setCheerError] = useState<string | null>(null);
-  const [isCheerBouncing, setIsCheerBouncing] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [liked, setLiked] = useState(false);
+  const [likeError, setLikeError] = useState<string | null>(null);
+  const [isLikeBouncing, setIsLikeBouncing] = useState(false);
+  const likeInFlightRef = useRef(false);
   const [isJoining, setIsJoining] = useState(false);
-  const [isCheering, setIsCheering] = useState(false);
   const [activeProofIndex, setActiveProofIndex] = useState(0);
   // Local "have I joined" state, synced from the server flags below but also
   // flipped optimistically the moment a join succeeds — without this, the
@@ -335,7 +332,6 @@ export default function FeedPactCard({
   // and no refetch happens on this card), so a second tap hit the backend's
   // "already joined" rejection instead of being a no-op.
   const [displayJoined, setDisplayJoined] = useState(false);
-  const cheerInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setExitDirection(null);
@@ -369,8 +365,9 @@ export default function FeedPactCard({
   }, [userVote]);
 
   useEffect(() => {
-    setDisplayCheerCount(Number(pact.active_cheer_count ?? 0));
-  }, [pact.active_cheer_count, pact.id]);
+    setLikeCount(Number(pact.like_count ?? 0));
+    setLiked(Boolean(pact.is_liked_by_me));
+  }, [pact.like_count, pact.is_liked_by_me, pact.id]);
 
   // Re-sync from the server whenever fresh pact data actually arrives (e.g.
   // this card gets recycled to a different pact, or a parent list refetches
@@ -394,7 +391,6 @@ export default function FeedPactCard({
   // same text as a second line (e.g. "Startup" under "Startup · Save
   // ₹50,000 in 30 Days") for any pact that isn't scoped to a circle.
   const circleLabel = pact.circle || pact.circle_name || null;
-  const cheerCount = displayCheerCount;
   const proofCount = Number(pact.proof_count ?? pact.proofClips?.length ?? 0);
   const commentCount = liveCommentCount ?? Number(pact.comment_count ?? pact.comments?.length ?? 0);
   const timeRemaining = pact.timeRemaining || formatEndsIn(pact.end_date || pact.deadline);
@@ -549,35 +545,32 @@ export default function FeedPactCard({
     }
   };
 
-  const handleCheerTap = () => {
-    if (isCheering || optimisticCheer) return;
-    setCheerError(null);
-    setOptimisticCheer(true);
-    setDisplayCheerCount((count) => count + 1);
-    setIsCheerBouncing(true);
-    window.setTimeout(() => setIsCheerBouncing(false), 150);
-    cheerInputRef.current?.click();
-  };
-
-  const handleCheerFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) {
-      setOptimisticCheer(false);
-      setDisplayCheerCount((count) => Math.max(0, count - 1));
-      return;
+  // Like toggles instantly and reverts if the server rejects it. The ref
+  // stops rapid double-taps from racing two requests for the same pact.
+  const handleLikeTap = async () => {
+    if (likeInFlightRef.current) return;
+    likeInFlightRef.current = true;
+    const wasLiked = liked;
+    setLikeError(null);
+    setLiked(!wasLiked);
+    setLikeCount((count) => Math.max(0, count + (wasLiked ? -1 : 1)));
+    if (!wasLiked) {
+      setIsLikeBouncing(true);
+      window.setTimeout(() => setIsLikeBouncing(false), 150);
     }
-
-    setIsCheering(true);
     try {
-      await createCheer.mutateAsync(file);
-      setOptimisticCheer(false);
+      const response: any = wasLiked ? await socialService.unlikePact(pact.id) : await socialService.likePact(pact.id);
+      const server = response?.data;
+      if (server && typeof server.like_count === 'number') {
+        setLikeCount(server.like_count);
+        setLiked(Boolean(server.liked));
+      }
     } catch {
-      setOptimisticCheer(false);
-      setDisplayCheerCount((count) => Math.max(0, count - 1));
-      setCheerError('Could not send cheer. Try again.');
+      setLiked(wasLiked);
+      setLikeCount((count) => Math.max(0, count + (wasLiked ? 1 : -1)));
+      setLikeError('Could not update your like. Try again.');
     } finally {
-      setIsCheering(false);
+      likeInFlightRef.current = false;
     }
   };
 
@@ -704,7 +697,7 @@ export default function FeedPactCard({
   // on it. Cards without a photo (or the detail page, which renders its own
   // hero) fall back to a compact plain layout.
   const immersive = !hideHeroAndTitle && tiles.length > 0;
-  const cheerLabelCount = cheerCount > 0 ? formatCompactCount(cheerCount) : null;
+  const likeLabelCount = likeCount > 0 ? formatCompactCount(likeCount) : null;
   const chatLabelCount = commentCount > 0 ? formatCompactCount(commentCount) : null;
 
   const kebab = (onPhoto: boolean) => (
@@ -749,14 +742,14 @@ export default function FeedPactCard({
     >
       <button
         type="button"
-        onClick={handleCheerTap}
-        disabled={isCheering || optimisticCheer}
-        aria-label="cheer this pact"
-        className={`flex h-11 items-center gap-1.5 px-2.5 text-[14px] font-bold text-[var(--navy)] transition disabled:opacity-60 ${isCheerBouncing ? 'scale-110' : 'scale-100'}`}
+        onClick={() => void handleLikeTap()}
+        aria-label={liked ? 'unlike this pact' : 'like this pact'}
+        aria-pressed={liked}
+        className={`flex h-11 items-center gap-1.5 px-2.5 text-[14px] font-bold text-[var(--navy)] transition ${isLikeBouncing ? 'scale-110' : 'scale-100'}`}
         style={{ transitionDuration: '150ms' }}
       >
-        {isCheering ? <Loader2 className="h-6 w-6 animate-spin" /> : <PartyPopper className={`h-6 w-6 ${optimisticCheer ? 'fill-[var(--navy)]/20' : ''}`} strokeWidth={1.8} />}
-        {cheerLabelCount}
+        <Heart className="h-6 w-6" strokeWidth={1.8} fill={liked ? 'var(--navy)' : 'none'} />
+        {likeLabelCount}
       </button>
       <button type="button" onClick={() => setCommentSheetOpen(true)} aria-label="open chat" className="flex h-11 items-center gap-1.5 px-2.5 text-[14px] font-bold text-[var(--navy)] transition active:scale-95">
         <MessageCircle className="h-[23px] w-[23px]" strokeWidth={1.8} />
@@ -876,9 +869,9 @@ export default function FeedPactCard({
             {actionBar(false)}
           </>
         )}
-        {cheerError && (
+        {likeError && (
           <div role="status" aria-live="polite" className="px-3.5 pb-2 pt-1 text-xs text-[var(--warn-text)]">
-            {cheerError}
+            {likeError}
           </div>
         )}
 
@@ -903,17 +896,6 @@ export default function FeedPactCard({
           </div>
         )}
       </motion.div>
-
-      {/* Hidden file input backing the fast single-photo cheer flow
-          triggered by swipe-right / double-tap / the cheer icon. */}
-      <input
-        ref={cheerInputRef}
-        type="file"
-        accept="image/*"
-        capture="user"
-        className="hidden"
-        onChange={handleCheerFileChange}
-      />
 
       {uploadAllowed && !onAddMoment && (
         <ProofUploadModal
