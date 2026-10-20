@@ -812,6 +812,7 @@ export default function FeedPactCard({
               interactive
               aspectClassName="aspect-[3/4]"
               dotsPosition="none"
+              hideProofBadge
               onActiveIndexChange={setActiveProofIndex}
             />
             <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/55 to-transparent" />
@@ -857,7 +858,7 @@ export default function FeedPactCard({
                     {progressInfo ? <MiniRing percent={progressInfo.percent} label={`D${dayNo}`} /> : <Camera className="h-6 w-6 shrink-0 text-[var(--navy)]" />}
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[15px] font-bold text-[var(--ink)]">{pact.title}</span>
-                      <span className="mt-0.5 block text-[12.5px] text-[var(--muted)]">{onAddMoment ? 'No moment yet today' : 'No proof yet today'}</span>
+                      <span className="mt-0.5 block text-[12.5px] text-[var(--muted)]">{onAddMoment ? 'No moment yet today' : 'Nothing posted today'}</span>
                     </span>
                     <Camera className="h-5 w-5 shrink-0 text-[var(--navy)]" aria-hidden="true" />
                   </button>
@@ -866,7 +867,7 @@ export default function FeedPactCard({
                     {progressInfo ? <MiniRing percent={progressInfo.percent} label={`D${dayNo}`} /> : <Camera className="h-6 w-6 shrink-0 text-[var(--muted)]" />}
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[15px] font-bold text-[var(--ink)]">{pact.title}</span>
-                      <span className="mt-0.5 block text-[12.5px] text-[var(--muted)]">{onAddMoment ? 'No moment yet' : 'No proof yet'}</span>
+                      <span className="mt-0.5 block text-[12.5px] text-[var(--muted)]">{onAddMoment ? 'No moment yet' : 'Nothing posted yet'}</span>
                     </span>
                   </div>
                 )}
