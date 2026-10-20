@@ -21,7 +21,7 @@ export default function FeedFilterChips({ activeCategory, disabled = false }: { 
   return (
     <section aria-label="Feed filters" className="flex flex-col gap-2">
       <h2 className="px-1 text-[17px] font-bold tracking-[-0.01em] text-[var(--ink)]">For you</h2>
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1" role="group" aria-label="Filter pacts by category">
+      <div className="scrollbar-hide -mx-4 flex gap-2 overflow-x-auto px-4 pb-1" role="group" aria-label="Filter pacts by category">
         {CATEGORIES.map((category) => {
           const active = category.id === selectedId
           return (
