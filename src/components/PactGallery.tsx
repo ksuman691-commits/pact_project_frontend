@@ -100,6 +100,8 @@ interface PactGalleryProps {
    * own story-bar indicator fed by onActiveIndexChange instead.
    */
   dotsPosition?: 'below' | 'overlay' | 'none';
+  /** Hides the corner "Day N" / "Proof" badge on proof photos (cheer badges stay). The feed card draws its own. */
+  hideProofBadge?: boolean;
   /** Fills the parent's height instead of sizing itself via aspectClassName — used by the feed hero. */
   fillHeight?: boolean;
   /**
@@ -151,6 +153,7 @@ export default function PactGallery({
   onActiveIndexChange,
   interactive = true,
   dotsPosition = 'below',
+  hideProofBadge = false,
   fillHeight = false,
   trailingSlot,
 }: PactGalleryProps) {
@@ -318,15 +321,17 @@ export default function PactGallery({
                 </div>
               )}
 
-              <span
-                className={`absolute left-2.5 top-2.5 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold text-white ${
-                  tile.kind === 'cheer' ? '' : 'bg-[var(--pact-violet)]'
-                }`}
-                style={tile.kind === 'cheer' ? { background: 'var(--pact-gold)' } : undefined}
-              >
-                {tile.kind === 'cheer' && <PartyPopper className="h-2.5 w-2.5" />}
-                {tile.kind === 'cheer' ? 'Cheer' : tile.day ? `Day ${tile.day}` : 'Proof'}
-              </span>
+              {(tile.kind === 'cheer' || !hideProofBadge) && (
+                <span
+                  className={`absolute left-2.5 top-2.5 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold text-white ${
+                    tile.kind === 'cheer' ? '' : 'bg-[var(--pact-violet)]'
+                  }`}
+                  style={tile.kind === 'cheer' ? { background: 'var(--pact-gold)' } : undefined}
+                >
+                  {tile.kind === 'cheer' && <PartyPopper className="h-2.5 w-2.5" />}
+                  {tile.kind === 'cheer' ? 'Cheer' : tile.day ? `Day ${tile.day}` : 'Proof'}
+                </span>
+              )}
 
               {/* Only cheer tiles need their own uploader credit here — proof
                   tiles already show the same person in FeedPactCard's own
