@@ -44,3 +44,18 @@ export async function getTodayStories(pactId: number): Promise<PactStory[]> {
 export async function markStorySeen(storyId: number) {
   await api.post(`/api/stories/${storyId}/seen`)
 }
+
+export interface StoryViewer {
+  user_id: number
+  name: string | null
+  username: string | null
+  avatar_url: string | null
+  viewed_at: string
+}
+
+/** Only the author of a moment may call this; anyone else gets a 404. */
+export async function getStoryViewers(storyId: number): Promise<{ count: number; viewers: StoryViewer[] }> {
+  const response = await api.get(`/api/stories/${storyId}/viewers`)
+  const payload = response.data
+  return { count: Number(payload?.count ?? 0), viewers: Array.isArray(payload?.viewers) ? payload.viewers : [] }
+}

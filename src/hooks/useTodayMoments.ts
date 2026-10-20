@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { useAuthStore } from '@/store/auth'
-import { STORIES_ENABLED } from '@/lib/stories'
+import { STORIES_ENABLED, type PactStory } from '@/lib/stories'
 import { useMyPacts } from './useMyPacts'
 import { usePactsStoriesToday } from './useStories'
 
@@ -39,14 +39,21 @@ export function useTodayMoments() {
 
   return useMemo(() => {
     const postedIds = new Set<number>()
+    const myStories: PactStory[] = []
     activePacts.forEach((pact, i) => {
       const stories = storyQueries[i]?.data
-      if (user?.id != null && stories?.some((s) => s.user_id === user.id)) postedIds.add(Number(pact.id))
+      const mine = user?.id != null ? (stories ?? []).filter((s) => s.user_id === user.id) : []
+      if (mine.length > 0) {
+        postedIds.add(Number(pact.id))
+        myStories.push(...mine)
+      }
     })
     const storiesLoading = STORIES_ENABLED && storyQueries.some((q) => q.isLoading)
     const pendingPact = activePacts.find((p) => !postedIds.has(Number(p.id))) ?? null
     return {
       activePacts,
+      /** The viewer's own moments from today, oldest first. */
+      myStories: myStories.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()),
       /** True once the viewer has a moment on at least one active pact today. */
       postedToday: postedIds.size > 0,
       /** True when every active pact already has a moment from the viewer. */

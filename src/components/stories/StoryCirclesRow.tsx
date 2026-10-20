@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Check, Plus, X } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import { useMomentPeople, type MomentPerson } from '@/hooks/useMomentPeople'
 import { useMyPacts } from '@/hooks/useMyPacts'
@@ -109,7 +109,8 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
   const [viewing, setViewing] = useState<MomentPerson | null>(null)
   const { user } = useAuthStore()
   const { people, isLoading: peopleLoading } = useMomentPeople(circles, user?.id)
-  const { postedToday } = useTodayMoments()
+  const { postedToday, myStories } = useTodayMoments()
+  const [viewingOwn, setViewingOwn] = useState(false)
   // Warm the sheet's data on Home mount so the chooser opens from cache.
   useMyPacts()
 
@@ -123,30 +124,26 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
       </div>
 
       <ul className="scrollbar-hide -mx-4 flex gap-4 overflow-x-auto px-4 pb-1">
-        <li>
+        <li className="relative">
+          <button
+            type="button"
+            onClick={() => (postedToday && myStories.length > 0 ? setViewingOwn(true) : setPickerOpen(true))}
+            className="flex w-[76px] flex-col items-center gap-1.5"
+            aria-label={postedToday ? 'View your moment' : "Post today's moment"}
+          >
+            <StoryRing state={postedToday ? 'seen' : 'add'} count={Math.max(1, myStories.length)} size={SIZE} name={user?.full_name} imageUrl={user?.avatar_url} />
+            <span className="w-full truncate text-center text-[12px] font-semibold text-[var(--ink)]">You</span>
+            <span className="-mt-1 text-[10px]" style={{ color: postedToday ? 'var(--muted)' : 'var(--navy)', fontWeight: postedToday ? 400 : 700 }}>
+              {postedToday ? 'Tap to view' : 'Post today'}
+            </span>
+          </button>
           <button
             type="button"
             onClick={() => setPickerOpen(true)}
-            className="flex w-[76px] flex-col items-center gap-1.5"
-            aria-label={postedToday ? "You've posted today. Post another moment" : "Post today's moment"}
+            aria-label="Add a moment"
+            className="absolute right-[2px] top-[50px] flex h-6 w-6 items-center justify-center rounded-full border-[2.5px] border-[var(--paper)] bg-[var(--navy)] text-white"
           >
-            <span className="relative inline-flex">
-              <StoryRing state={postedToday ? 'unseen' : 'add'} count={1} size={SIZE} name={user?.full_name} imageUrl={user?.avatar_url} />
-              <span
-                className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border-[2.5px] border-[var(--paper)] text-white"
-                style={{ background: postedToday ? 'var(--success)' : 'var(--navy)' }}
-              >
-                {postedToday ? (
-                  <Check className="h-3 w-3" strokeWidth={3.4} aria-hidden="true" />
-                ) : (
-                  <Plus className="h-3 w-3" strokeWidth={3.2} aria-hidden="true" />
-                )}
-              </span>
-            </span>
-            <span className="w-full truncate text-center text-[12px] font-semibold text-[var(--ink)]">Your moment</span>
-            <span className="-mt-0.5 text-[11px] font-bold" style={{ color: postedToday ? 'var(--success)' : 'var(--navy)' }}>
-              {postedToday ? 'Posted today' : 'Post today'}
-            </span>
+            <Plus className="h-3 w-3" strokeWidth={3.2} aria-hidden="true" />
           </button>
         </li>
 
@@ -203,6 +200,7 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
       {capturePact && (
         <StoryCaptureSheet isOpen onClose={() => setCapturePact(null)} pactId={Number(capturePact.id)} pactTitle={capturePact.title} />
       )}
+      <StoryViewer open={viewingOwn} onClose={() => setViewingOwn(false)} stories={myStories} />
       <StoryViewer
         open={viewing !== null}
         onClose={() => setViewing(null)}

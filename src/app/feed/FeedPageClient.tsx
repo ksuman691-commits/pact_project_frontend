@@ -8,6 +8,7 @@ import WelcomeHeader from '@/components/WelcomeHeader'
 import FeaturedDareCard from '@/components/FeaturedDareCard'
 import YourCirclesRail from '@/components/YourCirclesRail'
 import StoryCirclesRow from '@/components/stories/StoryCirclesRow'
+import { useMomentPeople } from '@/hooks/useMomentPeople'
 import { STORIES_ENABLED } from '@/lib/stories'
 import CreatePactFlowModal from '@/components/create-pact-flow/CreatePactFlowModal'
 import PactFeed from '@/components/PactFeed'
@@ -32,7 +33,8 @@ export default function FeedPageClient() {
   const { data: userStatsData } = useUserStats(user?.id || 0)
   const currentStreak = userStatsData?.data?.current_streak ?? 0
   const { data: circlesData, isLoading: circlesLoading } = useCircles()
-  const circles = (circlesData || []) as Array<{ id: number; name: string; photo_url?: string | null; emoji?: string | null; icon_emoji?: string | null; member_count?: number }>
+  const circles = (circlesData || []) as Array<{ id: number; name: string; photo_url?: string | null; emoji?: string | null; icon_emoji?: string | null; member_count?: number; stories_today_count?: number | null }>
+  const momentPeople = useMomentPeople(circles, user?.id)
   const isAtRisk = useAtRiskPact(user?.id)
   const { featuredDare } = useFeaturedDare()
   const profileCompletion = useProfileCompletion()
@@ -129,7 +131,7 @@ export default function FeedPageClient() {
             block is gone: a row of zeros says nothing to a new user, and the
             streak already shows in the header. Moments lead the page instead. */}
         {isInitialized && user && (
-          <div className="max-w-md mx-auto px-4 pb-5 pt-3">
+          <div className="max-w-md mx-auto px-4 pb-3 pt-2">
             {STORIES_ENABLED ? (
               <StoryCirclesRow circles={circles} isLoading={circlesLoading} />
             ) : (
@@ -139,8 +141,8 @@ export default function FeedPageClient() {
         )}
 
         {isInitialized && user && (
-          <div className="max-w-md mx-auto px-4 pb-5">
-            <TodayCheckInRow onCreatePact={handleCreatePact} />
+          <div className="max-w-md mx-auto px-4 pb-3">
+            <TodayCheckInRow onCreatePact={handleCreatePact} peers={momentPeople.people} />
           </div>
         )}
 
