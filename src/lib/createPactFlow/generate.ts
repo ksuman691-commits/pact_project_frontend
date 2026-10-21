@@ -1,3 +1,4 @@
+import { titleCase } from '@/lib/titleCase';
 // Title & description generation — circlepact_create_pact_spec.md §5.
 // Generate from draft only; never accept a separately-typed title.
 
@@ -41,7 +42,7 @@ export function generateTitle(draft: PactDraft, activity: Activity | null): stri
   if (days > 0) {
     title += ` in ${days} Days`;
   }
-  return title;
+  return titleCase(title);
 }
 
 /** Emoji-free pieces of the title for the "I will ..." sentence. */

@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import Image from 'next/image'
 
 interface SeatProps {
@@ -43,6 +46,9 @@ export function TickBadge({ size }: { size: number }) {
 }
 
 export default function Seat({ name, avatarUrl, size = 40, lit = false, className = '' }: SeatProps) {
+  // A photo link that fails (expired or unsigned) falls back to initials
+  // instead of a broken-image icon.
+  const [failed, setFailed] = useState(false)
   return (
     <div className={`relative shrink-0 ${className}`} style={{ width: size, height: size }}>
       <div
@@ -52,8 +58,8 @@ export default function Seat({ name, avatarUrl, size = 40, lit = false, classNam
           border: lit ? '2px solid var(--paper)' : '1.5px solid var(--seat-border)',
         }}
       >
-        {avatarUrl ? (
-          <Image src={avatarUrl} alt={name || ''} fill sizes={`${size}px`} className="object-cover" />
+        {avatarUrl && !failed ? (
+          <Image src={avatarUrl} alt="" fill sizes={`${size}px`} className="object-cover" onError={() => setFailed(true)} />
         ) : (
           <span
             className="font-semibold"
