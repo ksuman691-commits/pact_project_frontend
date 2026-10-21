@@ -137,7 +137,7 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
         <div className="flex min-w-0 items-center gap-2.5">
           {story && <RingFace name={story.name} imageUrl={story.avatar_url} size={36} />}
           <div className="min-w-0">
-            {story && <p className="truncate text-[14px] font-semibold">{story.name || 'Member'}</p>}
+            {story && <div className="truncate text-[14px] font-semibold" style={{ color: 'var(--paper)' }}>{story.name || 'Member'}</div>}
             <div className="flex items-center gap-2 text-[12px]" style={{ color: 'rgba(244,239,228,0.75)' }}>
               {story && postedAgo(story.created_at) && <span>shared {postedAgo(story.created_at)}</span>}
               {circleId != null && circleName && (
