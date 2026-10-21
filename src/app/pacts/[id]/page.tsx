@@ -17,8 +17,8 @@ import { resolvePactCompletionViewState } from '@/lib/pactCompletionState';
 
 function PactDetailSkeleton() {
   return (
-    <main className="min-h-[calc(100vh-72px)] bg-[var(--paper)] px-[14px] pb-3 pt-5">
-      <div className="mx-auto flex h-[calc(100vh-92px)] max-w-[390px] flex-col gap-[14px] rounded-[32px] border border-[var(--hairline)] bg-[var(--card)] p-[18px_16px_16px]">
+    <main className="min-h-[calc(100dvh-72px)] bg-[var(--paper)] px-[14px] pb-3 pt-5">
+      <div className="mx-auto flex h-[calc(100dvh-92px)] max-w-[390px] flex-col gap-[14px] rounded-[32px] border border-[var(--hairline)] bg-[var(--card)] p-[18px_16px_16px]">
         <div className="h-1 w-full animate-pulse rounded-full bg-[var(--card-muted)]" />
         <div className="flex h-11 items-center gap-3">
           <div className="size-11 animate-pulse rounded-full bg-[var(--card-muted)]" />
@@ -179,7 +179,7 @@ export default function PactDetailPage() {
     return (
       <>
         <DetailPageHeader title="Pact not found" backHref="/feed" maxWidthClassName="max-w-md" />
-        <div className="flex min-h-[calc(100vh-60px)] items-center justify-center bg-[var(--paper)] px-4">
+        <div className="flex min-h-[calc(100dvh-60px)] items-center justify-center bg-[var(--paper)] px-4">
           <div className="max-w-sm rounded-[28px] border border-[var(--hairline)] bg-[var(--card)] p-8 text-center">
             <AlertCircle className="mx-auto h-10 w-10 text-[var(--muted)]" />
             <h2 className="mt-4 text-xl font-black text-[var(--ink)]">Pact not found</h2>

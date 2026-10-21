@@ -12,6 +12,7 @@ import { useMomentPeople } from '@/hooks/useMomentPeople'
 import { STORIES_ENABLED } from '@/lib/stories'
 import CreatePactFlowModal from '@/components/create-pact-flow/CreatePactFlowModal'
 import PactFeed from '@/components/PactFeed'
+import QuickPostButton from '@/components/QuickPostButton'
 import PullToRefresh from '@/components/PullToRefresh'
 import { useAuthStore } from '@/store/auth'
 import { useUnreadNotificationCount } from '@/hooks/useNotifications'
@@ -119,7 +120,7 @@ export default function FeedPageClient() {
     <PullToRefresh onRefresh={() => feedRefetchRef.current()} disabled={!isInitialized}>
       <div className="pact-flow pact-page-enter min-h-screen">
         <WelcomeHeader
-          userName={user?.full_name || 'Test User'}
+          userName={user?.full_name || user?.username || ''}
           avatarUrl={user?.avatar_url || null}
           notificationCount={unreadCount}
           onNotificationsClick={handleNotificationsClick}
@@ -190,6 +191,7 @@ export default function FeedPageClient() {
           />
         </div>
 
+        {isInitialized && user && STORIES_ENABLED && <QuickPostButton onCreatePact={handleCreatePact} />}
         <CreatePactFlowModal isOpen={pactModalOpen} onClose={() => setPactModalOpen(false)} />
       </div>
     </PullToRefresh>
