@@ -2,8 +2,9 @@
 
 import Image from 'next/image'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Camera, Check, Image as ImageIcon, MessageCircle, Play, Plus, RotateCcw, Share2, UserRound, UserPlus, X } from 'lucide-react'
+import { Camera, Check, ChevronLeft, Image as ImageIcon, MessageCircle, Play, Plus, RotateCcw, Share2, UserRound, UserPlus, X } from 'lucide-react'
 import LikeButton from '@/components/LikeButton'
+import { useSmartBack } from '@/hooks/useSmartBack'
 import CircleChip from '@/components/classic/CircleChip'
 import { getCategoryTheme } from '@/lib/categoryTheme'
 import { pactLocalToday, resolvePactCompletionViewState } from '@/lib/pactCompletionState'
@@ -83,6 +84,7 @@ export default function PactMomentsDetail({
   onJoin,
   onStartOwnVersion,
 }: Props) {
+  const smartBack = useSmartBack('/feed')
   const [activeIndex, setActiveIndex] = useState(0)
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const [selectedMomentId, setSelectedMomentId] = useState<number | string | null>(null)
@@ -182,6 +184,9 @@ export default function PactMomentsDetail({
     <main className="min-h-[calc(100vh-72px)] bg-[var(--paper)] px-[14px] pb-3 pt-5 text-[var(--ink)]">
       <div className="mx-auto flex h-[calc(100vh-92px)] max-w-[390px] flex-col gap-[14px] rounded-[32px] border border-[var(--hairline)] bg-[var(--card)] p-[18px_16px_16px]">
         <div className="shrink-0">
+          <button type="button" onClick={smartBack} aria-label="Go back" className="-ml-2 flex size-11 items-center justify-center rounded-full text-[var(--ink)]">
+            <ChevronLeft className="size-6" strokeWidth={2} aria-hidden="true" />
+          </button>
           {pact?.circle_id != null && pact?.circle_name ? (
             <CircleChip circleId={pact.circle_id} circleName={pact.circle_name} variant="feed" className="max-w-full" />
           ) : (

@@ -10,6 +10,7 @@ import { useTodayMoments } from '@/hooks/useTodayMoments'
 import StoryCaptureSheet from './StoryCaptureSheet'
 import StoryRing from './StoryRing'
 import StoryViewer from './StoryViewer'
+import { useBackToClose } from '@/hooks/useBackToClose'
 
 interface StoryCircle {
   id: number
@@ -42,6 +43,7 @@ function groupPactsByCircle(pacts: any[], circles: StoryCircle[]) {
 
 function PostTodaySheet({ circles, onClose, onPick }: { circles: StoryCircle[]; onClose: () => void; onPick: (pact: any) => void }) {
   // Already warmed by the Home row, so this normally renders from cache.
+  useBackToClose(true, onClose)
   const query = useMyPacts()
   const active: any[] = ((query.data as any)?.data || []).filter((p: any) => p.status === 'active' && p.is_joined_by_me !== false)
   const groups = groupPactsByCircle(active, circles)
