@@ -10,13 +10,15 @@ interface TipButtonProps {
   creatorName: string
   creatorAvatarUrl?: string | null
   context?: string | null
-  /** 'pill' = labelled button; 'stage' = round button over a photo or video. */
-  variant?: 'pill' | 'stage'
+  /** 'pill' = labelled button; 'stage' = round button over media; 'row' = coin in a card's action row. */
+  variant?: 'pill' | 'stage' | 'row'
+  /** Confirmed tips so far; shown next to the coin in the 'row' variant. */
+  count?: number
   className?: string
 }
 
 /** Renders nothing unless the creator has tips turned on. */
-export default function TipButton({ creatorId, creatorName, creatorAvatarUrl, context, variant = 'pill', className = '' }: TipButtonProps) {
+export default function TipButton({ creatorId, creatorName, creatorAvatarUrl, context, variant = 'pill', count = 0, className = '' }: TipButtonProps) {
   const [open, setOpen] = useState(false)
   const { data: tip } = useUserTipInfo(creatorId)
   if (!tip) return null
@@ -24,7 +26,23 @@ export default function TipButton({ creatorId, creatorName, creatorAvatarUrl, co
 
   return (
     <>
-      {variant === 'stage' ? (
+      {variant === 'row' ? (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            setOpen(true)
+          }}
+          aria-label={`Tip ${firstName}`}
+          className={`flex h-11 items-center gap-1.5 px-1.5 text-[14px] font-bold transition active:scale-95 ${className}`}
+          style={{ color: '#1F3A93' }}
+        >
+          <span className="flex size-[30px] items-center justify-center rounded-full" style={{ border: '1.8px solid #1F3A93' }}>
+            <IndianRupee className="size-[15px]" strokeWidth={2.4} aria-hidden="true" />
+          </span>
+          {count > 0 && count}
+        </button>
+      ) : variant === 'stage' ? (
         <button
           type="button"
           onClick={() => setOpen(true)}

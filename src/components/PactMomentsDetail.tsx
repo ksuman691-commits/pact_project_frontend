@@ -193,9 +193,19 @@ export default function PactMomentsDetail({
     <main className="min-h-[calc(100vh-72px)] bg-[var(--paper)] px-[14px] pb-3 pt-5 text-[var(--ink)]">
       <div className="mx-auto flex h-[calc(100vh-92px)] max-w-[390px] flex-col gap-[14px] rounded-[32px] border border-[var(--hairline)] bg-[var(--card)] p-[18px_16px_16px]">
         <div className="shrink-0">
-          <button type="button" onClick={smartBack} aria-label="Go back" className="-ml-2 flex size-11 items-center justify-center rounded-full text-[var(--ink)]">
-            <ChevronLeft className="size-6" strokeWidth={2} aria-hidden="true" />
-          </button>
+          <div className="flex items-center justify-between">
+            <button type="button" onClick={smartBack} aria-label="Go back" className="-ml-2 flex size-11 items-center justify-center rounded-full text-[var(--ink)]">
+              <ChevronLeft className="size-6" strokeWidth={2} aria-hidden="true" />
+            </button>
+            {!isCreatorView && (
+              <TipButton creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} className="!h-9 !px-3.5 !text-[13.5px]" />
+            )}
+            {showTurnOnTips && (
+              <Link href="/profile/tips" className="inline-flex h-9 items-center rounded-full px-3 text-[13px] font-bold" style={{ border: '1.5px dashed #1F3A93', color: '#1F3A93' }}>
+                Turn on tips
+              </Link>
+            )}
+          </div>
           {pact?.circle_id != null && pact?.circle_name ? (
             <CircleChip circleId={pact.circle_id} circleName={pact.circle_name} variant="feed" className="max-w-full" />
           ) : (
@@ -207,14 +217,6 @@ export default function PactMomentsDetail({
           <h1 className="line-clamp-2 font-sans text-[24px] font-bold leading-[1.08] tracking-[-0.03em] text-[var(--ink)]">
             {titleEmoji ? `${titleEmoji} ` : ''}{pact?.title}
           </h1>
-          {!isCreatorView && (
-            <TipButton creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} className="mt-2" />
-          )}
-          {showTurnOnTips && (
-            <Link href="/profile/tips" className="mt-2 inline-flex h-9 items-center rounded-full px-3 text-[13px] font-bold" style={{ border: '1.5px dashed #1F3A93', color: '#1F3A93' }}>
-              Turn on tips for your pacts
-            </Link>
-          )}
         </div>
 
         {showModernStrip ? (
@@ -383,9 +385,7 @@ export default function PactMomentsDetail({
                 <button type="button" onClick={() => onComment(false)} aria-label="Comment on this moment" className="flex size-12 items-center justify-center rounded-full bg-[var(--card)] text-[var(--ink)] shadow-lg">
                   <MessageCircle className="size-5" />
                 </button>
-                {!isCreatorView && (
-                  <TipButton variant="stage" creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} />
-                )}
+
               </div>
               <div className="absolute inset-x-5 bottom-5 z-10 text-white">
                 <p className="mt-0.5 text-[17px] font-extrabold leading-[22px]">{caption}</p>
