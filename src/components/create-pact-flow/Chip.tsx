@@ -14,7 +14,7 @@ interface ChipProps {
 /** Text-only pill used for every choice in the create-pact screens. */
 export default function Chip({ selected = false, dashed = false, onClick, children, className = '', ariaLabel }: ChipProps) {
   const look = selected
-    ? 'bg-[var(--navy)] text-white'
+    ? 'bg-[var(--ink)] text-white'
     : dashed
       ? 'border-[1.5px] border-dashed border-[var(--hairline)] bg-transparent text-[var(--ink)]'
       : 'border border-[var(--hairline)] bg-[var(--card)] text-[var(--ink)]';

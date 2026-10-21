@@ -1,35 +1,33 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { ChevronLeft, LogOut, Settings } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useUserJoinedPacts, useUserPacts, useUserVotedPacts } from '@/hooks/useFeedQueries';
 import { useMyDares } from '@/hooks/useDareQueries';
 import { useCircles } from '@/hooks/useCircles';
 import { useMyMomentsToday } from '@/hooks/useMyMomentsToday';
-import StoryViewer from '@/components/stories/StoryViewer';
 import { useUserStats } from '@/hooks/useUserQueries';
-import ProfileHero from '@/components/ProfileHero';
-import ProfileStats from '@/components/ProfileStats';
-import ProfileTabs, { PactsTab, DaresTab } from '@/components/ProfileTabs';
-import AchievementsBadges from '@/components/AchievementsBadges';
-import ActivityStrip from '@/components/pact-ui/ActivityStrip';
-import WeeklyStreakStrip from '@/components/pact-ui/WeeklyStreakStrip';
-import CirclesRow from '@/components/pact-ui/CirclesRow';
-import LogoSpinner from '@/components/LogoSpinner';
-import { ChevronLeft, LogOut, Settings } from 'lucide-react';
-import TipsEntryCard from '@/components/tips/TipsEntryCard';
-import toast from 'react-hot-toast';
 import { useFollowers, useFollowing } from '@/hooks/useFollows';
-import { useAtRiskPact } from '@/hooks/useAtRiskPact';
 import { useSmartBack } from '@/hooks/useSmartBack';
+import StoryViewer from '@/components/stories/StoryViewer';
+import { PactsTab, DaresTab } from '@/components/ProfileTabs';
+import ProfileHeader, { profileButton } from '@/components/profile/ProfileHeader';
+import SegmentTabs from '@/components/profile/SegmentTabs';
+import PeopleSheet from '@/components/profile/PeopleSheet';
+import TipsEntryCard from '@/components/tips/TipsEntryCard';
 
-// useSearchParams() opts the subtree into client-side rendering and must sit
-// under its own Suspense boundary or `next build` fails to prerender this
-// page — the actual profile UI only ever needs the param for the one-time
-// ?tab=dares deep link from DareShareSheet, so a null fallback here is
-// invisible in practice (resolves on the same tick, no real loading state).
+const INK = '#17181D';
+const MUTED = '#5A5C63';
+
+type Tab = 'pacts' | 'circles' | 'dares';
+
+// useSearchParams() must sit under its own Suspense boundary or `next build`
+// fails to prerender this page. It is only used for the ?tab=dares deep link.
 export default function Profile() {
   return (
     <Suspense fallback={null}>
@@ -42,25 +40,14 @@ function ProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isInitialized } = useRequireAuth();
-  // Own profile has no natural single parent route the way a circle/pact
-  // detail page does, so this always falls back to /feed — same behavior
-  // as any other detail page's chevron when there's no real history to
-  // go back through (deep link, fresh tab).
   const smartBack = useSmartBack('/feed');
   const logout = useAuthStore((state) => state.logout);
-  const [activeTab, setActiveTab] = useState('pacts');
-  const [showFollowersModal, setShowFollowersModal] = useState(false);
-  const [showFollowingModal, setShowFollowingModal] = useState(false);
-  const [showPactsModal, setShowPactsModal] = useState(false);
+  const [tab, setTab] = useState<Tab>('pacts');
+  const [peopleSheet, setPeopleSheet] = useState<'followers' | 'following' | null>(null);
+  const [viewingMoment, setViewingMoment] = useState(false);
 
-  // Lets DareShareSheet's "View on your profile" action land directly on
-  // the Dares tab via a ?tab=dares deep link, instead of dropping the user
-  // on the default Pacts tab and making them find it themselves.
   useEffect(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam === 'dares') {
-      setActiveTab('dares');
-    }
+    if (searchParams.get('tab') === 'dares') setTab('dares');
   }, [searchParams]);
 
   const userId = user?.id;
@@ -68,339 +55,149 @@ function ProfileContent() {
   const { data: joinedPactsData } = useUserJoinedPacts(userId || 0);
   const { data: votedPactsData } = useUserVotedPacts(userId || 0);
   const myDaresQuery = useMyDares({ enabled: isInitialized && !!user });
-  const createdPacts = (createdPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[];
-  const joinedPacts = (joinedPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[];
-  const votedPacts = (votedPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[];
+  const createdPacts = useMemo(() => (createdPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[], [createdPactsData]);
+  const joinedPacts = useMemo(() => (joinedPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[], [joinedPactsData]);
+  const votedPacts = useMemo(() => (votedPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[], [votedPactsData]);
   const myDares = (myDaresQuery.data?.pages || []).flatMap((page: any) => page.data || []) as any[];
-  const followersQuery = useFollowers(userId || 0);
-  const followingQuery = useFollowing(userId || 0);
-  const followers = followersQuery.data?.data || [];
-  const following = followingQuery.data?.data || [];
-  const isAtRisk = useAtRiskPact(userId);
-  const userStatsQuery = useUserStats(userId || 0);
-  const realStreak = userStatsQuery.data?.data?.current_streak;
-  const circlesQuery = useCircles();
-  const myCircles = (circlesQuery.data || []) as any[];
+  const followers = (useFollowers(userId || 0).data?.data || []) as any[];
+  const following = (useFollowing(userId || 0).data?.data || []) as any[];
+  const stats = useUserStats(userId || 0).data?.data;
+  const myCircles = (useCircles().data || []) as any[];
   const { myStories, postedToday } = useMyMomentsToday(myCircles, user?.id);
-  const [viewingMoment, setViewingMoment] = useState(false);
 
-  const completedPacts = createdPacts.filter((p: any) => p.status === 'completed').length;
-  const winRate = createdPacts.length > 0 ? Math.round((completedPacts / createdPacts.length) * 100) : 0;
-
-  // Real activity signal: days the user created, joined, or voted on a pact.
-  const activityDates = [...createdPacts, ...joinedPacts, ...votedPacts]
-    .map((p: any) => p.created_at)
-    .filter(Boolean) as string[];
-
-  // Mock achievements data
-  const allAchievements = [
-    {
-      id: 'first-pact',
-      name: 'First Pact',
-      description: 'Create your first pact',
-      icon: '🎯',
-      rarity: 'common' as const,
-      unlocked: createdPacts.length > 0,
-      unlockedAt: createdPacts.length > 0 ? new Date().toISOString() : undefined,
-    },
-    {
-      id: 'on-fire',
-      name: 'On Fire',
-      description: 'Reach 7-day streak',
-      icon: '🔥',
-      rarity: 'rare' as const,
-      unlocked: false,
-    },
-    {
-      id: 'winner',
-      name: 'Winner',
-      description: 'Complete 5 pacts',
-      icon: '🏆',
-      rarity: 'rare' as const,
-      unlocked: completedPacts >= 5,
-      unlockedAt: completedPacts >= 5 ? new Date().toISOString() : undefined,
-    },
-    {
-      id: 'trusted',
-      name: 'Trusted Member',
-      description: 'Build 50 reputation',
-      icon: '⭐',
-      rarity: 'epic' as const,
-      unlocked: false,
-    },
-    {
-      id: 'legendary',
-      name: 'Legendary',
-      description: 'Complete 50 pacts',
-      icon: '👑',
-      rarity: 'legendary' as const,
-      unlocked: false,
-    },
-  ];
-
-  const handleLogout = async () => {
-    await logout();
-    router.push('/auth/login');
-  };
-
-  const handleEditProfile = () => {
-    router.push('/profile/edit');
-  };
+  const activeCount = useMemo(() => {
+    const ids = new Set<number>();
+    [...createdPacts, ...joinedPacts].forEach((p: any) => p?.status === 'active' && ids.add(Number(p.id)));
+    return ids.size;
+  }, [createdPacts, joinedPacts]);
 
   if (!isInitialized) {
-    return (
-      <div className="pact-flow min-h-screen flex items-center justify-center">
-        <LogoSpinner size={40} color="var(--pact-violet)" />
-      </div>
-    );
+    return <main className="min-h-screen" style={{ background: 'var(--paper)' }} />;
   }
+  if (!user) return null;
 
-  if (!user) {
-    return null;
-  }
+  const name = user.full_name || user.username || 'You';
 
-  const profileUser = {
-    id: user.id || 0,
-    name: user.full_name || 'User',
-    username: user.username || 'user',
-    avatar: user.avatar_url || undefined,
-    bio: user.bio || 'Building better habits, one pact at a time',
-    reputationScore: user.reputation_score || 0,
-    badges: completedPacts >= 5 ? ['trusted', 'onfire', 'consistent'] : [],
-  };
-
-  const stats = {
-    pactsCreated: createdPacts.length,
-    pactsCompleted: completedPacts,
-    winRate,
-    currentStreak: typeof realStreak === 'number' ? realStreak : null,
-    reputation: Math.round(user.reputation_score || 0),
-    followers: followers.length,
-    following: following.length,
+  const shareProfile = async () => {
+    const url = `${window.location.origin}/profile/${encodeURIComponent(user.username)}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `${name} on CirclePact`, url });
+        return;
+      }
+    } catch {
+      // Dismissed or unavailable; fall back to copying.
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Profile link copied');
+    } catch {
+      toast.error('Could not copy the link');
+    }
   };
 
   return (
-    <div className="pact-flow pact-page-enter min-h-screen">
-      {/* Top Bar */}
-      <div className="sticky top-0 z-40 backdrop-blur-xl border-b" style={{ background: 'var(--paper)', borderColor: 'var(--hairline)' }}>
-        <div className="px-4 py-4 flex items-center gap-2 max-w-md mx-auto">
-          <button
-            type="button"
-            onClick={smartBack}
-            aria-label="Go back"
-            className="flex-shrink-0 rounded-full p-2 -ml-2 transition hover:bg-[var(--pact-surface-2)]"
-          >
-            <ChevronLeft className="h-5 w-5 text-[var(--pact-text)]" />
-          </button>
-          <h1 className="flex-1 font-display text-xl font-medium text-[var(--ink)]">My Profile</h1>
-          <div className="flex gap-2">
-            <button
-              onClick={handleEditProfile}
-              className="p-2 rounded-full transition hover:bg-[var(--pact-surface-2)]"
-              title="Edit settings"
-            >
-              <Settings className="w-5 h-5 text-[var(--pact-text-dim)]" />
-            </button>
-            <button
-              onClick={handleLogout}
-              className="p-2 rounded-full transition hover:bg-[var(--pact-surface-2)]"
-              title="Logout"
-              style={{ color: 'var(--pact-pink)' }}
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </div>
+    <main className="min-h-screen pb-36" style={{ background: 'var(--paper)', color: INK }}>
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-1 px-2" style={{ background: 'rgba(244,239,228,0.94)', backdropFilter: 'blur(12px)' }}>
+        <button type="button" onClick={smartBack} aria-label="Go back" className="flex size-11 items-center justify-center rounded-full" style={{ color: INK }}>
+          <ChevronLeft className="size-6" />
+        </button>
+        <div className="min-w-0 flex-1 truncate text-[16px] font-bold" style={{ color: INK }}>@{user.username}</div>
+        <button type="button" onClick={() => router.push('/profile/edit')} aria-label="Settings" className="flex size-11 items-center justify-center rounded-full" style={{ color: INK }}>
+          <Settings className="size-5" />
+        </button>
+        <button
+          type="button"
+          onClick={async () => {
+            await logout();
+            router.push('/auth/login');
+          }}
+          aria-label="Log out"
+          className="flex size-11 items-center justify-center rounded-full"
+          style={{ color: MUTED }}
+        >
+          <LogOut className="size-5" />
+        </button>
+      </header>
 
-      {/* Main Content */}
-      {/* pb-36: extra clearance for the floating pill BottomNav — on
-          low-activity accounts (few/no pacts) this page is short enough that
-          it doesn't scroll, so the fixed nav can sit directly over the tabs
-          row unless we reserve enough space here. */}
-      <div className="max-w-md mx-auto px-4 py-6 pb-36">
-        {/* Profile Hero */}
-        <ProfileHero
-          user={profileUser}
-          isOwnProfile={true}
-          onEdit={handleEditProfile}
-          streak={stats.currentStreak ?? undefined}
-          atRisk={isAtRisk}
+      <div className="mx-auto max-w-md">
+        <ProfileHeader
+          isOwn
+          name={name}
+          avatarUrl={user.avatar_url}
+          bio={user.bio}
+          followers={followers.length}
+          following={following.length}
+          streak={typeof stats?.current_streak === 'number' ? stats.current_streak : null}
+          activeCount={activeCount}
+          completedCount={stats?.pacts_completed ?? createdPacts.filter((p: any) => p.status === 'completed').length}
           hasMoment={postedToday}
           onViewMoment={() => setViewingMoment(true)}
-        />
-        <StoryViewer open={viewingMoment} onClose={() => setViewingMoment(false)} stories={myStories} />
-        <TipsEntryCard className="mb-6" />
-
-        {/* Circles strip — quick jump to circles this account belongs to,
-            right below the Hero so identity + community context load
-            together before the numbers. */}
-        {myCircles.length > 0 && <CirclesRow circles={myCircles} className="mb-6" />}
-
-        {/* Stats — surfaced immediately after the Hero (name/avatar) so the
-            most important numbers aren't buried below secondary content. */}
-        <ProfileStats
-          stats={stats}
-          onPactClick={() => setShowPactsModal(true)}
-          onFollowersClick={() => setShowFollowersModal(true)}
-          onFollowingClick={() => setShowFollowingModal(true)}
+          onFollowersClick={() => setPeopleSheet('followers')}
+          onFollowingClick={() => setPeopleSheet('following')}
+          actions={
+            <>
+              <button type="button" onClick={() => router.push('/profile/edit')} className="h-11 flex-1 rounded-full text-[15px] font-bold" style={profileButton.quiet}>
+                Edit profile
+              </button>
+              <button type="button" onClick={() => void shareProfile()} className="h-11 flex-1 rounded-full text-[15px] font-bold" style={profileButton.quiet}>
+                Share profile
+              </button>
+            </>
+          }
+          footer={<TipsEntryCard />}
         />
 
-        {/* Tabs */}
-        <ProfileTabs onTabChange={setActiveTab}>
-          {activeTab === 'pacts' && (
-            <div className="space-y-4">
-              {/* Moved from the top of the page — activity heat is most
-                  relevant right next to the pacts it reflects, and this
-                  keeps Stats + Tabs visible immediately below the Hero. */}
-              <div className="pact-card rounded-2xl p-4">
-                <WeeklyStreakStrip activityDates={activityDates} className="mb-4" />
-                <ActivityStrip activityDates={activityDates} />
-              </div>
-              <h2 className="text-lg font-black text-[var(--pact-text)]">Your pacts</h2>
-              <PactsTab pacts={createdPacts} joinedPacts={joinedPacts} votedPacts={votedPacts} allowJoinedUploads={true} />
-            </div>
-          )}
-          {activeTab === 'dares' && <DaresTab dares={myDares} />}
-          {activeTab === 'achievements' && <AchievementsBadges achievements={allAchievements} />}
-          {activeTab === 'circles' && (
-            myCircles.length === 0 ? (
-              <div className="pact-card rounded-3xl px-6 py-10 text-center">
-                <p className="text-base font-semibold text-[var(--pact-text)]">Not in any circles yet</p>
-                <p className="mt-2 text-sm text-[var(--pact-text-dim)]">Join a circle to start building accountability together.</p>
-                <button
-                  onClick={() => router.push('/circles')}
-                  className=" mt-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition"
-                  style={{ background: 'var(--navy)', color: '#fff' }}
-                >
+        <SegmentTabs
+          className="px-4 pb-3 pt-5"
+          active={tab}
+          onChange={(id) => setTab(id as Tab)}
+          tabs={[
+            { id: 'pacts', label: 'Pacts', count: createdPacts.length + joinedPacts.length },
+            { id: 'circles', label: 'Circles', count: myCircles.length },
+            { id: 'dares', label: 'Dares', count: myDares.length },
+          ]}
+        />
+
+        <div className="px-4">
+          {tab === 'pacts' && <PactsTab pacts={createdPacts} joinedPacts={joinedPacts} votedPacts={votedPacts} allowJoinedUploads={true} />}
+          {tab === 'dares' && <DaresTab dares={myDares} />}
+          {tab === 'circles' &&
+            (myCircles.length === 0 ? (
+              <div className="rounded-[20px] px-5 py-8 text-center" style={{ border: '1.5px dashed var(--hairline)' }}>
+                <div className="text-[15px] font-bold" style={{ color: INK }}>Not in any circles yet</div>
+                <div className="mt-1 text-[13.5px]" style={{ color: MUTED }}>Join one to start keeping each other honest.</div>
+                <button type="button" onClick={() => router.push('/circles')} className="mt-4 h-11 rounded-full px-5 text-[14px] font-bold" style={profileButton.primary}>
                   Browse circles
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-2.5">
                 {myCircles.map((circle: any) => (
                   <button
                     key={circle.id}
+                    type="button"
                     onClick={() => router.push(`/circles/${circle.id}`)}
-                    className="pact-card  rounded-2xl p-4 text-left transition"
+                    className="flex items-center gap-3 rounded-[20px] p-3 text-left"
+                    style={{ background: 'var(--card)', border: '1px solid var(--hairline)' }}
                   >
-                    <p className="font-semibold text-[var(--pact-text)] truncate">{circle.name}</p>
-                    <p className="text-xs text-[var(--pact-text-faint)] mt-1">{circle.member_count ?? 0} members</p>
+                    <span className="relative flex size-11 items-center justify-center overflow-hidden rounded-full text-xl" style={{ background: 'var(--card-muted)' }}>
+                      {circle.photo_url ? <Image src={circle.photo_url} alt="" fill sizes="44px" className="object-cover" /> : circle.icon_emoji || circle.name?.charAt(0)}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[15px] font-bold" style={{ color: INK }}>{circle.name}</span>
+                      <span className="block text-[13px]" style={{ color: MUTED }}>{circle.member_count ?? 0} members</span>
+                    </span>
                   </button>
                 ))}
               </div>
-            )
-          )}
-          {activeTab === 'followers' && (
-            <div className="space-y-2">
-              {followers.length === 0 ? (
-                <p className="text-sm text-[var(--pact-text-faint)]">You do not have followers yet.</p>
-              ) : (
-                followers.map((row: any) => (
-                  <button
-                    key={row.id}
-                    onClick={() => router.push(`/profile/${encodeURIComponent(row.username)}`)}
-                    className="pact-card w-full text-left p-3 rounded-2xl transition hover:bg-[var(--pact-surface-2)]"
-                  >
-                    <p className="font-semibold text-[var(--pact-text)]">{row.full_name || row.username}</p>
-                    <p className="text-xs text-[var(--pact-text-faint)]">@{row.username}</p>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
-          {activeTab === 'following' && (
-            <div className="space-y-2">
-              {following.length === 0 ? (
-                <p className="text-sm text-[var(--pact-text-faint)]">You are not following anyone yet.</p>
-              ) : (
-                following.map((row: any) => (
-                  <button
-                    key={row.id}
-                    onClick={() => router.push(`/profile/${encodeURIComponent(row.username)}`)}
-                    className="pact-card w-full text-left p-3 rounded-2xl transition hover:bg-[var(--pact-surface-2)]"
-                  >
-                    <p className="font-semibold text-[var(--pact-text)]">{row.full_name || row.username}</p>
-                    <p className="text-xs text-[var(--pact-text-faint)]">@{row.username}</p>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
-        </ProfileTabs>
+            ))}
+        </div>
       </div>
 
-      {/* Followers Modal */}
-      {showFollowersModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-4" onClick={() => setShowFollowersModal(false)}>
-          <div className="pact-card rounded-t-3xl md:rounded-3xl max-w-md w-full max-h-[70vh] overflow-y-auto md:max-h-96" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 border-b px-6 py-4 flex items-center justify-between rounded-t-3xl" style={{ background: 'var(--pact-surface)', borderColor: 'var(--pact-hairline)' }}>
-              <h2 className="font-bold text-lg text-[var(--pact-text)]">Followers</h2>
-              <button onClick={() => setShowFollowersModal(false)} className="p-1 rounded-full hover:bg-[var(--pact-surface-2)] text-[var(--pact-text-faint)]">✕</button>
-            </div>
-            <div className="p-4 space-y-3">
-              {followers.length === 0 ? (
-                <p className="text-center text-[var(--pact-text-faint)] py-8">You do not have followers yet.</p>
-              ) : (
-                followers.map((row: any) => (
-                  <button key={row.id} onClick={() => { router.push(`/profile/${encodeURIComponent(row.username)}`); setShowFollowersModal(false); }} className="w-full text-left p-3 rounded-2xl transition hover:bg-[var(--pact-surface-2)]">
-                    <p className="font-medium text-[var(--pact-text)]">{row.full_name || row.username}</p>
-                    <p className="text-xs text-[var(--pact-text-faint)]">@{row.username}</p>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Following Modal */}
-      {showFollowingModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-4" onClick={() => setShowFollowingModal(false)}>
-          <div className="pact-card rounded-t-3xl md:rounded-3xl max-w-md w-full max-h-[70vh] overflow-y-auto md:max-h-96" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 border-b px-6 py-4 flex items-center justify-between rounded-t-3xl" style={{ background: 'var(--pact-surface)', borderColor: 'var(--pact-hairline)' }}>
-              <h2 className="font-bold text-lg text-[var(--pact-text)]">Following</h2>
-              <button onClick={() => setShowFollowingModal(false)} className="p-1 rounded-full hover:bg-[var(--pact-surface-2)] text-[var(--pact-text-faint)]">✕</button>
-            </div>
-            <div className="p-4 space-y-3">
-              {following.length === 0 ? (
-                <p className="text-center text-[var(--pact-text-faint)] py-8">You are not following anyone yet.</p>
-              ) : (
-                following.map((row: any) => (
-                  <button key={row.id} onClick={() => { router.push(`/profile/${encodeURIComponent(row.username)}`); setShowFollowingModal(false); }} className="w-full text-left p-3 rounded-2xl transition hover:bg-[var(--pact-surface-2)]">
-                    <p className="font-medium text-[var(--pact-text)]">{row.full_name || row.username}</p>
-                    <p className="text-xs text-[var(--pact-text-faint)]">@{row.username}</p>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Pacts Modal */}
-      {showPactsModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-4" onClick={() => setShowPactsModal(false)}>
-          <div className="pact-card rounded-t-3xl md:rounded-3xl max-w-md w-full max-h-[70vh] overflow-y-auto md:max-h-96" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 border-b px-6 py-4 flex items-center justify-between rounded-t-3xl" style={{ background: 'var(--pact-surface)', borderColor: 'var(--pact-hairline)' }}>
-              <h2 className="font-bold text-lg text-[var(--pact-text)]">My Pacts</h2>
-              <button onClick={() => setShowPactsModal(false)} className="p-1 rounded-full hover:bg-[var(--pact-surface-2)] text-[var(--pact-text-faint)]">✕</button>
-            </div>
-            <div className="p-4 space-y-3">
-              {createdPacts.length === 0 ? (
-                <p className="text-center text-[var(--pact-text-faint)] py-8">You have not created any pacts yet.</p>
-              ) : (
-                createdPacts.map((pact: any) => (
-                  <button key={pact.id} onClick={() => { router.push(`/pacts/${pact.id}`); setShowPactsModal(false); }} className="w-full text-left p-3 rounded-2xl transition hover:bg-[var(--pact-surface-2)]">
-                    <p className="font-medium text-[var(--pact-text)]">{pact.title}</p>
-                    <p className="text-xs text-[var(--pact-text-faint)]">{pact.category}</p>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+      <StoryViewer open={viewingMoment} onClose={() => setViewingMoment(false)} stories={myStories} />
+      <PeopleSheet open={peopleSheet === 'followers'} title="Followers" people={followers} emptyText="No followers yet." onClose={() => setPeopleSheet(null)} />
+      <PeopleSheet open={peopleSheet === 'following'} title="Following" people={following} emptyText="You're not following anyone yet." onClose={() => setPeopleSheet(null)} />
+    </main>
   );
 }

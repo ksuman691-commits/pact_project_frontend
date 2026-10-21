@@ -33,7 +33,7 @@ export default function FeedFilterChips({ activeCategory, disabled = false }: { 
               onClick={() => select(category.id)}
               className={`h-10 shrink-0 rounded-full border px-4 text-[13.5px] font-bold transition active:scale-[0.97] disabled:opacity-60 ${
                 active
-                  ? 'border-[var(--navy)] bg-[var(--navy)] text-white'
+                  ? 'border-[var(--ink)] bg-[var(--ink)] text-white'
                   : 'border-[var(--hairline)] bg-[var(--card)] text-[var(--ink)]'
               }`}
             >

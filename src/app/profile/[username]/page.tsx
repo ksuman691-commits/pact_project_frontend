@@ -1,17 +1,17 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { useParams } from 'next/navigation';
-import ProfileHero from '@/components/ProfileHero';
-import ProfileStats from '@/components/ProfileStats';
-import ProfileTabs, { PactsTab } from '@/components/ProfileTabs';
-import AchievementsBadges from '@/components/AchievementsBadges';
-import AddToCircleSheet from '@/components/AddToCircleSheet';
-import { ArrowLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/auth';
+import { useParams, useRouter } from 'next/navigation';
+import { ChevronLeft, UserPlus } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import AddToCircleSheet from '@/components/AddToCircleSheet';
+import FeedPactCard from '@/components/FeedPactCard';
+import ProfileHeader, { profileButton } from '@/components/profile/ProfileHeader';
+import SegmentTabs from '@/components/profile/SegmentTabs';
+import PeopleSheet from '@/components/profile/PeopleSheet';
+import TipButton from '@/components/tips/TipButton';
+import { useAuthStore } from '@/store/auth';
 import { userService } from '@/services/api';
 import {
   useAcceptFollow,
@@ -22,16 +22,13 @@ import {
   useRemoveFollow,
   useRequestFollow,
 } from '@/hooks/useFollows';
-import TipButton from '@/components/tips/TipButton';
-import {
-  useUserByUsername,
-  useUserStats,
-  useUserRelationship,
-  useUserCircles,
-} from '@/hooks/useUserQueries';
-import { useCirclePactsList } from '@/hooks/useCircles';
-import { useAtRiskPact } from '@/hooks/useAtRiskPact';
+import { useUserByUsername, useUserStats, useUserRelationship, useUserCircles } from '@/hooks/useUserQueries';
 import { useSmartBack } from '@/hooks/useSmartBack';
+
+const INK = '#17181D';
+const MUTED = '#5A5C63';
+
+type Tab = 'active' | 'completed' | 'circles';
 
 export default function PublicProfilePage() {
   const router = useRouter();
@@ -41,15 +38,15 @@ export default function PublicProfilePage() {
   const { user: currentUser } = useAuthStore();
 
   const isOwnProfile =
-    typeof currentUser?.username === 'string' &&
-    currentUser.username.trim().toLowerCase() === username.trim().toLowerCase();
+    typeof currentUser?.username === 'string' && currentUser.username.trim().toLowerCase() === username.trim().toLowerCase();
 
-  // Someone else's profile lands on Circles first — it establishes whether
-  // you share any context with this person before drilling into their pacts.
-  const [activeTab, setActiveTab] = useState(isOwnProfile ? 'pacts' : 'circles');
-  const [showFollowersModal, setShowFollowersModal] = useState(false);
-  const [showFollowingModal, setShowFollowingModal] = useState(false);
-  const [showPactsModal, setShowPactsModal] = useState(false);
+  // Your own profile lives at /profile, with the editing controls.
+  useEffect(() => {
+    if (isOwnProfile) router.replace('/profile');
+  }, [isOwnProfile, router]);
+
+  const [tab, setTab] = useState<Tab>('active');
+  const [peopleSheet, setPeopleSheet] = useState<'followers' | 'following' | null>(null);
   const [showAddToCircle, setShowAddToCircle] = useState(false);
 
   const userByUsernameQuery = useUserByUsername(username);
@@ -57,12 +54,11 @@ export default function PublicProfilePage() {
   const profileUserId = profileUser?.id;
 
   const relationshipQuery = useUserRelationship(profileUserId || 0);
-  const profileCirclesQuery = useUserCircles(profileUserId || 0);
   const relationship = relationshipQuery.data?.data;
   const sharedCircleIds: number[] = relationship?.shared_circle_ids ?? relationship?.sharedCircleIds ?? [];
-  const profileCircles = profileCirclesQuery.data?.data ?? [];
-  const hasSharedCircle = sharedCircleIds.length > 0;
-  const hasOwnCircles = isOwnProfile && profileCircles.length > 0;
+  const profileCirclesQuery = useUserCircles(profileUserId || 0);
+  const profileCircles = (profileCirclesQuery.data?.data ?? []) as any[];
+  const sharedCircles = profileCircles.filter((circle: any) => sharedCircleIds.includes(Number(circle.id)));
 
   const userStatsQuery = useUserStats(profileUserId || 0);
   const profilePactsQuery = useQuery({
@@ -71,448 +67,180 @@ export default function PublicProfilePage() {
     enabled: typeof profileUserId === 'number' && profileUserId > 0,
     staleTime: 1000 * 60,
   });
+  const pacts = useMemo(() => (profilePactsQuery.data?.data || []) as any[], [profilePactsQuery.data]);
+  const activePacts = useMemo(() => pacts.filter((p) => p.status === 'active'), [pacts]);
+  const completedPacts = useMemo(() => pacts.filter((p) => p.status === 'completed'), [pacts]);
 
   const followersQuery = useFollowers(profileUserId);
   const followingQuery = useFollowing(profileUserId);
+  const followers = (followersQuery.data?.data || []) as any[];
+  const following = (followingQuery.data?.data || []) as any[];
   const followStateQuery = useFollowState(profileUserId);
-  const isAtRisk = useAtRiskPact(isOwnProfile ? profileUserId : undefined);
-
   const requestFollow = useRequestFollow(profileUserId);
   const acceptFollow = useAcceptFollow(profileUserId);
   const rejectFollow = useRejectFollow(profileUserId);
   const removeFollow = useRemoveFollow(profileUserId);
-
-  const displayedPacts = profilePactsQuery.data?.data || [];
-  const followers = followersQuery.data?.data || [];
-  const following = followingQuery.data?.data || [];
-
-  // --- "Shared with you" pacts (client-side approximation) ---
-  // LIMITATION: There is no backend endpoint that returns pacts a viewer and
-  // a profile owner are both actual participants in. As a stand-in, we pull
-  // the pact list for the first circle the two of us have in common
-  // (sharedCircleIds[0]) and narrow it to pacts created by either of us that
-  // I have personally joined. This only surfaces shared pacts that live
-  // inside a *shared circle* — it will miss any shared pact that could ever
-  // exist outside that scope (e.g. a direct/private pact between two users
-  // with no circle in common). Treat this as a temporary approximation, not
-  // a complete solution.
-  // TODO(backend): replace with a real endpoint, e.g.
-  //   GET /users/{id}/shared-pacts
-  // that returns pacts where both the viewer and the profile owner are
-  // confirmed participants, regardless of circle membership.
-  const sharedCirclePactsQuery = useCirclePactsList(sharedCircleIds[0] || 0);
-  const sharedPacts = useMemo(() => {
-    if (isOwnProfile || !sharedCircleIds.length) return undefined;
-    const circlePacts = sharedCirclePactsQuery.data?.data ?? sharedCirclePactsQuery.data ?? [];
-    const rows = Array.isArray(circlePacts) ? circlePacts : [];
-    const myUsername = currentUser?.username;
-    const theirUsername = profileUser?.username;
-    return rows.filter((pact: any) => {
-      const creatorIsEitherOfUs = pact.creator === myUsername || pact.creator === theirUsername;
-      return creatorIsEitherOfUs && Boolean(pact.is_joined_by_me);
-    });
-  }, [isOwnProfile, sharedCircleIds.length, sharedCirclePactsQuery.data, currentUser?.username, profileUser?.username]);
-
-  const stats = {
-    pactsCreated: userStatsQuery.data?.data?.pacts_created ?? 0,
-    pactsCompleted: userStatsQuery.data?.data?.pacts_completed ?? 0,
-    winRate: userStatsQuery.data?.data?.win_rate ?? 0,
-    currentStreak: userStatsQuery.data?.data?.current_streak ?? 0,
-    reputation: userStatsQuery.data?.data?.reputation ?? 0,
-    followers: followers.length,
-    following: following.length,
-  };
 
   const followState = followStateQuery.data?.data;
   const outgoingStatus = followState?.outgoing_status || null;
   const outgoingFollowId = followState?.outgoing_follow_id || null;
   const incomingStatus = followState?.incoming_status || null;
   const incomingFollowId = followState?.incoming_follow_id || null;
-  const isBusy =
-    requestFollow.isPending ||
-    acceptFollow.isPending ||
-    rejectFollow.isPending ||
-    removeFollow.isPending;
+  const isBusy = requestFollow.isPending || acceptFollow.isPending || rejectFollow.isPending || removeFollow.isPending;
 
-  const badgeList = useMemo(() => {
-    const badges: string[] = [];
-    if (stats.pactsCompleted >= 5) badges.push('trusted');
-    if (stats.currentStreak >= 7) badges.push('onfire');
-    if (stats.pactsCreated >= 3) badges.push('consistent');
-    return badges;
-  }, [stats.pactsCompleted, stats.currentStreak, stats.pactsCreated]);
-
-  const allAchievements = [
-    {
-      id: 'first-pact',
-      name: 'First Pact',
-      description: 'Create your first pact',
-      icon: '🎯',
-      rarity: 'common' as const,
-      unlocked: stats.pactsCreated > 0,
-      unlockedAt: stats.pactsCreated > 0 ? new Date().toISOString() : undefined,
-    },
-    {
-      id: 'on-fire',
-      name: 'On Fire',
-      description: 'Reach 7-day streak',
-      icon: '🔥',
-      rarity: 'rare' as const,
-      unlocked: stats.currentStreak >= 7,
-      unlockedAt: stats.currentStreak >= 7 ? new Date().toISOString() : undefined,
-    },
-    {
-      id: 'winner',
-      name: 'Winner',
-      description: 'Complete 5 pacts',
-      icon: '🏆',
-      rarity: 'rare' as const,
-      unlocked: stats.pactsCompleted >= 5,
-      unlockedAt: stats.pactsCompleted >= 5 ? new Date().toISOString() : undefined,
-    },
-    {
-      id: 'trusted',
-      name: 'Trusted Member',
-      description: 'Build 50 reputation',
-      icon: '⭐',
-      rarity: 'epic' as const,
-      unlocked: stats.reputation >= 50,
-      unlockedAt: stats.reputation >= 50 ? new Date().toISOString() : undefined,
-    },
-    {
-      id: 'community',
-      name: 'Community Hero',
-      description: 'Join 10 circles',
-      icon: '👥',
-      rarity: 'epic' as const,
-      unlocked: false,
-      progress: Math.min(100, Math.round((followers.length / 10) * 100)),
-    },
-    {
-      id: 'legendary',
-      name: 'Legendary',
-      description: 'Complete 50 pacts',
-      icon: '👑',
-      rarity: 'legendary' as const,
-      unlocked: stats.pactsCompleted >= 50,
-      unlockedAt: stats.pactsCompleted >= 50 ? new Date().toISOString() : undefined,
-    },
-  ];
-
-  const handlePrimaryFollowAction = async () => {
-    if (typeof profileUserId !== 'number' || isOwnProfile) {
-      return;
-    }
-
+  const handleFollow = async () => {
+    if (typeof profileUserId !== 'number') return;
     if (incomingStatus === 'pending' && incomingFollowId) {
       await acceptFollow.mutateAsync(incomingFollowId);
       return;
     }
-
-    if (outgoingStatus === 'accepted' && outgoingFollowId) {
+    if ((outgoingStatus === 'accepted' || outgoingStatus === 'pending') && outgoingFollowId) {
       await removeFollow.mutateAsync(outgoingFollowId);
       return;
     }
-
-    if (outgoingStatus === 'pending' && outgoingFollowId) {
-      await removeFollow.mutateAsync(outgoingFollowId);
-      return;
-    }
-
     await requestFollow.mutateAsync(profileUserId);
   };
 
-  if (userByUsernameQuery.isLoading) {
+  if (userByUsernameQuery.isLoading || isOwnProfile) {
     return (
-      <div className="pact-flow min-h-screen flex items-center justify-center text-[var(--pact-text-faint)]">
-        Loading profile...
-      </div>
+      <main className="min-h-screen px-4 pt-16" style={{ background: 'var(--paper)' }}>
+        <div className="flex items-center gap-4">
+          <div className="pact-shimmer size-[84px] rounded-full" />
+          <div className="flex-1 space-y-2">
+            <div className="pact-shimmer h-6 w-40 rounded-full" />
+            <div className="pact-shimmer h-4 w-28 rounded-full" />
+          </div>
+        </div>
+      </main>
     );
   }
 
   if (!profileUser) {
     return (
-      <div className="pact-flow min-h-screen flex items-center justify-center text-[var(--pact-text-faint)]">
-        Profile not found.
-      </div>
+      <main className="flex min-h-screen items-center justify-center px-6 text-center text-[15px]" style={{ background: 'var(--paper)', color: MUTED }}>
+        We couldn&apos;t find that profile.
+      </main>
     );
   }
 
-  const heroUser = {
-    id: profileUser.id,
-    name: profileUser.full_name,
-    username: profileUser.username,
-    avatar: profileUser.avatar_url || undefined,
-    bio: profileUser.bio || undefined,
-    reputationScore: Number(profileUser.reputation_score || 0),
-    badges: badgeList,
-  };
-
-  const primaryFollowLabel =
-    incomingStatus === 'pending'
-      ? 'Accept'
-      : outgoingStatus === 'accepted'
-      ? 'Following'
-      : outgoingStatus === 'pending'
-      ? 'Requested'
-      : 'Follow';
-
-  const primaryFollowStyle: React.CSSProperties =
-    outgoingStatus === 'accepted'
-      ? { background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }
-      : outgoingStatus === 'pending'
-      ? { background: 'var(--pact-surface-2)', color: 'var(--pact-text-dim)' }
-      : { background: 'var(--navy)', color: '#fff' };
-
-  const profilePactsHeading = isOwnProfile
-    ? 'Your pacts'
-    : `Pacts created by @${profileUser.username}`;
-  const followersEmptyCopy = isOwnProfile
-    ? 'You do not have followers yet.'
-    : `No one follows @${profileUser.username} yet.`;
-  const followingEmptyCopy = isOwnProfile
-    ? "You are not following anyone yet."
-    : `@${profileUser.username} is not following anyone yet.`;
+  const name = profileUser.full_name || profileUser.username;
+  const firstName = name.split(' ')[0];
+  const followLabel =
+    incomingStatus === 'pending' ? 'Accept' : outgoingStatus === 'accepted' ? 'Following' : outgoingStatus === 'pending' ? 'Requested' : 'Follow';
+  const followStyle = followLabel === 'Following' || followLabel === 'Requested' ? profileButton.quiet : profileButton.primary;
+  const listed = tab === 'active' ? activePacts : completedPacts;
 
   return (
-    <div className="pact-flow pact-page-enter min-h-screen">
-      {/* Top Bar */}
-      <div className="sticky top-0 z-40 backdrop-blur-xl border-b" style={{ background: 'rgba(20,9,31,0.85)', borderColor: 'var(--pact-hairline)' }}>
-        <div className="max-w-md mx-auto px-4 py-4 flex items-center gap-4">
-          <button
-            onClick={goBack}
-            className="p-2 rounded-full transition hover:bg-[var(--pact-surface-2)]"
-          >
-            <ArrowLeft className="w-5 h-5 text-[var(--pact-text-dim)]" />
-          </button>
-          <h1 className="text-xl font-bold text-[var(--pact-text)]">{profileUser.full_name}</h1>
-        </div>
-      </div>
+    <main className="min-h-screen pb-28" style={{ background: 'var(--paper)', color: INK }}>
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-1 px-2" style={{ background: 'rgba(244,239,228,0.94)', backdropFilter: 'blur(12px)' }}>
+        <button type="button" onClick={goBack} aria-label="Go back" className="flex size-11 items-center justify-center rounded-full" style={{ color: INK }}>
+          <ChevronLeft className="size-6" />
+        </button>
+        <div className="min-w-0 flex-1 truncate text-[16px] font-bold" style={{ color: INK }}>@{profileUser.username}</div>
+      </header>
 
-      {/* Main Content */}
-      <div className="max-w-md mx-auto px-4 py-6 pb-24">
-        {/* Profile Hero */}
-        <ProfileHero
-          user={heroUser}
-          isOwnProfile={isOwnProfile}
-          streak={isOwnProfile ? stats.currentStreak : undefined}
-          atRisk={isOwnProfile ? isAtRisk : undefined}
-          customActions={
-            isOwnProfile ? null : (
-              <div className="flex flex-col gap-2 w-full md:w-auto">
-                <button
-                  onClick={handlePrimaryFollowAction}
-                  disabled={isBusy}
-                  className=" flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-semibold transition disabled:opacity-60"
-                  style={primaryFollowStyle}
-                >
-                  {primaryFollowLabel}
+      <div className="mx-auto max-w-md">
+        <ProfileHeader
+          name={name}
+          avatarUrl={profileUser.avatar_url}
+          bio={profileUser.bio}
+          followers={followers.length}
+          following={following.length}
+          streak={userStatsQuery.data?.data?.current_streak ?? null}
+          activeCount={activePacts.length}
+          completedCount={userStatsQuery.data?.data?.pacts_completed ?? completedPacts.length}
+          onFollowersClick={() => setPeopleSheet('followers')}
+          onFollowingClick={() => setPeopleSheet('following')}
+          actions={
+            <>
+              <button type="button" onClick={() => void handleFollow()} disabled={isBusy} className="h-11 flex-1 rounded-full text-[15px] font-extrabold disabled:opacity-60" style={followStyle}>
+                {followLabel}
+              </button>
+              <TipButton creatorId={profileUser.id} creatorName={name} creatorAvatarUrl={profileUser.avatar_url} className="!h-11 flex-1 justify-center !shadow-none" />
+              <button type="button" onClick={() => setShowAddToCircle(true)} aria-label={`Add ${firstName} to a circle`} className="flex size-11 shrink-0 items-center justify-center rounded-full" style={profileButton.quiet}>
+                <UserPlus className="size-5" />
+              </button>
+            </>
+          }
+          footer={
+            <>
+              {incomingStatus === 'pending' && incomingFollowId && (
+                <button type="button" onClick={() => rejectFollow.mutate(incomingFollowId)} disabled={isBusy} className="h-10 rounded-full text-[14px] font-bold" style={profileButton.quiet}>
+                  Decline follow request
                 </button>
-                <TipButton creatorId={profileUser.id} creatorName={profileUser.full_name || profileUser.username} creatorAvatarUrl={profileUser.avatar_url} className="justify-center" />
-                {incomingStatus === 'pending' && incomingFollowId ? (
-                  <button
-                    onClick={() => rejectFollow.mutate(incomingFollowId)}
-                    disabled={isBusy}
-                    className="flex items-center justify-center gap-2 px-5 py-2 rounded-full font-semibold transition border disabled:opacity-60"
-                    style={{ borderColor: 'var(--pact-pink)', color: 'var(--pact-pink)' }}
-                  >
-                    Reject
-                  </button>
-                ) : null}
-              </div>
-            )
+              )}
+              {sharedCircles.length > 0 && (
+                <div className="flex items-center gap-2 text-[13px]" style={{ color: MUTED }}>
+                  <span className="relative flex size-[22px] items-center justify-center overflow-hidden rounded-full text-[11px]" style={{ background: 'var(--navy)', color: '#FFFFFF' }}>
+                    {sharedCircles[0].photo_url ? <Image src={sharedCircles[0].photo_url} alt="" fill sizes="22px" className="object-cover" /> : sharedCircles[0].icon_emoji || sharedCircles[0].name?.charAt(0)}
+                  </span>
+                  <span>
+                    You&apos;re both in <span className="font-bold" style={{ color: INK }}>{sharedCircles[0].name}</span>
+                    {sharedCircles.length > 1 ? ` and ${sharedCircles.length - 1} more` : ''}
+                  </span>
+                </div>
+              )}
+            </>
           }
         />
 
-        {/* Stats */}
-        <ProfileStats
-          stats={stats}
-          onPactClick={() => { setActiveTab('pacts'); setShowPactsModal(true); }}
-          onFollowersClick={() => { setActiveTab('followers'); setShowFollowersModal(true); }}
-          onFollowingClick={() => { setActiveTab('following'); setShowFollowingModal(true); }}
+        <SegmentTabs
+          className="px-4 pb-3 pt-5"
+          active={tab}
+          onChange={(id) => setTab(id as Tab)}
+          tabs={[
+            { id: 'active', label: 'Active', count: activePacts.length },
+            { id: 'completed', label: 'Completed', count: completedPacts.length },
+            { id: 'circles', label: 'Circles', count: profileCircles.length },
+          ]}
         />
 
-        {/* Tabs */}
-        <ProfileTabs onTabChange={setActiveTab} initialTab={isOwnProfile ? 'pacts' : 'circles'}>
-          {activeTab === 'pacts' && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-black text-[var(--pact-text)]">{profilePactsHeading}</h2>
-              <PactsTab
-                pacts={displayedPacts}
-                joinedPacts={[]}
-                votedPacts={[]}
-                sharedPacts={sharedPacts}
-                isOwnProfile={isOwnProfile}
-                hasSharedCircle={hasSharedCircle}
-                profileName={profileUser.full_name || `@${profileUser.username}`}
-                profileUserId={profileUser.id}
-                sharedCircleId={sharedCircleIds[0]}
-                hasOwnCircles={hasOwnCircles}
-              />
-            </div>
-          )}
-          {activeTab === 'achievements' && <AchievementsBadges achievements={allAchievements} />}
-          {activeTab === 'followers' && (
-            <div className="space-y-2">
-              {followers.length === 0 ? (
-                <p className="text-sm text-[var(--pact-text-faint)]">{followersEmptyCopy}</p>
-              ) : (
-                followers.map((row: any) => (
-                  <button
-                    key={row.id}
-                    onClick={() => router.push(`/profile/${encodeURIComponent(row.username)}`)}
-                    className="pact-card w-full text-left p-3 rounded-2xl transition hover:bg-[var(--pact-surface-2)]"
-                  >
-                    <p className="font-semibold text-[var(--pact-text)]">{row.full_name || row.username}</p>
-                    <p className="text-xs text-[var(--pact-text-faint)]">@{row.username}</p>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
-          {activeTab === 'following' && (
-            <div className="space-y-2">
-              {following.length === 0 ? (
-                <p className="text-sm text-[var(--pact-text-faint)]">{followingEmptyCopy}</p>
-              ) : (
-                following.map((row: any) => (
-                  <button
-                    key={row.id}
-                    onClick={() => router.push(`/profile/${encodeURIComponent(row.username)}`)}
-                    className="pact-card w-full text-left p-3 rounded-2xl transition hover:bg-[var(--pact-surface-2)]"
-                  >
-                    <p className="font-semibold text-[var(--pact-text)]">{row.full_name || row.username}</p>
-                    <p className="text-xs text-[var(--pact-text-faint)]">@{row.username}</p>
-                  </button>
-                ))
-              )}
-            </div>
-          )}
-          {activeTab === 'circles' && (
-            <div className="space-y-3">
-              {profileCircles.length > 0 ? (
-                profileCircles.map((circle: any) => (
-                  <button
-                    key={circle.id}
-                    onClick={() => router.push(`/circles/${circle.id}`)}
-                    className="pact-card flex w-full items-center gap-3 rounded-2xl p-4 text-left transition hover:bg-[var(--pact-surface-2)]"
-                  >
-                    <span className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl text-xl" style={{ background: 'var(--pact-surface-2)' }}>
-                      {circle.photo_url ? (
-                        <Image src={circle.photo_url} alt="" fill sizes="44px" className="object-cover" />
-                      ) : (
-                        circle.icon_emoji || '◉'
-                      )}
+        <div className="flex flex-col gap-3.5 px-4">
+          {tab === 'circles' ? (
+            profileCircles.length === 0 ? (
+              <EmptyNote text={`${firstName} isn't in any circles you can see yet.`} />
+            ) : (
+              profileCircles.map((circle: any) => (
+                <button
+                  key={circle.id}
+                  type="button"
+                  onClick={() => router.push(`/circles/${circle.id}`)}
+                  className="flex items-center gap-3 rounded-[20px] p-3 text-left"
+                  style={{ background: 'var(--card)', border: '1px solid var(--hairline)' }}
+                >
+                  <span className="relative flex size-11 items-center justify-center overflow-hidden rounded-full text-xl" style={{ background: 'var(--card-muted)' }}>
+                    {circle.photo_url ? <Image src={circle.photo_url} alt="" fill sizes="44px" className="object-cover" /> : circle.icon_emoji || circle.name?.charAt(0)}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-bold" style={{ color: INK }}>{circle.name}</span>
+                    <span className="block text-[13px]" style={{ color: MUTED }}>
+                      {circle.member_count ?? 0} members{sharedCircleIds.includes(Number(circle.id)) ? ' · you’re in it' : ''}
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-semibold text-[var(--pact-text)]">{circle.name}</span>
-                      <span className="block text-xs text-[var(--pact-text-faint)]">{circle.member_count ?? 0} members</span>
-                    </span>
-                  </button>
-                ))
-              ) : (
-                <div className="pact-card rounded-3xl border border-dashed px-6 py-10 text-center" style={{ borderColor: 'var(--pact-hairline)' }}>
-                  <p className="font-semibold text-[var(--pact-text)]">
-                    {isOwnProfile ? 'Your circles are ready to grow' : `You don't share any circles with ${profileUser.full_name || `@${profileUser.username}`} yet`}
-                  </p>
-                  <p className="mt-2 text-sm text-[var(--pact-text-dim)]">
-                    {isOwnProfile ? 'Create a circle to bring your accountability crew together.' : 'Add them to a circle to start creating pacts together.'}
-                  </p>
-                  <button
-                    onClick={() => (isOwnProfile ? router.push('/circles/create') : setShowAddToCircle(true))}
-                    className=" mt-5 rounded-full px-4 py-2 text-sm font-semibold"
-                    style={{ background: 'var(--navy)', color: '#fff' }}
-                  >
-                    {isOwnProfile ? 'Create a Circle' : `Add ${profileUser.full_name || `@${profileUser.username}`} to a Circle`}
-                  </button>
-                </div>
-              )}
-            </div>
+                  </span>
+                </button>
+              ))
+            )
+          ) : profilePactsQuery.isLoading ? (
+            <div className="pact-shimmer h-[360px] rounded-[24px]" aria-hidden="true" />
+          ) : listed.length === 0 ? (
+            <EmptyNote text={tab === 'active' ? `${firstName} has no active pacts you can see.` : 'No completed pacts yet.'} />
+          ) : (
+            listed.map((pact: any) => <FeedPactCard key={pact.id} pact={pact} />)
           )}
-        </ProfileTabs>
+        </div>
       </div>
 
-      {/* Followers Modal */}
-      {showFollowersModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-4" onClick={() => setShowFollowersModal(false)}>
-          <div className="pact-card rounded-t-3xl md:rounded-3xl max-w-md w-full max-h-[70vh] overflow-y-auto md:max-h-96" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 border-b px-6 py-4 flex items-center justify-between rounded-t-3xl" style={{ background: 'var(--pact-surface)', borderColor: 'var(--pact-hairline)' }}>
-              <h2 className="font-bold text-lg text-[var(--pact-text)]">Followers</h2>
-              <button onClick={() => setShowFollowersModal(false)} className="p-1 rounded-full hover:bg-[var(--pact-surface-2)] text-[var(--pact-text-faint)]">✕</button>
-            </div>
-            <div className="p-4 space-y-3">
-              {followers.length === 0 ? (
-                <p className="text-center text-[var(--pact-text-faint)] py-8">{followersEmptyCopy}</p>
-              ) : (
-                followers.map((row: any) => (
-                  <button key={row.id} onClick={() => { router.push(`/profile/${encodeURIComponent(row.username)}`); setShowFollowersModal(false); }} className="w-full text-left p-3 rounded-2xl transition hover:bg-[var(--pact-surface-2)]">
-                    <p className="font-medium text-[var(--pact-text)]">{row.full_name || row.username}</p>
-                    <p className="text-xs text-[var(--pact-text-faint)]">@{row.username}</p>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <PeopleSheet open={peopleSheet === 'followers'} title="Followers" people={followers} emptyText={`No one follows ${firstName} yet.`} onClose={() => setPeopleSheet(null)} />
+      <PeopleSheet open={peopleSheet === 'following'} title="Following" people={following} emptyText={`${firstName} isn't following anyone yet.`} onClose={() => setPeopleSheet(null)} />
+      <AddToCircleSheet isOpen={showAddToCircle} onClose={() => setShowAddToCircle(false)} targetUserId={profileUser.id} targetName={name} />
+    </main>
+  );
+}
 
-      {/* Following Modal */}
-      {showFollowingModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-4" onClick={() => setShowFollowingModal(false)}>
-          <div className="pact-card rounded-t-3xl md:rounded-3xl max-w-md w-full max-h-[70vh] overflow-y-auto md:max-h-96" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 border-b px-6 py-4 flex items-center justify-between rounded-t-3xl" style={{ background: 'var(--pact-surface)', borderColor: 'var(--pact-hairline)' }}>
-              <h2 className="font-bold text-lg text-[var(--pact-text)]">Following</h2>
-              <button onClick={() => setShowFollowingModal(false)} className="p-1 rounded-full hover:bg-[var(--pact-surface-2)] text-[var(--pact-text-faint)]">✕</button>
-            </div>
-            <div className="p-4 space-y-3">
-              {following.length === 0 ? (
-                <p className="text-center text-[var(--pact-text-faint)] py-8">{followingEmptyCopy}</p>
-              ) : (
-                following.map((row: any) => (
-                  <button key={row.id} onClick={() => { router.push(`/profile/${encodeURIComponent(row.username)}`); setShowFollowingModal(false); }} className="w-full text-left p-3 rounded-2xl transition hover:bg-[var(--pact-surface-2)]">
-                    <p className="font-medium text-[var(--pact-text)]">{row.full_name || row.username}</p>
-                    <p className="text-xs text-[var(--pact-text-faint)]">@{row.username}</p>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Pacts Modal */}
-      {showPactsModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-4" onClick={() => setShowPactsModal(false)}>
-          <div className="pact-card rounded-t-3xl md:rounded-3xl max-w-md w-full max-h-[70vh] overflow-y-auto md:max-h-96" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 border-b px-6 py-4 flex items-center justify-between rounded-t-3xl" style={{ background: 'var(--pact-surface)', borderColor: 'var(--pact-hairline)' }}>
-              <h2 className="font-bold text-lg text-[var(--pact-text)]">Pacts</h2>
-              <button onClick={() => setShowPactsModal(false)} className="p-1 rounded-full hover:bg-[var(--pact-surface-2)] text-[var(--pact-text-faint)]">✕</button>
-            </div>
-            <div className="p-4 space-y-3">
-              {displayedPacts.length === 0 ? (
-                <p className="text-center text-[var(--pact-text-faint)] py-8">{isOwnProfile ? 'You have not created any pacts yet.' : `@${profileUser.username} has not created any pacts yet.`}</p>
-              ) : (
-                displayedPacts.map((pact: any) => (
-                  <button key={pact.id} onClick={() => { router.push(`/pacts/${pact.id}`); setShowPactsModal(false); }} className="w-full text-left p-3 rounded-2xl transition hover:bg-[var(--pact-surface-2)]">
-                    <p className="font-medium text-[var(--pact-text)]">{pact.title}</p>
-                    <p className="text-xs text-[var(--pact-text-faint)]">{pact.category}</p>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add to Circle sheet */}
-      {!isOwnProfile && (
-        <AddToCircleSheet
-          isOpen={showAddToCircle}
-          onClose={() => setShowAddToCircle(false)}
-          targetUserId={profileUser.id}
-          targetName={profileUser.full_name || `@${profileUser.username}`}
-        />
-      )}
+function EmptyNote({ text }: { text: string }) {
+  return (
+    <div className="rounded-[20px] px-5 py-8 text-center text-[14px]" style={{ border: '1.5px dashed var(--hairline)', color: MUTED }}>
+      {text}
     </div>
   );
 }

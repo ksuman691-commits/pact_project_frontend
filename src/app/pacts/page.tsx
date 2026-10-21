@@ -176,7 +176,7 @@ function PactsPageInner() {
               type="button"
               onClick={() => setFilter(item)}
               className={`h-9 shrink-0 rounded-full px-4 text-[13px] font-semibold transition ${
-                filter === item ? 'bg-[var(--navy)] text-[var(--card)]' : 'border border-[var(--line)] text-[var(--ink-soft)]'
+                filter === item ? 'bg-[var(--ink)] text-[var(--card)]' : 'border border-[var(--line)] text-[var(--ink-soft)]'
               }`}
             >
               {item}

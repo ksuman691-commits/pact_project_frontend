@@ -57,10 +57,7 @@ export default function AnimatedTabs({
               <motion.div
                 layoutId={layoutId}
                 className="absolute inset-0 rounded-full"
-                style={{
-                  background: 'var(--navy)',
-                  boxShadow: '0 4px 16px var(--pact-shadow-violet)',
-                }}
+                style={{ background: 'var(--ink)' }}
                 transition={{ type: 'spring', stiffness: 400, damping: 32 }}
               />
             )}
