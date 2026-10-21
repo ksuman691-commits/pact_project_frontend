@@ -7,6 +7,8 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useUserJoinedPacts, useUserPacts, useUserVotedPacts } from '@/hooks/useFeedQueries';
 import { useMyDares } from '@/hooks/useDareQueries';
 import { useCircles } from '@/hooks/useCircles';
+import { useMyMomentsToday } from '@/hooks/useMyMomentsToday';
+import StoryViewer from '@/components/stories/StoryViewer';
 import { useUserStats } from '@/hooks/useUserQueries';
 import ProfileHero from '@/components/ProfileHero';
 import ProfileStats from '@/components/ProfileStats';
@@ -78,6 +80,8 @@ function ProfileContent() {
   const realStreak = userStatsQuery.data?.data?.current_streak;
   const circlesQuery = useCircles();
   const myCircles = (circlesQuery.data || []) as any[];
+  const { myStories, postedToday } = useMyMomentsToday(myCircles, user?.id);
+  const [viewingMoment, setViewingMoment] = useState(false);
 
   const completedPacts = createdPacts.filter((p: any) => p.status === 'completed').length;
   const winRate = createdPacts.length > 0 ? Math.round((completedPacts / createdPacts.length) * 100) : 0;
@@ -221,7 +225,10 @@ function ProfileContent() {
           onEdit={handleEditProfile}
           streak={stats.currentStreak ?? undefined}
           atRisk={isAtRisk}
+          hasMoment={postedToday}
+          onViewMoment={() => setViewingMoment(true)}
         />
+        <StoryViewer open={viewingMoment} onClose={() => setViewingMoment(false)} stories={myStories} />
 
         {/* Circles strip — quick jump to circles this account belongs to,
             right below the Hero so identity + community context load

@@ -24,6 +24,9 @@ interface ProfileHeroProps {
   streak?: number;
   /** Pulses the ring amber-red to signal an approaching deadline with no proof yet. */
   atRisk?: boolean;
+  /** Own profile only: the viewer has a moment today, so ring the photo and open it on tap. */
+  hasMoment?: boolean;
+  onViewMoment?: () => void;
 }
 
 export default function ProfileHero({
@@ -36,6 +39,8 @@ export default function ProfileHero({
   customActions,
   streak,
   atRisk = false,
+  hasMoment = false,
+  onViewMoment,
 }: ProfileHeroProps) {
   return (
     <div className="pact-card rounded-3xl p-5 mb-6">
@@ -43,8 +48,10 @@ export default function ProfileHero({
       <div className="flex items-start gap-4">
         {/* Avatar */}
         <div
-          className="relative flex-shrink-0 cursor-pointer hover:opacity-80 transition"
-          onClick={isOwnProfile ? onEdit : undefined}
+          className={`relative flex-shrink-0 cursor-pointer hover:opacity-80 transition ${hasMoment && isOwnProfile ? 'rounded-full ring-[3px] ring-[var(--navy)] ring-offset-[3px] ring-offset-[var(--card)]' : ''}`}
+          onClick={isOwnProfile ? (hasMoment && onViewMoment ? onViewMoment : onEdit) : undefined}
+          aria-label={hasMoment && isOwnProfile ? 'View your moment' : undefined}
+          role={hasMoment && isOwnProfile ? 'button' : undefined}
         >
           <Avatar
             name={user.name}
