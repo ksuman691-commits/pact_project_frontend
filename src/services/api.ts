@@ -1,3 +1,4 @@
+import { titleCase } from '@/lib/titleCase';
 import axios, { AxiosInstance, AxiosRequestHeaders, InternalAxiosRequestConfig } from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pact-project-backend-v2.onrender.com';
@@ -69,6 +70,7 @@ const calculateCurrentDay = (startDateRaw: string | undefined, durationDaysRaw: 
 
 export const mapCircle = (raw: any) => ({
   ...raw,
+  name: raw?.name ? titleCase(raw.name) : raw?.name,
   is_public: (raw?.visibility ?? 'public') === 'public',
   memberCount: raw?.member_count ?? 0,
   visibility: raw?.visibility ?? 'public',
@@ -112,6 +114,8 @@ export const normalizeListResponse = <T,>(response: any, mapper: (item: any) => 
 
 export const mapPact = (raw: any) => ({
   ...raw,
+  title: raw?.title ? titleCase(raw.title) : raw?.title,
+  circle_name: raw?.circle_name ? titleCase(raw.circle_name) : raw?.circle_name,
   pact_uuid: raw?.pact_uuid ?? String(raw?.id ?? ''),
   is_public: raw?.visibility === 'public',
   verification_type: raw?.verification_method,
@@ -119,7 +123,7 @@ export const mapPact = (raw: any) => ({
   creator: raw?.creator_username ?? raw?.creator?.username ?? 'unknown',
   avatar: raw?.creator_username?.charAt(0)?.toUpperCase?.() ?? raw?.creator?.username?.charAt(0)?.toUpperCase?.() ?? '🔥',
   creatorAvatarUrl: raw?.creator_avatar_url ?? raw?.creator?.avatar_url ?? null,
-  circle: raw?.circle_name ?? raw?.circle?.name ?? null,
+  circle: raw?.circle_name ? titleCase(raw.circle_name) : raw?.circle?.name ?? null,
   circleEmoji: raw?.circle_icon_emoji ?? null,
   daysTotal: Number(raw?.duration_days ?? 0) || undefined,
   daysCurrent: calculateCurrentDay(raw?.start_date, Number(raw?.duration_days ?? 0) || undefined),

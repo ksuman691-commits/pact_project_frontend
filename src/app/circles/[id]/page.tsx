@@ -138,13 +138,6 @@ export default function CircleDetailPage() {
   const orderedMembers = activity.known
     ? [...members].sort((a: any, b: any) => Number(litById.get(b.user_id) ?? 0) - Number(litById.get(a.user_id) ?? 0))
     : members
-  // Real pact-creation events only. There is no circle activity endpoint,
-  // so join events are not shown (no real timestamp for them).
-  const recentEvents = [...pacts]
-    .filter((p: any) => p.created_at)
-    .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 12)
-
   return <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
     <div className="flex items-center justify-between px-2 pt-3">
       <button type="button" onClick={smartBack} aria-label="Go back" className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--ink)]">
@@ -187,6 +180,32 @@ export default function CircleDetailPage() {
         )}
       </div>
 
+      <section className="mx-4 mt-[30px] space-y-4">
+        <h2 className="px-2 text-[20px] font-bold tracking-[-0.025em]">Pacts{pacts.length ? ` · ${pacts.length}` : ''}</h2>
+        {!isMember ? (
+          <p className="px-2 text-[14px] text-[var(--muted)]">Join this circle to see its pacts.</p>
+        ) : pacts.length === 0 ? (
+          <p className="px-2 text-[14px] text-[var(--muted)]">No pacts here yet. Make the first one.</p>
+        ) : (
+          pacts.map((pact: any) => (
+            <FeedPactCard
+              key={pact.id}
+              pact={pact}
+              userVote={(pact as any).user_vote || (pact as any).userVote}
+              onVote={handleSkipPact}
+              detailHref={`/pacts/${pact.id}`}
+              canUploadProof={Boolean((pact as any).is_joined_by_me || pact.creator_id === user.id)}
+              onAddMoment={() => setCapturePact(pact)}
+              onJoined={() => handleCirclePactJoined(pact)}
+              onStartOwnVersion={() => startOwnVersion(pact)}
+              canReport={pact.creator_id !== user?.id}
+              showVoteActions={false}
+              dismissOnVote={false}
+            />
+          ))
+        )}
+      </section>
+
       <section className="mx-6 mt-[30px]">
         <h2 className="text-[20px] font-bold tracking-[-0.025em]">{activity.known ? 'This week' : 'Members'}</h2>
         <ul className="mt-2">
@@ -221,48 +240,6 @@ export default function CircleDetailPage() {
         </ul>
         {activity.known && <p className="mt-2 text-[12px] text-[var(--muted)]">A tick means they sent proof for a pact this week.</p>}
       </section>
-
-      <section className="mx-6 mt-[30px]">
-        <h2 className="text-[20px] font-bold tracking-[-0.025em]">Recently</h2>
-        {!isMember ? (
-          <p className="mt-2 text-[14px] text-[var(--muted)]">Join this circle to see its pacts.</p>
-        ) : recentEvents.length > 0 ? (
-          <ul className="mt-2">
-            {recentEvents.map((pact: any) => (
-              <li key={pact.id} className="flex items-baseline justify-between gap-3 border-b border-[var(--line)] py-3 last:border-b-0">
-                <Link href={`/pacts/${pact.id}`} className="min-w-0 text-[14px] leading-[1.4]">
-                  <span className="font-semibold">{pact.creator_full_name || pact.creator_username || 'Someone'}</span> started a pact: {pact.title}
-                </Link>
-                <span className="shrink-0 text-[13px] text-[var(--muted)]">{new Date(pact.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-2 text-[14px] text-[var(--muted)]">No pacts here yet.</p>
-        )}
-      </section>
-
-      {isMember && pacts.length > 0 && (
-        <section className="mx-4 mt-[30px] space-y-4">
-          <h2 className="px-2 text-[20px] font-bold tracking-[-0.025em]">Pacts in this circle</h2>
-          {pacts.map((pact: any) => (
-            <FeedPactCard
-              key={pact.id}
-              pact={pact}
-              userVote={(pact as any).user_vote || (pact as any).userVote}
-              onVote={handleSkipPact}
-              detailHref={`/pacts/${pact.id}`}
-              canUploadProof={Boolean((pact as any).is_joined_by_me || pact.creator_id === user.id)}
-              onAddMoment={() => setCapturePact(pact)}
-              onJoined={() => handleCirclePactJoined(pact)}
-              onStartOwnVersion={() => startOwnVersion(pact)}
-              canReport={pact.creator_id !== user?.id}
-              showVoteActions={false}
-              dismissOnVote={false}
-            />
-          ))}
-        </section>
-      )}
 
       {isMember && (
         <div className="mt-10 text-center"><button onClick={() => setLeaveModal(true)} className="h-11 px-4 text-[14px] text-[var(--muted)]">Leave circle</button></div>

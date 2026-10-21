@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import api from '@/services/api'
+import { titleCase } from '@/lib/titleCase'
 import { useAuthStore } from '@/store/auth'
 
 export interface TodayPact {
@@ -41,7 +42,7 @@ export function useTodayStatus() {
     queryKey: ['me-today', user?.id],
     queryFn: async () => {
       const response = await api.get('/api/me/today', { timeout: 12000 })
-      return (response.data?.pacts ?? []) as TodayPact[]
+      return ((response.data?.pacts ?? []) as TodayPact[]).map((p) => ({ ...p, title: titleCase(p.title), circle_name: p.circle_name ? titleCase(p.circle_name) : p.circle_name }))
     },
     enabled: !!user?.id,
     staleTime: 60_000,
