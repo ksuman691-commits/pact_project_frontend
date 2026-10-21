@@ -127,7 +127,7 @@ export default function MomentsPage() {
 
   return (
     <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
-      <DetailPageHeader title="Moments" backHref="/feed" showHomeLink={false} maxWidthClassName="max-w-md" />
+      <DetailPageHeader title="Moments" fallbackHref="/feed" showHomeLink={false} maxWidthClassName="max-w-md" />
       <div className="mx-auto flex max-w-md flex-col gap-7 px-4 pt-5">
         <div className="px-1">
           <h1 className="text-[28px] font-bold leading-none tracking-[-0.03em]">Today&apos;s moments</h1>

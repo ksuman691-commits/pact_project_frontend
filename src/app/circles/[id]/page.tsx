@@ -9,6 +9,7 @@ import toast from 'react-hot-toast'
 import Link from 'next/link'
 import { Plus, Users, Camera, ChevronLeft, Share2 } from 'lucide-react'
 import { useSeedBackHistory } from '@/hooks/useSeedBackHistory'
+import { useSmartBack } from '@/hooks/useSmartBack'
 import InviteMembersModal from '@/components/InviteMembersModal'
 import ConfirmModal from '@/components/ConfirmModal'
 import LogoSpinner from '@/components/LogoSpinner'
@@ -41,6 +42,7 @@ export default function CircleDetailPage() {
   const skipMutation = useSkipPact()
   const handleSkipPact = async (pactId: number, _vote: 'skip') => { await skipMutation.mutateAsync(pactId) }
   useSeedBackHistory('/circles')
+  const smartBack = useSmartBack('/circles')
   useEffect(() => { if (!isInitialized) return; if (!user) { router.push('/auth/login'); return } (async () => { try { const [c, m, p] = await Promise.all([circleService.getById(circleId), circleJoinRequestService.listMembers(circleId), circleService.listPacts(circleId)]); setCircle(c.data); setMembers(m.data || []); setPacts(p.data || []); setIsMember(!!c.data?.is_member) } catch { toast.error('Failed to load circle'); router.push('/circles') } finally { setLoading(false) } })() }, [isInitialized, user, router, circleId])
   if (!isInitialized || loading) return <div className="flex min-h-screen items-center justify-center bg-[var(--paper)]"><LogoSpinner size={32} color="var(--navy)" /></div>
   if (!user) return null
@@ -145,7 +147,7 @@ export default function CircleDetailPage() {
 
   return <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
     <div className="flex items-center justify-between px-2 pt-3">
-      <button type="button" onClick={() => router.push('/circles')} aria-label="Back to circles" className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--ink)]">
+      <button type="button" onClick={smartBack} aria-label="Go back" className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--ink)]">
         <ChevronLeft className="h-5 w-5" strokeWidth={1.8} />
       </button>
       <button type="button" onClick={() => setQrOpen(true)} aria-label="Share circle" className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--ink)]">

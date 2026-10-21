@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Eye, X } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import { useMarkStorySeen, useStoryViewers } from '@/hooks/useStories'
+import { useBackToClose } from '@/hooks/useBackToClose'
 import { monogram, postedAgo, STORIES_COMING_SOON, type PactStory } from '@/lib/stories'
 import { RingFace } from './StoryRing'
 
@@ -33,6 +34,7 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
   const holdTimer = useRef<number | null>(null)
   const heldRef = useRef(false)
   const markSeen = useMarkStorySeen()
+  useBackToClose(open, onClose)
 
   useEffect(() => {
     if (open) setIndex(Math.min(startIndex, Math.max(0, stories.length - 1)))
