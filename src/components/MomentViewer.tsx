@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MessageCircle, Play, Volume2, VolumeX, X } from 'lucide-react'
-import CheerButton from '@/components/CheerButton'
+import LikeButton from '@/components/LikeButton'
 
 export interface ViewerMoment {
   id: number | string
@@ -19,9 +19,8 @@ interface MomentViewerProps {
   moments: ViewerMoment[]
   startIndex: number
   pactId: number
-  cheerCount: number
-  canCheer: boolean
-  hasCheered: boolean
+  likeCount: number
+  liked: boolean
   onClose: () => void
   onIndexChange: (index: number) => void
   onComment: () => void
@@ -30,7 +29,7 @@ interface MomentViewerProps {
 const PHOTO_DURATION_MS = 5000
 const HOLD_MS = 220
 
-export default function MomentViewer({ moments, startIndex, pactId, cheerCount, canCheer, hasCheered, onClose, onIndexChange, onComment }: MomentViewerProps) {
+export default function MomentViewer({ moments, startIndex, pactId, likeCount, liked, onClose, onIndexChange, onComment }: MomentViewerProps) {
   const [index, setIndex] = useState(startIndex)
   const [muted, setMuted] = useState(false)
   const [paused, setPaused] = useState(false)
@@ -227,7 +226,7 @@ export default function MomentViewer({ moments, startIndex, pactId, cheerCount, 
       </div>
       {moment.description && <p className="shrink-0 px-5 pb-2 text-center text-sm text-white/85">{moment.description}</p>}
       <footer className="flex shrink-0 items-center justify-center gap-5 px-5 pb-4 pt-2">
-        <CheerButton pactId={pactId} canCheer={canCheer} hasCheered={hasCheered} variant="stage" cheerCount={cheerCount} />
+        <LikeButton pactId={pactId} count={likeCount} liked={liked} />
         <button type="button" onClick={onComment} aria-label="Comment on this moment" className="flex size-12 items-center justify-center rounded-full bg-white/15"><MessageCircle className="size-5" /></button>
       </footer>
     </div>

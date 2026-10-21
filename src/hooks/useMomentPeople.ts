@@ -61,13 +61,17 @@ export function useMomentPeople(circles: CircleLike[], viewerId?: number | null)
   const pactIds = useMemo(() => Array.from(pactCircle.keys()), [pactCircle])
   const storyQueries = usePactsStoriesToday(pactIds)
 
-  const people = useMemo(() => {
+  const grouped = useMemo(() => {
     const byUser = new Map<number, MomentPerson>()
+    const mine: PactStory[] = []
     storyQueries.forEach((query, i) => {
       const circle = pactCircle.get(pactIds[i])
       if (!circle) return
       for (const story of query.data ?? []) {
-        if (viewerId != null && story.user_id === viewerId) continue
+        if (viewerId != null && story.user_id === viewerId) {
+          mine.push(story)
+          continue
+        }
         const at = new Date(story.created_at).getTime()
         const person: MomentPerson = byUser.get(story.user_id) ?? {
           userId: story.user_id,
@@ -88,10 +92,13 @@ export function useMomentPeople(circles: CircleLike[], viewerId?: number | null)
     const list = Array.from(byUser.values())
     list.forEach((p) => p.stories.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()))
     // Unseen first, then most recent.
-    return list.sort((a, b) => Number(b.hasUnseen) - Number(a.hasUnseen) || b.latestAt - a.latestAt)
+    return {
+      people: list.sort((a, b) => Number(b.hasUnseen) - Number(a.hasUnseen) || b.latestAt - a.latestAt),
+      mine,
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storyQueries.map((q) => q.dataUpdatedAt).join(','), pactCircle, pactIds, viewerId])
 
   const isLoading = pactQueries.some((q) => q.isLoading) || storyQueries.some((q) => q.isLoading)
-  return { people, isLoading, hasActiveCircles: active.length > 0 }
+  return { people: grouped.people, mine: grouped.mine, isLoading, hasActiveCircles: active.length > 0 }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Plus, X } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
@@ -108,8 +108,16 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
   const [capturePact, setCapturePact] = useState<any | null>(null)
   const [viewing, setViewing] = useState<MomentPerson | null>(null)
   const { user } = useAuthStore()
-  const { people, isLoading: peopleLoading } = useMomentPeople(circles, user?.id)
-  const { postedToday, myStories } = useTodayMoments()
+  const { people, mine, isLoading: peopleLoading } = useMomentPeople(circles, user?.id)
+  const { myStories: myPactStories } = useTodayMoments()
+  // Own moments can sit on a pact the viewer doesn't own (e.g. a friend's pact
+  // in a shared circle), so merge both sources and de-dupe.
+  const myStories = useMemo(() => {
+    const byId = new Map<number, (typeof mine)[number]>()
+    ;[...myPactStories, ...mine].forEach((s) => byId.set(s.id, s))
+    return Array.from(byId.values()).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  }, [myPactStories, mine])
+  const postedToday = myStories.length > 0
   const [viewingOwn, setViewingOwn] = useState(false)
   // Warm the sheet's data on Home mount so the chooser opens from cache.
   useMyPacts()

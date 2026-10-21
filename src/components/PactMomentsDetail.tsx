@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Camera, Check, Image as ImageIcon, MessageCircle, Play, Plus, RotateCcw, Share2, UserRound, UserPlus, X } from 'lucide-react'
-import CheerButton from '@/components/CheerButton'
+import LikeButton from '@/components/LikeButton'
 import CircleChip from '@/components/classic/CircleChip'
 import { getCategoryTheme } from '@/lib/categoryTheme'
 import { pactLocalToday, resolvePactCompletionViewState } from '@/lib/pactCompletionState'
@@ -18,10 +18,7 @@ type Props = {
   moments: Moment[]
   participants: any[]
   progress: { completed: number; total: number; missed: number } | null
-  cheerCount: number
   isEnded: boolean
-  canCheer: boolean
-  hasCheered: boolean
   onInvite: () => void
   onAddMoment: () => void
   onRestart: () => void
@@ -72,10 +69,7 @@ export default function PactMomentsDetail({
   moments,
   participants,
   progress,
-  cheerCount,
   isEnded,
-  canCheer,
-  hasCheered,
   onInvite,
   onAddMoment,
   onRestart,
@@ -101,7 +95,18 @@ export default function PactMomentsDetail({
   const completionLooksSuccessful = completionView === 'completed' || completionView === 'provisional_completed'
   const presentationEnded = completionView !== null
   const visualDayEnded = presentationEnded || isEnded
-  const strip = Array.isArray(pact?.day_strip) ? (pact.day_strip as (PactDayStripEntry & { video_url?: string | null })[]) : null
+  // The backend strip only knows the creator's moments. Fill days from the
+  // moments list we are already showing, so a member's own moment (or anyone's)
+  // gets a real thumbnail instead of an empty tile.
+  const strip = Array.isArray(pact?.day_strip)
+    ? (pact.day_strip as (PactDayStripEntry & { video_url?: string | null })[]).map((entry) => {
+        if (entry.has_moment) return entry
+        const match = moments.find((m) => m.day === entry.day && m.url)
+        if (!match) return entry
+        const isVideo = match.type === 'video'
+        return { ...entry, has_moment: true, type: isVideo ? 'video' : 'photo', video_url: isVideo ? match.url : null, thumbnail_url: isVideo ? null : match.url } as PactDayStripEntry & { video_url?: string | null }
+      })
+    : null
   const total = Math.max(1, Number(strip ? pact?.duration_days ?? progress?.total ?? 7 : progress?.total ?? 7))
   const completed = Math.min(total, Number(pact?.days_completed ?? fallbackCompleted))
   const missed = progress?.missed || 0
@@ -213,7 +218,7 @@ export default function PactMomentsDetail({
                   {entry.has_moment && entry.type === 'photo' && entry.thumbnail_url ? (
                     <SafePhoto src={entry.thumbnail_url!} className="size-full object-cover" />
                   ) : entry.has_moment && entry.type === 'video' && videoUrl ? (
-                    <video src={`${videoUrl}#t=0.1`} muted playsInline preload="metadata" className="size-full object-cover" />
+                    <video src={`${videoUrl}#t=0.1`} muted playsInline preload="auto" className="size-full object-cover" />
                   ) : entry.has_moment ? (
                     <span className="flex size-full items-center justify-center text-[var(--card)]"><Play className="size-5 fill-current" aria-hidden="true" /></span>
                   ) : null}
@@ -352,13 +357,7 @@ export default function PactMomentsDetail({
                 {current.authorName || current.username || 'You'} - Day {current.day || day}
               </div>
               <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+5rem)] right-4 z-10 flex flex-col gap-2">
-                <CheerButton
-                  pactId={Number(pact.id)}
-                  canCheer={canCheer}
-                  hasCheered={hasCheered}
-                  variant="stage"
-                  cheerCount={cheerCount}
-                />
+                <LikeButton pactId={Number(pact.id)} count={Number(pact?.like_count ?? 0)} liked={Boolean(pact?.is_liked_by_me)} />
                 <button type="button" onClick={() => onComment(false)} aria-label="Comment on this moment" className="flex size-12 items-center justify-center rounded-full bg-[var(--card)] text-[var(--ink)] shadow-lg">
                   <MessageCircle className="size-5" />
                 </button>
@@ -447,9 +446,8 @@ export default function PactMomentsDetail({
           moments={orderedMoments}
           startIndex={Math.max(0, orderedMoments.findIndex((moment) => moment.id === current.id))}
           pactId={Number(pact.id)}
-          cheerCount={cheerCount}
-          canCheer={canCheer}
-          hasCheered={hasCheered}
+          likeCount={Number(pact?.like_count ?? 0)}
+          liked={Boolean(pact?.is_liked_by_me)}
           onClose={() => setViewerOpen(false)}
           onIndexChange={(index) => {
             setActiveIndex(index)

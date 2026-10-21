@@ -9,7 +9,7 @@ import DetailPageHeader from '@/components/DetailPageHeader';
 import PactMomentsDetail from '@/components/PactMomentsDetail';
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet';
 import CommentsBottomSheet from '@/components/CommentsBottomSheet';
-import { usePact, usePactCheers, usePactProofs } from '@/hooks/usePacts';
+import { usePact, usePactProofs } from '@/hooks/usePacts';
 import { useAuthStore } from '@/store/auth';
 import { pactService } from '@/services/api';
 import { getPactProgress } from '@/components/PactProgressRing';
@@ -47,7 +47,6 @@ export default function PactDetailPage() {
   const pactId = Number(params.id);
   const { data: pactData, isLoading, isError, refetch: refetchPact } = usePact(pactId);
   const { data: momentsData } = usePactProofs(pactId, 50);
-  const { data: cheersData } = usePactCheers(pactId, 50);
 
   const pact = pactData?.data;
   const moments = useMemo(
@@ -68,14 +67,10 @@ export default function PactDetailPage() {
     [momentsData?.data],
   );
   const participants = useMemo(() => pact?.participants || [], [pact?.participants]);
-  const cheers = useMemo(() => cheersData?.data || [], [cheersData?.data]);
   const progress = pact ? getPactProgress(pact, moments) : { completed: 0, total: 7, missed: 0 };
   const completionView = pact ? resolvePactCompletionViewState(pact, new Date(), progress.completed) : null;
   const isCreator = Boolean(user && pact?.creator_id === user.id);
   const isParticipant = Boolean(user && (joinedLocally || pact?.is_joined_by_me || isCreator || participants.some((participant: any) => participant.id === user.id || participant.user_id === user.id)));
-  const canCheer = isParticipant && !isCreator;
-  const hasCheered = Boolean(user && cheers.some((cheer: any) => cheer.sender_id === user.id));
-  const cheerCount = Number(pact?.active_cheer_count ?? cheersData?.pagination?.total ?? cheers.length);
   const isEnded = pact?.status !== 'active' || completionView !== null;
 
   const joinPact = async (): Promise<boolean> => {
@@ -208,10 +203,7 @@ export default function PactDetailPage() {
         moments={moments}
         participants={participants}
         progress={progress}
-        cheerCount={cheerCount}
         isEnded={isEnded}
-        canCheer={canCheer}
-        hasCheered={hasCheered}
         viewerId={user?.id}
         isParticipant={isParticipant}
         canJoin={Boolean(pact.can_join)}
