@@ -751,7 +751,7 @@ export default function FeedPactCard({
         )}
       </span>
       <div className="min-w-0" style={onPhoto ? { color: '#fff', textShadow: '0 1px 6px rgba(0,0,0,0.45)' } : undefined}>
-        <div className={`truncate text-[14.5px] font-bold ${onPhoto ? '' : 'text-[var(--ink)]'}`}>{momentStory ? momentAuthor : creatorLabel === 'You' ? 'You' : `@${creatorLabel}`}</div>
+        <div className={`truncate text-[14.5px] font-bold ${onPhoto ? '' : 'text-[var(--ink)]'}`}>{momentStory ? momentAuthor : creatorLabel === 'You' ? 'You' : pact.creator_full_name || `@${creatorLabel}`}</div>
         {headerSub && <div className={`truncate text-[12px] ${onPhoto ? '' : 'text-[var(--muted)]'}`} style={onPhoto ? { opacity: 0.92 } : undefined}>{headerSub}</div>}
       </div>
     </div>

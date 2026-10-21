@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, Circle, RefreshCw, RotateCcw, Square, Video, X } from 'lucide-react'
 import LogoMark from '@/components/LogoMark'
+import { CAMERA_FILTERS, canRecordWithFilters } from '@/lib/cameraFilters'
+import { useAuthStore } from '@/store/auth'
+import { useUserStats } from '@/hooks/useUserQueries'
 import { usePactStoriesToday, usePostStory } from '@/hooks/useStories'
 import {
   isDurationAllowed,
@@ -56,6 +59,11 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
   const [elapsed, setElapsed] = useState(0)
   const [inPageSupported, setInPageSupported] = useState(false)
   const [facing, setFacing] = useState<'environment' | 'user'>('environment')
+  const [filterId, setFilterId] = useState('none')
+  const [filtersSupported, setFiltersSupported] = useState(false)
+  const drawFrameRef = useRef<number | null>(null)
+  const { user } = useAuthStore()
+  const streak = Number(useUserStats(user?.id || 0).data?.data?.current_streak ?? 0)
 
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const liveVideoRef = useRef<HTMLVideoElement>(null)
@@ -69,9 +77,14 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
   const { phase, progress, error, retryable, unavailable: postUnavailable, post, reset } = usePostStory(pactId)
   const comingSoon = today.unavailable || postUnavailable
 
-  useEffect(() => setInPageSupported(canRecordInPage()), [])
+  useEffect(() => {
+    setInPageSupported(canRecordInPage())
+    setFiltersSupported(canRecordWithFilters())
+  }, [])
 
   const stopStream = useCallback(() => {
+    if (drawFrameRef.current) cancelAnimationFrame(drawFrameRef.current)
+    drawFrameRef.current = null
     if (tickRef.current) window.clearInterval(tickRef.current)
     if (stopTimerRef.current) window.clearTimeout(stopTimerRef.current)
     tickRef.current = null
@@ -193,9 +206,32 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
     if (recorderRef.current && recorderRef.current.state !== 'inactive') recorderRef.current.stop()
   }
 
+  /** With a filter picked, record a canvas copy of the camera with the filter baked in. */
+  const filteredStream = (stream: MediaStream): MediaStream => {
+    const preset = CAMERA_FILTERS.find((f) => f.id === filterId)
+    const video = liveVideoRef.current
+    if (!preset || preset.css === 'none' || !filtersSupported || !video || !video.videoWidth) return stream
+    const scale = Math.min(1, 1280 / Math.max(video.videoWidth, video.videoHeight))
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.round(video.videoWidth * scale)
+    canvas.height = Math.round(video.videoHeight * scale)
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return stream
+    const draw = () => {
+      ctx.filter = preset.css
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+      drawFrameRef.current = requestAnimationFrame(draw)
+    }
+    draw()
+    const out = (canvas as any).captureStream(30) as MediaStream
+    stream.getAudioTracks().forEach((track) => out.addTrack(track))
+    return out
+  }
+
   const startRecording = () => {
-    const stream = streamRef.current
-    if (!stream) return
+    const source = streamRef.current
+    if (!source) return
+    const stream = filteredStream(source)
     const mimeType = RECORDER_TYPES.find((type) => MediaRecorder.isTypeSupported(type))
     const recorderOptions: MediaRecorderOptions = {
       videoBitsPerSecond: VIDEO_BITS_PER_SECOND,
@@ -245,6 +281,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
           muted
           playsInline
           className={`absolute inset-0 h-full w-full object-cover ${facing === 'user' ? '-scale-x-100' : ''}`}
+          style={{ filter: CAMERA_FILTERS.find((f) => f.id === filterId)?.css ?? 'none' }}
         />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-36" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0))' }} />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56" style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.65), rgba(0,0,0,0))' }} />
@@ -262,6 +299,12 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
           <div className="flex min-w-0 flex-1 flex-col items-center pt-1 text-center" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.4)' }}>
             <LogoMark size={20} tone="cream" />
             {pactTitle && <div className="mt-1 max-w-full truncate text-[13px] font-semibold" style={{ color: 'rgba(244,239,228,0.92)' }}>{pactTitle}</div>}
+            {streak > 0 && (
+              <div className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[12px] font-extrabold" style={{ background: 'rgba(255,255,255,0.18)', color: '#FFFFFF' }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 4-3 6-3 10a4 4 0 0 0 8 0c0-2-1-3-1-5 3 2 5 5 5 8a9 9 0 0 1-18 0c0-6 6-8 9-13z" /></svg>
+                {streak}-day streak, keep it going
+              </div>
+            )}
           </div>
           <button
             type="button"
@@ -275,10 +318,42 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
           </button>
         </header>
 
+        <input ref={cameraInputRef} type="file" accept="video/*" className="sr-only" onChange={(event) => { stopStream(); onFilePicked(event) }} tabIndex={-1} aria-hidden="true" />
         <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 pb-[max(2rem,env(safe-area-inset-bottom))]">
+          {filtersSupported && !recording && (
+            <div className="flex w-full gap-2 overflow-x-auto px-4 scrollbar-hide" role="radiogroup" aria-label="Camera look">
+              {CAMERA_FILTERS.map((preset) => {
+                const on = preset.id === filterId
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    onClick={() => setFilterId(preset.id)}
+                    className="h-9 shrink-0 rounded-full px-3.5 text-[13px] font-extrabold"
+                    style={on ? { background: '#FFFFFF', color: '#17181D' } : { background: 'rgba(255,255,255,0.16)', color: '#FFFFFF' }}
+                  >
+                    {preset.name}
+                  </button>
+                )
+              })}
+            </div>
+          )}
           <p className="text-[14px] font-semibold tabular-nums" aria-live="polite" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.4)' }}>
             {recording ? `${Math.ceil(STORY_MAX_SECONDS - elapsed)} s left` : `Tap to record. Stops at ${STORY_MAX_SECONDS} seconds.`}
           </p>
+          <div className="flex w-full items-center justify-between px-9">
+          <button
+            type="button"
+            onClick={() => cameraInputRef.current?.click()}
+            disabled={recording}
+            aria-label="Upload a video from your gallery"
+            className="flex size-[52px] items-center justify-center rounded-[14px] disabled:opacity-0"
+            style={{ border: '2px solid #FFFFFF', background: 'rgba(255,255,255,0.12)', color: '#FFFFFF' }}
+          >
+            <Video className="h-5 w-5" aria-hidden="true" />
+          </button>
           <div className="relative flex h-[104px] w-[104px] items-center justify-center">
             <svg viewBox="0 0 104 104" className="absolute inset-0 -rotate-90" aria-hidden="true">
               <circle cx="52" cy="52" r={ringRadius} fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="5" />
@@ -293,6 +368,8 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
             >
               {recording ? <Square className="h-6 w-6" fill="currentColor" /> : <Circle className="h-7 w-7" fill="currentColor" />}
             </button>
+          </div>
+          <span className="size-[52px]" aria-hidden="true" />
           </div>
         </div>
       </div>
