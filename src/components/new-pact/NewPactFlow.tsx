@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Check, ChevronLeft, Globe, Link2, Lock, MessageCircle, Play, UserPlus, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
+import PriceChooser from '@/components/private/PriceChooser'
 import { useCreatePact } from '@/hooks/usePactMutations'
 import { useCircles } from '@/hooks/useCircles'
 import { useMyTipSettings } from '@/hooks/useTips'
@@ -68,6 +69,8 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   const [chosenAudience, setAudience] = useState<Audience>('circle')
   const [circleId, setCircleId] = useState<number | null>(initialCircleId)
   const [posting, setPosting] = useState<string | null>(null)
+  const [watchPrice, setWatchPrice] = useState<number | null>(null)
+  const [autoApprove, setAutoApprove] = useState(false)
   const [created, setCreated] = useState<{ id: number; title: string; days: number } | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -92,6 +95,8 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   const ready = cleanText.length >= 4
   const title = ready ? sentenceTitle(cleanText, days) : ''
   const circle = circles.find((c) => Number(c.id) === circleId)
+  // Selling access needs somewhere for the money to go.
+  const needsUpi = audience === 'private' && watchPrice != null && Boolean(tips.data) && !tips.data?.enabled
 
   const post = async () => {
     if (!ready || posting) return
@@ -102,6 +107,8 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
       circle_id: audience === 'circle' ? circleId : null,
       visibility: audience === 'circle' ? 'circle_only' : 'public',
       media_locked: audience === 'private',
+      watch_price: audience === 'private' ? watchPrice : null,
+      watch_auto_approve: audience === 'private' && watchPrice != null ? autoApprove : false,
       start_date: localToday(),
       duration_days: days,
       verification_method: 'video',
@@ -337,9 +344,14 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                 ))}
               </div>
             )}
+            {audience === 'private' && (
+              <div className="mt-5">
+                <PriceChooser price={watchPrice} onPrice={setWatchPrice} autoApprove={autoApprove} onAutoApprove={setAutoApprove} />
+              </div>
+            )}
             {audience === 'private' && tips.data && !tips.data.enabled && (
               <Link href="/profile/tips" className="mt-3.5 flex min-h-11 items-center rounded-[14px] px-3.5 text-[13.5px] font-bold" style={{ border: `1.5px dashed ${NAVY}`, color: NAVY, background: '#F5F7FD' }}>
-                Turn on tips so people can back you
+                {watchPrice != null ? 'Add your UPI first, so people can pay you' : 'Turn on tips so people can back you'}
               </Link>
             )}
           </div>
@@ -347,7 +359,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
             <button
               type="button"
               onClick={() => void post()}
-              disabled={Boolean(posting) || (audience === 'circle' && circleId == null)}
+              disabled={Boolean(posting) || (audience === 'circle' && circleId == null) || needsUpi}
               className="h-14 w-full rounded-full text-[16.5px] font-extrabold disabled:opacity-70"
               style={{ background: NAVY, color: '#FFFFFF', boxShadow: '0 8px 22px rgba(31,58,147,0.28)' }}
             >
@@ -368,7 +380,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
             <div className="text-center">
               <div className="text-[30px] font-extrabold tracking-[-0.035em]" style={{ color: INK }}>{clip ? 'You’re on Day 1.' : 'Your pact is live.'}</div>
               <div className="mt-1.5 text-[14.5px]" style={{ color: MUTED }}>
-                {audience === 'circle' ? `${circle?.name ?? 'Your circle'} can see it now.` : audience === 'public' ? 'It’s live in Discover.' : 'Private. People can ask to watch, and tip you.'}
+                {audience === 'circle' ? `${circle?.name ?? 'Your circle'} can see it now.` : audience === 'public' ? 'It’s live in Discover.' : watchPrice != null ? `Private · ₹${watchPrice} to watch.` : 'Private. People can ask to watch, and tip you.'}
               </div>
             </div>
             <div className="mt-5 overflow-hidden rounded-[24px]" style={{ background: CARD, border: `1px solid ${LINE}` }}>
@@ -382,7 +394,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                 )}
                 {audience === 'private' && (
                   <span className="absolute left-3 top-3 flex items-center gap-1 rounded-xl px-2.5 py-1 text-[12px] font-extrabold" style={{ background: 'rgba(15,16,20,0.6)', color: '#FFFFFF' }}>
-                    <Lock className="size-3" strokeWidth={2.6} /> Private
+                    <Lock className="size-3" strokeWidth={2.6} /> {watchPrice != null ? `Private · ₹${watchPrice}` : 'Private'}
                   </span>
                 )}
                 <div className="absolute inset-x-3.5 bottom-3" style={{ color: '#FFFFFF' }}>

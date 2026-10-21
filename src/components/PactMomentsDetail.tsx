@@ -233,7 +233,7 @@ export default function PactMomentsDetail({
                 style={pact?.media_locked ? { background: '#17181D', color: '#FFFFFF' } : { border: '1px solid var(--hairline)', color: 'var(--ink)' }}
               >
                 <Lock className="size-3.5" strokeWidth={2.4} aria-hidden="true" />
-                {pact?.media_locked ? 'Private' : 'Make private'}
+                {pact?.media_locked ? (pact?.watch_price ? `Private · ₹${pact.watch_price}` : 'Private') : 'Make private'}
                 {pendingAsks > 0 && <span className="rounded-full px-1.5 text-[11px] font-extrabold" style={{ background: '#FFFFFF', color: '#17181D' }}>{pendingAsks}</span>}
               </button>
             )}
@@ -514,7 +514,7 @@ export default function PactMomentsDetail({
         )}
       </div>
       {isCreatorView && (
-        <WatchersSheet open={watchersOpen} onClose={() => setWatchersOpen(false)} pactId={Number(pact?.id)} mediaLocked={Boolean(pact?.media_locked)} />
+        <WatchersSheet open={watchersOpen} onClose={() => setWatchersOpen(false)} pactId={Number(pact?.id)} mediaLocked={Boolean(pact?.media_locked)} watchPrice={pact?.watch_price ?? null} watchAutoApprove={Boolean(pact?.watch_auto_approve)} />
       )}
       {viewerOpen && current && (
         <MomentViewer
