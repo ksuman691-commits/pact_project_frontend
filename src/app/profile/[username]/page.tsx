@@ -24,6 +24,7 @@ import {
 } from '@/hooks/useFollows';
 import { useUserByUsername, useUserStats, useUserRelationship, useUserCircles } from '@/hooks/useUserQueries';
 import { useSmartBack } from '@/hooks/useSmartBack';
+import { useSupporters } from '@/hooks/useTips';
 
 const INK = '#17181D';
 const MUTED = '#5A5C63';
@@ -71,6 +72,8 @@ export default function PublicProfilePage() {
   const activePacts = useMemo(() => pacts.filter((p) => p.status === 'active'), [pacts]);
   const completedPacts = useMemo(() => pacts.filter((p) => p.status === 'completed'), [pacts]);
 
+  const supportersQuery = useSupporters(profileUserId);
+  const supporters = supportersQuery.data;
   const followersQuery = useFollowers(profileUserId);
   const followingQuery = useFollowing(profileUserId);
   const followers = (followersQuery.data?.data || []) as any[];
@@ -168,6 +171,25 @@ export default function PublicProfilePage() {
                 <button type="button" onClick={() => rejectFollow.mutate(incomingFollowId)} disabled={isBusy} className="h-10 rounded-full text-[14px] font-bold" style={profileButton.quiet}>
                   Decline follow request
                 </button>
+              )}
+              {supporters && supporters.count > 0 && (
+                <div className="flex items-center gap-2.5 rounded-[16px] px-3 py-2.5" style={{ background: 'var(--card)', border: '1px solid var(--hairline)' }}>
+                  <span className="flex shrink-0">
+                    {supporters.supporters.slice(0, 3).map((person, index) => (
+                      <span key={person.id} className="flex size-6 items-center justify-center overflow-hidden rounded-full text-[10px] font-extrabold" style={{ background: INK, color: '#FFFFFF', border: '2px solid var(--card)', marginLeft: index ? -8 : 0 }}>
+                        {person.avatar_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={person.avatar_url} alt="" className="size-full object-cover" />
+                        ) : (
+                          (person.full_name || person.username).charAt(0).toUpperCase()
+                        )}
+                      </span>
+                    ))}
+                  </span>
+                  <span className="text-[13px] leading-snug" style={{ color: MUTED }}>
+                    <span className="font-extrabold" style={{ color: INK }}>Tipped by {supporters.count} {supporters.count === 1 ? 'person' : 'people'}</span> · confirmed by {firstName}
+                  </span>
+                </div>
               )}
               {sharedCircles.length > 0 && (
                 <div className="flex items-center gap-2 text-[13px]" style={{ color: MUTED }}>

@@ -786,6 +786,8 @@ export default function FeedPactCard({
           creatorAvatarUrl={creatorAvatarUrl}
           context={pact.title}
           count={Number(pact.tip_count ?? 0)}
+          pactId={Number(pact.id)}
+          tipsEnabled={typeof pact.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined}
         />
       )}
       <div className="ml-auto flex items-center">

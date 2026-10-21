@@ -14,13 +14,16 @@ interface TipButtonProps {
   variant?: 'pill' | 'stage' | 'row'
   /** Confirmed tips so far; shown next to the coin in the 'row' variant. */
   count?: number
+  pactId?: number | null
+  /** From the pact payload. false skips the lookup entirely; undefined asks the server. */
+  tipsEnabled?: boolean
   className?: string
 }
 
 /** Renders nothing unless the creator has tips turned on. */
-export default function TipButton({ creatorId, creatorName, creatorAvatarUrl, context, variant = 'pill', count = 0, className = '' }: TipButtonProps) {
+export default function TipButton({ creatorId, creatorName, creatorAvatarUrl, context, variant = 'pill', count = 0, pactId = null, tipsEnabled, className = '' }: TipButtonProps) {
   const [open, setOpen] = useState(false)
-  const { data: tip } = useUserTipInfo(creatorId)
+  const { data: tip } = useUserTipInfo(tipsEnabled === false ? null : creatorId)
   if (!tip) return null
   const firstName = creatorName.split(' ')[0] || creatorName
 
@@ -63,7 +66,7 @@ export default function TipButton({ creatorId, creatorName, creatorAvatarUrl, co
           Tip {firstName}
         </button>
       )}
-      <TipSheet open={open} onClose={() => setOpen(false)} tip={tip} context={context} creatorName={creatorName} creatorAvatarUrl={creatorAvatarUrl} />
+      <TipSheet open={open} onClose={() => setOpen(false)} tip={tip} context={context} pactId={pactId} creatorName={creatorName} creatorAvatarUrl={creatorAvatarUrl} />
     </>
   )
 }
