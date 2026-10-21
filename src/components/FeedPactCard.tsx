@@ -15,6 +15,7 @@ import {
   Heart,
   MoreVertical,
   Flame,
+  Play,
 } from 'lucide-react';
 import ProofUploadModal from './ProofUploadModal';
 import CommentsBottomSheet from './CommentsBottomSheet';
@@ -25,6 +26,8 @@ import PactGallery, { buildGalleryTiles } from './PactGallery';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useGoalMatches } from '@/hooks/usePactMatches';
 import { useAuthStore } from '@/store/auth';
+import { usePactStoriesToday } from '@/hooks/useStories';
+import { postedAgo } from '@/lib/stories';
 import { getDisplayName } from '@/lib/displayName';
 import { hasPactMomentum } from '@/lib/pactMomentum';
 import { pactService, socialService } from '@/services/api';
@@ -504,7 +507,16 @@ export default function FeedPactCard({
   // Header subline: circle and when the latest photo went up. Category is the
   // fallback for pacts that aren't scoped to a circle.
   const postedAt = formatPostedAt(activeProof?.uploadedAt);
-  const headerSub = [circleLabel, postedAt].filter(Boolean).join(' · ') || pactCategoryLabel;
+  // No photo on the pact, but someone may have posted a video moment today.
+  // Show the newest one as the card's media instead of an empty strip.
+  const todayStories = usePactStoriesToday(Number(pact.id), tiles.length === 0 && !hideHeroAndTitle);
+  const momentStory =
+    tiles.length === 0 && Array.isArray(todayStories.data) && todayStories.data.length > 0
+      ? todayStories.data[todayStories.data.length - 1]
+      : null;
+  const headerSub = momentStory
+    ? [circleLabel, postedAgo(momentStory.created_at)].filter(Boolean).join(' · ')
+    : [circleLabel, postedAt].filter(Boolean).join(' · ') || pactCategoryLabel;
   const dayNo = progressInfo ? Math.min(progressInfo.totalDays, Math.max(1, progressInfo.elapsedDays)) : 0;
   const showMomentum = showRing && hasPactMomentum(pact);
   // The Add moment pill replaces the old in-carousel "+ Add today" tile. With no
@@ -696,7 +708,8 @@ export default function FeedPactCard({
   // Immersive layout: the photo IS the card. Header, title and actions float
   // on it. Cards without a photo (or the detail page, which renders its own
   // hero) fall back to a compact plain layout.
-  const immersive = !hideHeroAndTitle && tiles.length > 0;
+  const immersive = !hideHeroAndTitle && (tiles.length > 0 || momentStory !== null);
+  const momentAuthor = momentStory ? (user?.id != null && momentStory.user_id === user.id ? 'You' : momentStory.name || 'Member') : null;
   const likeLabelCount = likeCount > 0 ? formatCompactCount(likeCount) : null;
   const chatLabelCount = commentCount > 0 ? formatCompactCount(commentCount) : null;
 
@@ -725,10 +738,16 @@ export default function FeedPactCard({
   const identity = (onPhoto: boolean) => (
     <div className="pointer-events-auto flex min-w-0 flex-1 items-center gap-2.5" onClick={(event) => event.stopPropagation()}>
       <span className={`inline-flex h-[34px] w-[34px] shrink-0 overflow-hidden rounded-full ${onPhoto ? 'ring-2 ring-white/70' : ''}`}>
-        {creatorProfileHref ? <UserAvatarLink name={creatorLabel} avatarUrl={creatorAvatarUrl} username={creatorUsername} size={34} stopPropagation /> : <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={34} />}
+        {momentStory ? (
+          <Avatar name={momentAuthor} avatarUrl={momentStory.avatar_url} size={34} />
+        ) : creatorProfileHref ? (
+          <UserAvatarLink name={creatorLabel} avatarUrl={creatorAvatarUrl} username={creatorUsername} size={34} stopPropagation />
+        ) : (
+          <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={34} />
+        )}
       </span>
       <div className="min-w-0" style={onPhoto ? { color: '#fff', textShadow: '0 1px 6px rgba(0,0,0,0.45)' } : undefined}>
-        <div className={`truncate text-[14.5px] font-bold ${onPhoto ? '' : 'text-[var(--ink)]'}`}>{creatorLabel === 'You' ? 'You' : `@${creatorLabel}`}</div>
+        <div className={`truncate text-[14.5px] font-bold ${onPhoto ? '' : 'text-[var(--ink)]'}`}>{momentStory ? momentAuthor : creatorLabel === 'You' ? 'You' : `@${creatorLabel}`}</div>
         {headerSub && <div className={`truncate text-[12px] ${onPhoto ? '' : 'text-[var(--muted)]'}`} style={onPhoto ? { opacity: 0.92 } : undefined}>{headerSub}</div>}
       </div>
     </div>
@@ -799,15 +818,25 @@ export default function FeedPactCard({
              horizontal swipes reach PactGallery; tapping the photo opens the viewer. */
           <>
           <div className="relative w-full" onClick={handleMediaTap} style={transformStyle}>
-            <PactGallery
-              proofs={galleryProofs ?? proofs}
-              cheers={galleryCheers ?? []}
-              interactive
-              aspectClassName="aspect-[3/4]"
-              dotsPosition="none"
-              hideProofBadge
-              onActiveIndexChange={setActiveProofIndex}
-            />
+            {tiles.length > 0 ? (
+              <PactGallery
+                proofs={galleryProofs ?? proofs}
+                cheers={galleryCheers ?? []}
+                interactive
+                aspectClassName="aspect-[3/4]"
+                dotsPosition="none"
+                hideProofBadge
+                onActiveIndexChange={setActiveProofIndex}
+              />
+            ) : (
+              <div className="relative aspect-[3/4] w-full overflow-hidden bg-[var(--ink)]">
+                {/* First frame doubles as the thumbnail; muted so it never makes noise. */}
+                <video src={`${momentStory!.video_url}#t=0.1`} muted playsInline preload="auto" className="absolute inset-0 h-full w-full object-cover" />
+                <span className="pointer-events-none absolute right-3 top-14 flex size-8 items-center justify-center rounded-full bg-black/55 text-white">
+                  <Play className="size-4 fill-current" aria-hidden="true" />
+                </span>
+              </div>
+            )}
             <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/55 to-transparent" />
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/75 to-transparent" />
 
