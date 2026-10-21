@@ -19,6 +19,7 @@ import WeeklyStreakStrip from '@/components/pact-ui/WeeklyStreakStrip';
 import CirclesRow from '@/components/pact-ui/CirclesRow';
 import LogoSpinner from '@/components/LogoSpinner';
 import { ChevronLeft, LogOut, Settings } from 'lucide-react';
+import TipsEntryCard from '@/components/tips/TipsEntryCard';
 import toast from 'react-hot-toast';
 import { useFollowers, useFollowing } from '@/hooks/useFollows';
 import { useAtRiskPact } from '@/hooks/useAtRiskPact';
@@ -229,6 +230,7 @@ function ProfileContent() {
           onViewMoment={() => setViewingMoment(true)}
         />
         <StoryViewer open={viewingMoment} onClose={() => setViewingMoment(false)} stories={myStories} />
+        <TipsEntryCard className="mb-6" />
 
         {/* Circles strip — quick jump to circles this account belongs to,
             right below the Hero so identity + community context load

@@ -22,6 +22,7 @@ import {
   useRemoveFollow,
   useRequestFollow,
 } from '@/hooks/useFollows';
+import TipButton from '@/components/tips/TipButton';
 import {
   useUserByUsername,
   useUserStats,
@@ -307,6 +308,7 @@ export default function PublicProfilePage() {
                 >
                   {primaryFollowLabel}
                 </button>
+                <TipButton creatorId={profileUser.id} creatorName={profileUser.full_name || profileUser.username} creatorAvatarUrl={profileUser.avatar_url} className="justify-center" />
                 {incomingStatus === 'pending' && incomingFollowId ? (
                   <button
                     onClick={() => rejectFollow.mutate(incomingFollowId)}

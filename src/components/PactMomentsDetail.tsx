@@ -4,6 +4,9 @@ import Image from 'next/image'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Camera, Check, ChevronLeft, Image as ImageIcon, MessageCircle, Play, Plus, RotateCcw, Share2, UserRound, UserPlus, X } from 'lucide-react'
 import LikeButton from '@/components/LikeButton'
+import Link from 'next/link'
+import TipButton from '@/components/tips/TipButton'
+import { useMyTipSettings } from '@/hooks/useTips'
 import { useSmartBack } from '@/hooks/useSmartBack'
 import CircleChip from '@/components/classic/CircleChip'
 import { getCategoryTheme } from '@/lib/categoryTheme'
@@ -154,6 +157,12 @@ export default function PactMomentsDetail({
     full: 'This pact is full',
   }
 
+  const creatorId = pact?.creator_id ?? null
+  const isCreatorView = viewerId != null && creatorId != null && String(viewerId) === String(creatorId)
+  const creatorName = String(pact?.creator_full_name || pact?.creator_username || 'the creator')
+  const myTips = useMyTipSettings(isCreatorView)
+  const showTurnOnTips = isCreatorView && myTips.data != null && !myTips.data.enabled
+
   useEffect(() => {
     const container = stripRef.current
     const tile = selectedTileRef.current
@@ -198,6 +207,14 @@ export default function PactMomentsDetail({
           <h1 className="line-clamp-2 font-sans text-[24px] font-bold leading-[1.08] tracking-[-0.03em] text-[var(--ink)]">
             {titleEmoji ? `${titleEmoji} ` : ''}{pact?.title}
           </h1>
+          {!isCreatorView && (
+            <TipButton creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} className="mt-2" />
+          )}
+          {showTurnOnTips && (
+            <Link href="/profile/tips" className="mt-2 inline-flex h-9 items-center rounded-full px-3 text-[13px] font-bold" style={{ border: '1.5px dashed #1F3A93', color: '#1F3A93' }}>
+              Turn on tips for your pacts
+            </Link>
+          )}
         </div>
 
         {showModernStrip ? (
@@ -366,6 +383,9 @@ export default function PactMomentsDetail({
                 <button type="button" onClick={() => onComment(false)} aria-label="Comment on this moment" className="flex size-12 items-center justify-center rounded-full bg-[var(--card)] text-[var(--ink)] shadow-lg">
                   <MessageCircle className="size-5" />
                 </button>
+                {!isCreatorView && (
+                  <TipButton variant="stage" creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} />
+                )}
               </div>
               <div className="absolute inset-x-5 bottom-5 z-10 text-white">
                 <p className="mt-0.5 text-[17px] font-extrabold leading-[22px]">{caption}</p>
