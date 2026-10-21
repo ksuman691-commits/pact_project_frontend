@@ -198,7 +198,7 @@ export default function PactMomentsDetail({
               <ChevronLeft className="size-6" strokeWidth={2} aria-hidden="true" />
             </button>
             {!isCreatorView && (
-              <TipButton creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} className="!h-9 !px-3.5 !text-[13.5px]" />
+              <TipButton creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} pactId={Number(pact?.id)} tipsEnabled={typeof pact?.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined} className="!h-9 !px-3.5 !text-[13.5px]" />
             )}
             {showTurnOnTips && (
               <Link href="/profile/tips" className="inline-flex h-9 items-center rounded-full px-3 text-[13px] font-bold" style={{ border: '1.5px dashed #1F3A93', color: '#1F3A93' }}>
