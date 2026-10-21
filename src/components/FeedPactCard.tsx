@@ -1,5 +1,6 @@
 'use client';
 
+import TipButton from '@/components/tips/TipButton';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -777,6 +778,16 @@ export default function FeedPactCard({
       <button type="button" onClick={() => void handleCopyShareLink()} aria-label="share pact" className="flex h-11 w-11 items-center justify-center text-[var(--navy)] transition active:scale-95">
         <Share2 className="h-[22px] w-[22px]" strokeWidth={1.8} />
       </button>
+      {!isCreator && (
+        <TipButton
+          variant="row"
+          creatorId={pact.creator_id ?? pact.user_id ?? pact.creator?.id}
+          creatorName={pact.creator_full_name || creatorLabel}
+          creatorAvatarUrl={creatorAvatarUrl}
+          context={pact.title}
+          count={Number(pact.tip_count ?? 0)}
+        />
+      )}
       <div className="ml-auto flex items-center">
         {showAddPill && (
           <button type="button" onClick={handleProofUploadClick} aria-label={onAddMoment ? 'Add a moment' : "Add today's proof photo"} className="group flex h-11 items-center">

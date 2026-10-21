@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, Clock, Plus } from 'lucide-react'
 import { STORIES_ENABLED } from '@/lib/stories'
-import { useTodayMoments } from '@/hooks/useTodayMoments'
+import { useTodayStatus } from '@/hooks/useTodayStatus'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
 import { RingFace } from '@/components/stories/StoryRing'
 import type { MomentPerson } from '@/hooks/useMomentPeople'
@@ -30,7 +30,7 @@ const card = 'flex items-center gap-3 rounded-[20px] border border-[var(--hairli
  */
 export default function TodayCheckInRow({ onCreatePact, peers = [] }: { onCreatePact?: () => void; peers?: MomentPerson[] }) {
   const router = useRouter()
-  const { activePacts, pendingPact, allDone, isLoading } = useTodayMoments()
+  const { pacts: activePacts, pendingPact, allDone, isLoading } = useTodayStatus()
   const [capturePact, setCapturePact] = useState<any | null>(null)
 
   const checkIn = (pact: any) => {
@@ -39,7 +39,7 @@ export default function TodayCheckInRow({ onCreatePact, peers = [] }: { onCreate
   }
 
   const hasActive = activePacts.length > 0
-  const circleName = pendingPact?.circle_name || pendingPact?.circle || null
+  const circleName = pendingPact?.circle_name || null
   const meta = pendingPact ? [circleName, endsInLabel(pendingPact)].filter(Boolean).join(' · ') : ''
   // Social nudge: who in this pact's circle has already posted today. Shown
   // as a fact ("Suman and 2 others posted"), never as a guilt trip.
@@ -58,7 +58,7 @@ export default function TodayCheckInRow({ onCreatePact, peers = [] }: { onCreate
     <section aria-label="Today" className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between px-1">
         <h2 className="text-[17px] font-bold tracking-[-0.01em] text-[var(--ink)]">Today</h2>
-        {hasActive && (
+        {(hasActive || isLoading) && (
           <button type="button" onClick={onCreatePact} className="-my-3 flex h-11 items-center gap-1 px-1 text-[14px] font-bold text-[var(--navy)]">
             <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" />
             New pact
