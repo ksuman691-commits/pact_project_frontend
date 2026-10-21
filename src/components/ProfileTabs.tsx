@@ -181,7 +181,7 @@ export function PactsTab({
               }`}
               style={
                 isActive
-                  ? { background: 'var(--navy)', color: '#fff' }
+                  ? { background: 'var(--ink)', color: '#fff' }
                   : { color: 'var(--pact-text-dim)' }
               }
             >

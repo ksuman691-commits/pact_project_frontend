@@ -181,7 +181,7 @@ export default function CirclesPage() {
               type="button"
               onClick={() => setMembershipFilter(item.id)}
               className={`h-9 shrink-0 rounded-full px-4 text-[13px] font-semibold transition ${
-                membershipFilter === item.id ? 'bg-[var(--navy)] text-[var(--card)]' : 'border border-[var(--line)] text-[var(--ink-soft)]'
+                membershipFilter === item.id ? 'bg-[var(--ink)] text-[var(--card)]' : 'border border-[var(--line)] text-[var(--ink-soft)]'
               }`}
             >
               {item.label} ({filterCount(item.id)})
