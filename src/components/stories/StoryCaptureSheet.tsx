@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Check, Circle, RotateCcw, Square, Video, X } from 'lucide-react'
+import { Check, Circle, RefreshCw, RotateCcw, Square, Video, X } from 'lucide-react'
+import LogoMark from '@/components/LogoMark'
 import { usePactStoriesToday, usePostStory } from '@/hooks/useStories'
 import {
   isDurationAllowed,
@@ -54,6 +55,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
   const [recording, setRecording] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const [inPageSupported, setInPageSupported] = useState(false)
+  const [facing, setFacing] = useState<'environment' | 'user'>('environment')
 
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const liveVideoRef = useRef<HTMLVideoElement>(null)
@@ -140,23 +142,50 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
     if (file) void acceptBlob(file)
   }
 
+  const attachStream = (stream: MediaStream) => {
+    streamRef.current = stream
+    requestAnimationFrame(() => {
+      if (liveVideoRef.current) {
+        liveVideoRef.current.srcObject = stream
+        void liveVideoRef.current.play().catch(() => {})
+      }
+    })
+  }
+
+  // Back camera first. `ideal` (not `exact`) so devices without one, like a laptop, still open.
+  const requestStream = (mode: 'environment' | 'user') =>
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: mode }, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30, max: 30 } },
+      audio: true,
+    })
+
   const openLiveCamera = async () => {
     setNotice(null)
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30, max: 30 } },
-        audio: true,
-      })
-      streamRef.current = stream
+      const stream = await requestStream('environment')
+      const actual = stream.getVideoTracks()[0]?.getSettings().facingMode
+      setFacing(actual === 'user' ? 'user' : 'environment')
       setStep('live')
-      requestAnimationFrame(() => {
-        if (liveVideoRef.current) {
-          liveVideoRef.current.srcObject = stream
-          void liveVideoRef.current.play().catch(() => {})
-        }
-      })
+      attachStream(stream)
     } catch (err: any) {
       setNotice(err?.name === 'NotAllowedError' ? CAMERA_BLOCKED : "Couldn't open the camera here. Use Record a video, or choose one from your gallery.")
+    }
+  }
+
+  const flipCamera = async () => {
+    if (recording) return
+    const next = facing === 'environment' ? 'user' : 'environment'
+    streamRef.current?.getTracks().forEach((track) => track.stop())
+    try {
+      attachStream(await requestStream(next))
+      setFacing(next)
+    } catch {
+      try {
+        attachStream(await requestStream(facing))
+      } catch {
+        setNotice("Couldn't switch cameras.")
+        setStep('idle')
+      }
     }
   }
 
@@ -207,6 +236,68 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
   const busy = phase === 'requesting' || phase === 'uploading' || phase === 'saving'
   const ringRadius = 46
   const ringLength = 2 * Math.PI * ringRadius
+
+  if (step === 'live') {
+    return (
+      <div role="dialog" aria-modal="true" aria-label="Record a moment" className="fixed inset-0 z-[80] bg-black text-white">
+        <video
+          ref={liveVideoRef}
+          muted
+          playsInline
+          className={`absolute inset-0 h-full w-full object-cover ${facing === 'user' ? '-scale-x-100' : ''}`}
+        />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-36" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0))' }} />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56" style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.65), rgba(0,0,0,0))' }} />
+
+        <header className="absolute inset-x-0 top-0 flex items-start justify-between gap-3 px-4 pt-[max(1rem,env(safe-area-inset-top))]">
+          <button
+            type="button"
+            onClick={() => { stopStream(); setStep('idle') }}
+            aria-label="Back"
+            className="flex h-11 w-11 items-center justify-center rounded-full"
+            style={{ background: 'rgba(255,255,255,0.18)' }}
+          >
+            <X className="h-5 w-5" />
+          </button>
+          <div className="flex min-w-0 flex-1 flex-col items-center pt-1 text-center" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.4)' }}>
+            <LogoMark size={20} tone="cream" />
+            {pactTitle && <div className="mt-1 max-w-full truncate text-[13px] font-semibold" style={{ color: 'rgba(244,239,228,0.92)' }}>{pactTitle}</div>}
+          </div>
+          <button
+            type="button"
+            onClick={() => void flipCamera()}
+            disabled={recording}
+            aria-label={facing === 'environment' ? 'Switch to front camera' : 'Switch to back camera'}
+            className="flex h-11 w-11 items-center justify-center rounded-full disabled:opacity-40"
+            style={{ background: 'rgba(255,255,255,0.18)' }}
+          >
+            <RefreshCw className="h-5 w-5" />
+          </button>
+        </header>
+
+        <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 pb-[max(2rem,env(safe-area-inset-bottom))]">
+          <p className="text-[14px] font-semibold tabular-nums" aria-live="polite" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.4)' }}>
+            {recording ? `${Math.ceil(STORY_MAX_SECONDS - elapsed)} s left` : `Tap to record. Stops at ${STORY_MAX_SECONDS} seconds.`}
+          </p>
+          <div className="relative flex h-[104px] w-[104px] items-center justify-center">
+            <svg viewBox="0 0 104 104" className="absolute inset-0 -rotate-90" aria-hidden="true">
+              <circle cx="52" cy="52" r={ringRadius} fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="5" />
+              <circle cx="52" cy="52" r={ringRadius} fill="none" stroke="#fff" strokeWidth="5" strokeLinecap="round" strokeDasharray={ringLength} strokeDashoffset={ringLength * (1 - elapsed / STORY_MAX_SECONDS)} />
+            </svg>
+            <button
+              type="button"
+              onClick={recording ? finishRecording : startRecording}
+              aria-label={recording ? 'Stop recording' : 'Start recording'}
+              className="relative flex h-[76px] w-[76px] items-center justify-center rounded-full"
+              style={{ background: recording ? '#D64545' : '#fff', color: recording ? '#fff' : '#17181D' }}
+            >
+              {recording ? <Square className="h-6 w-6" fill="currentColor" /> : <Circle className="h-7 w-7" fill="currentColor" />}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div role="dialog" aria-modal="true" aria-label="Post a moment" className="fixed inset-0 z-[80] flex flex-col bg-[var(--paper)] text-[var(--ink)]">
@@ -273,42 +364,6 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
               </p>
             )}
           </>
-        )}
-
-        {step === 'live' && (
-          <div className="flex flex-col items-center gap-5">
-            <video ref={liveVideoRef} muted playsInline className="aspect-[9/16] w-full max-w-[300px] rounded-[6px] bg-[var(--ink)] object-cover" />
-            <div className="relative flex h-[104px] w-[104px] items-center justify-center">
-              <svg viewBox="0 0 104 104" className="absolute inset-0 -rotate-90" aria-hidden="true">
-                <circle cx="52" cy="52" r={ringRadius} fill="none" stroke="var(--hairline)" strokeWidth="5" />
-                <circle
-                  cx="52"
-                  cy="52"
-                  r={ringRadius}
-                  fill="none"
-                  stroke="var(--navy)"
-                  strokeWidth="5"
-                  strokeDasharray={ringLength}
-                  strokeDashoffset={ringLength * (1 - elapsed / STORY_MAX_SECONDS)}
-                />
-              </svg>
-              <button
-                type="button"
-                onClick={recording ? finishRecording : startRecording}
-                aria-label={recording ? 'Stop recording' : 'Start recording'}
-                className="relative flex h-[76px] w-[76px] items-center justify-center rounded-full"
-                style={{ background: 'var(--navy)', color: '#fff' }}
-              >
-                {recording ? <Square className="h-6 w-6" fill="currentColor" /> : <Circle className="h-7 w-7" fill="currentColor" />}
-              </button>
-            </div>
-            <p className="text-[14px] tabular-nums text-[var(--muted)]" aria-live="polite">
-              {recording ? `${Math.ceil(STORY_MAX_SECONDS - elapsed)} s left` : `Tap to record. Stops at ${STORY_MAX_SECONDS} seconds.`}
-            </p>
-            <button type="button" onClick={() => { stopStream(); setStep('idle') }} className="text-[14px] font-semibold text-[var(--navy)] underline-offset-4 hover:underline">
-              Back
-            </button>
-          </div>
         )}
 
         {step === 'preview' && clip && (
