@@ -1,6 +1,7 @@
 'use client';
 
 import TipButton from '@/components/tips/TipButton';
+import LockedMedia from '@/components/private/LockedMedia';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -709,7 +710,9 @@ export default function FeedPactCard({
   // Immersive layout: the photo IS the card. Header, title and actions float
   // on it. Cards without a photo (or the detail page, which renders its own
   // hero) fall back to a compact plain layout.
-  const immersive = !hideHeroAndTitle && (tiles.length > 0 || momentStory !== null);
+  // Private pact the viewer hasn't been let into: the server sent no media.
+  const lockedForMe = !hideHeroAndTitle && Boolean(pact.media_locked) && pact.can_view_media === false;
+  const immersive = !lockedForMe && !hideHeroAndTitle && (tiles.length > 0 || momentStory !== null);
   const momentAuthor = momentStory ? (user?.id != null && momentStory.user_id === user.id ? 'You' : momentStory.name || 'Member') : null;
   const likeLabelCount = likeCount > 0 ? formatCompactCount(likeCount) : null;
   const chatLabelCount = commentCount > 0 ? formatCompactCount(commentCount) : null;
@@ -826,7 +829,19 @@ export default function FeedPactCard({
           chromeless ? '' : 'rounded-[24px]'
         } ${moreMenuOpen ? 'overflow-visible' : 'overflow-hidden'}`}
       >
-        {immersive ? (
+        {lockedForMe ? (
+          <>
+            <div className="flex items-center gap-2.5 pb-2 pl-3.5 pr-0.5 pt-2">
+              {identity(false)}
+              {kebab(false)}
+            </div>
+            <div className="line-clamp-2 px-4 pb-2.5 text-[18px] font-extrabold leading-[1.2] tracking-[-0.02em]" style={{ color: 'var(--ink)' }}>{pact.title}</div>
+            <div className="relative mx-3 overflow-hidden rounded-[18px]">
+              <LockedMedia pact={pact} variant="card" />
+            </div>
+            {actionBar(false)}
+          </>
+        ) : immersive ? (
           /* The photo fills the card. Gradients are pointer-events-none so
              horizontal swipes reach PactGallery; tapping the photo opens the viewer. */
           <>

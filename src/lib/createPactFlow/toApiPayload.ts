@@ -104,6 +104,8 @@ export interface CreatePactApiPayload {
   visibility: 'public' | 'private' | 'circle_only';
   circle_id: number | null;
   is_milestone: boolean;
+  /** Private pact tier: only people the creator lets in see the moments. */
+  media_locked?: boolean;
 }
 
 // Backend rejects datetimes with a non-zero time component ("Datetimes

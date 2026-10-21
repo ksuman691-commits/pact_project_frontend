@@ -34,6 +34,8 @@ const isJoinRequestNotification = (notification: any) => {
 const notificationTarget = (notification: any) => {
   // "Priya says they tipped you ₹51" goes to the creator's confirm screen.
   if (`${notification?.title || ''}`.toLowerCase().includes('says they tipped you')) return '/profile/tips/inbox';
+  // "Priya wants to watch your pact" opens the pact with the asks sheet up.
+  if (`${notification?.title || ''}`.toLowerCase().includes('wants to watch your pact') && notification.related_pact_id) return `/pacts/${notification.related_pact_id}?watchers=1`;
   if (notification.related_pact_id) {
     // Join-request notifications land the creator directly in the pact's
     // Accept/Reject window (see PactJoinRequestsModal) instead of just the

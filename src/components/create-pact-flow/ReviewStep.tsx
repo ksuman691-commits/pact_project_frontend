@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Calendar, Camera, Check, Clock, Users } from 'lucide-react';
+import { Calendar, Camera, Check, Clock, Lock, Users } from 'lucide-react';
 import { useCreatePactFlow } from '@/context/CreatePactFlowContext';
 import { useCreatePact } from '@/hooks/usePactMutations';
 import { useCircles } from '@/hooks/useCircles';
@@ -44,6 +44,8 @@ function formatStart(startDate?: string): string {
 
 export default function ReviewStep({ onExit }: { onExit?: () => void }) {
   const { draft, activity, setIsSubmitting, isSubmitting, setCreatedPact, goToSuccess } = useCreatePactFlow();
+  // Private pact tier: only people the creator lets in see the moments.
+  const [privateMoments, setPrivateMoments] = useState(false);
   const { data: circles } = useCircles();
   const createPact = useCreatePact();
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -53,7 +55,7 @@ export default function ReviewStep({ onExit }: { onExit?: () => void }) {
     setSubmitError(null);
     setIsSubmitting(true);
     try {
-      const payload = toCreatePactApiPayload(draft, activity);
+      const payload = { ...toCreatePactApiPayload(draft, activity), media_locked: privateMoments };
       const response = await createPact.mutateAsync(payload);
       const created = response?.data ?? payload;
 
@@ -138,6 +140,25 @@ export default function ReviewStep({ onExit }: { onExit?: () => void }) {
         />
         <SummaryRow icon={Users} label="Who's watching" value={audienceValue || 'Private'} last />
       </div>
+
+      <button
+        type="button"
+        role="switch"
+        aria-checked={privateMoments}
+        onClick={() => setPrivateMoments((on) => !on)}
+        className="mt-3 flex w-full items-center gap-3 rounded-3xl border border-[var(--hairline)] bg-[var(--card)] px-[18px] py-3.5 text-left"
+      >
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full" style={privateMoments ? { background: '#17181D', color: '#FFFFFF' } : { background: 'var(--card-muted)', color: 'var(--ink)' }}>
+          <Lock className="size-4" strokeWidth={2.4} aria-hidden="true" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[15px] font-bold" style={{ color: 'var(--ink)' }}>Private moments</span>
+          <span className="block text-[12.5px] leading-snug" style={{ color: 'var(--muted)' }}>Only people you let in see your photos and videos. Others can ask, and tip.</span>
+        </span>
+        <span className="relative h-7 w-12 shrink-0 rounded-full transition-colors" style={{ background: privateMoments ? '#1F3A93' : '#D4D5D9' }}>
+          <span className="absolute top-0.5 size-6 rounded-full bg-white transition-all" style={{ left: privateMoments ? 22 : 2, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+        </span>
+      </button>
 
       <div>
         <FieldLabel>How it counts</FieldLabel>

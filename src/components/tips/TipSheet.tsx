@@ -24,6 +24,8 @@ interface TipSheetProps {
   pactId?: number | null
   creatorName: string
   creatorAvatarUrl?: string | null
+  /** Called once the tipper says they sent it (e.g. to attach the tip to an ask-to-watch). */
+  onClaimed?: (tip: TipRecord) => void
 }
 
 /**
@@ -32,7 +34,7 @@ interface TipSheetProps {
  * tipper says "I sent it" and the creator confirms once it shows in their UPI
  * app. Only confirmed tips count anywhere public.
  */
-export default function TipSheet({ open, onClose, tip, context, pactId, creatorName, creatorAvatarUrl }: TipSheetProps) {
+export default function TipSheet({ open, onClose, tip, context, pactId, creatorName, creatorAvatarUrl, onClaimed }: TipSheetProps) {
   const [amount, setAmount] = useState<number | null>(51)
   const [stage, setStage] = useState<Stage>('pick')
   const [record, setRecord] = useState<TipRecord | null>(null)
@@ -95,7 +97,9 @@ export default function TipSheet({ open, onClose, tip, context, pactId, creatorN
     }
     setBusy(true)
     try {
-      setRecord(await claimTip(record.id, amount))
+      const claimed = await claimTip(record.id, amount)
+      setRecord(claimed)
+      onClaimed?.(claimed)
       setStage('waiting')
     } catch {
       toast.error("Couldn't send that to " + firstName + '. Try again.')

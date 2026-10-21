@@ -2,7 +2,12 @@
 
 import Image from 'next/image'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Camera, Check, ChevronLeft, Image as ImageIcon, MessageCircle, Play, Plus, RotateCcw, Share2, UserRound, UserPlus, X } from 'lucide-react'
+import { Camera, Check, ChevronLeft, Image as ImageIcon, Lock, MessageCircle, Play, Plus, RotateCcw, Share2, UserRound, UserPlus, X } from 'lucide-react'
+import toast from 'react-hot-toast'
+import LockedMedia from '@/components/private/LockedMedia'
+import WatchersSheet from '@/components/private/WatchersSheet'
+import { useWatchers } from '@/hooks/usePactAccess'
+import { joinRequestService } from '@/services/api'
 import LikeButton from '@/components/LikeButton'
 import Link from 'next/link'
 import TipButton from '@/components/tips/TipButton'
@@ -155,6 +160,7 @@ export default function PactMomentsDetail({
     already_joined: 'You are already in this pact',
     not_active: 'Joining is closed',
     full: 'This pact is full',
+    request_required: 'This pact is private. The creator picks who joins.',
   }
 
   const creatorId = pact?.creator_id ?? null
@@ -162,6 +168,25 @@ export default function PactMomentsDetail({
   const creatorName = String(pact?.creator_full_name || pact?.creator_username || 'the creator')
   const myTips = useMyTipSettings(isCreatorView)
   const showTurnOnTips = isCreatorView && myTips.data != null && !myTips.data.enabled
+  // Private pact tier: the server already stripped the media; show the ask instead.
+  const lockedForMe = Boolean(pact?.media_locked) && pact?.can_view_media === false
+  const [watchersOpen, setWatchersOpen] = useState(false)
+  const watchers = useWatchers(Number(pact?.id), isCreatorView && Boolean(pact?.media_locked))
+  const pendingAsks = watchers.data?.pending.length ?? 0
+  const [joinAsked, setJoinAsked] = useState(false)
+  useEffect(() => {
+    // Notifications open the pact with ?watchers=1 so the creator lands on the asks.
+    if (isCreatorView && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('watchers') === '1') setWatchersOpen(true)
+  }, [isCreatorView])
+  const askToJoin = async () => {
+    try {
+      await joinRequestService.sendRequest(Number(pact?.id))
+      setJoinAsked(true)
+      toast.success('Asked to join')
+    } catch {
+      toast.error("Couldn't send that. Try again.")
+    }
+  }
 
   useEffect(() => {
     const container = stripRef.current
@@ -199,6 +224,18 @@ export default function PactMomentsDetail({
             </button>
             {!isCreatorView && (
               <TipButton creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} pactId={Number(pact?.id)} tipsEnabled={typeof pact?.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined} className="!h-9 !px-3.5 !text-[13.5px]" />
+            )}
+            {isCreatorView && (
+              <button
+                type="button"
+                onClick={() => setWatchersOpen(true)}
+                className="ml-auto mr-2 inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-bold"
+                style={pact?.media_locked ? { background: '#17181D', color: '#FFFFFF' } : { border: '1px solid var(--hairline)', color: 'var(--ink)' }}
+              >
+                <Lock className="size-3.5" strokeWidth={2.4} aria-hidden="true" />
+                {pact?.media_locked ? 'Private' : 'Make private'}
+                {pendingAsks > 0 && <span className="rounded-full px-1.5 text-[11px] font-extrabold" style={{ background: '#FFFFFF', color: '#17181D' }}>{pendingAsks}</span>}
+              </button>
             )}
             {showTurnOnTips && (
               <Link href="/profile/tips" className="inline-flex h-9 items-center rounded-full px-3 text-[13px] font-bold" style={{ border: '1.5px dashed #1F3A93', color: '#1F3A93' }}>
@@ -304,12 +341,18 @@ export default function PactMomentsDetail({
 
         <section
           onClick={(event) => {
+            if (lockedForMe) return
             if ((event.target as HTMLElement).closest('button,a')) return
             openViewer()
           }}
           className={`relative min-h-0 flex-1 cursor-pointer overflow-hidden rounded-[24px] ${!hasMoments && !presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : 'bg-[var(--navy)]'}`}
           aria-label="Moments"
         >
+          {lockedForMe && (
+            <div className="absolute inset-0 z-40">
+              <LockedMedia pact={pact} variant="page" className="h-full" />
+            </div>
+          )}
           {!hasMoments && (
             <>
               <div className="absolute left-[60px] top-0 size-[190px] rounded-full bg-[#FFE3A8]/90" />
@@ -457,6 +500,10 @@ export default function PactMomentsDetail({
               <button type="button" onClick={onJoin} disabled={isJoining} className="h-12 w-full rounded-full bg-[var(--navy)] px-5 text-[15px] font-bold text-white disabled:opacity-60">
                 {isJoining ? 'Joining…' : 'Join this pact'}
               </button>
+            ) : joinBlockReason === 'request_required' ? (
+              <button type="button" onClick={() => void askToJoin()} disabled={joinAsked} className="h-12 w-full rounded-full bg-[var(--navy)] px-5 text-[15px] font-bold text-white disabled:opacity-60">
+                {joinAsked ? 'Asked to join' : 'Ask to join the pact'}
+              </button>
             ) : (
               <p className="text-center text-[13px] text-[var(--muted)]">{joinMessage[joinBlockReason || ''] || 'Joining is unavailable'}</p>
             )}
@@ -466,6 +513,9 @@ export default function PactMomentsDetail({
           </div>
         )}
       </div>
+      {isCreatorView && (
+        <WatchersSheet open={watchersOpen} onClose={() => setWatchersOpen(false)} pactId={Number(pact?.id)} mediaLocked={Boolean(pact?.media_locked)} />
+      )}
       {viewerOpen && current && (
         <MomentViewer
           moments={orderedMoments}
