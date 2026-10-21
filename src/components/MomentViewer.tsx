@@ -13,6 +13,7 @@ export interface ViewerMoment {
   uploadedAt?: string
   username?: string
   authorName?: string
+  avatarUrl?: string
 }
 
 interface MomentViewerProps {
@@ -180,9 +181,17 @@ export default function MomentViewer({ moments, startIndex, pactId, likeCount, l
       <header className="flex h-14 shrink-0 items-center justify-between px-4">
         <div className="flex min-w-0 items-center gap-2">
           <button type="button" aria-label="Close moment viewer" onClick={close} className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/15"><X className="size-6" /></button>
+          <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[13px] font-extrabold text-[var(--navy)]">
+            {moment.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={moment.avatarUrl} alt="" className="size-full object-cover" />
+            ) : (
+              (moment.authorName || moment.username || 'M').charAt(0).toUpperCase()
+            )}
+          </span>
           <div className="min-w-0">
-            <p className="truncate text-[15px] font-semibold">{moment.authorName || moment.username || 'Member'}</p>
-            <p className="text-[12px] text-white/70">Day {moment.day ?? index + 1}</p>
+            <div className="truncate text-[15px] font-semibold" style={{ color: '#fff' }}>{moment.authorName || moment.username || 'Member'}</div>
+            <div className="text-[12px]" style={{ color: 'rgba(255,255,255,0.75)' }}>Day {moment.day ?? index + 1}</div>
           </div>
         </div>
         <div className="flex items-center gap-2">

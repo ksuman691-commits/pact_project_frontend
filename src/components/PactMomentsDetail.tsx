@@ -351,8 +351,8 @@ export default function PactMomentsDetail({
           {hasMoments && (
             <>
               <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-black/50 px-2.5 py-1.5 text-xs font-bold text-white backdrop-blur">
-                <span className="flex size-5 items-center justify-center rounded-full bg-[var(--card)] text-[10px] text-[var(--ink)]">
-                  {String(pact?.creator_username || 'Y').charAt(0).toUpperCase()}
+                <span className="flex size-5 items-center justify-center overflow-hidden rounded-full bg-[var(--card)] text-[10px] text-[var(--ink)]">
+                  {String(current.authorName || current.username || 'Y').charAt(0).toUpperCase()}
                 </span>
                 {current.authorName || current.username || 'You'} - Day {current.day || day}
               </div>

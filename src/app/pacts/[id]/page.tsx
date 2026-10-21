@@ -62,6 +62,7 @@ export default function PactDetailPage() {
           userId: moment.submitted_by || moment.user_id,
           username: moment.username || moment.submitted_by_username,
           authorName: moment.full_name || moment.name || moment.username || moment.submitted_by_username,
+          avatarUrl: moment.avatar_url || undefined,
         }))
         .sort((left: any, right: any) => new Date(right.uploadedAt || 0).getTime() - new Date(left.uploadedAt || 0).getTime()),
     [momentsData?.data],
