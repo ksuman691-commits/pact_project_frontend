@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Eye, X } from 'lucide-react'
+import { Eye, Send, X } from 'lucide-react'
+import { reactToStory, replyToStory, STORY_REACTIONS } from '@/lib/api/stories'
 import { useAuthStore } from '@/store/auth'
 import { useMarkStorySeen, useStoryViewers } from '@/hooks/useStories'
 import { useBackToClose } from '@/hooks/useBackToClose'
@@ -29,6 +30,10 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
   const [paused, setPaused] = useState(false)
   const [broken, setBroken] = useState(false)
   const [viewersOpen, setViewersOpen] = useState(false)
+  const [composing, setComposing] = useState(false)
+  const [replyText, setReplyText] = useState('')
+  const [sent, setSent] = useState<string | null>(null)
+  const [sendError, setSendError] = useState(false)
   const { user } = useAuthStore()
   const videoRef = useRef<HTMLVideoElement>(null)
   const holdTimer = useRef<number | null>(null)
@@ -45,12 +50,17 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
     setBroken(false)
     setPaused(false)
     setViewersOpen(false)
+    setComposing(false)
+    setReplyText('')
+    setSent(null)
+    setSendError(false)
   }, [index])
 
   const story = stories[index]
   const isOwn = !!story && user?.id != null && story.user_id === user.id
   const viewersQuery = useStoryViewers(story?.id ?? null, open && isOwn)
   const viewers = viewersQuery.data?.viewers ?? []
+  const replies = viewersQuery.data?.replies ?? []
 
   const reportIfWatched = useCallback(() => {
     const video = videoRef.current
@@ -98,9 +108,35 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
-    if (paused || viewersOpen) video.pause()
+    if (paused || viewersOpen || composing) video.pause()
     else void video.play().catch(() => {})
-  }, [paused, viewersOpen, index])
+  }, [paused, viewersOpen, composing, index])
+
+  const sendReaction = async (emoji: string) => {
+    if (!story) return
+    setSendError(false)
+    setSent(emoji)
+    try {
+      await reactToStory(story.id, emoji)
+    } catch {
+      setSent(null)
+      setSendError(true)
+    }
+  }
+
+  const sendReply = async () => {
+    const text = replyText.trim()
+    if (!story || !text) return
+    setSendError(false)
+    try {
+      await replyToStory(story.id, text)
+      setReplyText('')
+      setSent('✓')
+      setComposing(false)
+    } catch {
+      setSendError(true)
+    }
+  }
 
   if (!open) return null
 
@@ -198,6 +234,49 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
         <div className="flex flex-1 items-center justify-center px-8 text-center text-[15px]">{emptyText}</div>
       )}
 
+      {story && !isOwn && (
+        <div className="flex flex-col gap-2 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
+          {sendError && <div className="text-[12px]" style={{ color: '#F6B8B8' }}>Could not send. Try again.</div>}
+          <div className="flex items-center gap-2">
+            <input
+              value={replyText}
+              onChange={(event) => setReplyText(event.target.value)}
+              onFocus={() => setComposing(true)}
+              onBlur={() => !replyText && setComposing(false)}
+              onKeyDown={(event) => {
+                event.stopPropagation()
+                if (event.key === 'Enter') void sendReply()
+              }}
+              maxLength={300}
+              placeholder={`Reply to ${(story.name || 'them').split(' ')[0]}…`}
+              aria-label="Reply to this moment"
+              className="h-11 min-w-0 flex-1 rounded-full border px-4 text-[16px] outline-none placeholder:text-white/60"
+              style={{ background: 'rgba(255,255,255,0.12)', borderColor: 'rgba(255,255,255,0.3)', color: '#fff' }}
+            />
+            {replyText.trim() ? (
+              <button type="button" onClick={() => void sendReply()} aria-label="Send reply" className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[var(--navy)] text-white">
+                <Send className="size-5" aria-hidden="true" />
+              </button>
+            ) : (
+              <div className="flex shrink-0 items-center">
+                {STORY_REACTIONS.slice(0, 4).map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => void sendReaction(emoji)}
+                    aria-label={`React ${emoji}`}
+                    className={`flex size-11 items-center justify-center rounded-full text-[22px] transition active:scale-90 ${sent === emoji ? 'bg-white/20' : ''}`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {sent === '✓' && <div className="text-[12px]" style={{ color: 'rgba(255,255,255,0.75)' }}>Reply sent</div>}
+        </div>
+      )}
+
       {isOwn && (
         <button
           type="button"
@@ -242,10 +321,25 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
                       <div className="truncate text-[15px] font-semibold">{v.name || v.username || 'Member'}</div>
                       {v.username && <div className="truncate text-[12.5px] text-[var(--muted)]">@{v.username}</div>}
                     </div>
+                    {v.reaction && <span className="shrink-0 text-[20px]" aria-label={`Reacted ${v.reaction}`}>{v.reaction}</span>}
                     <span className="shrink-0 text-[12px] text-[var(--muted)]">{postedAgo(v.viewed_at) || ''}</span>
                   </li>
                 ))}
               </ul>
+            )}
+            {replies.length > 0 && (
+              <div className="mt-3 flex flex-col gap-2 border-t border-[var(--hairline)] pt-3">
+                <h4 className="text-[13px] font-bold text-[var(--muted)]">Replies</h4>
+                {replies.map((r) => (
+                  <div key={r.id} className="flex items-start gap-2.5">
+                    <RingFace name={r.name} imageUrl={r.avatar_url} size={28} />
+                    <div className="min-w-0 flex-1 text-[14px]">
+                      <span className="font-semibold">{(r.name || 'Member').split(' ')[0]}</span>{' '}
+                      <span>{r.text}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>

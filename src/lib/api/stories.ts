@@ -51,11 +51,35 @@ export interface StoryViewer {
   username: string | null
   avatar_url: string | null
   viewed_at: string
+  reaction?: string | null
+}
+
+export interface StoryReply {
+  id: number
+  user_id: number
+  name: string | null
+  avatar_url: string | null
+  text: string
+  created_at: string
+}
+
+export const STORY_REACTIONS = ['❤️', '🔥', '👏', '💪', '😂', '😮'] as const
+
+export async function reactToStory(storyId: number, emoji: string) {
+  await api.post(`/api/stories/${storyId}/react`, { emoji })
+}
+
+export async function replyToStory(storyId: number, text: string) {
+  await api.post(`/api/stories/${storyId}/reply`, { text })
 }
 
 /** Only the author of a moment may call this; anyone else gets a 404. */
-export async function getStoryViewers(storyId: number): Promise<{ count: number; viewers: StoryViewer[] }> {
+export async function getStoryViewers(storyId: number): Promise<{ count: number; viewers: StoryViewer[]; replies: StoryReply[] }> {
   const response = await api.get(`/api/stories/${storyId}/viewers`)
   const payload = response.data
-  return { count: Number(payload?.count ?? 0), viewers: Array.isArray(payload?.viewers) ? payload.viewers : [] }
+  return {
+    count: Number(payload?.count ?? 0),
+    viewers: Array.isArray(payload?.viewers) ? payload.viewers : [],
+    replies: Array.isArray(payload?.replies) ? payload.replies : [],
+  }
 }
