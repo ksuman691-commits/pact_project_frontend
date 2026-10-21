@@ -113,6 +113,7 @@ export function usePostStory(pactId: number) {
           queryClient.invalidateQueries({ queryKey: storyKeys.pactToday(pactId) }),
           queryClient.invalidateQueries({ queryKey: queryKeys.pacts.detail(pactId) }),
           queryClient.invalidateQueries({ queryKey: ['my-pacts'] }),
+          queryClient.invalidateQueries({ queryKey: ['me-today'] }),
           queryClient.invalidateQueries({ queryKey: queryKeys.feed.all }),
           queryClient.invalidateQueries({ queryKey: queryKeys.circles.all }),
           queryClient.invalidateQueries({ queryKey: queryKeys.circles.lists() }),
