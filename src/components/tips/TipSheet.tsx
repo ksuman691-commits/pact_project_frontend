@@ -26,6 +26,8 @@ interface TipSheetProps {
   creatorAvatarUrl?: string | null
   /** Called once the tipper says they sent it (e.g. to attach the tip to an ask-to-watch). */
   onClaimed?: (tip: TipRecord) => void
+  /** Paying a set price (e.g. ₹21 to watch a private pact): no amount choice. */
+  fixedAmount?: number | null
 }
 
 /**
@@ -34,8 +36,8 @@ interface TipSheetProps {
  * tipper says "I sent it" and the creator confirms once it shows in their UPI
  * app. Only confirmed tips count anywhere public.
  */
-export default function TipSheet({ open, onClose, tip, context, pactId, creatorName, creatorAvatarUrl, onClaimed }: TipSheetProps) {
-  const [amount, setAmount] = useState<number | null>(51)
+export default function TipSheet({ open, onClose, tip, context, pactId, creatorName, creatorAvatarUrl, onClaimed, fixedAmount = null }: TipSheetProps) {
+  const [amount, setAmount] = useState<number | null>(fixedAmount ?? 51)
   const [stage, setStage] = useState<Stage>('pick')
   const [record, setRecord] = useState<TipRecord | null>(null)
   const [busy, setBusy] = useState(false)
@@ -61,7 +63,7 @@ export default function TipSheet({ open, onClose, tip, context, pactId, creatorN
       return
     }
     let cancelled = false
-    startTip({ creator_id: tip.user_id, pact_id: pactId ?? null })
+    startTip({ creator_id: tip.user_id, pact_id: pactId ?? null, amount: fixedAmount ?? null })
       .then((created) => {
         if (!cancelled) setRecord(created)
       })
@@ -71,7 +73,7 @@ export default function TipSheet({ open, onClose, tip, context, pactId, creatorN
     return () => {
       cancelled = true
     }
-  }, [open, tip.user_id, pactId])
+  }, [open, tip.user_id, pactId, fixedAmount])
 
   const firstName = creatorName.split(' ')[0] || creatorName
   const code = record?.code
@@ -123,7 +125,7 @@ export default function TipSheet({ open, onClose, tip, context, pactId, creatorN
             )}
           </span>
           <div className="min-w-0 flex-1">
-            <div className="text-[22px] font-extrabold leading-tight tracking-[-0.02em]" style={{ color: INK }}>Tip {firstName}</div>
+            <div className="text-[22px] font-extrabold leading-tight tracking-[-0.02em]" style={{ color: INK }}>{fixedAmount ? `₹${fixedAmount} to watch` : `Tip ${firstName}`}</div>
             <div className="mt-0.5 truncate text-[13.5px]" style={{ color: MUTED }}>{context ? `for ${context}` : `Straight to ${firstName}'s UPI`}</div>
           </div>
           <button type="button" onClick={onClose} aria-label="Close" className="-mr-2 -mt-1 flex size-11 items-center justify-center rounded-full" style={{ color: INK }}>
@@ -133,6 +135,11 @@ export default function TipSheet({ open, onClose, tip, context, pactId, creatorN
 
         {stage === 'pick' && (
           <>
+            {fixedAmount ? (
+              <div className="mt-4 rounded-[16px] px-4 py-3 text-[13.5px] leading-snug" style={{ background: '#F5F7FD', color: MUTED }}>
+                Pay <span className="font-extrabold" style={{ color: INK }}>₹{fixedAmount}</span> to {firstName}, then tap <span className="font-extrabold" style={{ color: INK }}>I sent it</span>. {firstName} lets you in once it arrives.
+              </div>
+            ) : (
             <div className="mt-4 grid grid-cols-4 gap-2" role="radiogroup" aria-label="Tip amount">
               {AMOUNTS.map((value) => {
                 const active = amount === value
@@ -151,6 +158,7 @@ export default function TipSheet({ open, onClose, tip, context, pactId, creatorN
                 )
               })}
             </div>
+            )}
 
             <div className="mt-4 flex items-center gap-4 rounded-[20px] p-3" style={{ border: '1px solid #E6E6E9' }}>
               <div className="shrink-0 rounded-[12px] bg-white p-1.5">
@@ -193,7 +201,7 @@ export default function TipSheet({ open, onClose, tip, context, pactId, creatorN
               </button>
             )}
             <div className="mt-1 text-center text-[12px] leading-snug" style={{ color: MUTED }}>
-              Goes straight to {firstName}&apos;s UPI. CirclePact never sees the money. A tip is a gift and doesn&apos;t change anything in the pact.
+              Goes straight to {firstName}&apos;s UPI. CirclePact never sees the money.{fixedAmount ? ' Sort out any problem with the payment directly with ' + firstName + '.' : ' A tip is a gift and doesn’t change anything in the pact.'}
             </div>
           </>
         )}

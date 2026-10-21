@@ -1,9 +1,11 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Lock, X } from 'lucide-react'
+import PriceChooser from '@/components/private/PriceChooser'
 import toast from 'react-hot-toast'
 import { useBackToClose } from '@/hooks/useBackToClose'
-import { useResolveWatcher, useSetPactPrivate, useWatchers } from '@/hooks/usePactAccess'
+import { useResolveWatcher, useSetPactPrivate, useUpdateWatchSettings, useWatchers } from '@/hooks/usePactAccess'
 import type { AccessRow } from '@/lib/api/access'
 
 const INK = '#17181D'
@@ -39,12 +41,30 @@ function TipLine({ row }: { row: AccessRow }) {
  * The creator's control room for a pact: make it private, let people in,
  * turn them away or take access back.
  */
-export default function WatchersSheet({ open, onClose, pactId, mediaLocked }: { open: boolean; onClose: () => void; pactId: number; mediaLocked: boolean }) {
+export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watchPrice = null, watchAutoApprove = false }: { open: boolean; onClose: () => void; pactId: number; mediaLocked: boolean; watchPrice?: number | null; watchAutoApprove?: boolean }) {
   useBackToClose(open, onClose)
   const watchers = useWatchers(pactId, open)
   const resolve = useResolveWatcher(pactId)
   const setPrivate = useSetPactPrivate(pactId)
+  const saveSettings = useUpdateWatchSettings(pactId)
+  const [price, setPrice] = useState<number | null>(watchPrice)
+  const [auto, setAuto] = useState(watchAutoApprove)
+  useEffect(() => {
+    if (!open) return
+    setPrice(watchPrice)
+    setAuto(watchAutoApprove)
+  }, [open, watchPrice, watchAutoApprove])
   if (!open) return null
+  const settingsChanged = price !== watchPrice || auto !== watchAutoApprove
+  const saveWatch = async () => {
+    try {
+      await saveSettings.mutateAsync({ watch_price: price, watch_auto_approve: price != null && auto })
+      toast.success(price != null ? `₹${price} to watch` : 'Free to ask')
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || 'Could not save the price')
+      setPrice(watchPrice)
+    }
+  }
 
   const locked = watchers.data?.media_locked ?? mediaLocked
   const pending = watchers.data?.pending ?? []
@@ -106,6 +126,14 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked }: { 
 
         {locked && (
           <>
+            <div className="mt-4 rounded-[18px] p-3.5" style={{ background: '#FFFFFF', border: `1px solid ${LINE}` }}>
+              <PriceChooser price={price} onPrice={setPrice} autoApprove={auto} onAutoApprove={setAuto} disabled={saveSettings.isPending} />
+              {settingsChanged && (
+                <button type="button" onClick={() => void saveWatch()} disabled={saveSettings.isPending} className="mt-3 h-11 w-full rounded-full text-[14.5px] font-extrabold disabled:opacity-60" style={{ background: NAVY, color: '#FFFFFF' }}>
+                  {saveSettings.isPending ? 'Saving…' : 'Save'}
+                </button>
+              )}
+            </div>
             <div className="mt-5 text-[14.5px] font-extrabold" style={{ color: INK }}>Asking to watch{pending.length ? ` · ${pending.length}` : ''}</div>
             {pending.length === 0 ? (
               <div className="mt-2 rounded-[16px] px-4 py-5 text-center text-[13.5px]" style={{ border: `1.5px dashed ${LINE}`, color: MUTED }}>
@@ -126,10 +154,10 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked }: { 
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-2">
                       <button type="button" disabled={resolve.isPending} onClick={() => void act(row, 'deny')} className="h-10 rounded-full text-[13.5px] font-bold disabled:opacity-60" style={{ background: '#FBF8F1', color: INK, border: `1px solid ${LINE}` }}>
-                        Not now
+                        {row.tip ? 'Didn’t arrive' : 'Not now'}
                       </button>
                       <button type="button" disabled={resolve.isPending} onClick={() => void act(row, 'approve')} className="h-10 rounded-full text-[13.5px] font-extrabold disabled:opacity-60" style={{ background: NAVY, color: '#FFFFFF' }}>
-                        Let them watch
+                        {row.tip ? `Received ₹${row.tip.amount ?? ''} · let in` : 'Let them watch'}
                       </button>
                     </div>
                   </div>

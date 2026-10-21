@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CreatePactFlow from '@/components/create-pact-flow/CreatePactFlow';
+import NewPactFlow from '@/components/new-pact/NewPactFlow';
 import { useSmartBack } from '@/hooks/useSmartBack';
 
 function CreatePactPageContent() {
@@ -25,6 +26,13 @@ function CreatePactPageContent() {
   const category = searchParams.get('category');
   const matchPactIdParam = searchParams.get('pactId');
   const initialMatchPactId = matchPactIdParam ? Number(matchPactIdParam) : null;
+
+  // "Create a pact with [Name]" still uses the older flow, which knows how to
+  // attach that person. Everything else, including "Start my own version"
+  // (which arrives with the other pact's text), gets the short flow.
+  if (!initialParticipantId) {
+    return <NewPactFlow onExit={exitFlow} initialCircleId={Number.isFinite(initialCircleId) ? initialCircleId : null} initialText={initialDescription} />;
+  }
 
   return (
     <CreatePactFlow

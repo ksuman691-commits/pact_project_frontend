@@ -49,3 +49,8 @@ export async function getAccessInbox() {
   const response = await api.get('/api/access/inbox')
   return response.data as { pending: AccessRow[] }
 }
+
+export async function updateWatchSettings(pactId: number, body: { media_locked?: boolean; watch_price?: number | null; watch_auto_approve?: boolean }) {
+  const response = await api.put(`/api/pacts/${pactId}`, body)
+  return response.data
+}

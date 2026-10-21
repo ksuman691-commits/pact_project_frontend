@@ -33,6 +33,13 @@ interface StoryCaptureSheetProps {
   onJoin?: () => Promise<boolean>
   /** Lets a page show the sheet in a fixed state for review screenshots. */
   initialClip?: Clip | null
+  /**
+   * Capture without posting: the preview's main button hands the clip back
+   * (used by new pact, where the pact doesn't exist until the end).
+   */
+  onCaptured?: (clip: { blob: Blob; contentType: string; duration: number }) => void
+  /** Open straight on the live camera instead of the start screen. */
+  autoStart?: boolean
 }
 
 type Step = 'idle' | 'live' | 'preview'
@@ -50,7 +57,7 @@ function canRecordInPage() {
   return typeof window !== 'undefined' && typeof window.MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
 }
 
-export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, canJoin = false, onJoin, initialClip = null }: StoryCaptureSheetProps) {
+export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, canJoin = false, onJoin, initialClip = null, onCaptured, autoStart = false }: StoryCaptureSheetProps) {
   const [step, setStep] = useState<Step>(initialClip ? 'preview' : 'idle')
   const [clip, setClip] = useState<Clip | null>(initialClip)
   const [notice, setNotice] = useState<string | null>(null)
@@ -75,7 +82,8 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
 
   const today = usePactStoriesToday(pactId, isOpen)
   const { phase, progress, error, retryable, unavailable: postUnavailable, post, reset } = usePostStory(pactId)
-  const comingSoon = today.unavailable || postUnavailable
+  const comingSoon = !onCaptured && (today.unavailable || postUnavailable)
+  const autoStarted = useRef(false)
 
   useEffect(() => {
     setInPageSupported(canRecordInPage())
@@ -201,6 +209,18 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
       }
     }
   }
+
+  useEffect(() => {
+    if (!isOpen) {
+      autoStarted.current = false
+      return
+    }
+    if (!autoStart || autoStarted.current || !inPageSupported || step !== 'idle') return
+    autoStarted.current = true
+    void openLiveCamera()
+    // openLiveCamera is stable enough for a one-shot start; re-running it would reopen the camera.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, autoStart, inPageSupported, step])
 
   const finishRecording = () => {
     if (recorderRef.current && recorderRef.current.state !== 'inactive') recorderRef.current.stop()
@@ -498,11 +518,17 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
                   <button
                     type="button"
                     disabled={comingSoon}
-                    onClick={() => void post({ blob: clip.blob, contentType: clip.contentType, durationSeconds: clip.duration })}
+                    onClick={() => {
+                      if (onCaptured) {
+                        onCaptured({ blob: clip.blob, contentType: clip.contentType, duration: clip.duration })
+                        return
+                      }
+                      void post({ blob: clip.blob, contentType: clip.contentType, durationSeconds: clip.duration })
+                    }}
                     className="h-12 flex-1 rounded-full text-[15px] font-semibold disabled:bg-[var(--card-muted)] disabled:text-[var(--muted)]"
                     style={comingSoon ? undefined : { background: 'var(--navy)', color: '#fff' }}
                   >
-                    {comingSoon ? STORIES_COMING_SOON : phase === 'error' ? 'Try again' : 'Post'}
+                    {comingSoon ? STORIES_COMING_SOON : onCaptured ? 'Use this' : phase === 'error' ? 'Try again' : 'Post'}
                   </button>
                 </div>}
               </>

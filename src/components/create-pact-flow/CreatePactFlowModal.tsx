@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import CreatePactFlow from './CreatePactFlow';
+import NewPactFlow from '@/components/new-pact/NewPactFlow';
 
 interface CreatePactFlowModalProps {
   isOpen: boolean;
@@ -17,10 +17,7 @@ interface CreatePactFlowModalProps {
 export default function CreatePactFlowModal({ isOpen, onClose }: CreatePactFlowModalProps) {
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* key resets CreatePactFlowProvider's internal state each time it opens */}
-      <CreatePactFlow key={isOpen ? 'open' : 'closed'} onExit={onClose} />
-    </div>
-  );
+  // The short flow (shoot Day 1, say it, pick who's in) replaced the old
+  // six-step "What's the vibe?" wizard.
+  return <NewPactFlow onExit={onClose} />;
 }

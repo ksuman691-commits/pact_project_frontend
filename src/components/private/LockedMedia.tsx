@@ -30,13 +30,14 @@ export default function LockedMedia({ pact, variant = 'card', className = '' }: 
   const [tipOpen, setTipOpen] = useState(false)
   const tipsKnownOff = pact?.creator_tips_enabled === false
   const { data: tipInfo } = useUserTipInfo(tipsKnownOff ? null : pact?.creator_id)
+  const price: number | null = pact?.watch_price ?? null
   const pending = status === 'pending'
   const said_no = status === 'denied' || status === 'revoked'
 
   const askNow = async (tipId?: number) => {
     try {
-      await ask.mutateAsync(tipId ? { tip_id: tipId } : {})
-      toast.success(`Asked ${firstName}`)
+      const result = await ask.mutateAsync(tipId ? { tip_id: tipId } : {})
+      toast.success(result?.status === 'approved' ? 'You’re in' : price ? `Sent. ${firstName} lets you in once it arrives.` : `Asked ${firstName}`)
     } catch (error: any) {
       toast.error(error?.response?.data?.detail || "Couldn't send that. Try again.")
     }
@@ -56,7 +57,15 @@ export default function LockedMedia({ pact, variant = 'card', className = '' }: 
       <div className="mt-3 text-[19px] font-extrabold tracking-[-0.02em]" style={{ color: '#FFFFFF' }}>Private pact</div>
       <div className="mt-1 max-w-[280px] text-[13.5px] leading-snug" style={{ color: 'rgba(255,255,255,0.82)' }}>
         {moments > 0 ? `${moments} ${moments === 1 ? 'moment' : 'moments'} · ` : ''}
-        {pending ? `You asked. ${firstName} decides who watches.` : said_no ? `${firstName} hasn't let you in.` : `${firstName} shares these with people they let in.`}
+        {pending
+          ? price
+            ? `${firstName} lets you in once your ₹${price} arrives.`
+            : `You asked. ${firstName} decides who watches.`
+          : said_no
+            ? `${firstName} hasn't let you in.`
+            : price
+              ? `₹${price} to watch, paid straight to ${firstName}.`
+              : `${firstName} shares these with people they let in.`}
       </div>
 
       {pending ? (
@@ -64,8 +73,22 @@ export default function LockedMedia({ pact, variant = 'card', className = '' }: 
           <span className="flex h-11 items-center rounded-full px-5 text-[14px] font-extrabold" style={{ background: 'rgba(255,255,255,0.14)', color: '#FFFFFF' }}>
             Waiting for {firstName}
           </span>
-          <button type="button" onClick={() => withdraw.mutate()} className="h-10 px-3 text-[13px] font-bold" style={{ color: 'rgba(255,255,255,0.78)' }}>
-            Cancel request
+          {!price && (
+            <button type="button" onClick={() => withdraw.mutate()} className="h-10 px-3 text-[13px] font-bold" style={{ color: 'rgba(255,255,255,0.78)' }}>
+              Cancel request
+            </button>
+          )}
+        </div>
+      ) : price ? (
+        <div className="mt-4 w-full max-w-[300px]">
+          <button
+            type="button"
+            onClick={() => (tipInfo ? setTipOpen(true) : toast.error(`${firstName} hasn't set up payments yet`))}
+            className="flex h-12 w-full items-center justify-center gap-1.5 rounded-full text-[15.5px] font-extrabold"
+            style={{ background: '#FFFFFF', color: '#1F3A93' }}
+          >
+            <IndianRupee className="size-4" strokeWidth={2.6} aria-hidden="true" />
+            Watch for ₹{price}
           </button>
         </div>
       ) : (
@@ -103,6 +126,7 @@ export default function LockedMedia({ pact, variant = 'card', className = '' }: 
           creatorName={creatorName}
           creatorAvatarUrl={pact?.creator_avatar_url || pact?.creatorAvatarUrl}
           onClaimed={(tip) => void askNow(tip.id)}
+          fixedAmount={price}
         />
       )}
     </div>

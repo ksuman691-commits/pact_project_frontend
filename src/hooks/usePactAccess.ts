@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { askToWatch, getAccessInbox, listWatchers, resolveWatcher, setPactPrivate, withdrawAsk } from '@/lib/api/access'
+import { askToWatch, getAccessInbox, listWatchers, resolveWatcher, setPactPrivate, updateWatchSettings, withdrawAsk } from '@/lib/api/access'
 
 /** Anything that shows pact media must refetch once access changes. */
 function useInvalidateAccess() {
@@ -50,4 +50,16 @@ export function useSetPactPrivate(pactId: number) {
 
 export function useAccessInbox(enabled = true) {
   return useQuery({ queryKey: ['access', 'inbox'], queryFn: getAccessInbox, enabled, staleTime: 30_000 })
+}
+
+export function useUpdateWatchSettings(pactId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { media_locked?: boolean; watch_price?: number | null; watch_auto_approve?: boolean }) => updateWatchSettings(pactId, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['access'] })
+      queryClient.invalidateQueries({ queryKey: ['pacts'] })
+      queryClient.invalidateQueries({ queryKey: ['feed'] })
+    },
+  })
 }
