@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Camera, Check, ChevronLeft, Image as ImageIcon, Lock, MessageCircle, Play, Plus, RotateCcw, Share2, UserRound, UserPlus, X } from 'lucide-react'
+import { Camera, Check, ChevronLeft, Image as ImageIcon, Lock, MessageCircle, Play, RotateCcw, Share2, UserRound, UserPlus, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import LockedMedia from '@/components/private/LockedMedia'
 import WatchersSheet from '@/components/private/WatchersSheet'
@@ -425,8 +425,9 @@ export default function PactMomentsDetail({
               </div>
               <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+5rem)] right-4 z-10 flex flex-col gap-2">
                 <LikeButton pactId={Number(pact.id)} count={Number(pact?.like_count ?? 0)} liked={Boolean(pact?.is_liked_by_me)} />
-                <button type="button" onClick={() => onComment(false)} aria-label="Comment on this moment" className="flex size-12 items-center justify-center rounded-full bg-[var(--card)] text-[var(--ink)] shadow-lg">
-                  <MessageCircle className="size-5" />
+                <button type="button" onClick={() => onComment(false)} aria-label={`Comments, ${Number(pact?.comment_count ?? 0)}`} className="flex size-12 flex-col items-center justify-center rounded-full bg-[var(--card)] text-[var(--navy)] shadow-lg transition active:scale-95">
+                  <MessageCircle className="size-[18px]" strokeWidth={1.9} />
+                  <span className="text-[11px] font-bold leading-none text-[var(--ink)]">{Number(pact?.comment_count ?? 0)}</span>
                 </button>
 
               </div>
@@ -438,13 +439,25 @@ export default function PactMomentsDetail({
 
           {!hasMoments && !isEnded && isParticipant && (
             <div className="absolute inset-0 z-10 px-5 text-center text-white">
-              <button type="button" aria-label="Add a moment" onClick={onAddMoment} className="absolute left-1/2 top-[100px] flex size-[104px] -translate-x-1/2 items-center justify-center rounded-full border-0 bg-[var(--navy)] text-white shadow-[0_0_0_10px_rgba(255,255,255,0.28),0_0_0_22px_rgba(255,255,255,0.14)]">
-                <Plus className="size-11" strokeWidth={2.2} aria-hidden="true" />
+              <button type="button" aria-label="Post Day 1" onClick={onAddMoment} className="absolute left-1/2 top-[96px] flex size-[112px] -translate-x-1/2 items-center justify-center rounded-full border-0 bg-[var(--navy)] text-white shadow-[0_0_0_10px_rgba(255,255,255,0.28),0_0_0_22px_rgba(255,255,255,0.14)] transition active:scale-95">
+                <Camera className="size-11" strokeWidth={2} aria-hidden="true" />
               </button>
-              <div className="absolute left-0 right-0 top-[232px] text-[24px] font-extrabold tracking-[-0.4px] text-white">Add a moment</div>
-              <div className="absolute inset-x-5 bottom-[22px] text-left text-white">
-                <div className="text-[12px] font-bold opacity-80">No moments yet</div>
-                <div className="mt-0.5 text-[17px] font-extrabold leading-[22px]">Make something worth showing.</div>
+              <div className="absolute left-0 right-0 top-[240px] text-[28px] font-extrabold tracking-[-0.5px] text-white">Post Day 1</div>
+              <div className="absolute left-0 right-0 top-[278px] text-[14px] font-semibold text-white/80">A 15-second video starts your streak.</div>
+              <div className="absolute inset-x-5 bottom-[22px]">
+                <button type="button" onClick={onAddMoment} className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-white text-[16px] font-extrabold text-[var(--navy)]">
+                  <Camera className="size-5" strokeWidth={2.2} aria-hidden="true" />
+                  Post Day 1
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!hasMoments && !isEnded && !isParticipant && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-6 text-center text-white">
+              <div className="text-[20px] font-extrabold tracking-[-0.3px] text-white">Day 1 Is Coming</div>
+              <div className="mt-1 max-w-[260px] text-[14px] font-semibold text-white/80">
+                {String(pact?.creator_full_name || pact?.creator_username || 'They').split(' ')[0]} hasn&apos;t posted yet. Check back soon.
               </div>
             </div>
           )}

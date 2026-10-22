@@ -53,7 +53,7 @@ export default function IdentityStep() {
   return (
     <div className="pact-step-enter flex flex-1 flex-col">
       <h1 className="text-2xl font-bold">Give it a face.</h1>
-      <p className="mt-1 text-sm">A photo (or emoji), a name, and a one-line tagline.</p>
+      <p className="text-[var(--muted)] mt-1 text-sm">A photo (or emoji), a name, and a one-line tagline.</p>
 
       <div className="mt-6 flex flex-col items-center">
         <input ref={fileInputRef} type="file" accept="image/*" className="sr-only" onChange={handlePhotoChange} />

@@ -10,7 +10,7 @@ export default function PrivacyStep() {
   return (
     <div className="pact-step-enter flex flex-1 flex-col">
       <h1 className="text-2xl font-bold">Who can join?</h1>
-      <p className="mt-1 text-sm">You can change this later from circle settings.</p>
+      <p className="text-[var(--muted)] mt-1 text-sm">You can change this later from circle settings.</p>
 
       <div className="mt-6 flex flex-col gap-2">
         {PRIVACY_OPTIONS.map((option) => {

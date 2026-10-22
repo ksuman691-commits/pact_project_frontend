@@ -10,8 +10,8 @@ export function isValidUpiId(value: string) {
 export function buildUpiUri({ upiId, payeeName, note, amount }: { upiId: string; payeeName?: string; note?: string; amount?: number | null }) {
   // The UPI ID goes in as-is (it only has safe characters); some UPI apps
   // don't decode %40 back to @.
-  const parts = [`pa=${upiId.trim()}`]
-  if (payeeName) parts.push(`pn=${encodeURIComponent(payeeName.trim())}`)
+  const parts = [`pa=${String(upiId ?? "").trim()}`]
+  if (payeeName) parts.push(`pn=${encodeURIComponent(String(payeeName).trim())}`)
   if (note) parts.push(`tn=${encodeURIComponent(note.slice(0, 50))}`)
   if (amount && amount > 0) parts.push(`am=${amount.toFixed(2)}`)
   parts.push('cu=INR')

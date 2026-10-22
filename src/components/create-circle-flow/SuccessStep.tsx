@@ -41,7 +41,7 @@ export default function SuccessStep() {
       <p className="mt-2 text-base font-medium" style={{ color: 'var(--pact-text)' }}>
         {createdCircle.name}
       </p>
-      <p className="mt-1 text-sm">Now get someone to make a pact in it.</p>
+      <p className="text-[var(--muted)] mt-1 text-sm">Now get someone to make a pact in it.</p>
 
       <div className="mt-8 flex w-full flex-col gap-3">
         <button

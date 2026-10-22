@@ -5,12 +5,17 @@ import { ChevronRight, Inbox } from 'lucide-react'
 import { useAccessInbox, useCircleRequests } from '@/hooks/usePactAccess'
 import { useTipInbox } from '@/hooks/useTips'
 
+/** People waiting on you: watch asks and payments, circle join asks, tips to confirm. */
+export function useRequestCount(enabled = true) {
+  const watch = useAccessInbox(enabled)
+  const circles = useCircleRequests(enabled)
+  const tips = useTipInbox(enabled)
+  return (watch.data?.pending.length ?? 0) + (circles.data?.pending.length ?? 0) + (tips.data?.waiting.length ?? 0)
+}
+
 /** On your own profile, only when someone is waiting on you. */
 export default function RequestsEntryCard({ className = '' }: { className?: string }) {
-  const watch = useAccessInbox()
-  const circles = useCircleRequests()
-  const tips = useTipInbox()
-  const count = (watch.data?.pending.length ?? 0) + (circles.data?.pending.length ?? 0) + (tips.data?.waiting.length ?? 0)
+  const count = useRequestCount()
   if (count === 0) return null
   return (
     <Link href="/requests" className={`flex items-center gap-3 rounded-[18px] px-4 py-3 ${className}`} style={{ background: '#F5F7FD', border: '1.5px solid #1F3A93' }}>

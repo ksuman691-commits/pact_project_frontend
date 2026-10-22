@@ -72,7 +72,7 @@ export default function ReviewStep() {
   return (
     <div className="pact-step-enter flex flex-1 flex-col">
       <h1 className="text-2xl font-bold">Review your circle</h1>
-      <p className="mt-1 text-sm">This is what it&apos;ll look like.</p>
+      <p className="text-[var(--muted)] mt-1 text-sm">This is what it&apos;ll look like.</p>
 
       <div className="mt-6">
         <CircleCard />

@@ -103,6 +103,12 @@ export default function FeedPageClient() {
     feedAnchor?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [category])
 
+  // Home shows one card between Today and the feed: a profile reminder while
+  // one is due, otherwise the dare of the day. Never both.
+  const showChecklist = profileCompletion.showChecklist && !checklistDismissed
+  const showNudge = !showChecklist && profileCompletion.showSingleNudge && !nudgeDismissed && Boolean(profileCompletion.missingItem)
+  const showDare = !showChecklist && !showNudge
+
   const handleCreatePact = () => {
     if (!user) {
       toast.error('Please login to create a pact')
@@ -152,13 +158,13 @@ export default function FeedPageClient() {
             than a second, home-feed-specific pick. Renders nothing when
             Discover has no open public dare, same as the Dares page's own
             hero. */}
-        {isInitialized && user && featuredDare && (
+        {isInitialized && user && featuredDare && showDare && (
           <div className="max-w-md mx-auto px-4 pb-4">
             <FeaturedDareCard dare={featuredDare} />
           </div>
         )}
 
-        {profileCompletion.showChecklist && !checklistDismissed && (
+        {showChecklist && (
           <div className="max-w-md mx-auto px-4 pb-4">
             <ProfileCompletionCard
               percent={profileCompletion.percent}
@@ -168,7 +174,7 @@ export default function FeedPageClient() {
           </div>
         )}
 
-        {profileCompletion.showSingleNudge && !nudgeDismissed && profileCompletion.missingItem && (
+        {showNudge && profileCompletion.missingItem && (
           <div className="max-w-md mx-auto px-4 pb-4">
             <ProfileNudgeCard itemId={profileCompletion.missingItem.id} onDismiss={() => setNudgeDismissed(true)} />
           </div>

@@ -21,7 +21,7 @@ export default function InviteStep() {
   return (
     <div className="pact-step-enter flex flex-1 flex-col">
       <h1 className="text-2xl font-bold">Bring some people in.</h1>
-      <p className="mt-1 text-sm">Optional — you can invite more later.</p>
+      <p className="text-[var(--muted)] mt-1 text-sm">Optional — you can invite more later.</p>
 
       <div className="mt-6 flex flex-1 flex-col gap-2 overflow-y-auto">
         {isLoading && (
