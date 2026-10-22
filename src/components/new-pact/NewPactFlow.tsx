@@ -103,17 +103,16 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   const circle = circles.find((c) => Number(c.id) === circleId)
   const circleIsPrivate = audience === 'circle' && circle?.visibility === 'private'
   // Selling access needs somewhere for the money to go.
-  const needsUpi = locked && watchPrice != null && Boolean(tips.data) && !tips.data?.enabled
+  const needsUpi = locked && Boolean(tips.data) && !tips.data?.enabled
+  const needsPrice = locked && watchPrice == null
   const lockHint =
     audience === 'circle'
       ? circleIsPrivate
-        ? watchPrice != null
-          ? `A premium drop: members of ${circle?.name ?? 'the circle'} pay ₹${watchPrice} too.`
-          : `Members of ${circle?.name ?? 'the circle'} watch free. Add a price to make it a premium drop.`
-        : 'Circle members ask or pay like anyone. Your followers see it locked and can buy.'
+        ? `A premium drop: members of ${circle?.name ?? 'the circle'} pay too. Leave it off and the circle watches free.`
+        : 'Circle members pay like anyone. Your followers see it locked and can buy.'
       : audience === 'followers'
-        ? 'Followers see it locked in their feed. Anyone with the link can ask or pay.'
-        : 'Shows in Discover, locked. Anyone can ask or pay to watch.'
+        ? 'Followers see it locked in their feed. Anyone with the link can pay to watch.'
+        : 'Shows in Discover, locked. Anyone can pay to watch.'
 
   const post = async () => {
     if (!ready || posting) return
@@ -381,14 +380,17 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[15.5px] font-extrabold" style={{ color: INK }}>Private Moments</span>
-                  <span className="mt-0.5 block text-[12.5px] leading-snug" style={{ color: MUTED }}>{locked ? lockHint : 'Off: whoever sees the pact sees your videos.'}</span>
+                  <span className="mt-0.5 block text-[12.5px] leading-snug" style={{ color: MUTED }}>{locked ? lockHint : 'Off: free. Everyone who sees the pact watches, no asking.'}</span>
                 </span>
                 <button
                   type="button"
                   role="switch"
                   aria-checked={locked}
                   aria-label="Private moments"
-                  onClick={() => setLocked((value) => !value)}
+                  onClick={() => {
+                    if (!locked && watchPrice == null) setWatchPrice(21)
+                    setLocked((value) => !value)
+                  }}
                   className="relative h-8 w-[52px] shrink-0 rounded-full transition-colors"
                   style={{ background: locked ? NAVY : '#D4D5D9' }}
                 >
@@ -403,7 +405,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
             </div>
             {locked && tips.data && !tips.data.enabled && (
               <Link href="/profile/tips" className="mt-3 flex min-h-11 items-center rounded-[14px] px-3.5 text-[13.5px] font-bold" style={{ border: `1.5px dashed ${NAVY}`, color: NAVY, background: '#F5F7FD' }}>
-                {watchPrice != null ? 'Add your UPI first, so people can pay you' : 'Turn on tips so people can back you'}
+                Add your UPI first, so people can pay you
               </Link>
             )}
           </div>
@@ -411,7 +413,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
             <button
               type="button"
               onClick={() => void post()}
-              disabled={Boolean(posting) || (audience === 'circle' && circleId == null) || needsUpi}
+              disabled={Boolean(posting) || (audience === 'circle' && circleId == null) || needsUpi || needsPrice}
               className="h-14 w-full rounded-full text-[16.5px] font-extrabold disabled:opacity-70"
               style={{ background: NAVY, color: '#FFFFFF', boxShadow: '0 8px 22px rgba(31,58,147,0.28)' }}
             >
@@ -433,7 +435,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
               <div className="text-[30px] font-extrabold tracking-[-0.035em]" style={{ color: INK }}>{clip ? 'You’re on Day 1.' : 'Your pact is live.'}</div>
               <div className="mt-1.5 text-[14.5px]" style={{ color: MUTED }}>
                 {audience === 'circle' ? `${circle?.name ?? 'Your circle'} can see it now.` : audience === 'followers' ? 'Your followers can see it now.' : 'It’s live in Discover.'}
-                {locked ? (watchPrice != null ? ` Moments are ₹${watchPrice} to watch.` : ' Moments are private: people ask to watch.') : ''}
+                {locked && watchPrice != null ? ` Moments are ₹${watchPrice} to watch.` : ''}
               </div>
             </div>
             <div className="mt-5 overflow-hidden rounded-[24px]" style={{ background: CARD, border: `1px solid ${LINE}` }}>

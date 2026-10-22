@@ -59,7 +59,7 @@ export function useAccessInbox(enabled = true) {
 export function useUpdateWatchSettings(pactId: number) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (body: { media_locked?: boolean; watch_price?: number | null; watch_auto_approve?: boolean }) => updateWatchSettings(pactId, body),
+    mutationFn: (body: { media_locked?: boolean; watch_price?: number | null; watch_auto_approve?: boolean; keep_members?: boolean }) => updateWatchSettings(pactId, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['access'] })
       queryClient.invalidateQueries({ queryKey: ['pacts'] })

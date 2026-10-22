@@ -57,7 +57,8 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
     setAuto(watchAutoApprove)
   }, [open, watchPrice, watchAutoApprove])
   if (!open) return null
-  const settingsChanged = price !== watchPrice || auto !== watchAutoApprove
+  // No saving a lock without a price: free moments are just open.
+  const settingsChanged = price != null && (price !== watchPrice || auto !== watchAutoApprove)
   const saveWatch = async () => {
     try {
       await saveSettings.mutateAsync({ watch_price: price, watch_auto_approve: price != null && auto })
@@ -80,12 +81,19 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
     }
   }
 
+  // Locking always comes with a price: free moments are simply open.
   const lock = async (next: boolean, keepMembers = true) => {
     setAskKeep(false)
     try {
-      await setPrivate.mutateAsync({ locked: next, keepMembers })
+      if (next) {
+        const startPrice = price ?? 21
+        await saveSettings.mutateAsync({ media_locked: true, watch_price: startPrice, watch_auto_approve: auto, keep_members: keepMembers })
+        setPrice(startPrice)
+      } else {
+        await setPrivate.mutateAsync({ locked: false })
+      }
       await watchers.refetch()
-      toast.success(!next ? 'Pact is open again' : inCircle ? (keepMembers ? 'Private. Current circle members keep watching.' : 'Private. Everyone pays or asks from now.') : 'Pact is private')
+      toast.success(!next ? 'Open again. Everyone who sees it watches free.' : inCircle ? (keepMembers ? `₹${price ?? 21} to watch. Current circle members keep watching.` : `₹${price ?? 21} to watch, for everyone from now.`) : `₹${price ?? 21} to watch`)
     } catch {
       toast.error('Could not change that')
     }
@@ -112,7 +120,7 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
           <div className="min-w-0 flex-1">
             <div className="text-[15px] font-extrabold" style={{ color: INK }}>Private pact</div>
             <div className="text-[12.5px] leading-snug" style={{ color: MUTED }}>
-              {locked ? 'Only you, people in the pact and people you let in see the moments.' : 'Anyone who can see the pact sees the moments.'}
+              {locked ? 'People pay to watch. You, people in the pact and buyers see the moments.' : 'Free: anyone who can see the pact watches. Turn on to charge for it.'}
             </div>
           </div>
           <button
@@ -121,7 +129,7 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
             aria-checked={locked}
             aria-label="Private pact"
             onClick={toggle}
-            disabled={setPrivate.isPending}
+            disabled={setPrivate.isPending || saveSettings.isPending}
             className="relative h-8 w-[52px] shrink-0 rounded-full transition-colors disabled:opacity-60"
             style={{ background: locked ? NAVY : '#D4D5D9' }}
           >
@@ -134,10 +142,10 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
             <div className="text-[15px] font-extrabold" style={{ color: INK }}>People already in the circle</div>
             <div className="mt-0.5 text-[12.5px] leading-snug" style={{ color: MUTED }}>New people always ask or pay. Choose for everyone in the circle today.</div>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <button type="button" disabled={setPrivate.isPending} onClick={() => void lock(true, true)} className="min-h-11 rounded-full px-2 text-[13.5px] font-extrabold disabled:opacity-60" style={{ background: '#FBF8F1', color: INK, border: `1px solid ${LINE}` }}>
+              <button type="button" disabled={saveSettings.isPending} onClick={() => void lock(true, true)} className="min-h-11 rounded-full px-2 text-[13.5px] font-extrabold disabled:opacity-60" style={{ background: '#FBF8F1', color: INK, border: `1px solid ${LINE}` }}>
                 Keep them watching
               </button>
-              <button type="button" disabled={setPrivate.isPending} onClick={() => void lock(true, false)} className="min-h-11 rounded-full px-2 text-[13.5px] font-extrabold disabled:opacity-60" style={{ background: NAVY, color: '#FFFFFF' }}>
+              <button type="button" disabled={saveSettings.isPending} onClick={() => void lock(true, false)} className="min-h-11 rounded-full px-2 text-[13.5px] font-extrabold disabled:opacity-60" style={{ background: NAVY, color: '#FFFFFF' }}>
                 Everyone pays
               </button>
             </div>
