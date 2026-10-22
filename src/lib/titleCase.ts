@@ -7,3 +7,16 @@ export function titleCase(value: string | null | undefined): string {
   if (!value) return value ?? ''
   return value.replace(/(^|[\s(\-/"“'‘])(\p{Ll})/gu, (_match, lead: string, letter: string) => lead + letter.toUpperCase())
 }
+
+/**
+ * A pact title as people should see it: no emoji (older pacts had one stuck
+ * on the front), single spaces, Title Case.
+ */
+export function cleanTitle(value: string | null | undefined): string {
+  if (!value) return ''
+  const stripped = value
+    .replace(/[\p{Extended_Pictographic}\p{Emoji_Modifier}‍️⃣]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return titleCase(stripped || value.trim())
+}

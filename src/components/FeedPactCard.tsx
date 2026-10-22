@@ -1,6 +1,7 @@
 'use client';
 
 import TipButton from '@/components/tips/TipButton';
+import { cleanTitle } from '@/lib/titleCase';
 import LockedMedia from '@/components/private/LockedMedia';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -390,7 +391,10 @@ export default function FeedPactCard({
   );
   const creatorUsername = pact.creator_username || null;
   const creatorProfileHref = creatorUsername ? `/profile/${encodeURIComponent(creatorUsername)}` : null;
-  const creatorAvatarUrl = pact.creatorAvatarUrl || pact.creator_avatar_url || null;
+  const isOwnPact = creatorLabel === 'You';
+  const creatorAvatarUrl = pact.creatorAvatarUrl || pact.creator_avatar_url || (isOwnPact ? user?.avatar_url : null) || null;
+  // Initials come from the real name, never from "You".
+  const creatorAvatarName = pact.creator_full_name || (isOwnPact ? user?.full_name || user?.username : null) || pact.creator_username || creatorLabel;
   // Circle name only — NOT category. category is already shown as its own
   // label directly above the title; falling back to it here duplicated the
   // same text as a second line (e.g. "Startup" under "Startup · Save
@@ -743,11 +747,11 @@ export default function FeedPactCard({
     <div className="pointer-events-auto flex min-w-0 flex-1 items-center gap-2.5" onClick={(event) => event.stopPropagation()}>
       <span className={`inline-flex h-[34px] w-[34px] shrink-0 overflow-hidden rounded-full ${onPhoto ? 'ring-2 ring-white/70' : ''}`}>
         {momentStory ? (
-          <Avatar name={momentAuthor} avatarUrl={momentStory.avatar_url} size={34} />
+          <Avatar name={momentAuthor === 'You' ? user?.full_name || user?.username || 'You' : momentAuthor} avatarUrl={momentStory.avatar_url || (momentAuthor === 'You' ? user?.avatar_url : null) || null} size={34} />
         ) : creatorProfileHref ? (
-          <UserAvatarLink name={creatorLabel} avatarUrl={creatorAvatarUrl} username={creatorUsername} size={34} stopPropagation />
+          <UserAvatarLink name={creatorAvatarName} avatarUrl={creatorAvatarUrl} username={creatorUsername} size={34} stopPropagation />
         ) : (
-          <Avatar name={creatorLabel} avatarUrl={creatorAvatarUrl} size={34} />
+          <Avatar name={creatorAvatarName} avatarUrl={creatorAvatarUrl} size={34} />
         )}
       </span>
       <div className="min-w-0" style={onPhoto ? { color: '#fff', textShadow: '0 1px 6px rgba(0,0,0,0.45)' } : undefined}>
@@ -835,7 +839,7 @@ export default function FeedPactCard({
               {identity(false)}
               {kebab(false)}
             </div>
-            <div className="line-clamp-2 px-4 pb-2.5 text-[18px] font-extrabold leading-[1.2] tracking-[-0.02em]" style={{ color: 'var(--ink)' }}>{pact.title}</div>
+            <div className="line-clamp-2 px-4 pb-2.5 text-[18px] font-extrabold leading-[1.2] tracking-[-0.02em]" style={{ color: 'var(--ink)' }}>{cleanTitle(pact.title)}</div>
             <div className="relative mx-3 overflow-hidden rounded-[18px]">
               <LockedMedia pact={pact} variant="card" />
             </div>
@@ -884,7 +888,7 @@ export default function FeedPactCard({
                   <span className="ml-auto text-[12px] font-bold" style={{ color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{Math.min(activeProofIndex + 1, tiles.length)} / {tiles.length}</span>
                 )}
               </div>
-              <h2 className="mt-1.5 text-balance text-[21px] font-extrabold leading-[1.2] tracking-[-0.02em]" style={{ color: '#fff', textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>{pact.title}</h2>
+              <h2 className="mt-1.5 text-balance text-[21px] font-extrabold leading-[1.2] tracking-[-0.02em]" style={{ color: '#fff', textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>{cleanTitle(pact.title)}</h2>
             </div>
 
           </div>
@@ -907,7 +911,7 @@ export default function FeedPactCard({
                   >
                     {progressInfo ? <MiniRing percent={progressInfo.percent} label={`D${dayNo}`} /> : <Camera className="h-6 w-6 shrink-0 text-[var(--navy)]" />}
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px] font-bold text-[var(--ink)]">{pact.title}</span>
+                      <span className="block truncate text-[15px] font-bold text-[var(--ink)]">{cleanTitle(pact.title)}</span>
                       <span className="mt-0.5 block text-[12.5px] text-[var(--muted)]">{onAddMoment ? 'No moment yet today' : 'Nothing posted today'}</span>
                     </span>
                     <Camera className="h-5 w-5 shrink-0 text-[var(--navy)]" aria-hidden="true" />
@@ -916,7 +920,7 @@ export default function FeedPactCard({
                   <div className="flex w-full items-center gap-3 rounded-[18px] border-[1.5px] border-dashed border-[var(--seat-border)] bg-[var(--card-muted)] p-3.5">
                     {progressInfo ? <MiniRing percent={progressInfo.percent} label={`D${dayNo}`} /> : <Camera className="h-6 w-6 shrink-0 text-[var(--muted)]" />}
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px] font-bold text-[var(--ink)]">{pact.title}</span>
+                      <span className="block truncate text-[15px] font-bold text-[var(--ink)]">{cleanTitle(pact.title)}</span>
                       <span className="mt-0.5 block text-[12.5px] text-[var(--muted)]">{onAddMoment ? 'No moment yet' : 'Nothing posted yet'}</span>
                     </span>
                   </div>

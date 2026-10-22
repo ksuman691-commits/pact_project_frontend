@@ -61,7 +61,21 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   const queryClient = useQueryClient()
   const createPact = useCreatePact()
   const circlesQuery = useCircles()
-  const circles = useMemo(() => ((circlesQuery.data || []) as any[]).filter((c) => c?.id != null), [circlesQuery.data])
+  // One chip per circle, even if the list repeats one (owned and joined).
+  const circles = useMemo(() => {
+    const seen = new Set<number>()
+    return ((circlesQuery.data || []) as any[]).filter((c) => {
+      if (c?.id == null || seen.has(Number(c.id))) return false
+      seen.add(Number(c.id))
+      return true
+    })
+  }, [circlesQuery.data])
+  // Two different circles with the same name get their member count so you can tell them apart.
+  const nameCount = useMemo(() => {
+    const counts = new Map<string, number>()
+    circles.forEach((c) => counts.set(String(c.name).trim().toLowerCase(), (counts.get(String(c.name).trim().toLowerCase()) || 0) + 1))
+    return counts
+  }, [circles])
   const tips = useMyTipSettings()
   const me = useAuthStore((state) => state.user)
   const followerCount = (((useFollowers(me?.id).data as any)?.data || []) as any[]).length
@@ -262,9 +276,9 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                 ref={inputRef}
                 value={text}
                 onChange={(e) => setText(e.target.value.slice(0, 120))}
-                placeholder="run 5 km every morning for 30 days"
+                placeholder="run 5 km every morning"
                 enterKeyHint="next"
-                className="mt-2 w-full border-0 border-b-2 bg-transparent pb-2.5 pt-1.5 text-[21px] font-semibold outline-none"
+                className="mt-2 w-full border-0 border-b-2 bg-transparent pb-2.5 pt-1.5 text-[21px] font-semibold outline-none placeholder:text-[17px] placeholder:font-medium placeholder:text-[#A39C8C]"
                 style={{ borderColor: INK, color: INK }}
               />
             </label>
@@ -366,7 +380,10 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                 {circles.map((c) => (
                   <button key={c.id} type="button" onClick={() => setCircleId(Number(c.id))} className="flex h-9 items-center gap-1 rounded-full px-3.5 text-[13.5px] font-bold" style={pill(Number(c.id) === circleId)}>
                     {c.visibility === 'private' && <Lock className="size-3" strokeWidth={2.6} aria-label="Private circle" />}
-                    {c.name}
+                    {titleCase(String(c.name || ''))}
+                    {(nameCount.get(String(c.name).trim().toLowerCase()) || 0) > 1 && (
+                      <span className="font-semibold opacity-70"> · {c.member_count ?? 0}</span>
+                    )}
                   </button>
                 ))}
               </div>
