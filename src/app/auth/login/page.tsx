@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { readNext } from '@/lib/authNext';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
@@ -14,6 +15,12 @@ export default function Login() {
   const isLoading = useAuthStore((state) => state.isLoading);
 
   const [formData, setFormData] = useState({ email: '', password: '' });
+  // Keep ?next= when switching to sign-up, so a shared link still lands where it pointed.
+  const [registerHref, setRegisterHref] = useState('/auth/register');
+  useEffect(() => {
+    const next = readNext('');
+    if (next) setRegisterHref(`/auth/register?next=${encodeURIComponent(next)}`);
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -24,7 +31,7 @@ export default function Login() {
     try {
       await login(formData.email, formData.password);
       toast.success('Signed in');
-      router.push('/');
+      router.push(readNext('/'));
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Sign in failed');
     }
@@ -52,7 +59,7 @@ export default function Login() {
 
       <p className="mt-6 text-center text-[14px] text-[var(--muted)]">
         New here?{' '}
-        <Link href="/auth/register" className="font-semibold text-[var(--navy)] hover:text-[var(--navy-hover)] hover:underline">
+        <Link href={registerHref} className="font-semibold text-[var(--navy)] hover:text-[var(--navy-hover)] hover:underline">
           Create an account
         </Link>
       </p>

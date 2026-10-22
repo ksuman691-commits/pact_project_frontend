@@ -4,6 +4,7 @@ import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
+import { readNext } from '@/lib/authNext';
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -20,8 +21,8 @@ export default function GoogleSignInButton() {
 
     try {
       await loginWithGoogle(credentialResponse.credential);
-      toast.success('login successful');
-      router.push('/');
+      toast.success('Signed in');
+      router.push(readNext('/'));
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Google sign-in failed');
     }
