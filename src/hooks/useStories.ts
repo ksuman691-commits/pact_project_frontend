@@ -5,7 +5,7 @@ import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createStory, getStoryViewers, getTodayStories, markStorySeen, putStoryVideo, requestStoryUploadUrl } from '@/lib/api/stories'
 import { isStoriesUnavailable, storyErrorMessage, STORIES_ENABLED, STORY_MAX_SECONDS, type PactStory } from '@/lib/stories'
 import { queryKeys } from '@/lib/queryKeys'
-import { circleService } from '@/services/api'
+import { circleService, pactService } from '@/services/api'
 
 export const storyKeys = {
   all: ['stories'] as const,
@@ -99,15 +99,25 @@ export function usePostStory(pactId: number) {
       setRetryable(false)
       setProgress(0)
       try {
-        setPhase('requesting')
-        const { upload_url, object_key } = await requestStoryUploadUrl(pactId, { content_type: contentType, size_bytes: blob.size })
-        setPhase('uploading')
-        await putStoryVideo(upload_url, blob, contentType, setProgress)
-        setPhase('saving')
-        await createStory(pactId, {
-          object_key,
-          duration_seconds: Math.min(STORY_MAX_SECONDS, Math.max(1, Math.round(durationSeconds))),
-        })
+        if (contentType.startsWith('image/')) {
+          // Photo moments go through the pact's photo upload (checked for safety there),
+          // and count for today's day like a video.
+          setPhase('uploading')
+          const extension = contentType === 'image/png' ? 'png' : contentType === 'image/webp' ? 'webp' : contentType.includes('hei') ? 'heic' : 'jpg'
+          const file = new File([blob], `moment.${extension}`, { type: contentType })
+          await pactService.uploadProofFile(pactId, file, 'photo', undefined, undefined, setProgress)
+          setPhase('saving')
+        } else {
+          setPhase('requesting')
+          const { upload_url, object_key } = await requestStoryUploadUrl(pactId, { content_type: contentType, size_bytes: blob.size })
+          setPhase('uploading')
+          await putStoryVideo(upload_url, blob, contentType, setProgress)
+          setPhase('saving')
+          await createStory(pactId, {
+            object_key,
+            duration_seconds: Math.min(STORY_MAX_SECONDS, Math.max(1, Math.round(durationSeconds))),
+          })
+        }
         setPhase('done')
         void Promise.all([
           queryClient.invalidateQueries({ queryKey: storyKeys.pactToday(pactId) }),
@@ -119,8 +129,10 @@ export function usePostStory(pactId: number) {
           queryClient.invalidateQueries({ queryKey: queryKeys.circles.lists() }),
         ])
       } catch (err) {
-        setUnavailable(isStoriesUnavailable(err))
-        setError(storyErrorMessage(err))
+        // The photo upload is always there, so a 404 on it is a real error, not "coming soon".
+        const isPhoto = contentType.startsWith('image/')
+        setUnavailable(!isPhoto && isStoriesUnavailable(err))
+        setError(isPhoto && isStoriesUnavailable(err) ? "Couldn't find this pact. Refresh and try again." : storyErrorMessage(err))
         setRetryable(isRetryablePostError(err))
         setPhase('error')
       }

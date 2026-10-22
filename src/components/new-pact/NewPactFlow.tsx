@@ -9,6 +9,7 @@ import toast from 'react-hot-toast'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
 import PriceChooser from '@/components/private/PriceChooser'
 import { useCreatePact } from '@/hooks/usePactMutations'
+import { pactService } from '@/services/api'
 import { useCircles } from '@/hooks/useCircles'
 import { useMyTipSettings } from '@/hooks/useTips'
 import { useFollowers } from '@/hooks/useFollows'
@@ -108,6 +109,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
     if (step === 'say') window.setTimeout(() => inputRef.current?.focus(), 250)
   }, [step])
 
+  const isPhoto = Boolean(clip?.contentType.startsWith('image/'))
   const parsed = parseSentence(text)
   const days = pickedDays ?? parsed.days ?? 30
   const frequency = pickedFrequency ?? parsed.frequency ?? 'Every day'
@@ -160,9 +162,15 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
     if (clip) {
       try {
         setPosting('Posting Day 1… 0%')
-        const { upload_url, object_key } = await requestStoryUploadUrl(pactId, { content_type: clip.contentType, size_bytes: clip.blob.size })
-        await putStoryVideo(upload_url, clip.blob, clip.contentType, (fraction) => setPosting(`Posting Day 1… ${Math.round(fraction * 100)}%`))
-        await createStory(pactId, { object_key, duration_seconds: Math.min(STORY_MAX_SECONDS, Math.max(1, Math.round(clip.duration))) })
+        const onProgress = (fraction: number) => setPosting(`Posting Day 1… ${Math.round(fraction * 100)}%`)
+        if (isPhoto) {
+          const file = new File([clip.blob], clip.contentType === 'image/png' ? 'day-1.png' : 'day-1.jpg', { type: clip.contentType })
+          await pactService.uploadProofFile(pactId, file, 'photo', undefined, undefined, onProgress)
+        } else {
+          const { upload_url, object_key } = await requestStoryUploadUrl(pactId, { content_type: clip.contentType, size_bytes: clip.blob.size })
+          await putStoryVideo(upload_url, clip.blob, clip.contentType, onProgress)
+          await createStory(pactId, { object_key, duration_seconds: Math.min(STORY_MAX_SECONDS, Math.max(1, Math.round(clip.duration))) })
+        }
       } catch {
         toast("Your pact is live. Day 1 didn't upload, add it from the pact.")
       }
@@ -258,7 +266,12 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                 className="relative h-[100px] w-[76px] shrink-0 overflow-hidden rounded-[16px]"
                 style={clip ? { background: INK } : { background: '#E8E2D4', border: '2px dashed #CFC5B0' }}
               >
-                {clip && <video src={`${clip.url}#t=0.1`} muted playsInline preload="auto" className="absolute inset-0 size-full object-cover" />}
+                {clip && (isPhoto ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={clip.url} alt="" className="absolute inset-0 size-full object-cover" />
+                ) : (
+                  <video src={`${clip.url}#t=0.1`} muted playsInline preload="auto" className="absolute inset-0 size-full object-cover" />
+                ))}
                 {clip ? (
                   <span className="absolute bottom-1.5 left-1.5 rounded-lg px-1.5 py-0.5 text-[10.5px] font-extrabold" style={{ background: 'rgba(15,16,20,0.6)', color: '#FFFFFF' }}>Day 1</span>
                 ) : (
@@ -266,7 +279,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                 )}
               </button>
               <div className="pb-1 text-[13.5px] leading-snug" style={{ color: MUTED }}>
-                {clip ? 'Day 1 is in. Now say what you’re committing to.' : 'No video yet. Tap the box to shoot Day 1, or add it later.'}
+                {clip ? 'Day 1 is in. Now say what you’re committing to.' : 'Nothing yet. Tap the box for a photo or video of Day 1, or add it later.'}
               </div>
             </div>
 
@@ -457,9 +470,14 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
             </div>
             <div className="mt-5 overflow-hidden rounded-[24px]" style={{ background: CARD, border: `1px solid ${LINE}` }}>
               <div className="relative h-[300px]" style={{ background: clip ? INK : 'radial-gradient(120% 80% at 30% 20%, #2A3A6E 0%, #141A2E 60%, #0F1014 100%)' }}>
-                {clip && <video src={clip.url} autoPlay loop muted playsInline className="absolute inset-0 size-full object-cover" />}
+                {clip && (isPhoto ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={clip.url} alt="" className="absolute inset-0 size-full object-cover" />
+                ) : (
+                  <video src={clip.url} autoPlay loop muted playsInline className="absolute inset-0 size-full object-cover" />
+                ))}
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5" style={{ background: 'linear-gradient(0deg, rgba(15,16,20,0.75), rgba(15,16,20,0))' }} />
-                {clip && (
+                {clip && !isPhoto && (
                   <span className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full" style={{ background: 'rgba(15,16,20,0.55)', color: '#FFFFFF' }}>
                     <Play className="size-4 fill-current" />
                   </span>

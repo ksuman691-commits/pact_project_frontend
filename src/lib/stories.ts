@@ -5,7 +5,62 @@ export const STORIES_ENABLED = process.env.NEXT_PUBLIC_STORIES_ENABLED === 'true
 export const STORY_MAX_SECONDS = 15
 export const STORY_MAX_BYTES = 30 * 1024 * 1024
 export const STORY_ALLOWED_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'] as const
-export const STORY_LIMITS_TEXT = 'Up to 15 seconds. MP4, WebM or MOV, 30 MB max.'
+export const STORY_LIMITS_TEXT = 'A photo, or a video up to 15 seconds (30 MB max).'
+/** The pact photo upload takes images up to 10 MB. */
+export const PHOTO_MAX_BYTES = 10 * 1024 * 1024
+const PHOTO_MAX_EDGE = 2048
+
+export function isImageFile(file: Blob & { name?: string }): boolean {
+  const raw = (file.type || '').toLowerCase()
+  if (raw.startsWith('image/')) return true
+  const ext = file.name?.split('.').pop()?.toLowerCase()
+  return Boolean(ext && ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'gif'].includes(ext))
+}
+
+function loadImage(blob: Blob): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve(img)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('decode'))
+    }
+    img.src = url
+  })
+}
+
+/**
+ * Gets a photo ready to post: big or unusual images are redrawn as a JPEG no
+ * wider than 2048 px, so phone photos upload fast and stay under 10 MB.
+ * Returns null when the photo can't be used.
+ */
+export async function preparePhoto(file: Blob & { name?: string }): Promise<{ blob: Blob; contentType: string } | null> {
+  const type = (file.type || '').toLowerCase()
+  const plain = ['image/jpeg', 'image/png', 'image/webp'].includes(type)
+  let img: HTMLImageElement
+  try {
+    img = await loadImage(file)
+  } catch {
+    // The browser can't open it (e.g. HEIC outside Safari). Send it as is if it fits.
+    return file.size <= PHOTO_MAX_BYTES ? { blob: file, contentType: type || 'image/jpeg' } : null
+  }
+  const longest = Math.max(img.naturalWidth, img.naturalHeight)
+  if (plain && longest <= PHOTO_MAX_EDGE && file.size <= 3 * 1024 * 1024) return { blob: file, contentType: type }
+  const scale = Math.min(1, PHOTO_MAX_EDGE / Math.max(1, longest))
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.max(1, Math.round(img.naturalWidth * scale))
+  canvas.height = Math.max(1, Math.round(img.naturalHeight * scale))
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return file.size <= PHOTO_MAX_BYTES ? { blob: file, contentType: type || 'image/jpeg' } : null
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+  const out = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.88))
+  if (!out || out.size > PHOTO_MAX_BYTES) return null
+  return { blob: out, contentType: 'image/jpeg' }
+}
 export const STORIES_COMING_SOON = 'Moment sharing is coming soon'
 
 // Phone cameras stop a "15 second" clip a few frames late.
