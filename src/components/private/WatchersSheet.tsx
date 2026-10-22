@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Lock, X } from 'lucide-react'
 import PriceChooser from '@/components/private/PriceChooser'
+import BodyPortal from '@/components/BodyPortal'
 import toast from 'react-hot-toast'
 import { useBackToClose } from '@/hooks/useBackToClose'
 import { useResolveWatcher, useSetPactPrivate, useUpdateWatchSettings, useWatchers } from '@/hooks/usePactAccess'
@@ -102,6 +103,7 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
   const toggle = () => (!locked && inCircle ? setAskKeep(true) : void lock(!locked))
 
   return (
+    <BodyPortal>
     <div role="dialog" aria-modal="true" aria-label="Who can watch" className="fixed inset-0 z-[90] flex items-end justify-center">
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0" style={{ background: 'rgba(15,16,20,0.55)' }} />
       <div className="relative max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-[28px] px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3" style={{ background: '#FBF8F1', color: INK }}>
@@ -217,5 +219,6 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
         )}
       </div>
     </div>
+    </BodyPortal>
   )
 }

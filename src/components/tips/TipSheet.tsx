@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Check, Clock, Copy, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { CircleQR } from '@/components/CircleQR'
+import BodyPortal from '@/components/BodyPortal'
 import { useBackToClose } from '@/hooks/useBackToClose'
 import { buildUpiUri, isLikelyMobile } from '@/lib/upi'
 import { claimTip, startTip, type PublicTipInfo, type TipRecord } from '@/lib/api/tips'
@@ -43,6 +44,7 @@ export default function TipSheet({ open, onClose, tip, context, pactId, creatorN
   const [busy, setBusy] = useState(false)
   const [copied, setCopied] = useState(false)
   const [mobile, setMobile] = useState(false)
+  const [avatarFailed, setAvatarFailed] = useState(false)
   useBackToClose(open, onClose)
 
   useEffect(() => setMobile(isLikelyMobile()), [])
@@ -111,15 +113,16 @@ export default function TipSheet({ open, onClose, tip, context, pactId, creatorN
   }
 
   return (
-    <div role="dialog" aria-modal="true" aria-label={`Tip ${firstName}`} className="fixed inset-0 z-[90] flex items-end justify-center">
+    <BodyPortal>
+    <div role="dialog" aria-modal="true" aria-label={fixedAmount ? `Pay ${firstName} to watch` : `Tip ${firstName}`} className="fixed inset-0 z-[90] flex items-end justify-center">
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0" style={{ background: 'rgba(15,16,20,0.55)' }} />
-      <div className="relative w-full max-w-md rounded-t-[28px] px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3" style={{ background: '#FFFFFF', color: INK, boxShadow: '0 -10px 40px rgba(0,0,0,0.25)' }}>
+      <div className="relative max-h-[92dvh] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-[28px] px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3" style={{ background: '#FFFFFF', color: INK, boxShadow: '0 -10px 40px rgba(0,0,0,0.25)' }}>
         <div className="mx-auto mb-3 h-[5px] w-10 rounded-full" style={{ background: '#D9D9DE' }} />
         <div className="flex items-start gap-3">
           <span className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full text-[18px] font-extrabold" style={{ background: '#E8ECF7', color: NAVY }}>
-            {creatorAvatarUrl ? (
+            {creatorAvatarUrl && !avatarFailed ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={creatorAvatarUrl} alt="" className="size-full object-cover" />
+              <img src={creatorAvatarUrl} alt="" onError={() => setAvatarFailed(true)} className="size-full object-cover" />
             ) : (
               firstName.charAt(0).toUpperCase()
             )}
@@ -208,7 +211,7 @@ export default function TipSheet({ open, onClose, tip, context, pactId, creatorN
 
         {stage === 'confirm' && (
           <>
-            <div className="mt-5 text-[18px] font-extrabold" style={{ color: INK }}>Did your tip go through?</div>
+            <div className="mt-5 text-[18px] font-extrabold" style={{ color: INK }}>{fixedAmount ? 'Did your payment go through?' : 'Did your tip go through?'}</div>
             <div className="mt-1 text-[14px] leading-snug" style={{ color: MUTED }}>
               Check your UPI app. We&apos;ll ask {firstName} to confirm it arrived{code ? ` (${code})` : ''}.
             </div>
@@ -229,7 +232,7 @@ export default function TipSheet({ open, onClose, tip, context, pactId, creatorN
               </span>
               <div className="text-[13.5px] leading-snug" style={{ color: MUTED }}>
                 <span className="block text-[15px] font-extrabold" style={{ color: INK }}>Waiting for {firstName}</span>
-                {code ? `Ref ${code}. ` : ''}Once {firstName} confirms it arrived, you show up as a supporter.
+                {code ? `Ref ${code}. ` : ''}{fixedAmount ? `Once ${firstName} confirms it arrived, the moments open for you.` : `Once ${firstName} confirms it arrived, you show up as a supporter.`}
               </div>
             </div>
             <button type="button" onClick={onClose} className="mt-4 h-14 w-full rounded-full text-[16px] font-extrabold" style={{ background: '#17181D', color: '#FFFFFF' }}>
@@ -239,5 +242,6 @@ export default function TipSheet({ open, onClose, tip, context, pactId, creatorN
         )}
       </div>
     </div>
+    </BodyPortal>
   )
 }
