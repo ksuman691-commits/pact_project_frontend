@@ -551,3 +551,18 @@ section + section {
     transition: none;
   }
 }
+
+/* Circles page: member faces turn slowly around a circle's ring (OrbitCircleCard). */
+@keyframes cp-orbit-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes cp-orbit-upright {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+.cp-orbit-spin { animation: cp-orbit-spin linear infinite; }
+.cp-orbit-upright { animation: cp-orbit-upright linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .cp-orbit-spin, .cp-orbit-upright { animation: none; }
+}
