@@ -22,6 +22,8 @@ export default function EditProfilePage() {
   const [bio, setBio] = useState(user?.bio || '');
   const [saving, setSaving] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarBroken, setAvatarBroken] = useState(false);
+  useEffect(() => setAvatarBroken(false), [user?.avatar_url]);
   const bioRef = useRef<HTMLTextAreaElement>(null);
 
   // /profile/edit#bio (from "Add a bio" on the profile) lands with the bio focused.
@@ -91,7 +93,7 @@ export default function EditProfilePage() {
         <div className="flex flex-col items-center pt-4">
           <label className="relative cursor-pointer">
             <span className="relative flex size-24 items-center justify-center overflow-hidden rounded-full text-[30px] font-extrabold" style={{ background: INK, color: '#FFFFFF' }}>
-              {user.avatar_url ? <Image src={user.avatar_url} alt="" fill sizes="96px" className="object-cover" /> : name.charAt(0).toUpperCase() || '?'}
+              {user.avatar_url && !avatarBroken ? <Image src={user.avatar_url} alt="" fill sizes="96px" unoptimized onError={() => setAvatarBroken(true)} className="object-cover" /> : name.charAt(0).toUpperCase() || '?'}
             </span>
             <span className="absolute -bottom-1 -right-1 flex size-9 items-center justify-center rounded-full" style={{ background: NAVY, color: '#FFFFFF', border: '3px solid var(--paper)' }}>
               <Camera className="size-4" />

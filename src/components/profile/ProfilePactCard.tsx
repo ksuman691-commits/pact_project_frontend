@@ -36,6 +36,7 @@ export default function ProfilePactCard({
   label,
   postedToday,
   onPost,
+  byline = null,
 }: {
   pact: any
   /** Overrides who-sees-it on the tag (defaults to Public, Followers or the circle's name). */
@@ -44,6 +45,8 @@ export default function ProfilePactCard({
   postedToday?: boolean
   /** Shows a "Post Day N" button for your own live pacts. */
   onPost?: () => void
+  /** Who started it, shown as the first tag (e.g. on a circle page, where the circle is obvious). */
+  byline?: { name: string; avatarUrl?: string | null; isYou?: boolean } | null
 }) {
   const [broken, setBroken] = useState(false)
   const total = Number(pact?.duration_days ?? pact?.daysTotal ?? 0)
@@ -81,10 +84,24 @@ export default function ProfilePactCard({
         ))}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[70%]" style={{ background: 'linear-gradient(0deg, rgba(15,16,20,0.78), rgba(15,16,20,0))' }} />
         <div className="absolute left-3 right-14 top-3 flex flex-wrap gap-1.5">
+          {byline ? (
+          <span className="flex max-w-full items-center gap-1.5 truncate rounded-xl py-1 pl-1 pr-2.5 text-[12px] font-extrabold" style={{ background: 'rgba(15,16,20,0.45)', color: '#FFFFFF', backdropFilter: 'blur(6px)' }}>
+            <span className="flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full text-[9px]" style={{ background: '#FFFFFF', color: '#17181D' }}>
+              {byline.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={byline.avatarUrl} alt="" className="size-full object-cover" onError={(event) => { (event.currentTarget as HTMLImageElement).style.display = 'none' }} />
+              ) : (
+                (byline.name || '?').split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('')
+              )}
+            </span>
+            <span className="truncate">{byline.isYou ? 'You' : byline.name}</span>
+          </span>
+          ) : (
           <span className="flex max-w-full items-center gap-1 truncate rounded-xl px-2.5 py-1 text-[12px] font-extrabold" style={{ background: 'rgba(15,16,20,0.45)', color: '#FFFFFF', backdropFilter: 'blur(6px)' }}>
             {audience === 'Public' ? <Globe className="size-3 shrink-0" strokeWidth={2.6} aria-hidden="true" /> : audience === 'Followers' ? <Heart className="size-3 shrink-0" strokeWidth={2.6} aria-hidden="true" /> : <Users className="size-3 shrink-0" strokeWidth={2.6} aria-hidden="true" />}
             <span className="truncate">{audience}</span>
           </span>
+          )}
           {isPrivate && (
             <span className="flex shrink-0 items-center gap-1 rounded-xl px-2.5 py-1 text-[12px] font-extrabold" style={{ background: '#FFFFFF', color: '#1F3A93' }}>
               <Lock className="size-3" strokeWidth={2.6} aria-hidden="true" />

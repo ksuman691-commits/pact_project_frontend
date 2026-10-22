@@ -341,6 +341,10 @@ export const circleService = {
   },
   join: (id: number) => api.post(`/api/circles/${id}/join`),
   leave: (id: number) => api.post(`/api/circles/${id}/leave`),
+  updateDetails: async (id: number, data: { name?: string; description?: string }) => {
+    const response = await api.patch(`/api/circles/${id}`, data);
+    return { ...response, data: mapCircle(response.data) };
+  },
   setVisibility: async (id: number, visibility: 'public' | 'private') => {
     const response = await api.patch(`/api/circles/${id}`, { visibility });
     return { ...response, data: mapCircle(response.data) };
