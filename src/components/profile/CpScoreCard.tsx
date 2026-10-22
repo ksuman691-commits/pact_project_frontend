@@ -11,8 +11,23 @@ const LINE = '#DCD3C1'
 
 /** The CP Score on a profile. Public: everyone who visits sees it. Taps through to how it's worked out. */
 export default function CpScoreCard({ userId, username, isOwn = false }: { userId: number | null | undefined; username: string; isOwn?: boolean }) {
-  const { data, isLoading } = useCpScore(userId)
+  const { data, isLoading, isError, refetch, isFetching } = useCpScore(userId)
   const href = `/profile/${encodeURIComponent(username)}/score`
+
+  if (isError || data?.status === 'unavailable') {
+    return (
+      <div className="mx-4 mt-4 flex items-center gap-4 rounded-[22px] p-4" style={{ background: '#FFFFFF', border: `1px solid ${LINE}`, color: INK }}>
+        <ScoreRing score={null} label="" />
+        <span className="min-w-0 flex-1">
+          <span className="block text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>CP SCORE</span>
+          <span className="mt-1 block text-[15px] font-bold">Couldn&apos;t load {isOwn ? 'your' : 'this'} score</span>
+        </span>
+        <button type="button" onClick={() => void refetch()} disabled={isFetching} className="h-10 shrink-0 rounded-full px-4 text-[13.5px] font-extrabold disabled:opacity-60" style={{ background: '#1F3A93', color: '#FFFFFF' }}>
+          {isFetching ? 'Loading…' : 'Try again'}
+        </button>
+      </div>
+    )
+  }
 
   if (isLoading || !data) {
     return <div className="mx-4 mt-4 h-[118px] rounded-[22px] pact-shimmer" style={{ background: '#FFFFFF', border: `1px solid ${LINE}` }} aria-hidden="true" />

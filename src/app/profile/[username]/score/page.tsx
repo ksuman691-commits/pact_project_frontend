@@ -78,7 +78,11 @@ export default function CpScorePage() {
           </h1>
         </header>
 
-        {isLoading || !data ? (
+        {data?.status === 'unavailable' ? (
+          <p className="px-6 pt-10 text-center text-[14px]" style={{ color: MUTED }}>
+            Couldn&apos;t load this score right now. Pull down or come back in a minute.
+          </p>
+        ) : isLoading || !data ? (
           <div className="mx-auto mt-10 size-[184px] rounded-full pact-shimmer" aria-hidden="true" />
         ) : data.status === 'building' ? (
           <section className="flex flex-col items-center px-6 pt-6 text-center">

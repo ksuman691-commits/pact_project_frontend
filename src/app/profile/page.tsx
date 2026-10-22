@@ -73,8 +73,11 @@ function ProfileContent() {
     [...createdPacts, ...joinedPacts].forEach((p: any) => p?.id != null && !byId.has(Number(p.id)) && byId.set(Number(p.id), p));
     return [...byId.values()].sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
   }, [createdPacts, joinedPacts]);
-  const activePacts = allPacts.filter((p: any) => p.status === 'active');
-  const finishedPacts = allPacts.filter((p: any) => p.status !== 'active');
+  // Same rule as the feed and the Pacts tab: live means active and not past its last day.
+  const todayKey = new Date().toLocaleDateString('en-CA');
+  const isLive = (p: any) => p.status === 'active' && (!p.end_date || String(p.end_date).slice(0, 10) >= todayKey);
+  const activePacts = allPacts.filter(isLive);
+  const finishedPacts = allPacts.filter((p: any) => !isLive(p));
 
   if (!isInitialized) {
     return <main className="min-h-screen" style={{ background: 'var(--paper)' }} />;
