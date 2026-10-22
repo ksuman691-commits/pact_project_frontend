@@ -56,7 +56,7 @@ export default function PactDetailPage() {
           id: moment.id,
           url: moment.proof_url || moment.file_url || undefined,
           type: moment.proof_type === 'video' ? 'video' : 'image',
-          description: moment.caption || "Today's moment",
+          description: moment.caption || '',
           day: moment.day_number,
           uploadedAt: moment.uploaded_at || moment.created_at,
           userId: moment.submitted_by || moment.user_id,
