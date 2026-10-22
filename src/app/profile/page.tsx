@@ -14,6 +14,8 @@ import { useMyMomentsToday } from '@/hooks/useMyMomentsToday';
 import { useFollowers, useFollowing } from '@/hooks/useFollows';
 import { useSmartBack } from '@/hooks/useSmartBack';
 import StoryViewer from '@/components/stories/StoryViewer';
+import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet';
+import { STORIES_ENABLED } from '@/lib/stories';
 import { DaresTab } from '@/components/ProfileTabs';
 import CpScoreCard from '@/components/profile/CpScoreCard';
 import ProfilePactCard, { ProfileEmpty } from '@/components/profile/ProfilePactCard';
@@ -47,6 +49,7 @@ function ProfileContent() {
   const [tab, setTab] = useState<Tab>('active');
   const [peopleSheet, setPeopleSheet] = useState<'followers' | 'following' | null>(null);
   const [viewingMoment, setViewingMoment] = useState(false);
+  const [capturePact, setCapturePact] = useState<any | null>(null);
 
   useEffect(() => {
     if (searchParams.get('tab') === 'dares') setTab('dares');
@@ -178,7 +181,13 @@ function ProfileContent() {
                   <ProfileEmpty title="Nothing finished yet" text="Pacts you finish stay here." />
                 )
               ) : (
-                (tab === 'active' ? activePacts : finishedPacts).map((pact: any) => <ProfilePactCard key={pact.id} pact={pact} />)
+                (tab === 'active' ? activePacts : finishedPacts).map((pact: any) => (
+                  <ProfilePactCard
+                    key={pact.id}
+                    pact={pact}
+                    onPost={tab === 'active' ? () => (STORIES_ENABLED ? setCapturePact(pact) : router.push(`/pacts/${pact.id}`)) : undefined}
+                  />
+                ))
               )}
             </div>
           )}
@@ -218,6 +227,9 @@ function ProfileContent() {
         </div>
       </div>
 
+      {STORIES_ENABLED && capturePact && (
+        <StoryCaptureSheet isOpen onClose={() => setCapturePact(null)} pactId={Number(capturePact.id)} pactTitle={capturePact.title} />
+      )}
       <StoryViewer open={viewingMoment} onClose={() => setViewingMoment(false)} stories={myStories} />
       <PeopleSheet open={peopleSheet === 'followers'} title="Followers" people={followers} emptyText="No followers yet." onClose={() => setPeopleSheet(null)} />
       <PeopleSheet open={peopleSheet === 'following'} title="Following" people={following} emptyText="You're not following anyone yet." onClose={() => setPeopleSheet(null)} />

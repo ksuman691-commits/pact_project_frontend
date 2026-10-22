@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Suspense, useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { Plus, Search } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
@@ -46,6 +46,7 @@ function summaryLine(going: number, waiting: number, broken: number) {
 
 function PactsPageInner() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const queryClient = useQueryClient()
   const { user } = useAuthStore()
   const [filter, setFilter] = useState<(typeof filters)[number]>('All')
@@ -220,9 +221,8 @@ function PactsPageInner() {
                   <ProfilePactCard
                     key={pact.id}
                     pact={pact}
-                    label={pact.circle_name || pact.circle || 'Just you'}
                     postedToday={postedToday}
-                    onPost={STORIES_ENABLED && !storiesUnavailable ? () => setCapturePact(pact) : undefined}
+                    onPost={() => (STORIES_ENABLED && !storiesUnavailable ? setCapturePact(pact) : router.push(`/pacts/${pact.id}`))}
                   />
                 )
               })}
@@ -239,7 +239,7 @@ function PactsPageInner() {
               <h2 className="px-2 pt-3 text-[12px] font-extrabold tracking-[0.08em] text-[var(--muted)]">DONE</h2>
             )}
             {showDone &&
-              [...finished, ...broken].map((pact) => <ProfilePactCard key={pact.id} pact={pact} label={pact.circle_name || pact.circle || 'Just you'} />)}
+              [...finished, ...broken].map((pact) => <ProfilePactCard key={pact.id} pact={pact} />)}
             {pacts.length >= pactLimit && pactLimit < 100 && (
               <button
                 type="button"

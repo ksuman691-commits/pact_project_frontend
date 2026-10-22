@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { Camera, Check, Lock, Play } from 'lucide-react'
+import { Camera, Check, Globe, Heart, Lock, Play, Users } from 'lucide-react'
 
 const INK = '#17181D'
 const MUTED = '#5A5C63'
@@ -38,7 +38,7 @@ export default function ProfilePactCard({
   onPost,
 }: {
   pact: any
-  /** Small tag over the photo, e.g. the circle's name or "Just you". */
+  /** Overrides who-sees-it on the tag (defaults to Public, Followers or the circle's name). */
   label?: string | null
   /** Known from today's moments; overrides the guess from the last upload. */
   postedToday?: boolean
@@ -52,6 +52,15 @@ export default function ProfilePactCard({
   const pastEnd = Boolean(pact?.end_date) && String(pact.end_date).slice(0, 10) < new Date().toLocaleDateString('en-CA')
   const ended = (pact?.status && pact.status !== 'active') || pastEnd
   const locked = Boolean(pact?.media_locked) && pact?.can_view_media === false
+  const isPrivate = Boolean(pact?.media_locked)
+  // Who sees it, always shown: Public, Followers, or the circle's name.
+  const audience =
+    label ||
+    (pact?.visibility === 'circle_only' || pact?.circle_id
+      ? pact?.circle_name || pact?.circle || 'Circle'
+      : pact?.visibility === 'private'
+        ? 'Followers'
+        : 'Public')
   const latest = (pact?.recent_proofs || []).find((p: any) => p?.proof_url || p?.video_url) || null
   const isVideo = latest ? latest.proof_type === 'video' || Boolean(latest.video_url) : pact?.proof_type === 'video'
   const mediaUrl = locked ? null : latest?.video_url || latest?.proof_url || pact?.proof_url || null
@@ -71,12 +80,18 @@ export default function ProfilePactCard({
           <img src={mediaUrl} alt="" onError={() => setBroken(true)} className="absolute inset-0 size-full object-cover" />
         ))}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[70%]" style={{ background: 'linear-gradient(0deg, rgba(15,16,20,0.78), rgba(15,16,20,0))' }} />
-        {(locked || label) && (
-          <span className="absolute left-3 top-3 flex max-w-[70%] items-center gap-1 truncate rounded-xl px-2.5 py-1 text-[12px] font-extrabold" style={{ background: 'rgba(15,16,20,0.42)', color: '#FFFFFF', backdropFilter: 'blur(6px)' }}>
-            {locked && <Lock className="size-3 shrink-0" strokeWidth={2.6} aria-hidden="true" />}
-            <span className="truncate">{locked ? (pact?.watch_price ? `Private · ₹${pact.watch_price}` : 'Private') : label}</span>
+        <div className="absolute left-3 right-14 top-3 flex flex-wrap gap-1.5">
+          <span className="flex max-w-full items-center gap-1 truncate rounded-xl px-2.5 py-1 text-[12px] font-extrabold" style={{ background: 'rgba(15,16,20,0.45)', color: '#FFFFFF', backdropFilter: 'blur(6px)' }}>
+            {audience === 'Public' ? <Globe className="size-3 shrink-0" strokeWidth={2.6} aria-hidden="true" /> : audience === 'Followers' ? <Heart className="size-3 shrink-0" strokeWidth={2.6} aria-hidden="true" /> : <Users className="size-3 shrink-0" strokeWidth={2.6} aria-hidden="true" />}
+            <span className="truncate">{audience}</span>
           </span>
-        )}
+          {isPrivate && (
+            <span className="flex shrink-0 items-center gap-1 rounded-xl px-2.5 py-1 text-[12px] font-extrabold" style={{ background: '#FFFFFF', color: '#1F3A93' }}>
+              <Lock className="size-3" strokeWidth={2.6} aria-hidden="true" />
+              {pact?.watch_price ? `Private · ₹${pact.watch_price}` : 'Private'}
+            </span>
+          )}
+        </div>
         {mediaUrl && isVideo && !broken && (
           <span className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full" style={{ background: 'rgba(15,16,20,0.55)', color: '#FFFFFF' }}>
             <Play className="size-4 fill-current" aria-hidden="true" />
