@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { Lock, Play } from 'lucide-react'
+import { Camera, Check, Lock, Play } from 'lucide-react'
 
 const INK = '#17181D'
 const MUTED = '#5A5C63'
@@ -31,18 +31,35 @@ function lastPosted(pact: any): string {
  * A pact on a profile: the latest moment fills a dark tile with the day and
  * title over it, and one line under it says how it's going.
  */
-export default function ProfilePactCard({ pact }: { pact: any }) {
+export default function ProfilePactCard({
+  pact,
+  label,
+  postedToday,
+  onPost,
+}: {
+  pact: any
+  /** Small tag over the photo, e.g. the circle's name or "Just you". */
+  label?: string | null
+  /** Known from today's moments; overrides the guess from the last upload. */
+  postedToday?: boolean
+  /** Shows a "Post Day N" button for your own live pacts. */
+  onPost?: () => void
+}) {
   const [broken, setBroken] = useState(false)
   const total = Number(pact?.duration_days ?? pact?.daysTotal ?? 0)
   const day = Number(pact?.daysCurrent ?? 0)
-  const ended = pact?.status && pact.status !== 'active'
+  // Over when it's closed, or when its last day has passed even if nobody closed it.
+  const pastEnd = Boolean(pact?.end_date) && String(pact.end_date).slice(0, 10) < new Date().toLocaleDateString('en-CA')
+  const ended = (pact?.status && pact.status !== 'active') || pastEnd
   const locked = Boolean(pact?.media_locked) && pact?.can_view_media === false
   const latest = (pact?.recent_proofs || []).find((p: any) => p?.proof_url || p?.video_url) || null
   const isVideo = latest ? latest.proof_type === 'video' || Boolean(latest.video_url) : pact?.proof_type === 'video'
   const mediaUrl = locked ? null : latest?.video_url || latest?.proof_url || pact?.proof_url || null
   const done = Number(pact?.days_completed ?? 0)
   const outOf = ended ? total : Math.max(1, day)
-  const badge = ended ? (pact.status === 'completed' ? 'Finished' : 'Ended') : total ? `Day ${Math.max(1, day)} of ${total}` : 'Live'
+  const posted = postedToday ?? lastPosted(pact) === 'Posted today'
+  const canPost = Boolean(onPost) && !ended
+  const badge = ended ? (pact.status === 'completed' || done >= Math.ceil(0.75 * Math.max(1, total)) ? 'Finished' : 'Ended') : total ? `Day ${Math.max(1, day)} of ${total}` : 'Live'
 
   return (
     <Link href={`/pacts/${pact.id}`} className="block overflow-hidden rounded-[22px]" style={{ background: '#FBF8F1', border: `1px solid ${LINE}` }}>
@@ -54,10 +71,10 @@ export default function ProfilePactCard({ pact }: { pact: any }) {
           <img src={mediaUrl} alt="" onError={() => setBroken(true)} className="absolute inset-0 size-full object-cover" />
         ))}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[70%]" style={{ background: 'linear-gradient(0deg, rgba(15,16,20,0.78), rgba(15,16,20,0))' }} />
-        {locked && (
-          <span className="absolute left-3 top-3 flex items-center gap-1 rounded-xl px-2.5 py-1 text-[12px] font-extrabold" style={{ background: 'rgba(255,255,255,0.16)', color: '#FFFFFF' }}>
-            <Lock className="size-3" strokeWidth={2.6} aria-hidden="true" />
-            {pact?.watch_price ? `Private · ₹${pact.watch_price}` : 'Private'}
+        {(locked || label) && (
+          <span className="absolute left-3 top-3 flex max-w-[70%] items-center gap-1 truncate rounded-xl px-2.5 py-1 text-[12px] font-extrabold" style={{ background: 'rgba(15,16,20,0.42)', color: '#FFFFFF', backdropFilter: 'blur(6px)' }}>
+            {locked && <Lock className="size-3 shrink-0" strokeWidth={2.6} aria-hidden="true" />}
+            <span className="truncate">{locked ? (pact?.watch_price ? `Private · ₹${pact.watch_price}` : 'Private') : label}</span>
           </span>
         )}
         {mediaUrl && isVideo && !broken && (
@@ -76,11 +93,36 @@ export default function ProfilePactCard({ pact }: { pact: any }) {
       </div>
       <div className="flex items-center justify-between gap-3 px-3.5 py-3">
         <div className="min-w-0 truncate text-[13px]" style={{ color: MUTED }}>
-          {ended ? `${done} of ${total} days posted` : `${lastPosted(pact)} · ${Math.min(done, outOf)} of ${outOf} days`}
+          {ended
+            ? `${done} of ${total} days posted`
+            : canPost && !posted
+              ? `${Math.min(done, outOf)} of ${outOf} days so far`
+              : `${posted ? 'Posted today' : lastPosted(pact)} · ${Math.min(done, outOf)} of ${outOf} days`}
         </div>
-        <span className="shrink-0 text-[13px] font-extrabold" style={{ color: NAVY }}>
-          {locked ? 'See' : 'Watch'}
-        </span>
+        {canPost && !posted ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              onPost?.()
+            }}
+            className="flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-[13.5px] font-extrabold transition active:scale-95"
+            style={{ background: NAVY, color: '#FFFFFF', boxShadow: '0 6px 16px -6px rgba(31,58,147,0.55)' }}
+          >
+            <Camera className="size-4" strokeWidth={2.4} aria-hidden="true" />
+            Post Day {Math.max(1, day)}
+          </button>
+        ) : canPost && posted ? (
+          <span className="flex shrink-0 items-center gap-1 text-[13px] font-extrabold" style={{ color: '#22663F' }}>
+            <Check className="size-4" strokeWidth={2.6} aria-hidden="true" />
+            Done today
+          </span>
+        ) : (
+          <span className="shrink-0 text-[13px] font-extrabold" style={{ color: NAVY }}>
+            {locked ? 'See' : 'Watch'}
+          </span>
+        )}
       </div>
     </Link>
   )

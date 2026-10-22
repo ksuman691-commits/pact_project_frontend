@@ -8,13 +8,12 @@ import { Plus, Search } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import BottomNav from '@/components/BottomNav'
 import CuratedContentGrid from '@/components/CuratedContentGrid'
-import { ActivePactCard, BrokenPactCard, DarePactCard, FinishedPactRow } from '@/components/classic/PactCard'
+import { DarePactCard } from '@/components/classic/PactCard'
 import { pactAdvancedService, dareService, pactService } from '@/services/api'
 import { useAuthStore } from '@/store/auth'
 import toast from 'react-hot-toast'
-import { DayMarksKey } from '@/components/stories/DayMarks'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
-import StoryPactCard from '@/components/stories/StoryPactCard'
+import ProfilePactCard from '@/components/profile/ProfilePactCard'
 import { usePactsStoriesToday } from '@/hooks/useStories'
 import { isStoriesUnavailable, STORIES_ENABLED } from '@/lib/stories'
 
@@ -80,7 +79,9 @@ function PactsPageInner() {
 
   const matchesSearch = (title: string) => (title || '').toLowerCase().includes(search.toLowerCase())
   const isBroken = (p: any) => p.status === 'failed' || p.status === 'cancelled'
-  const isActive = (p: any) => p.status === 'active'
+  // Live means active and its last day hasn't passed; anything past its end goes to Done.
+  const today = new Date().toLocaleDateString('en-CA')
+  const isActive = (p: any) => p.status === 'active' && (!p.end_date || String(p.end_date).slice(0, 10) >= today)
 
   const active = useMemo(
     () => pacts.filter((p) => isActive(p) && matchesSearch(p.title)).sort((a, b) => deadlineOf(a) - deadlineOf(b)),
@@ -138,9 +139,6 @@ function PactsPageInner() {
           {STORIES_ENABLED ? (
             <>
               {query.isSuccess && <p className="text-[14px] text-[var(--muted)]">{storySummary}</p>}
-              <div className="pt-1">
-                <DayMarksKey />
-              </div>
             </>
           ) : (
             summary && <p className="text-[14px] text-[var(--muted)]">{summary}</p>
@@ -213,22 +211,21 @@ function PactsPageInner() {
             )}
           </div>
         ) : (
-          <div className="flex flex-col gap-[30px] px-4 pt-4">
+          <div className="flex flex-col gap-3.5 px-4 pt-2">
             {showActive &&
-              active.filter((pact: any) => pact.is_joined_by_me !== false).map((pact) =>
-                STORIES_ENABLED ? (
-                  <StoryPactCard
+              active.filter((pact: any) => pact.is_joined_by_me !== false).map((pact) => {
+                const stories = storyQueries[activeIds.indexOf(Number(pact.id))]?.data
+                const postedToday = stories ? stories.some((story: any) => story.user_id === user?.id) : undefined
+                return (
+                  <ProfilePactCard
                     key={pact.id}
                     pact={pact}
-                    myUserId={user?.id}
-                    stories={storyQueries[activeIds.indexOf(Number(pact.id))]?.data}
-                    storiesUnavailable={storiesUnavailable}
-                    onPost={() => setCapturePact(pact)}
+                    label={pact.circle_name || pact.circle || 'Just you'}
+                    postedToday={postedToday}
+                    onPost={STORIES_ENABLED && !storiesUnavailable ? () => setCapturePact(pact) : undefined}
                   />
-                ) : (
-                  <ActivePactCard key={pact.id} pact={pact} />
-                ),
-              )}
+                )
+              })}
 
             {showDares && dareRows.length > 0 && (
               <div className="flex flex-col border-b border-[var(--line)] pb-3">
@@ -238,8 +235,11 @@ function PactsPageInner() {
               </div>
             )}
 
-            {showDone && broken.map((pact) => <BrokenPactCard key={pact.id} pact={pact} />)}
-            {showDone && finished.map((pact) => <FinishedPactRow key={pact.id} pact={pact} />)}
+            {showDone && finished.length + broken.length > 0 && filter === 'All' && (
+              <h2 className="px-2 pt-3 text-[12px] font-extrabold tracking-[0.08em] text-[var(--muted)]">DONE</h2>
+            )}
+            {showDone &&
+              [...finished, ...broken].map((pact) => <ProfilePactCard key={pact.id} pact={pact} label={pact.circle_name || pact.circle || 'Just you'} />)}
             {pacts.length >= pactLimit && pactLimit < 100 && (
               <button
                 type="button"
