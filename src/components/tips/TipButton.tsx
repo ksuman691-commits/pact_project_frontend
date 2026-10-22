@@ -10,8 +10,8 @@ interface TipButtonProps {
   creatorName: string
   creatorAvatarUrl?: string | null
   context?: string | null
-  /** 'pill' = labelled button; 'stage' = round button over media; 'row' = coin in a card's action row. */
-  variant?: 'pill' | 'stage' | 'row'
+  /** 'pill' = labelled button; 'outline' = navy-outline "Tip" for a profile's button row; 'stage' = round button over media; 'row' = coin in a card's action row. */
+  variant?: 'pill' | 'outline' | 'stage' | 'row'
   /** Confirmed tips so far; shown next to the coin in the 'row' variant. */
   count?: number
   pactId?: number | null
@@ -44,6 +44,17 @@ export default function TipButton({ creatorId, creatorName, creatorAvatarUrl, co
             <IndianRupee className="size-[15px]" strokeWidth={2.4} aria-hidden="true" />
           </span>
           {count > 0 && count}
+        </button>
+      ) : variant === 'outline' ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label={`Tip ${firstName}`}
+          className={`flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full text-[15px] font-extrabold transition active:scale-[0.98] ${className}`}
+          style={{ background: 'transparent', color: '#1F3A93', border: '1.5px solid #1F3A93' }}
+        >
+          <IndianRupee className="size-4" strokeWidth={2.6} aria-hidden="true" />
+          Tip
         </button>
       ) : variant === 'stage' ? (
         <button

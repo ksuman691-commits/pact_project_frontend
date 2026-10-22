@@ -1,0 +1,97 @@
+'use client'
+
+import Link from 'next/link'
+import { useState } from 'react'
+import { Lock, Play } from 'lucide-react'
+
+const INK = '#17181D'
+const MUTED = '#5A5C63'
+const NAVY = '#1F3A93'
+const LINE = '#DCD3C1'
+
+function localDay(value: string | null | undefined): string | null {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toLocaleDateString('en-CA')
+}
+
+function lastPosted(pact: any): string {
+  const latest = pact?.latest_proof_upload_date || pact?.recent_proofs?.[0]?.uploaded_at
+  const day = localDay(latest)
+  if (!day) return 'No moments yet'
+  const today = new Date().toLocaleDateString('en-CA')
+  if (day === today) return 'Posted today'
+  const diff = Math.round((Date.parse(today) - Date.parse(day)) / 86_400_000)
+  if (diff === 1) return 'Posted yesterday'
+  return `Last posted ${diff} days ago`
+}
+
+/**
+ * A pact on a profile: the latest moment fills a dark tile with the day and
+ * title over it, and one line under it says how it's going.
+ */
+export default function ProfilePactCard({ pact }: { pact: any }) {
+  const [broken, setBroken] = useState(false)
+  const total = Number(pact?.duration_days ?? pact?.daysTotal ?? 0)
+  const day = Number(pact?.daysCurrent ?? 0)
+  const ended = pact?.status && pact.status !== 'active'
+  const locked = Boolean(pact?.media_locked) && pact?.can_view_media === false
+  const latest = (pact?.recent_proofs || []).find((p: any) => p?.proof_url || p?.video_url) || null
+  const isVideo = latest ? latest.proof_type === 'video' || Boolean(latest.video_url) : pact?.proof_type === 'video'
+  const mediaUrl = locked ? null : latest?.video_url || latest?.proof_url || pact?.proof_url || null
+  const done = Number(pact?.days_completed ?? 0)
+  const outOf = ended ? total : Math.max(1, day)
+  const badge = ended ? (pact.status === 'completed' ? 'Finished' : 'Ended') : total ? `Day ${Math.max(1, day)} of ${total}` : 'Live'
+
+  return (
+    <Link href={`/pacts/${pact.id}`} className="block overflow-hidden rounded-[22px]" style={{ background: '#FBF8F1', border: `1px solid ${LINE}` }}>
+      <div className="relative h-[168px] overflow-hidden" style={{ background: locked ? 'radial-gradient(120% 90% at 30% 20%, #2A3A6E 0%, #141A2E 55%, #0F1014 100%)' : '#1F2A4A' }}>
+        {mediaUrl && !broken && (isVideo ? (
+          <video src={`${mediaUrl}#t=0.1`} muted playsInline preload="metadata" onError={() => setBroken(true)} className="absolute inset-0 size-full object-cover" />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={mediaUrl} alt="" onError={() => setBroken(true)} className="absolute inset-0 size-full object-cover" />
+        ))}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[70%]" style={{ background: 'linear-gradient(0deg, rgba(15,16,20,0.78), rgba(15,16,20,0))' }} />
+        {locked && (
+          <span className="absolute left-3 top-3 flex items-center gap-1 rounded-xl px-2.5 py-1 text-[12px] font-extrabold" style={{ background: 'rgba(255,255,255,0.16)', color: '#FFFFFF' }}>
+            <Lock className="size-3" strokeWidth={2.6} aria-hidden="true" />
+            {pact?.watch_price ? `Private · ₹${pact.watch_price}` : 'Private'}
+          </span>
+        )}
+        {mediaUrl && isVideo && !broken && (
+          <span className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full" style={{ background: 'rgba(15,16,20,0.55)', color: '#FFFFFF' }}>
+            <Play className="size-4 fill-current" aria-hidden="true" />
+          </span>
+        )}
+        <div className="absolute inset-x-3.5 bottom-3" style={{ color: '#FFFFFF' }}>
+          <span className="rounded-[10px] px-2.5 py-[3px] text-[11.5px] font-extrabold" style={{ background: 'rgba(255,255,255,0.22)', color: '#FFFFFF' }}>
+            {badge}
+          </span>
+          <div className="mt-1.5 line-clamp-2 text-[18px] font-extrabold leading-tight tracking-[-0.02em]" style={{ color: '#FFFFFF' }}>
+            {pact?.title}
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center justify-between gap-3 px-3.5 py-3">
+        <div className="min-w-0 truncate text-[13px]" style={{ color: MUTED }}>
+          {ended ? `${done} of ${total} days posted` : `${lastPosted(pact)} · ${Math.min(done, outOf)} of ${outOf} days`}
+        </div>
+        <span className="shrink-0 text-[13px] font-extrabold" style={{ color: NAVY }}>
+          {locked ? 'See' : 'Watch'}
+        </span>
+      </div>
+    </Link>
+  )
+}
+
+export function ProfileEmpty({ title, text, action }: { title: string; text?: string; action?: React.ReactNode }) {
+  return (
+    <div className="rounded-[22px] px-5 py-8 text-center" style={{ background: '#FBF8F1', border: `1px solid ${LINE}` }}>
+      <div className="text-[15.5px] font-extrabold" style={{ color: INK }}>{title}</div>
+      {text && <div className="mx-auto mt-1 max-w-[280px] text-[13.5px] leading-snug" style={{ color: MUTED }}>{text}</div>}
+      {action && <div className="mt-4 flex justify-center">{action}</div>}
+    </div>
+  )
+}

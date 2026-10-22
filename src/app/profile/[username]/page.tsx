@@ -7,7 +7,8 @@ import { Bell, BellOff, ChevronLeft, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import AddToCircleSheet from '@/components/AddToCircleSheet';
-import FeedPactCard from '@/components/FeedPactCard';
+import CpScoreCard from '@/components/profile/CpScoreCard';
+import ProfilePactCard, { ProfileEmpty } from '@/components/profile/ProfilePactCard';
 import ProfileHeader, { profileButton } from '@/components/profile/ProfileHeader';
 import SegmentTabs from '@/components/profile/SegmentTabs';
 import PeopleSheet from '@/components/profile/PeopleSheet';
@@ -23,7 +24,7 @@ import {
   useRemoveFollow,
   useRequestFollow,
 } from '@/hooks/useFollows';
-import { useUserByUsername, useUserStats, useUserRelationship, useUserCircles } from '@/hooks/useUserQueries';
+import { useUserByUsername, useUserRelationship, useUserCircles } from '@/hooks/useUserQueries';
 import { useSmartBack } from '@/hooks/useSmartBack';
 import { useSupporters } from '@/hooks/useTips';
 
@@ -62,7 +63,6 @@ export default function PublicProfilePage() {
   const profileCircles = (profileCirclesQuery.data?.data ?? []) as any[];
   const sharedCircles = profileCircles.filter((circle: any) => sharedCircleIds.includes(Number(circle.id)));
 
-  const userStatsQuery = useUserStats(profileUserId || 0);
   const profilePactsQuery = useQuery({
     queryKey: ['profile-user-pacts', profileUserId],
     queryFn: () => userService.getPacts(profileUserId as number),
@@ -160,16 +160,15 @@ export default function PublicProfilePage() {
           bio={profileUser.bio}
           followers={followers.length}
           following={following.length}
-          streak={userStatsQuery.data?.data?.current_streak ?? null}
-          activeCount={activePacts.length}
-          completedCount={userStatsQuery.data?.data?.pacts_completed ?? completedPacts.length}
+          score={<div className="-mx-4"><CpScoreCard userId={profileUser.id} username={profileUser.username} /></div>}
           onFollowersClick={() => setPeopleSheet('followers')}
           onFollowingClick={() => setPeopleSheet('following')}
           actions={
             <>
-              <button type="button" onClick={() => void handleFollow()} disabled={isBusy} className="h-11 flex-1 rounded-full text-[15px] font-extrabold disabled:opacity-60" style={followStyle}>
+              <button type="button" onClick={() => void handleFollow()} disabled={isBusy} className="h-11 flex-1 rounded-full text-[15px] font-extrabold transition active:scale-[0.98] disabled:opacity-60" style={followStyle}>
                 {followLabel}
               </button>
+              <TipButton variant="outline" creatorId={profileUser.id} creatorName={name} creatorAvatarUrl={profileUser.avatar_url} />
               {outgoingStatus === 'accepted' && (
                 <button
                   type="button"
@@ -182,13 +181,13 @@ export default function PublicProfilePage() {
                   {announcementsMuted ? <BellOff className="size-5" /> : <Bell className="size-5" />}
                 </button>
               )}
-              <TipButton creatorId={profileUser.id} creatorName={name} creatorAvatarUrl={profileUser.avatar_url} className="!h-11 flex-1 justify-center !shadow-none" />
               <button type="button" onClick={() => setShowAddToCircle(true)} aria-label={`Add ${firstName} to a circle`} className="flex size-11 shrink-0 items-center justify-center rounded-full" style={profileButton.quiet}>
                 <UserPlus className="size-5" />
               </button>
             </>
           }
           footer={
+            (incomingStatus === 'pending' && incomingFollowId) || (supporters && supporters.count > 0) || sharedCircles.length > 0 ? (
             <>
               {incomingStatus === 'pending' && incomingFollowId && (
                 <button type="button" onClick={() => rejectFollow.mutate(incomingFollowId)} disabled={isBusy} className="h-10 rounded-full text-[14px] font-bold" style={profileButton.quiet}>
@@ -196,7 +195,7 @@ export default function PublicProfilePage() {
                 </button>
               )}
               {supporters && supporters.count > 0 && (
-                <div className="flex items-center gap-2.5 rounded-[16px] px-3 py-2.5" style={{ background: 'var(--card)', border: '1px solid var(--hairline)' }}>
+                <div className="flex items-center gap-2.5 px-1">
                   <span className="flex shrink-0">
                     {supporters.supporters.slice(0, 3).map((person, index) => (
                       <span key={person.id} className="flex size-6 items-center justify-center overflow-hidden rounded-full text-[10px] font-extrabold" style={{ background: INK, color: '#FFFFFF', border: '2px solid var(--card)', marginLeft: index ? -8 : 0 }}>
@@ -226,6 +225,7 @@ export default function PublicProfilePage() {
                 </div>
               )}
             </>
+            ) : undefined
           }
         />
 
@@ -243,15 +243,15 @@ export default function PublicProfilePage() {
         <div className="flex flex-col gap-3.5 px-4">
           {tab === 'circles' ? (
             profileCircles.length === 0 ? (
-              <EmptyNote text={`${firstName} isn't in any circles you can see yet.`} />
+              <ProfileEmpty title="No circles to show" text={`${firstName} isn't in any circles you can see yet.`} />
             ) : (
               profileCircles.map((circle: any) => (
                 <button
                   key={circle.id}
                   type="button"
                   onClick={() => router.push(`/circles/${circle.id}`)}
-                  className="flex items-center gap-3 rounded-[20px] p-3 text-left"
-                  style={{ background: 'var(--card)', border: '1px solid var(--hairline)' }}
+                  className="flex items-center gap-3 rounded-[22px] p-3.5 text-left"
+                  style={{ background: '#FBF8F1', border: '1px solid #DCD3C1' }}
                 >
                   <span className="relative flex size-11 items-center justify-center overflow-hidden rounded-full text-xl" style={{ background: 'var(--card-muted)' }}>
                     {circle.photo_url ? <Image src={circle.photo_url} alt="" fill sizes="44px" className="object-cover" /> : circle.icon_emoji || circle.name?.charAt(0)}
@@ -266,11 +266,11 @@ export default function PublicProfilePage() {
               ))
             )
           ) : profilePactsQuery.isLoading ? (
-            <div className="pact-shimmer h-[360px] rounded-[24px]" aria-hidden="true" />
+            <div className="pact-shimmer h-[220px] rounded-[22px]" aria-hidden="true" />
           ) : listed.length === 0 ? (
-            <EmptyNote text={tab === 'active' ? `${firstName} has no active pacts you can see.` : 'No completed pacts yet.'} />
+            <ProfileEmpty title={tab === 'active' ? 'Nothing live right now' : 'Nothing finished yet'} text={tab === 'active' ? `When ${firstName} starts a pact you can see, it shows here.` : `Pacts ${firstName} finishes show here.`} />
           ) : (
-            listed.map((pact: any) => <FeedPactCard key={pact.id} pact={pact} />)
+            listed.map((pact: any) => <ProfilePactCard key={pact.id} pact={pact} />)
           )}
         </div>
       </div>
@@ -279,13 +279,5 @@ export default function PublicProfilePage() {
       <PeopleSheet open={peopleSheet === 'following'} title="Following" people={following} emptyText={`${firstName} isn't following anyone yet.`} onClose={() => setPeopleSheet(null)} />
       <AddToCircleSheet isOpen={showAddToCircle} onClose={() => setShowAddToCircle(false)} targetUserId={profileUser.id} targetName={name} />
     </main>
-  );
-}
-
-function EmptyNote({ text }: { text: string }) {
-  return (
-    <div className="rounded-[20px] px-5 py-8 text-center text-[14px]" style={{ border: '1.5px dashed var(--hairline)', color: MUTED }}>
-      {text}
-    </div>
   );
 }

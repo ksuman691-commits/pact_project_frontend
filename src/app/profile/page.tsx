@@ -7,15 +7,16 @@ import { ChevronLeft, LogOut, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { useUserJoinedPacts, useUserPacts, useUserVotedPacts } from '@/hooks/useFeedQueries';
+import { useUserJoinedPacts, useUserPacts } from '@/hooks/useFeedQueries';
 import { useMyDares } from '@/hooks/useDareQueries';
 import { useCircles } from '@/hooks/useCircles';
 import { useMyMomentsToday } from '@/hooks/useMyMomentsToday';
-import { useUserStats } from '@/hooks/useUserQueries';
 import { useFollowers, useFollowing } from '@/hooks/useFollows';
 import { useSmartBack } from '@/hooks/useSmartBack';
 import StoryViewer from '@/components/stories/StoryViewer';
-import { PactsTab, DaresTab } from '@/components/ProfileTabs';
+import { DaresTab } from '@/components/ProfileTabs';
+import CpScoreCard from '@/components/profile/CpScoreCard';
+import ProfilePactCard, { ProfileEmpty } from '@/components/profile/ProfilePactCard';
 import ProfileHeader, { profileButton } from '@/components/profile/ProfileHeader';
 import SegmentTabs from '@/components/profile/SegmentTabs';
 import PeopleSheet from '@/components/profile/PeopleSheet';
@@ -25,7 +26,7 @@ import RequestsEntryCard from '@/components/requests/RequestsEntryCard';
 const INK = '#17181D';
 const MUTED = '#5A5C63';
 
-type Tab = 'pacts' | 'circles' | 'dares';
+type Tab = 'active' | 'completed' | 'circles' | 'dares';
 
 // useSearchParams() must sit under its own Suspense boundary or `next build`
 // fails to prerender this page. It is only used for the ?tab=dares deep link.
@@ -43,7 +44,7 @@ function ProfileContent() {
   const { user, isInitialized } = useRequireAuth();
   const smartBack = useSmartBack('/feed');
   const logout = useAuthStore((state) => state.logout);
-  const [tab, setTab] = useState<Tab>('pacts');
+  const [tab, setTab] = useState<Tab>('active');
   const [peopleSheet, setPeopleSheet] = useState<'followers' | 'following' | null>(null);
   const [viewingMoment, setViewingMoment] = useState(false);
 
@@ -54,23 +55,23 @@ function ProfileContent() {
   const userId = user?.id;
   const { data: createdPactsData } = useUserPacts(userId || 0);
   const { data: joinedPactsData } = useUserJoinedPacts(userId || 0);
-  const { data: votedPactsData } = useUserVotedPacts(userId || 0);
   const myDaresQuery = useMyDares({ enabled: isInitialized && !!user });
   const createdPacts = useMemo(() => (createdPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[], [createdPactsData]);
   const joinedPacts = useMemo(() => (joinedPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[], [joinedPactsData]);
-  const votedPacts = useMemo(() => (votedPactsData?.pages || []).flatMap((page: any) => page.data || []) as any[], [votedPactsData]);
   const myDares = (myDaresQuery.data?.pages || []).flatMap((page: any) => page.data || []) as any[];
   const followers = (useFollowers(userId || 0).data?.data || []) as any[];
   const following = (useFollowing(userId || 0).data?.data || []) as any[];
-  const stats = useUserStats(userId || 0).data?.data;
   const myCircles = (useCircles().data || []) as any[];
   const { myStories, postedToday } = useMyMomentsToday(myCircles, user?.id);
 
-  const activeCount = useMemo(() => {
-    const ids = new Set<number>();
-    [...createdPacts, ...joinedPacts].forEach((p: any) => p?.status === 'active' && ids.add(Number(p.id)));
-    return ids.size;
+  // Pacts you started and pacts you joined, once each, newest first.
+  const allPacts = useMemo(() => {
+    const byId = new Map<number, any>();
+    [...createdPacts, ...joinedPacts].forEach((p: any) => p?.id != null && !byId.has(Number(p.id)) && byId.set(Number(p.id), p));
+    return [...byId.values()].sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
   }, [createdPacts, joinedPacts]);
+  const activePacts = allPacts.filter((p: any) => p.status === 'active');
+  const finishedPacts = allPacts.filter((p: any) => p.status !== 'active');
 
   if (!isInitialized) {
     return <main className="min-h-screen" style={{ background: 'var(--paper)' }} />;
@@ -129,20 +130,18 @@ function ProfileContent() {
           bio={user.bio}
           followers={followers.length}
           following={following.length}
-          streak={typeof stats?.current_streak === 'number' ? stats.current_streak : null}
-          activeCount={activeCount}
-          completedCount={stats?.pacts_completed ?? createdPacts.filter((p: any) => p.status === 'completed').length}
+          score={<div className="-mx-4"><CpScoreCard userId={user.id} username={user.username} isOwn /></div>}
           hasMoment={postedToday}
           onViewMoment={() => setViewingMoment(true)}
           onFollowersClick={() => setPeopleSheet('followers')}
           onFollowingClick={() => setPeopleSheet('following')}
           actions={
             <>
-              <button type="button" onClick={() => router.push('/profile/edit')} className="h-11 flex-1 rounded-full text-[15px] font-bold" style={profileButton.quiet}>
-                Edit profile
+              <button type="button" onClick={() => void shareProfile()} className="h-11 flex-1 rounded-full text-[15px] font-extrabold transition active:scale-[0.98]" style={profileButton.primary}>
+                Share Profile
               </button>
-              <button type="button" onClick={() => void shareProfile()} className="h-11 flex-1 rounded-full text-[15px] font-bold" style={profileButton.quiet}>
-                Share profile
+              <button type="button" onClick={() => router.push('/profile/edit')} className="h-11 flex-1 rounded-full text-[15px] font-extrabold transition active:scale-[0.98]" style={profileButton.ghost}>
+                Edit Profile
               </button>
             </>
           }
@@ -154,24 +153,47 @@ function ProfileContent() {
           active={tab}
           onChange={(id) => setTab(id as Tab)}
           tabs={[
-            { id: 'pacts', label: 'Pacts', count: createdPacts.length + joinedPacts.length },
+            { id: 'active', label: 'Active', count: activePacts.length },
+            { id: 'completed', label: 'Completed', count: finishedPacts.length },
             { id: 'circles', label: 'Circles', count: myCircles.length },
-            { id: 'dares', label: 'Dares', count: myDares.length },
+            ...(myDares.length > 0 ? [{ id: 'dares', label: 'Dares', count: myDares.length }] : []),
           ]}
         />
 
         <div className="px-4">
-          {tab === 'pacts' && <PactsTab pacts={createdPacts} joinedPacts={joinedPacts} votedPacts={votedPacts} allowJoinedUploads={true} />}
+          {(tab === 'active' || tab === 'completed') && (
+            <div className="flex flex-col gap-3.5">
+              {(tab === 'active' ? activePacts : finishedPacts).length === 0 ? (
+                tab === 'active' ? (
+                  <ProfileEmpty
+                    title="Nothing live right now"
+                    text="Start a pact and shoot Day 1. It shows up here."
+                    action={
+                      <button type="button" onClick={() => router.push('/pacts/create')} className="h-11 rounded-full px-5 text-[14.5px] font-extrabold" style={profileButton.primary}>
+                        Start a pact
+                      </button>
+                    }
+                  />
+                ) : (
+                  <ProfileEmpty title="Nothing finished yet" text="Pacts you finish stay here." />
+                )
+              ) : (
+                (tab === 'active' ? activePacts : finishedPacts).map((pact: any) => <ProfilePactCard key={pact.id} pact={pact} />)
+              )}
+            </div>
+          )}
           {tab === 'dares' && <DaresTab dares={myDares} />}
           {tab === 'circles' &&
             (myCircles.length === 0 ? (
-              <div className="rounded-[20px] px-5 py-8 text-center" style={{ border: '1.5px dashed var(--hairline)' }}>
-                <div className="text-[15px] font-bold" style={{ color: INK }}>Not in any circles yet</div>
-                <div className="mt-1 text-[13.5px]" style={{ color: MUTED }}>Join one to start keeping each other honest.</div>
-                <button type="button" onClick={() => router.push('/circles')} className="mt-4 h-11 rounded-full px-5 text-[14px] font-bold" style={profileButton.primary}>
-                  Browse circles
-                </button>
-              </div>
+              <ProfileEmpty
+                title="Not in any circles yet"
+                text="Join one to start keeping each other honest."
+                action={
+                  <button type="button" onClick={() => router.push('/circles')} className="h-11 rounded-full px-5 text-[14.5px] font-extrabold" style={profileButton.primary}>
+                    Browse circles
+                  </button>
+                }
+              />
             ) : (
               <div className="flex flex-col gap-2.5">
                 {myCircles.map((circle: any) => (
@@ -179,8 +201,8 @@ function ProfileContent() {
                     key={circle.id}
                     type="button"
                     onClick={() => router.push(`/circles/${circle.id}`)}
-                    className="flex items-center gap-3 rounded-[20px] p-3 text-left"
-                    style={{ background: 'var(--card)', border: '1px solid var(--hairline)' }}
+                    className="flex items-center gap-3 rounded-[22px] p-3.5 text-left"
+                    style={{ background: '#FBF8F1', border: '1px solid #DCD3C1' }}
                   >
                     <span className="relative flex size-11 items-center justify-center overflow-hidden rounded-full text-xl" style={{ background: 'var(--card-muted)' }}>
                       {circle.photo_url ? <Image src={circle.photo_url} alt="" fill sizes="44px" className="object-cover" /> : circle.icon_emoji || circle.name?.charAt(0)}
