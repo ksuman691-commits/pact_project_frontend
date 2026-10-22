@@ -17,9 +17,8 @@ export interface ProfileHeaderProps {
   bio?: string | null
   followers?: number
   following?: number
-  streak?: number | null
-  activeCount?: number
-  completedCount?: number
+  /** The CP Score card, between the name and the buttons. */
+  score?: ReactNode
   /** Navy ring around the photo when they posted a moment today. */
   hasMoment?: boolean
   onViewMoment?: () => void
@@ -42,9 +41,8 @@ function initials(name: string) {
 }
 
 /**
- * The top of every profile, own or someone else's. Only real numbers: no
- * win rate, reputation or locked achievements. Everything uses explicit
- * colours so the legacy .pact-flow heading and paragraph rules can't grey it out.
+ * The top of every profile, own or someone else's: photo, name, bio, the
+ * follow counts, the CP Score card and the buttons. Nothing else.
  */
 export default function ProfileHeader({
   name,
@@ -53,9 +51,7 @@ export default function ProfileHeader({
   bio,
   followers = 0,
   following = 0,
-  streak,
-  activeCount = 0,
-  completedCount = 0,
+  score,
   hasMoment = false,
   onViewMoment,
   onFollowersClick,
@@ -69,9 +65,9 @@ export default function ProfileHeader({
     : { border: '3px solid transparent', padding: 3 }
 
   const avatar = (
-    <span className="block size-[84px] shrink-0 rounded-full" style={{ ...ringStyle, boxSizing: 'border-box' }}>
+    <span className="block size-[80px] shrink-0 rounded-full" style={{ ...ringStyle, boxSizing: 'border-box' }}>
       <span className="relative flex size-full items-center justify-center overflow-hidden rounded-full text-[26px] font-extrabold" style={{ background: INK, color: '#FFFFFF' }}>
-        {avatarUrl ? <Image src={avatarUrl} alt="" fill sizes="84px" className="object-cover" /> : initials(name) || '?'}
+        {avatarUrl ? <Image src={avatarUrl} alt="" fill sizes="80px" className="object-cover" /> : initials(name) || '?'}
       </span>
     </span>
   )
@@ -86,49 +82,29 @@ export default function ProfileHeader({
         ) : (
           avatar
         )}
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="truncate text-[23px] font-extrabold leading-tight tracking-[-0.025em]" style={{ color: INK }}>{name}</div>
-          {username && <div className="mt-0.5 truncate text-[13.5px]" style={{ color: MUTED }}>@{username}</div>}
-          <div className="mt-1 flex items-center gap-1 text-[13.5px]" style={{ color: MUTED }}>
+          {bio ? (
+            <div className="mt-0.5 line-clamp-3 whitespace-pre-line text-[14px] leading-snug" style={{ color: MUTED }}>{bio}</div>
+          ) : isOwn ? (
+            <Link href="/profile/edit#bio" className="mt-0.5 inline-block text-[14px] font-bold" style={{ color: NAVY }}>
+              Add a bio
+            </Link>
+          ) : null}
+          <div className="mt-1.5 flex items-center gap-1 text-[13.5px]" style={{ color: MUTED }}>
             <button type="button" onClick={onFollowersClick} className="hover:underline">
-              <span className="font-extrabold" style={{ color: INK }}>{followers}</span> followers
+              <span className="font-extrabold" style={{ color: INK }}>{followers.toLocaleString('en-IN')}</span> {followers === 1 ? 'follower' : 'followers'}
             </button>
             <span aria-hidden="true">·</span>
             <button type="button" onClick={onFollowingClick} className="hover:underline">
-              <span className="font-extrabold" style={{ color: INK }}>{following}</span> following
+              <span className="font-extrabold" style={{ color: INK }}>{following.toLocaleString('en-IN')}</span> following
             </button>
           </div>
         </div>
       </div>
 
-      {bio ? (
-        <div className="mt-3 whitespace-pre-line text-[14.5px] leading-snug" style={{ color: INK }}>{bio}</div>
-      ) : isOwn ? (
-        <Link
-          href="/profile/edit#bio"
-          className="mt-3 flex min-h-11 items-center rounded-[14px] px-3 text-[14px] font-semibold"
-          style={{ border: `1.5px dashed ${NAVY}`, color: NAVY, background: '#F5F7FD' }}
-        >
-          + Add a bio. Tell people what you&apos;re working on.
-        </Link>
-      ) : null}
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        {streak != null && streak > 0 && (
-          <span className="flex h-[30px] items-center gap-1.5 rounded-full px-3 text-[13px] font-extrabold" style={{ background: '#E8ECF7', color: NAVY }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill={NAVY} aria-hidden="true"><path d="M12 2c1 4-3 6-3 10a4 4 0 0 0 8 0c0-2-1-3-1-5 3 2 5 5 5 8a9 9 0 0 1-18 0c0-6 6-8 9-13z" /></svg>
-            {streak}-day streak
-          </span>
-        )}
-        <span className="flex h-[30px] items-center rounded-full px-3 text-[13px] font-bold" style={{ background: CARD, border: `1px solid ${LINE}`, color: INK }}>
-          {activeCount} active {activeCount === 1 ? 'pact' : 'pacts'}
-        </span>
-        <span className="flex h-[30px] items-center rounded-full px-3 text-[13px] font-bold" style={{ background: CARD, border: `1px solid ${LINE}`, color: INK }}>
-          {completedCount} completed
-        </span>
-      </div>
-
-      {actions && <div className="mt-4 flex gap-2">{actions}</div>}
+      {score}
+      {actions && <div className="mt-3.5 flex gap-2">{actions}</div>}
       {footer && <div className="mt-3 flex flex-col gap-2">{footer}</div>}
     </section>
   )
@@ -139,4 +115,6 @@ export const profileButton = {
   primary: { background: NAVY, color: '#FFFFFF', border: 0 },
   outline: { background: CARD, color: NAVY, border: `1.5px solid ${NAVY}` },
   quiet: { background: CARD, color: INK, border: `1px solid ${LINE}` },
+  /** Second action next to a navy button (Tip, Edit): navy outline on paper. */
+  ghost: { background: 'transparent', color: NAVY, border: `1.5px solid ${NAVY}` },
 } as const
