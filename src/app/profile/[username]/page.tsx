@@ -3,7 +3,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import { ChevronLeft, UserPlus } from 'lucide-react';
+import { Bell, BellOff, ChevronLeft, UserPlus } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import AddToCircleSheet from '@/components/AddToCircleSheet';
 import FeedPactCard from '@/components/FeedPactCard';
@@ -12,7 +13,7 @@ import SegmentTabs from '@/components/profile/SegmentTabs';
 import PeopleSheet from '@/components/profile/PeopleSheet';
 import TipButton from '@/components/tips/TipButton';
 import { useAuthStore } from '@/store/auth';
-import { userService } from '@/services/api';
+import { followService, userService } from '@/services/api';
 import {
   useAcceptFollow,
   useFollowers,
@@ -89,6 +90,16 @@ export default function PublicProfilePage() {
   const outgoingFollowId = followState?.outgoing_follow_id || null;
   const incomingStatus = followState?.incoming_status || null;
   const incomingFollowId = followState?.incoming_follow_id || null;
+  const announcementsMuted = Boolean((followState as any)?.announcements_muted);
+  const toggleAnnouncements = async () => {
+    try {
+      await followService.setAnnouncements(Number(profileUserId), !announcementsMuted);
+      await followStateQuery.refetch();
+      toast.success(announcementsMuted ? `You'll hear when ${firstName} starts a circle` : `Muted ${firstName}'s new circles`);
+    } catch {
+      toast.error('Could not change that');
+    }
+  };
   const isBusy = requestFollow.isPending || acceptFollow.isPending || rejectFollow.isPending || removeFollow.isPending;
 
   const handleFollow = async () => {
@@ -159,6 +170,18 @@ export default function PublicProfilePage() {
               <button type="button" onClick={() => void handleFollow()} disabled={isBusy} className="h-11 flex-1 rounded-full text-[15px] font-extrabold disabled:opacity-60" style={followStyle}>
                 {followLabel}
               </button>
+              {outgoingStatus === 'accepted' && (
+                <button
+                  type="button"
+                  onClick={() => void toggleAnnouncements()}
+                  aria-pressed={!announcementsMuted}
+                  aria-label={announcementsMuted ? `Get ${firstName}'s new circles` : `Mute ${firstName}'s new circles`}
+                  className="flex size-11 shrink-0 items-center justify-center rounded-full"
+                  style={profileButton.quiet}
+                >
+                  {announcementsMuted ? <BellOff className="size-5" /> : <Bell className="size-5" />}
+                </button>
+              )}
               <TipButton creatorId={profileUser.id} creatorName={name} creatorAvatarUrl={profileUser.avatar_url} className="!h-11 flex-1 justify-center !shadow-none" />
               <button type="button" onClick={() => setShowAddToCircle(true)} aria-label={`Add ${firstName} to a circle`} className="flex size-11 shrink-0 items-center justify-center rounded-full" style={profileButton.quiet}>
                 <UserPlus className="size-5" />

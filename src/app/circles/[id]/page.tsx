@@ -7,7 +7,7 @@ import { circleService, circleJoinRequestService, circleAdvancedService, pactSer
 import { Circle, Pact } from '@/types'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
-import { Plus, Users, Camera, ChevronLeft, Share2 } from 'lucide-react'
+import { Plus, Users, Camera, ChevronLeft, Share2, Lock } from 'lucide-react'
 import { useSeedBackHistory } from '@/hooks/useSeedBackHistory'
 import { useSmartBack } from '@/hooks/useSmartBack'
 import InviteMembersModal from '@/components/InviteMembersModal'
@@ -24,13 +24,15 @@ import { readCircleActivity } from '@/lib/circleActivity'
 const PRIVACY_LABEL: Record<string, string> = {
   public: 'Anyone can join',
   open: 'Anyone can join',
-  approval: 'Approval needed to join',
-  private: 'Invite only',
+  approval: 'Ask to join',
+  private: 'Private · ask to join',
 }
 
 export default function CircleDetailPage() {
   const router = useRouter(); const params = useParams(); const { user, isInitialized } = useRequireAuth(); const circleId = Number(params.id)
   const [circle, setCircle] = useState<Circle | null>(null); const [members, setMembers] = useState<any[]>([]); const [pacts, setPacts] = useState<Pact[]>([]); const [loading, setLoading] = useState(true); const [isMember, setIsMember] = useState(false); const [qrOpen, setQrOpen] = useState(false); const [inviteModal, setInviteModal] = useState(false); const [leaveModal, setLeaveModal] = useState(false); const [leaving, setLeaving] = useState(false); const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [requested, setRequested] = useState(false)
+  const [savingPrivacy, setSavingPrivacy] = useState(false)
   // Tracks which members were just nudged this session so the button can
   // flip to a disabled "Nudged" state and prevent an accidental double-send
   // — not persisted, so it resets on reload (there's no "already nudged
@@ -43,14 +45,28 @@ export default function CircleDetailPage() {
   const handleSkipPact = async (pactId: number, _vote: 'skip') => { await skipMutation.mutateAsync(pactId) }
   useSeedBackHistory('/circles')
   const smartBack = useSmartBack('/circles')
-  useEffect(() => { if (!isInitialized) return; if (!user) { router.push('/auth/login'); return } (async () => { try { const [c, m, p] = await Promise.all([circleService.getById(circleId), circleJoinRequestService.listMembers(circleId), circleService.listPacts(circleId)]); setCircle(c.data); setMembers(m.data || []); setPacts(p.data || []); setIsMember(!!c.data?.is_member) } catch { toast.error('Failed to load circle'); router.push('/circles') } finally { setLoading(false) } })() }, [isInitialized, user, router, circleId])
+  useEffect(() => { if (!isInitialized) return; if (!user) { router.push('/auth/login'); return } (async () => { try { const c = await circleService.getById(circleId); setCircle(c.data); setIsMember(!!c.data?.is_member); setRequested(c.data?.my_join_request === 'pending'); const [m, p] = await Promise.allSettled([circleJoinRequestService.listMembers(circleId), circleService.listPacts(circleId)]); setMembers(m.status === 'fulfilled' ? m.value.data || [] : []); setPacts(p.status === 'fulfilled' ? p.value.data || [] : []) } catch { toast.error('Failed to load circle'); router.push('/circles') } finally { setLoading(false) } })() }, [isInitialized, user, router, circleId])
   if (!isInitialized || loading) return <div className="flex min-h-screen items-center justify-center bg-[var(--paper)]"><LogoSpinner size={32} color="var(--navy)" /></div>
   if (!user) return null
   // Real not-found state instead of a blank screen — reachable when the load
   // effect's catch block hasn't redirected away yet (or a future change stops
   // redirecting), matching the Pact detail page's "not found" pattern.
   if (!circle) return <div className="flex min-h-screen items-center justify-center bg-[var(--paper)] px-5 text-center text-[var(--ink)]"><div><p className="font-serif text-lg">Circle not found</p><p className="mt-2 text-[13px] text-[var(--muted)]">This circle could not be loaded or is no longer available.</p><button type="button" onClick={() => router.push('/circles')} className="mt-4 h-11 rounded-full bg-[var(--navy)] px-6 text-[14px] font-semibold text-[var(--card)]">Back to circles</button></div></div>
-  const handleJoin = async () => { try { await circleService.join(circleId); setIsMember(true); const m = await circleJoinRequestService.listMembers(circleId); setMembers(m.data || []); toast.success('Joined circle') } catch { toast.error('Failed to join circle') } }
+  const isPrivateCircle = ((circle as any)?.visibility || 'public') === 'private'
+  const reloadAfterJoin = async () => { const [m, p] = await Promise.allSettled([circleJoinRequestService.listMembers(circleId), circleService.listPacts(circleId)]); if (m.status === 'fulfilled') setMembers(m.value.data || []); if (p.status === 'fulfilled') setPacts(p.value.data || []) }
+  const handleJoin = async () => {
+    if (isPrivateCircle) {
+      try { await circleJoinRequestService.sendRequest(circleId); setRequested(true); toast.success(`Asked to join. ${(circle as any)?.owner_username ? '@' + (circle as any).owner_username : 'The owner'} decides.`) } catch (error: any) { toast.error(error?.response?.data?.detail || 'Could not send your request') }
+      return
+    }
+    try { await circleService.join(circleId); setIsMember(true); await reloadAfterJoin(); toast.success('Joined circle') } catch (error: any) { toast.error(error?.response?.data?.detail || 'Failed to join circle') }
+  }
+  const togglePrivacy = async () => {
+    if (!circle || savingPrivacy) return
+    const next = isPrivateCircle ? 'public' : 'private'
+    setSavingPrivacy(true)
+    try { const res = await circleService.setVisibility(circleId, next); setCircle(prev => prev ? { ...prev, ...res.data } as any : prev); toast.success(next === 'private' ? 'Circle is private. Everyone in it stays.' : 'Anyone can join again') } catch { toast.error('Could not change that') } finally { setSavingPrivacy(false) }
+  }
   // POST /api/circles/{id}/members/{user_id}/nudge — see
   // circleAdvancedService.nudgeMember and BACKEND_SPEC_PUSH_NOTIFICATIONS.md.
   // Not live yet, same graceful-degradation convention as
@@ -165,7 +181,11 @@ export default function CircleDetailPage() {
 
       <div className="mx-4 mt-[22px] flex flex-col gap-2.5">
         {!isMember ? (
-          <button onClick={handleJoin} className="flex h-[52px] w-full items-center justify-center rounded-full bg-[var(--navy)] text-[16px] font-semibold text-[var(--card)] transition hover:bg-[var(--navy-hover)]">Join circle</button>
+          requested ? (
+            <div className="flex h-[52px] w-full items-center justify-center rounded-full border-[1.5px] border-[var(--line)] text-[15px] font-semibold text-[var(--muted)]">Requested · waiting for the owner</div>
+          ) : (
+            <button onClick={handleJoin} className="flex h-[52px] w-full items-center justify-center rounded-full bg-[var(--navy)] text-[16px] font-semibold text-[var(--card)] transition hover:bg-[var(--navy-hover)]">{isPrivateCircle ? 'Ask to join' : 'Join circle'}</button>
+          )
         ) : (
           <>
             <button onClick={() => router.push(`/pacts/create?circleId=${circleId}`)} className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--navy)] text-[16px] font-semibold text-[var(--card)] transition hover:bg-[var(--navy-hover)]">
@@ -176,14 +196,31 @@ export default function CircleDetailPage() {
               <Users className="h-4 w-4" strokeWidth={1.8} />
               Invite someone
             </button>
+            {isOwner && (
+              <div className="mt-1 flex items-center gap-3 rounded-[18px] border border-[var(--line)] bg-[var(--card)] p-3.5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background: isPrivateCircle ? '#1F3A93' : '#EFEBE1', color: isPrivateCircle ? '#FFFFFF' : '#17181D' }}>
+                  <Lock className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
+                </span>
+                <span className="min-w-0 flex-1 text-left">
+                  <span className="block text-[15px] font-bold" style={{ color: '#17181D' }}>Private Circle</span>
+                  <span className="block text-[12.5px] leading-snug" style={{ color: '#5A5C63' }}>{isPrivateCircle ? 'People ask to join and you approve. Members watch your free private pacts here.' : 'Anyone can join. Turn on to approve each person; everyone in it now stays.'}</span>
+                </span>
+                <button type="button" role="switch" aria-checked={isPrivateCircle} aria-label="Private circle" onClick={() => void togglePrivacy()} disabled={savingPrivacy} className="relative h-8 w-[52px] shrink-0 rounded-full transition-colors disabled:opacity-60" style={{ background: isPrivateCircle ? '#1F3A93' : '#D4D5D9' }}>
+                  <span className="absolute top-1 h-6 w-6 rounded-full bg-white transition-all" style={{ left: isPrivateCircle ? 24 : 4, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                </button>
+              </div>
+            )}
+            {isOwner && isPrivateCircle && (
+              <button type="button" onClick={() => router.push('/requests')} className="flex h-11 w-full items-center justify-center rounded-full text-[14px] font-semibold text-[var(--navy)]">See join requests</button>
+            )}
           </>
         )}
       </div>
 
       <section className="mx-4 mt-[30px] space-y-4">
         <h2 className="px-2 text-[20px] font-bold tracking-[-0.025em]">Pacts{pacts.length ? ` · ${pacts.length}` : ''}</h2>
-        {!isMember ? (
-          <p className="px-2 text-[14px] text-[var(--muted)]">Join this circle to see its pacts.</p>
+        {!isMember && (isPrivateCircle || pacts.length === 0) ? (
+          <p className="px-2 text-[14px] text-[var(--muted)]">{isPrivateCircle ? 'Members only. Ask to join to see its pacts.' : 'Join this circle to see its pacts.'}</p>
         ) : pacts.length === 0 ? (
           <p className="px-2 text-[14px] text-[var(--muted)]">No pacts here yet. Make the first one.</p>
         ) : (

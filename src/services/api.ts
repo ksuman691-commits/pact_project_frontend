@@ -341,6 +341,10 @@ export const circleService = {
   },
   join: (id: number) => api.post(`/api/circles/${id}/join`),
   leave: (id: number) => api.post(`/api/circles/${id}/leave`),
+  setVisibility: async (id: number, visibility: 'public' | 'private') => {
+    const response = await api.patch(`/api/circles/${id}`, { visibility });
+    return { ...response, data: mapCircle(response.data) };
+  },
   listPacts: async (id: number, skip = 0, limit = 20) => {
     const response = await api.get(`/api/circles/${id}/pacts`, { params: { skip, limit } });
     return normalizeListResponse(response, mapPact);
@@ -593,6 +597,7 @@ export const followService = {
   remove: (followId: number) => api.delete(`/api/follows/${followId}`),
   pending: () => api.get('/api/follows/pending'),
   state: (userId: number) => api.get(`/api/follows/state/${userId}`),
+  setAnnouncements: (userId: number, muted: boolean) => api.post(`/api/follows/state/${userId}/announcements`, null, { params: { muted } }),
 };
 
 // Feed Services (Personalized feed, trending, discover)
