@@ -17,7 +17,7 @@ export interface CpScoreChange {
 
 export interface CpScore {
   user_id: number
-  status: 'ready' | 'building'
+  status: 'ready' | 'building' | 'unavailable'
   score: number | null
   band: string | null
   building_day?: number

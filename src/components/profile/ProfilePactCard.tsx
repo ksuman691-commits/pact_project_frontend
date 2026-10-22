@@ -111,7 +111,9 @@ export default function ProfilePactCard({
           {ended
             ? `${done} of ${total} days posted`
             : canPost && !posted
-              ? `${Math.min(done, outOf)} of ${outOf} days so far`
+              ? done === 0
+                ? `Day ${Math.max(1, day)} · nothing posted yet`
+                : `${Math.min(done, outOf)} of ${outOf} days so far`
               : `${posted ? 'Posted today' : lastPosted(pact)} · ${Math.min(done, outOf)} of ${outOf} days`}
         </div>
         {canPost && !posted ? (

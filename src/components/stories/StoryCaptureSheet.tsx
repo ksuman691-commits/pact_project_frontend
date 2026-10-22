@@ -57,7 +57,7 @@ function canRecordInPage() {
   return typeof window !== 'undefined' && typeof window.MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
 }
 
-export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, canJoin = false, onJoin, initialClip = null, onCaptured, autoStart = false }: StoryCaptureSheetProps) {
+export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, canJoin = false, onJoin, initialClip = null, onCaptured, autoStart = true }: StoryCaptureSheetProps) {
   const [step, setStep] = useState<Step>(initialClip ? 'preview' : 'idle')
   const [clip, setClip] = useState<Clip | null>(initialClip)
   const [notice, setNotice] = useState<string | null>(null)
@@ -280,11 +280,13 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
     stopTimerRef.current = window.setTimeout(finishRecording, STORY_MAX_SECONDS * 1000)
   }
 
+  // Retake goes straight back to the camera, not to the intro screen.
   const retake = () => {
     replaceClip(null)
     reset()
     setNotice(null)
     setStep('idle')
+    if (inPageSupported) void openLiveCamera()
   }
 
   if (!isOpen) return null
@@ -309,8 +311,8 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
         <header className="absolute inset-x-0 top-0 flex items-start justify-between gap-3 px-4 pt-[max(1rem,env(safe-area-inset-top))]">
           <button
             type="button"
-            onClick={() => { stopStream(); setStep('idle') }}
-            aria-label="Back"
+            onClick={closeSheet}
+            aria-label="Close camera"
             className="flex h-11 w-11 items-center justify-center rounded-full"
             style={{ background: 'rgba(255,255,255,0.18)' }}
           >
@@ -420,7 +422,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
         {step === 'idle' && (
           <>
             <p className="text-[15px] leading-relaxed text-[var(--ink)]">
-              Record a short video moment. It shares your progress and disappears after 24 hours.
+              Up to 15 seconds. It goes on today&apos;s day of your pact, for everyone who can watch it.
             </p>
             <p className="rounded-[6px] border border-[var(--hairline)] bg-[var(--card)] px-4 py-3 text-[14px] text-[var(--muted)]">{STORY_LIMITS_TEXT}</p>
 

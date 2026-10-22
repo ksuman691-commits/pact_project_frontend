@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 
 const INK = '#17181D'
 const MUTED = '#5A5C63'
@@ -60,6 +60,7 @@ export default function ProfileHeader({
   actions,
   footer,
 }: ProfileHeaderProps) {
+  const [avatarBroken, setAvatarBroken] = useState(false)
   const ringStyle = hasMoment
     ? { border: `3px solid ${NAVY}`, padding: 3 }
     : { border: '3px solid transparent', padding: 3 }
@@ -67,7 +68,7 @@ export default function ProfileHeader({
   const avatar = (
     <span className="block size-[80px] shrink-0 rounded-full" style={{ ...ringStyle, boxSizing: 'border-box' }}>
       <span className="relative flex size-full items-center justify-center overflow-hidden rounded-full text-[26px] font-extrabold" style={{ background: INK, color: '#FFFFFF' }}>
-        {avatarUrl ? <Image src={avatarUrl} alt="" fill sizes="80px" className="object-cover" /> : initials(name) || '?'}
+        {avatarUrl && !avatarBroken ? <Image src={avatarUrl} alt="" fill sizes="80px" unoptimized onError={() => setAvatarBroken(true)} className="object-cover" /> : initials(name) || '?'}
       </span>
     </span>
   )
