@@ -4,7 +4,8 @@ import { Suspense, useEffect, useState } from 'react';
 import InviteConfirmation from '@/components/create-circle-flow/InviteConfirmation';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import CreateCircleFlow from '@/components/create-circle-flow/CreateCircleFlow';
+import NewCircleFlow from '@/components/new-circle/NewCircleFlow';
+import { loginHrefForHere } from '@/lib/authNext';
 import { useSmartBack } from '@/hooks/useSmartBack';
 import LogoSpinner from '@/components/LogoSpinner';
 
@@ -65,14 +66,14 @@ function CreateCirclePageContent() {
 
   if (!isInitialized || !inviteesReady) {
     return (
-      <div className="pact-flow min-h-screen flex items-center justify-center">
-        <LogoSpinner size={48} color="var(--pact-pink)" />
+      <div className="flex min-h-screen items-center justify-center bg-[var(--paper)]">
+        <LogoSpinner size={40} color="var(--navy)" />
       </div>
     );
   }
 
   if (!user) {
-    router.push('/auth/login');
+    router.push(loginHrefForHere());
     return null;
   }
 
@@ -81,11 +82,11 @@ function CreateCirclePageContent() {
   }
 
   return (
-    <CreateCircleFlow
+    <NewCircleFlow
       onExit={exitFlow}
-      initialInviteUserId={inviteUserIds.length > 0 ? inviteUserIds : null}
+      initialInviteUserIds={inviteUserIds}
       initialCategory={category}
-      initialPactId={Number.isFinite(pactId) ? pactId : null}
+      initialPactId={pactId != null && Number.isFinite(pactId) ? pactId : null}
     />
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
+import { loginHrefForHere } from '@/lib/authNext';
 
 export function useRequireAuth() {
   const router = useRouter();
@@ -11,7 +12,8 @@ export function useRequireAuth() {
 
   useEffect(() => {
     if (isInitialized && !user) {
-      router.push('/auth/login');
+      // Come back here after signing in (e.g. a circle link shared on WhatsApp).
+      router.push(loginHrefForHere());
     }
   }, [isInitialized, user, router]);
 

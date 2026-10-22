@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Copy, Check, Link as LinkIcon, Search, Loader, UserPlus } from 'lucide-react';
+import { X, Copy, Check, Link as LinkIcon, Search, Loader, UserPlus, MessageCircle } from 'lucide-react';
+import { circleLink, copyText, shareCircle } from '@/lib/circleInvite';
 import toast from 'react-hot-toast';
 import { useSearchUsers } from '@/hooks/useUserQueries';
 import { useInviteUserToCircle } from '@/hooks/useCircleMutations';
@@ -14,6 +15,8 @@ interface InviteMembersModalProps {
   circleName: string;
   /** Member user_ids already in the circle, so they're excluded from search results. */
   existingMemberIds?: number[];
+  /** Private circles: people with the link ask to join instead of joining. */
+  isPrivate?: boolean;
 }
 
 /**
@@ -21,9 +24,8 @@ interface InviteMembersModalProps {
  * MemberSearchModal (Feed's working user search: useSearchUsers ->
  * userService.search -> GET /api/users/search, a real, deployed
  * endpoint). Selecting a result calls useInviteUserToCircle, which posts
- * to POST /api/circles/{id}/invite — not yet deployed (see the NOTE on
- * circleAdvancedService.inviteUser) — so that mutation already downgrades
- * a 404 into a friendly "not available yet" toast instead of crashing.
+ * to POST /api/circles/{id}/invite; the person gets a notification and the
+ * invite waits on their Circles page.
  */
 function SearchInviteTab({ circleId, existingMemberIds }: { circleId: number; existingMemberIds: number[] }) {
   const [query, setQuery] = useState('');
@@ -127,30 +129,21 @@ function SearchInviteTab({ circleId, existingMemberIds }: { circleId: number; ex
   );
 }
 
-export default function InviteMembersModal({ isOpen, onClose, circleId, circleName, existingMemberIds = [] }: InviteMembersModalProps) {
+export default function InviteMembersModal({ isOpen, onClose, circleId, circleName, existingMemberIds = [], isPrivate = false }: InviteMembersModalProps) {
   const [activeTab, setActiveTab] = useState<'search' | 'link'>('search');
-  const [inviteLink, setInviteLink] = useState('');
   const [copied, setCopied] = useState(false);
+  // The circle's own page: open circles can Join there, private ones Ask to Join.
+  const inviteLink = isOpen ? circleLink(circleId) : '';
 
-  // NOTE: the backend has no invite-code/invite-link endpoint either
-  // (confirmed against the live OpenAPI schema — only /join and
-  // /join-request exist, neither of which issues a shareable code). This
-  // link and code are still client-generated placeholders, same gap as
-  // the removed "Search people" tab, just not addressed in this pass per
-  // explicit instruction to only pull that tab and leave Link as-is.
-  // The generated /circles/join/{code} route does not resolve to anything
-  // real yet — needs its own backend endpoint before this tab is genuinely
-  // functional.
-  const generateInviteLink = () => {
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-    setInviteLink(`${window.location.origin}/circles/join/${code}`);
-  };
-
-  const copyLink = () => {
-    navigator.clipboard.writeText(inviteLink);
+  const copyLink = async () => {
+    const ok = await copyText(inviteLink);
+    if (!ok) {
+      toast.error('Could not copy. Long-press the link to copy it.');
+      return;
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    toast.success('Link copied to clipboard!');
+    toast.success('Link copied');
   };
 
   if (!isOpen) return null;
@@ -169,10 +162,6 @@ export default function InviteMembersModal({ isOpen, onClose, circleId, circleNa
           </button>
         </div>
 
-        {/* Tabs: "Search for someone" is the default and reuses the real,
-            deployed user-search endpoint. "Shareable link" keeps its
-            existing client-generated-placeholder behavior (that gap is
-            unrelated to this change, see NOTE below). */}
         <div className="flex gap-1 px-6 pt-4 flex-shrink-0">
           <button
             type="button"
@@ -185,7 +174,7 @@ export default function InviteMembersModal({ isOpen, onClose, circleId, circleNa
             }
           >
             <Search className="w-4 h-4" />
-            Search for someone
+            Search People
           </button>
           <button
             type="button"
@@ -198,7 +187,7 @@ export default function InviteMembersModal({ isOpen, onClose, circleId, circleNa
             }
           >
             <LinkIcon className="w-4 h-4" />
-            Shareable link
+            Share a Link
           </button>
         </div>
 
@@ -207,64 +196,39 @@ export default function InviteMembersModal({ isOpen, onClose, circleId, circleNa
           {activeTab === 'search' ? (
             <SearchInviteTab circleId={circleId} existingMemberIds={existingMemberIds} />
           ) : (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-[var(--pact-text-dim)] mb-2">Invite Link</label>
-                {/* NOTE: the backend has no invite-code/invite-link
-                    endpoint either (confirmed against the live OpenAPI
-                    schema — only /join and /join-request exist, neither
-                    of which issues a shareable code). This link and code
-                    are still client-generated placeholders. The generated
-                    /circles/join/{code} route does not resolve to
-                    anything real yet — needs its own backend endpoint
-                    before this tab is genuinely functional. */}
-                {!inviteLink ? (
-                  <button
-                    onClick={generateInviteLink}
-                    className="w-full px-4 py-3 rounded-[28px] font-medium transition"
-                    style={{
-                      background: 'var(--pact-surface-2)',
-                      border: '1px dashed var(--pact-violet)',
-                      color: 'var(--pact-violet)',
-                    }}
-                  >
-                    Generate Invite Link
-                  </button>
-                ) : (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={inviteLink}
-                      readOnly
-                      className="flex-1 px-4 py-3 rounded-[28px]"
-                      style={{
-                        background: 'var(--pact-surface-2)',
-                        border: '1px solid var(--pact-hairline)',
-                        color: 'var(--pact-text-dim)',
-                      }}
-                    />
-                    <button
-                      onClick={copyLink}
-                      className="px-4 py-3 rounded-[28px] text-[var(--card-text)] transition"
-                      style={{ background: 'var(--navy)' }}
-                    >
-                      {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                    </button>
-                  </div>
-                )}
-              </div>
-
+            <div className="space-y-3">
               <div
-                className="rounded-[28px] p-3 space-y-2"
+                className="flex items-center gap-2 rounded-[18px] px-4 py-3"
                 style={{ background: 'var(--pact-surface-2)', border: '1px solid var(--pact-hairline)' }}
               >
-                <p className="text-xs text-[var(--pact-text)] font-medium">How it works:</p>
-                <ul className="text-xs text-[var(--pact-text-faint)] space-y-1">
-                  <li>• Share the link with anyone, even outside the app</li>
-                  <li>• They can join without requiring approval</li>
-                  <li>• Link is valid for 30 days</li>
-                </ul>
+                <LinkIcon className="h-4 w-4 shrink-0" style={{ color: 'var(--pact-text-faint)' }} />
+                <span className="min-w-0 flex-1 select-all truncate text-sm" style={{ color: 'var(--pact-text)' }}>{inviteLink}</span>
               </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => void shareCircle('whatsapp', { id: circleId, name: circleName, isPrivate })}
+                  className="flex h-12 items-center justify-center gap-2 rounded-full text-sm font-bold"
+                  style={{ background: 'var(--navy)', color: '#fff' }}
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp
+                </button>
+                <button
+                  type="button"
+                  onClick={copyLink}
+                  className="flex h-12 items-center justify-center gap-2 rounded-full text-sm font-bold"
+                  style={{ border: '1.5px solid var(--navy)', color: 'var(--navy)' }}
+                >
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copied ? 'Copied' : 'Copy Link'}
+                </button>
+              </div>
+              <p className="px-1 text-xs leading-snug" style={{ color: 'var(--pact-text-faint)' }}>
+                {isPrivate
+                  ? 'Anyone with the link can ask to join. You approve each person.'
+                  : 'Anyone with the link can join. People without the app sign up first, then land here.'}
+              </p>
             </div>
           )}
 

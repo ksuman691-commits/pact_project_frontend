@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { loginHrefForHere } from '@/lib/authNext'
 import { useRouter, useParams } from 'next/navigation'
 import { useRequireAuth } from '@/hooks/useRequireAuth'
 import { circleService, circleJoinRequestService, circleAdvancedService, pactService } from '@/services/api'
@@ -46,7 +47,7 @@ export default function CircleDetailPage() {
   // all" expand toggle, rather than the full roster always rendered flat.
   useSeedBackHistory('/circles')
   const smartBack = useSmartBack('/circles')
-  useEffect(() => { if (!isInitialized) return; if (!user) { router.push('/auth/login'); return } (async () => { try { const c = await circleService.getById(circleId); setCircle(c.data); setIsMember(!!c.data?.is_member); setRequested(c.data?.my_join_request === 'pending'); const [m, p] = await Promise.allSettled([circleJoinRequestService.listMembers(circleId), circleService.listPacts(circleId)]); setMembers(m.status === 'fulfilled' ? m.value.data || [] : []); setPacts(p.status === 'fulfilled' ? p.value.data || [] : []) } catch { toast.error('Failed to load circle'); router.push('/circles') } finally { setLoading(false) } })() }, [isInitialized, user, router, circleId])
+  useEffect(() => { if (!isInitialized) return; if (!user) { router.push(loginHrefForHere()); return } (async () => { try { const c = await circleService.getById(circleId); setCircle(c.data); setIsMember(!!c.data?.is_member); setRequested(c.data?.my_join_request === 'pending'); const [m, p] = await Promise.allSettled([circleJoinRequestService.listMembers(circleId), circleService.listPacts(circleId)]); setMembers(m.status === 'fulfilled' ? m.value.data || [] : []); setPacts(p.status === 'fulfilled' ? p.value.data || [] : []) } catch { toast.error('Failed to load circle'); router.push('/circles') } finally { setLoading(false) } })() }, [isInitialized, user, router, circleId])
   if (!isInitialized || loading) return <div className="flex min-h-screen items-center justify-center bg-[var(--paper)]"><LogoSpinner size={32} color="var(--navy)" /></div>
   if (!user) return null
   // Real not-found state instead of a blank screen — reachable when the load
@@ -389,5 +390,5 @@ export default function CircleDetailPage() {
         onJoin={() => joinPactForCapture(capturePact)}
       />
     )}
-    {circle && qrOpen && <CircleQRFullView circle={circle} onClose={() => setQrOpen(false)} />} {circle && <InviteMembersModal isOpen={inviteModal} onClose={() => setInviteModal(false)} circleId={circle.id} circleName={circle.name} existingMemberIds={members.map((m: any) => m.user_id)} />}<ConfirmModal isOpen={leaveModal} onClose={() => setLeaveModal(false)} onConfirm={handleLeave} title="Leave circle?" description={`You'll lose access to ${circle.name}'s pacts until you rejoin.`} confirmLabel="Leave Circle" destructive loading={leaving} /></main>
+    {circle && qrOpen && <CircleQRFullView circle={circle} onClose={() => setQrOpen(false)} />} {circle && <InviteMembersModal isOpen={inviteModal} onClose={() => setInviteModal(false)} circleId={circle.id} circleName={circle.name} existingMemberIds={members.map((m: any) => m.user_id)} isPrivate={isPrivateCircle} />}<ConfirmModal isOpen={leaveModal} onClose={() => setLeaveModal(false)} onConfirm={handleLeave} title="Leave circle?" description={`You'll lose access to ${circle.name}'s pacts until you rejoin.`} confirmLabel="Leave Circle" destructive loading={leaving} /></main>
 }

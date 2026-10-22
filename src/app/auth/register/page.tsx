@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { readNext } from '@/lib/authNext';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import toast from 'react-hot-toast';
@@ -21,6 +22,11 @@ export default function Register() {
   const register = useAuthStore((state) => state.register);
   const isLoading = useAuthStore((state) => state.isLoading);
 
+  const [loginHref, setLoginHref] = useState('/auth/login');
+  useEffect(() => {
+    const next = readNext('');
+    if (next) setLoginHref(`/auth/login?next=${encodeURIComponent(next)}`);
+  }, []);
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -44,7 +50,7 @@ export default function Register() {
     try {
       await register(formData.username, formData.email, formData.full_name, formData.password);
       toast.success('Account created');
-      router.push('/profile');
+      router.push(readNext('/profile'));
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Registration failed');
     }
@@ -79,7 +85,7 @@ export default function Register() {
 
       <p className="mt-6 text-center text-[14px] text-[var(--muted)]">
         Already have an account?{' '}
-        <Link href="/auth/login" className="font-semibold text-[var(--navy)] hover:text-[var(--navy-hover)] hover:underline">
+        <Link href={loginHref} className="font-semibold text-[var(--navy)] hover:text-[var(--navy-hover)] hover:underline">
           Sign in
         </Link>
       </p>
