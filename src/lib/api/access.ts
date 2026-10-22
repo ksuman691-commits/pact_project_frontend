@@ -1,6 +1,6 @@
 import api from '@/services/api'
 
-export type MediaAccess = 'open' | 'creator' | 'member' | 'approved' | 'pending' | 'denied' | 'revoked' | 'none'
+export type MediaAccess = 'open' | 'creator' | 'member' | 'approved' | 'circle' | 'pending' | 'denied' | 'revoked' | 'none'
 
 export interface AccessPerson {
   id: number
@@ -40,8 +40,9 @@ export async function resolveWatcher(pactId: number, userId: number, action: 'ap
   return response.data as { status: string }
 }
 
-export async function setPactPrivate(pactId: number, mediaLocked: boolean) {
-  const response = await api.put(`/api/pacts/${pactId}`, { media_locked: mediaLocked })
+/** keepMembers: when locking a circle pact, whether people already in the circle keep watching. */
+export async function setPactPrivate(pactId: number, mediaLocked: boolean, keepMembers = true) {
+  const response = await api.put(`/api/pacts/${pactId}`, { media_locked: mediaLocked, keep_members: keepMembers })
   return response.data
 }
 
@@ -50,7 +51,20 @@ export async function getAccessInbox() {
   return response.data as { pending: AccessRow[] }
 }
 
-export async function updateWatchSettings(pactId: number, body: { media_locked?: boolean; watch_price?: number | null; watch_auto_approve?: boolean }) {
+export async function updateWatchSettings(pactId: number, body: { media_locked?: boolean; watch_price?: number | null; watch_auto_approve?: boolean; keep_members?: boolean }) {
   const response = await api.put(`/api/pacts/${pactId}`, body)
   return response.data
+}
+
+export interface CircleJoinAsk {
+  id: number
+  circle_id: number
+  circle_name: string
+  user: AccessRow['user']
+  created_at: string
+}
+
+export async function getCircleRequests() {
+  const response = await api.get('/api/requests/circles')
+  return response.data as { pending: CircleJoinAsk[] }
 }

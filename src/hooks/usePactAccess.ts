@@ -1,7 +1,7 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { askToWatch, getAccessInbox, listWatchers, resolveWatcher, setPactPrivate, updateWatchSettings, withdrawAsk } from '@/lib/api/access'
+import { askToWatch, getAccessInbox, getCircleRequests, listWatchers, resolveWatcher, setPactPrivate, updateWatchSettings, withdrawAsk } from '@/lib/api/access'
 
 /** Anything that shows pact media must refetch once access changes. */
 function useInvalidateAccess() {
@@ -45,7 +45,11 @@ export function useResolveWatcher(pactId: number) {
 
 export function useSetPactPrivate(pactId: number) {
   const invalidate = useInvalidateAccess()
-  return useMutation({ mutationFn: (locked: boolean) => setPactPrivate(pactId, locked), onSuccess: () => invalidate(pactId) })
+  return useMutation({
+    mutationFn: (input: boolean | { locked: boolean; keepMembers?: boolean }) =>
+      typeof input === 'boolean' ? setPactPrivate(pactId, input) : setPactPrivate(pactId, input.locked, input.keepMembers ?? true),
+    onSuccess: () => invalidate(pactId),
+  })
 }
 
 export function useAccessInbox(enabled = true) {
@@ -55,11 +59,15 @@ export function useAccessInbox(enabled = true) {
 export function useUpdateWatchSettings(pactId: number) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (body: { media_locked?: boolean; watch_price?: number | null; watch_auto_approve?: boolean }) => updateWatchSettings(pactId, body),
+    mutationFn: (body: { media_locked?: boolean; watch_price?: number | null; watch_auto_approve?: boolean; keep_members?: boolean }) => updateWatchSettings(pactId, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['access'] })
       queryClient.invalidateQueries({ queryKey: ['pacts'] })
       queryClient.invalidateQueries({ queryKey: ['feed'] })
     },
   })
+}
+
+export function useCircleRequests(enabled = true) {
+  return useQuery({ queryKey: ['access', 'circle-requests'], queryFn: getCircleRequests, enabled, staleTime: 30_000 })
 }

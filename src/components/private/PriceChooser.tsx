@@ -13,8 +13,9 @@ function chip(on: boolean): React.CSSProperties {
 }
 
 /**
- * Price to watch a private pact: Free (the creator approves each ask) or a
- * set amount paid over UPI. Plus when people get in once they say they paid.
+ * Price to watch a private pact, paid over UPI. There is no "free" lock: if a
+ * pact's moments are free they're simply open. Plus when people get in once
+ * they say they paid.
  */
 export default function PriceChooser({
   price,
@@ -37,9 +38,6 @@ export default function PriceChooser({
     <div>
       <div className="text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>PRICE TO WATCH</div>
       <div className="mt-2 flex flex-wrap gap-2">
-        <button type="button" disabled={disabled} onClick={() => { setEditing(false); onPrice(null) }} className="h-9 rounded-full px-3.5 text-[13.5px] font-bold disabled:opacity-50" style={chip(price == null && !editing)}>
-          Free
-        </button>
         {PRESETS.map((value) => (
           <button key={value} type="button" disabled={disabled} onClick={() => { setEditing(false); onPrice(value) }} className="h-9 rounded-full px-3.5 text-[13.5px] font-bold disabled:opacity-50" style={chip(price === value && !editing)}>
             ₹{value}
@@ -71,7 +69,7 @@ export default function PriceChooser({
         )}
       </div>
       <div className="mt-1.5 text-[12.5px] leading-snug" style={{ color: MUTED }}>
-        {price == null ? 'Free: people ask, and you decide who watches.' : `People pay ₹${price} to your UPI, then you let them in.`}
+        {price == null ? 'Pick a price. Free moments don’t need a lock: switch Private off and everyone who sees the pact watches.' : `People pay ₹${price} to your UPI, then you let them in.`}
       </div>
 
       {price != null && (

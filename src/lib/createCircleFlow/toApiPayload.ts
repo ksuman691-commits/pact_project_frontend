@@ -9,6 +9,7 @@ export interface CreateCircleApiPayload {
   description: string;
   visibility: 'public' | 'private';
   icon_emoji: string;
+  notify_followers?: boolean;
 }
 
 // FLAGGED LIMITATION (see types/createCircleFlow.ts for detail): the

@@ -26,9 +26,8 @@ export const NAME_TEMPLATES: Record<VibeId, string[]> = {
 export const CIRCLE_EMOJIS = ['🚀', '💪', '💻', '📚', '⚡', '👥', '🎯', '🔥', '🌱', '🧠', '✨', '❤️', '🎨', '🌎', '🎉'];
 
 export const PRIVACY_OPTIONS: PrivacyOption[] = [
-  { id: 'open', emoji: '🌎', label: 'Open', desc: 'Anyone can find and join instantly' },
-  { id: 'approval', emoji: '🖐️', label: 'Approval required', desc: 'Anyone can request — you approve' },
-  { id: 'invite_only', emoji: '🔒', label: 'Invite only', desc: 'Only people you invite can join' },
+  { id: 'open', emoji: '🌎', label: 'Open', desc: 'Anyone can join. Your private pacts here cost members the same as everyone.' },
+  { id: 'approval', emoji: '🔒', label: 'Private', desc: 'People ask, you approve. Members watch your free private pacts here.' },
 ];
 
 export const CIRCLE_VIBE_TAGLINES: Record<VibeId, string> = {

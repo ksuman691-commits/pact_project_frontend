@@ -20,6 +20,7 @@ import ProfileHeader, { profileButton } from '@/components/profile/ProfileHeader
 import SegmentTabs from '@/components/profile/SegmentTabs';
 import PeopleSheet from '@/components/profile/PeopleSheet';
 import TipsEntryCard from '@/components/tips/TipsEntryCard';
+import RequestsEntryCard from '@/components/requests/RequestsEntryCard';
 
 const INK = '#17181D';
 const MUTED = '#5A5C63';
@@ -145,7 +146,7 @@ function ProfileContent() {
               </button>
             </>
           }
-          footer={<TipsEntryCard />}
+          footer={<div className="flex flex-col gap-2"><RequestsEntryCard /><TipsEntryCard /></div>}
         />
 
         <SegmentTabs

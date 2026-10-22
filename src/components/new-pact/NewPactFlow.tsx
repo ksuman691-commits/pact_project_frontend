@@ -4,13 +4,15 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
-import { Check, ChevronLeft, Globe, Link2, Lock, MessageCircle, Play, UserPlus, X } from 'lucide-react'
+import { Check, ChevronLeft, Globe, Heart, Link2, Lock, MessageCircle, Play, UserPlus, Users, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
 import PriceChooser from '@/components/private/PriceChooser'
 import { useCreatePact } from '@/hooks/usePactMutations'
 import { useCircles } from '@/hooks/useCircles'
 import { useMyTipSettings } from '@/hooks/useTips'
+import { useFollowers } from '@/hooks/useFollows'
+import { useAuthStore } from '@/store/auth'
 import { createStory, putStoryVideo, requestStoryUploadUrl } from '@/lib/api/stories'
 import { IDEAS, parseSentence, sentenceTitle, type Frequency } from '@/lib/pactSentence'
 import { STORY_MAX_SECONDS } from '@/lib/stories'
@@ -24,7 +26,8 @@ const CARD = '#FBF8F1'
 const PAPER = '#F4EFE4'
 
 type Step = 'shoot' | 'say' | 'who' | 'live'
-type Audience = 'circle' | 'public' | 'private'
+/** Who sees the pact. Private moments are a separate lock on top of any of these. */
+type Audience = 'circle' | 'followers' | 'public'
 
 interface Clip {
   blob: Blob
@@ -60,6 +63,8 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   const circlesQuery = useCircles()
   const circles = useMemo(() => ((circlesQuery.data || []) as any[]).filter((c) => c?.id != null), [circlesQuery.data])
   const tips = useMyTipSettings()
+  const me = useAuthStore((state) => state.user)
+  const followerCount = (((useFollowers(me?.id).data as any)?.data || []) as any[]).length
 
   const [step, setStep] = useState<Step>('shoot')
   const [clip, setClip] = useState<Clip | null>(null)
@@ -69,12 +74,13 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   const [chosenAudience, setAudience] = useState<Audience>('circle')
   const [circleId, setCircleId] = useState<number | null>(initialCircleId)
   const [posting, setPosting] = useState<string | null>(null)
+  const [locked, setLocked] = useState(false)
   const [watchPrice, setWatchPrice] = useState<number | null>(null)
   const [autoApprove, setAutoApprove] = useState(false)
   const [created, setCreated] = useState<{ id: number; title: string; days: number } | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // No circles means "My circle" isn't an option, so Everyone is the default.
+  // No circles means "A circle" isn't an option, so Everyone is the default.
   const audience: Audience = chosenAudience === 'circle' && circles.length === 0 ? 'public' : chosenAudience
   useEffect(() => {
     if (circles.length > 0 && circleId == null) setCircleId(Number(circles[0].id))
@@ -95,8 +101,18 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   const ready = cleanText.length >= 4
   const title = ready ? sentenceTitle(cleanText, days) : ''
   const circle = circles.find((c) => Number(c.id) === circleId)
+  const circleIsPrivate = audience === 'circle' && circle?.visibility === 'private'
   // Selling access needs somewhere for the money to go.
-  const needsUpi = audience === 'private' && watchPrice != null && Boolean(tips.data) && !tips.data?.enabled
+  const needsUpi = locked && Boolean(tips.data) && !tips.data?.enabled
+  const needsPrice = locked && watchPrice == null
+  const lockHint =
+    audience === 'circle'
+      ? circleIsPrivate
+        ? `A premium drop: members of ${circle?.name ?? 'the circle'} pay too. Leave it off and the circle watches free.`
+        : 'Circle members pay like anyone. Your followers see it locked and can buy.'
+      : audience === 'followers'
+        ? 'Followers see it locked in their feed. Anyone with the link can pay to watch.'
+        : 'Shows in Discover, locked. Anyone can pay to watch.'
 
   const post = async () => {
     if (!ready || posting) return
@@ -105,10 +121,11 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
       description: '',
       category: parsed.category,
       circle_id: audience === 'circle' ? circleId : null,
-      visibility: audience === 'circle' ? 'circle_only' : 'public',
-      media_locked: audience === 'private',
-      watch_price: audience === 'private' ? watchPrice : null,
-      watch_auto_approve: audience === 'private' && watchPrice != null ? autoApprove : false,
+      // 'private' on the backend means the creator's followers.
+      visibility: audience === 'circle' ? 'circle_only' : audience === 'followers' ? 'private' : 'public',
+      media_locked: locked,
+      watch_price: locked ? watchPrice : null,
+      watch_auto_approve: locked && watchPrice != null ? autoApprove : false,
       start_date: localToday(),
       duration_days: days,
       verification_method: 'video',
@@ -147,6 +164,14 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
     setCreated({ id: pactId, title, days })
     setPosting(null)
     setStep('live')
+  }
+
+  // Leaving the live screen always lands on the new pact, so it never seems to vanish.
+  const openPact = () => {
+    if (!created) return onExit()
+    const id = created.id
+    onExit()
+    router.push(`/pacts/${id}`)
   }
 
   const pactUrl = created && typeof window !== 'undefined' ? `${window.location.origin}/pacts/${created.id}` : ''
@@ -303,12 +328,13 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
           <div className="mx-auto w-full max-w-md flex-1 px-5">
             <div className="pt-3 text-[28px] font-extrabold leading-tight tracking-[-0.03em]" style={{ color: INK }}>Who&apos;s in on it?</div>
             <div className="mt-1.5 text-[14px]" style={{ color: MUTED }}>{title}</div>
-            <div className="mt-5 flex flex-col gap-2.5">
+            <div className="mt-5 text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>WHO SEES IT</div>
+            <div className="mt-2 flex flex-col gap-2" role="radiogroup" aria-label="Who sees it">
               {(
                 [
-                  circles.length > 0 && { id: 'circle', name: 'My circle', desc: 'Your circle watches and cheers. Others only see it exists.', icon: <UserPlus className="size-5" /> },
-                  { id: 'public', name: 'Everyone', desc: 'Shows in Discover. Anyone can watch and join.', icon: <Globe className="size-5" /> },
-                  { id: 'private', name: 'Private', desc: 'Only people you let in see your moments. Others can ask, and tip you.', icon: <Lock className="size-5" /> },
+                  { id: 'public', name: 'Everyone', desc: 'Shows in Discover. Anyone can find it.', icon: <Globe className="size-5" /> },
+                  { id: 'followers', name: 'My Followers', desc: followerCount > 0 ? `${followerCount.toLocaleString('en-IN')} ${followerCount === 1 ? 'follower sees' : 'followers see'} it in their feed.` : 'Shows on your profile and to people who follow you.', icon: <Heart className="size-5" /> },
+                  circles.length > 0 && { id: 'circle', name: 'A Circle', desc: 'Just the people in one of your circles.', icon: <Users className="size-5" /> },
                 ].filter(Boolean) as { id: Audience; name: string; desc: string; icon: React.ReactNode }[]
               ).map((option) => {
                 const on = audience === option.id
@@ -319,39 +345,67 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                     role="radio"
                     aria-checked={on}
                     onClick={() => setAudience(option.id)}
-                    className="flex w-full items-center gap-3 rounded-[20px] p-3.5 text-left"
+                    className="flex w-full items-center gap-3 rounded-[18px] px-3.5 py-3 text-left"
                     style={{ background: on ? '#FFFFFF' : CARD, border: on ? `2px solid ${INK}` : `1px solid ${LINE}` }}
                   >
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full" style={on ? { background: INK, color: '#FFFFFF' } : { background: '#EFEBE1', color: INK }}>
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full" style={on ? { background: INK, color: '#FFFFFF' } : { background: '#EFEBE1', color: INK }}>
                       {option.icon}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[16px] font-extrabold" style={{ color: INK }}>{option.name}</span>
-                      <span className="mt-0.5 block text-[13px] leading-snug" style={{ color: MUTED }}>{option.desc}</span>
+                      <span className="block text-[15.5px] font-extrabold" style={{ color: INK }}>{option.name}</span>
+                      <span className="mt-0.5 block text-[12.5px] leading-snug" style={{ color: MUTED }}>{option.desc}</span>
                     </span>
-                    <span className="size-[22px] shrink-0 rounded-full" style={on ? { border: `7px solid ${INK}` } : { border: '2px solid #B9AF9A' }} />
+                    <span className="size-[20px] shrink-0 rounded-full" style={on ? { border: `6px solid ${INK}` } : { border: '2px solid #B9AF9A' }} />
                   </button>
                 )
               })}
             </div>
 
             {audience === 'circle' && circles.length > 0 && (
-              <div className="mt-3.5 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 {circles.map((c) => (
-                  <button key={c.id} type="button" onClick={() => setCircleId(Number(c.id))} className="h-9 rounded-full px-3.5 text-[13.5px] font-bold" style={pill(Number(c.id) === circleId)}>
+                  <button key={c.id} type="button" onClick={() => setCircleId(Number(c.id))} className="flex h-9 items-center gap-1 rounded-full px-3.5 text-[13.5px] font-bold" style={pill(Number(c.id) === circleId)}>
+                    {c.visibility === 'private' && <Lock className="size-3" strokeWidth={2.6} aria-label="Private circle" />}
                     {c.name}
                   </button>
                 ))}
               </div>
             )}
-            {audience === 'private' && (
-              <div className="mt-5">
-                <PriceChooser price={watchPrice} onPrice={setWatchPrice} autoApprove={autoApprove} onAutoApprove={setAutoApprove} />
+
+            <div className="mt-6 text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>MOMENTS</div>
+            <div className="mt-2 rounded-[18px] p-3.5" style={{ background: locked ? '#FFFFFF' : CARD, border: locked ? `2px solid ${NAVY}` : `1px solid ${LINE}` }}>
+              <div className="flex items-center gap-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full" style={locked ? { background: NAVY, color: '#FFFFFF' } : { background: '#EFEBE1', color: INK }}>
+                  <Lock className="size-[17px]" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15.5px] font-extrabold" style={{ color: INK }}>Private Moments</span>
+                  <span className="mt-0.5 block text-[12.5px] leading-snug" style={{ color: MUTED }}>{locked ? lockHint : 'Off: free. Everyone who sees the pact watches, no asking.'}</span>
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={locked}
+                  aria-label="Private moments"
+                  onClick={() => {
+                    if (!locked && watchPrice == null) setWatchPrice(21)
+                    setLocked((value) => !value)
+                  }}
+                  className="relative h-8 w-[52px] shrink-0 rounded-full transition-colors"
+                  style={{ background: locked ? NAVY : '#D4D5D9' }}
+                >
+                  <span className="absolute top-1 size-6 rounded-full transition-all" style={{ background: '#FFFFFF', left: locked ? 24 : 4, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                </button>
               </div>
-            )}
-            {audience === 'private' && tips.data && !tips.data.enabled && (
-              <Link href="/profile/tips" className="mt-3.5 flex min-h-11 items-center rounded-[14px] px-3.5 text-[13.5px] font-bold" style={{ border: `1.5px dashed ${NAVY}`, color: NAVY, background: '#F5F7FD' }}>
-                {watchPrice != null ? 'Add your UPI first, so people can pay you' : 'Turn on tips so people can back you'}
+              {locked && (
+                <div className="mt-3.5 border-t pt-3.5" style={{ borderColor: LINE }}>
+                  <PriceChooser price={watchPrice} onPrice={setWatchPrice} autoApprove={autoApprove} onAutoApprove={setAutoApprove} />
+                </div>
+              )}
+            </div>
+            {locked && tips.data && !tips.data.enabled && (
+              <Link href="/profile/tips" className="mt-3 flex min-h-11 items-center rounded-[14px] px-3.5 text-[13.5px] font-bold" style={{ border: `1.5px dashed ${NAVY}`, color: NAVY, background: '#F5F7FD' }}>
+                Add your UPI first, so people can pay you
               </Link>
             )}
           </div>
@@ -359,7 +413,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
             <button
               type="button"
               onClick={() => void post()}
-              disabled={Boolean(posting) || (audience === 'circle' && circleId == null) || needsUpi}
+              disabled={Boolean(posting) || (audience === 'circle' && circleId == null) || needsUpi || needsPrice}
               className="h-14 w-full rounded-full text-[16.5px] font-extrabold disabled:opacity-70"
               style={{ background: NAVY, color: '#FFFFFF', boxShadow: '0 8px 22px rgba(31,58,147,0.28)' }}
             >
@@ -372,7 +426,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
       {step === 'live' && created && (
         <>
           <div className="flex justify-end px-1 pt-[max(0.75rem,env(safe-area-inset-top))]">
-            <button type="button" onClick={onExit} aria-label="Close" className="flex size-11 items-center justify-center" style={{ color: INK }}>
+            <button type="button" onClick={openPact} aria-label="Close" className="flex size-11 items-center justify-center" style={{ color: INK }}>
               <X className="size-5" />
             </button>
           </div>
@@ -380,7 +434,8 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
             <div className="text-center">
               <div className="text-[30px] font-extrabold tracking-[-0.035em]" style={{ color: INK }}>{clip ? 'You’re on Day 1.' : 'Your pact is live.'}</div>
               <div className="mt-1.5 text-[14.5px]" style={{ color: MUTED }}>
-                {audience === 'circle' ? `${circle?.name ?? 'Your circle'} can see it now.` : audience === 'public' ? 'It’s live in Discover.' : watchPrice != null ? `Private · ₹${watchPrice} to watch.` : 'Private. People can ask to watch, and tip you.'}
+                {audience === 'circle' ? `${circle?.name ?? 'Your circle'} can see it now.` : audience === 'followers' ? 'Your followers can see it now.' : 'It’s live in Discover.'}
+                {locked && watchPrice != null ? ` Moments are ₹${watchPrice} to watch.` : ''}
               </div>
             </div>
             <div className="mt-5 overflow-hidden rounded-[24px]" style={{ background: CARD, border: `1px solid ${LINE}` }}>
@@ -392,7 +447,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                     <Play className="size-4 fill-current" />
                   </span>
                 )}
-                {audience === 'private' && (
+                {locked && (
                   <span className="absolute left-3 top-3 flex items-center gap-1 rounded-xl px-2.5 py-1 text-[12px] font-extrabold" style={{ background: 'rgba(15,16,20,0.6)', color: '#FFFFFF' }}>
                     <Lock className="size-3" strokeWidth={2.6} /> {watchPrice != null ? `Private · ₹${watchPrice}` : 'Private'}
                   </span>
@@ -422,11 +477,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
           <div className="mx-auto w-full max-w-md px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
             <button
               type="button"
-              onClick={() => {
-                const id = created.id
-                onExit()
-                router.push(`/pacts/${id}`)
-              }}
+              onClick={openPact}
               className="flex h-14 w-full items-center justify-center gap-2 rounded-full text-[16.5px] font-extrabold"
               style={{ background: INK, color: '#FFFFFF' }}
             >

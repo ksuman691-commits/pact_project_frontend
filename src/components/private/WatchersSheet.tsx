@@ -41,7 +41,7 @@ function TipLine({ row }: { row: AccessRow }) {
  * The creator's control room for a pact: make it private, let people in,
  * turn them away or take access back.
  */
-export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watchPrice = null, watchAutoApprove = false }: { open: boolean; onClose: () => void; pactId: number; mediaLocked: boolean; watchPrice?: number | null; watchAutoApprove?: boolean }) {
+export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watchPrice = null, watchAutoApprove = false, inCircle = false }: { open: boolean; onClose: () => void; pactId: number; mediaLocked: boolean; watchPrice?: number | null; watchAutoApprove?: boolean; inCircle?: boolean }) {
   useBackToClose(open, onClose)
   const watchers = useWatchers(pactId, open)
   const resolve = useResolveWatcher(pactId)
@@ -49,13 +49,16 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
   const saveSettings = useUpdateWatchSettings(pactId)
   const [price, setPrice] = useState<number | null>(watchPrice)
   const [auto, setAuto] = useState(watchAutoApprove)
+  const [askKeep, setAskKeep] = useState(false)
   useEffect(() => {
     if (!open) return
+    setAskKeep(false)
     setPrice(watchPrice)
     setAuto(watchAutoApprove)
   }, [open, watchPrice, watchAutoApprove])
   if (!open) return null
-  const settingsChanged = price !== watchPrice || auto !== watchAutoApprove
+  // No saving a lock without a price: free moments are just open.
+  const settingsChanged = price != null && (price !== watchPrice || auto !== watchAutoApprove)
   const saveWatch = async () => {
     try {
       await saveSettings.mutateAsync({ watch_price: price, watch_auto_approve: price != null && auto })
@@ -78,15 +81,25 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
     }
   }
 
-  const toggle = async () => {
+  // Locking always comes with a price: free moments are simply open.
+  const lock = async (next: boolean, keepMembers = true) => {
+    setAskKeep(false)
     try {
-      await setPrivate.mutateAsync(!locked)
+      if (next) {
+        const startPrice = price ?? 21
+        await saveSettings.mutateAsync({ media_locked: true, watch_price: startPrice, watch_auto_approve: auto, keep_members: keepMembers })
+        setPrice(startPrice)
+      } else {
+        await setPrivate.mutateAsync({ locked: false })
+      }
       await watchers.refetch()
-      toast.success(!locked ? 'Pact is private. Current circle members keep access.' : 'Pact is open again')
+      toast.success(!next ? 'Open again. Everyone who sees it watches free.' : inCircle ? (keepMembers ? `₹${price ?? 21} to watch. Current circle members keep watching.` : `₹${price ?? 21} to watch, for everyone from now.`) : `₹${price ?? 21} to watch`)
     } catch {
       toast.error('Could not change that')
     }
   }
+  // Locking a circle pact asks once whether the people already in the circle keep watching.
+  const toggle = () => (!locked && inCircle ? setAskKeep(true) : void lock(!locked))
 
   return (
     <div role="dialog" aria-modal="true" aria-label="Who can watch" className="fixed inset-0 z-[90] flex items-end justify-center">
@@ -107,7 +120,7 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
           <div className="min-w-0 flex-1">
             <div className="text-[15px] font-extrabold" style={{ color: INK }}>Private pact</div>
             <div className="text-[12.5px] leading-snug" style={{ color: MUTED }}>
-              {locked ? 'Only you, people in the pact and people you let in see the moments.' : 'Anyone who can see the pact sees the moments.'}
+              {locked ? 'People pay to watch. You, people in the pact and buyers see the moments.' : 'Free: anyone who can see the pact watches. Turn on to charge for it.'}
             </div>
           </div>
           <button
@@ -115,14 +128,29 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
             role="switch"
             aria-checked={locked}
             aria-label="Private pact"
-            onClick={() => void toggle()}
-            disabled={setPrivate.isPending}
+            onClick={toggle}
+            disabled={setPrivate.isPending || saveSettings.isPending}
             className="relative h-8 w-[52px] shrink-0 rounded-full transition-colors disabled:opacity-60"
             style={{ background: locked ? NAVY : '#D4D5D9' }}
           >
             <span className="absolute top-1 size-6 rounded-full transition-all" style={{ background: '#FFFFFF', left: locked ? 24 : 4, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
           </button>
         </div>
+
+        {askKeep && !locked && (
+          <div className="mt-3 rounded-[18px] p-3.5" style={{ background: '#FFFFFF', border: `2px solid ${INK}` }}>
+            <div className="text-[15px] font-extrabold" style={{ color: INK }}>People already in the circle</div>
+            <div className="mt-0.5 text-[12.5px] leading-snug" style={{ color: MUTED }}>New people always ask or pay. Choose for everyone in the circle today.</div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button type="button" disabled={saveSettings.isPending} onClick={() => void lock(true, true)} className="min-h-11 rounded-full px-2 text-[13.5px] font-extrabold disabled:opacity-60" style={{ background: '#FBF8F1', color: INK, border: `1px solid ${LINE}` }}>
+                Keep them watching
+              </button>
+              <button type="button" disabled={saveSettings.isPending} onClick={() => void lock(true, false)} className="min-h-11 rounded-full px-2 text-[13.5px] font-extrabold disabled:opacity-60" style={{ background: NAVY, color: '#FFFFFF' }}>
+                Everyone pays
+              </button>
+            </div>
+          </div>
+        )}
 
         {locked && (
           <>
@@ -137,7 +165,7 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
             <div className="mt-5 text-[14.5px] font-extrabold" style={{ color: INK }}>Asking to watch{pending.length ? ` · ${pending.length}` : ''}</div>
             {pending.length === 0 ? (
               <div className="mt-2 rounded-[16px] px-4 py-5 text-center text-[13.5px]" style={{ border: `1.5px dashed ${LINE}`, color: MUTED }}>
-                No one is waiting. New circle members and visitors ask here.
+                No one is waiting. Followers, circle members and visitors ask or pay here.
               </div>
             ) : (
               <div className="mt-2 flex flex-col gap-2">
@@ -166,7 +194,7 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
             )}
 
             <div className="mt-5 text-[14.5px] font-extrabold" style={{ color: INK }}>Can watch{approved.length ? ` · ${approved.length}` : ''}</div>
-            <div className="mt-1 text-[12.5px]" style={{ color: MUTED }}>People in the pact always can. These are extra viewers you let in.</div>
+            <div className="mt-1 text-[12.5px]" style={{ color: MUTED }}>People in the pact always can. These are viewers you let in, from anywhere.</div>
             {approved.length === 0 ? (
               <div className="py-4 text-[13.5px]" style={{ color: MUTED }}>Nobody extra yet.</div>
             ) : (
