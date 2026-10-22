@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { titleCase } from '@/lib/titleCase'
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { Bell, BellOff, ChevronLeft, UserPlus } from 'lucide-react';
@@ -223,7 +224,7 @@ export default function PublicProfilePage() {
                     {sharedCircles[0].photo_url ? <Image src={sharedCircles[0].photo_url} alt="" fill sizes="22px" className="object-cover" /> : sharedCircles[0].icon_emoji || sharedCircles[0].name?.charAt(0)}
                   </span>
                   <span>
-                    You&apos;re both in <span className="font-bold" style={{ color: INK }}>{sharedCircles[0].name}</span>
+                    You&apos;re both in <span className="font-bold" style={{ color: INK }}>{titleCase(String(sharedCircles[0].name || ''))}</span>
                     {sharedCircles.length > 1 ? ` and ${sharedCircles.length - 1} more` : ''}
                   </span>
                 </div>

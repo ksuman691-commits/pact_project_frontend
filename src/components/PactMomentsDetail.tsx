@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { cleanTitle } from '@/lib/titleCase'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Camera, Check, ChevronLeft, Globe, Heart, Image as ImageIcon, Lock, MessageCircle, Play, RotateCcw, Share2, UserPlus, Users, X } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -154,7 +155,6 @@ export default function PactMomentsDetail({
   const caption = current?.description || (current?.day && current.day !== currentDay ? `Day ${current.day} · ${momentAgo}` : "Today's moment")
   const postedToday = moments.some((m) => m.day === currentDay && viewerId != null && String(m.userId ?? '') === String(viewerId))
   // No made-up emoji in front of titles; old pacts that typed one keep it.
-  const titleEmoji = pact?.icon_emoji || ''
   const showModernStrip = strip !== null
   const requiredDays = Number(pact?.days_required || 0)
   const isMoments75 = pact?.completion_rule === 'moments_75' && requiredDays > 0
@@ -270,7 +270,7 @@ export default function PactMomentsDetail({
             </span>
           </div>
           <h1 className="mt-2 line-clamp-2 font-sans text-[25px] font-extrabold leading-[1.08] tracking-[-0.03em] text-[var(--ink)]">
-            {titleEmoji ? `${titleEmoji} ` : ''}{pact?.title}
+            {cleanTitle(pact?.title)}
           </h1>
           <Link
             href={pact?.creator_username ? `/profile/${encodeURIComponent(pact.creator_username)}` : '#'}

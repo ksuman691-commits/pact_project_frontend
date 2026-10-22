@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { cleanTitle } from '@/lib/titleCase'
 import { useState } from 'react'
 import { Camera, Check, Globe, Heart, Lock, Play, Users } from 'lucide-react'
 
@@ -119,7 +120,7 @@ export default function ProfilePactCard({
             {badge}
           </span>
           <div className="mt-1.5 line-clamp-2 text-[18px] font-extrabold leading-tight tracking-[-0.02em]" style={{ color: '#FFFFFF' }}>
-            {pact?.title}
+            {cleanTitle(pact?.title)}
           </div>
         </div>
       </div>
