@@ -75,7 +75,7 @@ export default function RecipientsStep() {
               </div>
             ) : searchResults.length === 0 ? (
               <div className="flex items-center justify-center py-6 text-[var(--pact-text-faint)]">
-                <p className="text-sm">No users found</p>
+                <p className="text-[var(--muted)] text-sm">No users found</p>
               </div>
             ) : (
               <div className="divide-y divide-[var(--pact-hairline)]">

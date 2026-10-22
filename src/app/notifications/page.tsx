@@ -10,6 +10,8 @@ import { queryKeys } from '@/lib/queryKeys';
 import { notificationService } from '@/services/api';
 import { useMarkAllNotificationsAsRead, useNotifications } from '@/hooks/useNotifications';
 import { useAcceptFollow, usePendingFollowRequests, useRejectFollow } from '@/hooks/useFollows';
+import { RequestsList } from '@/components/requests/RequestsList';
+import { useRequestCount } from '@/components/requests/RequestsEntryCard';
 
 const formatTimeAgo = (isoTimestamp: string) => {
   const timestamp = new Date(isoTimestamp).getTime();
@@ -66,6 +68,11 @@ export default function NotificationsPage() {
   );
 
   const unreadCount = notifications.filter((n: any) => !n.is_read).length;
+  const requestCount = useRequestCount();
+  const [tab, setTab] = useState<'all' | 'requests'>('all');
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('tab') === 'requests') setTab('requests');
+  }, []);
   const pendingFollowRequests = pendingFollowRequestsQuery.data?.data || [];
 
   useEffect(() => {
@@ -131,6 +138,32 @@ export default function NotificationsPage() {
           </div>
         </div>
 
+        <div className="px-4 pt-3">
+          <div className="flex gap-2" role="tablist" aria-label="Notifications">
+            {([
+              ['all', 'All'],
+              ['requests', requestCount ? `Requests · ${requestCount}` : 'Requests'],
+            ] as const).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={tab === id}
+                onClick={() => setTab(id)}
+                className="h-10 rounded-full px-4 text-[14px] font-bold"
+                style={tab === id ? { background: '#17181D', color: '#FFFFFF', border: '1px solid #17181D' } : { background: 'var(--card)', color: '#17181D', border: '1px solid var(--hairline)' }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {tab === 'requests' ? (
+          <div className="px-4 pb-4">
+            <RequestsList />
+          </div>
+        ) : (
         <div className="px-4 py-4 space-y-3">
           {isLoading ? (
             <div className="text-[var(--muted)] text-sm">Loading notifications...</div>
@@ -201,6 +234,7 @@ export default function NotificationsPage() {
             </button>
           )}
         </div>
+        )}
       </div>
     </>
   );

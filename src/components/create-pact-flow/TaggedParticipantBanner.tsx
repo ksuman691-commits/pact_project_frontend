@@ -45,7 +45,7 @@ export default function TaggedParticipantBanner({
       style={{ background: 'var(--pact-surface)' }}
     >
       <Avatar name={name} avatarUrl={user.avatar_url} size={32} />
-      <p className="text-sm">
+      <p className="text-[var(--muted)] text-sm">
         {label} <span className="font-semibold">{name}</span>
       </p>
     </div>

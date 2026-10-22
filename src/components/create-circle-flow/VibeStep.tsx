@@ -10,7 +10,7 @@ export default function VibeStep() {
   return (
     <div className="pact-step-enter flex flex-1 flex-col">
       <h1 className="text-2xl font-bold">What&apos;s the vibe?</h1>
-      <p className="mt-1 text-sm">Pick the energy your circle is built around.</p>
+      <p className="text-[var(--muted)] mt-1 text-sm">Pick the energy your circle is built around.</p>
 
       <div className="mt-6 grid grid-cols-2 gap-3">
         {VIBES.map((vibe) => {

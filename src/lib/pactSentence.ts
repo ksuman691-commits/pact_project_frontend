@@ -19,7 +19,7 @@ const CATEGORY_RULES: [RegExp, BackendCategory, string][] = [
   [/\b(code|coding|leetcode|github|program|commit)/, 'coding', 'Coding'],
   [/\b(read|pages|book|study|learn|course|practice|language|exam)/, 'study', 'Learning'],
   [/\b(post|reel|video|youtube|write|blog|draw|paint|design|create|podcast|content|photo)/, 'creator', 'Create'],
-  [/\b(ship|launch|startup|customers?|revenue|sell|sales|build|business|pitch|save|₹|invest|money)/, 'startup', 'Build & money'],
+  [/\b(ship|launch|startup|customers?|revenue|sell|sales|build|business|pitch|save|₹|invest|money)/, 'startup', 'Build & Money'],
   [/\b(meet|call|friends?|people|family|date|network|speak|stage)/, 'social', 'Social'],
 ]
 
@@ -42,7 +42,7 @@ export function parseSentence(text: string): ParsedSentence {
   else if (/every\s*day|daily|a day|each day|per day/.test(t)) frequency = 'Every day'
 
   const rule = CATEGORY_RULES.find(([pattern]) => pattern.test(t))
-  return { days, frequency, category: rule ? rule[1] : 'habits', categoryLabel: rule ? rule[2] : 'Habit' }
+  return { days, frequency, category: rule ? rule[1] : 'habits', categoryLabel: rule ? rule[2] : 'Habits' }
 }
 
 /** "run 5 km every morning" + 30 -> "Run 5 Km Every Morning In 30 Days". */

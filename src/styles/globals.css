@@ -329,16 +329,17 @@ section + section {
   min-height: 100dvh;
 }
 
+/* No colour rules on elements inside .pact-flow. ".pact-flow p" and
+   ".pact-flow h1..h4" used to force muted/ink colours with higher specificity
+   than Tailwind classes, so white text on dark cards and photos came out grey
+   wherever this wrapper was used (feed, dares, wizards). Text now takes its
+   colour from its own class or its parent, like everywhere else. Paragraphs
+   that want the muted tone say so with text-[var(--muted)]. */
 .pact-flow h1,
 .pact-flow h2,
 .pact-flow h3,
 .pact-flow h4 {
   font-family: var(--font-pact-display), sans-serif;
-  color: var(--pact-text);
-}
-
-.pact-flow p {
-  color: var(--pact-text-muted);
 }
 
 .pact-flow .pact-mono {

@@ -93,18 +93,17 @@ const normalizeVote = (vote: unknown): string | null => {
   return vote
 }
 
-// Kept in sync with the CATEGORIES list in TopNav.tsx — same 7 real
-// backend-filterable buckets, same friendlier vibe-inspired names.
+// Kept in sync with the CATEGORIES list in TopNav.tsx.
 const categoryLabelMap: Record<string, string> = {
   all: 'all pacts',
   trending: 'trending pacts',
-  fitness: 'Glow Up & Wellbeing',
-  startup: 'Build & Earn',
+  fitness: 'Fitness',
+  startup: 'Build & Money',
   coding: 'Coding',
   creator: 'Create',
-  study: 'Level Up',
-  habits: 'Dare Yourself',
-  social: 'Social & Adventure',
+  study: 'Learning',
+  habits: 'Habits',
+  social: 'Social',
 }
 
 export default function PactFeed({

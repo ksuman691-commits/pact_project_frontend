@@ -25,7 +25,7 @@ export default function CircleCard() {
         )}
         <h2 className="text-2xl font-bold leading-snug">{draft.name || 'Untitled Circle'}</h2>
       </div>
-      {description && <p className="mt-2 text-sm italic">&ldquo;{description}&rdquo;</p>}
+      {description && <p className="text-[var(--muted)] mt-2 text-sm italic">&ldquo;{description}&rdquo;</p>}
 
       <div className="mt-5 flex flex-col gap-2 border-t pt-4" style={{ borderColor: 'var(--pact-hairline)' }}>
         <MetaRow label="Privacy" value={privacyOption ? `${privacyOption.emoji} ${privacyOption.label}` : '—'} />

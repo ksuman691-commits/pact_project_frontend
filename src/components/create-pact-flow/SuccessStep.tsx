@@ -49,7 +49,7 @@ export default function SuccessStep() {
       <p className="mt-2 text-base font-medium" style={{ color: 'var(--pact-text)' }}>
         {createdPact.title}
       </p>
-      <p className="mt-1 text-sm">
+      <p className="text-[var(--muted)] mt-1 text-sm">
         {AUDIENCE_COPY[createdPact.audience] ?? 'Your pact is live.'}
       </p>
 

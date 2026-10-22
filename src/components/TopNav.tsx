@@ -4,32 +4,18 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, ArrowLeft, ChevronDown } from 'lucide-react'
 
-// IMPORTANT: these ids are the backend's `category` column values, and the
-// backend enforces a hard server-side enum of exactly these 7 strings
-// (confirmed live: POST /api/pacts with any other value, including a raw
-// vibe id like "adventure" or "money", is rejected with 422). The Create
-// Pact flow's 10-vibe taxonomy (src/lib/createPactFlow/content.ts) maps
-// many-to-few onto these 7 buckets via VIBE_TO_CATEGORY in
-// src/lib/createPactFlow/toApiPayload.ts — e.g. adventure/love/social all
-// collapse to "social". Rather than showing 10 filter chips where several
-// visually-different ones would silently return identical result sets, we
-// show exactly one chip per REAL filterable bucket, with a friendlier
-// vibe-inspired name where one vibe maps cleanly (dare→Dare Yourself,
-// create→Create, levelup→Level Up), or a combined name where multiple
-// vibes collapse into the same bucket (fitness, startup, social). "Coding"
-// has no vibe mapped to it at all in the current create flow — it's a
-// legacy-only bucket kept so older pacts created before the vibe flow
-// existed remain filterable.
+// Feed filters: the real backend categories, named the same way the new
+// pact flow names them (see lib/pactSentence.ts).
 export const CATEGORIES = [
   { id: 'all', name: 'All', emoji: '✨' },
   { id: 'Trending', name: 'Trending', emoji: '🔥' },
-  { id: 'fitness', name: 'Glow Up & Wellbeing', emoji: '💪' },
-  { id: 'startup', name: 'Build & Earn', emoji: '🚀' },
-  { id: 'habits', name: 'Dare Yourself', emoji: '🔥' },
-  { id: 'social', name: 'Social & Adventure', emoji: '🎉' },
+  { id: 'fitness', name: 'Fitness', emoji: '💪' },
+  { id: 'study', name: 'Learning', emoji: '📚' },
   { id: 'creator', name: 'Create', emoji: '🎨' },
-  { id: 'study', name: 'Level Up', emoji: '🧠' },
+  { id: 'startup', name: 'Build & Money', emoji: '🚀' },
   { id: 'coding', name: 'Coding', emoji: '💻' },
+  { id: 'social', name: 'Social', emoji: '🎉' },
+  { id: 'habits', name: 'Habits', emoji: '🔁' },
 ]
 
 interface TopNavProps {
