@@ -2,7 +2,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import { Play, PartyPopper } from 'lucide-react';
+import { PartyPopper } from 'lucide-react';
+import AutoPlayVideo from '@/components/media/AutoPlayVideo';
 import ProofCarousel from './ProofCarousel';
 import type { CheerItem } from './CheerGallery';
 
@@ -314,10 +315,9 @@ export default function PactGallery({
                 )
               ) : (
                 <div className="relative h-full w-full bg-[var(--ink)]">
-                  <video src={tile.url} className="h-full w-full object-cover" muted playsInline />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/25">
-                    <Play className="h-10 w-10 fill-white text-white" />
-                  </div>
+                  {/* Plays muted while on screen. The tile is itself a button (opens the viewer
+                      with sound), so the sound toggle lives there, not here. */}
+                  <AutoPlayVideo src={tile.url} soundButton={false} className="h-full w-full object-cover" />
                 </div>
               )}
 

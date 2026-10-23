@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, Circle, ImageIcon as Images, RefreshCw, RotateCcw, Square, X } from 'lucide-react'
 import LogoMark from '@/components/LogoMark'
+import { cleanTitle } from '@/lib/titleCase'
 import { CAMERA_FILTERS, canRecordWithFilters } from '@/lib/cameraFilters'
 import { useAuthStore } from '@/store/auth'
 import { useUserStats } from '@/hooks/useUserQueries'
@@ -69,14 +70,16 @@ function canRecordInPage() {
   return typeof window !== 'undefined' && typeof window.MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
 }
 
-export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, canJoin = false, onJoin, initialClip = null, onCaptured, autoStart = true }: StoryCaptureSheetProps) {
+export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: rawTitle, canJoin = false, onJoin, initialClip = null, onCaptured, autoStart = true }: StoryCaptureSheetProps) {
+  const pactTitle = rawTitle ? cleanTitle(rawTitle) : rawTitle
   const [step, setStep] = useState<Step>(initialClip ? 'preview' : 'idle')
   const [clip, setClip] = useState<Clip | null>(initialClip)
   const [notice, setNotice] = useState<string | null>(null)
   const [checking, setChecking] = useState(false)
   const [recording, setRecording] = useState(false)
   const [elapsed, setElapsed] = useState(0)
-  const [inPageSupported, setInPageSupported] = useState(false)
+  // null until we know; the start screen waits for it so it doesn't flash before the camera.
+  const [inPageSupported, setInPageSupported] = useState<boolean | null>(null)
   const [facing, setFacing] = useState<'environment' | 'user'>('environment')
   const [filterId, setFilterId] = useState('none')
   const [filtersSupported, setFiltersSupported] = useState(false)
@@ -105,6 +108,10 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
   const { phase, progress, error, retryable, unavailable: postUnavailable, post, reset } = usePostStory(pactId)
   const comingSoon = !onCaptured && (today.unavailable || postUnavailable)
   const autoStarted = useRef(false)
+  const openRef = useRef(isOpen)
+  useEffect(() => {
+    openRef.current = isOpen
+  }, [isOpen])
 
   useEffect(() => {
     setInPageSupported(canRecordInPage())
@@ -136,6 +143,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
   }, [initialClip])
 
   const closeSheet = useCallback(() => {
+    openRef.current = false
     stopStream()
     replaceClip(null)
     setNotice(null)
@@ -233,6 +241,11 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
     setNotice(null)
     try {
       const stream = await requestStream('environment')
+      // Closed while the camera was starting: switch it straight back off.
+      if (!openRef.current) {
+        stream.getTracks().forEach((track) => track.stop())
+        return
+      }
       const actual = stream.getVideoTracks()[0]?.getSettings().facingMode
       setFacing(actual === 'user' ? 'user' : 'environment')
       setStep('live')
@@ -380,6 +393,24 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
   const busy = phase === 'requesting' || phase === 'uploading' || phase === 'saving'
   const ringRadius = 46
   const ringLength = 2 * Math.PI * ringRadius
+
+  // Opening straight on the camera: show a dark "opening" screen, not the start
+  // screen, until the camera is up or it fails (then the start screen explains why).
+  const opening = autoStart && step === 'idle' && !notice && !comingSoon && inPageSupported !== false
+  if (opening) {
+    return (
+      <div role="dialog" aria-modal="true" aria-label="Opening camera" className="fixed inset-0 z-[80] flex flex-col bg-black text-white">
+        <header className="flex items-center justify-between px-4 pt-[max(1rem,env(safe-area-inset-top))]">
+          <button type="button" onClick={closeSheet} aria-label="Close camera" className="flex h-11 w-11 items-center justify-center rounded-full" style={{ background: 'rgba(255,255,255,0.18)' }}>
+            <X className="h-5 w-5" />
+          </button>
+        </header>
+        <div className="flex flex-1 items-center justify-center">
+          <p className="text-[15px] font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }} aria-live="polite">Opening camera…</p>
+        </div>
+      </div>
+    )
+  }
 
   if (step === 'live') {
     return (

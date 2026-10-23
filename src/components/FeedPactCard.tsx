@@ -1,6 +1,7 @@
 'use client';
 
 import TipButton from '@/components/tips/TipButton';
+import AutoPlayVideo from '@/components/media/AutoPlayVideo';
 import { cleanTitle } from '@/lib/titleCase';
 import LockedMedia from '@/components/private/LockedMedia';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -18,7 +19,6 @@ import {
   Heart,
   MoreVertical,
   Flame,
-  Play,
 } from 'lucide-react';
 import ProofUploadModal from './ProofUploadModal';
 import CommentsBottomSheet from './CommentsBottomSheet';
@@ -862,11 +862,8 @@ export default function FeedPactCard({
               />
             ) : (
               <div className="relative aspect-[3/4] w-full overflow-hidden bg-[var(--ink)]">
-                {/* First frame doubles as the thumbnail; muted so it never makes noise. */}
-                <video src={`${momentStory!.video_url}#t=0.1`} muted playsInline preload="auto" className="absolute inset-0 h-full w-full object-cover" />
-                <span className="pointer-events-none absolute right-3 top-14 flex size-8 items-center justify-center rounded-full bg-black/55 text-white">
-                  <Play className="size-4 fill-current" aria-hidden="true" />
-                </span>
+                {/* Plays by itself, sound off, while it's on screen; the button turns sound on. */}
+                <AutoPlayVideo src={momentStory!.video_url} className="absolute inset-0 h-full w-full object-cover" />
               </div>
             )}
             <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/55 to-transparent" />
