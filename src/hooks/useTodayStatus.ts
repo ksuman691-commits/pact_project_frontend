@@ -13,6 +13,12 @@ export interface TodayPact {
   circle_name: string | null
   end_date: string | null
   posted_today: boolean
+  /** When your latest moment on it went up (UTC ISO). Null when not posted. */
+  posted_at?: string | null
+  start_date?: string | null
+  /** Today's day number in the pact's own time zone. */
+  day?: number | null
+  total_days?: number | null
 }
 
 const storageKey = (userId: number | string) => `cp:today:${userId}`
