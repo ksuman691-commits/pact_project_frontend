@@ -305,12 +305,10 @@ export default function PactGallery({
                     fill
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, 480px"
-                    // The tile count here is small and capped, so loading all
-                    // of them eagerly means slide 2/3 are already decoded and
-                    // ready the moment the user scrolls to them, rather than
-                    // waiting on a lazy-load fetch mid-swipe.
-                    loading="eager"
-                    priority={index === 0}
+                    // Lazy: the browser still fetches the next slides well before
+                    // a swipe reaches them (its lazy margin is over a screen wide),
+                    // but cards further down the feed no longer all load on open.
+                    loading="lazy"
                     onError={() =>
                       setFailedTileKeys((prev) => new Set(prev).add(`${tile.kind}-${tile.id}`))
                     }

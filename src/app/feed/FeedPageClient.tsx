@@ -14,6 +14,7 @@ import CreatePactFlowModal from '@/components/create-pact-flow/CreatePactFlowMod
 import PactFeed from '@/components/PactFeed'
 import QuickPostButton from '@/components/QuickPostButton'
 import PullToRefresh from '@/components/PullToRefresh'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth'
 import { useUnreadNotificationCount } from '@/hooks/useNotifications'
 import { useUserStats } from '@/hooks/useUserQueries'
@@ -50,6 +51,7 @@ export default function FeedPageClient() {
   // below ~250px of header/nav on a typical phone screen. PactFeed still owns
   // the actual data fetching, so it hands its `refetch` up through this ref
   // each time the query identity changes.
+  const queryClient = useQueryClient()
   const feedRefetchRef = useRef<() => Promise<unknown>>(async () => {})
   const handleRefreshReady = useCallback((refetch: () => Promise<unknown>) => {
     feedRefetchRef.current = refetch
@@ -123,7 +125,20 @@ export default function FeedPageClient() {
   }
 
   return (
-    <PullToRefresh onRefresh={() => feedRefetchRef.current()} disabled={!isInitialized}>
+    <PullToRefresh
+      onRefresh={() =>
+        // Everything on Home, not just the feed list: today's pacts, moments, circles, counts.
+        Promise.all([
+          feedRefetchRef.current(),
+          queryClient.invalidateQueries({ queryKey: ['my-pacts'] }),
+          queryClient.invalidateQueries({ queryKey: ['me-today'] }),
+          queryClient.invalidateQueries({ queryKey: ['stories'] }),
+          queryClient.invalidateQueries({ queryKey: ['circles'] }),
+          queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+        ])
+      }
+      disabled={!isInitialized}
+    >
       <div className="pact-flow pact-page-enter min-h-screen">
         <WelcomeHeader
           userName={user?.full_name || user?.username || ''}
