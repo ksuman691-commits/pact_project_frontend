@@ -45,6 +45,8 @@ export default function MomentViewer({ moments, startIndex, pactId, likeCount, l
   const startingFraction = useRef(0)
   const historyOwned = useRef(false)
   const moment = moments[index]
+  const mutedRef = useRef(muted)
+  mutedRef.current = muted
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
@@ -100,10 +102,21 @@ export default function MomentViewer({ moments, startIndex, pactId, likeCount, l
     startingFraction.current = 0
     const video = videoRef.current
     if (video) {
-      video.muted = muted
-      void video.play().then(() => setPlayRejected(false)).catch(() => setPlayRejected(true))
+      video.muted = mutedRef.current
+      void video.play().then(() => setPlayRejected(false)).catch(() => {
+        // Phones refuse sound without a fresh tap. Play muted instead of
+        // waiting for one; the sound button turns it back on.
+        video.muted = true
+        setMuted(true)
+        void video.play().then(() => setPlayRejected(false)).catch(() => setPlayRejected(true))
+      })
     }
-  }, [index, muted])
+  }, [index])
+
+  // Turning sound on or off doesn't restart the moment.
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.muted = muted
+  }, [muted])
 
   useEffect(() => {
     if (moment?.type === 'video' || paused) return
@@ -214,8 +227,6 @@ export default function MomentViewer({ moments, startIndex, pactId, likeCount, l
             key={moment.id}
             ref={videoRef}
             src={moment.url}
-            autoPlay
-            loop
             playsInline
             preload="auto"
             muted={muted}
@@ -223,6 +234,8 @@ export default function MomentViewer({ moments, startIndex, pactId, likeCount, l
             onTimeUpdate={(event) => { const v = event.currentTarget; if (v.duration > 0) setFraction(v.currentTime / v.duration) }}
             onPlay={() => setPlayRejected(false)}
             onPause={() => { if (!paused) setPaused(true) }}
+            // Like stories: when a video finishes, the next moment comes on; after the last, the viewer closes.
+            onEnded={() => { if (index === moments.length - 1) close(); else go(1) }}
             onError={() => setPlayRejected(true)}
           />
         ) : moment.url && !photoFailed ? (
