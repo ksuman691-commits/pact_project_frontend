@@ -30,6 +30,7 @@ export default function PriceChooser({
   onAutoApprove,
   disabled = false,
   dark = false,
+  lockPrice = false,
 }: {
   price: number | null
   onPrice: (price: number | null) => void
@@ -37,6 +38,8 @@ export default function PriceChooser({
   onAutoApprove: (on: boolean) => void
   disabled?: boolean
   dark?: boolean
+  /** The price can't change (people have paid); the access switch still works. */
+  lockPrice?: boolean
 }) {
   const custom = price != null && !PRESETS.includes(price)
   const [editing, setEditing] = useState(custom)
@@ -49,7 +52,7 @@ export default function PriceChooser({
       <div className="text-[12px] font-extrabold tracking-[0.08em]" style={{ color: label }}>PRICE TO WATCH</div>
       <div className="mt-2 flex flex-wrap gap-2">
         {PRESETS.map((value) => (
-          <button key={value} type="button" disabled={disabled} onClick={() => { setEditing(false); onPrice(value) }} className={`${dark ? 'h-10 px-4' : 'h-9 px-3.5'} rounded-full text-[13.5px] font-bold disabled:opacity-50`} style={chip(price === value && !editing, dark)}>
+          <button key={value} type="button" disabled={disabled || lockPrice} onClick={() => { setEditing(false); onPrice(value) }} className={`${dark ? 'h-10 px-4' : 'h-9 px-3.5'} rounded-full text-[13.5px] font-bold disabled:opacity-50`} style={chip(price === value && !editing, dark)}>
             ₹{value}
           </button>
         ))}
@@ -73,13 +76,13 @@ export default function PriceChooser({
             />
           </label>
         ) : (
-          <button type="button" disabled={disabled} onClick={() => setEditing(true)} className={`${dark ? 'h-10 px-4' : 'h-9 px-3.5'} rounded-full text-[13.5px] font-bold disabled:opacity-50`} style={chip(custom, dark)}>
+          <button type="button" disabled={disabled || lockPrice} onClick={() => setEditing(true)} className={`${dark ? 'h-10 px-4' : 'h-9 px-3.5'} rounded-full text-[13.5px] font-bold disabled:opacity-50`} style={chip(custom, dark)}>
             {custom ? `₹${price}` : 'Your price'}
           </button>
         )}
       </div>
       <div className="mt-1.5 text-[12.5px] leading-snug" style={{ color: label }}>
-        {price == null ? 'Pick a price. Free moments don’t need a lock: switch Private off and everyone who sees the pact watches.' : `People pay ₹${price} to your UPI, then you let them in.`}
+        {lockPrice ? `The price stays ₹${price} because people have already paid.` : price == null ? 'Pick a price. Free moments don’t need a lock: switch Private off and everyone who sees the pact watches.' : `People pay ₹${price} to your UPI, then you let them in.`}
       </div>
 
       {price != null && (

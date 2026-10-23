@@ -76,6 +76,8 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
   const locked = watchers.data?.media_locked ?? mediaLocked
   const pending = watchers.data?.pending ?? []
   const approved = watchers.data?.approved ?? []
+  // Once someone has paid and is waiting or let in, the pact stays private at that price.
+  const hasPaid = [...pending, ...approved].some((row) => row.tip)
 
   const act = async (row: AccessRow, action: 'approve' | 'deny' | 'revoke') => {
     try {
@@ -89,17 +91,20 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
   const lock = async (next: boolean, keepMembers = true) => {
     setAskKeep(false)
     try {
+      let shown = price ?? 21
       if (next) {
-        const startPrice = price ?? 21
-        await saveSettings.mutateAsync({ media_locked: true, watch_price: startPrice, watch_auto_approve: auto, keep_members: keepMembers })
-        setPrice(startPrice)
+        const saved = await saveSettings.mutateAsync({ media_locked: true, watch_price: shown, watch_auto_approve: auto, keep_members: keepMembers })
+        // The server may keep the price people already paid instead of the one asked for.
+        shown = saved?.watch_price ?? shown
+        setPrice(shown)
       } else {
         await setPrivate.mutateAsync({ locked: false })
       }
       await watchers.refetch()
-      toast.success(!next ? 'Open again. Everyone who sees it watches free.' : inCircle ? (keepMembers ? `₹${price ?? 21} to watch. Current circle members keep watching.` : `₹${price ?? 21} to watch, for everyone from now.`) : `₹${price ?? 21} to watch`)
-    } catch {
-      toast.error('Could not change that')
+      toast.success(!next ? 'Open again. Everyone who sees it watches free.' : inCircle ? (keepMembers ? `₹${shown} to watch. Current circle members keep watching.` : `₹${shown} to watch, for everyone from now.`) : `Private again · ₹${shown} to watch`)
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || 'Could not change that')
+      void watchers.refetch()
     }
   }
   // Locking a circle pact asks once whether the people already in the circle keep watching.
@@ -125,7 +130,7 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
           <div className="min-w-0 flex-1">
             <div className="text-[15px] font-extrabold" style={{ color: INK }}>Private pact</div>
             <div className="text-[12.5px] leading-snug" style={{ color: MUTED }}>
-              {locked ? 'People pay to watch. You, people in the pact and buyers see the moments.' : 'Free: anyone who can see the pact watches. Turn on to charge for it.'}
+              {locked ? (hasPaid ? 'People have paid to watch, so it stays private.' : 'People pay to watch. You, people in the pact and buyers see the moments.') : hasPaid ? 'People already paid to watch. Turn this back on to keep it private.' : 'Free: anyone who can see the pact watches. Turn on to charge for it.'}
             </div>
           </div>
           <button
@@ -134,7 +139,7 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
             aria-checked={locked}
             aria-label="Private pact"
             onClick={toggle}
-            disabled={setPrivate.isPending || saveSettings.isPending}
+            disabled={setPrivate.isPending || saveSettings.isPending || (locked && hasPaid)}
             className="relative h-8 w-[52px] shrink-0 rounded-full transition-colors disabled:opacity-60"
             style={{ background: locked ? NAVY : '#D4D5D9' }}
           >
@@ -161,8 +166,8 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
           <>
             {editPrice || price == null || settingsChanged ? (
               <div className="mt-3 rounded-[18px] p-3.5" style={{ background: '#FFFFFF', border: `1px solid ${LINE}` }}>
-                <PriceChooser price={price} onPrice={setPrice} autoApprove={auto} onAutoApprove={setAuto} disabled={saveSettings.isPending} />
-                <div className="mt-2 text-[12.5px] leading-snug" style={{ color: MUTED }}>A new price only applies to people who ask from now on. Anyone already waiting keeps what they paid.</div>
+                <PriceChooser price={price} onPrice={setPrice} autoApprove={auto} onAutoApprove={setAuto} disabled={saveSettings.isPending} lockPrice={hasPaid} />
+                {!hasPaid && <div className="mt-2 text-[12.5px] leading-snug" style={{ color: MUTED }}>A new price only applies to people who ask from now on. Anyone already waiting keeps what they paid.</div>}
                 {settingsChanged && (
                   <button type="button" onClick={() => void saveWatch()} disabled={saveSettings.isPending} className="mt-3 h-11 w-full rounded-full text-[14.5px] font-extrabold disabled:opacity-60" style={{ background: NAVY, color: '#FFFFFF' }}>
                     {saveSettings.isPending ? 'Saving…' : 'Save'}
@@ -176,7 +181,7 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
                   <span className="font-medium" style={{ color: MUTED }}> · {auto ? 'instant access' : 'you confirm each payment'}</span>
                 </span>
                 <button type="button" onClick={() => setEditPrice(true)} className="h-9 rounded-full px-3 text-[13px] font-extrabold" style={{ color: NAVY, border: `1px solid ${LINE}`, background: '#FBF8F1' }}>
-                  Edit price
+                  {hasPaid ? 'Access' : 'Edit price'}
                 </button>
               </div>
             )}
