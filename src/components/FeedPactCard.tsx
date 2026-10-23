@@ -874,19 +874,28 @@ export default function FeedPactCard({
               {kebab(true)}
             </div>
 
-            <div className="pointer-events-none absolute inset-x-3.5 bottom-3.5" style={{ color: '#fff' }}>
+            <div className={`pointer-events-none absolute inset-x-3.5 ${tiles.length > 1 ? 'bottom-7' : 'bottom-3.5'}`} style={{ color: '#fff' }}>
               <div className="flex items-center gap-2">
                 {showRing && progressInfo && (
                   <span className="rounded-[10px] px-2.5 py-0.5 text-[12px] font-extrabold" style={{ color: '#fff', backgroundColor: 'rgba(255,255,255,0.28)' }}>
                     {showMomentum ? '🔥 ' : ''}Day {dayNo}
                   </span>
                 )}
-                {tiles.length > 1 && (
-                  <span className="ml-auto text-[12px] font-bold" style={{ color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{Math.min(activeProofIndex + 1, tiles.length)} / {tiles.length}</span>
-                )}
               </div>
               <h2 className="mt-1.5 text-balance text-[21px] font-extrabold leading-[1.2] tracking-[-0.02em]" style={{ color: '#fff', textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>{cleanTitle(pact.title)}</h2>
             </div>
+            {/* One dot per moment, under the title; the active one stretches. */}
+            {tiles.length > 1 && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-3 flex items-center justify-center gap-1.5" aria-label={`Moment ${Math.min(activeProofIndex + 1, tiles.length)} of ${tiles.length}`} role="img">
+                {tiles.map((tile, index) => (
+                  <span
+                    key={`${tile.kind}-${tile.id}`}
+                    className="h-1.5 rounded-full transition-all duration-200"
+                    style={{ width: index === activeProofIndex ? 16 : 6, background: index === activeProofIndex ? '#FFFFFF' : 'rgba(255,255,255,0.5)', boxShadow: '0 0 4px rgba(0,0,0,0.35)' }}
+                  />
+                ))}
+              </div>
+            )}
 
           </div>
             {actionBar(false)}
