@@ -13,7 +13,7 @@ import { pactAdvancedService, dareService, pactService } from '@/services/api'
 import { useAuthStore } from '@/store/auth'
 import toast from 'react-hot-toast'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
-import ProfilePactCard from '@/components/profile/ProfilePactCard'
+import FeedPactCard from '@/components/FeedPactCard'
 import { usePactsStoriesToday } from '@/hooks/useStories'
 import { isStoriesUnavailable, STORIES_ENABLED } from '@/lib/stories'
 
@@ -218,12 +218,13 @@ function PactsPageInner() {
                 const stories = storyQueries[activeIds.indexOf(Number(pact.id))]?.data
                 const postedToday = stories ? stories.some((story: any) => story.user_id === user?.id) : undefined
                 return (
-                  <ProfilePactCard
-                    key={pact.id}
-                    pact={pact}
-                    postedToday={postedToday}
-                    onPost={() => (STORIES_ENABLED && !storiesUnavailable ? setCapturePact(pact) : router.push(`/pacts/${pact.id}`))}
-                  />
+                  <div key={pact.id} className="-mx-4">
+                    <FeedPactCard
+                      pact={pact}
+                      postedToday={postedToday}
+                      onAddMoment={() => (STORIES_ENABLED && !storiesUnavailable ? setCapturePact(pact) : router.push(`/pacts/${pact.id}`))}
+                    />
+                  </div>
                 )
               })}
 
@@ -239,7 +240,11 @@ function PactsPageInner() {
               <h2 className="px-2 pt-3 text-[12px] font-extrabold tracking-[0.08em] text-[var(--muted)]">DONE</h2>
             )}
             {showDone &&
-              [...finished, ...broken].map((pact) => <ProfilePactCard key={pact.id} pact={pact} />)}
+              [...finished, ...broken].map((pact) => (
+                <div key={pact.id} className="-mx-4">
+                  <FeedPactCard pact={pact} />
+                </div>
+              ))}
             {pacts.length >= pactLimit && pactLimit < 100 && (
               <button
                 type="button"

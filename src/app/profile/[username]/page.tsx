@@ -9,7 +9,8 @@ import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import AddToCircleSheet from '@/components/AddToCircleSheet';
 import CpScoreCard from '@/components/profile/CpScoreCard';
-import ProfilePactCard, { ProfileEmpty } from '@/components/profile/ProfilePactCard';
+import { ProfileEmpty } from '@/components/profile/ProfilePactCard';
+import FeedPactCard from '@/components/FeedPactCard';
 import ProfileHeader, { profileButton } from '@/components/profile/ProfileHeader';
 import SegmentTabs from '@/components/profile/SegmentTabs';
 import PeopleSheet from '@/components/profile/PeopleSheet';
@@ -275,7 +276,11 @@ export default function PublicProfilePage() {
           ) : listed.length === 0 ? (
             <ProfileEmpty title={tab === 'active' ? 'Nothing live right now' : 'Nothing finished yet'} text={tab === 'active' ? `When ${firstName} starts a pact you can see, it shows here.` : `Pacts ${firstName} finishes show here.`} />
           ) : (
-            listed.map((pact: any) => <ProfilePactCard key={pact.id} pact={pact} />)
+            listed.map((pact: any) => (
+              <div key={pact.id} className="-mx-4">
+                <FeedPactCard pact={pact} />
+              </div>
+            ))
           )}
         </div>
       </div>

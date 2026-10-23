@@ -10,8 +10,8 @@ interface TipButtonProps {
   creatorName: string
   creatorAvatarUrl?: string | null
   context?: string | null
-  /** 'pill' = labelled button; 'outline' = navy-outline "Tip" for a profile's button row; 'stage' = round button over media; 'row' = coin in a card's action row. */
-  variant?: 'pill' | 'outline' | 'stage' | 'row'
+  /** 'soft' = the pact card's "₹ Tip" pill; 'pill' = labelled button; 'outline' = navy-outline "Tip" for a profile's button row; 'stage' = round button over media; 'row' = coin in a card's action row. */
+  variant?: 'pill' | 'outline' | 'stage' | 'row' | 'soft'
   /** Confirmed tips so far; shown next to the coin in the 'row' variant. */
   count?: number
   pactId?: number | null
@@ -29,7 +29,23 @@ export default function TipButton({ creatorId, creatorName, creatorAvatarUrl, co
 
   return (
     <>
-      {variant === 'row' ? (
+      {variant === 'soft' ? (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            setOpen(true)
+          }}
+          aria-label={`Tip ${firstName}`}
+          className={`flex h-9 items-center gap-1.5 rounded-full pl-1 pr-3.5 text-[13px] font-extrabold transition active:scale-95 ${className}`}
+          style={{ background: '#E8ECF7', color: '#1F3A93' }}
+        >
+          <span className="flex size-7 items-center justify-center rounded-full" style={{ background: '#1F3A93', color: '#FFFFFF' }}>
+            <IndianRupee className="size-[14px]" strokeWidth={2.6} aria-hidden="true" />
+          </span>
+          Tip{count > 0 ? ` · ${count}` : ''}
+        </button>
+      ) : variant === 'row' ? (
         <button
           type="button"
           onClick={(event) => {

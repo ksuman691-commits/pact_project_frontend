@@ -103,7 +103,7 @@ export function RequestsList() {
 
   const watchRows = watch.data?.pending ?? []
   const circleRows = circles.data?.pending ?? []
-  const tipCount = tips.data?.waiting.length ?? 0
+  const tipCount = Array.isArray((tips.data as any)?.waiting) ? (tips.data as any).waiting.length : 0
 
   return (
     <div>

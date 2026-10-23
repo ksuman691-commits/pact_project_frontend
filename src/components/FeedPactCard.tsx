@@ -12,15 +12,16 @@ import {
   ChevronRight,
   Flag,
   MessageCircle,
-  Share2,
-  FileImage,
   Check,
   Camera,
   Heart,
   MoreVertical,
   Flame,
+  Lock,
+  Share,
 } from 'lucide-react';
-import ProofUploadModal from './ProofUploadModal';
+import BodyPortal from './BodyPortal';
+import StoryCaptureSheet from './stories/StoryCaptureSheet';
 import CommentsBottomSheet from './CommentsBottomSheet';
 import Avatar from './Avatar';
 import UserAvatarLink from './UserAvatarLink';
@@ -49,12 +50,15 @@ interface FeedPactCardProps {
   userVote?: string | null;
   onVote?: (pactId: number, vote: VoteDirection) => Promise<void> | void;
   onDismiss?: (pactId: number) => void;
+  /** Unused since moments post through the camera sheet; kept so existing callers still compile. */
   onProofUpload?: (pactId: number, proof?: any) => void;
   detailHref?: string;
   dismissOnVote?: boolean;
   showVoteActions?: boolean;
   canUploadProof?: boolean;
   onAddMoment?: () => void;
+  /** Known from today's moments (e.g. the Pacts tab); otherwise guessed from the card's own moments. */
+  postedToday?: boolean;
   onJoined?: () => void | Promise<void>;
   onStartOwnVersion?: () => void;
   canReport?: boolean;
@@ -267,19 +271,6 @@ function DayBar({ day, total }: { day: number; total: number }) {
 }
 
 /** Small progress ring for the no-proof-yet strip. */
-function MiniRing({ percent, label }: { percent: number; label: string }) {
-  const radius = 24;
-  const circumference = 2 * Math.PI * radius;
-  return (
-    <div className="relative h-14 w-14 shrink-0">
-      <svg viewBox="0 0 56 56" className="h-full w-full -rotate-90" aria-hidden="true">
-        <circle cx="28" cy="28" r={radius} fill="none" stroke="var(--hairline)" strokeWidth="5" />
-        <circle cx="28" cy="28" r={radius} fill="none" stroke="var(--navy)" strokeWidth="5" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - percent / 100)} />
-      </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-[15px] font-extrabold text-[var(--ink)]">{label}</span>
-    </div>
-  );
-}
 
 export default function FeedPactCard({
   pact,
@@ -292,6 +283,7 @@ export default function FeedPactCard({
   showVoteActions,
   canUploadProof,
   onAddMoment,
+  postedToday: postedTodayProp,
   onJoined,
   onStartOwnVersion,
   canReport = true,
@@ -304,7 +296,6 @@ export default function FeedPactCard({
   const router = useRouter();
   const { user } = useAuthStore();
   const reportMutation = useReportPact(pact.id);
-  const [proofUploadModal, setProofUploadModal] = useState(false);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [commentSheetOpen, setCommentSheetOpen] = useState(false);
@@ -400,6 +391,8 @@ export default function FeedPactCard({
   // same text as a second line (e.g. "Startup" under "Startup · Save
   // ₹50,000 in 30 Days") for any pact that isn't scoped to a circle.
   const circleLabel = pact.circle || pact.circle_name || null;
+  // Where the pact lives, always: the circle's name, Followers or Public.
+  const audienceLabel = circleLabel || (pact.visibility === 'private' ? 'Followers' : pact.visibility === 'public' || pact.is_public ? 'Public' : null);
   const proofCount = Number(pact.proof_count ?? pact.proofClips?.length ?? 0);
   const commentCount = liveCommentCount ?? Number(pact.comment_count ?? pact.comments?.length ?? 0);
   const timeRemaining = pact.timeRemaining || formatEndsIn(pact.end_date || pact.deadline);
@@ -439,7 +432,11 @@ export default function FeedPactCard({
   // otherwise a creator whose identity on this payload only resolves via
   // one of those other fields saw the passive "Proof photo" viewer empty
   // state instead of their own "Add today's proof photo" upload CTA.
-  const uploadAllowed = canUploadProof ?? Boolean(isCreator || isParticipant);
+  // Over when it's closed, or when its last day has passed even if nobody closed it.
+  const pastEnd = Boolean(pact.end_date) && String(pact.end_date).slice(0, 10) < new Date().toLocaleDateString('en-CA');
+  const pactEnded = (Boolean(pact.status) && pact.status !== 'active') || pastEnd;
+  const uploadAllowed = !pactEnded && (canUploadProof ?? Boolean(isCreator || isParticipant));
+  const [captureOpen, setCaptureOpen] = useState(false);
   const joinAllowed = Boolean(pact.can_join) && !displayJoined;
   // Whether to render the button in its disabled "Joined" state instead of
   // hiding it — covers both "just joined this render" (displayJoined) and
@@ -451,7 +448,8 @@ export default function FeedPactCard({
   // on the pact actually having a category to match against. See
   // GoalMatchStrip / useGoalMatches / BACKEND_SPEC_MUTUAL_GOAL_MATCHING.md.
   const isPublicPact = Boolean(pact.is_public || pact.visibility === 'public');
-  const goalMatchesQuery = useGoalMatches(pact.id, { enabled: Boolean(pact.category) });
+  // Only cards that can show the strip ask for matches; every card used to ask.
+  const goalMatchesQuery = useGoalMatches(pact.id, { enabled: Boolean(pact.category) && !isCreator && isPublicPact });
   const goalMatches = goalMatchesQuery.data?.matches ?? [];
   const goalMatchesTotal = goalMatchesQuery.data?.total_count ?? 0;
   const handleStartCircleWithMatches = () => {
@@ -521,16 +519,38 @@ export default function FeedPactCard({
       ? todayStories.data[todayStories.data.length - 1]
       : null;
   const headerSub = momentStory
-    ? [circleLabel, postedAgo(momentStory.created_at)].filter(Boolean).join(' · ')
-    : [circleLabel, postedAt].filter(Boolean).join(' · ') || pactCategoryLabel;
+    ? [audienceLabel, postedAgo(momentStory.created_at)].filter(Boolean).join(' · ')
+    : [audienceLabel, postedAt].filter(Boolean).join(' · ') || pactCategoryLabel;
   const dayNo = progressInfo ? Math.min(progressInfo.totalDays, Math.max(1, progressInfo.elapsedDays)) : 0;
   // The badge follows the moment on screen: swipe to a Day 1 clip and it says Day 1.
   const slideDay = tiles.length > 0 && activeProof?.day ? Number(activeProof.day) : null;
   const badgeDay = slideDay || dayNo;
+  // "Day 1 · 2 of 3" when a day has several moments, counted in the order you swipe them.
+  const sameDayTiles = slideDay ? tiles.filter((tile) => Number(tile.day) === slideDay) : [];
+  const positionInDay = activeProof ? sameDayTiles.findIndex((tile) => tile.id === activeProof.id) + 1 : 0;
+  const totalDays = Number(pact.duration_days ?? progressInfo?.totalDays ?? 0);
+  const finishedPact = pactEnded && (pact.status === 'completed' || Number(pact.days_completed ?? 0) >= Math.ceil(0.75 * Math.max(1, totalDays)));
+  const badgeText = pactEnded
+    ? `${finishedPact ? 'Finished' : 'Ended'}${totalDays ? ` · ${Number(pact.days_completed ?? 0)} of ${totalDays} days` : ''}`
+    : badgeDay
+      ? `Day ${badgeDay}${sameDayTiles.length > 1 && positionInDay > 0 ? ` · ${positionInDay} of ${sameDayTiles.length}` : ''}`
+      : null;
+  const privateTag = pact.media_locked ? (pact.watch_price ? `Private · ₹${pact.watch_price}` : 'Private') : null;
+  const todayKey = new Date().toDateString();
+  // The page may know about today's videos (stories); the card's own moments
+  // also catch photos. Either one means you've posted today.
+  const postedToday =
+    Boolean(postedTodayProp) ||
+    tiles.some((tile) => tile.uploadedAt && new Date(tile.uploadedAt).toDateString() === todayKey && (!tile.uploader || tile.uploader === user?.username));
+  const openCamera = () => {
+    if (!uploadAllowed) return;
+    if (onAddMoment) onAddMoment();
+    else setCaptureOpen(true);
+  };
   const showMomentum = showRing && hasPactMomentum(pact);
   // The Add moment pill replaces the old in-carousel "+ Add today" tile. With no
   // photo yet the dashed strip is the prompt, so the pill stays out of the way.
-  const showAddPill = uploadAllowed && !hideHeroAndTitle && tiles.length > 0;
+  const showAddPill = uploadAllowed && !hideHeroAndTitle;
 
   // Voting/cheering/joining are button-only actions (see the action row
   // below) — photo paging is native scroll inside PactGallery, so the card
@@ -652,14 +672,6 @@ export default function FeedPactCard({
     }
   };
 
-  const handleProofUploadClick = () => {
-    if (!uploadAllowed) {
-      toast.error('Join this pact to share a moment');
-      return;
-    }
-    if (onAddMoment) onAddMoment();
-    else setProofUploadModal(true);
-  };
 
   const handleJoinPact = async () => {
     // showJoinedState (not just joinAllowed) also guards this — joinAllowed
@@ -739,7 +751,7 @@ export default function FeedPactCard({
       {moreMenuOpen && <>
         <button type="button" aria-label="close more options menu" onClick={() => setMoreMenuOpen(false)} className="fixed inset-0 z-40 cursor-default" />
         <div role="menu" className="absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)] py-1.5 shadow-xl">
-          {uploadAllowed && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); handleProofUploadClick(); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--pact-text)] transition hover:bg-white/5"><FileImage className="h-4 w-4" />{onAddMoment ? 'Add a moment' : 'Upload proof'}{proofCount > 0 && <span className="ml-auto text-xs text-[var(--pact-text-faint)]">{formatCompactCount(proofCount)}</span>}</button>}
+          {uploadAllowed && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); openCamera(); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--pact-text)] transition hover:bg-white/5"><Camera className="h-4 w-4" />Add a moment{proofCount > 0 && <span className="ml-auto text-xs text-[var(--pact-text-faint)]">{formatCompactCount(proofCount)}</span>}</button>}
           {canReport && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); setReportSheetOpen(true); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--warn-text)] transition hover:bg-white/5"><Flag className="h-4 w-4" />Report pact</button>}
         </div>
       </>}
@@ -764,6 +776,44 @@ export default function FeedPactCard({
     </div>
   );
 
+  const mediaCaption = (
+    <div className="pointer-events-none absolute inset-x-3.5 bottom-3.5" style={{ color: '#fff' }}>
+      {(badgeText || privateTag) && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {badgeText && (
+            <span className="rounded-[9px] px-2.5 py-[3px] text-[11.5px] font-extrabold" style={{ color: '#fff', backgroundColor: 'rgba(255,255,255,0.24)' }}>
+              {showMomentum && !pactEnded && badgeDay === dayNo ? '🔥 ' : ''}
+              {badgeText}
+            </span>
+          )}
+          {privateTag && (
+            <span className="flex items-center gap-1 rounded-[9px] bg-white px-2.5 py-[3px] text-[11.5px] font-extrabold text-[var(--navy)]">
+              <Lock className="size-3" strokeWidth={2.6} aria-hidden="true" />
+              {privateTag}
+            </span>
+          )}
+        </div>
+      )}
+      <h2 className="mt-1.5 line-clamp-2 text-balance text-[20px] font-extrabold leading-[1.15] tracking-[-0.02em]" style={{ color: '#fff', textShadow: '0 1px 8px rgba(0,0,0,0.45)' }}>
+        {cleanTitle(pact.title)}
+      </h2>
+      {tiles.length === 0 && !momentStory && !pactEnded && (
+        <p className="mt-1 text-[12.5px] font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>No moments yet</p>
+      )}
+      {tiles.length > 1 && (
+        <div className="mt-2 flex items-center gap-[5px]" aria-label={`Moment ${Math.min(activeProofIndex + 1, tiles.length)} of ${tiles.length}`} role="img">
+          {tiles.map((tile, index) => (
+            <span
+              key={`${tile.kind}-${tile.id}`}
+              className="h-1.5 rounded-full transition-all duration-200"
+              style={{ width: index === activeProofIndex ? 16 : 6, background: index === activeProofIndex ? '#FFFFFF' : 'rgba(255,255,255,0.5)' }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   const actionBar = (floating: boolean) => (
     <div
       className={`flex items-center ${floating ? 'absolute inset-x-2.5 bottom-2.5 h-[50px] rounded-full pl-0.5 pr-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.25)]' : 'px-1 py-0.5'}`}
@@ -775,22 +825,23 @@ export default function FeedPactCard({
         onClick={() => void handleLikeTap()}
         aria-label={liked ? 'unlike this pact' : 'like this pact'}
         aria-pressed={liked}
-        className={`flex h-11 items-center gap-1.5 px-2.5 text-[14px] font-bold text-[var(--navy)] transition ${isLikeBouncing ? 'scale-110' : 'scale-100'}`}
+        className={`flex h-11 items-center gap-1.5 px-2 text-[14px] font-extrabold transition ${liked ? 'text-[var(--navy)]' : 'text-[var(--ink)]'} ${isLikeBouncing ? 'scale-110' : 'scale-100'}`}
         style={{ transitionDuration: '150ms' }}
       >
-        <Heart className="h-6 w-6" strokeWidth={1.8} fill={liked ? 'var(--navy)' : 'none'} />
+        <Heart className="h-6 w-6" strokeWidth={2} fill={liked ? 'var(--navy)' : 'none'} />
         {likeLabelCount}
       </button>
-      <button type="button" onClick={() => setCommentSheetOpen(true)} aria-label="open chat" className="flex h-11 items-center gap-1.5 px-2.5 text-[14px] font-bold text-[var(--navy)] transition active:scale-95">
-        <MessageCircle className="h-[23px] w-[23px]" strokeWidth={1.8} />
+      <button type="button" onClick={() => setCommentSheetOpen(true)} aria-label="open chat" className="flex h-11 items-center gap-1.5 px-2 text-[14px] font-extrabold text-[var(--ink)] transition active:scale-95">
+        <MessageCircle className="h-[23px] w-[23px]" strokeWidth={2} />
         {chatLabelCount}
       </button>
-      <button type="button" onClick={() => void handleCopyShareLink()} aria-label="share pact" className="flex h-11 w-11 items-center justify-center text-[var(--navy)] transition active:scale-95">
-        <Share2 className="h-[22px] w-[22px]" strokeWidth={1.8} />
+      <button type="button" onClick={() => void handleCopyShareLink()} aria-label="share pact" className="flex h-11 w-10 items-center justify-center text-[var(--ink)] transition active:scale-95">
+        <Share className="h-[21px] w-[21px]" strokeWidth={2} />
       </button>
+      <div className="ml-auto flex items-center gap-1.5">
       {!isCreator && (
         <TipButton
-          variant="row"
+          variant="soft"
           creatorId={pact.creator_id ?? pact.user_id ?? pact.creator?.id}
           creatorName={pact.creator_full_name || creatorLabel}
           creatorAvatarUrl={creatorAvatarUrl}
@@ -800,18 +851,24 @@ export default function FeedPactCard({
           tipsEnabled={typeof pact.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined}
         />
       )}
-      <div className="ml-auto flex items-center">
         {showAddPill && (
-          <button type="button" onClick={handleProofUploadClick} aria-label={onAddMoment ? 'Add a moment' : "Add today's proof photo"} className="group flex h-11 items-center">
-            <span className="flex h-[34px] items-center gap-1.5 rounded-full bg-[var(--navy)] px-3.5 text-[13px] font-bold text-white transition group-hover:bg-[var(--navy-hover)] group-active:scale-95">
-              <Camera className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-              Add moment
-            </span>
+          <button type="button" onClick={openCamera} aria-label={postedToday ? 'Add another moment' : `Post Day ${dayNo || 1}`} className="group flex h-11 items-center">
+            {postedToday ? (
+              <span className="flex h-9 items-center gap-1.5 rounded-full border-[1.5px] border-[var(--navy)] px-3 text-[13px] font-extrabold text-[var(--navy)] transition group-active:scale-95">
+                <Camera className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
+                Add
+              </span>
+            ) : (
+              <span className="flex h-9 items-center gap-1.5 rounded-full bg-[var(--navy)] px-3.5 text-[13px] font-extrabold text-white transition group-hover:bg-[var(--navy-hover)] group-active:scale-95" style={{ boxShadow: '0 6px 14px -6px rgba(31,58,147,0.6)' }}>
+                <Camera className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
+                Post Day {dayNo || 1}
+              </span>
+            )}
           </button>
         )}
         {!showAddPill && showJoinCta && (
           <button type="button" onClick={handleJoinPact} disabled={showJoinedState || isJoining} aria-label={showJoinedState ? 'Joined' : 'Join pact'} className="group flex h-11 items-center">
-            <span className={`flex h-[34px] items-center gap-1.5 rounded-full px-5 text-[13px] font-bold transition group-active:scale-95 ${showJoinedState ? 'border border-[var(--hairline)] bg-[var(--card-muted)] text-[var(--muted)]' : 'bg-[var(--navy)] text-white group-hover:bg-[var(--navy-hover)]'} ${isJoining ? 'opacity-70' : ''}`}>
+            <span className={`flex h-9 items-center gap-1.5 rounded-full px-5 text-[13px] font-bold transition group-active:scale-95 ${showJoinedState ? 'border border-[var(--hairline)] bg-[var(--card-muted)] text-[var(--muted)]' : 'bg-[var(--navy)] text-white group-hover:bg-[var(--navy-hover)]'} ${isJoining ? 'opacity-70' : ''}`}>
               {showJoinedState && <Check className="h-3.5 w-3.5" strokeWidth={2.6} aria-hidden="true" />}
               {showJoinedState ? 'Joined' : isJoining ? 'Joining…' : 'Join'}
             </span>
@@ -832,8 +889,8 @@ export default function FeedPactCard({
         whileTap={{ scale: 0.99 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
         onClick={handleCardNavigate}
-        className={`${chromeless ? '' : 'pact-card'} group relative mx-2 cursor-pointer transition-colors hover:border-[var(--pact-violet)]/60 sm:mx-0 ${
-          chromeless ? '' : 'rounded-[24px]'
+        className={`${chromeless ? '' : 'pact-card'} group relative mx-1.5 cursor-pointer transition-colors hover:border-[var(--pact-violet)]/60 sm:mx-0 ${
+          chromeless ? '' : 'rounded-[22px]'
         } ${moreMenuOpen ? 'overflow-visible' : 'overflow-hidden'}`}
       >
         {lockedForMe ? (
@@ -858,13 +915,13 @@ export default function FeedPactCard({
                 proofs={galleryProofs ?? proofs}
                 cheers={galleryCheers ?? []}
                 interactive
-                aspectClassName="aspect-[3/4]"
+                aspectClassName="aspect-[4/5]"
                 dotsPosition="none"
                 hideProofBadge
                 onActiveIndexChange={setActiveProofIndex}
               />
             ) : (
-              <div className="relative aspect-[3/4] w-full overflow-hidden bg-[var(--ink)]">
+              <div className="relative aspect-[4/5] w-full overflow-hidden bg-[var(--ink)]">
                 {/* Plays by itself, sound off, while it's on screen; the button turns sound on. */}
                 <AutoPlayVideo src={momentStory!.video_url} className="absolute inset-0 h-full w-full object-cover" />
               </div>
@@ -877,63 +934,31 @@ export default function FeedPactCard({
               {kebab(true)}
             </div>
 
-            <div className={`pointer-events-none absolute inset-x-3.5 ${tiles.length > 1 ? 'bottom-7' : 'bottom-3.5'}`} style={{ color: '#fff' }}>
-              <div className="flex items-center gap-2">
-                {(slideDay || (showRing && progressInfo)) && (
-                  <span className="rounded-[10px] px-2.5 py-0.5 text-[12px] font-extrabold" style={{ color: '#fff', backgroundColor: 'rgba(255,255,255,0.28)' }}>
-                    {showMomentum && badgeDay === dayNo ? '🔥 ' : ''}Day {badgeDay}
-                  </span>
-                )}
-              </div>
-              <h2 className="mt-1.5 text-balance text-[21px] font-extrabold leading-[1.2] tracking-[-0.02em]" style={{ color: '#fff', textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>{cleanTitle(pact.title)}</h2>
-            </div>
-            {/* One dot per moment, under the title; the active one stretches. */}
-            {tiles.length > 1 && (
-              <div className="pointer-events-none absolute inset-x-0 bottom-3 flex items-center justify-center gap-1.5" aria-label={`Moment ${Math.min(activeProofIndex + 1, tiles.length)} of ${tiles.length}`} role="img">
-                {tiles.map((tile, index) => (
-                  <span
-                    key={`${tile.kind}-${tile.id}`}
-                    className="h-1.5 rounded-full transition-all duration-200"
-                    style={{ width: index === activeProofIndex ? 16 : 6, background: index === activeProofIndex ? '#FFFFFF' : 'rgba(255,255,255,0.5)', boxShadow: '0 0 4px rgba(0,0,0,0.35)' }}
-                  />
-                ))}
-              </div>
-            )}
+            {mediaCaption}
 
           </div>
             {actionBar(false)}
           </>
         ) : (
           <>
-            <div className="flex items-center gap-2.5 pb-1 pl-3.5 pr-0.5 pt-2">
-              {identity(false)}
-              {kebab(false)}
-            </div>
-            {!hideHeroAndTitle && (
-              <div className="px-3.5 pb-2" onClick={handleMediaTap} style={transformStyle}>
-                {uploadAllowed ? (
-                  <button
-                    type="button"
-                    onClick={handleProofUploadClick}
-                    aria-label={onAddMoment ? 'Add a moment' : "Add today's proof photo"}
-                    className="flex w-full items-center gap-3 rounded-[18px] border-[1.5px] border-dashed border-[var(--seat-border)] bg-[var(--card-muted)] p-3.5 text-left transition active:scale-[0.99]"
-                  >
-                    {progressInfo ? <MiniRing percent={progressInfo.percent} label={`D${dayNo}`} /> : <Camera className="h-6 w-6 shrink-0 text-[var(--navy)]" />}
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px] font-bold text-[var(--ink)]">{cleanTitle(pact.title)}</span>
-                      <span className="mt-0.5 block text-[12.5px] text-[var(--muted)]">{onAddMoment ? 'No moment yet today' : 'Nothing posted today'}</span>
-                    </span>
-                    <Camera className="h-5 w-5 shrink-0 text-[var(--navy)]" aria-hidden="true" />
-                  </button>
-                ) : (
-                  <div className="flex w-full items-center gap-3 rounded-[18px] border-[1.5px] border-dashed border-[var(--seat-border)] bg-[var(--card-muted)] p-3.5">
-                    {progressInfo ? <MiniRing percent={progressInfo.percent} label={`D${dayNo}`} /> : <Camera className="h-6 w-6 shrink-0 text-[var(--muted)]" />}
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px] font-bold text-[var(--ink)]">{cleanTitle(pact.title)}</span>
-                      <span className="mt-0.5 block text-[12.5px] text-[var(--muted)]">{onAddMoment ? 'No moment yet' : 'Nothing posted yet'}</span>
-                    </span>
-                  </div>
-                )}
+            {hideHeroAndTitle ? (
+              <div className="flex items-center gap-2.5 pb-1 pl-3.5 pr-0.5 pt-2">
+                {identity(false)}
+                {kebab(false)}
+              </div>
+            ) : (
+              // No moments yet: the same dark tile as every card, half height so a
+              // list of new pacts isn't a wall of empty frames.
+              <div
+                className="relative aspect-[2/1] w-full overflow-hidden"
+                onClick={handleMediaTap}
+                style={{ ...transformStyle, background: 'radial-gradient(120% 90% at 30% 20%, #2A3A6E 0%, #141A2E 55%, #0F1014 100%)' }}
+              >
+                <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center gap-2.5 pl-3.5 pr-0.5 pt-2">
+                  {identity(true)}
+                  {kebab(true)}
+                </div>
+                {mediaCaption}
               </div>
             )}
             {actionBar(false)}
@@ -967,14 +992,11 @@ export default function FeedPactCard({
         )}
       </motion.div>
 
-      {uploadAllowed && !onAddMoment && (
-        <ProofUploadModal
-          isOpen={proofUploadModal}
-          onClose={() => setProofUploadModal(false)}
-          pactId={pact.id}
-          pactStartDate={pact.start_date || pact.created_at}
-          onUpload={(pactId, proof) => onProofUpload?.(pactId, proof)}
-        />
+
+      {captureOpen && (
+        <BodyPortal>
+          <StoryCaptureSheet isOpen onClose={() => setCaptureOpen(false)} pactId={Number(pact.id)} pactTitle={pact.title} />
+        </BodyPortal>
       )}
 
       <CommentsBottomSheet

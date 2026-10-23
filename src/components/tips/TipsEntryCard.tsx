@@ -9,7 +9,9 @@ export default function TipsEntryCard({ className = '' }: { className?: string }
   const { data } = useMyTipSettings()
   const on = Boolean(data?.enabled && data?.upi_id)
   const inbox = useTipInbox(on)
-  const waiting = inbox.data?.waiting.length ?? 0
+  // A reply of an unexpected shape counts as zero instead of taking the page down.
+  const waitingList = (inbox.data as any)?.waiting
+  const waiting = Array.isArray(waitingList) ? waitingList.length : 0
   const total = inbox.data?.confirmed_total ?? 0
   if (on && (waiting > 0 || total > 0)) {
     return (

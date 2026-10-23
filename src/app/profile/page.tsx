@@ -18,7 +18,8 @@ import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet';
 import { STORIES_ENABLED } from '@/lib/stories';
 import { DaresTab } from '@/components/ProfileTabs';
 import CpScoreCard from '@/components/profile/CpScoreCard';
-import ProfilePactCard, { ProfileEmpty } from '@/components/profile/ProfilePactCard';
+import { ProfileEmpty } from '@/components/profile/ProfilePactCard';
+import FeedPactCard from '@/components/FeedPactCard';
 import ProfileHeader, { profileButton } from '@/components/profile/ProfileHeader';
 import SegmentTabs from '@/components/profile/SegmentTabs';
 import PeopleSheet from '@/components/profile/PeopleSheet';
@@ -185,11 +186,12 @@ function ProfileContent() {
                 )
               ) : (
                 (tab === 'active' ? activePacts : finishedPacts).map((pact: any) => (
-                  <ProfilePactCard
-                    key={pact.id}
-                    pact={pact}
-                    onPost={tab === 'active' ? () => (STORIES_ENABLED ? setCapturePact(pact) : router.push(`/pacts/${pact.id}`)) : undefined}
-                  />
+                  <div key={pact.id} className="-mx-4">
+                    <FeedPactCard
+                      pact={pact}
+                      onAddMoment={tab === 'active' ? () => (STORIES_ENABLED ? setCapturePact(pact) : router.push(`/pacts/${pact.id}`)) : undefined}
+                    />
+                  </div>
                 ))
               )}
             </div>
