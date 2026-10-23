@@ -4,13 +4,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
-import { Check, ChevronLeft, Globe, Heart, Link2, Lock, MessageCircle, UserPlus, Users, X } from 'lucide-react'
+import { Camera, Check, ChevronLeft, ChevronRight, Globe, Heart, Link2, Lock, MessageCircle, Plus, Search, UserPlus, Users, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
 import PriceChooser from '@/components/private/PriceChooser'
 import { useCreatePact } from '@/hooks/usePactMutations'
 import { pactService } from '@/services/api'
 import { useCircles } from '@/hooks/useCircles'
+import { useBackToClose } from '@/hooks/useBackToClose'
 import { useMyTipSettings } from '@/hooks/useTips'
 import { useFollowers } from '@/hooks/useFollows'
 import { useAuthStore } from '@/store/auth'
@@ -26,7 +27,8 @@ const LINE = '#DCD3C1'
 const CARD = '#FBF8F1'
 const PAPER = '#F4EFE4'
 
-type Step = 'shoot' | 'say' | 'who' | 'live'
+/** Say it, choose who, shoot Day 1, review, then it's live. The camera comes after the audience is decided. */
+type Step = 'say' | 'who' | 'shoot' | 'review' | 'live'
 /** Who sees the pact. Private moments are a separate lock on top of any of these. */
 type Audience = 'circle' | 'followers' | 'public'
 
@@ -81,12 +83,15 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   const me = useAuthStore((state) => state.user)
   const followerCount = (((useFollowers(me?.id).data as any)?.data || []) as any[]).length
 
-  const [step, setStep] = useState<Step>('shoot')
+  const [step, setStep] = useState<Step>('say')
   const [clip, setClip] = useState<Clip | null>(null)
   const [text, setText] = useState(initialText || '')
   const [pickedDays, setPickedDays] = useState<number | null>(null)
   const [pickedFrequency, setPickedFrequency] = useState<Frequency | null>(null)
-  const [chosenAudience, setAudience] = useState<Audience>('circle')
+  // Nothing is pre-selected: unless opened from a circle, the creator chooses.
+  const [chosenAudience, setAudience] = useState<Audience | null>(initialCircleId != null ? 'circle' : null)
+  const [pickingCircle, setPickingCircle] = useState(false)
+  const [circleSearch, setCircleSearch] = useState('')
   const [circleId, setCircleId] = useState<number | null>(initialCircleId)
   const [posting, setPosting] = useState<string | null>(null)
   const [locked, setLocked] = useState(false)
@@ -95,12 +100,8 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   const [created, setCreated] = useState<{ id: number; title: string; days: number } | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // No circles means "A circle" isn't an option, so Everyone is the default.
-  const audience: Audience = chosenAudience === 'circle' && circles.length === 0 ? 'public' : chosenAudience
-  useEffect(() => {
-    if (circles.length > 0 && circleId == null) setCircleId(Number(circles[0].id))
-  }, [circles, circleId])
-
+  const audience: Audience | null = chosenAudience
+  useBackToClose(pickingCircle, () => setPickingCircle(false))
   useEffect(() => () => {
     if (clip) URL.revokeObjectURL(clip.url)
   }, [clip])
@@ -122,7 +123,9 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   const needsUpi = locked && Boolean(tips.data) && !tips.data?.enabled
   const needsPrice = locked && watchPrice == null
   const lockHint =
-    audience === 'circle'
+    audience == null
+      ? 'Choose who sees it first.'
+      : audience === 'circle'
       ? circleIsPrivate
         ? `A premium drop: members of ${circle?.name ?? 'the circle'} pay too. Leave it off and the circle watches free.`
         : 'Circle members pay like anyone. Your followers see it locked and can buy.'
@@ -131,7 +134,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
         : 'Shows in Discover, locked. Anyone can pay to watch.'
 
   const post = async () => {
-    if (!ready || posting) return
+    if (!ready || posting || !audience) return
     const payload = {
       title,
       description: '',
@@ -226,12 +229,14 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
         isOpen
         autoStart
         pactId={0}
-        pactTitle="New pact · Day 1"
+        pactTitle={title || 'New pact · Day 1'}
         onCaptured={(captured) => {
           setClip({ ...captured, url: URL.createObjectURL(captured.blob) })
-          setStep('say')
+          setStep('review')
         }}
-        onClose={() => setStep('say')}
+        // Closing the camera, or no camera, still lets the pact start; Day 1 can come later.
+        onClose={() => setStep('review')}
+        onSkip={() => setStep('review')}
       />
     )
   }
@@ -256,34 +261,9 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
     <div className="fixed inset-0 z-[70] flex flex-col overflow-y-auto" style={{ background: PAPER, color: INK }}>
       {step === 'say' && (
         <>
-          {header(() => setStep('shoot'), 0)}
+          {header(onExit, 0)}
           <div className="mx-auto w-full max-w-md flex-1 px-5">
-            <div className="flex items-end gap-3.5 pt-3">
-              <button
-                type="button"
-                onClick={() => setStep('shoot')}
-                aria-label={clip ? 'Retake Day 1' : 'Shoot Day 1'}
-                className="relative h-[100px] w-[76px] shrink-0 overflow-hidden rounded-[16px]"
-                style={clip ? { background: INK } : { background: '#E8E2D4', border: '2px dashed #CFC5B0' }}
-              >
-                {clip && (isPhoto ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={clip.url} alt="" className="absolute inset-0 size-full object-cover" />
-                ) : (
-                  <video src={`${clip.url}#t=0.1`} muted playsInline preload="auto" className="absolute inset-0 size-full object-cover" />
-                ))}
-                {clip ? (
-                  <span className="absolute bottom-1.5 left-1.5 rounded-lg px-1.5 py-0.5 text-[10.5px] font-extrabold" style={{ background: 'rgba(15,16,20,0.6)', color: '#FFFFFF' }}>Day 1</span>
-                ) : (
-                  <span className="absolute inset-0 flex items-center justify-center text-[22px] font-bold" style={{ color: MUTED }}>+</span>
-                )}
-              </button>
-              <div className="pb-1 text-[13.5px] leading-snug" style={{ color: MUTED }}>
-                {clip ? 'Day 1 is in. Now say what you’re committing to.' : 'Nothing yet. Tap the box for a photo or video of Day 1, or add it later.'}
-              </div>
-            </div>
-
-            <label className="mt-6 block">
+            <label className="mt-5 block">
               <span className="block text-[30px] font-extrabold tracking-[-0.03em]" style={{ color: INK }}>I will…</span>
               <input
                 ref={inputRef}
@@ -353,101 +333,281 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
         <>
           {header(() => setStep('say'), 1)}
           <div className="mx-auto w-full max-w-md flex-1 px-5">
-            <div className="pt-3 text-[28px] font-extrabold leading-tight tracking-[-0.03em]" style={{ color: INK }}>Who&apos;s in on it?</div>
+            <div className="pt-3 text-[28px] font-extrabold leading-tight tracking-[-0.03em]" style={{ color: INK }}>Who&apos;s In On It?</div>
             <div className="mt-1.5 text-[14px]" style={{ color: MUTED }}>{title}</div>
             <div className="mt-5 text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>WHO SEES IT</div>
-            <div className="mt-2 flex flex-col gap-2" role="radiogroup" aria-label="Who sees it">
+            <div className="mt-2 flex flex-col gap-2.5" role="radiogroup" aria-label="Who sees it">
               {(
                 [
-                  { id: 'public', name: 'Everyone', desc: 'Shows in Discover. Anyone can find it.', icon: <Globe className="size-5" /> },
-                  { id: 'followers', name: 'My Followers', desc: followerCount > 0 ? `${followerCount.toLocaleString('en-IN')} ${followerCount === 1 ? 'follower sees' : 'followers see'} it in their feed.` : 'Shows on your profile and to people who follow you.', icon: <Heart className="size-5" /> },
-                  circles.length > 0 && { id: 'circle', name: 'A Circle', desc: 'Just the people in one of your circles.', icon: <Users className="size-5" /> },
-                ].filter(Boolean) as { id: Audience; name: string; desc: string; icon: React.ReactNode }[]
+                  {
+                    id: 'circle' as Audience,
+                    name: 'A Circle',
+                    desc: circles.length === 0 ? 'You have no circles yet. Make one.' : circle && audience === 'circle' ? titleCase(String(circle.name || '')) : `Choose one of your ${circles.length} ${circles.length === 1 ? 'circle' : 'circles'}.`,
+                    icon: <Users className="size-[22px]" />,
+                  },
+                  { id: 'followers' as Audience, name: 'My Followers', desc: followerCount > 0 ? `${followerCount.toLocaleString('en-IN')} ${followerCount === 1 ? 'follower sees' : 'followers see'} it in their feed.` : 'Shows on your profile and to people who follow you.', icon: <Heart className="size-[22px]" /> },
+                  { id: 'public' as Audience, name: 'Everyone', desc: 'Shows in Discover. Anyone can find it.', icon: <Globe className="size-[22px]" /> },
+                ]
               ).map((option) => {
                 const on = audience === option.id
+                const isCircle = option.id === 'circle'
                 return (
                   <button
                     key={option.id}
                     type="button"
                     role="radio"
                     aria-checked={on}
-                    onClick={() => setAudience(option.id)}
-                    className="flex w-full items-center gap-3 rounded-[18px] px-3.5 py-3 text-left"
+                    onClick={() => {
+                      if (isCircle) {
+                        if (circles.length === 0) return router.push('/circles/create')
+                        setPickingCircle(true)
+                        return
+                      }
+                      setAudience(option.id)
+                    }}
+                    className="flex min-h-[72px] w-full items-center gap-3 rounded-[20px] px-3.5 py-3 text-left"
                     style={{ background: on ? '#FFFFFF' : CARD, border: on ? `2px solid ${INK}` : `1px solid ${LINE}` }}
                   >
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full" style={on ? { background: INK, color: '#FFFFFF' } : { background: '#EFEBE1', color: INK }}>
+                    <span className="flex size-11 shrink-0 items-center justify-center rounded-full" style={on ? { background: INK, color: '#FFFFFF' } : { background: '#E8E2D4', color: INK }}>
                       {option.icon}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[15.5px] font-extrabold" style={{ color: INK }}>{option.name}</span>
-                      <span className="mt-0.5 block text-[12.5px] leading-snug" style={{ color: MUTED }}>{option.desc}</span>
+                      <span className="block text-[17px] font-extrabold tracking-[-0.01em]" style={{ color: INK }}>{option.name}</span>
+                      <span className="mt-px block text-[13.5px] leading-snug" style={{ color: on && isCircle ? NAVY : MUTED, fontWeight: on && isCircle ? 700 : 400 }}>{option.desc}</span>
                     </span>
-                    <span className="size-[20px] shrink-0 rounded-full" style={on ? { border: `6px solid ${INK}` } : { border: '2px solid #B9AF9A' }} />
+                    {isCircle && on ? (
+                      <span className="flex h-9 shrink-0 items-center rounded-full px-3 text-[13px] font-extrabold" style={{ background: CARD, border: `1px solid ${LINE}`, color: INK }}>Change</span>
+                    ) : isCircle ? (
+                      <ChevronRight className="size-[18px] shrink-0" style={{ color: MUTED }} strokeWidth={2.4} aria-hidden="true" />
+                    ) : null}
+                    {!(isCircle && !on) && (
+                      <span className="size-6 shrink-0 rounded-full" style={on ? { border: `8px solid ${INK}` } : { border: '2px solid #B9AF9A' }} />
+                    )}
                   </button>
                 )
               })}
             </div>
 
-            {audience === 'circle' && circles.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {circles.map((c) => (
-                  <button key={c.id} type="button" onClick={() => setCircleId(Number(c.id))} className="flex h-9 items-center gap-1 rounded-full px-3.5 text-[13.5px] font-bold" style={pill(Number(c.id) === circleId)}>
-                    {c.visibility === 'private' && <Lock className="size-3" strokeWidth={2.6} aria-label="Private circle" />}
-                    {titleCase(String(c.name || ''))}
-                    {(nameCount.get(String(c.name).trim().toLowerCase()) || 0) > 1 && (
-                      <span className="font-semibold opacity-70"> · {c.member_count ?? 0}</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <div className="mt-6 text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>MOMENTS</div>
-            <div className="mt-2 rounded-[18px] p-3.5" style={{ background: locked ? '#FFFFFF' : CARD, border: locked ? `2px solid ${NAVY}` : `1px solid ${LINE}` }}>
-              <div className="flex items-center gap-3">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full" style={locked ? { background: NAVY, color: '#FFFFFF' } : { background: '#EFEBE1', color: INK }}>
-                  <Lock className="size-[17px]" />
-                </span>
+            <div className="mt-6 text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>EARN FROM IT</div>
+            <div className="mt-2 rounded-[24px] p-[18px]" style={{ background: INK, color: '#FFFFFF' }}>
+              <div className="flex items-start gap-3.5">
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-full text-[22px] font-extrabold" style={{ background: '#F2C14E', color: INK }} aria-hidden="true">₹</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[15.5px] font-extrabold" style={{ color: INK }}>Private Moments</span>
-                  <span className="mt-0.5 block text-[12.5px] leading-snug" style={{ color: MUTED }}>{locked ? lockHint : 'Off: free. Everyone who sees the pact watches, no asking.'}</span>
+                  <span className="block text-[19px] font-extrabold leading-tight tracking-[-0.02em]">{locked ? 'Paid Moments Are On' : 'Get Paid For Your Moments'}</span>
+                  <span className="mt-1.5 block text-[13.5px] leading-snug" style={{ color: '#D4D6DD' }}>
+                    {locked ? lockHint : 'Lock your moments. People pay to watch, and the money goes straight to your UPI.'}
+                  </span>
                 </span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={locked}
-                  aria-label="Private moments"
-                  onClick={() => {
-                    if (!locked && watchPrice == null) setWatchPrice(21)
-                    setLocked((value) => !value)
-                  }}
-                  className="relative h-8 w-[52px] shrink-0 rounded-full transition-colors"
-                  style={{ background: locked ? NAVY : '#D4D5D9' }}
-                >
-                  <span className="absolute top-1 size-6 rounded-full transition-all" style={{ background: '#FFFFFF', left: locked ? 24 : 4, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
-                </button>
+                {locked && (
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked
+                    aria-label="Paid moments"
+                    onClick={() => setLocked(false)}
+                    className="relative h-8 w-[52px] shrink-0 rounded-full"
+                    style={{ background: '#F2C14E' }}
+                  >
+                    <span className="absolute top-1 size-6 rounded-full" style={{ background: INK, left: 24 }} />
+                  </button>
+                )}
               </div>
-              {locked && (
-                <div className="mt-3.5 border-t pt-3.5" style={{ borderColor: LINE }}>
-                  <PriceChooser price={watchPrice} onPrice={setWatchPrice} autoApprove={autoApprove} onAutoApprove={setAutoApprove} />
+              {locked ? (
+                <div className="mt-4">
+                  <PriceChooser dark price={watchPrice} onPrice={setWatchPrice} autoApprove={autoApprove} onAutoApprove={setAutoApprove} />
+                  {watchPrice != null && (
+                    <div className="mt-3.5 rounded-[14px] px-3.5 py-2.5 text-[13px] leading-snug" style={{ background: 'rgba(255,255,255,0.08)', color: '#E6E7EC' }}>
+                      <span className="font-extrabold" style={{ color: '#F2C14E' }}>Example</span> · 20 people at ₹{watchPrice} is ₹{(20 * watchPrice).toLocaleString('en-IN')} for one pact.
+                    </div>
+                  )}
+                  {tips.data && !tips.data.enabled ? (
+                    <Link href="/profile/tips" className="mt-3.5 flex min-h-11 items-center rounded-[14px] px-3.5 text-[13.5px] font-bold" style={{ border: '1.5px dashed #F2C14E', color: '#F2C14E' }}>
+                      Add your UPI first, so people can pay you
+                    </Link>
+                  ) : tips.data?.upi_id ? (
+                    <div className="mt-3.5 flex items-center gap-2.5 rounded-[14px] px-3.5 py-2.5" style={{ border: '1px solid rgba(255,255,255,0.18)' }}>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[12px]" style={{ color: '#BFC2CB' }}>Paid straight to your UPI</span>
+                        <span className="mt-px block truncate text-[14.5px] font-bold">{tips.data.upi_id}</span>
+                      </span>
+                      <Link href="/profile/tips" className="flex h-[34px] items-center rounded-full px-3 text-[13px] font-extrabold" style={{ background: 'rgba(255,255,255,0.14)' }}>Edit</Link>
+                    </div>
+                  ) : null}
                 </div>
+              ) : (
+                <>
+                  <div className="mt-3.5 rounded-[14px] px-3.5 py-2.5 text-[13px] leading-snug" style={{ background: 'rgba(255,255,255,0.08)', color: '#E6E7EC' }}>
+                    <span className="font-extrabold" style={{ color: '#F2C14E' }}>Example</span> · 20 people at ₹51 is ₹1,020 for one pact.
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (watchPrice == null) setWatchPrice(51)
+                      setLocked(true)
+                    }}
+                    className="mt-3.5 h-12 w-full rounded-full text-[15px] font-extrabold"
+                    style={{ background: '#F2C14E', color: INK }}
+                  >
+                    Turn On Paid Moments
+                  </button>
+                </>
               )}
             </div>
-            {locked && tips.data && !tips.data.enabled && (
-              <Link href="/profile/tips" className="mt-3 flex min-h-11 items-center rounded-[14px] px-3.5 text-[13.5px] font-bold" style={{ border: `1.5px dashed ${NAVY}`, color: NAVY, background: '#F5F7FD' }}>
-                Add your UPI first, so people can pay you
-              </Link>
-            )}
+          </div>
+          <div className="mx-auto w-full max-w-md px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
+            <button
+              type="button"
+              onClick={() => setStep('shoot')}
+              disabled={!audience || (audience === 'circle' && circleId == null) || needsUpi || needsPrice}
+              className="flex h-14 w-full items-center justify-center gap-2 rounded-full text-[16.5px] font-extrabold disabled:opacity-100"
+              style={
+                !audience || (audience === 'circle' && circleId == null) || needsUpi || needsPrice
+                  ? { background: '#E1DACB', color: '#6B6C72' }
+                  : { background: NAVY, color: '#FFFFFF', boxShadow: '0 8px 22px rgba(31,58,147,0.28)' }
+              }
+            >
+              {!audience || (audience === 'circle' && circleId == null) ? (
+                'Choose Who Sees It'
+              ) : (
+                <>
+                  <Camera className="size-5" strokeWidth={2.2} aria-hidden="true" />
+                  Next: Shoot Day 1
+                </>
+              )}
+            </button>
+          </div>
+
+          {pickingCircle && (
+            <div role="dialog" aria-modal="true" aria-label="Choose your circle" className="fixed inset-0 z-[75] flex items-end justify-center">
+              <button type="button" aria-label="Close" onClick={() => setPickingCircle(false)} className="absolute inset-0" style={{ background: 'rgba(15,16,20,0.55)' }} />
+              <div className="relative flex max-h-[85dvh] min-h-[60dvh] w-full max-w-md flex-col rounded-t-[28px] px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3" style={{ background: CARD, color: INK }}>
+                <div className="mx-auto mb-1.5 h-[5px] w-10 rounded-full" style={{ background: '#D9D2C2' }} />
+                <div className="flex items-center justify-between">
+                  <div className="text-[20px] font-extrabold tracking-[-0.02em]">Choose Your Circle</div>
+                  <button type="button" onClick={() => setPickingCircle(false)} aria-label="Close" className="-mr-2 flex size-11 items-center justify-center">
+                    <X className="size-5" />
+                  </button>
+                </div>
+                <label className="mt-1 flex h-[46px] shrink-0 items-center gap-2.5 rounded-full px-4" style={{ background: '#FFFFFF', border: `1px solid ${LINE}` }}>
+                  <Search className="size-[18px]" style={{ color: MUTED }} aria-hidden="true" />
+                  <input value={circleSearch} onChange={(e) => setCircleSearch(e.target.value)} placeholder="Search Your Circles" aria-label="Search your circles" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#7A7B80]" />
+                </label>
+                <div className="mt-1.5 min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                  {(() => {
+                    const q = circleSearch.trim().toLowerCase()
+                    const matches = circles.filter((c) => !q || String(c.name || '').toLowerCase().includes(q))
+                    // Private circles first, public ones below.
+                    const groups = [
+                      { key: 'private', label: 'PRIVATE', icon: <Lock className="size-3" strokeWidth={2.6} aria-hidden="true" />, sub: 'Members only', list: matches.filter((c) => c.visibility === 'private') },
+                      { key: 'public', label: 'PUBLIC', icon: <Globe className="size-3" strokeWidth={2.6} aria-hidden="true" />, sub: 'Anyone can join', list: matches.filter((c) => c.visibility !== 'private') },
+                    ].filter((g) => g.list.length > 0)
+                    if (groups.length === 0) return <p className="px-1 py-6 text-center text-[14px]" style={{ color: MUTED }}>No circle by that name.</p>
+                    return groups.map((g) => (
+                      <div key={g.key} role="group" aria-label={`${g.label.toLowerCase()} circles`}>
+                        <div className="flex items-center gap-1.5 px-0.5 pb-0.5 pt-3.5 text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>
+                          {g.icon}
+                          {g.label} · {g.list.length}
+                        </div>
+                        {g.list.map((c) => {
+                          const same = (nameCount.get(String(c.name).trim().toLowerCase()) || 0) > 1
+                          const picked = audience === 'circle' && Number(c.id) === circleId
+                          return (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => {
+                                setCircleId(Number(c.id))
+                                setAudience('circle')
+                                setPickingCircle(false)
+                                setCircleSearch('')
+                              }}
+                              className="flex min-h-[60px] w-full items-center gap-3 border-b py-1.5 text-left last:border-b-0"
+                              style={{ borderColor: '#E6E1D6' }}
+                            >
+                              <span className="flex size-10 shrink-0 items-center justify-center rounded-full text-[16px] font-extrabold" style={{ background: '#E8E2D4' }}>
+                                {String(c.name || '?').trim().charAt(0).toUpperCase()}
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-[15.5px] font-bold">{titleCase(String(c.name || ''))}</span>
+                                <span className="block text-[12.5px]" style={{ color: MUTED }}>{same ? `${c.member_count ?? 0} ${Number(c.member_count ?? 0) === 1 ? 'member' : 'members'}` : g.sub}</span>
+                              </span>
+                              <span className="size-6 shrink-0 rounded-full" style={picked ? { border: `8px solid ${INK}` } : { border: '2px solid #B9AF9A' }} />
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ))
+                  })()}
+                </div>
+                <Link href="/circles/create" className="mt-2 flex h-[50px] shrink-0 items-center justify-center gap-1.5 rounded-full text-[15px] font-extrabold" style={{ border: `1.5px dashed ${NAVY}`, background: '#F5F7FD', color: NAVY }}>
+                  <Plus className="size-4" strokeWidth={2.6} aria-hidden="true" />
+                  Create A New Circle
+                </Link>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {step === 'review' && (
+        <>
+          {header(() => setStep('who'), 2)}
+          <div className="mx-auto w-full max-w-md flex-1 px-5">
+            <div className="pt-3 text-[28px] font-extrabold leading-tight tracking-[-0.03em]" style={{ color: INK }}>Ready To Start</div>
+            <div className="mt-1.5 text-[14px]" style={{ color: MUTED }}>{clip ? 'Day 1 goes up the moment you start.' : 'No Day 1 yet. You can add it from the pact.'}</div>
+
+            <div className="relative mt-5 h-[300px] overflow-hidden rounded-[24px]" style={{ background: clip ? INK : 'radial-gradient(120% 80% at 30% 20%, #2A3A6E 0%, #141A2E 60%, #0F1014 100%)' }}>
+              {clip && (isPhoto ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={clip.url} alt="Your Day 1 photo" className="absolute inset-0 size-full object-cover" />
+              ) : (
+                <video src={clip.url} autoPlay loop muted playsInline className="absolute inset-0 size-full object-cover" />
+              ))}
+              {clip && <span className="absolute bottom-3 left-3 flex h-[26px] items-center rounded-full px-2.5 text-[12.5px] font-extrabold" style={{ background: 'rgba(15,16,20,0.62)', color: '#FFFFFF' }}>Day 1</span>}
+              <button
+                type="button"
+                onClick={() => {
+                  setClip(null)
+                  setStep('shoot')
+                }}
+                className="absolute bottom-3 right-3 h-9 rounded-full px-3.5 text-[13px] font-extrabold"
+                style={{ background: 'rgba(255,255,255,0.92)', color: INK }}
+              >
+                {clip ? 'Retake' : 'Shoot Day 1'}
+              </button>
+            </div>
+
+            <div className="mt-3.5 rounded-[20px] px-4 py-3.5" style={{ background: CARD, border: `1px solid ${LINE}` }}>
+              <div className="text-[11.5px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>YOUR PACT</div>
+              <div className="mt-1 text-[18px] font-extrabold leading-tight tracking-[-0.02em]" style={{ color: INK }}>{title}</div>
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                <span className="flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-extrabold" style={{ background: INK, color: '#FFFFFF' }}>
+                  {audience === 'circle' ? <Users className="size-3" strokeWidth={2.6} /> : audience === 'followers' ? <Heart className="size-3" strokeWidth={2.6} /> : <Globe className="size-3" strokeWidth={2.6} />}
+                  {audience === 'circle' ? titleCase(String(circle?.name || 'Your circle')) : audience === 'followers' ? 'My Followers' : 'Everyone'}
+                </span>
+                <span className="flex h-7 items-center rounded-full px-2.5 text-[12px] font-bold" style={{ background: CARD, border: `1px solid ${LINE}`, color: INK }}>
+                  {frequency} · {days} days
+                </span>
+                {locked && watchPrice != null && (
+                  <span className="flex h-7 items-center gap-1 rounded-full px-2.5 text-[12px] font-extrabold" style={{ background: '#F2C14E', color: INK }}>
+                    <Lock className="size-3" strokeWidth={2.6} /> ₹{watchPrice} to watch
+                  </span>
+                )}
+              </div>
+              <div className="mt-2.5 text-[13px] leading-snug" style={{ color: MUTED }}>
+                {audience === 'circle' ? `Members of ${titleCase(String(circle?.name || 'your circle'))} can see it now.` : audience === 'followers' ? 'Your followers can see it now.' : 'It goes live in Discover.'}
+              </div>
+            </div>
           </div>
           <div className="mx-auto w-full max-w-md px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
             <button
               type="button"
               onClick={() => void post()}
-              disabled={Boolean(posting) || (audience === 'circle' && circleId == null) || needsUpi || needsPrice}
+              disabled={Boolean(posting)}
               className="h-14 w-full rounded-full text-[16.5px] font-extrabold disabled:opacity-70"
               style={{ background: NAVY, color: '#FFFFFF', boxShadow: '0 8px 22px rgba(31,58,147,0.28)' }}
             >
-              {posting || (clip ? 'Post Day 1' : 'Start the pact')}
+              {posting || (clip ? 'Start Pact And Post Day 1' : 'Start Pact')}
             </button>
           </div>
         </>
