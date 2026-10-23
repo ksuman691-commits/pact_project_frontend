@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import type { PactStory } from '@/lib/stories'
 import { useMomentPeople } from './useMomentPeople'
-import { useTodayMoments } from './useTodayMoments'
+import { useMyStoriesToday } from './useStories'
 
 interface CircleLike {
   id: number
@@ -17,10 +17,11 @@ interface CircleLike {
  */
 export function useMyMomentsToday(circles: CircleLike[], viewerId?: number | null) {
   const { mine } = useMomentPeople(circles, viewerId)
-  const { myStories: myPactStories } = useTodayMoments()
+  // One request for all of the viewer's pacts (it used to check only the 8 most urgent).
+  const myPactStories = useMyStoriesToday().data
   const myStories = useMemo(() => {
     const byId = new Map<number, PactStory>()
-    ;[...myPactStories, ...mine].forEach((s) => byId.set(s.id, s))
+    ;[...(myPactStories ?? []), ...mine].forEach((s) => byId.set(s.id, s))
     return Array.from(byId.values()).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
   }, [myPactStories, mine])
   return { myStories, postedToday: myStories.length > 0 }
