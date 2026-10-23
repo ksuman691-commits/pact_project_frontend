@@ -8,7 +8,7 @@ import StoryViewer from '@/components/stories/StoryViewer'
 import { useCircles } from '@/hooks/useCircles'
 import { useCircleStoriesToday } from '@/hooks/useStories'
 import { useRequireAuth } from '@/hooks/useRequireAuth'
-import { monogram, postedAgo, STORIES_COMING_SOON, STORIES_ENABLED, type PactStory } from '@/lib/stories'
+import { isPhotoStory, monogram, postedAgo, STORIES_COMING_SOON, STORIES_ENABLED, type PactStory } from '@/lib/stories'
 
 interface MomentCircle {
   id: number
@@ -30,31 +30,39 @@ function clock(seconds?: number | null) {
 function MomentTile({ story, onOpen }: { story: PactStory; onOpen: () => void }) {
   const unseen = story.seen === false
   const ago = postedAgo(story.created_at)
-  const length = clock(story.duration_seconds)
+  const photo = isPhotoStory(story)
+  const length = photo ? null : clock(story.duration_seconds)
   const who = story.name || 'Someone'
   return (
     <button
       type="button"
       onClick={onOpen}
-      aria-label={`Watch ${who}'s moment${ago ? `, ${ago}` : ''}${unseen ? ', new' : ''}`}
+      aria-label={`${photo ? 'See' : 'Watch'} ${who}'s moment${ago ? `, ${ago}` : ''}${unseen ? ', new' : ''}`}
       className={`relative aspect-[3/4] w-full overflow-hidden rounded-[20px] bg-[var(--card-muted)] text-left transition active:scale-[0.98] ${
         unseen ? 'ring-[3px] ring-[var(--navy)] ring-offset-2 ring-offset-[var(--paper)]' : 'border border-[var(--hairline)]'
       }`}
     >
-      {/* The first frame stands in as a thumbnail; browsers that won't paint one just show the tinted tile. */}
-      <video
-        src={`${story.video_url}#t=0.1`}
-        muted
-        playsInline
-        preload="metadata"
-        tabIndex={-1}
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-      />
+      {photo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={story.video_url} alt="" aria-hidden="true" loading="lazy" className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
+      ) : (
+        // The first frame stands in as a thumbnail; browsers that won't paint one just show the tinted tile.
+        <video
+          src={`${story.video_url}#t=0.1`}
+          muted
+          playsInline
+          preload="metadata"
+          tabIndex={-1}
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+        />
+      )}
       <span className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" aria-hidden="true" />
-      <span className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--navy)] text-white" aria-hidden="true">
-        <Play className="h-5 w-5 translate-x-px" fill="currentColor" />
-      </span>
+      {!photo && (
+        <span className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--navy)] text-white" aria-hidden="true">
+          <Play className="h-5 w-5 translate-x-px" fill="currentColor" />
+        </span>
+      )}
       {length && (
         <span className="absolute right-2.5 top-2.5 rounded-[10px] bg-[var(--ink)]/75 px-2 py-0.5 text-[11.5px] font-bold text-white" aria-hidden="true">
           {length}

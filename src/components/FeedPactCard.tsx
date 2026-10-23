@@ -31,7 +31,7 @@ import { useReportPact } from '@/hooks/usePactActions';
 import { useGoalMatches } from '@/hooks/usePactMatches';
 import { useAuthStore } from '@/store/auth';
 import { usePactStoriesToday } from '@/hooks/useStories';
-import { postedAgo } from '@/lib/stories';
+import { isPhotoStory, postedAgo } from '@/lib/stories';
 import { getDisplayName } from '@/lib/displayName';
 import { hasPactMomentum } from '@/lib/pactMomentum';
 import { pactService, socialService } from '@/services/api';
@@ -922,8 +922,13 @@ export default function FeedPactCard({
               />
             ) : (
               <div className="relative aspect-[4/5] w-full overflow-hidden bg-[var(--ink)]">
-                {/* Plays by itself, sound off, while it's on screen; the button turns sound on. */}
-                <AutoPlayVideo src={momentStory!.video_url} className="absolute inset-0 h-full w-full object-cover" />
+                {isPhotoStory(momentStory!) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={momentStory!.video_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                ) : (
+                  // Plays by itself, sound off, while it's on screen; the button turns sound on.
+                  <AutoPlayVideo src={momentStory!.video_url} className="absolute inset-0 h-full w-full object-cover" />
+                )}
               </div>
             )}
             <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/55 to-transparent" />

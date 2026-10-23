@@ -7,7 +7,7 @@ import { reactToStory, replyToStory, STORY_REACTIONS } from '@/lib/api/stories'
 import { useAuthStore } from '@/store/auth'
 import { useMarkStorySeen, useStoryViewers } from '@/hooks/useStories'
 import { useBackToClose } from '@/hooks/useBackToClose'
-import { monogram, postedAgo, STORIES_COMING_SOON, type PactStory } from '@/lib/stories'
+import { isPhotoStory, monogram, postedAgo, STORIES_COMING_SOON, type PactStory } from '@/lib/stories'
 import { RingFace } from './StoryRing'
 
 interface StoryViewerProps {
@@ -23,6 +23,8 @@ interface StoryViewerProps {
 
 const HOLD_MS = 220
 const SEEN_AFTER_SECONDS = 1
+/** How long a photo moment stays up before the next one. */
+const PHOTO_MS = 5000
 
 export default function StoryViewer({ open, onClose, stories, startIndex = 0, circleId, circleName, isLoading, unavailable }: StoryViewerProps) {
   const [index, setIndex] = useState(startIndex)
@@ -38,6 +40,8 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
   const videoRef = useRef<HTMLVideoElement>(null)
   const holdTimer = useRef<number | null>(null)
   const heldRef = useRef(false)
+  // Time a photo has been on screen, for its progress bar and "seen".
+  const photoElapsed = useRef(0)
   const markSeen = useMarkStorySeen()
   useBackToClose(open, onClose)
 
@@ -57,15 +61,21 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
   }, [index])
 
   const story = stories[index]
+  const photo = !!story && isPhotoStory(story)
   const isOwn = !!story && user?.id != null && story.user_id === user.id
   const viewersQuery = useStoryViewers(story?.id ?? null, open && isOwn)
   const viewers = viewersQuery.data?.viewers ?? []
   const replies = viewersQuery.data?.replies ?? []
 
   const reportIfWatched = useCallback(() => {
+    if (!story) return
+    if (photo) {
+      if (photoElapsed.current >= SEEN_AFTER_SECONDS * 1000) markSeen(story.id)
+      return
+    }
     const video = videoRef.current
-    if (story && video && video.currentTime >= SEEN_AFTER_SECONDS) markSeen(story.id)
-  }, [markSeen, story])
+    if (video && video.currentTime >= SEEN_AFTER_SECONDS) markSeen(story.id)
+  }, [markSeen, story, photo])
 
   const close = useCallback(() => {
     reportIfWatched()
@@ -111,6 +121,27 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
     if (paused || viewersOpen || composing) video.pause()
     else void video.play().catch(() => {})
   }, [paused, viewersOpen, composing, index])
+
+  // A photo has no timeline of its own: it stays up for PHOTO_MS, pausing like a video does.
+  useEffect(() => {
+    photoElapsed.current = 0
+  }, [index])
+  useEffect(() => {
+    if (!open || !photo || broken || paused || viewersOpen || composing) return
+    let last = performance.now()
+    const timer = window.setInterval(() => {
+      const now = performance.now()
+      photoElapsed.current += now - last
+      last = now
+      setFraction(Math.min(1, photoElapsed.current / PHOTO_MS))
+      if (photoElapsed.current >= PHOTO_MS) {
+        window.clearInterval(timer)
+        if (story) markSeen(story.id)
+        go(1)
+      }
+    }, 50)
+    return () => window.clearInterval(timer)
+  }, [open, photo, broken, paused, viewersOpen, composing, index, go, markSeen, story])
 
   const sendReaction = async (emoji: string) => {
     if (!story) return
@@ -207,7 +238,10 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
           onContextMenu={(event) => event.preventDefault()}
         >
           {broken ? (
-            <p className="px-8 text-center text-[15px]">This video couldn&apos;t load. Tap to go on.</p>
+            <p className="px-8 text-center text-[15px]">This {photo ? 'photo' : 'video'} couldn&apos;t load. Tap to go on.</p>
+          ) : photo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={story.id} src={story.video_url} alt={`${story.name || 'Member'}'s moment`} draggable={false} className="h-full w-full object-contain" onError={() => setBroken(true)} />
           ) : (
             <video
               key={story.id}
