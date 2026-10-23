@@ -21,8 +21,8 @@ function electActive() {
 /**
  * A moment video that plays by itself, muted and looping, while it's the most
  * visible video on screen (at least half showing), and pauses when it scrolls away. A small button turns the sound
- * on and off. People who ask for reduced motion or data saving see the first
- * frame until they tap the sound button, which also starts it.
+ * on and off. Phones in Data Saver mode see the first frame until the sound
+ * button (or opening the moment) starts it.
  */
 export default function AutoPlayVideo({
   src,
@@ -74,9 +74,11 @@ export default function AutoPlayVideo({
       video.defaultMuted = true
     }
     try {
-      const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+      // Only Data Saver holds videos back. "Reduce motion" is NOT checked: Android
+      // turns it on with Battery Saver and "Remove animations", and it froze every
+      // moment on its first frame (feed tiles have no button to start them).
       const saveData = Boolean((navigator as any).connection?.saveData)
-      setAllowAuto(!reduce && !saveData)
+      setAllowAuto(!saveData)
     } catch {
       setAllowAuto(true)
     }

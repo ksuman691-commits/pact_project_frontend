@@ -119,9 +119,9 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
   useMyPacts()
 
   const loadingPeople = Boolean(isLoading || peopleLoading)
-  // With nobody else's moments today the row would just be "You", so Home
-  // drops it; posting lives on the camera button and your moments show in the feed.
-  const hidden = !loadingPeople && people.length === 0
+  // Hidden only when it would be an empty "You": nobody else has posted and you
+  // haven't either. Once you check in, your ring shows your moment.
+  const hidden = !loadingPeople && people.length === 0 && !postedToday
 
   return (
     <section aria-label="Moments" className={hidden ? 'contents' : 'mb-0 flex flex-col pt-4'}>

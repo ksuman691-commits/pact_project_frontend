@@ -71,7 +71,10 @@ export interface PactStory {
   user_id: number
   name: string | null
   avatar_url: string | null
+  /** The moment's media link, photo or video (named for the original video-only API). */
   video_url: string
+  /** "photo" or "video". Older servers leave it out: treat that as video. */
+  media_type?: 'photo' | 'video' | null
   duration_seconds: number | null
   created_at: string
   expires_at: string | null
@@ -220,4 +223,10 @@ export function monogram(name?: string | null) {
   if (words.length === 0) return '?'
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
   return (words[0][0] + words[1][0]).toUpperCase()
+}
+
+/** A story is a photo when the server says so, or when its link is plainly an image. */
+export function isPhotoStory(story: Pick<PactStory, 'media_type' | 'video_url'>): boolean {
+  if (story.media_type) return story.media_type === 'photo'
+  return /\.(jpe?g|png|webp|heic|heif|gif)(\?|#|$)/i.test(story.video_url || '')
 }

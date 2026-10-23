@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Camera, Check, Plus } from 'lucide-react'
 import { STORIES_ENABLED } from '@/lib/stories'
@@ -78,7 +79,7 @@ function CheckInSlide({ pact, peers, fullWidth, onCapture }: { pact: TodayPact; 
 
   return (
     <li
-      className="flex shrink-0 snap-start flex-col gap-1.5 rounded-[20px] border border-[var(--hairline)] bg-[var(--card)] pb-3 pl-3.5 pr-3 pt-[13px]"
+      className="relative flex shrink-0 snap-start flex-col gap-1.5 rounded-[20px] border border-[var(--hairline)] bg-[var(--card)] pb-3 pl-3.5 pr-3 pt-[13px]"
       style={{ width: fullWidth ? '100%' : `calc(100% - ${32 + GAP}px)` }}
       aria-label={`${pact.title}${pact.posted_today ? ', checked in' : ', waiting'}`}
     >
@@ -88,8 +89,11 @@ function CheckInSlide({ pact, peers, fullWidth, onCapture }: { pact: TodayPact; 
         <span className="flex-1" />
         {urgent && hours != null && <span className="shrink-0 font-extrabold text-[#A4471F]">{endsLabel(hours)}</span>}
       </div>
-      <div className="truncate text-[16px] font-extrabold tracking-[-0.015em] text-[var(--ink)]">{pact.title}</div>
-      <div className="mt-0.5 flex items-center gap-2">
+      {/* The slide's top half opens the pact; the buttons below keep their own jobs. */}
+      <Link href={`/pacts/${pact.id}`} className="-mx-1 -my-0.5 truncate rounded-[10px] px-1 py-0.5 text-[16px] font-extrabold tracking-[-0.015em] text-[var(--ink)] after:absolute after:inset-x-0 after:top-0 after:h-[62%] after:content-['']">
+        {pact.title}
+      </Link>
+      <div className="relative z-[1] mt-0.5 flex items-center gap-2">
         {pact.posted_today ? (
           <>
             <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full text-white" style={{ background: 'var(--success, #2E7D4F)' }}>
