@@ -400,7 +400,7 @@ export const pactService = {
   update: (id: number, data: any) => api.put(`/api/pacts/${id}`, data),
   uploadProof: (id: number, payload: any) =>
     api.post(`/api/pacts/${id}/upload-proof`, payload),
-  uploadProofFile: (id: number, file: File, proofType: 'photo' | 'video' | 'checklist' = 'photo', caption?: string, dayNumber?: number) => {
+  uploadProofFile: (id: number, file: File, proofType: 'photo' | 'video' | 'checklist' = 'photo', caption?: string, dayNumber?: number, onProgress?: (fraction: number) => void) => {
     const formData = new FormData();
     formData.append('proof_type', proofType);
     formData.append('file', file);
@@ -411,6 +411,12 @@ export const pactService = {
     // surfaces to the user as an opaque Network Error.
     return api.post(`/api/pacts/${id}/upload-proof-file`, formData, {
       headers: { 'Content-Type': undefined },
+      timeout: 120000,
+      onUploadProgress: onProgress
+        ? (event: any) => {
+            if (event?.total) onProgress(Math.min(1, event.loaded / event.total));
+          }
+        : undefined,
     });
   },
   listProofs: async (id: number, limit = 20, skip = 0) => {

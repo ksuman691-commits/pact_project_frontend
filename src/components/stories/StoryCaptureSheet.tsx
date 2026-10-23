@@ -1,13 +1,16 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Check, Circle, RefreshCw, RotateCcw, Square, Video, X } from 'lucide-react'
+import { Check, Circle, ImageIcon as Images, RefreshCw, RotateCcw, Square, X } from 'lucide-react'
 import LogoMark from '@/components/LogoMark'
+import { cleanTitle } from '@/lib/titleCase'
 import { CAMERA_FILTERS, canRecordWithFilters } from '@/lib/cameraFilters'
 import { useAuthStore } from '@/store/auth'
 import { useUserStats } from '@/hooks/useUserQueries'
 import { usePactStoriesToday, usePostStory } from '@/hooks/useStories'
 import {
+  isImageFile,
+  preparePhoto,
   isDurationAllowed,
   readVideoDuration,
   resolveVideoType,
@@ -20,8 +23,16 @@ import {
 interface Clip {
   blob: Blob
   contentType: string
+  /** Seconds for a video; 0 for a photo. */
   duration: number
   url: string
+}
+
+type Mode = 'photo' | 'video'
+const MODE_KEY = 'cp-camera-mode'
+
+function isPhotoClip(clip: { contentType: string }) {
+  return clip.contentType.startsWith('image/')
 }
 
 interface StoryCaptureSheetProps {
@@ -36,6 +47,7 @@ interface StoryCaptureSheetProps {
   /**
    * Capture without posting: the preview's main button hands the clip back
    * (used by new pact, where the pact doesn't exist until the end).
+   * A photo comes back with an image/* contentType and a duration of 0.
    */
   onCaptured?: (clip: { blob: Blob; contentType: string; duration: number }) => void
   /** Open straight on the live camera instead of the start screen. */
@@ -44,12 +56,13 @@ interface StoryCaptureSheetProps {
 
 type Step = 'idle' | 'live' | 'preview'
 
-const CAMERA_BLOCKED = 'Camera is blocked. Allow camera access in your browser settings, or choose a video from your library.'
+const CAMERA_BLOCKED = 'Camera is blocked. Allow camera access in your browser settings, or choose a photo or video from your library.'
 const RECORDER_TYPES = ['video/mp4', 'video/webm;codecs=vp8,opus', 'video/webm']
 const VIDEO_BITS_PER_SECOND = 2_500_000
 const AUDIO_BITS_PER_SECOND = 64_000
 
 function formatMb(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
@@ -57,17 +70,28 @@ function canRecordInPage() {
   return typeof window !== 'undefined' && typeof window.MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
 }
 
-export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, canJoin = false, onJoin, initialClip = null, onCaptured, autoStart = true }: StoryCaptureSheetProps) {
+export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: rawTitle, canJoin = false, onJoin, initialClip = null, onCaptured, autoStart = true }: StoryCaptureSheetProps) {
+  const pactTitle = rawTitle ? cleanTitle(rawTitle) : rawTitle
   const [step, setStep] = useState<Step>(initialClip ? 'preview' : 'idle')
   const [clip, setClip] = useState<Clip | null>(initialClip)
   const [notice, setNotice] = useState<string | null>(null)
   const [checking, setChecking] = useState(false)
   const [recording, setRecording] = useState(false)
   const [elapsed, setElapsed] = useState(0)
-  const [inPageSupported, setInPageSupported] = useState(false)
+  // null until we know; the start screen waits for it so it doesn't flash before the camera.
+  const [inPageSupported, setInPageSupported] = useState<boolean | null>(null)
   const [facing, setFacing] = useState<'environment' | 'user'>('environment')
   const [filterId, setFilterId] = useState('none')
   const [filtersSupported, setFiltersSupported] = useState(false)
+  const [mode, setModeState] = useState<Mode>('video')
+  const setMode = (next: Mode) => {
+    setModeState(next)
+    try {
+      localStorage.setItem(MODE_KEY, next)
+    } catch {
+      // Remembering the mode is a nicety.
+    }
+  }
   const drawFrameRef = useRef<number | null>(null)
   const { user } = useAuthStore()
   const streak = Number(useUserStats(user?.id || 0).data?.data?.current_streak ?? 0)
@@ -84,10 +108,19 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
   const { phase, progress, error, retryable, unavailable: postUnavailable, post, reset } = usePostStory(pactId)
   const comingSoon = !onCaptured && (today.unavailable || postUnavailable)
   const autoStarted = useRef(false)
+  const openRef = useRef(isOpen)
+  useEffect(() => {
+    openRef.current = isOpen
+  }, [isOpen])
 
   useEffect(() => {
     setInPageSupported(canRecordInPage())
     setFiltersSupported(canRecordWithFilters())
+    try {
+      if (localStorage.getItem(MODE_KEY) === 'photo') setModeState('photo')
+    } catch {
+      // Private mode: start on video.
+    }
   }, [])
 
   const stopStream = useCallback(() => {
@@ -110,6 +143,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
   }, [initialClip])
 
   const closeSheet = useCallback(() => {
+    openRef.current = false
     stopStream()
     replaceClip(null)
     setNotice(null)
@@ -129,11 +163,29 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
     }
   }, [isOpen])
 
+  const acceptPhoto = async (file: Blob & { name?: string }) => {
+    setNotice(null)
+    setChecking(true)
+    const ready = await preparePhoto(file)
+    setChecking(false)
+    if (!ready) {
+      setNotice("That photo couldn't be used. Try another one under 10 MB.")
+      return
+    }
+    replaceClip({ blob: ready.blob, contentType: ready.contentType, duration: 0, url: URL.createObjectURL(ready.blob) })
+    reset()
+    setStep('preview')
+  }
+
   const acceptBlob = async (blob: Blob & { name?: string }, knownDuration?: number) => {
     setNotice(null)
+    if (isImageFile(blob)) {
+      await acceptPhoto(blob)
+      return
+    }
     const contentType = resolveVideoType(blob)
     if (!contentType) {
-      setNotice("That file type isn't supported. Use an MP4, WebM or MOV video.")
+      setNotice("That file type isn't supported. Use a photo, or an MP4, WebM or MOV video.")
       return
     }
     if (blob.size > STORY_MAX_BYTES) {
@@ -163,15 +215,20 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
     if (file) void acceptBlob(file)
   }
 
+  const [streamVersion, setStreamVersion] = useState(0)
   const attachStream = (stream: MediaStream) => {
     streamRef.current = stream
-    requestAnimationFrame(() => {
-      if (liveVideoRef.current) {
-        liveVideoRef.current.srcObject = stream
-        void liveVideoRef.current.play().catch(() => {})
-      }
-    })
+    // The live screen may not be on screen yet; the effect below attaches it once it is.
+    setStreamVersion((v) => v + 1)
   }
+
+  useEffect(() => {
+    const video = liveVideoRef.current
+    const stream = streamRef.current
+    if (step !== 'live' || !video || !stream || video.srcObject === stream) return
+    video.srcObject = stream
+    void video.play().catch(() => {})
+  }, [step, streamVersion])
 
   // Back camera first. `ideal` (not `exact`) so devices without one, like a laptop, still open.
   const requestStream = (mode: 'environment' | 'user') =>
@@ -184,12 +241,17 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
     setNotice(null)
     try {
       const stream = await requestStream('environment')
+      // Closed while the camera was starting: switch it straight back off.
+      if (!openRef.current) {
+        stream.getTracks().forEach((track) => track.stop())
+        return
+      }
       const actual = stream.getVideoTracks()[0]?.getSettings().facingMode
       setFacing(actual === 'user' ? 'user' : 'environment')
       setStep('live')
       attachStream(stream)
     } catch (err: any) {
-      setNotice(err?.name === 'NotAllowedError' ? CAMERA_BLOCKED : "Couldn't open the camera here. Use Record a video, or choose one from your gallery.")
+      setNotice(err?.name === 'NotAllowedError' ? CAMERA_BLOCKED : "Couldn't open the camera here. Choose a photo or video from your library instead.")
     }
   }
 
@@ -221,6 +283,43 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
     // openLiveCamera is stable enough for a one-shot start; re-running it would reopen the camera.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, autoStart, inPageSupported, step])
+
+  /** A still from the live camera, with the chosen look and the selfie mirror baked in. */
+  const takePhoto = () => {
+    const video = liveVideoRef.current
+    if (!video || !video.videoWidth) {
+      setNotice('The camera is still starting. Try again in a second.')
+      return
+    }
+    setNotice(null)
+    const scale = Math.min(1, 2048 / Math.max(video.videoWidth, video.videoHeight))
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.round(video.videoWidth * scale)
+    canvas.height = Math.round(video.videoHeight * scale)
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    const preset = CAMERA_FILTERS.find((f) => f.id === filterId)
+    if (preset && preset.css !== 'none' && filtersSupported) ctx.filter = preset.css
+    if (facing === 'user') {
+      ctx.translate(canvas.width, 0)
+      ctx.scale(-1, 1)
+    }
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          setNotice("Couldn't take the photo. Try again.")
+          return
+        }
+        stopStream()
+        replaceClip({ blob, contentType: 'image/jpeg', duration: 0, url: URL.createObjectURL(blob) })
+        reset()
+        setStep('preview')
+      },
+      'image/jpeg',
+      0.9,
+    )
+  }
 
   const finishRecording = () => {
     if (recorderRef.current && recorderRef.current.state !== 'inactive') recorderRef.current.stop()
@@ -295,6 +394,24 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
   const ringRadius = 46
   const ringLength = 2 * Math.PI * ringRadius
 
+  // Opening straight on the camera: show a dark "opening" screen, not the start
+  // screen, until the camera is up or it fails (then the start screen explains why).
+  const opening = autoStart && step === 'idle' && !notice && !comingSoon && inPageSupported !== false
+  if (opening) {
+    return (
+      <div role="dialog" aria-modal="true" aria-label="Opening camera" className="fixed inset-0 z-[80] flex flex-col bg-black text-white">
+        <header className="flex items-center justify-between px-4 pt-[max(1rem,env(safe-area-inset-top))]">
+          <button type="button" onClick={closeSheet} aria-label="Close camera" className="flex h-11 w-11 items-center justify-center rounded-full" style={{ background: 'rgba(255,255,255,0.18)' }}>
+            <X className="h-5 w-5" />
+          </button>
+        </header>
+        <div className="flex flex-1 items-center justify-center">
+          <p className="text-[15px] font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }} aria-live="polite">Opening camera…</p>
+        </div>
+      </div>
+    )
+  }
+
   if (step === 'live') {
     return (
       <div role="dialog" aria-modal="true" aria-label="Record a moment" className="fixed inset-0 z-[80] bg-black text-white">
@@ -340,7 +457,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
           </button>
         </header>
 
-        <input ref={cameraInputRef} type="file" accept="video/*" className="sr-only" onChange={(event) => { stopStream(); onFilePicked(event) }} tabIndex={-1} aria-hidden="true" />
+        <input ref={cameraInputRef} type="file" accept="image/*,video/*" className="sr-only" onChange={(event) => { stopStream(); onFilePicked(event) }} tabIndex={-1} aria-hidden="true" />
         <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 pb-[max(2rem,env(safe-area-inset-bottom))]">
           {filtersSupported && !recording && (
             <div className="flex w-full gap-2 overflow-x-auto px-4 scrollbar-hide" role="radiogroup" aria-label="Camera look">
@@ -363,19 +480,31 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
             </div>
           )}
           <p className="text-[14px] font-semibold tabular-nums" aria-live="polite" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.4)' }}>
-            {recording ? `${Math.ceil(STORY_MAX_SECONDS - elapsed)} s left` : `Tap to record. Stops at ${STORY_MAX_SECONDS} seconds.`}
+            {recording ? `${Math.ceil(STORY_MAX_SECONDS - elapsed)} s left` : notice ? notice : mode === 'photo' ? 'Tap to take a photo.' : `Tap to record. Stops at ${STORY_MAX_SECONDS} seconds.`}
           </p>
           <div className="flex w-full items-center justify-between px-9">
           <button
             type="button"
             onClick={() => cameraInputRef.current?.click()}
             disabled={recording}
-            aria-label="Upload a video from your gallery"
+            aria-label="Choose a photo or video from your library"
             className="flex size-[52px] items-center justify-center rounded-[14px] disabled:opacity-0"
             style={{ border: '2px solid #FFFFFF', background: 'rgba(255,255,255,0.12)', color: '#FFFFFF' }}
           >
-            <Video className="h-5 w-5" aria-hidden="true" />
+            <Images className="h-5 w-5" aria-hidden="true" />
           </button>
+          {mode === 'photo' ? (
+            <div className="relative flex h-[104px] w-[104px] items-center justify-center">
+              <span className="absolute inset-[4px] rounded-full" style={{ border: '5px solid #FFFFFF' }} aria-hidden="true" />
+              <button
+                type="button"
+                onClick={takePhoto}
+                aria-label="Take a photo"
+                className="relative h-[76px] w-[76px] rounded-full transition active:scale-90"
+                style={{ background: '#FFFFFF' }}
+              />
+            </div>
+          ) : (
           <div className="relative flex h-[104px] w-[104px] items-center justify-center">
             <svg viewBox="0 0 104 104" className="absolute inset-0 -rotate-90" aria-hidden="true">
               <circle cx="52" cy="52" r={ringRadius} fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="5" />
@@ -391,8 +520,26 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
               {recording ? <Square className="h-6 w-6" fill="currentColor" /> : <Circle className="h-7 w-7" fill="currentColor" />}
             </button>
           </div>
+          )}
           <span className="size-[52px]" aria-hidden="true" />
           </div>
+          {!recording && (
+            <div className="flex gap-1 rounded-full p-1" role="radiogroup" aria-label="Photo or video" style={{ background: 'rgba(0,0,0,0.35)' }}>
+              {(['photo', 'video'] as Mode[]).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  role="radio"
+                  aria-checked={mode === option}
+                  onClick={() => setMode(option)}
+                  className="h-9 rounded-full px-4 text-[13.5px] font-extrabold"
+                  style={mode === option ? { background: '#FFFFFF', color: '#17181D' } : { color: '#FFFFFF' }}
+                >
+                  {option === 'photo' ? 'Photo' : 'Video'}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     )
@@ -416,13 +563,13 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
         </button>
       </header>
 
-      <input ref={cameraInputRef} type="file" accept="video/*" className="sr-only" onChange={onFilePicked} tabIndex={-1} aria-hidden="true" />
+      <input ref={cameraInputRef} type="file" accept="image/*,video/*" className="sr-only" onChange={onFilePicked} tabIndex={-1} aria-hidden="true" />
 
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 overflow-y-auto px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         {step === 'idle' && (
           <>
             <p className="text-[15px] leading-relaxed text-[var(--ink)]">
-              Up to 15 seconds. It goes on today&apos;s day of your pact, for everyone who can watch it.
+              A photo or a video up to 15 seconds. It goes on today&apos;s day of your pact, for everyone who can watch it.
             </p>
             <p className="rounded-[6px] border border-[var(--hairline)] bg-[var(--card)] px-4 py-3 text-[14px] text-[var(--muted)]">{STORY_LIMITS_TEXT}</p>
 
@@ -441,7 +588,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
                     style={{ background: 'var(--navy)', color: '#fff' }}
                   >
                     <Circle className="h-7 w-7" strokeWidth={2} aria-hidden="true" />
-                    Record here
+                    Open camera
                   </button>
                 )}
                 <div className="flex flex-wrap items-center justify-center gap-2">
@@ -451,7 +598,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
                     disabled={checking}
                     className="flex h-11 items-center gap-2 rounded-full border-[1.5px] border-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--navy)]"
                   >
-                    <Video className="h-4 w-4" aria-hidden="true" />
+                    <Images className="h-4 w-4" aria-hidden="true" />
                     Choose from library
                   </button>
                 </div>
@@ -467,9 +614,14 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
 
         {step === 'preview' && clip && (
           <div className="flex flex-col items-center gap-4">
-            <video src={clip.url} autoPlay loop muted playsInline className="aspect-[9/16] w-full max-w-[300px] rounded-[6px] bg-[var(--ink)] object-cover" />
+            {isPhotoClip(clip) ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={clip.url} alt="Your photo" className="max-h-[56vh] w-full max-w-[300px] rounded-[6px] bg-[var(--ink)] object-contain" />
+            ) : (
+              <video src={clip.url} autoPlay loop muted playsInline className="aspect-[9/16] w-full max-w-[300px] rounded-[6px] bg-[var(--ink)] object-cover" />
+            )}
             <p className="text-[13px] tabular-nums text-[var(--muted)]">
-              {clip.duration.toFixed(1)} s · {formatMb(clip.blob.size)}
+              {isPhotoClip(clip) ? 'Photo' : `${clip.duration.toFixed(1)} s`} · {formatMb(clip.blob.size)}
             </p>
 
             {phase === 'done' ? (
@@ -543,5 +695,6 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle, 
 }
 
 function isParticipantPermissionError(error: string) {
-  return error.toLowerCase().includes('only pact participants can post stories')
+  const text = error.toLowerCase()
+  return text.includes('only pact participants can post stories') || text.includes('only pact members can submit proof')
 }
