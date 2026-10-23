@@ -524,6 +524,9 @@ export default function FeedPactCard({
     ? [circleLabel, postedAgo(momentStory.created_at)].filter(Boolean).join(' · ')
     : [circleLabel, postedAt].filter(Boolean).join(' · ') || pactCategoryLabel;
   const dayNo = progressInfo ? Math.min(progressInfo.totalDays, Math.max(1, progressInfo.elapsedDays)) : 0;
+  // The badge follows the moment on screen: swipe to a Day 1 clip and it says Day 1.
+  const slideDay = tiles.length > 0 && activeProof?.day ? Number(activeProof.day) : null;
+  const badgeDay = slideDay || dayNo;
   const showMomentum = showRing && hasPactMomentum(pact);
   // The Add moment pill replaces the old in-carousel "+ Add today" tile. With no
   // photo yet the dashed strip is the prompt, so the pill stays out of the way.
@@ -876,9 +879,9 @@ export default function FeedPactCard({
 
             <div className={`pointer-events-none absolute inset-x-3.5 ${tiles.length > 1 ? 'bottom-7' : 'bottom-3.5'}`} style={{ color: '#fff' }}>
               <div className="flex items-center gap-2">
-                {showRing && progressInfo && (
+                {(slideDay || (showRing && progressInfo)) && (
                   <span className="rounded-[10px] px-2.5 py-0.5 text-[12px] font-extrabold" style={{ color: '#fff', backgroundColor: 'rgba(255,255,255,0.28)' }}>
-                    {showMomentum ? '🔥 ' : ''}Day {dayNo}
+                    {showMomentum && badgeDay === dayNo ? '🔥 ' : ''}Day {badgeDay}
                   </span>
                 )}
               </div>

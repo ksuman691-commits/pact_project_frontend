@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useUserJoinedPacts, useUserPacts } from './useFeedQueries';
+import { useMyPacts } from './useMyPacts';
 
 const APPROACHING_WINDOW_MS = 24 * 60 * 60 * 1000; // 24h
 
@@ -55,22 +55,18 @@ function isDeadlineApproaching(pact: any): boolean {
  * this precise — flagging that as a follow-up rather than guessing further.
  */
 export function useAtRiskPact(userId?: number) {
-  const createdQuery = useUserPacts(userId || 0);
-  const joinedQuery = useUserJoinedPacts(userId || 0);
+  // Reuses the user's pacts the feed already loads (one request), instead of
+  // fetching created and joined pacts again just for this dot.
+  const myPacts = useMyPacts();
+  const pacts = useMemo(() => {
+    const data: any = myPacts.data;
+    return (Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []) as any[];
+  }, [myPacts.data]);
 
-  const createdPacts = useMemo(
-    () => (createdQuery.data?.pages || []).flatMap((page: any) => page.data || []),
-    [createdQuery.data]
+  return useMemo(
+    () =>
+      Boolean(userId) &&
+      pacts.some((pact: any) => pact?.status === 'active' && isDeadlineApproaching(pact) && !hasProofUploadedToday(pact)),
+    [pacts, userId]
   );
-  const joinedPacts = useMemo(
-    () => (joinedQuery.data?.pages || []).flatMap((page: any) => page.data || []),
-    [joinedQuery.data]
-  );
-
-  return useMemo(() => {
-    const allPacts = [...createdPacts, ...joinedPacts];
-    return allPacts.some(
-      (pact: any) => pact?.status === 'active' && isDeadlineApproaching(pact) && !hasProofUploadedToday(pact)
-    );
-  }, [createdPacts, joinedPacts]);
 }

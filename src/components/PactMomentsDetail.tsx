@@ -42,22 +42,25 @@ type Props = {
   onStartOwnVersion: () => void
 }
 
-function Avatar({ person, index }: { person: any; index: number }) {
+function Avatar({ person, index, size = 30 }: { person: any; index: number; size?: number }) {
   const [failed, setFailed] = useState(false)
   const label = String(person?.full_name || person?.name || person?.username || 'M').charAt(0).toUpperCase()
+  const box = { width: size, height: size }
   return (person?.avatar_url || person?.avatar) && !failed ? (
     <Image
       src={person.avatar_url || person.avatar}
       alt=""
-      width={34}
-      height={34}
+      width={size}
+      height={size}
       unoptimized
       onError={() => setFailed(true)}
-      className={`size-[34px] rounded-full border-2 border-[var(--card)] object-cover ${index ? '-ml-2' : ''}`}
+      style={box}
+      className={`shrink-0 rounded-full border-2 border-[var(--card)] object-cover ${index ? '-ml-2' : ''}`}
     />
   ) : (
     <span
-      className={`flex size-[34px] items-center justify-center rounded-full border-2 border-[var(--card)] bg-[var(--navy-hover)] text-[13px] font-extrabold text-white ${index ? '-ml-2' : ''}`}
+      style={{ ...box, fontSize: Math.round(size * 0.4) }}
+      className={`flex shrink-0 items-center justify-center rounded-full border-2 border-[var(--card)] bg-[var(--navy-hover)] font-extrabold text-white ${index ? '-ml-2' : ''}`}
     >
       {label}
     </span>
@@ -273,45 +276,62 @@ export default function PactMomentsDetail({
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             {pact?.circle_id != null && pact?.circle_name ? (
-              <Link href={`/circles/${pact.circle_id}`} className="flex h-7 items-center gap-1 rounded-full px-2.5 text-[12px] font-extrabold" style={{ background: '#17181D', color: '#FFFFFF' }}>
+              <Link href={`/circles/${pact.circle_id}`} className="flex h-6 items-center gap-1 rounded-full px-2 text-[11px] font-extrabold" style={{ background: '#17181D', color: '#FFFFFF' }}>
                 <Users className="size-3" strokeWidth={2.6} aria-hidden="true" />
                 {pact.circle_name}
               </Link>
             ) : (
-              <span className="flex h-7 items-center gap-1 rounded-full px-2.5 text-[12px] font-extrabold" style={{ background: '#17181D', color: '#FFFFFF' }}>
+              <span className="flex h-6 items-center gap-1 rounded-full px-2 text-[11px] font-extrabold" style={{ background: '#17181D', color: '#FFFFFF' }}>
                 {pact?.visibility === 'private' ? <Heart className="size-3" strokeWidth={2.6} aria-hidden="true" /> : <Globe className="size-3" strokeWidth={2.6} aria-hidden="true" />}
                 {pact?.visibility === 'private' ? 'Followers' : 'Public'}
               </span>
             )}
             {pact?.media_locked && !isCreatorView && (
-              <span className="flex h-7 items-center gap-1 rounded-full px-2.5 text-[12px] font-extrabold" style={{ background: '#E8ECF7', color: '#1F3A93' }}>
+              <span className="flex h-6 items-center gap-1 rounded-full px-2 text-[11px] font-extrabold" style={{ background: '#E8ECF7', color: '#1F3A93' }}>
                 <Lock className="size-3" strokeWidth={2.6} aria-hidden="true" />
                 {pact?.watch_price ? `Private · ₹${pact.watch_price}` : 'Private'}
               </span>
             )}
-            <span className="flex h-7 items-center rounded-full px-2.5 text-[12px] font-bold" style={{ background: 'var(--card)', border: '1px solid var(--hairline)', color: 'var(--ink)' }}>
+            <span className="flex h-6 items-center rounded-full px-2 text-[11px] font-bold" style={{ background: 'var(--card)', border: '1px solid var(--hairline)', color: 'var(--ink)' }}>
               {pact?.proof_submission_frequency === 'weekly' ? 'Every week' : 'Every day'} · {total} days
             </span>
           </div>
-          <h1 className="mt-2 line-clamp-2 font-sans text-[25px] font-extrabold leading-[1.08] tracking-[-0.03em] text-[var(--ink)]">
+          <h1 className="mt-1.5 line-clamp-2 font-sans text-[20px] font-extrabold leading-[1.12] tracking-[-0.025em] text-[var(--ink)]">
             {cleanTitle(pact?.title)}
           </h1>
-          <Link
-            href={pact?.creator_username ? `/profile/${encodeURIComponent(pact.creator_username)}` : '#'}
-            className="mt-2 flex items-center gap-2 text-[13px]"
-            style={{ color: 'var(--muted)' }}
-          >
-            <Avatar person={{ full_name: creatorName, avatar_url: pact?.creator_avatar_url }} index={0} />
-            <span className="min-w-0 truncate">
-              Started by <span className="font-extrabold" style={{ color: 'var(--ink)' }}>{isCreatorView ? 'you' : creatorName}</span>
-              {pact?.start_date ? ` · ${new Date(`${pact.start_date}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : ''}
-              {pact?.end_date ? ` – ${new Date(`${String(pact.end_date).slice(0, 10)}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : ''}
-            </span>
-          </Link>
+          <div className="mt-1 flex items-center gap-2">
+            <Link
+              href={pact?.creator_username ? `/profile/${encodeURIComponent(pact.creator_username)}` : '#'}
+              className="flex min-w-0 flex-1 items-center gap-1.5 text-[12px]"
+              style={{ color: 'var(--muted)' }}
+            >
+              <Avatar person={{ full_name: creatorName, avatar_url: pact?.creator_avatar_url }} index={0} size={22} />
+              <span className="min-w-0 truncate">
+                Started by <span className="font-extrabold" style={{ color: 'var(--ink)' }}>{isCreatorView ? 'you' : creatorName}</span>
+                {pact?.start_date ? ` · ${new Date(`${pact.start_date}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : ''}
+                {pact?.end_date ? ` – ${new Date(`${String(pact.end_date).slice(0, 10)}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : ''}
+              </span>
+            </Link>
+            {!presentationEnded && (
+              <div className="flex shrink-0 items-center">
+                {visiblePeople.map((person, index) => (
+                  <Avatar key={person.id || person.user_id || index} person={person} index={index} size={26} />
+                ))}
+                {overflow > 0 && (
+                  <span className="-ml-2 flex size-[26px] items-center justify-center rounded-full border-2 border-[var(--card)] bg-[var(--card-muted)] text-[10px] font-bold">
+                    +{overflow}
+                  </span>
+                )}
+                <button type="button" onClick={onInvite} aria-label="Invite someone" className="ml-1 flex size-8 items-center justify-center rounded-full border border-[var(--hairline)] bg-[var(--card)]">
+                  <UserPlus className="size-4" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {showModernStrip ? (
-          <div ref={stripRef} className="flex shrink-0 gap-2 overflow-x-auto py-1" aria-label="Pact day strip">
+          <div ref={stripRef} className="flex shrink-0 gap-1.5 overflow-x-auto py-1 scrollbar-hide" aria-label="Pact day strip">
             {strip.map((entry) => {
               const isToday = !visualDayEnded && entry.date === localToday
               const isPast = entry.date < localToday
@@ -328,21 +348,21 @@ export default function PactMomentsDetail({
                   aria-pressed={isSelected}
                   onClick={() => selectDay(entry)}
                   disabled={!entry.has_moment}
-                  className={`relative h-20 w-16 shrink-0 overflow-hidden rounded-[9px] transition-transform active:scale-95 ${entry.has_moment ? 'cursor-pointer bg-[var(--navy)]' : isMissed ? 'border border-[var(--hairline)] bg-[var(--card)]' : 'bg-[var(--card-muted)]'} ${isToday && !entry.has_moment ? 'ring-2 ring-[var(--navy)] ring-offset-1' : ''} ${isFuture ? 'border border-dashed border-[var(--seat-border)]' : ''} ${isSelected && entry.has_moment ? 'ring-2 ring-[var(--navy)] ring-offset-1' : ''}`}
+                  className={`relative h-[54px] w-11 shrink-0 overflow-hidden rounded-[8px] transition-transform active:scale-95 ${entry.has_moment ? 'cursor-pointer bg-[var(--navy)]' : isMissed ? 'border border-[var(--hairline)] bg-[var(--card)]' : 'bg-[var(--card-muted)]'} ${isToday && !entry.has_moment ? 'ring-2 ring-[var(--navy)] ring-offset-1' : ''} ${isFuture ? 'border border-dashed border-[var(--seat-border)]' : ''} ${isSelected && entry.has_moment ? 'ring-2 ring-[var(--navy)] ring-offset-1' : ''}`}
                 >
                   {entry.has_moment && entry.type === 'photo' && entry.thumbnail_url ? (
                     <SafePhoto src={entry.thumbnail_url!} className="size-full object-cover" />
                   ) : entry.has_moment && entry.type === 'video' && videoUrl ? (
                     <video src={`${videoUrl}#t=0.1`} muted playsInline preload="auto" className="size-full object-cover" />
                   ) : isMissed ? (
-                    <span className="flex size-full items-center justify-center pb-3 text-[11px] font-semibold text-[var(--muted)]">No post</span>
+                    <span className="flex size-full items-center justify-center pb-3 text-center text-[9.5px] font-semibold leading-tight text-[var(--muted)]">No post</span>
                   ) : null}
                   {(momentsPerDay.get(entry.day) || 0) > 1 && (
-                    <span className="absolute right-1 top-1 z-10 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-black/60 px-1 text-[10.5px] font-extrabold text-white" aria-hidden="true">
+                    <span className="absolute right-0.5 top-0.5 z-10 flex h-4 min-w-4 items-center justify-center rounded-full bg-black/60 px-1 text-[9.5px] font-extrabold text-white" aria-hidden="true">
                       {momentsPerDay.get(entry.day)}
                     </span>
                   )}
-                  <span className={`absolute inset-x-0 bottom-1 z-10 text-center text-[10px] font-extrabold leading-3 ${entry.has_moment ? 'text-white' : 'text-[var(--muted)]'}`}>DAY {entry.day}</span>
+                  <span className={`absolute inset-x-0 bottom-1 z-10 text-center text-[9px] font-extrabold leading-3 ${entry.has_moment ? 'text-white' : 'text-[var(--muted)]'}`}>DAY {entry.day}</span>
                 </button>
               )
             })}
@@ -367,36 +387,42 @@ export default function PactMomentsDetail({
           </div>
         )}
 
-        {!presentationEnded && <header className="flex items-center gap-3">
-          <div className="relative flex size-11 shrink-0 items-center justify-center rounded-full bg-[var(--navy)]">
-            <span className="flex size-[35px] items-center justify-center rounded-full bg-[var(--card)] text-[11px] font-extrabold">
+        {!presentationEnded && <header className="flex shrink-0 items-center gap-2.5">
+          <div className="relative flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--navy)]">
+            <span className="flex size-[29px] items-center justify-center rounded-full bg-[var(--card)] text-[9.5px] font-extrabold">
               {isMoments75 ? `${completed}/${requiredDays}` : `${percent}%`}
             </span>
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="whitespace-nowrap text-[20px] font-extrabold leading-6">Day {day} of {total}</h1>
-            <p className="whitespace-nowrap text-[13px] font-semibold leading-[18px] text-[var(--muted)]">
+            <h2 className="whitespace-nowrap text-[15px] font-extrabold leading-5">Day {day} of {total}</h2>
+            <p className="whitespace-nowrap text-[12px] font-semibold leading-4 text-[var(--muted)]">
               {isMoments75 ? `${completed} of ${requiredDays} days needed to finish` : dayLabel}
             </p>
           </div>
-          <div className="flex items-center">
-            {!presentationEnded && visiblePeople.map((person, index) => (
-              <Avatar key={person.id || person.user_id || index} person={person} index={index} />
-            ))}
-            {!presentationEnded && overflow > 0 && (
-              <span className="-ml-2 flex size-[34px] items-center justify-center rounded-full border-2 border-[var(--card)] bg-[var(--card-muted)] text-[11px] font-bold">
-                +{overflow}
-              </span>
-            )}
-            {!presentationEnded && <button
-              type="button"
-              onClick={onInvite}
-              aria-label="Invite someone"
-              className="ml-1 flex size-11 items-center justify-center rounded-full border border-[var(--hairline)] bg-[var(--card)]"
-            >
-              <UserPlus className="size-5" />
-            </button>}
-          </div>
+          {isParticipant && hasMoments && !isEnded && (
+            postedToday ? (
+              <div className="flex shrink-0 items-center gap-1.5">
+                <span className="flex items-center gap-1 text-[12.5px] font-extrabold" style={{ color: '#22663F' }}>
+                  <Check className="size-4" strokeWidth={2.6} aria-hidden="true" />
+                  Day {currentDay} done
+                </span>
+                <button type="button" onClick={onAddMoment} aria-label="Add another moment" className="flex h-9 items-center gap-1 rounded-full border px-3 text-[12.5px] font-bold" style={{ borderColor: 'var(--hairline)', color: 'var(--ink)' }}>
+                  <Camera className="size-4" aria-hidden="true" />
+                  Add
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={onAddMoment}
+                className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-[var(--navy)] px-4 text-[13.5px] font-extrabold text-white"
+                style={{ boxShadow: '0 6px 16px -6px rgba(31,58,147,0.6)' }}
+              >
+                <Camera className="size-4" aria-hidden="true" />
+                Post Day {currentDay}
+              </button>
+            )
+          )}
         </header>}
 
         <section
@@ -500,6 +526,7 @@ export default function PactMomentsDetail({
                   {String(current.authorName || current.username || 'Y').charAt(0).toUpperCase()}
                 </span>
                 {current.authorName || current.username || 'You'} · Day {current.day || day}
+                {currentDayMoments.length > 1 ? ` · ${positionInDay + 1} of ${currentDayMoments.length}` : ''}
               </div>
               <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+5rem)] right-4 z-10 flex flex-col gap-2">
                 <LikeButton pactId={Number(pact.id)} count={Number(pact?.like_count ?? 0)} liked={Boolean(pact?.is_liked_by_me)} />
@@ -510,7 +537,7 @@ export default function PactMomentsDetail({
 
               </div>
               <div className="absolute inset-x-5 bottom-5 z-10 text-white">
-                <p className="mt-0.5 text-[17px] font-extrabold leading-[22px]">{caption}</p>
+                <p className="mt-0.5 text-[15px] font-extrabold leading-5">{caption}</p>
                 {currentDayMoments.length > 1 && (
                   <div className="mt-2.5 flex items-center gap-1.5" role="img" aria-label={`Moment ${positionInDay + 1} of ${currentDayMoments.length} on Day ${current.day}`}>
                     {currentDayMoments.map((moment, index) => (
@@ -535,7 +562,7 @@ export default function PactMomentsDetail({
                 </button>
                 <div className="mt-3 text-[26px] font-extrabold tracking-[-0.5px] text-white">Post Day {currentDay}</div>
                 <div className="-mt-1 max-w-[260px] text-[14px] font-semibold text-white/85">
-                  {currentDay === 1 ? 'A 15-second video starts your streak.' : 'Nothing here yet. Your first moment starts the streak.'}
+                  {currentDay === 1 ? 'A photo or a 15-second video starts your streak.' : 'Nothing here yet. Your first moment starts the streak.'}
                 </div>
               </div>
               <button type="button" onClick={onAddMoment} className="flex h-14 w-full shrink-0 items-center justify-center gap-2 rounded-full bg-white text-[16px] font-extrabold text-[var(--navy)]">
@@ -563,8 +590,8 @@ export default function PactMomentsDetail({
           )}
         </section>
 
-        {(hasMoments || isEnded || presentationEnded || !isParticipant) && (
-          <footer className="flex min-h-14 flex-wrap items-center gap-2">
+        {(isEnded || presentationEnded) && (
+          <footer className="flex min-h-12 shrink-0 flex-wrap items-center gap-2">
             {presentationEnded && completionLooksSuccessful && !watchingRecap ? (
               <>
                 <button type="button" onClick={onShareRecap} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-5 text-[14px] font-extrabold text-white">
@@ -585,27 +612,6 @@ export default function PactMomentsDetail({
               </button>
             ) : (
               <div className="flex flex-1" />
-            )}
-            {!presentationEnded && isParticipant && hasMoments && !isEnded && (
-              postedToday ? (
-                <div className="ml-auto flex h-14 shrink-0 items-center gap-2 px-2 text-[14px] font-extrabold" style={{ color: '#22663F' }}>
-                  <Check className="size-5" strokeWidth={2.6} aria-hidden="true" />
-                  Day {currentDay} done
-                  <button type="button" onClick={onAddMoment} className="ml-2 h-11 rounded-full border px-4 text-[13.5px] font-bold" style={{ borderColor: 'var(--hairline)', color: 'var(--ink)' }}>
-                    Add another
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={onAddMoment}
-                  className="ml-auto flex h-14 shrink-0 items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-6 text-[15px] font-extrabold text-white"
-                  style={{ boxShadow: '0 8px 20px -8px rgba(31,58,147,0.6)' }}
-                >
-                  <Camera className="size-5" aria-hidden="true" />
-                  Post Day {currentDay}
-                </button>
-              )
             )}
           </footer>
         )}

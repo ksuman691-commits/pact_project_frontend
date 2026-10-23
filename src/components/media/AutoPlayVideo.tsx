@@ -42,6 +42,29 @@ export default function AutoPlayVideo({
   const [visible, setVisible] = useState(false)
   const [allowAuto, setAllowAuto] = useState(true)
   const [userStarted, setUserStarted] = useState(false)
+  // Load nothing until the video is within about a screen of view. A feed of
+  // cards used to start ~50 downloads at once on open, competing with the feed.
+  const [near, setNear] = useState(false)
+
+  useEffect(() => {
+    const video = ref.current
+    if (!video || near) return
+    if (typeof IntersectionObserver === 'undefined') {
+      setNear(true)
+      return
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setNear(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '600px' },
+    )
+    observer.observe(video)
+    return () => observer.disconnect()
+  }, [near])
 
   useEffect(() => {
     const video = ref.current
@@ -86,7 +109,7 @@ export default function AutoPlayVideo({
   useEffect(() => {
     const video = ref.current
     if (!video) return
-    const shouldPlay = visible && (allowAuto || userStarted)
+    const shouldPlay = near && visible && (allowAuto || userStarted)
     if (shouldPlay) {
       void video.play().catch(() => {
         // Blocked (e.g. low-power mode). The first frame stays; the sound button can start it.
@@ -99,7 +122,7 @@ export default function AutoPlayVideo({
         setMuted(true)
       }
     }
-  }, [visible, allowAuto, userStarted])
+  }, [near, visible, allowAuto, userStarted])
 
   const toggleSound = (event: React.MouseEvent) => {
     event.preventDefault()
@@ -116,7 +139,7 @@ export default function AutoPlayVideo({
   return (
     <>
       {/* "#t=0.1" makes phones paint the first frame even when autoplay is held back. */}
-      <video ref={ref} src={src.includes('#') ? src : `${src}#t=0.1`} muted loop playsInline preload="metadata" className={className} />
+      <video ref={ref} src={near ? (src.includes('#') ? src : `${src}#t=0.1`) : undefined} muted loop playsInline preload={near ? 'metadata' : 'none'} className={className} />
       {soundButton && (
         <button
           type="button"
