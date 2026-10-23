@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Camera, Check, X } from 'lucide-react'
@@ -26,6 +26,23 @@ export default function QuickPostButton({ onCreatePact }: { onCreatePact?: () =>
 
   const waiting = pacts.filter((p) => !p.posted_today)
   const ordered = [...waiting, ...pacts.filter((p) => p.posted_today)]
+
+  // A reminder tap lands on /feed?checkin=<pact id> (or =pick): open the camera on
+  // that pact, or the picker, once today's list has loaded. Read once per page load.
+  const deepLinkHandled = useRef(false)
+  useEffect(() => {
+    if (deepLinkHandled.current || isLoading || typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    const target = url.searchParams.get('checkin')
+    deepLinkHandled.current = true
+    if (!target) return
+    url.searchParams.delete('checkin')
+    window.history.replaceState(window.history.state, '', url.pathname + (url.search ? url.search : '') + url.hash)
+    const pact = pacts.find((p) => String(p.id) === target)
+    if (pact) setCapture(pact)
+    else if (waiting.length === 1) setCapture(waiting[0])
+    else if (pacts.length > 0) setPicking(true)
+  }, [isLoading, pacts, waiting])
 
   const open = () => {
     if (isLoading) return
