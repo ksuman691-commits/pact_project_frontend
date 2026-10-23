@@ -37,6 +37,7 @@ export default function MomentViewer({ moments, startIndex, pactId, likeCount, l
   const [fraction, setFraction] = useState(0)
   const [playRejected, setPlayRejected] = useState(false)
   const [photoFailed, setPhotoFailed] = useState(false)
+  const [brokenAvatars, setBrokenAvatars] = useState<Set<string>>(() => new Set())
   const [swipeStart, setSwipeStart] = useState<{ x: number; y: number } | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const holdTimer = useRef<number | null>(null)
@@ -195,9 +196,9 @@ export default function MomentViewer({ moments, startIndex, pactId, likeCount, l
         <div className="flex min-w-0 items-center gap-2">
           <button type="button" aria-label="Close moment viewer" onClick={close} className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/15"><X className="size-6" /></button>
           <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-[13px] font-extrabold text-[var(--navy)]">
-            {moment.avatarUrl ? (
+            {moment.avatarUrl && !brokenAvatars.has(moment.avatarUrl) ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={moment.avatarUrl} alt="" className="size-full object-cover" />
+              <img src={moment.avatarUrl} alt="" className="size-full object-cover" onError={() => setBrokenAvatars((prev) => new Set(prev).add(moment.avatarUrl as string))} />
             ) : (
               (moment.authorName || moment.username || 'M').charAt(0).toUpperCase()
             )}
