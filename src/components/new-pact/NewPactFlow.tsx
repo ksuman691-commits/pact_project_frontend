@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
-import { Check, ChevronLeft, Globe, Heart, Link2, Lock, MessageCircle, Play, UserPlus, Users, X } from 'lucide-react'
+import { Check, ChevronLeft, Globe, Heart, Link2, Lock, MessageCircle, UserPlus, Users, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
 import PriceChooser from '@/components/private/PriceChooser'
@@ -477,11 +477,6 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                   <video src={clip.url} autoPlay loop muted playsInline className="absolute inset-0 size-full object-cover" />
                 ))}
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5" style={{ background: 'linear-gradient(0deg, rgba(15,16,20,0.75), rgba(15,16,20,0))' }} />
-                {clip && !isPhoto && (
-                  <span className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full" style={{ background: 'rgba(15,16,20,0.55)', color: '#FFFFFF' }}>
-                    <Play className="size-4 fill-current" />
-                  </span>
-                )}
                 {locked && (
                   <span className="absolute left-3 top-3 flex items-center gap-1 rounded-xl px-2.5 py-1 text-[12px] font-extrabold" style={{ background: 'rgba(15,16,20,0.6)', color: '#FFFFFF' }}>
                     <Lock className="size-3" strokeWidth={2.6} /> {watchPrice != null ? `Private · ₹${watchPrice}` : 'Private'}
