@@ -6,6 +6,7 @@ import { createStory, getMyStoriesToday, getStoryViewers, getTodayStories, markS
 import { isStoriesUnavailable, storyErrorMessage, STORIES_ENABLED, STORY_MAX_SECONDS, type PactStory } from '@/lib/stories'
 import { queryKeys } from '@/lib/queryKeys'
 import { circleService, pactService } from '@/services/api'
+import { MOMENT_POSTED_EVENT } from '@/lib/push'
 
 export const storyKeys = {
   all: ['stories'] as const,
@@ -131,6 +132,12 @@ export function usePostStory(pactId: number) {
           })
         }
         setPhase('done')
+        // The reminder sheet offers itself once, after a first check-in (src/components/ReminderPrompt.tsx).
+        try {
+          window.dispatchEvent(new CustomEvent(MOMENT_POSTED_EVENT, { detail: { pactId } }))
+        } catch {
+          // Old browsers without CustomEvent: nothing to offer.
+        }
         void Promise.all([
           queryClient.invalidateQueries({ queryKey: storyKeys.pactToday(pactId) }),
           queryClient.invalidateQueries({ queryKey: storyKeys.mineToday }),

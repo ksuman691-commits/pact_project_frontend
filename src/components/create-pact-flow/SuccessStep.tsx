@@ -5,7 +5,6 @@ import { useCreatePactFlow } from '@/context/CreatePactFlowContext';
 import { useCircle } from '@/hooks/useCircles';
 import SuggestedPactsSection from './SuggestedPactsSection';
 import SponsoredCard from '@/components/SponsoredCard';
-import PushNotificationPrompt from '@/components/PushNotificationPrompt';
 import { useSponsor } from '@/hooks/useSponsor';
 
 const VIBE_TO_CATEGORY: Record<string, string> = {
@@ -60,7 +59,6 @@ export default function SuccessStep() {
         </div>
       )}
 
-      <PushNotificationPrompt />
 
       <div className="mt-8 flex w-full flex-col gap-3">
         <button

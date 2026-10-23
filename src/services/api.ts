@@ -590,13 +590,24 @@ export const notificationService = {
 // preferences shape, and scheduling contract. Same "degrade gracefully"
 // convention as circleAdvancedService.inviteUser: callers treat a
 // 404/501 here as "not available yet", not a real failure.
+export interface PushPreferences {
+  daily_reminder: boolean;
+  reminder_hour: 9 | 13 | 19;
+  last_call: boolean;
+  circle_nudges: boolean;
+  /** Devices with push turned on for this account. */
+  devices: number;
+}
+
 export const pushService = {
-  subscribe: (fcmToken: string, timezone: string) =>
-    api.post('/api/push/subscribe', { fcm_token: fcmToken, timezone }),
-  unsubscribe: (fcmToken: string) => api.post('/api/push/unsubscribe', { fcm_token: fcmToken }),
-  getPreferences: () => api.get('/api/push/preferences'),
-  updatePreferences: (preferences: Record<string, boolean>) =>
-    api.put('/api/push/preferences', preferences),
+  vapidKey: () => api.get<{ public_key: string | null; enabled: boolean }>('/api/push/vapid-key'),
+  subscribe: (body: { subscription: { endpoint: string; keys: { p256dh: string; auth: string } }; timezone: string; user_agent?: string }) =>
+    api.post<PushPreferences>('/api/push/subscribe', body),
+  unsubscribe: (endpoint: string) => api.post<PushPreferences>('/api/push/unsubscribe', { endpoint }),
+  getPreferences: () => api.get<PushPreferences>('/api/push/preferences'),
+  updatePreferences: (preferences: Partial<Omit<PushPreferences, 'devices'>>) =>
+    api.put<PushPreferences>('/api/push/preferences', preferences),
+  sendTest: () => api.post<{ sent: number }>('/api/push/test'),
 };
 
 // Follow Services
