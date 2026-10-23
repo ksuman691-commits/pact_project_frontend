@@ -1,18 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import { Camera, Check, X } from 'lucide-react'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
 import { useBackToClose } from '@/hooks/useBackToClose'
 import { useTodayStatus, type TodayPact } from '@/hooks/useTodayStatus'
 
 /**
- * A camera button that floats over the feed: one tap to post today's moment.
- * With one pact still waiting it opens the camera straight away; with more,
- * it asks which pact first (waiting ones on top).
+ * The camera button: one tap to post today's moment. It sits raised in the
+ * middle of the bottom nav, with a badge counting pacts still waiting today.
+ * With one pact waiting it opens the camera straight away; with more, it asks
+ * which pact first (waiting ones on top). With no pacts it starts a new one.
  */
-export default function QuickPostButton({ onCreatePact }: { onCreatePact: () => void }) {
+export default function QuickPostButton({ onCreatePact }: { onCreatePact?: () => void }) {
+  const router = useRouter()
   const { pacts, isLoading } = useTodayStatus()
+  // The nav is its own fixed layer, so its sheets render on <body> instead.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const [picking, setPicking] = useState(false)
   const [capture, setCapture] = useState<TodayPact | null>(null)
   useBackToClose(picking, () => setPicking(false))
@@ -22,7 +29,7 @@ export default function QuickPostButton({ onCreatePact }: { onCreatePact: () => 
 
   const open = () => {
     if (isLoading) return
-    if (pacts.length === 0) return onCreatePact()
+    if (pacts.length === 0) return onCreatePact ? onCreatePact() : router.push('/pacts/create')
     if (waiting.length === 1) return setCapture(waiting[0])
     if (pacts.length === 1) return setCapture(pacts[0])
     setPicking(true)
@@ -30,25 +37,28 @@ export default function QuickPostButton({ onCreatePact }: { onCreatePact: () => 
 
   return (
     <>
-      <button
-        type="button"
-        onClick={open}
-        aria-label="Post a moment"
-        className="fixed bottom-[calc(96px+env(safe-area-inset-bottom))] right-4 z-40 flex size-14 items-center justify-center rounded-full transition active:scale-95"
-        style={{ background: '#1F3A93', color: '#FFFFFF', boxShadow: '0 10px 26px rgba(31,58,147,0.4)' }}
-      >
-        <Camera className="size-6" strokeWidth={2.2} />
-        {waiting.length > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex size-5 items-center justify-center rounded-full text-[11px] font-extrabold" style={{ background: '#FFFFFF', color: '#1F3A93', boxShadow: '0 0 0 2px #1F3A93' }}>
-            {waiting.length}
-          </span>
-        )}
-      </button>
+      <span className="relative flex flex-1 items-start justify-center">
+        <button
+          type="button"
+          onClick={open}
+          aria-label={waiting.length > 0 ? `Post a moment, ${waiting.length} ${waiting.length === 1 ? 'pact' : 'pacts'} waiting` : 'Post a moment'}
+          className="relative -mt-[14px] flex size-[52px] items-center justify-center rounded-full transition active:scale-95"
+          style={{ background: '#1F3A93', color: '#FFFFFF', boxShadow: '0 0 0 4px var(--paper), 0 10px 22px -8px rgba(31,58,147,0.7)' }}
+        >
+          <Camera className="size-6" strokeWidth={2.2} aria-hidden="true" />
+          {waiting.length > 0 && (
+            <span aria-hidden="true" className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full px-[5px] text-[11px] font-extrabold" style={{ background: '#FFFFFF', color: '#1F3A93', boxShadow: '0 0 0 1.5px #1F3A93' }}>
+              {waiting.length}
+            </span>
+          )}
+        </button>
+      </span>
 
-      {picking && (
+      {mounted && picking && createPortal(
         <div role="dialog" aria-modal="true" aria-label="Post to which pact" className="fixed inset-0 z-[85] flex items-end justify-center">
           <button type="button" aria-label="Close" onClick={() => setPicking(false)} className="absolute inset-0" style={{ background: 'rgba(15,16,20,0.55)' }} />
-          <div className="relative w-full max-w-md rounded-t-[28px] px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3" style={{ background: '#FBF8F1', color: '#17181D' }}>
+          {/* Capped at 80% of the screen: with many pacts the list scrolls and the header stays put. */}
+          <div className="relative flex max-h-[80dvh] w-full max-w-md flex-col rounded-t-[28px] px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3" style={{ background: '#FBF8F1', color: '#17181D' }}>
             <div className="mx-auto mb-2 h-[5px] w-10 rounded-full" style={{ background: '#D9D2C2' }} />
             <div className="flex items-center justify-between">
               <div className="text-[19px] font-extrabold" style={{ color: '#17181D' }}>Post today&apos;s moment</div>
@@ -56,7 +66,7 @@ export default function QuickPostButton({ onCreatePact }: { onCreatePact: () => 
                 <X className="size-5" />
               </button>
             </div>
-            <div className="mt-2 flex flex-col gap-2">
+            <div className="-mx-1 mt-2 flex min-h-0 flex-col gap-2 overflow-y-auto overscroll-contain px-1 pb-1">
               {ordered.map((pact) => (
                 <button
                   key={pact.id}
@@ -87,10 +97,11 @@ export default function QuickPostButton({ onCreatePact }: { onCreatePact: () => 
               ))}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
-      {capture && <StoryCaptureSheet isOpen onClose={() => setCapture(null)} pactId={Number(capture.id)} pactTitle={capture.title} />}
+      {mounted && capture && createPortal(<StoryCaptureSheet isOpen onClose={() => setCapture(null)} pactId={Number(capture.id)} pactTitle={capture.title} />, document.body)}
     </>
   )
 }

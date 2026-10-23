@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { Plus, Search } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import BottomNav from '@/components/BottomNav'
 import CuratedContentGrid from '@/components/CuratedContentGrid'
 import { DarePactCard } from '@/components/classic/PactCard'
 import { pactAdvancedService, dareService, pactService } from '@/services/api'
@@ -258,7 +257,6 @@ function PactsPageInner() {
           </div>
         )}
       </div>
-      <BottomNav />
       {STORIES_ENABLED && capturePact && (
         <StoryCaptureSheet isOpen onClose={() => setCapturePact(null)} pactId={Number(capturePact.id)} pactTitle={capturePact.title} canJoin={Boolean(capturePact.can_join)} onJoin={joinCapturePact} />
       )}

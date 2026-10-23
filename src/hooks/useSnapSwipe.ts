@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, type RefObject } from 'react'
+import { useEffect, useRef, type RefObject } from 'react'
 
 /**
  * Native scroll-snap only turns the page once a swipe passes the halfway point,
@@ -8,10 +8,19 @@ import { useEffect, type RefObject } from 'react'
  * swipe (40 px+) or a quick flick moves one slide that way. Passive listeners
  * only: native scrolling still does the work and nothing is blocked.
  */
-export function useSnapSwipe(scrollerRef: RefObject<HTMLElement | null>, slideCount: number, enabled = true) {
+export function useSnapSwipe(
+  scrollerRef: RefObject<HTMLElement | null>,
+  slideCount: number,
+  enabled = true,
+  /** Distance between slides; defaults to the scroller's width (one slide per page). Peeking carousels pass slide width + gap. */
+  stepOf?: (scroller: HTMLElement) => number,
+) {
+  const stepRef = useRef(stepOf)
+  stepRef.current = stepOf
   useEffect(() => {
     const scroller = scrollerRef.current
     if (!enabled || !scroller || slideCount <= 1) return
+    const step = () => (stepRef.current ? stepRef.current(scroller) : scroller.clientWidth)
     let startX = 0
     let startY = 0
     let startAt = 0
@@ -22,7 +31,7 @@ export function useSnapSwipe(scrollerRef: RefObject<HTMLElement | null>, slideCo
       startX = touch.clientX
       startY = touch.clientY
       startAt = performance.now()
-      startIndex = Math.round(scroller.scrollLeft / Math.max(1, scroller.clientWidth))
+      startIndex = Math.round(scroller.scrollLeft / Math.max(1, step()))
     }
     const onEnd = (event: TouchEvent) => {
       const touch = event.changedTouches[0]
@@ -37,7 +46,7 @@ export function useSnapSwipe(scrollerRef: RefObject<HTMLElement | null>, slideCo
       const target = Math.max(0, Math.min(slideCount - 1, startIndex + (dx < 0 ? 1 : -1)))
       if (target === startIndex) return
       requestAnimationFrame(() => {
-        scroller.scrollTo({ left: target * scroller.clientWidth, behavior: 'smooth' })
+        scroller.scrollTo({ left: target * step(), behavior: 'smooth' })
       })
     }
     scroller.addEventListener('touchstart', onStart, { passive: true })

@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import FeedFilterChips from '@/components/FeedFilterChips'
 import TodayCheckInRow from '@/components/TodayCheckInRow'
 import WelcomeHeader from '@/components/WelcomeHeader'
 import FeaturedDareCard from '@/components/FeaturedDareCard'
@@ -12,7 +11,6 @@ import { useMomentPeople } from '@/hooks/useMomentPeople'
 import { STORIES_ENABLED } from '@/lib/stories'
 import CreatePactFlowModal from '@/components/create-pact-flow/CreatePactFlowModal'
 import PactFeed from '@/components/PactFeed'
-import QuickPostButton from '@/components/QuickPostButton'
 import PullToRefresh from '@/components/PullToRefresh'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth'
@@ -43,7 +41,7 @@ export default function FeedPageClient() {
   const [nudgeDismissed, setNudgeDismissed] = useState(true)
   const [checklistDismissed, setChecklistDismissed] = useState(true)
   const [pactModalOpen, setPactModalOpen] = useState(false)
-  const [feedBusy, setFeedBusy] = useState(false)
+  const [, setFeedBusy] = useState(false)
   const firstLoadRef = useRef(true)
   // PullToRefresh needs to wrap the *whole* scrollable page (header + nav +
   // feed) so a pull starting anywhere on screen while scrolled to the top is
@@ -149,11 +147,11 @@ export default function FeedPageClient() {
           atRisk={isAtRisk}
         />
 
-        {/* Header -> Moments -> Today -> Dare -> For you. The old "Your record" stats
-            block is gone: a row of zeros says nothing to a new user, and the
-            streak already shows in the header. Moments lead the page instead. */}
+        {/* Header -> Moments -> Today -> feed. The "For you" chips are gone and
+            the camera lives in the bottom nav. Moments hide themselves when
+            nobody else has posted today. */}
         {isInitialized && user && (
-          <div className="max-w-md mx-auto px-4 pb-3 pt-2">
+          <div className="max-w-md mx-auto px-4">
             {STORIES_ENABLED ? (
               <StoryCirclesRow circles={circles} isLoading={circlesLoading} />
             ) : (
@@ -163,7 +161,7 @@ export default function FeedPageClient() {
         )}
 
         {isInitialized && user && (
-          <div className="max-w-md mx-auto px-4 pb-3">
+          <div className="max-w-md mx-auto px-4 pb-3 pt-[18px]">
             <TodayCheckInRow onCreatePact={handleCreatePact} peers={momentPeople.people} />
           </div>
         )}
@@ -195,10 +193,6 @@ export default function FeedPageClient() {
           </div>
         )}
 
-        <div className="max-w-md mx-auto px-4 pb-3 pt-1">
-          <FeedFilterChips activeCategory={category} disabled={feedBusy} />
-        </div>
-
         {/* pb-28: clearance for the floating pill BottomNav (same convention as
             circles/page.tsx) so the last pact card in the feed isn't covered. */}
         <div className="max-w-md mx-auto pb-28 px-4" id="pact-feed-shell">
@@ -212,7 +206,6 @@ export default function FeedPageClient() {
           />
         </div>
 
-        {isInitialized && user && STORIES_ENABLED && <QuickPostButton onCreatePact={handleCreatePact} />}
         <CreatePactFlowModal isOpen={pactModalOpen} onClose={() => setPactModalOpen(false)} />
       </div>
     </PullToRefresh>

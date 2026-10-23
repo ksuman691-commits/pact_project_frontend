@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation'
 import { Home, Users, Circle, Zap } from 'lucide-react'
 import { useMyDares } from '@/hooks/useDareQueries'
 import { useAuthStore } from '@/store/auth'
+import QuickPostButton from '@/components/QuickPostButton'
+import { STORIES_ENABLED } from '@/lib/stories'
 
 // Leaderboard was dropped from the nav deliberately (it 404s and we're not
 // fixing that route here) — exactly 4 items, Home → Circles → Pacts → Dares.
@@ -70,11 +72,11 @@ export default function BottomNav() {
         paddingRight: '8px',
       }}
     >
-      {authItems.map((item) => {
+      {authItems.map((item, index) => {
         const Icon = item.icon
         const active = isActive(item.href)
         const isDares = item.href === '/dares'
-        return (
+        const link = (
           <Link
             key={item.href}
             href={item.href}
@@ -120,6 +122,11 @@ export default function BottomNav() {
             </span>
           </Link>
         )
+        // The camera sits raised in the middle, between Circles and Pacts.
+        if (index === 2 && user && STORIES_ENABLED) {
+          return [<QuickPostButton key="camera" />, link]
+        }
+        return link
       })}
     </nav>
   )

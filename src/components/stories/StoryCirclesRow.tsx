@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Plus, X } from 'lucide-react'
+import { ArrowRight, Plus, X } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import { useMomentPeople, type MomentPerson } from '@/hooks/useMomentPeople'
 import { useMyMomentsToday } from '@/hooks/useMyMomentsToday'
@@ -21,7 +21,7 @@ interface StoryCircle {
   has_unseen_story?: boolean | null
 }
 
-const SIZE = 72
+const SIZE = 58
 
 function groupPactsByCircle(pacts: any[], circles: StoryCircle[]) {
   type Group = { key: string; name: string; pacts: any[] }
@@ -118,77 +118,70 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
   // Warm the sheet's data on Home mount so the chooser opens from cache.
   useMyPacts()
 
+  const loadingPeople = Boolean(isLoading || peopleLoading)
+  // With nobody else's moments today the row would just be "You", so Home
+  // drops it; posting lives on the camera button and your moments show in the feed.
+  const hidden = !loadingPeople && people.length === 0
+
   return (
-    <section aria-label="Your circles" className="flex flex-col gap-3">
-      <div className="flex items-baseline justify-between px-1">
-        <h2 className="text-[17px] font-bold tracking-[-0.01em] text-[var(--ink)]">Moments</h2>
-        <Link href="/moments" className="text-[14px] font-bold text-[var(--navy)]">
-          See all
-        </Link>
-      </div>
+    <section aria-label="Moments" className={hidden ? 'contents' : 'mb-0 flex flex-col pt-4'}>
+      {!hidden && (
+        <ul className="scrollbar-hide -mx-4 flex gap-3.5 overflow-x-auto px-4 pb-0.5">
+          <li className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => (postedToday && myStories.length > 0 ? setViewingOwn(true) : setPickerOpen(true))}
+              className="flex w-[62px] flex-col items-center gap-[5px]"
+              aria-label={postedToday ? 'View your moment' : "Post today's moment"}
+            >
+              <StoryRing state="seen" count={Math.max(1, myStories.length)} size={SIZE} name={user?.full_name} imageUrl={user?.avatar_url} />
+              <span className="w-full truncate text-center text-[12px] font-bold text-[var(--ink)]">You</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              aria-label="Add a moment"
+              className="absolute left-[38px] top-[36px] flex h-[22px] w-[22px] items-center justify-center rounded-full border-[2.5px] border-[var(--paper)] bg-[var(--navy)] text-white"
+            >
+              <Plus className="h-3 w-3" strokeWidth={3.2} aria-hidden="true" />
+            </button>
+          </li>
 
-      <ul className="scrollbar-hide -mx-4 flex gap-4 overflow-x-auto px-4 pb-1">
-        <li className="relative">
-          <button
-            type="button"
-            onClick={() => (postedToday && myStories.length > 0 ? setViewingOwn(true) : setPickerOpen(true))}
-            className="flex w-[76px] flex-col items-center gap-1.5"
-            aria-label={postedToday ? 'View your moment' : "Post today's moment"}
-          >
-            <StoryRing state={postedToday ? 'seen' : 'add'} count={Math.max(1, myStories.length)} size={SIZE} name={user?.full_name} imageUrl={user?.avatar_url} />
-            <span className="w-full truncate text-center text-[12px] font-semibold text-[var(--ink)]">You</span>
-            <span className="-mt-1 text-[10px]" style={{ color: postedToday ? 'var(--muted)' : 'var(--navy)', fontWeight: postedToday ? 400 : 700 }}>
-              {postedToday ? 'Tap to view' : 'Post today'}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setPickerOpen(true)}
-            aria-label="Add a moment"
-            className="absolute right-[2px] top-[50px] flex h-6 w-6 items-center justify-center rounded-full border-[2.5px] border-[var(--paper)] bg-[var(--navy)] text-white"
-          >
-            <Plus className="h-3 w-3" strokeWidth={3.2} aria-hidden="true" />
-          </button>
-        </li>
-
-        {isLoading || peopleLoading
-          ? [0, 1].map((i) => (
-              <li key={i} className="flex w-[76px] flex-col items-center gap-1.5" aria-hidden="true">
-                <span className="pact-shimmer rounded-full" style={{ width: SIZE, height: SIZE }} />
-              </li>
-            ))
-          : people.map((person) => {
-              const firstName = (person.name || 'Member').split(' ')[0]
-              return (
-                <li key={person.userId}>
-                  <button
-                    type="button"
-                    onClick={() => setViewing(person)}
-                    className="flex w-[76px] flex-col items-center gap-1"
-                    aria-label={`${firstName}'s moment${person.hasUnseen ? ', new' : ''}, in ${person.circleName}`}
-                  >
-                    <StoryRing
-                      state={person.hasUnseen ? 'unseen' : 'seen'}
-                      size={SIZE}
-                      name={person.name}
-                      imageUrl={person.avatarUrl}
-                      count={person.stories.length}
-                    />
-                    <span className={`w-full truncate text-center text-[12px] ${person.hasUnseen ? 'font-bold' : 'font-semibold'} text-[var(--ink)]`}>{firstName}</span>
-                    <span className="-mt-1 w-full truncate text-center text-[10px] text-[var(--muted)]">{person.circleName}</span>
-                  </button>
+          {loadingPeople
+            ? [0, 1, 2].map((i) => (
+                <li key={i} className="flex w-[62px] shrink-0 flex-col items-center gap-[5px]" aria-hidden="true">
+                  <span className="pact-shimmer rounded-full" style={{ width: SIZE, height: SIZE }} />
+                  <span className="pact-shimmer h-3 w-10 rounded" />
                 </li>
-              )
-            })}
-      </ul>
+              ))
+            : people.map((person) => {
+                const firstName = (person.name || 'Member').split(' ')[0]
+                return (
+                  <li key={person.userId} className="shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setViewing(person)}
+                      className="flex w-[62px] flex-col items-center gap-[5px]"
+                      aria-label={`${firstName}'s moment${person.hasUnseen ? ', new' : ''}, in ${person.circleName}`}
+                    >
+                      <StoryRing state={person.hasUnseen ? 'unseen' : 'seen'} size={SIZE} name={person.name} imageUrl={person.avatarUrl} count={person.stories.length} />
+                      <span className={`w-full truncate text-center text-[12px] ${person.hasUnseen ? 'font-extrabold text-[var(--ink)]' : 'font-semibold text-[var(--muted)]'}`}>{firstName}</span>
+                    </button>
+                  </li>
+                )
+              })}
 
-      {!isLoading && circles.length === 0 && (
-        <p className="px-1 text-[14px] text-[var(--muted)]">
-          No circles yet.{' '}
-          <Link href="/circles" className="font-semibold text-[var(--navy)]">
-            Browse circles
-          </Link>
-        </p>
+          {!loadingPeople && (
+            <li className="shrink-0">
+              <Link href="/moments" aria-label="See all moments" className="flex w-[62px] flex-col items-center gap-[5px] text-[var(--navy)]">
+                <span className="flex items-center justify-center rounded-full border-[1.5px] border-dashed border-[#B9AE97]" style={{ width: SIZE, height: SIZE }}>
+                  <ArrowRight className="h-5 w-5" strokeWidth={2.2} aria-hidden="true" />
+                </span>
+                <span className="text-[12px] font-extrabold">See all</span>
+              </Link>
+            </li>
+          )}
+        </ul>
       )}
 
       {pickerOpen && (
