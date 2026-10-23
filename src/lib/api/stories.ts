@@ -41,6 +41,14 @@ export async function getTodayStories(pactId: number): Promise<PactStory[]> {
   return rows as PactStory[]
 }
 
+/** The viewer's own live moments across every pact (one request, however many pacts they have). */
+export async function getMyStoriesToday(): Promise<PactStory[]> {
+  const response = await api.get('/api/me/stories/today')
+  const payload = response.data
+  const rows = Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : []
+  return rows as PactStory[]
+}
+
 export async function markStorySeen(storyId: number) {
   await api.post(`/api/stories/${storyId}/seen`)
 }

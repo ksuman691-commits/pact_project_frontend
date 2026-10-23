@@ -14,7 +14,9 @@ export function usePersonalizedFeed(category = 'all') {
     getNextPageParam: (lastPage, pages) =>
       lastPage.data?.length === ITEMS_PER_PAGE ? pages.length * ITEMS_PER_PAGE : undefined,
     initialPageParam: 0,
-    staleTime: 1000 * 60 * 2,
+    // Short, so a pact someone just started in your circle shows up when you open or return to the app.
+    staleTime: 1000 * 20,
+    refetchOnWindowFocus: true,
     // One automatic background retry, then the feed shows its Tap to retry state.
     retry: 1,
     retryDelay: 1000,

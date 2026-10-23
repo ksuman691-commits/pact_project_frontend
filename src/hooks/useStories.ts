@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createStory, getStoryViewers, getTodayStories, markStorySeen, putStoryVideo, requestStoryUploadUrl } from '@/lib/api/stories'
+import { createStory, getMyStoriesToday, getStoryViewers, getTodayStories, markStorySeen, putStoryVideo, requestStoryUploadUrl } from '@/lib/api/stories'
 import { isStoriesUnavailable, storyErrorMessage, STORIES_ENABLED, STORY_MAX_SECONDS, type PactStory } from '@/lib/stories'
 import { queryKeys } from '@/lib/queryKeys'
 import { circleService, pactService } from '@/services/api'
@@ -10,6 +10,7 @@ import { circleService, pactService } from '@/services/api'
 export const storyKeys = {
   all: ['stories'] as const,
   pactToday: (pactId: number) => ['stories', 'pact', pactId, 'today'] as const,
+  mineToday: ['stories', 'me', 'today'] as const,
 }
 
 const todayQueryOptions = (pactId: number) => ({
@@ -23,6 +24,17 @@ const todayQueryOptions = (pactId: number) => ({
 export function usePactStoriesToday(pactId: number, enabled = true) {
   const query = useQuery({ ...todayQueryOptions(pactId), enabled: STORIES_ENABLED && enabled && !!pactId })
   return { ...query, unavailable: query.isError && isStoriesUnavailable(query.error) }
+}
+
+/** Everything the viewer posted today, on any pact. Drives the "You" ring on Home. */
+export function useMyStoriesToday() {
+  return useQuery({
+    queryKey: storyKeys.mineToday,
+    queryFn: getMyStoriesToday,
+    enabled: STORIES_ENABLED,
+    staleTime: 30_000,
+    retry: (count: number, error: any) => !isStoriesUnavailable(error) && count < 1,
+  })
 }
 
 export function usePactsStoriesToday(pactIds: number[]) {
@@ -121,6 +133,7 @@ export function usePostStory(pactId: number) {
         setPhase('done')
         void Promise.all([
           queryClient.invalidateQueries({ queryKey: storyKeys.pactToday(pactId) }),
+          queryClient.invalidateQueries({ queryKey: storyKeys.mineToday }),
           queryClient.invalidateQueries({ queryKey: queryKeys.pacts.detail(pactId) }),
           queryClient.invalidateQueries({ queryKey: ['my-pacts'] }),
           queryClient.invalidateQueries({ queryKey: ['me-today'] }),
