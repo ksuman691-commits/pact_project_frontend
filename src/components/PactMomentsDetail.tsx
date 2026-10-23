@@ -202,7 +202,7 @@ export default function PactMomentsDetail({
   const lockedForMe = Boolean(pact?.media_locked) && pact?.can_view_media === false
   const [watchersOpen, setWatchersOpen] = useState(false)
   const watchers = useWatchers(Number(pact?.id), isCreatorView && Boolean(pact?.media_locked))
-  const pendingAsks = watchers.data?.pending.length ?? 0
+  const pendingAsks = Array.isArray((watchers.data as any)?.pending) ? (watchers.data as any).pending.length : 0
   const [joinAsked, setJoinAsked] = useState(false)
   useEffect(() => {
     // Notifications open the pact with ?watchers=1 so the creator lands on the asks.

@@ -15,7 +15,7 @@ import InviteMembersModal from '@/components/InviteMembersModal'
 import ConfirmModal from '@/components/ConfirmModal'
 import LogoSpinner from '@/components/LogoSpinner'
 import { CircleQRFullView } from '@/components/CircleQR'
-import ProfilePactCard from '@/components/profile/ProfilePactCard'
+import FeedPactCard from '@/components/FeedPactCard'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
 import OrbitRing from '@/components/circles/OrbitRing'
 import Seat from '@/components/classic/Seat'
@@ -292,12 +292,9 @@ export default function CircleDetailPage() {
             pacts.map((pact: any) => {
               const mine = Boolean(pact.is_joined_by_me || pact.creator_id === user.id)
               return (
-                <ProfilePactCard
-                  key={pact.id}
-                  pact={pact}
-                  byline={{ name: pact.creator_full_name || pact.creator_username || 'Someone', avatarUrl: pact.creator_avatar_url || pact.creatorAvatarUrl, isYou: pact.creator_id === user.id }}
-                  onPost={mine ? () => setCapturePact(pact) : undefined}
-                />
+                <div key={pact.id} className="-mx-4">
+                  <FeedPactCard pact={pact} onAddMoment={mine ? () => setCapturePact(pact) : undefined} />
+                </div>
               )
             })
           )}

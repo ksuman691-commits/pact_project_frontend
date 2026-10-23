@@ -241,7 +241,8 @@ export default function PactFeed({
         return (
         <div
           key={pact.id}
-          className={isNew ? 'pact-new-item' : 'pact-list-item'}
+          // Cards sit 6 px from the screen edge, past the feed's 16 px padding, like every page.
+          className={`-mx-4 ${isNew ? 'pact-new-item' : 'pact-list-item'}`}
           style={isNew ? undefined : { animationDelay: `${Math.min(index, 8) * 40}ms` }}
         >
         <FeedPactCard

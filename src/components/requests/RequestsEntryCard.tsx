@@ -10,7 +10,9 @@ export function useRequestCount(enabled = true) {
   const watch = useAccessInbox(enabled)
   const circles = useCircleRequests(enabled)
   const tips = useTipInbox(enabled)
-  return (watch.data?.pending.length ?? 0) + (circles.data?.pending.length ?? 0) + (tips.data?.waiting.length ?? 0)
+  // A reply of an unexpected shape counts as zero instead of taking the page down.
+  const size = (list: unknown) => (Array.isArray(list) ? list.length : 0)
+  return size((watch.data as any)?.pending) + size((circles.data as any)?.pending) + size((tips.data as any)?.waiting)
 }
 
 /** On your own profile, only when someone is waiting on you. */
