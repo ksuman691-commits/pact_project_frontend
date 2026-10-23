@@ -146,8 +146,30 @@ export default function PactMomentsDetail({
   const orderedMoments = useMemo(() => [...moments].sort((a, b) => (a.day ?? 0) - (b.day ?? 0) || new Date(a.uploadedAt || 0).getTime() - new Date(b.uploadedAt || 0).getTime()), [moments])
   const hasMoments = displayMoments.length > 0
   const effectiveDay = selectedDay ?? currentDay
-  const dayMoment = displayMoments.find((moment) => moment.day === effectiveDay)
+  // A day opens on its first moment, so swiping forward goes through it in order.
+  const dayMoment = (displayMoments === moments ? orderedMoments : displayMoments).find((moment) => moment.day === effectiveDay)
   const current = displayMoments.find((moment) => moment.id === selectedMomentId) || dayMoment || displayMoments[activeIndex] || displayMoments[0]
+  // Every moment of the day on screen, oldest first; the dots on the card follow these.
+  const currentDayMoments = current?.day != null ? orderedMoments.filter((moment) => moment.day === current.day) : []
+  const positionInDay = Math.max(0, currentDayMoments.findIndex((moment) => moment.id === current?.id))
+  const momentsPerDay = useMemo(() => {
+    const counts = new Map<number, number>()
+    moments.forEach((moment) => {
+      if (moment.day != null) counts.set(moment.day, (counts.get(moment.day) || 0) + 1)
+    })
+    return counts
+  }, [moments])
+  // Swiping the card steps through every moment in order, into the next or previous day.
+  const stepMoment = (delta: number) => {
+    if (!current) return
+    const index = orderedMoments.findIndex((moment) => moment.id === current.id)
+    const next = orderedMoments[index + delta]
+    if (!next) return
+    setSelectedMomentId(next.id)
+    if (next.day != null) setSelectedDay(next.day)
+  }
+  const swipeRef = useRef<{ x: number; y: number; at: number } | null>(null)
+  const lastSwipeAt = useRef(0)
   const momentAgo = (() => {
     if (!current?.day) return null
     const diff = currentDay - current.day
@@ -212,10 +234,11 @@ export default function PactMomentsDetail({
 
   const selectDay = (entry: (PactDayStripEntry & { video_url?: string | null })) => {
     setSelectedDay(entry.day)
-    const index = displayMoments.findIndex((moment) => moment.day === entry.day)
-    if (index >= 0) {
+    const first = orderedMoments.find((moment) => moment.day === entry.day)
+    const index = first ? displayMoments.findIndex((moment) => moment.id === first.id) : -1
+    if (first && index >= 0) {
       setActiveIndex(index)
-      setSelectedMomentId(displayMoments[index].id)
+      setSelectedMomentId(first.id)
     }
   }
 
@@ -301,7 +324,7 @@ export default function PactMomentsDetail({
                   key={entry.day}
                   ref={isSelected ? selectedTileRef : undefined}
                   type="button"
-                  aria-label={`Day ${entry.day}${entry.has_moment ? `, ${entry.type === 'video' ? 'video' : 'photo'}` : isToday ? ', today' : isMissed ? ', missed' : ', upcoming'}`}
+                  aria-label={`Day ${entry.day}${entry.has_moment ? `, ${(momentsPerDay.get(entry.day) || 0) > 1 ? `${momentsPerDay.get(entry.day)} moments` : entry.type === 'video' ? 'video' : 'photo'}` : isToday ? ', today' : isMissed ? ', no post' : ', upcoming'}`}
                   aria-pressed={isSelected}
                   onClick={() => selectDay(entry)}
                   disabled={!entry.has_moment}
@@ -311,7 +334,14 @@ export default function PactMomentsDetail({
                     <SafePhoto src={entry.thumbnail_url!} className="size-full object-cover" />
                   ) : entry.has_moment && entry.type === 'video' && videoUrl ? (
                     <video src={`${videoUrl}#t=0.1`} muted playsInline preload="auto" className="size-full object-cover" />
+                  ) : isMissed ? (
+                    <span className="flex size-full items-center justify-center pb-3 text-[11px] font-semibold text-[var(--muted)]">No post</span>
                   ) : null}
+                  {(momentsPerDay.get(entry.day) || 0) > 1 && (
+                    <span className="absolute right-1 top-1 z-10 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-black/60 px-1 text-[10.5px] font-extrabold text-white" aria-hidden="true">
+                      {momentsPerDay.get(entry.day)}
+                    </span>
+                  )}
                   <span className={`absolute inset-x-0 bottom-1 z-10 text-center text-[10px] font-extrabold leading-3 ${entry.has_moment ? 'text-white' : 'text-[var(--muted)]'}`}>DAY {entry.day}</span>
                 </button>
               )
@@ -370,9 +400,27 @@ export default function PactMomentsDetail({
         </header>}
 
         <section
+          onTouchStart={(event) => {
+            const touch = event.touches[0]
+            swipeRef.current = touch && event.touches.length === 1 ? { x: touch.clientX, y: touch.clientY, at: performance.now() } : null
+          }}
+          onTouchEnd={(event) => {
+            const start = swipeRef.current
+            swipeRef.current = null
+            const touch = event.changedTouches[0]
+            if (!start || !touch || lockedForMe) return
+            const dx = touch.clientX - start.x
+            const dy = touch.clientY - start.y
+            const flick = Math.abs(dx) / Math.max(1, performance.now() - start.at) > 0.3
+            if (Math.abs(dx) < Math.abs(dy) * 1.2 || (Math.abs(dx) < 40 && !(flick && Math.abs(dx) >= 24))) return
+            lastSwipeAt.current = Date.now()
+            stepMoment(dx < 0 ? 1 : -1)
+          }}
           onClick={(event) => {
             if (lockedForMe) return
             if ((event.target as HTMLElement).closest('button,a')) return
+            // A swipe that ends on the card isn't a tap.
+            if (Date.now() - lastSwipeAt.current < 450) return
             openViewer()
           }}
           className={`relative min-h-0 flex-1 cursor-pointer overflow-hidden rounded-[24px] ${!hasMoments && !presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : 'bg-[var(--navy)]'}`}
@@ -463,6 +511,18 @@ export default function PactMomentsDetail({
               </div>
               <div className="absolute inset-x-5 bottom-5 z-10 text-white">
                 <p className="mt-0.5 text-[17px] font-extrabold leading-[22px]">{caption}</p>
+                {currentDayMoments.length > 1 && (
+                  <div className="mt-2.5 flex items-center gap-1.5" role="img" aria-label={`Moment ${positionInDay + 1} of ${currentDayMoments.length} on Day ${current.day}`}>
+                    {currentDayMoments.map((moment, index) => (
+                      <span
+                        key={moment.id}
+                        className="h-1.5 rounded-full transition-all duration-200"
+                        style={{ width: index === positionInDay ? 16 : 6, background: index === positionInDay ? '#FFFFFF' : 'rgba(255,255,255,0.5)' }}
+                      />
+                    ))}
+                    <span className="ml-1 text-[12px] font-bold text-white/80">Swipe for more</span>
+                  </div>
+                )}
               </div>
             </>
           )}
