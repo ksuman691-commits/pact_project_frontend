@@ -2,7 +2,10 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import { X } from 'lucide-react';
+import { Volume2, VolumeX, X } from 'lucide-react';
+import { useSnapSwipe } from '@/hooks/useSnapSwipe';
+
+const PHOTO_MS = 5000;
 
 interface Proof {
   id: number;
@@ -65,15 +68,22 @@ interface ProofCarouselProps {
  * (which the browser does not fire `click` for) never also triggers a tap
  * navigation.
  *
- * There is no autoplay/timer — segments fill in as "viewed" (index <=
- * current) rather than draining on a clock, since nothing asked for a timed
- * advance and faking one would just be a decorative animation with no real
- * behavior behind it.
+ * It plays like stories: only the moment on screen plays. A photo shows for
+ * 5 seconds and a video plays to its end, then it moves on by itself; after
+ * the last one the viewer closes. The top bar fills as each one plays. Sound
+ * starts on (the viewer was opened with a tap); if the phone refuses, the
+ * video plays muted instead of stopping, and the sound button turns it on.
  */
 export default function ProofCarousel({ proofs, isOpen, onClose, initialIndex = 0 }: ProofCarouselProps) {
   const items = useMemo(() => toStoryItems(proofs), [proofs]);
   const [activeIndex, setActiveIndex] = useState(initialIndex);
+  const [muted, setMuted] = useState(false);
+  const [fraction, setFraction] = useState(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const videoRefs = useRef(new Map<number, HTMLVideoElement>());
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
+  useSnapSwipe(scrollerRef, items.length, isOpen);
 
   const scrollToIndex = (index: number, behavior: ScrollBehavior = 'smooth') => {
     const scroller = scrollerRef.current;
@@ -125,6 +135,58 @@ export default function ProofCarousel({ proofs, isOpen, onClose, initialIndex = 
     return () => observer.disconnect();
   }, [isOpen, items.length]);
 
+  // Only the moment on screen plays; the rest stop and rewind.
+  useEffect(() => {
+    if (!isOpen) return;
+    setFraction(0);
+    videoRefs.current.forEach((video, index) => {
+      if (index === activeIndex) return;
+      video.pause();
+      try {
+        video.currentTime = 0;
+      } catch {
+        // Not loaded yet.
+      }
+    });
+    const video = videoRefs.current.get(activeIndex);
+    if (!video) return;
+    video.muted = mutedRef.current;
+    void video.play().catch(() => {
+      // Sound refused (no tap this time): play muted rather than sit still.
+      video.muted = true;
+      setMuted(true);
+      void video.play().catch(() => {});
+    });
+  }, [isOpen, activeIndex]);
+
+  useEffect(() => {
+    const video = videoRefs.current.get(activeIndex);
+    if (video) video.muted = muted;
+  }, [muted, activeIndex]);
+
+  const advance = () => {
+    if (activeIndex >= items.length - 1) onClose();
+    else scrollToIndex(activeIndex + 1);
+  };
+  const advanceRef = useRef(advance);
+  advanceRef.current = advance;
+
+  // A photo stays up for 5 seconds, then the next moment comes on.
+  const currentIsPhoto = items[activeIndex]?.media_type === 'image';
+  useEffect(() => {
+    if (!isOpen || !currentIsPhoto) return;
+    const started = performance.now();
+    const timer = window.setInterval(() => {
+      const next = Math.min(1, (performance.now() - started) / PHOTO_MS);
+      setFraction(next);
+      if (next >= 1) {
+        window.clearInterval(timer);
+        advanceRef.current();
+      }
+    }, 80);
+    return () => window.clearInterval(timer);
+  }, [isOpen, activeIndex, currentIsPhoto]);
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -161,10 +223,21 @@ export default function ProofCarousel({ proofs, isOpen, onClose, initialIndex = 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex gap-1 p-3 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
         {items.map((item, index) => (
           <div key={item.id} className="h-1 flex-1 overflow-hidden rounded-full bg-white/25">
-            <div className="h-full rounded-full bg-white" style={{ width: index <= activeIndex ? '100%' : '0%' }} />
+            <div className="h-full rounded-full bg-white" style={{ width: index < activeIndex ? '100%' : index === activeIndex ? `${Math.round(fraction * 100)}%` : '0%' }} />
           </div>
         ))}
       </div>
+
+      {current.media_type === 'video' && (
+        <button
+          type="button"
+          onClick={() => setMuted((value) => !value)}
+          aria-label={muted ? 'Turn sound on' : 'Turn sound off'}
+          className="absolute right-16 top-[calc(env(safe-area-inset-top)+1.5rem)] z-20 rounded-full bg-white/20 p-2 text-white backdrop-blur-sm transition hover:bg-white/30"
+        >
+          {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+        </button>
+      )}
 
       <button
         type="button"
@@ -188,8 +261,25 @@ export default function ProofCarousel({ proofs, isOpen, onClose, initialIndex = 
             {item.media_type === 'image' ? (
               <Image src={item.url} alt={item.description || 'Proof'} fill className="object-contain" priority={index === initialIndex} />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-[var(--ink)]" onClick={(event) => event.stopPropagation()}>
-                <video src={item.url} controls autoPlay playsInline className="h-full w-full object-contain" />
+              <div className="flex h-full w-full items-center justify-center bg-[var(--ink)]">
+                <video
+                  ref={(node) => {
+                    if (node) videoRefs.current.set(index, node);
+                    else videoRefs.current.delete(index);
+                  }}
+                  src={item.url}
+                  playsInline
+                  preload={Math.abs(index - activeIndex) <= 1 ? 'auto' : 'metadata'}
+                  className="h-full w-full object-contain"
+                  onTimeUpdate={(event) => {
+                    if (index !== activeIndex) return;
+                    const v = event.currentTarget;
+                    if (v.duration > 0) setFraction(v.currentTime / v.duration);
+                  }}
+                  onEnded={() => {
+                    if (index === activeIndex) advanceRef.current();
+                  }}
+                />
               </div>
             )}
           </div>
