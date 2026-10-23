@@ -52,6 +52,8 @@ interface StoryCaptureSheetProps {
   onCaptured?: (clip: { blob: Blob; contentType: string; duration: number }) => void
   /** Open straight on the live camera instead of the start screen. */
   autoStart?: boolean
+  /** Shows "Skip, Start Without Day 1" under the shutter (new pact: Day 1 is optional). */
+  onSkip?: () => void
 }
 
 type Step = 'idle' | 'live' | 'preview'
@@ -70,7 +72,7 @@ function canRecordInPage() {
   return typeof window !== 'undefined' && typeof window.MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
 }
 
-export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: rawTitle, canJoin = false, onJoin, initialClip = null, onCaptured, autoStart = true }: StoryCaptureSheetProps) {
+export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: rawTitle, canJoin = false, onJoin, initialClip = null, onCaptured, autoStart = true, onSkip }: StoryCaptureSheetProps) {
   const pactTitle = rawTitle ? cleanTitle(rawTitle) : rawTitle
   const [step, setStep] = useState<Step>(initialClip ? 'preview' : 'idle')
   const [clip, setClip] = useState<Clip | null>(initialClip)
@@ -539,6 +541,11 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
                 </button>
               ))}
             </div>
+          )}
+          {onSkip && !recording && (
+            <button type="button" onClick={() => { stopStream(); onSkip() }} className="min-h-11 px-4 text-[14px] font-bold underline underline-offset-4" style={{ color: '#FFFFFF', textShadow: '0 1px 6px rgba(0,0,0,0.4)' }}>
+              Skip, Start Without Day 1
+            </button>
           )}
         </div>
       </div>
