@@ -51,9 +51,12 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
   const [price, setPrice] = useState<number | null>(watchPrice)
   const [auto, setAuto] = useState(watchAutoApprove)
   const [askKeep, setAskKeep] = useState(false)
+  // The price stays tucked away so the people waiting on you come first.
+  const [editPrice, setEditPrice] = useState(false)
   useEffect(() => {
     if (!open) return
     setAskKeep(false)
+    setEditPrice(false)
     setPrice(watchPrice)
     setAuto(watchAutoApprove)
   }, [open, watchPrice, watchAutoApprove])
@@ -156,14 +159,27 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
 
         {locked && (
           <>
-            <div className="mt-4 rounded-[18px] p-3.5" style={{ background: '#FFFFFF', border: `1px solid ${LINE}` }}>
-              <PriceChooser price={price} onPrice={setPrice} autoApprove={auto} onAutoApprove={setAuto} disabled={saveSettings.isPending} />
-              {settingsChanged && (
-                <button type="button" onClick={() => void saveWatch()} disabled={saveSettings.isPending} className="mt-3 h-11 w-full rounded-full text-[14.5px] font-extrabold disabled:opacity-60" style={{ background: NAVY, color: '#FFFFFF' }}>
-                  {saveSettings.isPending ? 'Saving…' : 'Save'}
+            {editPrice || price == null || settingsChanged ? (
+              <div className="mt-3 rounded-[18px] p-3.5" style={{ background: '#FFFFFF', border: `1px solid ${LINE}` }}>
+                <PriceChooser price={price} onPrice={setPrice} autoApprove={auto} onAutoApprove={setAuto} disabled={saveSettings.isPending} />
+                <div className="mt-2 text-[12.5px] leading-snug" style={{ color: MUTED }}>A new price only applies to people who ask from now on. Anyone already waiting keeps what they paid.</div>
+                {settingsChanged && (
+                  <button type="button" onClick={() => void saveWatch()} disabled={saveSettings.isPending} className="mt-3 h-11 w-full rounded-full text-[14.5px] font-extrabold disabled:opacity-60" style={{ background: NAVY, color: '#FFFFFF' }}>
+                    {saveSettings.isPending ? 'Saving…' : 'Save'}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="mt-3 flex min-h-12 items-center gap-3 rounded-[16px] px-3.5 py-2" style={{ background: '#FFFFFF', border: `1px solid ${LINE}` }}>
+                <span className="min-w-0 flex-1 text-[14px] font-bold" style={{ color: INK }}>
+                  ₹{price} to watch
+                  <span className="font-medium" style={{ color: MUTED }}> · {auto ? 'instant access' : 'you confirm each payment'}</span>
+                </span>
+                <button type="button" onClick={() => setEditPrice(true)} className="h-9 rounded-full px-3 text-[13px] font-extrabold" style={{ color: NAVY, border: `1px solid ${LINE}`, background: '#FBF8F1' }}>
+                  Edit price
                 </button>
-              )}
-            </div>
+              </div>
+            )}
             <div className="mt-5 text-[14.5px] font-extrabold" style={{ color: INK }}>Asking to watch{pending.length ? ` · ${pending.length}` : ''}</div>
             {pending.length === 0 ? (
               <div className="mt-2 rounded-[16px] px-4 py-5 text-center text-[13.5px]" style={{ border: `1.5px dashed ${LINE}`, color: MUTED }}>
