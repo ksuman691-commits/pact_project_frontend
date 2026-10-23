@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import AutoPlayVideo from '@/components/media/AutoPlayVideo'
 import { cleanTitle } from '@/lib/titleCase'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Camera, Check, ChevronLeft, Globe, Heart, Image as ImageIcon, Lock, MessageCircle, Play, RotateCcw, Share2, UserPlus, Users, X } from 'lucide-react'
@@ -310,10 +311,7 @@ export default function PactMomentsDetail({
                     <SafePhoto src={entry.thumbnail_url!} className="size-full object-cover" />
                   ) : entry.has_moment && entry.type === 'video' && videoUrl ? (
                     <video src={`${videoUrl}#t=0.1`} muted playsInline preload="auto" className="size-full object-cover" />
-                  ) : entry.has_moment ? (
-                    <span className="flex size-full items-center justify-center text-[var(--card)]"><Play className="size-5 fill-current" aria-hidden="true" /></span>
                   ) : null}
-                  {entry.has_moment && entry.type === 'video' && <span className="absolute right-1 top-1 z-10 flex size-5 items-center justify-center rounded-full bg-black/60 text-white"><Play className="size-3 fill-current" aria-hidden="true" /></span>}
                   <span className={`absolute inset-x-0 bottom-1 z-10 text-center text-[10px] font-extrabold leading-3 ${entry.has_moment ? 'text-white' : 'text-[var(--muted)]'}`}>DAY {entry.day}</span>
                 </button>
               )
@@ -437,7 +435,7 @@ export default function PactMomentsDetail({
           )}
           {hasMoments && current?.url && (
             current.type === 'video' ? (
-              <video key={current.id} src={current.url} className="absolute inset-0 size-full object-cover" muted playsInline autoPlay loop preload="auto" />
+              <AutoPlayVideo key={current.id} src={current.url} soundButtonClassName="right-3 top-3" className="absolute inset-0 size-full object-cover" />
             ) : (
               <SafePhoto src={current.url} alt={caption} className="absolute inset-0 size-full object-cover" />
             )

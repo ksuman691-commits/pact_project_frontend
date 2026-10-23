@@ -1,9 +1,10 @@
 'use client'
 
 import Link from 'next/link'
+import AutoPlayVideo from '@/components/media/AutoPlayVideo'
 import { cleanTitle } from '@/lib/titleCase'
 import { useState } from 'react'
-import { Camera, Check, Globe, Heart, Lock, Play, Users } from 'lucide-react'
+import { Camera, Check, Globe, Heart, Lock, Users } from 'lucide-react'
 
 const INK = '#17181D'
 const MUTED = '#5A5C63'
@@ -78,7 +79,7 @@ export default function ProfilePactCard({
     <Link href={`/pacts/${pact.id}`} className="block overflow-hidden rounded-[22px]" style={{ background: '#FBF8F1', border: `1px solid ${LINE}` }}>
       <div className="relative h-[168px] overflow-hidden" style={{ background: locked ? 'radial-gradient(120% 90% at 30% 20%, #2A3A6E 0%, #141A2E 55%, #0F1014 100%)' : '#1F2A4A' }}>
         {mediaUrl && !broken && (isVideo ? (
-          <video src={`${mediaUrl}#t=0.1`} muted playsInline preload="metadata" onError={() => setBroken(true)} className="absolute inset-0 size-full object-cover" />
+          <AutoPlayVideo src={mediaUrl} soundButton={false} className="absolute inset-0 size-full object-cover" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={mediaUrl} alt="" onError={() => setBroken(true)} className="absolute inset-0 size-full object-cover" />
@@ -110,11 +111,6 @@ export default function ProfilePactCard({
             </span>
           )}
         </div>
-        {mediaUrl && isVideo && !broken && (
-          <span className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full" style={{ background: 'rgba(15,16,20,0.55)', color: '#FFFFFF' }}>
-            <Play className="size-4 fill-current" aria-hidden="true" />
-          </span>
-        )}
         <div className="absolute inset-x-3.5 bottom-3" style={{ color: '#FFFFFF' }}>
           <span className="rounded-[10px] px-2.5 py-[3px] text-[11.5px] font-extrabold" style={{ background: 'rgba(255,255,255,0.22)', color: '#FFFFFF' }}>
             {badge}

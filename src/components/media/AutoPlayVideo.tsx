@@ -115,7 +115,8 @@ export default function AutoPlayVideo({
 
   return (
     <>
-      <video ref={ref} src={src} muted loop playsInline preload="metadata" className={className} />
+      {/* "#t=0.1" makes phones paint the first frame even when autoplay is held back. */}
+      <video ref={ref} src={src.includes('#') ? src : `${src}#t=0.1`} muted loop playsInline preload="metadata" className={className} />
       {soundButton && (
         <button
           type="button"
