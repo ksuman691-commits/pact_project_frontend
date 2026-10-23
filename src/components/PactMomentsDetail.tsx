@@ -4,7 +4,7 @@ import Image from 'next/image'
 import AutoPlayVideo from '@/components/media/AutoPlayVideo'
 import { cleanTitle } from '@/lib/titleCase'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Camera, Check, ChevronLeft, Globe, Heart, Image as ImageIcon, Lock, MessageCircle, Play, RotateCcw, Share2, UserPlus, Users, X } from 'lucide-react'
+import { Camera, Check, ChevronLeft, Globe, Heart, Image as ImageIcon, Lock, MessageCircle, Play, RotateCcw, Share, Share2, UserPlus, Users, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import LockedMedia from '@/components/private/LockedMedia'
 import WatchersSheet from '@/components/private/WatchersSheet'
@@ -178,7 +178,33 @@ export default function PactMomentsDetail({
     const diff = currentDay - current.day
     return diff <= 0 ? 'Today' : diff === 1 ? 'Yesterday' : `${diff} days ago`
   })()
-  const caption = current?.description || (current?.day && current.day !== currentDay ? `Day ${current.day} · ${momentAgo}` : "Today's moment")
+  const caption = current?.description || (current?.day && current.day !== currentDay ? (momentAgo === 'Yesterday' ? "Yesterday's moment" : `Moment from ${momentAgo}`) : "Today's moment")
+  // Under the name on the photo: "Today", "Yesterday" or "3 days ago", plus the time when it's today.
+  const momentWhen = (() => {
+    if (!current) return ''
+    const at = current.uploadedAt ? new Date(current.uploadedAt) : null
+    const time = at && !Number.isNaN(at.getTime()) ? at.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase() : null
+    if (momentAgo === 'Today' || !momentAgo) return time ? `Today · ${time}` : 'Today'
+    return momentAgo
+  })()
+  const sharePact = async () => {
+    const url = typeof window !== 'undefined' ? `${window.location.origin}/pacts/${pact?.id}` : ''
+    const title = cleanTitle(pact?.title)
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text: `${title} on CirclePact`, url })
+        return
+      }
+    } catch (error: any) {
+      if (error?.name === 'AbortError') return
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      toast.success('Link copied')
+    } catch {
+      toast.error('Could not copy the link')
+    }
+  }
   const postedToday = moments.some((m) => m.day === currentDay && viewerId != null && String(m.userId ?? '') === String(viewerId))
   // No made-up emoji in front of titles; old pacts that typed one keep it.
   const showModernStrip = strip !== null
@@ -247,13 +273,15 @@ export default function PactMomentsDetail({
 
   return (
     <main className="min-h-[calc(100dvh-72px)] bg-[var(--paper)] px-4 pb-3 pt-3 text-[var(--ink)]">
-      <div className="mx-auto flex h-[calc(100dvh-84px)] max-w-[420px] flex-col gap-3">
+      {/* pb-28: clearance for the floating BottomNav, now that this page scrolls. */}
+      <div className="mx-auto flex max-w-[420px] flex-col gap-3 pb-28">
         <div className="shrink-0">
           <div className="flex items-center justify-between">
             <button type="button" onClick={smartBack} aria-label="Go back" className="-ml-2 flex size-11 items-center justify-center rounded-full text-[var(--ink)]">
               <ChevronLeft className="size-6" strokeWidth={2} aria-hidden="true" />
             </button>
-            {!isCreatorView && (
+            {/* The action row under the media carries Tip; the header only does when that row is hidden. */}
+            {!isCreatorView && !(!presentationEnded && !lockedForMe && (hasMoments || isParticipant)) && (
               <TipButton creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} pactId={Number(pact?.id)} tipsEnabled={typeof pact?.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined} className="!h-9 !px-3.5 !text-[13.5px]" />
             )}
             {isCreatorView && (
@@ -399,29 +427,11 @@ export default function PactMomentsDetail({
               {isMoments75 ? `${completed} of ${requiredDays} days needed to finish` : dayLabel}
             </p>
           </div>
-          {isParticipant && hasMoments && !isEnded && (
-            postedToday ? (
-              <div className="flex shrink-0 items-center gap-1.5">
-                <span className="flex items-center gap-1 text-[12.5px] font-extrabold" style={{ color: '#22663F' }}>
-                  <Check className="size-4" strokeWidth={2.6} aria-hidden="true" />
-                  Day {currentDay} done
-                </span>
-                <button type="button" onClick={onAddMoment} aria-label="Add another moment" className="flex h-9 items-center gap-1 rounded-full border px-3 text-[12.5px] font-bold" style={{ borderColor: 'var(--hairline)', color: 'var(--ink)' }}>
-                  <Camera className="size-4" aria-hidden="true" />
-                  Add
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={onAddMoment}
-                className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-[var(--navy)] px-4 text-[13.5px] font-extrabold text-white"
-                style={{ boxShadow: '0 6px 16px -6px rgba(31,58,147,0.6)' }}
-              >
-                <Camera className="size-4" aria-hidden="true" />
-                Post Day {currentDay}
-              </button>
-            )
+          {isParticipant && !isEnded && postedToday && (
+            <span className="flex shrink-0 items-center gap-1 text-[12.5px] font-extrabold" style={{ color: '#22663F' }}>
+              <Check className="size-4" strokeWidth={2.6} aria-hidden="true" />
+              Day {currentDay} done
+            </span>
           )}
         </header>}
 
@@ -449,7 +459,7 @@ export default function PactMomentsDetail({
             if (Date.now() - lastSwipeAt.current < 450) return
             openViewer()
           }}
-          className={`relative min-h-0 flex-1 cursor-pointer overflow-hidden rounded-[24px] ${!hasMoments && !presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : 'bg-[var(--navy)]'}`}
+          className={`relative -mx-2.5 aspect-[4/5] cursor-pointer overflow-hidden rounded-[22px] ${!hasMoments && !presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : 'bg-[var(--navy)]'}`}
           aria-label="Moments"
         >
           {lockedForMe && (
@@ -521,25 +531,24 @@ export default function PactMomentsDetail({
 
           {hasMoments && (
             <>
-              <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-black/50 px-2.5 py-1.5 text-xs font-bold text-white backdrop-blur">
-                <span className="flex size-5 items-center justify-center overflow-hidden rounded-full bg-[var(--card)] text-[10px] text-[var(--ink)]">
-                  {String(current.authorName || current.username || 'Y').charAt(0).toUpperCase()}
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/55 to-transparent" />
+              <div className="pointer-events-none absolute left-3.5 right-14 top-2.5 flex items-center gap-2.5 text-white" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}>
+                <span className="flex size-[34px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--ink)] text-[12px] font-extrabold text-white ring-2 ring-white/70">
+                  {String(current.authorName || current.username || 'Y').split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'Y'}
                 </span>
-                {current.authorName || current.username || 'You'} · Day {current.day || day}
-                {currentDayMoments.length > 1 ? ` · ${positionInDay + 1} of ${currentDayMoments.length}` : ''}
+                <span className="min-w-0">
+                  <span className="block truncate text-[14px] font-extrabold">{current.authorName || current.username || 'You'}</span>
+                  <span className="block truncate text-[12px] opacity-90">{momentWhen}</span>
+                </span>
               </div>
-              <div className="absolute bottom-[calc(env(safe-area-inset-bottom)+5rem)] right-4 z-10 flex flex-col gap-2">
-                <LikeButton pactId={Number(pact.id)} count={Number(pact?.like_count ?? 0)} liked={Boolean(pact?.is_liked_by_me)} />
-                <button type="button" onClick={() => onComment(false)} aria-label={`Comments, ${Number(pact?.comment_count ?? 0)}`} className="flex size-12 flex-col items-center justify-center rounded-full bg-[var(--card)] text-[var(--navy)] shadow-lg transition active:scale-95">
-                  <MessageCircle className="size-[18px]" strokeWidth={1.9} />
-                  <span className="text-[11px] font-bold leading-none text-[var(--ink)]">{Number(pact?.comment_count ?? 0)}</span>
-                </button>
-
-              </div>
-              <div className="absolute inset-x-5 bottom-5 z-10 text-white">
-                <p className="mt-0.5 text-[15px] font-extrabold leading-5">{caption}</p>
+              <div className="pointer-events-none absolute inset-x-3.5 bottom-3.5 z-10 text-white">
+                <span className="rounded-[9px] px-2.5 py-[3px] text-[11.5px] font-extrabold" style={{ backgroundColor: 'rgba(255,255,255,0.24)' }}>
+                  Day {current.day || day}
+                  {currentDayMoments.length > 1 ? ` · ${positionInDay + 1} of ${currentDayMoments.length}` : ''}
+                </span>
+                <p className="mt-1.5 line-clamp-2 text-[17px] font-extrabold leading-[1.2]" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.45)' }}>{caption}</p>
                 {currentDayMoments.length > 1 && (
-                  <div className="mt-2.5 flex items-center gap-1.5" role="img" aria-label={`Moment ${positionInDay + 1} of ${currentDayMoments.length} on Day ${current.day}`}>
+                  <div className="mt-2 flex items-center gap-[5px]" role="img" aria-label={`Moment ${positionInDay + 1} of ${currentDayMoments.length} on Day ${current.day}`}>
                     {currentDayMoments.map((moment, index) => (
                       <span
                         key={moment.id}
@@ -547,7 +556,6 @@ export default function PactMomentsDetail({
                         style={{ width: index === positionInDay ? 16 : 6, background: index === positionInDay ? '#FFFFFF' : 'rgba(255,255,255,0.5)' }}
                       />
                     ))}
-                    <span className="ml-1 text-[12px] font-bold text-white/80">Swipe for more</span>
                   </div>
                 )}
               </div>
@@ -589,6 +597,37 @@ export default function PactMomentsDetail({
             </>
           )}
         </section>
+
+        {!presentationEnded && !lockedForMe && (hasMoments || isParticipant) && (
+          <div className="-mx-1 -mt-1.5 flex items-center gap-1">
+            <LikeButton variant="row" pactId={Number(pact.id)} count={Number(pact?.like_count ?? 0)} liked={Boolean(pact?.is_liked_by_me)} />
+            <button type="button" onClick={() => onComment(false)} aria-label={`Comments, ${Number(pact?.comment_count ?? 0)}`} className="flex h-11 items-center gap-1.5 px-2 text-[14px] font-extrabold text-[var(--ink)] transition active:scale-95">
+              <MessageCircle className="h-[23px] w-[23px]" strokeWidth={2} />
+              {Number(pact?.comment_count ?? 0) > 0 && Number(pact?.comment_count ?? 0)}
+            </button>
+            <button type="button" onClick={() => void sharePact()} aria-label="Share pact" className="flex h-11 w-10 items-center justify-center text-[var(--ink)] transition active:scale-95">
+              <Share className="h-[21px] w-[21px]" strokeWidth={2} />
+            </button>
+            <div className="ml-auto flex items-center gap-1.5">
+              {!isCreatorView && (
+                <TipButton variant="soft" creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} count={Number(pact?.tip_count ?? 0)} pactId={Number(pact?.id)} tipsEnabled={typeof pact?.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined} />
+              )}
+              {isParticipant && !isEnded && hasMoments && (
+                postedToday ? (
+                  <button type="button" onClick={onAddMoment} aria-label="Add another moment" className="flex h-9 items-center gap-1.5 rounded-full border-[1.5px] border-[var(--navy)] px-3 text-[13px] font-extrabold text-[var(--navy)] transition active:scale-95">
+                    <Camera className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
+                    Add
+                  </button>
+                ) : (
+                  <button type="button" onClick={onAddMoment} className="flex h-9 items-center gap-1.5 rounded-full bg-[var(--navy)] px-3.5 text-[13px] font-extrabold text-white transition active:scale-95" style={{ boxShadow: '0 6px 14px -6px rgba(31,58,147,0.6)' }}>
+                    <Camera className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
+                    Post Day {currentDay}
+                  </button>
+                )
+              )}
+            </div>
+          </div>
+        )}
 
         {(isEnded || presentationEnded) && (
           <footer className="flex min-h-12 shrink-0 flex-wrap items-center gap-2">

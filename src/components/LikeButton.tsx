@@ -8,7 +8,8 @@ interface LikeButtonProps {
   pactId: number
   count?: number
   liked?: boolean
-  /** 'stage' = round action over a photo/video; same look the cheer button had. */
+  /** 'stage' (default) = round button over media; 'row' = heart and count in a card's action row. */
+  variant?: 'stage' | 'row'
   className?: string
 }
 
@@ -16,7 +17,7 @@ interface LikeButtonProps {
  * Heart like for a pact. Toggles instantly, reverts if the server rejects it.
  * Replaces the old camera-based cheer on the pact detail page and moment viewer.
  */
-export default function LikeButton({ pactId, count = 0, liked: initialLiked = false, className = '' }: LikeButtonProps) {
+export default function LikeButton({ pactId, count = 0, liked: initialLiked = false, variant = 'stage', className = '' }: LikeButtonProps) {
   const [liked, setLiked] = useState(initialLiked)
   const [likeCount, setLikeCount] = useState(count)
   const inFlight = useRef(false)
@@ -45,6 +46,21 @@ export default function LikeButton({ pactId, count = 0, liked: initialLiked = fa
     } finally {
       inFlight.current = false
     }
+  }
+
+  if (variant === 'row') {
+    return (
+      <button
+        type="button"
+        onClick={() => void toggle()}
+        aria-label={liked ? 'Unlike this pact' : 'Like this pact'}
+        aria-pressed={liked}
+        className={`flex h-11 items-center gap-1.5 px-2 text-[14px] font-extrabold transition active:scale-95 ${liked ? 'text-[var(--navy)]' : 'text-[var(--ink)]'} ${className}`}
+      >
+        <Heart className="h-6 w-6" strokeWidth={2} fill={liked ? 'var(--navy)' : 'none'} />
+        {likeCount > 0 && likeCount}
+      </button>
+    )
   }
 
   return (
