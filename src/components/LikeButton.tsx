@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Heart } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { socialService } from '@/services/api'
+import { syncPactLike } from '@/lib/syncPactLike'
 
 interface LikeButtonProps {
   pactId: number
@@ -21,6 +23,7 @@ export default function LikeButton({ pactId, count = 0, liked: initialLiked = fa
   const [liked, setLiked] = useState(initialLiked)
   const [likeCount, setLikeCount] = useState(count)
   const inFlight = useRef(false)
+  const queryClient = useQueryClient()
 
   useEffect(() => {
     setLiked(initialLiked)
@@ -31,18 +34,22 @@ export default function LikeButton({ pactId, count = 0, liked: initialLiked = fa
     if (inFlight.current) return
     inFlight.current = true
     const was = liked
+    const optimistic = Math.max(0, likeCount + (was ? -1 : 1))
     setLiked(!was)
-    setLikeCount((c) => Math.max(0, c + (was ? -1 : 1)))
+    setLikeCount(optimistic)
+    syncPactLike(queryClient, pactId, { liked: !was, likeCount: optimistic })
     try {
       const response: any = was ? await socialService.unlikePact(pactId) : await socialService.likePact(pactId)
       const server = response?.data
       if (server && typeof server.like_count === 'number') {
         setLikeCount(server.like_count)
         setLiked(Boolean(server.liked))
+        syncPactLike(queryClient, pactId, { liked: Boolean(server.liked), likeCount: server.like_count })
       }
     } catch {
       setLiked(was)
-      setLikeCount((c) => Math.max(0, c + (was ? 1 : -1)))
+      setLikeCount(likeCount)
+      syncPactLike(queryClient, pactId, { liked: was, likeCount })
     } finally {
       inFlight.current = false
     }
