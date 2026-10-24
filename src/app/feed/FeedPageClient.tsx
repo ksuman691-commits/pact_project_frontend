@@ -6,7 +6,6 @@ import TodayCheckInRow from '@/components/TodayCheckInRow'
 import WelcomeHeader from '@/components/WelcomeHeader'
 import FeaturedDareCard from '@/components/FeaturedDareCard'
 import YourCirclesRail from '@/components/YourCirclesRail'
-import WatchingRail from '@/components/WatchingRail'
 import StoryCirclesRow from '@/components/stories/StoryCirclesRow'
 import { useMomentPeople } from '@/hooks/useMomentPeople'
 import { STORIES_ENABLED } from '@/lib/stories'
@@ -159,12 +158,6 @@ export default function FeedPageClient() {
             ) : (
               <YourCirclesRail circles={circles} isLoading={circlesLoading} />
             )}
-          </div>
-        )}
-
-        {isInitialized && user && (
-          <div className="max-w-md mx-auto px-4 pt-4">
-            <WatchingRail />
           </div>
         )}
 
