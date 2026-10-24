@@ -4,42 +4,38 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import CommentSection from './CommentSection';
+import { cleanTitle } from '@/lib/titleCase';
+import { useBackToClose } from '@/hooks/useBackToClose';
 
 interface CommentsBottomSheetProps {
   pactId: number;
+  pactTitle?: string;
   commentCount: number;
   isOpen: boolean;
   onClose: () => void;
-  /** Reports the real total once CommentSection's own paginated query
-   * resolves, so the caller can correct the badge count that list endpoints
-   * currently always send as 0 (see BACKEND_SPEC_COMMENT_COUNT.md). */
+  /** Reports the new total as people add or delete comments and replies. */
   onCountChange?: (count: number) => void;
   aboveViewer?: boolean;
+  /** A comment or reply to scroll to and highlight (from a notification). */
+  focusCommentId?: number | null;
 }
 
 /**
- * Spring-up bottom sheet that presents the existing CommentSection inline,
- * relabeled "Chat" and styled as a lightweight group chat. This is purely a
- * presentation change: CommentSection still reuses the same real comments
- * data/mutations (usePactComments/useAddComment/useDeleteComment) as
- * before, and this component only owns the sheet chrome (backdrop, handle,
- * header, close) around it.
- *
- * Portalled straight to document.body. Rendering this inline where the feed
- * card lives isn't enough to guarantee `fixed inset-0` covers the real
- * viewport: the `.pact-list-item` wrapper every list card sits in leaves a
- * non-"none" transform behind after its mount-in animation, which creates
- * its own containing block and silently traps this sheet inside the card
- * instead of the viewport (see DareProofUploadModal for the same fix).
+ * Comments for a pact, in a sheet. The sheet is portalled to document.body:
+ * the `.pact-list-item` wrapper every list card sits in leaves a transform
+ * behind that would trap a `fixed inset-0` overlay inside the card.
  */
 export default function CommentsBottomSheet({
   pactId,
+  pactTitle,
   commentCount,
   isOpen,
   onClose,
   onCountChange,
   aboveViewer = false,
+  focusCommentId = null,
 }: CommentsBottomSheetProps) {
+  useBackToClose(isOpen, onClose);
   if (typeof document === 'undefined') return null;
 
   return createPortal(
@@ -48,7 +44,7 @@ export default function CommentsBottomSheet({
         <>
           <motion.button
             type="button"
-            aria-label="close comments"
+            aria-label="Close comments"
             onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -61,32 +57,22 @@ export default function CommentsBottomSheet({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className={`fixed inset-x-0 bottom-0 ${aboveViewer ? 'z-[111]' : 'z-[61]'} mx-auto flex h-[70vh] max-w-md flex-col overflow-hidden rounded-t-[24px] border border-b-0 border-[var(--pact-hairline)] bg-[var(--pact-surface-raised)]`}
+            className={`fixed inset-x-0 bottom-0 ${aboveViewer ? 'z-[111]' : 'z-[61]'} mx-auto flex h-[88dvh] max-w-md flex-col overflow-hidden rounded-t-[24px]`}
+            style={{ background: '#F4EFE4', color: '#17181D' }}
             role="dialog"
-            aria-label={`Chat, ${commentCount}`}
+            aria-label="Comments"
           >
-            <div className="mx-auto mt-2.5 h-1 w-9 flex-shrink-0 rounded-full bg-[var(--pact-hairline)]" />
-
-            <div className="flex flex-shrink-0 items-center justify-between border-b border-[var(--pact-hairline)] px-4 py-3">
-              <p
-                className="text-[15px] font-black text-[var(--pact-text)]"
-                style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}
-              >
-                Chat &middot; {commentCount}
-              </p>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="close comments"
-                className="text-[var(--pact-text-faint)] transition hover:text-[var(--pact-text)]"
-              >
-                <X className="h-5 w-5" />
+            <div className="mx-auto mt-2.5 h-[5px] w-10 shrink-0 rounded-full" style={{ background: '#D9D2C2' }} />
+            <div className="flex shrink-0 items-center gap-2 pl-5 pr-2 pt-1.5">
+              <div className="min-w-0 flex-1">
+                <div className="text-[18px] font-extrabold tracking-[-0.02em]">Comments</div>
+                {pactTitle && <div className="truncate text-[13px]" style={{ color: '#5A5C63' }}>{cleanTitle(pactTitle)}</div>}
+              </div>
+              <button type="button" onClick={onClose} aria-label="Close comments" className="flex size-11 items-center justify-center">
+                <X className="size-[22px]" strokeWidth={2.2} />
               </button>
             </div>
-
-            <div className="flex-1 overflow-y-auto px-4 py-4">
-              <CommentSection pactId={pactId} onCountChange={onCountChange} />
-            </div>
+            <CommentSection pactId={pactId} initialCount={commentCount} onCountChange={onCountChange} focusCommentId={focusCommentId} />
           </motion.div>
         </>
       )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { AlertCircle } from 'lucide-react';
@@ -42,6 +42,17 @@ export default function PactDetailPage() {
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [commentsAboveViewer, setCommentsAboveViewer] = useState(false);
   const [liveCommentCount, setLiveCommentCount] = useState<number | null>(null);
+  const [focusCommentId, setFocusCommentId] = useState<number | null>(null);
+  // A comment notification opens the pact with ?comment=ID: show that comment, highlighted.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    const raw = Number(url.searchParams.get('comment'));
+    if (!Number.isFinite(raw) || raw <= 0) return;
+    setFocusCommentId(raw);
+    url.searchParams.delete('comment');
+    window.history.replaceState(window.history.state, '', url.pathname + (url.search ? url.search : '') + url.hash);
+  }, []);
   const [joinedLocally, setJoinedLocally] = useState(false);
   const [joining, setJoining] = useState(false);
   const pactId = Number(params.id);
@@ -73,6 +84,16 @@ export default function PactDetailPage() {
   const isCreator = Boolean(user && pact?.creator_id === user.id);
   const isParticipant = Boolean(user && (joinedLocally || pact?.is_joined_by_me || isCreator || participants.some((participant: any) => participant.id === user.id || participant.user_id === user.id)));
   const isEnded = pact?.status !== 'active' || completionView !== null;
+  // Once the pact is on screen, open the comments for a ?comment= link. Opening after the page
+  // has mounted keeps the sheet's back-button history entry from being pushed twice.
+  const openedFromLink = useRef(false);
+  useEffect(() => {
+    if (focusCommentId && pact && !openedFromLink.current) {
+      openedFromLink.current = true;
+      setCommentsAboveViewer(false);
+      setCommentsOpen(true);
+    }
+  }, [focusCommentId, pact]);
 
   const joinPact = async (): Promise<boolean> => {
     if (!pact || joining || !pact.can_join) return false;
@@ -228,11 +249,13 @@ export default function PactDetailPage() {
       />
       <CommentsBottomSheet
         pactId={pact.id}
+        pactTitle={pact.title}
         commentCount={liveCommentCount ?? Number(pact.comment_count ?? 0)}
         isOpen={commentsOpen}
-        onClose={() => setCommentsOpen(false)}
+        onClose={() => { setCommentsOpen(false); setFocusCommentId(null); }}
         onCountChange={setLiveCommentCount}
         aboveViewer={commentsAboveViewer}
+        focusCommentId={focusCommentId}
       />
     </>
   );
