@@ -10,6 +10,7 @@ import { queryKeys } from '@/lib/queryKeys';
 import { socialService } from '@/services/api';
 import UserAvatarLink from '@/components/UserAvatarLink';
 import { parseApiDate } from '@/lib/dareCountdown';
+import WatcherReportSheet from '@/components/WatcherReportSheet';
 
 const INK = '#17181D';
 const MUTED = '#5A5C63';
@@ -30,6 +31,10 @@ export interface PactComment {
   liked_by_me?: boolean;
   reply_count?: number;
   is_creator?: boolean;
+  /** Creator only: this commenter paid to watch, so they can be reported. */
+  reportable_watcher?: boolean;
+  watcher_report_count?: number;
+  can_report_again_at?: string | null;
   liked_by_preview?: { user_id: number; username: string; full_name?: string | null; avatar_url?: string | null } | null;
 }
 
@@ -118,6 +123,10 @@ function CommentRow({
   };
 
   const likedBy = own && comment.liked_by_preview ? comment.liked_by_preview : null;
+  const [reportOpen, setReportOpen] = useState(false);
+  const reportedAt = comment.watcher_report_count ?? 0;
+  const againAt = comment.can_report_again_at ? parseApiDate(comment.can_report_again_at) : null;
+  const reportLocked = reportedAt > 0 && againAt != null && againAt.getTime() > Date.now();
 
   return (
     <div
@@ -146,6 +155,17 @@ function CommentRow({
               {confirmDelete ? 'Tap again to delete' : 'Delete'}
             </button>
           )}
+          {comment.reportable_watcher && !own && (
+            <button
+              type="button"
+              onClick={() => setReportOpen(true)}
+              disabled={reportLocked}
+              className="-my-2 min-h-11 py-2 text-[13px] font-extrabold disabled:opacity-60"
+              style={{ color: reportLocked ? MUTED : '#B3261E' }}
+            >
+              {reportLocked ? 'Reported' : 'Report'}
+            </button>
+          )}
           {likedBy && (
             <span className="flex items-center gap-1.5 text-[13px]" style={{ color: MUTED }}>
               <UserAvatarLink name={nameOf(likedBy)} avatarUrl={likedBy.avatar_url} username={likedBy.username} size={16} />
@@ -164,6 +184,16 @@ function CommentRow({
         <Heart className="size-[18px]" strokeWidth={2} fill={liked ? LIKE_RED : 'none'} style={{ color: liked ? LIKE_RED : MUTED }} />
         {count > 0 && <span className="text-[12px] font-extrabold" style={{ color: liked ? LIKE_RED : MUTED }}>{count}</span>}
       </button>
+      {reportOpen && (
+        <WatcherReportSheet
+          pactId={pactId}
+          watcherId={comment.user_id}
+          watcherName={nameOf(comment)}
+          isSecondReport={reportedAt > 0}
+          onClose={() => setReportOpen(false)}
+          onDone={onChanged}
+        />
+      )}
     </div>
   );
 }
