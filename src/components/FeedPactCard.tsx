@@ -35,6 +35,8 @@ import { isPhotoStory, postedAgo } from '@/lib/stories';
 import { getDisplayName } from '@/lib/displayName';
 import { hasPactMomentum } from '@/lib/pactMomentum';
 import { pactService, socialService } from '@/services/api';
+import { useQueryClient } from '@tanstack/react-query';
+import { syncPactLike } from '@/lib/syncPactLike';
 import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
 
@@ -319,6 +321,7 @@ export default function FeedPactCard({
   const [likeError, setLikeError] = useState<string | null>(null);
   const [isLikeBouncing, setIsLikeBouncing] = useState(false);
   const likeInFlightRef = useRef(false);
+  const queryClient = useQueryClient();
   const [isJoining, setIsJoining] = useState(false);
   const [activeProofIndex, setActiveProofIndex] = useState(0);
   // Local "have I joined" state, synced from the server flags below but also
@@ -598,8 +601,10 @@ export default function FeedPactCard({
     likeInFlightRef.current = true;
     const wasLiked = liked;
     setLikeError(null);
+    const optimisticCount = Math.max(0, likeCount + (wasLiked ? -1 : 1));
     setLiked(!wasLiked);
-    setLikeCount((count) => Math.max(0, count + (wasLiked ? -1 : 1)));
+    setLikeCount(optimisticCount);
+    syncPactLike(queryClient, Number(pact.id), { liked: !wasLiked, likeCount: optimisticCount });
     if (!wasLiked) {
       setIsLikeBouncing(true);
       window.setTimeout(() => setIsLikeBouncing(false), 150);
@@ -610,10 +615,12 @@ export default function FeedPactCard({
       if (server && typeof server.like_count === 'number') {
         setLikeCount(server.like_count);
         setLiked(Boolean(server.liked));
+        syncPactLike(queryClient, Number(pact.id), { liked: Boolean(server.liked), likeCount: server.like_count });
       }
     } catch {
       setLiked(wasLiked);
-      setLikeCount((count) => Math.max(0, count + (wasLiked ? 1 : -1)));
+      setLikeCount(likeCount);
+      syncPactLike(queryClient, Number(pact.id), { liked: wasLiked, likeCount });
       setLikeError('Could not update your like. Try again.');
     } finally {
       likeInFlightRef.current = false;
