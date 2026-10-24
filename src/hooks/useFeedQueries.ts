@@ -156,16 +156,16 @@ export function useSearchPacts(query: string) {
   });
 }
 
-export function usePactComments(pactId: number) {
+export function usePactComments(pactId: number, sort: 'top' | 'newest' | 'oldest' = 'oldest', enabled = true) {
   return useInfiniteQuery({
-    queryKey: queryKeys.pacts.comments(pactId),
+    queryKey: [...queryKeys.pacts.comments(pactId), sort],
     queryFn: ({ pageParam = 0 }) =>
-      socialService.getComments(pactId, pageParam, ITEMS_PER_PAGE),
+      socialService.getComments(pactId, pageParam, ITEMS_PER_PAGE, sort),
     getNextPageParam: (lastPage, pages) =>
       lastPage.data?.length === ITEMS_PER_PAGE ? pages.length * ITEMS_PER_PAGE : undefined,
     initialPageParam: 0,
-    enabled: !!pactId,
-    staleTime: 1000 * 60 * 2,
+    enabled: !!pactId && enabled,
+    staleTime: 1000 * 30,
   });
 }
 

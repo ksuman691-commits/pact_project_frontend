@@ -546,12 +546,23 @@ export const socialService = {
   getPactLikes: (pactId: number) => api.get(`/api/pacts/${pactId}/likes`),
   
   // Comments
-  addComment: (pactId: number, text: string) =>
-    api.post(`/api/pacts/${pactId}/comments`, { text }),
+  addComment: (pactId: number, text: string, parentId?: number | null) =>
+    api.post(`/api/pacts/${pactId}/comments`, parentId ? { text, parent_id: parentId } : { text }),
+  likeComment: (pactId: number, commentId: number) =>
+    api.post(`/api/pacts/${pactId}/comments/${commentId}/like`),
+  unlikeComment: (pactId: number, commentId: number) =>
+    api.delete(`/api/pacts/${pactId}/comments/${commentId}/like`),
+  getComment: (pactId: number, commentId: number) =>
+    api.get(`/api/pacts/${pactId}/comments/${commentId}`).then((response) => response.data),
+  getReplies: (pactId: number, commentId: number, skip = 0, limit = 50) =>
+    api.get(`/api/pacts/${pactId}/comments/${commentId}/replies`, { params: { skip, limit } }).then((response) => ({
+      rows: Array.isArray(response.data?.data) ? response.data.data : [],
+      total: Number(response.data?.pagination?.total ?? 0),
+    })),
   deleteComment: (pactId: number, commentId: number) =>
     api.delete(`/api/pacts/${pactId}/comments/${commentId}`),
-  getComments: (pactId: number, skip = 0, limit = 20) =>
-    api.get(`/api/pacts/${pactId}/comments`, { params: { skip, limit } }).then((response) => {
+  getComments: (pactId: number, skip = 0, limit = 20, sort: 'top' | 'newest' | 'oldest' = 'oldest') =>
+    api.get(`/api/pacts/${pactId}/comments`, { params: { skip, limit, sort } }).then((response) => {
       const payload = response.data;
       const rows = Array.isArray(payload)
         ? payload

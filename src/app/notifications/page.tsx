@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Bell, CheckCheck, Settings } from 'lucide-react';
+import { Bell, CheckCheck, Heart, MessageCircle, Settings } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import TopNav from '@/components/TopNav';
 import { queryKeys } from '@/lib/queryKeys';
@@ -12,21 +12,9 @@ import { useMarkAllNotificationsAsRead, useNotifications } from '@/hooks/useNoti
 import { useAcceptFollow, usePendingFollowRequests, useRejectFollow } from '@/hooks/useFollows';
 import { RequestsList } from '@/components/requests/RequestsList';
 import { useRequestCount } from '@/components/requests/RequestsEntryCard';
-
-const formatTimeAgo = (isoTimestamp: string) => {
-  const timestamp = new Date(isoTimestamp).getTime();
-  const now = Date.now();
-  const diffMs = Math.max(now - timestamp, 0);
-
-  const minute = 60 * 1000;
-  const hour = 60 * minute;
-  const day = 24 * hour;
-
-  if (diffMs < minute) return 'just now';
-  if (diffMs < hour) return `${Math.floor(diffMs / minute)}m ago`;
-  if (diffMs < day) return `${Math.floor(diffMs / hour)}h ago`;
-  return `${Math.floor(diffMs / day)}d ago`;
-};
+import Avatar from '@/components/Avatar';
+import { buildRows, rowTarget, shortTime } from '@/lib/notificationView';
+import type { NotificationRow, RawNotification } from '@/lib/notificationView';
 
 const isJoinRequestNotification = (notification: any) => {
   const text = `${notification?.title || ''} ${notification?.description || ''}`.toLowerCase();
@@ -50,11 +38,47 @@ const notificationTarget = (notification: any) => {
   return '/feed';
 };
 
+function RowAvatar({ row }: { row: NotificationRow }) {
+  const badge =
+    row.kind === 'pact_like' || row.kind === 'comment_like' ? (
+      <Heart className="size-2.5" strokeWidth={2.6} fill="currentColor" aria-hidden="true" />
+    ) : row.kind === 'other' ? null : (
+      <MessageCircle className="size-2.5" strokeWidth={2.6} aria-hidden="true" />
+    );
+  if (row.actors.length === 0) {
+    return (
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[var(--card-muted)] text-[var(--ink-soft)]">
+        <Bell className="size-5" aria-hidden="true" />
+      </span>
+    );
+  }
+  const first = row.actors[0];
+  const second = row.actors[1];
+  return (
+    <span className="relative size-11 shrink-0">
+      {second ? (
+        <>
+          <span className="absolute left-0 top-0 rounded-full ring-2 ring-[var(--card)]">
+            <Avatar name={second.full_name || second.username} avatarUrl={second.avatar_url} size={28} />
+          </span>
+          <span className="absolute bottom-0 right-0 rounded-full ring-2 ring-[var(--card)]">
+            <Avatar name={first.full_name || first.username} avatarUrl={first.avatar_url} size={28} />
+          </span>
+        </>
+      ) : (
+        <Avatar name={first.full_name || first.username} avatarUrl={first.avatar_url} size={44} />
+      )}
+      {badge && !second && (
+        <span className="absolute -bottom-0.5 -right-0.5 flex size-[18px] items-center justify-center rounded-full bg-[var(--navy)] text-white ring-2 ring-[var(--card)]">{badge}</span>
+      )}
+    </span>
+  );
+}
+
 export default function NotificationsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isUpdating, setIsUpdating] = useState(false);
-  const [autoMarked, setAutoMarked] = useState(false);
 
   const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage } = useNotifications();
   const markAllAsRead = useMarkAllNotificationsAsRead();
@@ -75,27 +99,45 @@ export default function NotificationsPage() {
   }, []);
   const pendingFollowRequests = pendingFollowRequestsQuery.data?.data || [];
 
+  // New stays New while you are on this page, even after it is read. Marking happens when you leave.
+  const [newIds, setNewIds] = useState<Set<number>>(() => new Set());
   useEffect(() => {
-    if (!autoMarked && !isLoading && unreadCount > 0 && !markAllAsRead.isPending) {
-      markAllAsRead.mutate();
-      setAutoMarked(true);
-    }
-  }, [autoMarked, isLoading, unreadCount, markAllAsRead]);
+    const add = notifications.filter((n: RawNotification) => !n.is_read && !newIds.has(n.id)).map((n: RawNotification) => n.id);
+    if (add.length) setNewIds((prev) => new Set([...Array.from(prev), ...add]));
+  }, [notifications, newIds]);
+  const { fresh, earlier } = useMemo(
+    () => buildRows(notifications as RawNotification[], (n) => !n.is_read || newIds.has(n.id)),
+    [notifications, newIds],
+  );
 
-  const handleNotificationClick = async (notification: any) => {
+  // Leaving the page clears the badge. The short delay lets React's dev double-mount cancel it.
+  const hasUnread = useRef(false);
+  hasUnread.current = unreadCount > 0;
+  const leaveTimer = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (leaveTimer.current) window.clearTimeout(leaveTimer.current);
+    return () => {
+      leaveTimer.current = window.setTimeout(() => {
+        if (!hasUnread.current) return;
+        void notificationService.markAllAsRead().finally(() => {
+          void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() });
+          void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
+        });
+      }, 60);
+    };
+  }, [queryClient]);
+
+  const openRow = async (row: NotificationRow) => {
     if (isUpdating) return;
-
     setIsUpdating(true);
     try {
-      if (!notification.is_read) {
-        await notificationService.markAsRead(notification.id);
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() }),
-          queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() }),
-        ]);
+      const unreadIds = row.ids.filter((id) => !notifications.find((n: RawNotification) => n.id === id)?.is_read);
+      if (unreadIds.length) {
+        await Promise.all(unreadIds.map((id) => notificationService.markAsRead(id).catch(() => null)));
+        void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
       }
-
-      router.push(notificationTarget(notification));
+      router.push(rowTarget(row) ?? notificationTarget(row.source));
     } finally {
       setIsUpdating(false);
     }
@@ -174,54 +216,68 @@ export default function NotificationsPage() {
               <p className="text-sm text-[var(--muted)] mt-1">You will see join requests and activity updates here.</p>
             </div>
           ) : (
-            notifications.map((notification: any) => {
-              const pendingFollowId = getPendingFollowIdForNotification(notification);
-              const canRespondInline = isFollowRequestNotification(notification) && !!pendingFollowId;
-
-              return (
-              <div
-                key={notification.id}
-                className={`w-full text-left rounded-[24px] border p-4 transition ${
-                  notification.is_read
-                    ? 'bg-[var(--card)] border-[var(--hairline)]'
-                    : 'bg-[var(--card)] border-[var(--hairline)]'
-                }`}
-              >
-                <button
-                  onClick={() => handleNotificationClick(notification)}
-                  className="w-full text-left"
-                >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-[var(--ink)]">{notification.title}</p>
-                    <p className="text-sm text-[var(--muted)] mt-1">{notification.description}</p>
-                  </div>
-                  {!notification.is_read && (
-                    <span className="w-2.5 h-2.5 rounded-full bg-[var(--navy)] mt-1" />
-                  )}
-                </div>
-                </button>
-                {canRespondInline ? (
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      onClick={() => acceptFollow.mutate(pendingFollowId)}
-                      disabled={acceptFollow.isPending || rejectFollow.isPending}
-                      className="px-3 py-1.5 text-xs rounded-md bg-navy text-white hover:bg-navy-hover disabled:opacity-60"
-                    >
-                      Accept
-                    </button>
-                    <button
-                      onClick={() => rejectFollow.mutate(pendingFollowId)}
-                      disabled={acceptFollow.isPending || rejectFollow.isPending}
-                      className="px-3 py-1.5 text-xs rounded-md bg-[var(--line)] text-[var(--ink)] hover:bg-[var(--line)] disabled:opacity-60"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                ) : null}
-                <p className="text-xs text-[var(--muted)] mt-3">{formatTimeAgo(notification.created_at)}</p>
-              </div>
-            )})
+            <div className="-mx-1 space-y-3">
+              {([['NEW', fresh], ['EARLIER', earlier]] as const).map(([label, rows]) =>
+                rows.length === 0 ? null : (
+                  <section key={label} aria-label={label === 'NEW' ? 'New notifications' : 'Earlier notifications'}>
+                    <div className="px-2 pb-1 pt-2 text-[12px] font-extrabold tracking-[0.08em] text-[var(--muted)]">
+                      {label === 'NEW' ? `NEW · ${rows.length}` : 'EARLIER'}
+                    </div>
+                    <div className="overflow-hidden rounded-[22px] border border-[var(--hairline)] bg-[var(--card)]">
+                      {rows.map((row, index) => {
+                        const pendingFollowId = getPendingFollowIdForNotification(row.source);
+                        const canRespondInline = isFollowRequestNotification(row.source) && !!pendingFollowId;
+                        const wantsReview = row.kind === 'other' && String(row.source.title || '').toLowerCase().includes('wants to watch your pact');
+                        return (
+                          <div key={row.key} className={`px-4 py-3 ${index > 0 ? 'border-t border-[var(--hairline)]' : ''}`}>
+                            <div className="flex items-start gap-3">
+                              <button type="button" onClick={() => void openRow(row)} className="flex min-w-0 flex-1 items-start gap-3 text-left">
+                                <RowAvatar row={row} />
+                                <span className="min-w-0 flex-1">
+                                  <span className="block text-[14.5px] leading-[1.4] text-[var(--ink)]">
+                                    {row.kind === 'other' ? (
+                                      <>
+                                        <b>{row.source.title}</b>
+                                        {row.source.description ? <span className="text-[var(--muted)]"> {row.source.description}</span> : null}
+                                      </>
+                                    ) : (
+                                      <>
+                                        <b>{row.names}</b> {row.verb}
+                                        {row.pactTitle ? <> <b>{row.pactTitle}</b></> : null}
+                                        {row.tail ? <span className="text-[var(--muted)]">: {row.tail}</span> : null}
+                                      </>
+                                    )}
+                                  </span>
+                                  <span className="mt-0.5 block text-[12.5px] text-[var(--muted)]">{shortTime(row.createdAt)}</span>
+                                </span>
+                              </button>
+                              {row.unread && <span className="mt-1.5 size-2.5 shrink-0 rounded-full bg-[var(--navy)]" aria-label="Unread" />}
+                            </div>
+                            {canRespondInline ? (
+                              <div className="ml-14 mt-2 flex gap-2">
+                                <button onClick={() => acceptFollow.mutate(pendingFollowId)} disabled={acceptFollow.isPending || rejectFollow.isPending} className="h-9 rounded-full bg-[var(--navy)] px-4 text-[13px] font-bold text-white disabled:opacity-60">
+                                  Accept
+                                </button>
+                                <button onClick={() => rejectFollow.mutate(pendingFollowId)} disabled={acceptFollow.isPending || rejectFollow.isPending} className="h-9 rounded-full border border-[var(--hairline)] px-4 text-[13px] font-bold text-[var(--ink)] disabled:opacity-60">
+                                  Decline
+                                </button>
+                              </div>
+                            ) : null}
+                            {wantsReview ? (
+                              <div className="ml-14 mt-2">
+                                <button onClick={() => void openRow(row)} className="h-9 rounded-full bg-[var(--ink)] px-4 text-[13px] font-bold text-white">
+                                  Review Payment
+                                </button>
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ),
+              )}
+            </div>
           )}
 
           {hasNextPage && (

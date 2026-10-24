@@ -1018,6 +1018,7 @@ export default function FeedPactCard({
 
       <CommentsBottomSheet
         pactId={pact.id}
+        pactTitle={pact.title}
         commentCount={commentCount}
         isOpen={commentSheetOpen}
         onClose={() => setCommentSheetOpen(false)}
