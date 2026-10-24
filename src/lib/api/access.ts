@@ -91,3 +91,9 @@ export async function getMyWatching() {
 export async function markWatchingSeen(pactId: number) {
   await api.post(`/api/pacts/${pactId}/access/seen`)
 }
+
+/** Creator only. First report warns; a second 24+ hours later removes the watcher. */
+export async function reportWatcher(pactId: number, userId: number, reason: string) {
+  const response = await api.post(`/api/pacts/${pactId}/access/${userId}/report`, { reason })
+  return response.data as { action: 'warned' | 'removed'; can_report_again_at?: string }
+}
