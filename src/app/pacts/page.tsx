@@ -4,9 +4,10 @@ import Link from 'next/link'
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
-import { Plus, Search } from 'lucide-react'
+import { Eye, Plus, Search } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import CuratedContentGrid from '@/components/CuratedContentGrid'
+import RefreshButton from '@/components/RefreshButton'
+import { getMyWatching, withdrawAsk, type WatchRequest } from '@/lib/api/access'
 import { DarePactCard } from '@/components/classic/PactCard'
 import { pactAdvancedService, dareService, pactService } from '@/services/api'
 import { useAuthStore } from '@/store/auth'
@@ -16,9 +17,9 @@ import FeedPactCard from '@/components/FeedPactCard'
 import { usePactsStoriesToday } from '@/hooks/useStories'
 import { isStoriesUnavailable, STORIES_ENABLED } from '@/lib/stories'
 
-// "Discover" is not a slice of the viewer's own pacts, so it is rendered as
-// its own branch below rather than folded into `filtered`.
-const filters = ['All', 'Active', 'Done', 'Discover'] as const
+// All = Watching + Active + Done. Watching is pacts the viewer paid to watch and
+// the creator accepted (plus open asks); once one ends it moves to Done.
+const filters = ['All', 'Active', 'Watching', 'Done'] as const
 
 // useSearchParams() requires a Suspense boundary or `next build` fails.
 export default function PactsPage() {
@@ -26,6 +27,16 @@ export default function PactsPage() {
     <Suspense fallback={null}>
       <PactsPageInner />
     </Suspense>
+  )
+}
+
+function SectionLabel({ label, count, tone, muted }: { label: string; count: number; tone?: 'navy'; muted?: boolean }) {
+  return (
+    <h2
+      className={`px-2 pt-3 text-[12px] font-extrabold uppercase tracking-[0.08em] ${tone === 'navy' ? 'text-[var(--navy)]' : muted ? 'text-[var(--muted)]' : 'text-[var(--ink)]'}`}
+    >
+      {label} <span className="font-bold text-[var(--muted)]">{count}</span>
+    </h2>
   )
 }
 
@@ -66,9 +77,45 @@ function PactsPageInner() {
     enabled: !!user?.id,
     placeholderData: (previousData) => previousData,
   })
+  const watchingQuery = useQuery({
+    queryKey: ['my-watching', user?.id],
+    queryFn: getMyWatching,
+    enabled: !!user?.id,
+    placeholderData: (previousData) => previousData,
+  })
   const daresQuery = useQuery({ queryKey: ['my-dares-page', user?.id], queryFn: () => dareService.getMine(0, 50), enabled: !!user?.id })
 
   const pacts: any[] = query.data?.data || []
+  const watchingAll: any[] = watchingQuery.data?.watching || []
+  const requests: WatchRequest[] = watchingQuery.data?.requests || []
+
+  // Turned-down asks can be dismissed; remembered on this device.
+  const dismissKey = `dismissed-watch-requests:${user?.id ?? ''}`
+  const [dismissed, setDismissed] = useState<string[]>([])
+  useEffect(() => {
+    try {
+      setDismissed(JSON.parse(localStorage.getItem(dismissKey) || '[]'))
+    } catch {
+      setDismissed([])
+    }
+  }, [dismissKey])
+  const requestId = (r: WatchRequest) => `${r.pact_id}:${r.created_at}`
+  const visibleRequests = requests.filter((r) => r.status === 'pending' || !dismissed.includes(requestId(r)))
+  const dismissRequest = (r: WatchRequest) => {
+    const next = [...dismissed, requestId(r)]
+    setDismissed(next)
+    try {
+      localStorage.setItem(dismissKey, JSON.stringify(next))
+    } catch {}
+  }
+  const cancelRequest = async (r: WatchRequest) => {
+    try {
+      await withdrawAsk(r.pact_id)
+      await watchingQuery.refetch()
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || 'Could not cancel this request')
+    }
+  }
   const allDares: any[] = (daresQuery.data as any)?.data || []
 
   // A dare needs attention when the viewer sent it and it is still pending.
@@ -93,7 +140,22 @@ function PactsPageInner() {
     [pacts, search], // eslint-disable-line react-hooks/exhaustive-deps
   )
 
+  // Paid pacts: running ones are Watching, ended ones are Done (they keep their Watching chip).
+  const watchingLive = useMemo(() => watchingAll.filter((p) => isActive(p) && matchesSearch(p.title)), [watchingAll, search]) // eslint-disable-line react-hooks/exhaustive-deps
+  const watchingEnded = useMemo(() => watchingAll.filter((p) => !isActive(p) && matchesSearch(p.title)), [watchingAll, search]) // eslint-disable-line react-hooks/exhaustive-deps
+  const doneAll = useMemo(() => [...finished, ...broken, ...watchingEnded], [finished, broken, watchingEnded])
+
+  // Tab counts ignore the search box.
+  const counts = {
+    Active: pacts.filter((p) => isActive(p) && p.is_joined_by_me !== false).length,
+    Watching: watchingAll.filter(isActive).length,
+    Done: pacts.filter((p) => !isActive(p)).length + watchingAll.filter((p) => !isActive(p)).length,
+  }
+  const countAll = counts.Active + counts.Watching + counts.Done
+  const watchingHasNew = watchingAll.some((p) => isActive(p) && Number(p.watch?.new_moments ?? 0) > 0)
+
   const showActive = filter === 'All' || filter === 'Active'
+  const showWatching = filter === 'All' || filter === 'Watching'
   const showDone = filter === 'All' || filter === 'Done'
   const showDares = filter === 'All' || filter === 'Active'
 
@@ -128,61 +190,80 @@ function PactsPageInner() {
     }
   }
 
+  const activeShown = active.filter((pact: any) => pact.is_joined_by_me !== false)
   const nothingToShow =
-    (!showActive || active.length === 0) && (!showDares || dareRows.length === 0) && (!showDone || (broken.length === 0 && finished.length === 0))
+    (!showActive || activeShown.length === 0) &&
+    (!showWatching || (watchingLive.length === 0 && (filter !== 'Watching' || visibleRequests.length === 0))) &&
+    (!showDares || dareRows.length === 0) &&
+    (!showDone || doneAll.length === 0)
+  const refreshAll = () => Promise.all([query.refetch(), watchingQuery.refetch(), daresQuery.refetch()])
 
   return (
     <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
       <div className="mx-auto max-w-2xl">
-        <header className="flex flex-col gap-2 px-6 pb-1.5 pt-9">
-          <h1 className="text-[34px] font-bold leading-none tracking-[-0.035em]">Your pacts</h1>
-          {STORIES_ENABLED ? (
-            <>
-              {query.isSuccess && <p className="text-[14px] text-[var(--muted)]">{storySummary}</p>}
-            </>
-          ) : (
-            summary && <p className="text-[14px] text-[var(--muted)]">{summary}</p>
-          )}
+        <header className="flex items-start justify-between gap-3 px-6 pb-1.5 pt-9">
+          <div className="flex min-w-0 flex-col gap-2">
+            <h1 className="text-[34px] font-bold leading-none tracking-[-0.035em]">Your Pacts</h1>
+            {STORIES_ENABLED ? (
+              <>
+                {query.isSuccess && <p className="text-[14px] text-[var(--muted)]">{storySummary}</p>}
+              </>
+            ) : (
+              summary && <p className="text-[14px] text-[var(--muted)]">{summary}</p>
+            )}
+          </div>
+          <RefreshButton label="Refresh pacts" onRefresh={refreshAll} />
         </header>
 
         <div className="flex items-center justify-between gap-3 px-6 pb-3 pt-5">
-          {filter !== 'Discover' && (
-            <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--card)] px-4 text-[14px] text-[var(--muted)]">
-              <Search className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search pacts"
-                aria-label="Search pacts"
-                className="min-w-0 flex-1 bg-transparent text-[var(--ink)] outline-none placeholder:text-[var(--muted)]"
-              />
-            </label>
-          )}
+          <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--card)] px-4 text-[14px] text-[var(--muted)]">
+            <Search className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search pacts"
+              aria-label="Search pacts"
+              className="min-w-0 flex-1 bg-transparent text-[var(--ink)] outline-none placeholder:text-[var(--muted)]"
+            />
+          </label>
           <Link
             href="/pacts/create"
             className="ml-auto flex h-11 shrink-0 items-center gap-2 rounded-full bg-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--card)] transition hover:bg-[var(--navy-hover)]"
           >
             <Plus className="h-4 w-4" strokeWidth={2} />
-            New pact
+            New Pact
           </Link>
         </div>
 
         <nav className="flex gap-2 overflow-x-auto px-6 pb-4" aria-label="Pact filters">
-          {filters.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => setFilter(item)}
-              className={`h-9 shrink-0 rounded-full px-4 text-[13px] font-semibold transition ${
-                filter === item ? 'bg-[var(--ink)] text-[var(--card)]' : 'border border-[var(--line)] text-[var(--ink-soft)]'
-              }`}
-            >
-              {item}
-            </button>
-          ))}
+          {filters.map((item) => {
+            const count = item === 'All' ? countAll : counts[item]
+            const selected = filter === item
+            return (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setFilter(item)}
+                aria-pressed={selected}
+                className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-[13px] font-semibold transition ${
+                  selected
+                    ? item === 'Watching'
+                      ? 'bg-[var(--navy)] text-white'
+                      : 'bg-[var(--ink)] text-[var(--card)]'
+                    : item === 'Watching' && watchingHasNew
+                      ? 'border border-[var(--navy)] bg-[var(--navy)]/10 text-[var(--navy)]'
+                      : 'border border-[var(--line)] text-[var(--ink-soft)]'
+                }`}
+              >
+                {item === 'Watching' && watchingHasNew && <span className={`size-[7px] rounded-full ${selected ? 'bg-white' : 'bg-[var(--navy)]'}`} aria-label="New moments" />}
+                {item}
+                {query.isSuccess && <span className={selected ? 'opacity-75' : 'text-[var(--muted)]'}>{count}</span>}
+              </button>
+            )
+          })}
         </nav>
 
-        {query.isError && filter !== 'Discover' && (
+        {query.isError && (
           <div className="flex flex-col items-start gap-3 px-6 py-8 text-[14px] text-[var(--muted)]">
             <p>We couldn&apos;t load your pacts.</p>
             <button
@@ -195,16 +276,27 @@ function PactsPageInner() {
           </div>
         )}
 
-        {filter === 'Discover' ? (
-          <div className="px-6 py-4">
-            <CuratedContentGrid type="pact" />
-          </div>
-        ) : query.isLoading ? (
+        {query.isLoading ? (
           <p className="px-6 py-10 text-[14px] text-[var(--muted)]">Loading pacts…</p>
+        ) : nothingToShow && !query.isError && filter === 'Watching' && search.trim() === '' ? (
+          <div className="px-4 pt-2">
+            <div className="rounded-[22px] border border-[var(--line)] bg-[var(--card)] px-6 py-8 text-center">
+              <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-[var(--navy)]/10 text-[var(--navy)]">
+                <Eye className="size-6" strokeWidth={2} aria-hidden="true" />
+              </span>
+              <h2 className="mt-4 text-[20px] font-extrabold tracking-[-0.02em]">Pacts You Watch Live Here</h2>
+              <p className="mt-2 text-[14px] leading-[1.5] text-[var(--muted)]">
+                When you pay to watch a pact and the creator accepts you, it shows up here, and it stays at the top of your feed.
+              </p>
+              <Link href="/feed" className="mt-5 inline-flex h-11 items-center rounded-full bg-[var(--navy)] px-6 text-[14px] font-extrabold text-white transition hover:bg-[var(--navy-hover)]">
+                Browse The Feed
+              </Link>
+            </div>
+          </div>
         ) : nothingToShow && !query.isError ? (
           <div className="flex flex-col items-start gap-3 px-6 py-8">
-            <p className="text-[14px] text-[var(--muted)]">{pacts.length === 0 ? 'You have no pacts yet.' : 'No pacts match that.'}</p>
-            {pacts.length === 0 && (
+            <p className="text-[14px] text-[var(--muted)]">{pacts.length === 0 && watchingAll.length === 0 ? 'You have no pacts yet.' : 'No pacts match that.'}</p>
+            {pacts.length === 0 && watchingAll.length === 0 && (
               <Link href="/pacts/create" className="flex h-11 items-center rounded-full bg-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--card)]">
                 Make a pact
               </Link>
@@ -212,8 +304,57 @@ function PactsPageInner() {
           </div>
         ) : (
           <div className="flex flex-col gap-3.5 px-4 pt-2">
+            {showWatching && filter === 'Watching' && visibleRequests.length > 0 && (
+              <>
+                <SectionLabel label="Requests" count={visibleRequests.length} />
+                <div className="flex flex-col gap-2.5">
+                  {visibleRequests.map((r) => (
+                    <div key={requestId(r)} className="flex items-center gap-3 rounded-[18px] border border-[var(--line)] bg-[var(--card)] py-3 pl-3.5 pr-3">
+                      <Link href={`/pacts/${r.pact_id}`} className="flex min-w-0 flex-1 items-center gap-3">
+                        <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy)] text-[13px] font-extrabold text-white">
+                          {r.creator?.avatar_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={r.creator.avatar_url} alt="" className="size-full object-cover" />
+                          ) : (
+                            (r.creator?.full_name || r.creator?.username || '?').slice(0, 1).toUpperCase()
+                          )}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-[14px] font-extrabold">{r.pact_title}</span>
+                          <span className="block truncate text-[12.5px] text-[var(--muted)]">
+                            {r.status === 'pending'
+                              ? `Waiting for ${r.creator?.full_name || `@${r.creator?.username ?? 'the creator'}`} to confirm`
+                              : `Not approved by ${r.creator?.full_name || `@${r.creator?.username ?? 'the creator'}`}`}
+                          </span>
+                        </span>
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => (r.status === 'pending' ? void cancelRequest(r) : dismissRequest(r))}
+                        className="h-9 shrink-0 rounded-full border border-[var(--line)] px-3 text-[13px] font-semibold text-[var(--ink)]"
+                      >
+                        {r.status === 'pending' ? 'Cancel' : 'Dismiss'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {showWatching && watchingLive.length > 0 && (
+              <>
+                <SectionLabel label={filter === 'Watching' ? 'Watching Now' : 'Watching'} count={watchingLive.length} tone="navy" />
+                {watchingLive.map((pact) => (
+                  <div key={pact.id} className="-mx-4">
+                    <FeedPactCard pact={pact} canReport={false} />
+                  </div>
+                ))}
+              </>
+            )}
+
+            {showActive && activeShown.length > 0 && <SectionLabel label="Active" count={activeShown.length} />}
             {showActive &&
-              active.filter((pact: any) => pact.is_joined_by_me !== false).map((pact) => {
+              activeShown.map((pact) => {
                 const stories = storyQueries[activeIds.indexOf(Number(pact.id))]?.data
                 const postedToday = stories ? stories.some((story: any) => story.user_id === user?.id) : undefined
                 return (
@@ -235,11 +376,9 @@ function PactsPageInner() {
               </div>
             )}
 
-            {showDone && finished.length + broken.length > 0 && filter === 'All' && (
-              <h2 className="px-2 pt-3 text-[12px] font-extrabold tracking-[0.08em] text-[var(--muted)]">DONE</h2>
-            )}
+            {showDone && doneAll.length > 0 && <SectionLabel label="Done" count={doneAll.length} muted />}
             {showDone &&
-              [...finished, ...broken].map((pact) => (
+              doneAll.map((pact) => (
                 <div key={pact.id} className="-mx-4">
                   <FeedPactCard pact={pact} />
                 </div>

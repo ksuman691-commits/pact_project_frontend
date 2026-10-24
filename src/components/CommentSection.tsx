@@ -14,6 +14,7 @@ import { parseApiDate } from '@/lib/dareCountdown';
 const INK = '#17181D';
 const MUTED = '#5A5C63';
 const NAVY = '#1F3A93';
+const LIKE_RED = '#E11D48';
 const LINE = '#DCD3C1';
 
 export interface PactComment {
@@ -160,8 +161,8 @@ function CommentRow({
         aria-pressed={liked}
         className="-mr-1 flex min-h-11 min-w-11 shrink-0 flex-col items-center justify-center gap-0.5 transition active:scale-90"
       >
-        <Heart className="size-[18px]" strokeWidth={2} fill={liked ? NAVY : 'none'} style={{ color: liked ? NAVY : MUTED }} />
-        {count > 0 && <span className="text-[12px] font-extrabold" style={{ color: liked ? NAVY : MUTED }}>{count}</span>}
+        <Heart className="size-[18px]" strokeWidth={2} fill={liked ? LIKE_RED : 'none'} style={{ color: liked ? LIKE_RED : MUTED }} />
+        {count > 0 && <span className="text-[12px] font-extrabold" style={{ color: liked ? LIKE_RED : MUTED }}>{count}</span>}
       </button>
     </div>
   );
