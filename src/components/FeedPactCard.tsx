@@ -513,7 +513,12 @@ export default function FeedPactCard({
   const postedAt = formatPostedAt(activeProof?.uploadedAt);
   // No photo on the pact, but someone may have posted a video moment today.
   // Show the newest one as the card's media instead of an empty strip.
-  const todayStories = usePactStoriesToday(Number(pact.id), tiles.length === 0 && !hideHeroAndTitle);
+  const todayStories = usePactStoriesToday(
+    Number(pact.id),
+    // The server answers 403 for people outside the pact and its circle, so
+    // don't ask. A missing flag (older server) keeps the old behaviour.
+    tiles.length === 0 && !hideHeroAndTitle && pact.can_view_moments !== false,
+  );
   const momentStory =
     tiles.length === 0 && Array.isArray(todayStories.data) && todayStories.data.length > 0
       ? todayStories.data[todayStories.data.length - 1]
