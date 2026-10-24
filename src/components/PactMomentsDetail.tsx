@@ -4,18 +4,18 @@ import Image from 'next/image'
 import AutoPlayVideo from '@/components/media/AutoPlayVideo'
 import { cleanTitle } from '@/lib/titleCase'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Camera, Check, ChevronLeft, Globe, Heart, Image as ImageIcon, Lock, MessageCircle, Play, RotateCcw, Share, Share2, UserPlus, Users, X } from 'lucide-react'
+import { Camera, Check, ChevronLeft, Globe, Heart, Image as ImageIcon, Lock, MessageCircle, Play, RotateCcw, Share, Share2, Users, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import LockedMedia from '@/components/private/LockedMedia'
 import WatchersSheet from '@/components/private/WatchersSheet'
 import { useWatchers } from '@/hooks/usePactAccess'
 import { joinRequestService } from '@/services/api'
 import LikeButton from '@/components/LikeButton'
-import Link from 'next/link'
 import TipButton from '@/components/tips/TipButton'
 import { useMyTipSettings } from '@/hooks/useTips'
 import { useSmartBack } from '@/hooks/useSmartBack'
 import { pactLocalToday, resolvePactCompletionViewState } from '@/lib/pactCompletionState'
+import { PactAudienceLine, PactAudienceSheet, useAudience } from '@/components/pacts/PactAudience'
 import MomentViewer from '@/components/MomentViewer'
 import type { ViewerMoment } from '@/components/MomentViewer'
 import type { PactDayStripEntry } from '@/types'
@@ -40,31 +40,6 @@ type Props = {
   isJoining?: boolean
   onJoin: () => void
   onStartOwnVersion: () => void
-}
-
-function Avatar({ person, index, size = 30 }: { person: any; index: number; size?: number }) {
-  const [failed, setFailed] = useState(false)
-  const label = String(person?.full_name || person?.name || person?.username || 'M').charAt(0).toUpperCase()
-  const box = { width: size, height: size }
-  return (person?.avatar_url || person?.avatar) && !failed ? (
-    <Image
-      src={person.avatar_url || person.avatar}
-      alt=""
-      width={size}
-      height={size}
-      unoptimized
-      onError={() => setFailed(true)}
-      style={box}
-      className={`shrink-0 rounded-full border-2 border-[var(--card)] object-cover ${index ? '-ml-2' : ''}`}
-    />
-  ) : (
-    <span
-      style={{ ...box, fontSize: Math.round(size * 0.4) }}
-      className={`flex shrink-0 items-center justify-center rounded-full border-2 border-[var(--card)] bg-[var(--navy-hover)] font-extrabold text-white ${index ? '-ml-2' : ''}`}
-    >
-      {label}
-    </span>
-  )
 }
 
 function SafePhoto({ src, alt = '', className = '' }: { src: string; alt?: string; className?: string }) {
@@ -137,8 +112,6 @@ export default function PactMomentsDetail({
   const percent = total ? Math.round((completed / total) * 100) : 0
   const daysLeft = Math.max(0, total - currentDay)
   const dayLabel = presentationEnded ? 'Ended' : daysLeft === 0 ? 'Last day' : `${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} to go`
-  const visiblePeople = participants.slice(0, 3)
-  const overflow = Math.max(0, participants.length - 3)
   const recapMoments = [...moments].sort((left, right) => {
     const leftDay = left.day ?? 0
     const rightDay = right.day ?? 0
@@ -229,6 +202,8 @@ export default function PactMomentsDetail({
   const [watchersOpen, setWatchersOpen] = useState(false)
   const watchers = useWatchers(Number(pact?.id), isCreatorView && Boolean(pact?.media_locked))
   const pendingAsks = Array.isArray((watchers.data as any)?.pending) ? (watchers.data as any).pending.length : 0
+  const [audienceOpen, setAudienceOpen] = useState(false)
+  const audience = useAudience({ pact, participants, moments, currentDay, viewerId, isCreatorView, creatorName })
   const [joinAsked, setJoinAsked] = useState(false)
   useEffect(() => {
     // Notifications open the pact with ?watchers=1 so the creator lands on the asks.
@@ -272,168 +247,118 @@ export default function PactMomentsDetail({
   }
 
   return (
-    <main className="min-h-[calc(100dvh-72px)] bg-[var(--paper)] px-4 pb-3 pt-3 text-[var(--ink)]">
-      {/* pb-28: clearance for the floating BottomNav, now that this page scrolls. */}
-      <div className="mx-auto flex max-w-[420px] flex-col gap-3 pb-28">
+    <main className="flex min-h-[calc(100dvh-72px)] flex-col bg-[var(--paper)] px-4 pb-3 pt-2 text-[var(--ink)]">
+      {/* pb-24: clearance for the floating BottomNav. The media card takes whatever height is left. */}
+      <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col gap-2 pb-24">
         <div className="shrink-0">
-          <div className="flex items-center justify-between">
-            <button type="button" onClick={smartBack} aria-label="Go back" className="-ml-2 flex size-11 items-center justify-center rounded-full text-[var(--ink)]">
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+            <button type="button" onClick={smartBack} aria-label="Go back" className="-ml-2 flex size-11 shrink-0 items-center justify-center rounded-full text-[var(--ink)]">
               <ChevronLeft className="size-6" strokeWidth={2} aria-hidden="true" />
             </button>
-            {/* The action row under the media carries Tip; the header only does when that row is hidden. */}
-            {!isCreatorView && !(!presentationEnded && !lockedForMe && (hasMoments || isParticipant)) && (
-              <TipButton creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} pactId={Number(pact?.id)} tipsEnabled={typeof pact?.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined} className="!h-9 !px-3.5 !text-[13.5px]" />
-            )}
-            {isCreatorView && (
-              <button
-                type="button"
-                onClick={() => setWatchersOpen(true)}
-                className="ml-auto mr-2 inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-bold"
-                style={pact?.media_locked ? { background: '#17181D', color: '#FFFFFF' } : { border: '1px solid var(--hairline)', color: 'var(--ink)' }}
-              >
-                <Lock className="size-3.5" strokeWidth={2.4} aria-hidden="true" />
-                {pact?.media_locked ? (pact?.watch_price ? `Private · ₹${pact.watch_price}` : 'Private') : 'Make private'}
-                {pendingAsks > 0 && <span className="rounded-full px-1.5 text-[11px] font-extrabold" style={{ background: '#FFFFFF', color: '#17181D' }}>{pendingAsks}</span>}
-              </button>
-            )}
-            {showTurnOnTips && (
-              <Link href="/profile/tips" className="inline-flex h-9 items-center rounded-full px-3 text-[13px] font-bold" style={{ border: '1.5px dashed #1F3A93', color: '#1F3A93' }}>
-                Turn on tips
-              </Link>
-            )}
-          </div>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            {pact?.circle_id != null && pact?.circle_name ? (
-              <Link href={`/circles/${pact.circle_id}`} className="flex h-6 items-center gap-1 rounded-full px-2 text-[11px] font-extrabold" style={{ background: '#17181D', color: '#FFFFFF' }}>
-                <Users className="size-3" strokeWidth={2.6} aria-hidden="true" />
-                {pact.circle_name}
-              </Link>
+            {pact?.media_locked ? (
+              <span className="flex h-7 items-center gap-1.5 rounded-full pl-2 pr-2.5 text-[12px] font-extrabold" style={{ background: '#E8ECF7', color: '#1F3A93' }}>
+                <Lock className="size-[13px]" strokeWidth={2.4} aria-hidden="true" />
+                {pact?.watch_price ? `Private · ₹${pact.watch_price}` : 'Private'}
+              </span>
+            ) : pact?.circle_id != null ? (
+              <span className="flex h-7 items-center gap-1.5 rounded-full pl-2 pr-2.5 text-[12px] font-extrabold" style={{ background: '#17181D', color: '#FFFFFF' }}>
+                <Users className="size-[13px]" strokeWidth={2.4} aria-hidden="true" />
+                Circle only
+              </span>
             ) : (
-              <span className="flex h-6 items-center gap-1 rounded-full px-2 text-[11px] font-extrabold" style={{ background: '#17181D', color: '#FFFFFF' }}>
-                {pact?.visibility === 'private' ? <Heart className="size-3" strokeWidth={2.6} aria-hidden="true" /> : <Globe className="size-3" strokeWidth={2.6} aria-hidden="true" />}
+              <span className="flex h-7 items-center gap-1.5 rounded-full pl-2 pr-2.5 text-[12px] font-extrabold" style={{ background: 'var(--card)', border: '1px solid var(--hairline)', color: 'var(--ink)' }}>
+                {pact?.visibility === 'private' ? <Heart className="size-[13px]" strokeWidth={2.4} aria-hidden="true" /> : <Globe className="size-[13px]" strokeWidth={2.4} aria-hidden="true" />}
                 {pact?.visibility === 'private' ? 'Followers' : 'Public'}
               </span>
             )}
-            {pact?.media_locked && !isCreatorView && (
-              <span className="flex h-6 items-center gap-1 rounded-full px-2 text-[11px] font-extrabold" style={{ background: '#E8ECF7', color: '#1F3A93' }}>
-                <Lock className="size-3" strokeWidth={2.6} aria-hidden="true" />
-                {pact?.watch_price ? `Private · ₹${pact.watch_price}` : 'Private'}
-              </span>
-            )}
-            <span className="flex h-6 items-center rounded-full px-2 text-[11px] font-bold" style={{ background: 'var(--card)', border: '1px solid var(--hairline)', color: 'var(--ink)' }}>
+            <span className="flex h-7 items-center rounded-full px-2.5 text-[12px] font-bold" style={{ background: 'var(--card)', border: '1px solid var(--hairline)', color: 'var(--ink)' }}>
               {pact?.proof_submission_frequency === 'weekly' ? 'Every week' : 'Every day'} · {total} days
             </span>
-          </div>
-          <h1 className="mt-1.5 line-clamp-2 font-sans text-[20px] font-extrabold leading-[1.12] tracking-[-0.025em] text-[var(--ink)]">
-            {cleanTitle(pact?.title)}
-          </h1>
-          <div className="mt-1 flex items-center gap-2">
-            <Link
-              href={pact?.creator_username ? `/profile/${encodeURIComponent(pact.creator_username)}` : '#'}
-              className="flex min-w-0 flex-1 items-center gap-1.5 text-[12px]"
-              style={{ color: 'var(--muted)' }}
-            >
-              <Avatar person={{ full_name: creatorName, avatar_url: pact?.creator_avatar_url }} index={0} size={22} />
-              <span className="min-w-0 truncate">
-                Started by <span className="font-extrabold" style={{ color: 'var(--ink)' }}>{isCreatorView ? 'you' : creatorName}</span>
-                {pact?.start_date ? ` · ${new Date(`${pact.start_date}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : ''}
-                {pact?.end_date ? ` – ${new Date(`${String(pact.end_date).slice(0, 10)}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : ''}
-              </span>
-            </Link>
-            {!presentationEnded && (
-              <div className="flex shrink-0 items-center">
-                {visiblePeople.map((person, index) => (
-                  <Avatar key={person.id || person.user_id || index} person={person} index={index} size={26} />
-                ))}
-                {overflow > 0 && (
-                  <span className="-ml-2 flex size-[26px] items-center justify-center rounded-full border-2 border-[var(--card)] bg-[var(--card-muted)] text-[10px] font-bold">
-                    +{overflow}
-                  </span>
-                )}
-                <button type="button" onClick={onInvite} aria-label="Invite someone" className="ml-1 flex size-8 items-center justify-center rounded-full border border-[var(--hairline)] bg-[var(--card)]">
-                  <UserPlus className="size-4" />
-                </button>
-              </div>
+            {/* The action row under the media carries Tip; the header only does when that row is hidden. */}
+            {!isCreatorView && !(!presentationEnded && !lockedForMe && (hasMoments || isParticipant)) && (
+              <TipButton creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} pactId={Number(pact?.id)} tipsEnabled={typeof pact?.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined} className="ml-auto !h-8 !px-3 !text-[13px]" />
             )}
           </div>
+          <h1 className="mt-0.5 line-clamp-2 font-sans text-[19px] font-extrabold leading-[1.15] tracking-[-0.025em] text-[var(--ink)]">
+            {cleanTitle(pact?.title)}
+          </h1>
         </div>
 
-        {showModernStrip ? (
-          <div ref={stripRef} className="flex shrink-0 gap-1.5 overflow-x-auto py-1 scrollbar-hide" aria-label="Pact day strip">
-            {strip.map((entry) => {
-              const isToday = !visualDayEnded && entry.date === localToday
-              const isPast = entry.date < localToday
-              const isSelected = effectiveDay === entry.day
-              const isMissed = !entry.has_moment && isPast
-              const isFuture = !entry.has_moment && !isPast && !isToday
-              const videoUrl = entry.video_url || undefined
-              return (
-                <button
-                  key={entry.day}
-                  ref={isSelected ? selectedTileRef : undefined}
-                  type="button"
-                  aria-label={`Day ${entry.day}${entry.has_moment ? `, ${(momentsPerDay.get(entry.day) || 0) > 1 ? `${momentsPerDay.get(entry.day)} moments` : entry.type === 'video' ? 'video' : 'photo'}` : isToday ? ', today' : isMissed ? ', no post' : ', upcoming'}`}
-                  aria-pressed={isSelected}
-                  onClick={() => selectDay(entry)}
-                  disabled={!entry.has_moment}
-                  className={`relative h-[54px] w-11 shrink-0 overflow-hidden rounded-[8px] transition-transform active:scale-95 ${entry.has_moment ? 'cursor-pointer bg-[var(--navy)]' : isMissed ? 'border border-[var(--hairline)] bg-[var(--card)]' : 'bg-[var(--card-muted)]'} ${isToday && !entry.has_moment ? 'ring-2 ring-[var(--navy)] ring-offset-1' : ''} ${isFuture ? 'border border-dashed border-[var(--seat-border)]' : ''} ${isSelected && entry.has_moment ? 'ring-2 ring-[var(--navy)] ring-offset-1' : ''}`}
-                >
-                  {entry.has_moment && entry.type === 'photo' && entry.thumbnail_url ? (
-                    <SafePhoto src={entry.thumbnail_url!} className="size-full object-cover" />
-                  ) : entry.has_moment && entry.type === 'video' && videoUrl ? (
-                    <video src={`${videoUrl}#t=0.1`} muted playsInline preload="auto" className="size-full object-cover" />
-                  ) : isMissed ? (
-                    <span className="flex size-full items-center justify-center pb-3 text-center text-[9.5px] font-semibold leading-tight text-[var(--muted)]">No post</span>
-                  ) : null}
-                  {(momentsPerDay.get(entry.day) || 0) > 1 && (
-                    <span className="absolute right-0.5 top-0.5 z-10 flex h-4 min-w-4 items-center justify-center rounded-full bg-black/60 px-1 text-[9.5px] font-extrabold text-white" aria-hidden="true">
-                      {momentsPerDay.get(entry.day)}
+        {(() => {
+          const dayCount = !presentationEnded ? (
+            <div className="shrink-0 text-right leading-[1.25]">
+              <h2 className="flex items-center justify-end gap-1 whitespace-nowrap text-[14px] font-extrabold">
+                {isParticipant && !isEnded && postedToday && <Check className="size-3.5" strokeWidth={3} style={{ color: '#22663F' }} aria-label={`Day ${currentDay} done`} />}
+                Day {day} of {total}
+              </h2>
+              <p className="whitespace-nowrap text-[11.5px] font-semibold text-[var(--muted)]">
+                {isMoments75 ? `${completed} of ${requiredDays} needed` : dayLabel}
+              </p>
+            </div>
+          ) : null
+          return showModernStrip ? (
+            <div className="flex shrink-0 items-center gap-2">
+              <div ref={stripRef} className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-0.5 py-1 scrollbar-hide" aria-label="Pact day strip">
+                {strip.map((entry) => {
+                  const isToday = !visualDayEnded && entry.date === localToday
+                  const isPast = entry.date < localToday
+                  const isSelected = effectiveDay === entry.day
+                  const isMissed = !entry.has_moment && isPast
+                  const isFuture = !entry.has_moment && !isPast && !isToday
+                  const videoUrl = entry.video_url || undefined
+                  return (
+                    <button
+                      key={entry.day}
+                      ref={isSelected ? selectedTileRef : undefined}
+                      type="button"
+                      aria-label={`Day ${entry.day}${entry.has_moment ? `, ${(momentsPerDay.get(entry.day) || 0) > 1 ? `${momentsPerDay.get(entry.day)} moments` : entry.type === 'video' ? 'video' : 'photo'}` : isToday ? ', today' : isMissed ? ', no post' : ', upcoming'}`}
+                      aria-pressed={isSelected}
+                      onClick={() => selectDay(entry)}
+                      disabled={!entry.has_moment}
+                      className={`relative size-[34px] shrink-0 overflow-hidden rounded-[9px] transition-transform active:scale-95 ${entry.has_moment ? 'cursor-pointer bg-[var(--navy)]' : isMissed ? 'border border-[var(--hairline)] bg-[var(--card)]' : 'bg-[var(--card-muted)]'} ${isToday && !entry.has_moment ? 'ring-2 ring-[var(--navy)]' : ''} ${isFuture ? 'border border-dashed border-[var(--seat-border)]' : ''} ${isSelected && entry.has_moment ? 'ring-2 ring-[var(--navy)]' : ''}`}
+                    >
+                      {entry.has_moment && entry.type === 'photo' && entry.thumbnail_url ? (
+                        <SafePhoto src={entry.thumbnail_url!} className="size-full object-cover" />
+                      ) : entry.has_moment && entry.type === 'video' && videoUrl ? (
+                        <video src={`${videoUrl}#t=0.1`} muted playsInline preload="auto" className="size-full object-cover" />
+                      ) : null}
+                      {(momentsPerDay.get(entry.day) || 0) > 1 && (
+                        <span className="absolute right-0 top-0 z-10 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-black/60 px-0.5 text-[8.5px] font-extrabold text-white" aria-hidden="true">
+                          {momentsPerDay.get(entry.day)}
+                        </span>
+                      )}
+                      <span className={`absolute inset-0 z-10 flex items-center justify-center text-[9px] font-extrabold ${entry.has_moment ? 'text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.7)]' : 'text-[var(--muted)]'}`}>D{entry.day}</span>
+                    </button>
+                  )
+                })}
+              </div>
+              {dayCount}
+            </div>
+          ) : (
+            <div className="shrink-0">
+              <div className="flex gap-[5px]" aria-label={`${total} pact days`}>
+                {Array.from({ length: total }).map((_, index) => {
+                  const isDone = index < completed
+                  const isToday = !visualDayEnded && index === currentDay - 1
+                  return (
+                    <span key={index} className="flex h-1 flex-1 overflow-hidden rounded-[2px] bg-[var(--hairline)]">
+                      {isDone ? (
+                        <span className="h-full w-full bg-[var(--navy)]" />
+                      ) : isToday ? (
+                        <span className="h-full w-1/2 bg-[var(--navy)]" />
+                      ) : !isEnded && index < currentDay - 1 ? (
+                        <span className="h-full w-full border border-dashed border-[var(--missed-border)] bg-transparent" />
+                      ) : null}
                     </span>
-                  )}
-                  <span className={`absolute inset-x-0 bottom-1 z-10 text-center text-[9px] font-extrabold leading-3 ${entry.has_moment ? 'text-white' : 'text-[var(--muted)]'}`}>DAY {entry.day}</span>
-                </button>
-              )
-            })}
-          </div>
-        ) : (
-          <div className="flex gap-[5px]" aria-label={`${total} pact days`}>
-            {Array.from({ length: total }).map((_, index) => {
-              const isDone = index < completed
-              const isToday = !visualDayEnded && index === currentDay - 1
-              return (
-                <span key={index} className="flex h-1 flex-1 overflow-hidden rounded-[2px] bg-[var(--hairline)]">
-                  {isDone ? (
-                    <span className="h-full w-full bg-[var(--navy)]" />
-                  ) : isToday ? (
-                    <span className="h-full w-1/2 bg-[var(--navy)]" />
-                  ) : !isEnded && index < currentDay - 1 ? (
-                    <span className="h-full w-full border border-dashed border-[var(--missed-border)] bg-transparent" />
-                  ) : null}
-                </span>
-              )
-            })}
-          </div>
-        )}
+                  )
+                })}
+              </div>
+              {dayCount && <div className="mt-2 flex justify-end">{dayCount}</div>}
+            </div>
+          )
+        })()}
 
-        {!presentationEnded && <header className="flex shrink-0 items-center gap-2.5">
-          <div className="relative flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--navy)]">
-            <span className="flex size-[29px] items-center justify-center rounded-full bg-[var(--card)] text-[9.5px] font-extrabold">
-              {isMoments75 ? `${completed}/${requiredDays}` : `${percent}%`}
-            </span>
-          </div>
-          <div className="min-w-0 flex-1">
-            <h2 className="whitespace-nowrap text-[15px] font-extrabold leading-5">Day {day} of {total}</h2>
-            <p className="whitespace-nowrap text-[12px] font-semibold leading-4 text-[var(--muted)]">
-              {isMoments75 ? `${completed} of ${requiredDays} days needed to finish` : dayLabel}
-            </p>
-          </div>
-          {isParticipant && !isEnded && postedToday && (
-            <span className="flex shrink-0 items-center gap-1 text-[12.5px] font-extrabold" style={{ color: '#22663F' }}>
-              <Check className="size-4" strokeWidth={2.6} aria-hidden="true" />
-              Day {currentDay} done
-            </span>
-          )}
-        </header>}
+        <PactAudienceLine pact={pact} audience={audience} ended={presentationEnded || isEnded} isCreatorView={isCreatorView} creatorName={creatorName} pendingAsks={pendingAsks} canViewMoments={!lockedForMe && pact?.can_view_moments !== false} onOpen={() => setAudienceOpen(true)} />
 
         <section
           onTouchStart={(event) => {
@@ -459,7 +384,7 @@ export default function PactMomentsDetail({
             if (Date.now() - lastSwipeAt.current < 450) return
             openViewer()
           }}
-          className={`relative -mx-2.5 aspect-[4/5] cursor-pointer overflow-hidden rounded-[22px] ${!hasMoments && !presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : 'bg-[var(--navy)]'}`}
+          className={`relative -mx-1.5 min-h-[320px] flex-1 cursor-pointer overflow-hidden rounded-[22px] ${!hasMoments && !presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : 'bg-[var(--navy)]'}`}
           aria-label="Moments"
         >
           {lockedForMe && (
@@ -599,7 +524,7 @@ export default function PactMomentsDetail({
         </section>
 
         {!presentationEnded && !lockedForMe && (hasMoments || isParticipant) && (
-          <div className="-mx-1 -mt-1.5 flex items-center gap-1">
+          <div className="-mx-1 -mt-1 flex shrink-0 items-center gap-1">
             <LikeButton variant="row" pactId={Number(pact.id)} count={Number(pact?.like_count ?? 0)} liked={Boolean(pact?.is_liked_by_me)} />
             <button type="button" onClick={() => onComment(false)} aria-label={`Comments, ${Number(pact?.comment_count ?? 0)}`} className="flex h-11 items-center gap-1.5 px-2 text-[14px] font-extrabold text-[var(--ink)] transition active:scale-95">
               <MessageCircle className="h-[23px] w-[23px]" strokeWidth={2} />
@@ -673,6 +598,36 @@ export default function PactMomentsDetail({
           </div>
         )}
       </div>
+      <PactAudienceSheet
+        open={audienceOpen}
+        onClose={() => setAudienceOpen(false)}
+        pact={pact}
+        audience={audience}
+        ended={presentationEnded || isEnded}
+        isCreatorView={isCreatorView}
+        creatorName={creatorName}
+        canViewMoments={!lockedForMe && pact?.can_view_moments !== false}
+        showTurnOnTips={showTurnOnTips}
+        isParticipant={isParticipant}
+        currentDay={currentDay}
+        pendingAsks={pendingAsks}
+        onWatch={(momentId) => {
+          const target = moments.find((moment) => moment.id === momentId)
+          setAudienceOpen(false)
+          if (!target) return
+          setSelectedDay(target.day ?? null)
+          setSelectedMomentId(target.id)
+          const index = displayMoments.findIndex((moment) => moment.id === target.id)
+          if (index >= 0) setActiveIndex(index)
+        }}
+        onPost={() => { setAudienceOpen(false); onAddMoment() }}
+        onInvite={() => { setAudienceOpen(false); onInvite() }}
+        onPrivacy={() => {
+          setAudienceOpen(false)
+          // Let the first sheet finish leaving history before the next one pushes its own entry.
+          window.setTimeout(() => setWatchersOpen(true), 250)
+        }}
+      />
       {isCreatorView && (
         <WatchersSheet open={watchersOpen} onClose={() => setWatchersOpen(false)} pactId={Number(pact?.id)} mediaLocked={Boolean(pact?.media_locked)} watchPrice={pact?.watch_price ?? null} watchAutoApprove={Boolean(pact?.watch_auto_approve)} inCircle={pact?.circle_id != null} />
       )}
