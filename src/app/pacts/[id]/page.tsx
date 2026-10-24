@@ -12,6 +12,7 @@ import CommentsBottomSheet from '@/components/CommentsBottomSheet';
 import { usePact, usePactProofs } from '@/hooks/usePacts';
 import { useAuthStore } from '@/store/auth';
 import { pactService } from '@/services/api';
+import { markWatchingSeen } from '@/lib/api/access';
 import { getPactProgress } from '@/components/PactProgressRing';
 import { resolvePactCompletionViewState } from '@/lib/pactCompletionState';
 
@@ -78,6 +79,14 @@ export default function PactDetailPage() {
         .sort((left: any, right: any) => new Date(right.uploadedAt || 0).getTime() - new Date(left.uploadedAt || 0).getTime()),
     [momentsData?.data],
   );
+  // A paid watcher opening the pact clears its "new" count.
+  const watchedByMe = pact?.media_access === 'approved';
+  useEffect(() => {
+    if (!watchedByMe || !pactId) return;
+    markWatchingSeen(pactId)
+      .then(() => queryClient.invalidateQueries({ queryKey: ['my-watching'] }))
+      .catch(() => {});
+  }, [watchedByMe, pactId, queryClient]);
   const participants = useMemo(() => pact?.participants || [], [pact?.participants]);
   const progress = pact ? getPactProgress(pact, moments) : { completed: 0, total: 7, missed: 0 };
   const completionView = pact ? resolvePactCompletionViewState(pact, new Date(), progress.completed) : null;

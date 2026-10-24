@@ -526,9 +526,15 @@ export default function FeedPactCard({
     tiles.length === 0 && Array.isArray(todayStories.data) && todayStories.data.length > 0
       ? todayStories.data[todayStories.data.length - 1]
       : null;
-  const headerSub = momentStory
-    ? [audienceLabel, postedAgo(momentStory.created_at)].filter(Boolean).join(' · ')
-    : [audienceLabel, postedAt].filter(Boolean).join(' · ') || pactCategoryLabel;
+  // Set on pacts the viewer paid to watch (from /api/my-watching).
+  const watch: { new_moments?: number; latest_moment_at?: string | null } | null =
+    pact.watch && typeof pact.watch === 'object' ? pact.watch : pact.paid_watching ? {} : null;
+  const watchNew = Number(watch?.new_moments ?? 0);
+  const headerSub = watch && watchNew > 0 && watch.latest_moment_at
+    ? `New moment · ${postedAgo(watch.latest_moment_at) ?? 'just now'}`
+    : momentStory
+      ? [audienceLabel, postedAgo(momentStory.created_at)].filter(Boolean).join(' · ')
+      : [audienceLabel, postedAt].filter(Boolean).join(' · ') || pactCategoryLabel;
   const dayNo = progressInfo ? Math.min(progressInfo.totalDays, Math.max(1, progressInfo.elapsedDays)) : 0;
   // The badge follows the moment on screen: swipe to a Day 1 clip and it says Day 1.
   const slideDay = tiles.length > 0 && activeProof?.day ? Number(activeProof.day) : null;
@@ -790,7 +796,7 @@ export default function FeedPactCard({
 
   const mediaCaption = (
     <div className="pointer-events-none absolute inset-x-3.5 bottom-3.5" style={{ color: '#fff' }}>
-      {(badgeText || privateTag) && (
+      {(badgeText || privateTag || watch) && (
         <div className="flex flex-wrap items-center gap-1.5">
           {badgeText && (
             <span className="rounded-[9px] px-2.5 py-[3px] text-[11.5px] font-extrabold" style={{ color: '#fff', backgroundColor: 'rgba(255,255,255,0.24)' }}>
@@ -798,11 +804,18 @@ export default function FeedPactCard({
               {badgeText}
             </span>
           )}
-          {privateTag && (
+          {watch ? (
             <span className="flex items-center gap-1 rounded-[9px] bg-white px-2.5 py-[3px] text-[11.5px] font-extrabold text-[var(--navy)]">
-              <Lock className="size-3" strokeWidth={2.6} aria-hidden="true" />
-              {privateTag}
+              <Check className="size-3" strokeWidth={3} aria-hidden="true" />
+              Watching
             </span>
+          ) : (
+            privateTag && (
+              <span className="flex items-center gap-1 rounded-[9px] bg-white px-2.5 py-[3px] text-[11.5px] font-extrabold text-[var(--navy)]">
+                <Lock className="size-3" strokeWidth={2.6} aria-hidden="true" />
+                {privateTag}
+              </span>
+            )
           )}
         </div>
       )}
@@ -837,10 +850,10 @@ export default function FeedPactCard({
         onClick={() => void handleLikeTap()}
         aria-label={liked ? 'unlike this pact' : 'like this pact'}
         aria-pressed={liked}
-        className={`flex h-11 items-center gap-1.5 px-2 text-[14px] font-extrabold transition ${liked ? 'text-[var(--navy)]' : 'text-[var(--ink)]'} ${isLikeBouncing ? 'scale-110' : 'scale-100'}`}
+        className={`flex h-11 items-center gap-1.5 px-2 text-[14px] font-extrabold transition ${liked ? 'text-[var(--like)]' : 'text-[var(--ink)]'} ${isLikeBouncing ? 'scale-110' : 'scale-100'}`}
         style={{ transitionDuration: '150ms' }}
       >
-        <Heart className="h-6 w-6" strokeWidth={2} fill={liked ? 'var(--navy)' : 'none'} />
+        <Heart className="h-6 w-6" strokeWidth={2} fill={liked ? 'var(--like)' : 'none'} />
         {likeLabelCount}
       </button>
       <button type="button" onClick={() => setCommentSheetOpen(true)} aria-label="open chat" className="flex h-11 items-center gap-1.5 px-2 text-[14px] font-extrabold text-[var(--ink)] transition active:scale-95">
@@ -851,6 +864,12 @@ export default function FeedPactCard({
         <Share className="h-[21px] w-[21px]" strokeWidth={2} />
       </button>
       <div className="ml-auto flex items-center gap-1.5">
+      {watch && watchNew > 0 && (
+        <span className="flex h-9 items-center gap-1.5 rounded-full bg-[var(--navy)]/10 px-3 text-[13px] font-extrabold text-[var(--navy)]">
+          <span className="size-2 rounded-full bg-[var(--navy)]" aria-hidden="true" />
+          {watchNew} new
+        </span>
+      )}
       {!isCreator && (
         <TipButton
           variant="soft"

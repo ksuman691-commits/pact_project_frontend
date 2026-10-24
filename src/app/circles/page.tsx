@@ -2,9 +2,11 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Search, SlidersHorizontal, Plus, Sparkles } from 'lucide-react'
 import { useCircles } from '@/hooks/useCircles'
 import PendingCircleInvites from '@/components/PendingCircleInvites'
+import RefreshButton from '@/components/RefreshButton'
 import ConnectSimilarFolksModal from '@/components/ConnectSimilarFolksModal'
 import OrbitCircleCard from '@/components/circles/OrbitCircleCard'
 import { readCircleActivity } from '@/lib/circleActivity'
@@ -24,6 +26,8 @@ export default function CirclesPage() {
   const [connectModalOpen, setConnectModalOpen] = useState(false)
   const { user, isInitialized } = useRequireAuth()
   const circlesQuery = useCircles(isInitialized && !!user)
+  const queryClient = useQueryClient()
+  const [invitesKey, setInvitesKey] = useState(0)
   const circles = (circlesQuery.data || []) as any[]
   const isLoading = circlesQuery.isLoading
   const [search, setSearch] = useState('')
@@ -74,13 +78,22 @@ export default function CirclesPage() {
   return (
     <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
       <div className="mx-auto max-w-2xl">
-        <header className="flex flex-col gap-2 px-6 pb-1.5 pt-9">
-          <h1 className="text-[34px] font-extrabold leading-none tracking-[-0.04em]">Your Circles</h1>
-          {summary && <p className="text-[14px] text-[var(--muted)]">{summary}</p>}
+        <header className="flex items-start justify-between gap-3 px-6 pb-1.5 pt-9">
+          <div className="flex min-w-0 flex-col gap-2">
+            <h1 className="text-[34px] font-extrabold leading-none tracking-[-0.04em]">Your Circles</h1>
+            {summary && <p className="text-[14px] text-[var(--muted)]">{summary}</p>}
+          </div>
+          <RefreshButton
+            label="Refresh circles"
+            onRefresh={async () => {
+              setInvitesKey((key) => key + 1)
+              await Promise.all([circlesQuery.refetch(), queryClient.invalidateQueries({ queryKey: ['circles'] })])
+            }}
+          />
         </header>
 
         <div className="mt-4">
-          <PendingCircleInvites />
+          <PendingCircleInvites key={invitesKey} />
         </div>
 
         <div className="flex flex-wrap gap-2.5 px-6 pt-4">

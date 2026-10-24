@@ -1,4 +1,4 @@
-import api from '@/services/api'
+import api, { mapPact } from '@/services/api'
 
 export type MediaAccess = 'open' | 'creator' | 'member' | 'approved' | 'circle' | 'pending' | 'denied' | 'revoked' | 'none'
 
@@ -67,4 +67,27 @@ export interface CircleJoinAsk {
 export async function getCircleRequests() {
   const response = await api.get('/api/requests/circles')
   return response.data as { pending: CircleJoinAsk[] }
+}
+
+export interface WatchRequest {
+  pact_id: number
+  pact_title: string
+  status: 'pending' | 'denied'
+  creator: AccessPerson | null
+  created_at: string
+  resolved_at: string | null
+}
+
+/** Pacts the viewer paid to watch (running and ended) plus asks still open or turned down. */
+export async function getMyWatching() {
+  const response = await api.get('/api/my-watching', { timeout: 12000 })
+  return {
+    watching: ((response.data?.watching as any[]) || []).map(mapPact),
+    requests: ((response.data?.requests as WatchRequest[]) || []),
+  }
+}
+
+/** The watcher opened the pact: moments so far stop counting as new. */
+export async function markWatchingSeen(pactId: number) {
+  await api.post(`/api/pacts/${pactId}/access/seen`)
 }

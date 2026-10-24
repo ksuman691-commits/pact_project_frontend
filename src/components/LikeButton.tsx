@@ -62,9 +62,9 @@ export default function LikeButton({ pactId, count = 0, liked: initialLiked = fa
         onClick={() => void toggle()}
         aria-label={liked ? 'Unlike this pact' : 'Like this pact'}
         aria-pressed={liked}
-        className={`flex h-11 items-center gap-1.5 px-2 text-[14px] font-extrabold transition active:scale-95 ${liked ? 'text-[var(--navy)]' : 'text-[var(--ink)]'} ${className}`}
+        className={`flex h-11 items-center gap-1.5 px-2 text-[14px] font-extrabold transition active:scale-95 ${liked ? 'text-[var(--like)]' : 'text-[var(--ink)]'} ${className}`}
       >
-        <Heart className="h-6 w-6" strokeWidth={2} fill={liked ? 'var(--navy)' : 'none'} />
+        <Heart className="h-6 w-6" strokeWidth={2} fill={liked ? 'var(--like)' : 'none'} />
         {likeCount > 0 && likeCount}
       </button>
     )
@@ -76,9 +76,9 @@ export default function LikeButton({ pactId, count = 0, liked: initialLiked = fa
       onClick={() => void toggle()}
       aria-label={liked ? 'Unlike this pact' : 'Like this pact'}
       aria-pressed={liked}
-      className={`flex size-12 flex-col items-center justify-center rounded-full bg-[var(--card)] text-[var(--navy)] shadow-lg transition active:scale-95 ${className}`}
+      className={`flex size-12 flex-col items-center justify-center rounded-full bg-[var(--card)] text-[var(--like)] shadow-lg transition active:scale-95 ${className}`}
     >
-      <Heart className="size-[18px]" strokeWidth={1.9} fill={liked ? 'var(--navy)' : 'none'} />
+      <Heart className="size-[18px]" strokeWidth={1.9} fill={liked ? 'var(--like)' : 'none'} />
       <span className="text-[11px] font-bold leading-none text-[var(--ink)]">{likeCount}</span>
     </button>
   )
