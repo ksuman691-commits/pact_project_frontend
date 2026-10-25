@@ -880,6 +880,7 @@ export default function FeedPactCard({
           count={Number(pact.tip_count ?? 0)}
           pactId={Number(pact.id)}
           tipsEnabled={typeof pact.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined}
+          locked={Boolean(pact.media_locked)}
         />
       )}
         {showAddPill && (

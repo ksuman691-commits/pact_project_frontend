@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Check, Clock, Copy, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { CircleQR } from '@/components/CircleQR'
@@ -9,7 +9,9 @@ import { useBackToClose } from '@/hooks/useBackToClose'
 import { buildUpiUri, isLikelyMobile } from '@/lib/upi'
 import { claimTip, startTip, type PublicTipInfo, type TipRecord } from '@/lib/api/tips'
 
-const AMOUNTS: (number | null)[] = [null, 21, 51, 101]
+// A tip is a small thank-you. The server rejects anything above ₹9.
+const AMOUNTS = [1, 5, 9]
+const DEFAULT_TIP = 5
 const INK = '#0F1014'
 const MUTED = '#5F6168'
 const NAVY = '#1F3A93'
@@ -38,7 +40,10 @@ interface TipSheetProps {
  * app. Only confirmed tips count anywhere public.
  */
 export default function TipSheet({ open, onClose, tip, context, pactId, creatorName, creatorAvatarUrl, onClaimed, fixedAmount = null }: TipSheetProps) {
-  const [amount, setAmount] = useState<number | null>(fixedAmount ?? 51)
+  const [amount, setAmount] = useState<number | null>(fixedAmount ?? DEFAULT_TIP)
+  const [blocked, setBlocked] = useState<string | null>(null)
+  const amountRef = useRef<number | null>(fixedAmount ?? DEFAULT_TIP)
+  amountRef.current = amount
   const [stage, setStage] = useState<Stage>('pick')
   const [record, setRecord] = useState<TipRecord | null>(null)
   const [busy, setBusy] = useState(false)
@@ -62,15 +67,20 @@ export default function TipSheet({ open, onClose, tip, context, pactId, creatorN
     if (!open) {
       setStage('pick')
       setRecord(null)
+      setBlocked(null)
       return
     }
     let cancelled = false
-    startTip({ creator_id: tip.user_id, pact_id: pactId ?? null, amount: fixedAmount ?? null })
+    startTip({ creator_id: tip.user_id, pact_id: pactId ?? null, amount: fixedAmount ?? amountRef.current })
       .then((created) => {
         if (!cancelled) setRecord(created)
       })
-      .catch(() => {
-        // The QR still works without a code; the creator just can't match it as easily.
+      .catch((error: any) => {
+        // Already tipped today: say so instead of showing a QR that would not be counted.
+        if (!cancelled && error?.response?.status === 409) {
+          setBlocked(error?.response?.data?.detail || "You've already sent a tip today. Come back tomorrow.")
+        }
+        // Any other failure: the QR still works without a code; the creator just can't match it as easily.
       })
     return () => {
       cancelled = true
@@ -129,34 +139,43 @@ export default function TipSheet({ open, onClose, tip, context, pactId, creatorN
           </span>
           <div className="min-w-0 flex-1">
             <div className="text-[22px] font-extrabold leading-tight tracking-[-0.02em]" style={{ color: INK }}>{fixedAmount ? `₹${fixedAmount} to watch` : `Tip ${firstName}`}</div>
-            <div className="mt-0.5 truncate text-[13.5px]" style={{ color: MUTED }}>{context ? `for ${context}` : `Straight to ${firstName}'s UPI`}</div>
+            <div className="mt-0.5 text-[13.5px] leading-snug" style={{ color: MUTED }}>{fixedAmount ? (context ? `for ${context}` : `Straight to ${firstName}'s UPI`) : `A tip is a gift. It goes straight to ${firstName} and unlocks nothing.`}</div>
           </div>
           <button type="button" onClick={onClose} aria-label="Close" className="-mr-2 -mt-1 flex size-11 items-center justify-center rounded-full" style={{ color: INK }}>
             <X className="size-5" />
           </button>
         </div>
 
-        {stage === 'pick' && (
+        {stage === 'pick' && blocked && (
+          <>
+            <div className="mt-5 rounded-[16px] px-4 py-3 text-[14px] leading-snug" style={{ background: '#F5F7FD', color: INK }}>{blocked}</div>
+            <button type="button" onClick={onClose} className="mt-4 h-14 w-full rounded-full text-[16px] font-extrabold" style={{ background: '#17181D', color: '#FFFFFF' }}>
+              Done
+            </button>
+          </>
+        )}
+
+        {stage === 'pick' && !blocked && (
           <>
             {fixedAmount ? (
               <div className="mt-4 rounded-[16px] px-4 py-3 text-[13.5px] leading-snug" style={{ background: '#F5F7FD', color: MUTED }}>
                 Pay <span className="font-extrabold" style={{ color: INK }}>₹{fixedAmount}</span> to {firstName}, then tap <span className="font-extrabold" style={{ color: INK }}>I sent it</span>. {firstName} lets you in once it arrives.
               </div>
             ) : (
-            <div className="mt-4 grid grid-cols-4 gap-2" role="radiogroup" aria-label="Tip amount">
+            <div className="mt-4 grid grid-cols-3 gap-2.5" role="radiogroup" aria-label="Tip amount">
               {AMOUNTS.map((value) => {
                 const active = amount === value
                 return (
                   <button
-                    key={value ?? 'any'}
+                    key={value}
                     type="button"
                     role="radio"
                     aria-checked={active}
                     onClick={() => setAmount(value)}
-                    className="h-11 rounded-full text-[15px] font-extrabold"
-                    style={active ? { background: NAVY, color: '#FFFFFF' } : { background: '#F2F2F4', color: INK }}
+                    className="h-14 rounded-[16px] text-[20px] font-extrabold"
+                    style={active ? { background: '#FFFFFF', color: NAVY, border: `2px solid ${NAVY}` } : { background: '#F2F2F4', color: INK, border: '2px solid transparent' }}
                   >
-                    {value == null ? 'Any' : `₹${value}`}
+                    ₹{value}
                   </button>
                 )
               })}
@@ -204,7 +223,7 @@ export default function TipSheet({ open, onClose, tip, context, pactId, creatorN
               </button>
             )}
             <div className="mt-1 text-center text-[12px] leading-snug" style={{ color: MUTED }}>
-              Goes straight to {firstName}&apos;s UPI. CirclePact never sees the money.{fixedAmount ? ' Sort out any problem with the payment directly with ' + firstName + '.' : ' A tip is a gift and doesn’t change anything in the pact.'}
+              Goes straight to {firstName}&apos;s UPI. CirclePact never sees the money.{fixedAmount ? ' Sort out any problem with the payment directly with ' + firstName + '.' : ' One tip a day per person. Tips are never refunded.'}
             </div>
           </>
         )}
