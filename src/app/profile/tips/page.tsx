@@ -9,10 +9,11 @@ import { useMyTipSettings, useSaveMyTipSettings } from '@/hooks/useTips'
 import { buildUpiUri, isValidUpiId, parseUpiUri, readQrFromImage } from '@/lib/upi'
 import { useAuthStore } from '@/store/auth'
 
-const INK = '#0F1014'
-const MUTED = '#5F6168'
-const NAVY = '#1F3A93'
-const LINE = '#E6E6E9'
+const INK = 'var(--ink)'
+const MUTED = 'var(--muted)'
+const NAVY = 'var(--navy)'
+const LINE = 'var(--hairline)'
+const CARD = 'var(--card)'
 
 export default function TipSettingsPage() {
   const goBack = useSmartBack('/profile')
@@ -76,8 +77,9 @@ export default function TipSettingsPage() {
   if (!user) return null
 
   return (
-    <main className="min-h-screen" style={{ background: '#FFFFFF', color: INK }}>
-      <div className="mx-auto max-w-md px-4 pb-10">
+    <main className="min-h-screen" style={{ background: 'var(--paper)', color: INK }}>
+      {/* Bottom padding clears the fixed nav bar, so Save is never underneath it. */}
+      <div className="mx-auto max-w-md px-4 pb-[140px]">
         <header className="flex h-14 items-center">
           <button type="button" onClick={goBack} aria-label="Go back" className="-ml-2 flex size-11 items-center justify-center rounded-full" style={{ color: INK }}>
             <ChevronLeft className="size-6" />
@@ -96,7 +98,7 @@ export default function TipSettingsPage() {
           onClick={() => fileRef.current?.click()}
           disabled={reading}
           className="mt-6 flex w-full items-center gap-3 rounded-[18px] px-4 py-4 text-left disabled:opacity-60"
-          style={{ border: `1.5px dashed ${NAVY}`, background: '#F5F7FD' }}
+          style={{ border: `1.5px dashed ${NAVY}`, background: CARD }}
         >
           <span className="flex size-11 shrink-0 items-center justify-center rounded-full" style={{ background: NAVY, color: '#FFFFFF' }}>
             <QrCode className="size-5" />
@@ -126,7 +128,7 @@ export default function TipSettingsPage() {
             inputMode="email"
             disabled={isLoading}
             className="mt-2 h-12 w-full rounded-[14px] px-4 text-[16px] outline-none"
-            style={{ border: `1.5px solid ${showError ? '#C0392B' : LINE}`, color: INK, background: '#FFFFFF' }}
+            style={{ border: `1.5px solid ${showError ? '#C0392B' : LINE}`, color: INK, background: CARD }}
           />
           {showError && <span className="mt-1 block text-[13px]" style={{ color: '#C0392B' }}>That doesn&apos;t look like a UPI ID. It should look like name@bank.</span>}
         </label>
@@ -139,11 +141,11 @@ export default function TipSettingsPage() {
             maxLength={100}
             placeholder="Your name"
             className="mt-2 h-12 w-full rounded-[14px] px-4 text-[16px] outline-none"
-            style={{ border: `1.5px solid ${LINE}`, color: INK, background: '#FFFFFF' }}
+            style={{ border: `1.5px solid ${LINE}`, color: INK, background: CARD }}
           />
         </label>
 
-        <div className="mt-5 flex items-center gap-3 rounded-[18px] px-4 py-3" style={{ border: `1px solid ${LINE}` }}>
+        <div className="mt-5 flex items-center gap-3 rounded-[18px] px-4 py-3" style={{ border: `1px solid ${LINE}`, background: CARD }}>
           <div className="min-w-0 flex-1">
             <div className="text-[15px] font-extrabold" style={{ color: INK }}>Show the Tip button</div>
             <div className="text-[13px]" style={{ color: MUTED }}>On your pacts and your profile</div>
@@ -155,14 +157,14 @@ export default function TipSettingsPage() {
             aria-label="Show the Tip button"
             onClick={() => setEnabled((on) => !on)}
             className="relative h-8 w-[52px] shrink-0 rounded-full transition-colors"
-            style={{ background: enabled ? NAVY : '#D4D5D9' }}
+            style={{ background: enabled ? NAVY : 'var(--seat-border)' }}
           >
             <span className="absolute top-1 size-6 rounded-full transition-all" style={{ background: '#FFFFFF', left: enabled ? 24 : 4, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
           </button>
         </div>
 
         {valid && enabled && (
-          <div className="mt-5 flex items-center gap-4 rounded-[18px] px-4 py-4" style={{ background: '#F7F7F8' }}>
+          <div className="mt-5 flex items-center gap-4 rounded-[18px] px-4 py-4" style={{ background: CARD, border: `1px solid ${LINE}` }}>
             <div className="rounded-[12px] p-2" style={{ background: '#FFFFFF' }}>
               <CircleQR url={buildUpiUri({ upiId: trimmed, payeeName: payeeName.trim() || undefined })} size={88} label="Preview of your tip QR" />
             </div>
@@ -180,7 +182,7 @@ export default function TipSettingsPage() {
         <button
           type="button"
           onClick={() => void onSave()}
-          disabled={save.isPending || isLoading}
+          disabled={save.isPending}
           className="mt-6 h-14 w-full rounded-full text-[16px] font-extrabold disabled:opacity-60"
           style={{ background: NAVY, color: '#FFFFFF' }}
         >
