@@ -49,6 +49,24 @@ export async function getMyStoriesToday(): Promise<PactStory[]> {
   return rows as PactStory[]
 }
 
+/** One person you follow, with their live moments in free pacts that are open to followers. */
+export interface FollowingMomentPerson {
+  user_id: number
+  name: string | null
+  username: string | null
+  avatar_url: string | null
+  has_unseen: boolean
+  latest_at: string
+  stories: PactStory[]
+}
+
+export async function getFollowingMoments(): Promise<FollowingMomentPerson[]> {
+  const response = await api.get('/api/me/following/stories/today')
+  const payload = response.data
+  const rows = Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : []
+  return rows as FollowingMomentPerson[]
+}
+
 export async function markStorySeen(storyId: number) {
   await api.post(`/api/stories/${storyId}/seen`)
 }

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Eye, Send, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ChevronRight, Eye, Globe, Send, User, Users, X } from 'lucide-react'
 import { reactToStory, replyToStory, STORY_REACTIONS } from '@/lib/api/stories'
 import { useAuthStore } from '@/store/auth'
 import { useMarkStorySeen, useStoryViewers } from '@/hooks/useStories'
@@ -21,6 +22,12 @@ interface StoryViewerProps {
   unavailable?: boolean
 }
 
+function audienceLabel(visibility?: string | null) {
+  if (visibility === 'public') return 'Public Pact'
+  if (visibility === 'circle') return 'Circle Pact'
+  return 'Followers Only'
+}
+
 const HOLD_MS = 220
 const SEEN_AFTER_SECONDS = 1
 /** How long a photo moment stays up before the next one. */
@@ -37,6 +44,7 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
   const [sent, setSent] = useState<string | null>(null)
   const [sendError, setSendError] = useState(false)
   const { user } = useAuthStore()
+  const router = useRouter()
   const videoRef = useRef<HTMLVideoElement>(null)
   const holdTimer = useRef<number | null>(null)
   const heldRef = useRef(false)
@@ -81,6 +89,23 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
     reportIfWatched()
     onClose()
   }, [onClose, reportIfWatched])
+
+  // Leaving for another page: close first (which also removes the history entry the
+  // overlay added) and push the page once that back step has landed. Pushing at the
+  // same time as the back step would cancel the navigation.
+  const goTo = (href: string) => (event: React.MouseEvent) => {
+    event.preventDefault()
+    let done = false
+    const finish = () => {
+      if (done) return
+      done = true
+      window.removeEventListener('popstate', finish)
+      router.push(href)
+    }
+    window.addEventListener('popstate', finish)
+    window.setTimeout(finish, 700)
+    close()
+  }
 
   const go = useCallback(
     (delta: number) => {
@@ -206,11 +231,17 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
         <div className="flex min-w-0 items-center gap-2.5">
           {story && <RingFace name={story.name} imageUrl={story.avatar_url} size={36} />}
           <div className="min-w-0">
-            {story && <div className="truncate text-[14px] font-semibold" style={{ color: 'var(--paper)' }}>{story.name || 'Member'}</div>}
+            {story && (story.username && !isOwn ? (
+              <Link href={`/profile/${encodeURIComponent(story.username)}`} onClick={goTo(`/profile/${encodeURIComponent(story.username)}`)} className="block truncate text-[14px] font-semibold" style={{ color: 'var(--paper)' }}>
+                {story.name || 'Member'}
+              </Link>
+            ) : (
+              <div className="truncate text-[14px] font-semibold" style={{ color: 'var(--paper)' }}>{story.name || 'Member'}</div>
+            ))}
             <div className="flex items-center gap-2 text-[12px]" style={{ color: 'rgba(244,239,228,0.75)' }}>
               {story && postedAgo(story.created_at) && <span>shared {postedAgo(story.created_at)}</span>}
               {circleId != null && circleName && (
-                <Link href={`/circles/${circleId}`} onClick={close} className="flex items-center gap-1.5 font-semibold text-[var(--paper)]">
+                <Link href={`/circles/${circleId}`} onClick={goTo(`/circles/${circleId}`)} className="flex items-center gap-1.5 font-semibold text-[var(--paper)]">
                   <span
                     className="flex h-5 w-5 items-center justify-center rounded-full text-[8px] font-bold"
                     style={{ border: '1.5px solid var(--paper)' }}
@@ -263,6 +294,40 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
             />
           )}
           {paused && <span className="sr-only">Paused</span>}
+          {!isOwn && story.pact_id != null && story.pact_title && (
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3.5 pb-2.5 pt-10">
+              <div
+                className="pointer-events-auto flex flex-col items-start gap-1.5"
+                onPointerDown={(event) => event.stopPropagation()}
+                onPointerUp={(event) => event.stopPropagation()}
+              >
+                <div className="flex max-w-full items-center gap-2">
+                  <span className="inline-flex h-[22px] shrink-0 items-center gap-1 rounded-full bg-[var(--card)] px-2.5 text-[10.5px] font-extrabold text-[var(--ink)]">
+                    {story.pact_visibility === 'public' ? <Globe className="size-3" aria-hidden="true" /> : story.pact_visibility === 'circle' ? <Users className="size-3" aria-hidden="true" /> : <User className="size-3" aria-hidden="true" />}
+                    {audienceLabel(story.pact_visibility)}
+                  </span>
+                  <Link href={`/pacts/${story.pact_id}`} onClick={goTo(`/pacts/${story.pact_id}`)} className="flex min-h-[28px] min-w-0 items-center gap-0.5 text-[14px] font-extrabold text-white">
+                    <span className="truncate">{story.pact_title}</span>
+                    <ChevronRight className="size-3.5 shrink-0" strokeWidth={2.8} aria-hidden="true" />
+                  </Link>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Link href={`/pacts/${story.pact_id}`} onClick={goTo(`/pacts/${story.pact_id}`)} className="flex h-9 items-center rounded-full bg-[var(--navy)] px-3.5 text-[12px] font-extrabold text-white">
+                    Open Pact
+                  </Link>
+                  {story.username && (
+                    <Link
+                      href={`/profile/${encodeURIComponent(story.username)}`}
+                      onClick={goTo(`/profile/${encodeURIComponent(story.username)}`)}
+                      className="flex h-9 items-center rounded-full border-[1.5px] border-white/70 bg-black/30 px-3.5 text-[12px] font-extrabold text-white"
+                    >
+                      Visit {(story.name || 'Profile').split(' ')[0]}
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-1 items-center justify-center px-8 text-center text-[15px]">{emptyText}</div>

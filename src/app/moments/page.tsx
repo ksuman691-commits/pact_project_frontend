@@ -1,128 +1,68 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Play } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import DetailPageHeader from '@/components/DetailPageHeader'
 import StoryViewer from '@/components/stories/StoryViewer'
+import { RingFace } from '@/components/stories/StoryRing'
 import { useCircles } from '@/hooks/useCircles'
-import { useCircleStoriesToday } from '@/hooks/useStories'
+import { useMomentPeople, type MomentPerson } from '@/hooks/useMomentPeople'
 import { useRequireAuth } from '@/hooks/useRequireAuth'
-import { isPhotoStory, monogram, postedAgo, STORIES_COMING_SOON, STORIES_ENABLED, type PactStory } from '@/lib/stories'
+import { postedAgo, STORIES_COMING_SOON, STORIES_ENABLED } from '@/lib/stories'
 
 interface MomentCircle {
   id: number
   name: string
+  stories_today_count?: number | null
 }
 
-interface Viewing {
-  circle: MomentCircle
-  stories: PactStory[]
-  index: number
-}
-
-function clock(seconds?: number | null) {
-  if (typeof seconds !== 'number' || seconds <= 0) return null
-  const s = Math.round(seconds)
-  return `0:${String(s % 60).padStart(2, '0')}`
-}
-
-function MomentTile({ story, onOpen }: { story: PactStory; onOpen: () => void }) {
-  const unseen = story.seen === false
-  const ago = postedAgo(story.created_at)
-  const photo = isPhotoStory(story)
-  const length = photo ? null : clock(story.duration_seconds)
-  const who = story.name || 'Someone'
+function PersonRow({ person, onOpen }: { person: MomentPerson; onOpen: () => void }) {
+  const ago = postedAgo(person.stories[person.stories.length - 1]?.created_at)
+  const count = person.stories.length
+  const inCircle = person.circleId != null
+  const who = person.name || 'Member'
+  const tag = inCircle ? `${person.circleName} Circle${person.isFollowing ? ' · Following' : ''}` : 'Following'
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      aria-label={`${photo ? 'See' : 'Watch'} ${who}'s moment${ago ? `, ${ago}` : ''}${unseen ? ', new' : ''}`}
-      className={`relative aspect-[3/4] w-full overflow-hidden rounded-[20px] bg-[var(--card-muted)] text-left transition active:scale-[0.98] ${
-        unseen ? 'ring-[3px] ring-[var(--navy)] ring-offset-2 ring-offset-[var(--paper)]' : 'border border-[var(--hairline)]'
-      }`}
-    >
-      {photo ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={story.video_url} alt="" aria-hidden="true" loading="lazy" className="pointer-events-none absolute inset-0 h-full w-full object-cover" />
-      ) : (
-        // The first frame stands in as a thumbnail; browsers that won't paint one just show the tinted tile.
-        <video
-          src={`${story.video_url}#t=0.1`}
-          muted
-          playsInline
-          preload="metadata"
-          tabIndex={-1}
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-        />
-      )}
-      <span className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" aria-hidden="true" />
-      {!photo && (
-        <span className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--navy)] text-white" aria-hidden="true">
-          <Play className="h-5 w-5 translate-x-px" fill="currentColor" />
+    <li className="border-b border-[var(--hairline)] last:border-b-0">
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={`Open ${who}'s ${count === 1 ? 'moment' : 'moments'}${person.hasUnseen ? ', new' : ''}`}
+        className="flex min-h-[64px] w-full items-center gap-3 px-3.5 py-2.5 text-left"
+      >
+        <span
+          className="flex shrink-0 items-center justify-center rounded-full p-[2.5px]"
+          style={{ border: person.hasUnseen ? '2.5px solid var(--navy)' : '1.5px solid var(--hairline)' }}
+        >
+          <RingFace name={person.name} imageUrl={person.avatarUrl} size={40} />
         </span>
-      )}
-      {length && (
-        <span className="absolute right-2.5 top-2.5 rounded-[10px] bg-[var(--ink)]/75 px-2 py-0.5 text-[11.5px] font-bold text-white" aria-hidden="true">
-          {length}
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[14.5px] font-extrabold text-[var(--ink)]">{who}</span>
+          <span className="block truncate text-[12.5px] font-semibold text-[var(--muted)]">
+            {count} {count === 1 ? 'moment' : 'moments'}
+            {ago ? ` · ${ago}` : ''}
+          </span>
+          <span className={`block truncate text-[12px] font-extrabold ${inCircle ? 'text-[var(--navy)]' : 'text-[var(--ink)]'}`}>{tag}</span>
         </span>
-      )}
-      {unseen && (
-        <span className="absolute left-2.5 top-2.5 rounded-[10px] bg-[var(--navy)] px-2 py-0.5 text-[11.5px] font-bold text-white" aria-hidden="true">
-          New
-        </span>
-      )}
-      <span className="absolute inset-x-0 bottom-0 flex items-center gap-2 p-3 text-white">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--card)] text-[11px] font-bold text-[var(--navy)]">
-          {story.avatar_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={story.avatar_url} alt="" className="h-full w-full object-cover" />
-          ) : (
-            monogram(story.name)
-          )}
-        </span>
-        <span className="min-w-0">
-          <span className="block truncate text-[13px] font-bold leading-tight">{who}</span>
-          {ago && <span className="block truncate text-[11.5px] leading-tight text-white/80">{ago}</span>}
-        </span>
-      </span>
-    </button>
+        <ChevronRight className="size-4 shrink-0 text-[var(--muted)]" aria-hidden="true" />
+      </button>
+    </li>
   )
 }
 
-function CircleMoments({ circle, onOpen }: { circle: MomentCircle; onOpen: (viewing: Viewing) => void }) {
-  const { stories, isLoading, unavailable } = useCircleStoriesToday(circle.id)
-  const unseenCount = stories.filter((s) => s.seen === false).length
-  const status = unavailable ? '' : isLoading ? '' : unseenCount > 0 ? `${unseenCount} new` : stories.length > 0 ? 'Seen' : 'Quiet'
-
+function Group({ label, people, onOpen, navy }: { label: string; people: MomentPerson[]; onOpen: (p: MomentPerson) => void; navy?: boolean }) {
+  if (people.length === 0) return null
   return (
-    <section aria-label={`${circle.name} moments`} className="flex flex-col gap-3">
-      <div className="flex items-baseline justify-between gap-3 px-1">
-        <h2 className="min-w-0 truncate text-[17px] font-bold tracking-[-0.01em] text-[var(--ink)]">{circle.name}</h2>
-        {status && <span className={`shrink-0 text-[13px] ${unseenCount > 0 ? 'font-bold text-[var(--navy)]' : 'text-[var(--muted)]'}`}>{status}</span>}
-      </div>
-
-      {isLoading ? (
-        <div className="grid grid-cols-2 gap-3" aria-busy="true" aria-label="Loading moments">
-          {[0, 1].map((i) => (
-            <div key={i} className="pact-shimmer aspect-[3/4] rounded-[20px]" />
-          ))}
-        </div>
-      ) : unavailable ? (
-        <div className="rounded-[20px] border border-dashed border-[var(--seat-border)] px-4 py-5 text-[13px] text-[var(--muted)]">{STORIES_COMING_SOON}.</div>
-      ) : stories.length === 0 ? (
-        <div className="rounded-[20px] border border-dashed border-[var(--seat-border)] px-4 py-5 text-center">
-          <div className="text-[14px] font-bold text-[var(--ink)]">Nothing shared today</div>
-          <div className="mt-1 text-[12.5px] text-[var(--muted)]">Moments from {circle.name} show up here.</div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {stories.map((story, index) => (
-            <MomentTile key={story.id} story={story} onOpen={() => onOpen({ circle, stories, index })} />
-          ))}
-        </div>
-      )}
+    <section aria-label={label}>
+      <h2 className={`px-0.5 pb-2 text-[12px] font-extrabold uppercase tracking-[0.07em] ${navy ? 'text-[var(--navy)]' : 'text-[var(--ink)]'}`}>
+        {label} <span className="font-bold text-[var(--muted)]">{people.length}</span>
+      </h2>
+      <ul className="overflow-hidden rounded-[16px] border border-[var(--hairline)] bg-[var(--card)]">
+        {people.map((person) => (
+          <PersonRow key={person.userId} person={person} onOpen={() => onOpen(person)} />
+        ))}
+      </ul>
     </section>
   )
 }
@@ -130,38 +70,45 @@ function CircleMoments({ circle, onOpen }: { circle: MomentCircle; onOpen: (view
 export default function MomentsPage() {
   const { user, isInitialized } = useRequireAuth()
   const circlesQuery = useCircles(isInitialized && !!user)
-  const circles = (circlesQuery.data || []) as MomentCircle[]
-  const [viewing, setViewing] = useState<Viewing | null>(null)
+  const circles = useMemo(() => (circlesQuery.data || []) as MomentCircle[], [circlesQuery.data])
+  const { people, isLoading } = useMomentPeople(circles, user?.id)
+  const [viewing, setViewing] = useState<MomentPerson | null>(null)
+
+  const fromCircles = people.filter((p) => p.circleId != null)
+  const fromFollowing = people.filter((p) => p.circleId == null)
+  const loading = circlesQuery.isLoading || isLoading
 
   return (
     <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
       <DetailPageHeader title="Moments" fallbackHref="/feed" showHomeLink={false} maxWidthClassName="max-w-md" />
-      <div className="mx-auto flex max-w-md flex-col gap-7 px-4 pt-5">
-        <div className="px-1">
-          <h1 className="text-[28px] font-bold leading-none tracking-[-0.03em]">Today&apos;s moments</h1>
-          <p className="mt-2 text-[14px] text-[var(--muted)]">What your circles shared today.</p>
+      <div className="mx-auto flex max-w-md flex-col gap-6 px-4 pt-5">
+        <div className="px-0.5">
+          <h1 className="text-[28px] font-bold leading-none tracking-[-0.03em]">Moments</h1>
+          <p className="mt-2 text-[14px] text-[var(--muted)]">
+            Last 24 hours{!loading && people.length > 0 ? ` · ${people.length} ${people.length === 1 ? 'person' : 'people'}` : ''}
+          </p>
         </div>
 
         {!STORIES_ENABLED ? (
           <div className="rounded-[20px] border border-dashed border-[var(--seat-border)] px-4 py-6 text-[14px] text-[var(--muted)]">{STORIES_COMING_SOON}.</div>
-        ) : circlesQuery.isLoading ? (
-          <div className="flex flex-col gap-3" aria-busy="true" aria-label="Loading circles">
-            <div className="pact-shimmer h-5 w-1/3 rounded" />
-            <div className="grid grid-cols-2 gap-3">
-              <div className="pact-shimmer aspect-[3/4] rounded-[20px]" />
-              <div className="pact-shimmer aspect-[3/4] rounded-[20px]" />
-            </div>
+        ) : loading ? (
+          <div className="flex flex-col gap-3" aria-busy="true" aria-label="Loading moments">
+            <div className="pact-shimmer h-4 w-1/3 rounded" />
+            <div className="pact-shimmer h-[200px] rounded-[16px]" />
           </div>
-        ) : circles.length === 0 ? (
+        ) : people.length === 0 ? (
           <div className="rounded-[20px] border border-[var(--hairline)] bg-[var(--card)] px-4 py-5">
-            <div className="text-[15px] font-bold">No circles yet</div>
-            <div className="mt-1 text-[13px] text-[var(--muted)]">Join or start a circle to see its moments here.</div>
+            <div className="text-[15px] font-bold">Nothing shared in the last 24 hours</div>
+            <div className="mt-1 text-[13px] text-[var(--muted)]">Moments from your circles and the people you follow show up here.</div>
             <Link href="/circles" className="mt-3 inline-flex h-11 items-center rounded-full bg-[var(--navy)] px-5 text-[14px] font-bold text-white">
               Browse circles
             </Link>
           </div>
         ) : (
-          circles.map((circle) => <CircleMoments key={circle.id} circle={circle} onOpen={setViewing} />)
+          <>
+            <Group label="From Your Circles" people={fromCircles} onOpen={setViewing} navy />
+            <Group label="From People You Follow" people={fromFollowing} onOpen={setViewing} />
+          </>
         )}
       </div>
 
@@ -169,9 +116,8 @@ export default function MomentsPage() {
         open={viewing !== null}
         onClose={() => setViewing(null)}
         stories={viewing?.stories ?? []}
-        startIndex={viewing?.index ?? 0}
-        circleId={viewing?.circle.id}
-        circleName={viewing?.circle.name}
+        circleId={viewing?.circleId}
+        circleName={viewing?.circleName}
       />
     </main>
   )
