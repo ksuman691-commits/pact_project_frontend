@@ -66,9 +66,17 @@ export const STORIES_COMING_SOON = 'Moment sharing is coming soon'
 // Phone cameras stop a "15 second" clip a few frames late.
 const DURATION_TOLERANCE_SECONDS = 0.5
 
+/** Who a moment's pact is open to: shown as a label on the moment. */
+export type MomentAudience = 'public' | 'followers' | 'circle'
+
 export interface PactStory {
   id: number
   user_id: number
+  pact_id?: number | null
+  username?: string | null
+  /** Filled in by the Home row: which pact the moment belongs to and who it is open to. */
+  pact_title?: string | null
+  pact_visibility?: MomentAudience | null
   name: string | null
   avatar_url: string | null
   /** The moment's media link, photo or video (named for the original video-only API). */

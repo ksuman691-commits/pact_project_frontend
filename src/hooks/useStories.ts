@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createStory, getMyStoriesToday, getStoryViewers, getTodayStories, markStorySeen, putStoryVideo, requestStoryUploadUrl } from '@/lib/api/stories'
+import { createStory, getFollowingMoments, getMyStoriesToday, getStoryViewers, getTodayStories, markStorySeen, putStoryVideo, requestStoryUploadUrl } from '@/lib/api/stories'
 import { isStoriesUnavailable, storyErrorMessage, STORIES_ENABLED, STORY_MAX_SECONDS, type PactStory } from '@/lib/stories'
 import { queryKeys } from '@/lib/queryKeys'
 import { circleService, pactService } from '@/services/api'
@@ -12,6 +12,7 @@ export const storyKeys = {
   all: ['stories'] as const,
   pactToday: (pactId: number) => ['stories', 'pact', pactId, 'today'] as const,
   mineToday: ['stories', 'me', 'today'] as const,
+  followingToday: ['stories', 'following', 'today'] as const,
 }
 
 const todayQueryOptions = (pactId: number) => ({
@@ -32,6 +33,17 @@ export function useMyStoriesToday() {
   return useQuery({
     queryKey: storyKeys.mineToday,
     queryFn: getMyStoriesToday,
+    enabled: STORIES_ENABLED,
+    staleTime: 30_000,
+    retry: (count: number, error: any) => !isStoriesUnavailable(error) && count < 1,
+  })
+}
+
+/** Live moments from people the viewer follows (free pacts open to followers only). */
+export function useFollowingMoments() {
+  return useQuery({
+    queryKey: storyKeys.followingToday,
+    queryFn: getFollowingMoments,
     enabled: STORIES_ENABLED,
     staleTime: 30_000,
     retry: (count: number, error: any) => !isStoriesUnavailable(error) && count < 1,

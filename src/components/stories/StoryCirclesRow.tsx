@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, Plus, X } from 'lucide-react'
+import { Plus, User, Users, X } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
-import { useMomentPeople, type MomentPerson } from '@/hooks/useMomentPeople'
+import { HOME_MOMENT_LIMIT, useMomentPeople, type MomentPerson } from '@/hooks/useMomentPeople'
 import { useMyMomentsToday } from '@/hooks/useMyMomentsToday'
 import { useMyPacts } from '@/hooks/useMyPacts'
 import StoryCaptureSheet from './StoryCaptureSheet'
@@ -125,6 +125,14 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
   return (
     <section aria-label="Moments" className={hidden ? 'contents' : 'mb-0 flex flex-col pt-4'}>
       {!hidden && (
+        <div className="flex items-baseline justify-between pb-2">
+          <h2 className="text-[12px] font-extrabold uppercase tracking-[0.07em] text-[var(--ink)]">Moments</h2>
+          <Link href="/moments" className="flex min-h-[32px] items-center text-[13px] font-extrabold text-[var(--navy)]">
+            See All
+          </Link>
+        </div>
+      )}
+      {!hidden && (
         <ul className="scrollbar-hide -mx-4 flex gap-3.5 overflow-x-auto px-4 pb-0.5">
           <li className="relative shrink-0">
             <button
@@ -153,33 +161,36 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
                   <span className="pact-shimmer h-3 w-10 rounded" />
                 </li>
               ))
-            : people.map((person) => {
+            : people.slice(0, HOME_MOMENT_LIMIT).map((person) => {
                 const firstName = (person.name || 'Member').split(' ')[0]
+                const inCircle = person.circleId != null
+                const where = inCircle ? `in ${person.circleName}` : 'you follow'
                 return (
                   <li key={person.userId} className="shrink-0">
                     <button
                       type="button"
                       onClick={() => setViewing(person)}
                       className="flex w-[62px] flex-col items-center gap-[5px]"
-                      aria-label={`${firstName}'s moment${person.hasUnseen ? ', new' : ''}, in ${person.circleName}`}
+                      aria-label={`${firstName}'s moment${person.stories.length > 1 ? 's' : ''}${person.hasUnseen ? ', new' : ''}, ${where}`}
                     >
-                      <StoryRing state={person.hasUnseen ? 'unseen' : 'seen'} size={SIZE} name={person.name} imageUrl={person.avatarUrl} count={person.stories.length} />
+                      <span className="relative inline-flex">
+                        <StoryRing state={person.hasUnseen ? 'unseen' : 'seen'} size={SIZE} name={person.name} imageUrl={person.avatarUrl} count={person.stories.length} />
+                        <span
+                          className="absolute -bottom-0.5 -right-1 flex h-[22px] w-[22px] items-center justify-center rounded-full border-[1.5px] bg-[var(--card)]"
+                          style={{ borderColor: inCircle ? 'var(--navy)' : 'var(--muted)' }}
+                          aria-hidden="true"
+                        >
+                          {inCircle ? <Users className="h-3 w-3 text-[var(--navy)]" strokeWidth={2.4} /> : <User className="h-3 w-3 text-[var(--ink)]" strokeWidth={2.4} />}
+                        </span>
+                      </span>
                       <span className={`w-full truncate text-center text-[12px] ${person.hasUnseen ? 'font-extrabold text-[var(--ink)]' : 'font-semibold text-[var(--muted)]'}`}>{firstName}</span>
+                      <span className={`-mt-1 w-full truncate text-center text-[11px] font-bold ${inCircle ? 'text-[var(--navy)]' : 'text-[var(--muted)]'}`}>
+                        {inCircle ? person.circleName : 'Following'}
+                      </span>
                     </button>
                   </li>
                 )
               })}
-
-          {!loadingPeople && (
-            <li className="shrink-0">
-              <Link href="/moments" aria-label="See all moments" className="flex w-[62px] flex-col items-center gap-[5px] text-[var(--navy)]">
-                <span className="flex items-center justify-center rounded-full border-[1.5px] border-dashed border-[#B9AE97]" style={{ width: SIZE, height: SIZE }}>
-                  <ArrowRight className="h-5 w-5" strokeWidth={2.2} aria-hidden="true" />
-                </span>
-                <span className="text-[12px] font-extrabold">See all</span>
-              </Link>
-            </li>
-          )}
         </ul>
       )}
 
