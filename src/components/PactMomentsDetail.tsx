@@ -276,7 +276,7 @@ export default function PactMomentsDetail({
             </span>
             {/* The action row under the media carries Tip; the header only does when that row is hidden. */}
             {!isCreatorView && !(!presentationEnded && !lockedForMe && (hasMoments || isParticipant)) && (
-              <TipButton creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} pactId={Number(pact?.id)} tipsEnabled={typeof pact?.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined} className="ml-auto !h-8 !px-3 !text-[13px]" />
+              <TipButton creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} pactId={Number(pact?.id)} tipsEnabled={typeof pact?.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined} locked={Boolean(pact?.media_locked)} className="ml-auto !h-8 !px-3 !text-[13px]" />
             )}
           </div>
           <h1 className="mt-0.5 line-clamp-2 font-sans text-[19px] font-extrabold leading-[1.15] tracking-[-0.025em] text-[var(--ink)]">
@@ -535,7 +535,7 @@ export default function PactMomentsDetail({
             </button>
             <div className="ml-auto flex items-center gap-1.5">
               {!isCreatorView && (
-                <TipButton variant="soft" creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} count={Number(pact?.tip_count ?? 0)} pactId={Number(pact?.id)} tipsEnabled={typeof pact?.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined} />
+                <TipButton variant="soft" creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} count={Number(pact?.tip_count ?? 0)} pactId={Number(pact?.id)} tipsEnabled={typeof pact?.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined} locked={Boolean(pact?.media_locked)} />
               )}
               {isParticipant && !isEnded && hasMoments && (
                 postedToday ? (

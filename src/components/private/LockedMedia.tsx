@@ -102,17 +102,6 @@ export default function LockedMedia({ pact, variant = 'card', className = '' }: 
           >
             {said_no ? 'Ask again' : 'Ask to watch'}
           </button>
-          {tipInfo && (
-            <button
-              type="button"
-              onClick={() => setTipOpen(true)}
-              className="flex h-11 flex-1 items-center justify-center gap-1 rounded-full text-[14.5px] font-extrabold"
-              style={{ background: 'rgba(255,255,255,0.14)', color: '#FFFFFF', border: '1.5px solid rgba(255,255,255,0.45)' }}
-            >
-              <IndianRupee className="size-4" strokeWidth={2.6} aria-hidden="true" />
-              Tip &amp; ask
-            </button>
-          )}
         </div>
       )}
 

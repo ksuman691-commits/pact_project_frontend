@@ -17,14 +17,16 @@ interface TipButtonProps {
   pactId?: number | null
   /** From the pact payload. false skips the lookup entirely; undefined asks the server. */
   tipsEnabled?: boolean
+  /** Paid or locked pacts never show a tip: paying to watch is its own purchase. */
+  locked?: boolean
   className?: string
 }
 
 /** Renders nothing unless the creator has tips turned on. */
-export default function TipButton({ creatorId, creatorName, creatorAvatarUrl, context, variant = 'pill', count = 0, pactId = null, tipsEnabled, className = '' }: TipButtonProps) {
+export default function TipButton({ creatorId, creatorName, creatorAvatarUrl, context, variant = 'pill', count = 0, pactId = null, tipsEnabled, locked = false, className = '' }: TipButtonProps) {
   const [open, setOpen] = useState(false)
-  const { data: tip } = useUserTipInfo(tipsEnabled === false ? null : creatorId)
-  if (!tip) return null
+  const { data: tip } = useUserTipInfo(tipsEnabled === false || locked ? null : creatorId)
+  if (!tip || locked) return null
   const firstName = creatorName.split(' ')[0] || creatorName
 
   return (
