@@ -14,7 +14,7 @@ import { useSmartBack } from '@/hooks/useSmartBack'
 import InviteMembersModal from '@/components/InviteMembersModal'
 import ConfirmModal from '@/components/ConfirmModal'
 import LogoSpinner from '@/components/LogoSpinner'
-import { CircleQRFullView } from '@/components/CircleQR'
+import { CircleInviteQRSheet } from '@/components/CircleInviteQR'
 import FeedPactCard from '@/components/FeedPactCard'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
 import OrbitRing from '@/components/circles/OrbitRing'
@@ -219,7 +219,7 @@ export default function CircleDetailPage() {
       <button type="button" onClick={smartBack} aria-label="Go back" className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--ink)]">
         <ChevronLeft className="h-6 w-6" strokeWidth={2} />
       </button>
-      <button type="button" onClick={() => setQrOpen(true)} aria-label="Share circle" className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--ink)]">
+      <button type="button" onClick={() => setQrOpen(true)} aria-label="Share Circle QR" className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--ink)]">
         <Share2 className="h-5 w-5" strokeWidth={1.9} />
       </button>
     </div>
@@ -387,5 +387,5 @@ export default function CircleDetailPage() {
         onJoin={() => joinPactForCapture(capturePact)}
       />
     )}
-    {circle && qrOpen && <CircleQRFullView circle={circle} onClose={() => setQrOpen(false)} />} {circle && <InviteMembersModal isOpen={inviteModal} onClose={() => setInviteModal(false)} circleId={circle.id} circleName={circle.name} existingMemberIds={members.map((m: any) => m.user_id)} isPrivate={isPrivateCircle} />}<ConfirmModal isOpen={leaveModal} onClose={() => setLeaveModal(false)} onConfirm={handleLeave} title="Leave circle?" description={`You'll lose access to ${circle.name}'s pacts until you rejoin.`} confirmLabel="Leave Circle" destructive loading={leaving} /></main>
+    {circle && qrOpen && <CircleInviteQRSheet circle={circle} onClose={() => setQrOpen(false)} />} {circle && <InviteMembersModal isOpen={inviteModal} onClose={() => setInviteModal(false)} circleId={circle.id} circleName={circle.name} existingMemberIds={members.map((m: any) => m.user_id)} isPrivate={isPrivateCircle} />}<ConfirmModal isOpen={leaveModal} onClose={() => setLeaveModal(false)} onConfirm={handleLeave} title="Leave circle?" description={`You'll lose access to ${circle.name}'s pacts until you rejoin.`} confirmLabel="Leave Circle" destructive loading={leaving} /></main>
 }

@@ -11,7 +11,7 @@ Captured while signed in as a seeded test user (`maya.chen`, one circle "Morning
 | Circle detail | 390×844 | `/circles/62` | Verified | Ring, "This week" member row, "A tick means they sent proof for a pact this week." and the pact row render. |
 | Dares list | 390×844 | `/dares` | Verified (empty state) | H1 "Dares", factual line, 3-cell stat row, tabs, New Dare pill, 14px-radius empty card. Test user has no dares, so a created dare was not re-checked here. |
 | Home feed | 390×844 | `/feed` | Not verified | "Your record" stats and circles rail load. The feed list below stays on skeleton cards after 45s and no personalised-feed request completed; cause not yet found. `home-feed.png` shows this state. |
-| QR sheet | 390×844 | `/circles/62` (Share circle) | Verified | Title, QR, link `/circles/62/wall`, Share link / Save image / Copy link. |
+| QR sheet | 390×844 | `/circles/62` (Share Circle QR) | Needs re-verify | Title "Share Circle QR", QR, tap-to-copy link `/circles/62/wall`, Share QR / Save image. |
 | Public wall | 390×844 | `/circles/62/wall` | Verified | "1 member · open to join", "No public proofs yet." and the opt-in note. |
 
 Open issue: the home feed list never leaves its loading state for this user.
