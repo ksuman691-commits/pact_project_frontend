@@ -73,6 +73,8 @@ const mockPacts = [
 interface PactFeedProps {
   showMockData?: boolean
   category?: string
+  /** Only pacts you can pay to watch. */
+  paidOnly?: boolean
   onBusyChange?: (busy: boolean) => void
   onCreatePact?: () => void
   /** Pact id to give a one-time glow entrance (e.g. just returned from Create Pact). */
@@ -109,6 +111,7 @@ const categoryLabelMap: Record<string, string> = {
 export default function PactFeed({
   showMockData = false,
   category = 'all',
+  paidOnly = false,
   onBusyChange,
   onCreatePact,
   highlightPactId = null,
@@ -121,7 +124,7 @@ export default function PactFeed({
 
   // Fetch feed data with infinite scroll (will integrate with API later)
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isFetching, isError, refetch } =
-    usePersonalizedFeed(normalizedCategory)
+    usePersonalizedFeed(normalizedCategory, paidOnly)
 
   const isBusy = isLoading || isFetching || isFetchingNextPage
 
@@ -137,7 +140,7 @@ export default function PactFeed({
     if (!showMockData) {
       setPacts([])
     }
-  }, [normalizedCategory, showMockData])
+  }, [normalizedCategory, paidOnly, showMockData])
 
   const skipMutation = useSkipPact()
 
@@ -170,17 +173,20 @@ export default function PactFeed({
   }, [data, showMockData])
 
   const emptyStateTitle = useMemo(() => {
+    if (paidOnly) return 'No Paid Pacts To Watch Right Now'
     if (normalizedCategory === 'trending') return 'Your Trending Pact Space'
     if (normalizedCategory === 'all') return 'Your Pact Feed'
     return `${categoryLabelMap[normalizedCategory] ?? 'Your Pact'} Space`
-  }, [normalizedCategory])
+  }, [normalizedCategory, paidOnly])
 
   const emptyStateMessage = useMemo(
     () =>
-      normalizedCategory === 'trending'
+      paidOnly
+        ? 'When a creator makes a pact you can pay to watch, it shows up here.'
+        : normalizedCategory === 'trending'
         ? 'Create a pact and give your circles something new to rally around.'
         : 'Create a pact to start your next accountability journey with your circles.',
-    [normalizedCategory],
+    [normalizedCategory, paidOnly],
   )
 
   const handleVote = async (pactId: number, _voteType: 'skip') => {
@@ -228,11 +234,11 @@ export default function PactFeed({
           <p className="text-lg font-bold text-[var(--pact-text)]">{emptyStateTitle}</p>
           <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-[var(--pact-text-dim)]">{emptyStateMessage}</p>
           <button
-            onClick={() => onCreatePact ? onCreatePact() : router.push('/pacts/create')}
+            onClick={() => (paidOnly ? router.push('/feed') : onCreatePact ? onCreatePact() : router.push('/pacts/create'))}
             className=" mt-6 inline-flex items-center justify-center px-5 py-3 rounded-full font-bold transition-colors"
             style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
           >
-            Create Pact
+            {paidOnly ? 'Show all pacts' : 'Create Pact'}
           </button>
         </div>
       ) : (

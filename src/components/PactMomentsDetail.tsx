@@ -16,6 +16,7 @@ import { useMyTipSettings } from '@/hooks/useTips'
 import { useSmartBack } from '@/hooks/useSmartBack'
 import { pactLocalToday, resolvePactCompletionViewState } from '@/lib/pactCompletionState'
 import { PactAudienceLine, PactAudienceSheet, useAudience } from '@/components/pacts/PactAudience'
+import PactOwnerMenu from '@/components/pacts/PactOwnerMenu'
 import MomentViewer from '@/components/MomentViewer'
 import type { ViewerMoment } from '@/components/MomentViewer'
 import type { PactDayStripEntry } from '@/types'
@@ -278,6 +279,7 @@ export default function PactMomentsDetail({
             {!isCreatorView && !(!presentationEnded && !lockedForMe && (hasMoments || isParticipant)) && (
               <TipButton creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} pactId={Number(pact?.id)} tipsEnabled={typeof pact?.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined} locked={Boolean(pact?.media_locked)} className="ml-auto !h-8 !px-3 !text-[13px]" />
             )}
+            {isCreatorView && pact?.id != null && <PactOwnerMenu pact={pact} />}
           </div>
           <h1 className="mt-0.5 line-clamp-2 font-sans text-[19px] font-extrabold leading-[1.15] tracking-[-0.025em] text-[var(--ink)]">
             {cleanTitle(pact?.title)}

@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { Lock, X } from 'lucide-react'
 import TodayCheckInRow from '@/components/TodayCheckInRow'
 import WelcomeHeader from '@/components/WelcomeHeader'
 import FeaturedDareCard from '@/components/FeaturedDareCard'
@@ -57,6 +58,8 @@ export default function FeedPageClient() {
   const unreadCount = unreadCountData?.unread_count ?? 0
   const category = (searchParams.get('category') || 'all').toLowerCase()
   const highlightPactId = searchParams.get('created')
+  // /feed?paid=1 (from "Browse The Feed" on the Watching tab): only pacts you can pay to watch.
+  const paidOnly = searchParams.get('paid') === '1'
 
   useEffect(() => {
     if (!isInitialized) return
@@ -94,14 +97,15 @@ export default function FeedPageClient() {
   }, [highlightPactId, router, searchParams])
 
   useEffect(() => {
+    // Landing here from Browse The Feed should open on the list, not on Home's header.
     if (firstLoadRef.current) {
       firstLoadRef.current = false
-      return
+      if (!paidOnly) return
     }
 
     const feedAnchor = document.getElementById('pact-feed-list')
     feedAnchor?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [category])
+  }, [category, paidOnly])
 
   // Home shows one card between Today and the feed: a profile reminder while
   // one is due, otherwise the dare of the day. Never both.
@@ -197,9 +201,25 @@ export default function FeedPageClient() {
         {/* pb-28: clearance for the floating pill BottomNav (same convention as
             circles/page.tsx) so the last pact card in the feed isn't covered. */}
         <div className="max-w-md mx-auto pb-28 px-4" id="pact-feed-shell">
+          {paidOnly && (
+            <div className="mb-3 flex items-center justify-between gap-3 rounded-[18px] border border-[var(--line)] bg-[var(--card)] px-4 py-3">
+              <p className="flex min-w-0 items-center gap-2 text-[14px] font-extrabold text-[var(--ink)]">
+                <Lock className="size-4 shrink-0 text-[var(--navy)]" strokeWidth={2.4} aria-hidden="true" />
+                <span className="truncate">Pay to watch</span>
+              </p>
+              <button
+                type="button"
+                onClick={() => router.replace(category === 'all' ? '/feed' : `/feed?category=${encodeURIComponent(category)}`)}
+                className="flex min-h-11 shrink-0 items-center gap-1 rounded-full px-3 text-[13px] font-extrabold text-[var(--navy)]"
+              >
+                Show all <X className="size-4" strokeWidth={2.4} aria-hidden="true" />
+              </button>
+            </div>
+          )}
           <PactFeed
             showMockData={false}
             category={category}
+            paidOnly={paidOnly}
             onBusyChange={setFeedBusy}
             onCreatePact={handleCreatePact}
             highlightPactId={highlightPactId}
