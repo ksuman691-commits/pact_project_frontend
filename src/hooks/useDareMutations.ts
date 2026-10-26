@@ -129,3 +129,49 @@ export function useCancelDare() {
     },
   });
 }
+
+/** Everything that changes one dare refreshes the lists, the detail and Home. */
+function useRefreshDare() {
+  const queryClient = useQueryClient();
+  return (dareId: number) =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.dares.detail(dareId) }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.dares.all }),
+    ]);
+}
+
+export function useReviewDare() {
+  const refresh = useRefreshDare();
+  return useMutation({
+    mutationFn: ({ dareId, done }: { dareId: number; done: boolean }) => dareService.review(dareId, done),
+    onSuccess: (_, { dareId, done }) => {
+      toast.success(done ? 'Marked done' : 'Marked not done');
+      return refresh(dareId);
+    },
+    onError: (error: any) => toast.error(toErrorMessage(error, "Couldn't save that. Try again.")),
+  });
+}
+
+export function useDareRewardStep() {
+  const refresh = useRefreshDare();
+  return useMutation({
+    mutationFn: ({ dareId, step }: { dareId: number; step: 'sent' | 'received' | 'not-received' }) => dareService.rewardStep(dareId, step),
+    onSuccess: (_, { dareId, step }) => {
+      toast.success(step === 'sent' ? "We've told them to check" : step === 'received' ? 'Marked received' : "We've let them know");
+      return refresh(dareId);
+    },
+    onError: (error: any) => toast.error(toErrorMessage(error, "Couldn't save that. Try again.")),
+  });
+}
+
+export function useShareDare() {
+  const refresh = useRefreshDare();
+  return useMutation({
+    mutationFn: ({ dareId, shared }: { dareId: number; shared: boolean }) => dareService.share(dareId, shared),
+    onSuccess: (_, { dareId, shared }) => {
+      toast.success(shared ? 'Now showing in Discover' : 'Removed from Discover');
+      return refresh(dareId);
+    },
+    onError: (error: any) => toast.error(toErrorMessage(error, "Couldn't change that. Try again.")),
+  });
+}

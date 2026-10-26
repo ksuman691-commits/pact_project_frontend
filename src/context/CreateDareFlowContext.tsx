@@ -42,7 +42,7 @@ export function CreateDareFlowProvider({
   const [draft, setDraft] = useState<DareDraft>(() => {
     let base = createEmptyDareDraft();
     if (initialRecipientId != null) {
-      base = { ...base, recipientPreset: true, visibility: 'private' };
+      base = { ...base, recipientPreset: true };
     }
     return base;
   });
@@ -67,8 +67,7 @@ export function CreateDareFlowProvider({
   }, [presetUserData]);
 
   const resolvedSteps = useMemo(() => resolveDareSteps(draft), [draft]);
-  // Clamp in case a draft change (e.g. switching visibility away from
-  // private) removes a step ahead of the current position.
+  // Clamp in case a draft change removes a step ahead of the current position.
   const safeIndex = Math.min(stepIndex, resolvedSteps.length - 1);
   const currentStep = resolvedSteps[safeIndex];
 
@@ -85,8 +84,12 @@ export function CreateDareFlowProvider({
       toast.error('Add a description so they know what to do');
       return;
     }
-    if (currentStep === 'recipients' && draft.visibility === 'private' && draft.recipients.length === 0) {
-      toast.error('Add at least one recipient, or switch to public');
+    if (currentStep === 'recipients' && draft.recipients.length === 0) {
+      toast.error('Pick who you are daring');
+      return;
+    }
+    if (currentStep === 'reward' && draft.rewardAmount != null && (draft.rewardAmount < 1 || draft.rewardAmount > 500 || !Number.isInteger(draft.rewardAmount))) {
+      toast.error('A reward is a whole amount from ₹1 to ₹500');
       return;
     }
     setStepIndex((i) => Math.min(resolvedSteps.length - 1, i + 1));

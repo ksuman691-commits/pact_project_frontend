@@ -178,12 +178,11 @@ export function FinishedPactRow({ pact }: { pact: any }) {
  * response window has actually closed.
  */
 export function DarePactCard({ dare }: { dare: any }) {
-  const recipient = dare.recipients?.[0]
+  const recipient = dare.recipient || dare.recipients?.[0]
   const recipientName: string =
     recipient?.full_name || recipient?.username || recipient?.user?.full_name || recipient?.user?.username || ''
   const first = recipientName ? recipientName.split(' ')[0] : 'They'
   const respondHours = hoursFrom(dare.respond_by)
-  const completeHours = hoursFrom(dare.complete_by)
   const windowClosed = respondHours !== null && respondHours < 0
 
   return (
@@ -196,7 +195,8 @@ export function DarePactCard({ dare }: { dare: any }) {
           <p className="text-[15px] font-semibold text-[var(--ink)]">{first} hasn&apos;t answered your dare</p>
           <p className="text-[13px] text-[var(--muted)]">
             {dare.title}
-            {completeHours !== null && completeHours > 0 ? ` · ${describeHours(completeHours)} left to do it` : ''}
+            {/* Nobody has accepted yet, so the clock that's running is the one to answer. */}
+            {respondHours !== null && respondHours > 0 ? ` · ${describeHours(respondHours)} left to answer` : ''}
           </p>
         </div>
       </div>

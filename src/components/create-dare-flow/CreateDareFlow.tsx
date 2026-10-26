@@ -8,8 +8,8 @@ import TaggedParticipantBanner from '@/components/create-pact-flow/TaggedPartici
 import TitleStep from './TitleStep';
 import DescriptionStep from './DescriptionStep';
 import TimingStep from './TimingStep';
-import VisibilityStep from './VisibilityStep';
 import RecipientsStep from './RecipientsStep';
+import RewardStep from './RewardStep';
 import VerificationStep from './VerificationStep';
 import ReviewStep from './ReviewStep';
 import SuccessStep from './SuccessStep';
@@ -42,8 +42,8 @@ function StepRouter({ onExit }: { onExit: () => void }) {
       {currentStep === 'title' && <TitleStep />}
       {currentStep === 'description' && <DescriptionStep />}
       {currentStep === 'timing' && <TimingStep />}
-      {currentStep === 'visibility' && <VisibilityStep />}
       {currentStep === 'recipients' && <RecipientsStep />}
+      {currentStep === 'reward' && <RewardStep />}
       {currentStep === 'verification' && <VerificationStep />}
       {currentStep === 'review' && <ReviewStep />}
       {currentStep === 'success' && <SuccessStep onDone={onExit} />}

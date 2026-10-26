@@ -22,8 +22,9 @@ export default function RecipientsStep() {
     (candidate: any) => !draft.recipients.some((selected) => selected.id === candidate.id)
   );
 
+  // One person per dare: picking someone replaces whoever was picked before.
   const addRecipient = (candidate: DareRecipientPick) => {
-    updateDraft({ recipients: [...draft.recipients, candidate] });
+    updateDraft({ recipients: [candidate] });
     setQuery('');
     setDebouncedQuery('');
   };
@@ -34,10 +35,10 @@ export default function RecipientsStep() {
 
   return (
     <div className="pact-step-enter flex flex-1 flex-col">
-      <h1 className="text-2xl font-bold text-[var(--pact-text)] text-balance">Add recipients</h1>
+      <h1 className="text-2xl font-bold text-[var(--pact-text)] text-balance">Who are you daring?</h1>
       <p className="mt-2 flex items-center gap-2 text-sm text-[var(--pact-text-dim)]">
-        <Users className="h-4 w-4" />
-        Search by name or username
+        <Users className="h-4 w-4" aria-hidden="true" />
+        Dares are one-to-one. Pick one person.
       </p>
 
       {draft.recipients.length > 0 && (
@@ -56,11 +57,11 @@ export default function RecipientsStep() {
 
       <div className="relative mt-4">
         <input
-          autoFocus
+          autoFocus={draft.recipients.length === 0}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name or username"
+          placeholder={draft.recipients.length ? 'Pick someone else instead' : 'Search by name or username'}
           className="w-full rounded-[28px] border border-[var(--pact-hairline)] bg-[var(--pact-surface)] px-4 py-2.5 text-[var(--pact-text)] placeholder:text-[var(--pact-text-faint)] focus:outline-none focus:border-[var(--pact-pink)]"
         />
 
@@ -111,10 +112,9 @@ export default function RecipientsStep() {
           type="button"
           onClick={goNext}
           disabled={draft.recipients.length === 0}
-          className=" w-full rounded-full py-3 font-bold disabled:opacity-40"
-          style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
+          className="w-full rounded-full bg-[var(--navy)] py-3 font-bold text-white disabled:opacity-40"
         >
-          Continue
+          {draft.recipients.length ? `Dare @${draft.recipients[0].username}` : 'Continue'}
         </button>
       </div>
     </div>

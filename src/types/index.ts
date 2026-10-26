@@ -230,6 +230,33 @@ export interface DareVerification {
   verifier?: User;
 }
 
+/** Where a dare is in its life, worked out by the server (see the backend's dares.py). */
+export type DareState =
+  | 'awaiting_response'
+  | 'in_progress'
+  | 'awaiting_review'
+  | 'completed'
+  | 'not_completed'
+  | 'declined'
+  | 'expired'
+  | 'cancelled'
+  | 'open';
+
+export interface DarePerson {
+  user_id: number;
+  username?: string | null;
+  full_name?: string | null;
+  avatar_url?: string | null;
+}
+
+/** started -> sent (creator says they paid) -> received | not_received (doer's answer). */
+export interface DareRewardState {
+  status: 'started' | 'sent' | 'received' | 'not_received';
+  amount: number;
+  sent_at?: string | null;
+  resolved_at?: string | null;
+}
+
 export interface Dare {
   id: number;
   dare_uuid?: string;
@@ -271,6 +298,19 @@ export interface Dare {
   // public dare they haven't claimed). Drives Accept/Decline/Upload Proof
   // affordances — see mapDare's derived isPendingForMe/isAcceptedByMe/etc.
   my_recipient_status?: 'pending' | 'accepted' | 'declined' | 'completed' | 'failed' | null;
+  /** Server-computed lifecycle state; every screen reads this. */
+  state?: DareState;
+  /** The one person who was dared. */
+  recipient?: DarePerson | null;
+  /** Only sent to the creator and the person dared. */
+  reward_amount?: number | null;
+  reward?: DareRewardState | null;
+  /** The person dared has a UPI ID, so the creator can pay. */
+  payee_upi_ready?: boolean | null;
+  shared_publicly?: boolean;
+  completed_at?: string | null;
+  proof_caption?: string | null;
+  proof_submitted_at?: string | null;
   // Derived client-side in mapDare from my_recipient_status, since the
   // backend has no is_accepted_by_me/is_completed_by_me fields.
   recipientCount?: number;

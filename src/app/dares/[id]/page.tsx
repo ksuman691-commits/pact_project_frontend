@@ -1,38 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams } from 'next/navigation';
-import Image from 'next/image';
-import { Upload, Users, CheckCircle2, XCircle, Clock, CalendarClock, ShieldCheck, Zap, CheckCheck, Share2 } from 'lucide-react';
+import { Globe } from 'lucide-react';
 import DetailPageHeader from '@/components/DetailPageHeader';
-import { useSeedBackHistory } from '@/hooks/useSeedBackHistory';
-import { useDareDetail, useDareRecipients, useDareStats } from '@/hooks/useDareQueries';
-import { useAcceptDare, useDeclineDare, useClaimDare } from '@/hooks/useDareMutations';
-import DareRecipientsModal from '@/components/DareRecipientsModal';
-import DareProofUploadModal from '@/components/DareProofUploadModal';
-import DareVerificationModal from '@/components/DareVerificationModal';
-import DareShareSheet from '@/components/DareShareSheet';
+import DareCard from '@/components/DareCard';
 import Avatar from '@/components/Avatar';
-import DareTimeRing from '@/components/DareTimeRing';
-import { formatCountdown, formatRelativeTime, parseApiDate, urgencyColor } from '@/lib/dareCountdown';
+import { useSeedBackHistory } from '@/hooks/useSeedBackHistory';
+import { useDareDetail } from '@/hooks/useDareQueries';
+import { useShareDare } from '@/hooks/useDareMutations';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { parseApiDate } from '@/lib/dareCountdown';
+import { creatorFace, dareRole, dareState, firstName, recipientFace, type DareFace } from '@/lib/dareView';
 
-const STATUS_PILL: Record<string, { label: string; color: string }> = {
-  pending: { label: 'Pending', color: 'var(--pact-gold)' },
-  accepted: { label: 'Accepted', color: 'var(--pact-violet)' },
-  declined: { label: 'Declined', color: 'var(--pact-text-faint)' },
-  completed: { label: 'Completed', color: 'var(--pact-mint)' },
-  failed: { label: 'Failed', color: 'var(--pact-pink)' },
-};
-
-function StatGroup({ icon: Icon, value, label, color }: { icon: any; value: number; label: string; color: string }) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <Icon className="h-4 w-4" style={{ color }} />
-      <span className="font-bold text-[var(--pact-text)]">{value}</span>
-      <span className="text-xs font-medium text-[var(--pact-text-faint)]">{label}</span>
-    </div>
-  );
+function when(raw?: string | null): string {
+  const at = parseApiDate(raw);
+  return at ? at.toLocaleString(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '–';
 }
 
 export default function DareDetailPage() {
@@ -41,42 +24,17 @@ export default function DareDetailPage() {
   const { user, isInitialized } = useRequireAuth();
   useSeedBackHistory('/dares');
 
-  // `enabled: isInitialized` guards against the same auth-rehydration race
-  // documented in useDareQueries.ts: this page mounts unconditionally on
-  // direct navigation/hard reload, before auth has finished rehydrating
-  // from localStorage. Firing these fetches first is what could leave
-  // `dare` permanently undefined after an unretried 401 even though the
-  // account was genuinely 'accepted' on the backend the whole time.
+  // Gate on auth: this page can mount before the session is restored.
   const dareQuery = useDareDetail(dareId, { enabled: isInitialized });
-  const recipientsQuery = useDareRecipients(dareId, { enabled: isInitialized });
-  const statsQuery = useDareStats(dareId, { enabled: isInitialized });
-
-  const acceptMutation = useAcceptDare();
-  const declineMutation = useDeclineDare();
-  const claimMutation = useClaimDare();
-
-  const [proofModalOpen, setProofModalOpen] = useState(false);
-  const [verifyModalOpen, setVerifyModalOpen] = useState(false);
-  const [recipientsModalOpen, setRecipientsModalOpen] = useState(false);
-  const [shareSheetOpen, setShareSheetOpen] = useState(false);
-
+  const share = useShareDare();
   const dare = dareQuery.data?.data;
 
-  const handleAccept = () => acceptMutation.mutate(dareId, { onSuccess: () => dareQuery.refetch() });
-  const handleDecline = () => declineMutation.mutate(dareId, { onSuccess: () => dareQuery.refetch() });
-  const handleClaim = () => claimMutation.mutate(dareId, { onSuccess: () => dareQuery.refetch() });
-
-  // While auth hasn't finished rehydrating, the queries above are
-  // deliberately disabled (see the enabled: isInitialized comment), so
-  // react-query's own isLoading would read false and briefly fall through
-  // to the "not found" state below instead of staying in loading. Fold
-  // !isInitialized into this check so the shimmer covers that gap too.
   if (!isInitialized || dareQuery.isLoading) {
     return (
-      <div className="pact-flow min-h-screen">
+      <div className="min-h-screen bg-[var(--paper)]">
         <DetailPageHeader title="Loading dare…" fallbackHref="/dares" />
-        <div className="max-w-2xl mx-auto px-4 py-6">
-          <div className="pact-shimmer h-96 rounded-[28px]" />
+        <div className="mx-auto max-w-2xl px-[10px] py-4 sm:px-6">
+          <div className="pact-shimmer aspect-[4/5] rounded-[22px]" />
         </div>
       </div>
     );
@@ -84,303 +42,110 @@ export default function DareDetailPage() {
 
   if (!dare) {
     return (
-      <div className="pact-flow min-h-screen">
-        <DetailPageHeader title="Dare not found" backHref="/dares" />
-        <div className="max-w-2xl mx-auto flex min-h-[60vh] items-center justify-center px-4 text-center">
+      <div className="min-h-screen bg-[var(--paper)]">
+        <DetailPageHeader title="Dare" backHref="/dares" />
+        <div className="mx-auto flex min-h-[60vh] max-w-2xl items-center justify-center px-6 text-center">
           <div>
-            <p className="text-lg font-bold text-[var(--pact-text)]">Dare not found</p>
-            <p className="mt-2 text-sm text-[var(--pact-text-dim)]">This dare could not be loaded or is no longer available.</p>
+            <p className="text-[18px] font-extrabold text-[var(--ink)]">This dare isn&apos;t available</p>
+            <p className="mt-2 text-[14px] text-[var(--muted)]">It may be private to the two people in it, or it was removed.</p>
           </div>
         </div>
       </div>
     );
   }
 
-  const isCreator = user?.id === dare.creator_id;
-  const isPending = dare.my_recipient_status === 'pending';
-  const isAccepted = dare.my_recipient_status === 'accepted';
-  const isPublicUnclaimed = dare.audience === 'public' && !isCreator && !dare.my_recipient_status;
-  // Same photo-forward rule as the Dares list card (DareCard): a photo is
-  // only ever real for a dare once its proof has been submitted
-  // (proof_url populated on completion) — pending/accepted dares have no
-  // image field at all, so this only goes photo-forward for that completed
-  // slice rather than faking a cover image.
-  const hasProofPhoto = Boolean(dare.proof_url) && dare.proof_type !== 'video';
-  // Mirrors DareCard's own ring target so the countdown ring here always
-  // agrees with the one shown on the list card for the same dare.
-  const ringTarget = dare.expires_at ?? (isPending ? dare.respond_by : dare.complete_by);
+  const role = dareRole(dare, user?.id);
+  const state = dareState(dare);
+  const creator = creatorFace(dare);
+  const recipient = recipientFace(dare);
+  const involved = role !== 'viewer';
+  const canShare = role === 'doer' && state === 'completed';
+  const canUnshare = involved && Boolean(dare.shared_publicly);
 
-  const countdown = isPending
-    ? formatCountdown(dare.respond_by, 'Respond')
-    : formatCountdown(dare.complete_by, 'Complete');
-
-  const statusPill = dare.my_recipient_status ? STATUS_PILL[dare.my_recipient_status] : null;
-  const stats = statsQuery.data?.data;
-
-  // DareResponse only carries `recipient_count`, not per-status breakdowns
-  // (confirmed against the live API schema) — the old acceptedCount /
-  // completedCount / failedCount fields the page previously read never
-  // existed on the backend and always rendered as 0. Deriving these from
-  // the actual recipients list is the only way to show real numbers.
-  const recipients = recipientsQuery.data?.data || [];
-  const acceptedCount = recipients.filter((r: any) => r.status === 'accepted').length;
-  const completedCount = recipients.filter((r: any) => r.status === 'completed').length;
-  const failedCount = recipients.filter((r: any) => r.status === 'declined' || r.status === 'failed').length;
+  const facts: { label: string; value: string }[] = [
+    { label: 'Sent', value: when(dare.created_at) },
+    state === 'awaiting_response' ? { label: 'Answer by', value: when(dare.respond_by) } : null,
+    state === 'in_progress' ? { label: 'Proof due', value: when(dare.complete_by) } : null,
+    dare.proof_submitted_at ? { label: 'Proof posted', value: when(dare.proof_submitted_at) } : null,
+    dare.completed_at ? { label: 'Marked done', value: when(dare.completed_at) } : null,
+    { label: 'Proof', value: dare.verification_method === 'video' ? 'Video' : dare.verification_method === 'photo' ? 'Photo' : 'Any' },
+    involved && dare.reward_amount
+      ? {
+          label: 'Reward',
+          value: `₹${dare.reward_amount}${
+            dare.reward?.status === 'received' ? ', paid' : dare.reward?.status === 'sent' ? ', sent, waiting to be confirmed' : state === 'completed' ? ', to be paid' : ', paid after it is marked done'
+          }`,
+        }
+      : null,
+  ].filter(Boolean) as { label: string; value: string }[];
 
   return (
-    <div className="pact-flow pact-page-enter min-h-screen">
-      <DetailPageHeader title="Dare Details" fallbackHref="/dares" />
+    <div className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
+      <DetailPageHeader title="Dare" fallbackHref="/dares" />
+      <div className="mx-auto max-w-2xl space-y-4 px-[10px] py-3 sm:px-6">
+        <DareCard dare={dare} variant="detail" />
 
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        {/* Photo-forward proof cover — same treatment as the Dares list
-            card (DareCard), not a simplified duplicate. Only rendered once
-            proof has actually been submitted; otherwise the time-ring
-            pattern below is the whole hero, matching the list card's own
-            fallback. */}
-        {hasProofPhoto && (
-          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-[28px]">
-            <Image
-              src={dare.proof_url as string}
-              alt={`Proof for ${dare.title}`}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 640px"
-            />
-            <span
-              className="absolute left-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold text-white"
-              style={{ background: 'var(--pact-mint)' }}
-            >
-              <CheckCheck className="h-2.5 w-2.5" />
-              Completed
-            </span>
-            {/* Share action — only surfaced once there's actually a proof
-                photo to share, same gating as the Completed pill above. */}
-            <button
-              onClick={() => setShareSheetOpen(true)}
-              aria-label="Share this dare"
-              className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md transition hover:opacity-90"
-              style={{ background: 'rgba(0,0,0,0.45)' }}
-            >
-              <Share2 className="h-3.5 w-3.5" />
-              Share
-            </button>
-          </div>
-        )}
+        <section className="rounded-[22px] border border-[var(--line)] bg-[var(--card)] px-4 py-2" aria-label="Who's in this dare">
+          <Person label="Dared by" face={creator} you={role === 'creator'} />
+          {recipient && <Person label="Dared" face={recipient} you={role === 'doer'} />}
+        </section>
 
-        {/* Creator + status + countdown — same DareTimeRing used on the
-            list card, so the countdown reads as a literal draining ring
-            here too instead of falling back to a plain avatar + text pill. */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <DareTimeRing
-              name={dare.creator_full_name || dare.creator_username}
-              avatarUrl={dare.creator_avatar_url}
-              username={dare.creator_username}
-              target={ringTarget}
-              windowStart={dare.created_at}
-              size={44}
-              showLabel={false}
-            />
-            <div className="min-w-0">
-              <p className="font-semibold text-[var(--pact-text)] truncate">
-                {isCreator ? 'You' : dare.creator_full_name || dare.creator_username}
-              </p>
-              <p className="text-sm text-[var(--pact-text-faint)] truncate">@{dare.creator_username}</p>
-            </div>
-          </div>
-          <div className="flex flex-shrink-0 flex-col items-end gap-1.5">
-            {statusPill && (
-              <span
-                className="rounded-full px-2.5 py-1 text-xs font-bold"
-                style={{ background: 'var(--pact-surface-2)', color: statusPill.color }}
-              >
-                {statusPill.label}
-              </span>
-            )}
-            <span
-              className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold"
-              style={{ background: 'var(--pact-surface-2)', color: urgencyColor(countdown.urgency) }}
-            >
-              <Clock className="h-3 w-3" />
-              {countdown.label}
-            </span>
-          </div>
-        </div>
+        <section className="rounded-[22px] border border-[var(--line)] bg-[var(--card)] px-4" aria-label="Dare details">
+          <dl className="divide-y divide-[var(--line)]">
+            {facts.map((fact) => (
+              <div key={fact.label} className="flex items-baseline justify-between gap-4 py-3 text-[14px]">
+                <dt className="text-[var(--muted)]">{fact.label}</dt>
+                <dd className="text-right font-semibold">{fact.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
 
-        {/* Title + description */}
-        <div>
-          <h2
-            className="mb-2 text-3xl font-black leading-tight text-[var(--pact-text)] text-pretty"
-            style={{ fontFamily: 'var(--font-pact-display), sans-serif' }}
-          >
-            {dare.title}
-          </h2>
-          <p className="text-[var(--pact-text-dim)] leading-relaxed">{dare.description}</p>
-        </div>
-
-        {/* Single recipient: show them directly, no tap required — with
-            only one person dared, hiding their identity behind an
-            interaction is unnecessary friction for information that
-            should just be visible on the page. */}
-        {recipients.length === 1 && (
-          <div className="flex items-center gap-3 rounded-md px-5 py-3" style={{ background: 'var(--pact-surface-2)' }}>
-            <Avatar
-              name={recipients[0].full_name || recipients[0].username}
-              avatarUrl={recipients[0].avatar_url}
-              size={36}
-            />
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-[var(--pact-text-faint)]">Dared</p>
-              <p className="truncate text-sm font-semibold text-[var(--pact-text)]">
-                {recipients[0].full_name || recipients[0].username || 'Unknown user'}
+        {(canShare || canUnshare) && (
+          <section className="flex items-center gap-3 rounded-[22px] border border-[var(--line)] bg-[var(--card)] px-4 py-3" aria-label="Discover">
+            <Globe className="size-5 shrink-0 text-[var(--navy)]" strokeWidth={2} aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-extrabold">{dare.shared_publicly ? 'Showing in Discover' : 'Show in Discover'}</p>
+              <p className="text-[13px] leading-[1.4] text-[var(--muted)]">
+                {dare.shared_publicly
+                  ? 'Anyone on CirclePact can see the proof. The reward is never shown.'
+                  : `Let people see you did it. ${firstName(creator.name)}'s name shows as the one who dared you; the reward stays private.`}
               </p>
             </div>
-          </div>
-        )}
-
-        {/* Compact icon-led stat row — one merged panel instead of 4 boxes.
-            Recipients is tappable whenever there's more than one, opening
-            a modal with the full who-was-dared list (DareRecipientsList,
-            re-themed) instead of building a separate component. */}
-        <div className="pact-card flex flex-wrap items-center gap-5 rounded-md px-5 py-4">
-          {recipients.length > 1 ? (
-            <button
-              onClick={() => setRecipientsModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-full transition hover:opacity-75"
-              aria-label="View who was dared"
-            >
-              <Users className="h-4 w-4" style={{ color: 'var(--pact-violet)' }} />
-              <span className="font-bold text-[var(--pact-text)]">{dare.recipientCount || 0}</span>
-              <span className="text-xs font-medium underline decoration-dotted text-[var(--pact-text-faint)]">Recipients</span>
-            </button>
-          ) : (
-            <StatGroup icon={Users} value={dare.recipientCount || 0} label="Recipients" color="var(--pact-violet)" />
-          )}
-          <StatGroup icon={CheckCircle2} value={acceptedCount} label="Accepted" color="var(--pact-violet)" />
-          <StatGroup icon={ShieldCheck} value={completedCount} label="Completed" color="var(--pact-mint)" />
-          <StatGroup icon={XCircle} value={failedCount} label="Failed" color="var(--pact-pink)" />
-        </div>
-
-        {/* Timeline — relative labels ("in 5h" / "2h ago") instead of raw
-            absolute datetimes, which are harder to parse at a glance for a
-            time-boxed feature. Exact datetime is still available via the
-            title attribute on hover/tap. */}
-        <div className="space-y-2 rounded-md px-5 py-3" style={{ background: 'var(--pact-surface-2)' }}>
-          <div className="flex items-center gap-2 text-sm">
-            <CalendarClock className="h-3.5 w-3.5 flex-shrink-0" style={{ color: 'var(--pact-text-faint)' }} />
-            <span className="text-[var(--pact-text-faint)]">Respond by</span>
-            <span
-              className="ml-auto font-medium text-[var(--pact-text-dim)]"
-              title={parseApiDate(dare.respond_by)?.toLocaleString()}
-            >
-              {formatRelativeTime(dare.respond_by)}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <CalendarClock className="h-3.5 w-3.5 flex-shrink-0" style={{ color: 'var(--pact-text-faint)' }} />
-            <span className="text-[var(--pact-text-faint)]">Complete by</span>
-            <span
-              className="ml-auto font-medium text-[var(--pact-text-dim)]"
-              title={parseApiDate(dare.complete_by)?.toLocaleString()}
-            >
-              {formatRelativeTime(dare.complete_by)}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0" style={{ color: 'var(--pact-text-faint)' }} />
-            <span className="text-[var(--pact-text-faint)]">Verification</span>
-            <span className="ml-auto font-medium capitalize text-[var(--pact-text-dim)]">{dare.verification_method || 'photo'}</span>
-          </div>
-        </div>
-
-        {/* Primary actions */}
-        {!isCreator && (isPending || isAccepted || isPublicUnclaimed) && (
-          <div className="grid grid-cols-2 gap-3">
-            {isPublicUnclaimed ? (
+            {dare.shared_publicly ? (
               <button
-                onClick={handleClaim}
-                disabled={claimMutation.isPending}
-                className=" col-span-2 flex items-center justify-center gap-2 rounded-full py-3 font-semibold disabled:opacity-50"
-                style={{ background: 'var(--navy)', color: 'var(--pact-bg)' }}
+                type="button"
+                disabled={share.isPending}
+                onClick={() => share.mutate({ dareId: dare.id, shared: false })}
+                className="h-11 shrink-0 rounded-full border-[1.5px] border-[var(--line)] px-4 text-[14px] font-extrabold disabled:opacity-50"
               >
-                <Zap className="h-4 w-4" />
-                {claimMutation.isPending ? 'Claiming...' : 'Claim Dare'}
+                Remove
               </button>
-            ) : isAccepted ? (
-              <>
-                <button
-                  onClick={() => setProofModalOpen(true)}
-                  className=" flex items-center justify-center gap-2 rounded-full py-3 font-semibold"
-                  style={{ background: 'var(--navy)', color: 'var(--pact-bg)' }}
-                >
-                  <Upload className="h-4 w-4" />
-                  Upload Proof
-                </button>
-                <button
-                  onClick={() => setVerifyModalOpen(true)}
-                  className="flex items-center justify-center gap-2 rounded-full border py-3 font-semibold transition"
-                  style={{ borderColor: 'var(--pact-violet)', color: 'var(--pact-violet)' }}
-                >
-                  <ShieldCheck className="h-4 w-4" />
-                  Verify
-                </button>
-              </>
             ) : (
-              <>
-                <button
-                  onClick={handleAccept}
-                  disabled={acceptMutation.isPending}
-                  className=" flex items-center justify-center gap-2 rounded-full py-3 font-semibold disabled:opacity-50"
-                  style={{ background: 'var(--navy)', color: 'var(--pact-bg)' }}
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  {acceptMutation.isPending ? 'Accepting...' : 'Accept'}
-                </button>
-                <button
-                  onClick={handleDecline}
-                  disabled={declineMutation.isPending}
-                  className="flex items-center justify-center gap-2 rounded-full border py-3 font-semibold transition disabled:opacity-50"
-                  style={{ borderColor: 'var(--pact-hairline)', color: 'var(--pact-text-dim)' }}
-                >
-                  <XCircle className="h-4 w-4" />
-                  {declineMutation.isPending ? 'Declining...' : 'Decline'}
-                </button>
-              </>
+              <button
+                type="button"
+                disabled={share.isPending}
+                onClick={() => share.mutate({ dareId: dare.id, shared: true })}
+                className="h-11 shrink-0 rounded-full bg-[var(--navy)] px-4 text-[14px] font-extrabold text-white disabled:opacity-50"
+              >
+                Share
+              </button>
             )}
-          </div>
+          </section>
         )}
-
-        {/* Verification stats */}
-        {stats && (stats.yes_count || stats.no_count) ? (
-          <div className="rounded-md px-5 py-4" style={{ background: 'var(--pact-surface-2)' }}>
-            <h3 className="mb-3 text-sm font-bold text-[var(--pact-text)]">Verification Stats</h3>
-            <div className="flex flex-wrap gap-5">
-          <StatGroup icon={CheckCircle2} value={stats.yes_count || 0} label="Yes" color="var(--pact-mint)" />
-          <StatGroup icon={XCircle} value={stats.no_count || 0} label="No" color="var(--pact-pink)" />
-          <div className="flex items-center gap-1.5">
-            <ShieldCheck className="h-4 w-4" style={{ color: 'var(--pact-gold)' }} />
-            <span className="font-bold text-[var(--pact-text)]">{(stats.confidence_avg || 0).toFixed(0)}%</span>
-            <span className="text-xs font-medium text-[var(--pact-text-faint)]">Confidence</span>
-          </div>
-            </div>
-          </div>
-        ) : null}
       </div>
+    </div>
+  );
+}
 
-      <DareShareSheet
-        isOpen={shareSheetOpen}
-        onClose={() => setShareSheetOpen(false)}
-        dareId={dareId}
-        dareTitle={dare.title}
-      />
-      <DareProofUploadModal isOpen={proofModalOpen} onClose={() => setProofModalOpen(false)} dareId={dareId} />
-      <DareVerificationModal isOpen={verifyModalOpen} onClose={() => setVerifyModalOpen(false)} dareId={dareId} />
-      <DareRecipientsModal
-        isOpen={recipientsModalOpen}
-        onClose={() => setRecipientsModalOpen(false)}
-        recipients={recipients}
-        isLoading={recipientsQuery.isLoading}
-      />
+function Person({ label, face, you }: { label: string; face: DareFace; you: boolean }) {
+  return (
+    <div className="flex items-center gap-3 py-2">
+      <Avatar name={face.name} avatarUrl={face.avatarUrl} size={36} />
+      <div className="min-w-0 flex-1">
+        <p className="text-[12px] font-semibold text-[var(--muted)]">{label}</p>
+        <p className="truncate text-[15px] font-bold">{you ? 'You' : face.name}</p>
+      </div>
     </div>
   );
 }

@@ -26,6 +26,7 @@ const notificationTarget = (notification: any) => {
   if (`${notification?.title || ''}`.toLowerCase().includes('says they tipped you')) return '/profile/tips/inbox';
   // "Priya wants to watch your pact" opens the pact with the asks sheet up.
   if (`${notification?.title || ''}`.toLowerCase().includes('wants to watch your pact') && notification.related_pact_id) return `/pacts/${notification.related_pact_id}?watchers=1`;
+  if (notification.related_dare_id) return `/dares/${notification.related_dare_id}`;
   if (notification.related_pact_id) {
     // Join-request notifications land the creator directly in the pact's
     // Accept/Reject window (see PactJoinRequestsModal) instead of just the
