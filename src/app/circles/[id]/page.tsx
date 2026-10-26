@@ -400,7 +400,10 @@ export default function CircleDetailPage() {
         <div className="mt-10 text-center"><button onClick={() => setLeaveModal(true)} className="h-11 px-4 text-[14px] text-[var(--muted)]">Leave circle</button></div>
       )}
       {isOwner && (
-        <div className="mt-10 text-center"><button onClick={() => setDeleteModal(true)} className="h-11 px-4 text-[14px] font-semibold" style={{ color: '#B3261E' }}>Delete circle</button></div>
+        <div className="mt-10 text-center">
+          <button onClick={() => setDeleteModal(true)} className="h-11 px-4 text-[14px] font-semibold" style={{ color: '#B3261E' }}>Delete circle</button>
+          <ConfirmModal isOpen={deleteModal} onClose={() => (deletingCircle ? undefined : setDeleteModal(false))} onConfirm={handleDeleteCircle} title="Delete this circle?" description={`${circle.name} will be removed for everyone in it${(circle as any).member_count > 1 ? ` (${(circle as any).member_count} members, who'll be told)` : ''}. Pacts made here stay with the people who made them and become private. This can't be undone.`} confirmLabel="Delete circle" destructive loading={deletingCircle} />
+        </div>
       )}
     </div>
     {capturePact && (
@@ -413,5 +416,5 @@ export default function CircleDetailPage() {
         onJoin={() => joinPactForCapture(capturePact)}
       />
     )}
-    {circle && qrOpen && <CircleQRFullView circle={circle} onClose={() => setQrOpen(false)} />} {circle && <InviteMembersModal isOpen={inviteModal} onClose={() => setInviteModal(false)} circleId={circle.id} circleName={circle.name} existingMemberIds={members.map((m: any) => m.user_id)} isPrivate={isPrivateCircle} />}<ConfirmModal isOpen={deleteModal} onClose={() => (deletingCircle ? undefined : setDeleteModal(false))} onConfirm={handleDeleteCircle} title="Delete this circle?" description={`${circle.name} will be removed for everyone in it${(circle as any).member_count > 1 ? ` (${(circle as any).member_count} members, who'll be told)` : ''}. Pacts made here stay with the people who made them and become private. This can't be undone.`} confirmLabel="Delete circle" destructive loading={deletingCircle} /><ConfirmModal isOpen={leaveModal} onClose={() => setLeaveModal(false)} onConfirm={handleLeave} title="Leave circle?" description={`You'll lose access to ${circle.name}'s pacts until you rejoin.`} confirmLabel="Leave Circle" destructive loading={leaving} /></main>
+    {circle && qrOpen && <CircleQRFullView circle={circle} onClose={() => setQrOpen(false)} />} {circle && <InviteMembersModal isOpen={inviteModal} onClose={() => setInviteModal(false)} circleId={circle.id} circleName={circle.name} existingMemberIds={members.map((m: any) => m.user_id)} isPrivate={isPrivateCircle} />}<ConfirmModal isOpen={leaveModal} onClose={() => setLeaveModal(false)} onConfirm={handleLeave} title="Leave circle?" description={`You'll lose access to ${circle.name}'s pacts until you rejoin.`} confirmLabel="Leave Circle" destructive loading={leaving} /></main>
 }
