@@ -341,6 +341,8 @@ export const circleService = {
   },
   join: (id: number) => api.post(`/api/circles/${id}/join`),
   leave: (id: number) => api.post(`/api/circles/${id}/leave`),
+  /** Owner only. The circle's pacts stay and move out of it. */
+  remove: (id: number) => api.delete(`/api/circles/${id}`),
   updateDetails: async (id: number, data: { name?: string; description?: string }) => {
     const response = await api.patch(`/api/circles/${id}`, data);
     return { ...response, data: mapCircle(response.data) };
@@ -381,6 +383,8 @@ export const circleJoinRequestService = {
 
 // Pact Services
 export const pactService = {
+  /** Creator only. The server refuses (409) when the pact is paid or ever was. */
+  remove: (id: number) => api.delete(`/api/pacts/${id}`),
   create: async (data: any) => {
     const response = await api.post('/api/pacts', data);
     return { ...response, data: mapPact(response.data) };
@@ -634,8 +638,9 @@ export const followService = {
 
 // Feed Services (Personalized feed, trending, discover)
 export const feedService = {
-  getPersonalized: (skip?: number, limit?: number, category?: string) =>
-    api.get('/api/feed', { params: { skip, limit, category }, timeout: 12000 }).then((response) => normalizeListResponse(response, mapPact)),
+  /** `paid` limits the feed to pacts you can pay to watch (priced, not yours, not already open to you). */
+  getPersonalized: (skip?: number, limit?: number, category?: string, paid?: boolean) =>
+    api.get('/api/feed', { params: { skip, limit, category, ...(paid ? { paid: true } : {}) }, timeout: 12000 }).then((response) => normalizeListResponse(response, mapPact)),
   getTrending: (skip?: number, limit?: number) =>
     api.get('/api/feed', { params: { skip, limit, category: 'trending' } }).then((response) => normalizeListResponse(response, mapPact)),
   getDiscover: (skip?: number, limit?: number) =>

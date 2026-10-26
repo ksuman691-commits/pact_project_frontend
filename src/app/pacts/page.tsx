@@ -288,7 +288,7 @@ function PactsPageInner() {
               <p className="mt-2 text-[14px] leading-[1.5] text-[var(--muted)]">
                 When you pay to watch a pact and the creator accepts you, it shows up here, and it stays at the top of your feed.
               </p>
-              <Link href="/feed" className="mt-5 inline-flex h-11 items-center rounded-full bg-[var(--navy)] px-6 text-[14px] font-extrabold text-white transition hover:bg-[var(--navy-hover)]">
+              <Link href="/feed?paid=1" className="mt-5 inline-flex h-11 items-center rounded-full bg-[var(--navy)] px-6 text-[14px] font-extrabold text-white transition hover:bg-[var(--navy-hover)]">
                 Browse The Feed
               </Link>
             </div>

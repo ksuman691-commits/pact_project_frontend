@@ -65,8 +65,13 @@ export default function TopNav({
       return
     }
 
-    const nextPath = categoryId === 'all' ? '/feed' : `/feed?category=${encodeURIComponent(categoryId)}`
-    router.replace(nextPath, { scroll: false })
+    // Keep "Pay to watch" on while the category changes.
+    const keepPaid = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('paid') === '1'
+    const params = new URLSearchParams()
+    if (categoryId !== 'all') params.set('category', categoryId)
+    if (keepPaid) params.set('paid', '1')
+    const query = params.toString()
+    router.replace(query ? `/feed?${query}` : '/feed', { scroll: false })
   }
 
   return (

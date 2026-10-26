@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, Heart, Loader, RotateCw, X } from 'lucide-react';
+import { AlertCircle, Heart, Loader, RotateCw, Trash2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
 import { usePactComments } from '@/hooks/useFeedQueries';
@@ -151,8 +151,17 @@ function CommentRow({
             Reply
           </button>
           {own && (
-            <button type="button" onClick={() => void remove()} disabled={deleting} className="-my-2 min-h-11 py-2 text-[13px] font-extrabold disabled:opacity-50" style={{ color: confirmDelete ? '#B3261E' : MUTED }}>
-              {confirmDelete ? 'Tap again to delete' : 'Delete'}
+            // Only the author gets this (the server enforces it too). First tap arms it, second tap deletes.
+            <button
+              type="button"
+              onClick={() => void remove()}
+              disabled={deleting}
+              aria-label={confirmDelete ? 'Tap again to delete this comment' : 'Delete comment'}
+              className="-my-2 flex min-h-11 items-center gap-1 py-2 text-[13px] font-extrabold disabled:opacity-50"
+              style={{ color: confirmDelete ? '#B3261E' : MUTED }}
+            >
+              <Trash2 className="size-[18px]" strokeWidth={2} aria-hidden="true" />
+              {confirmDelete && <span>{(comment.reply_count ?? 0) > 0 ? 'Delete with replies?' : 'Delete?'}</span>}
             </button>
           )}
           {comment.reportable_watcher && !own && (

@@ -77,7 +77,7 @@ export const queryKeys = {
   // Feed
   feed: {
     all: ['feed'],
-    personalized: (category?: string) => [...queryKeys.feed.all, 'personalized', category || 'all'],
+    personalized: (category?: string, paidOnly = false) => [...queryKeys.feed.all, 'personalized', category || 'all', paidOnly ? 'paid' : 'everything'],
     trending: () => [...queryKeys.feed.all, 'trending'],
     discover: () => [...queryKeys.feed.all, 'discover'],
     following: () => [...queryKeys.feed.all, 'following'],

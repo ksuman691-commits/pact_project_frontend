@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { queryKeys } from '@/lib/queryKeys'
 import { loginHrefForHere } from '@/lib/authNext'
 import { useRouter, useParams } from 'next/navigation'
 import { useRequireAuth } from '@/hooks/useRequireAuth'
@@ -30,6 +32,7 @@ const PRIVACY_LABEL: Record<string, string> = {
 export default function CircleDetailPage() {
   const router = useRouter(); const params = useParams(); const { user, isInitialized } = useRequireAuth(); const circleId = Number(params.id)
   const [circle, setCircle] = useState<Circle | null>(null); const [members, setMembers] = useState<any[]>([]); const [pacts, setPacts] = useState<Pact[]>([]); const [loading, setLoading] = useState(true); const [isMember, setIsMember] = useState(false); const [qrOpen, setQrOpen] = useState(false); const [inviteModal, setInviteModal] = useState(false); const [leaveModal, setLeaveModal] = useState(false); const [leaving, setLeaving] = useState(false); const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const queryClient = useQueryClient(); const [deleteModal, setDeleteModal] = useState(false); const [deletingCircle, setDeletingCircle] = useState(false)
   const [requested, setRequested] = useState(false)
   const [savingPrivacy, setSavingPrivacy] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -92,6 +95,26 @@ export default function CircleDetailPage() {
           return next
         })
       }
+    }
+  }
+  // Owner only. The server moves the circle's pacts out of it (they stay with their creators).
+  const handleDeleteCircle = async () => {
+    setDeletingCircle(true)
+    try {
+      await circleService.remove(circleId)
+      queryClient.removeQueries({ queryKey: queryKeys.circles.detail(circleId) })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.circles.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.pacts.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.feed.all }),
+        queryClient.invalidateQueries({ queryKey: ['my-pacts'] }),
+      ])
+      toast.success('Circle deleted')
+      router.replace('/circles')
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || "Couldn't delete this circle. Try again.")
+      setDeletingCircle(false)
+      setDeleteModal(false)
     }
   }
   const handleLeave = async () => { setLeaving(true); try { await circleService.leave(circleId); router.push('/circles') } finally { setLeaving(false); setLeaveModal(false) } }
@@ -376,6 +399,9 @@ export default function CircleDetailPage() {
       {isMember && !isOwner && (
         <div className="mt-10 text-center"><button onClick={() => setLeaveModal(true)} className="h-11 px-4 text-[14px] text-[var(--muted)]">Leave circle</button></div>
       )}
+      {isOwner && (
+        <div className="mt-10 text-center"><button onClick={() => setDeleteModal(true)} className="h-11 px-4 text-[14px] font-semibold" style={{ color: '#B3261E' }}>Delete circle</button></div>
+      )}
     </div>
     {capturePact && (
       <StoryCaptureSheet
@@ -387,5 +413,5 @@ export default function CircleDetailPage() {
         onJoin={() => joinPactForCapture(capturePact)}
       />
     )}
-    {circle && qrOpen && <CircleQRFullView circle={circle} onClose={() => setQrOpen(false)} />} {circle && <InviteMembersModal isOpen={inviteModal} onClose={() => setInviteModal(false)} circleId={circle.id} circleName={circle.name} existingMemberIds={members.map((m: any) => m.user_id)} isPrivate={isPrivateCircle} />}<ConfirmModal isOpen={leaveModal} onClose={() => setLeaveModal(false)} onConfirm={handleLeave} title="Leave circle?" description={`You'll lose access to ${circle.name}'s pacts until you rejoin.`} confirmLabel="Leave Circle" destructive loading={leaving} /></main>
+    {circle && qrOpen && <CircleQRFullView circle={circle} onClose={() => setQrOpen(false)} />} {circle && <InviteMembersModal isOpen={inviteModal} onClose={() => setInviteModal(false)} circleId={circle.id} circleName={circle.name} existingMemberIds={members.map((m: any) => m.user_id)} isPrivate={isPrivateCircle} />}<ConfirmModal isOpen={deleteModal} onClose={() => (deletingCircle ? undefined : setDeleteModal(false))} onConfirm={handleDeleteCircle} title="Delete this circle?" description={`${circle.name} will be removed for everyone in it${(circle as any).member_count > 1 ? ` (${(circle as any).member_count} members, who'll be told)` : ''}. Pacts made here stay with the people who made them and become private. This can't be undone.`} confirmLabel="Delete circle" destructive loading={deletingCircle} /><ConfirmModal isOpen={leaveModal} onClose={() => setLeaveModal(false)} onConfirm={handleLeave} title="Leave circle?" description={`You'll lose access to ${circle.name}'s pacts until you rejoin.`} confirmLabel="Leave Circle" destructive loading={leaving} /></main>
 }
