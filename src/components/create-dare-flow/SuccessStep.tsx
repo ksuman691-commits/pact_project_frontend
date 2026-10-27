@@ -12,7 +12,11 @@ export default function SuccessStep({ onDone }: { onDone: () => void }) {
   const { createdDare, draft, reset } = useCreateDareFlow();
   const router = useRouter();
   const who = draft.recipients[0];
-  const first = (who?.full_name || who?.username || 'them').replace(/^@/, '').split(' ')[0];
+  const sentTo = createdDare?.sentTo?.length ? createdDare.sentTo : [(who?.full_name || who?.username || 'them').replace(/^@/, '').split(' ')[0]];
+  const failedFor = createdDare?.failedFor ?? [];
+  const many = sentTo.length > 1;
+  const first = many ? 'them' : sentTo[0];
+  const list = sentTo.length > 2 ? `${sentTo.slice(0, -1).join(', ')} and ${sentTo[sentTo.length - 1]}` : sentTo.join(' and ');
   const title = createdDare?.title || draft.title;
 
   // The other person only knows about the dare once they open the app, so
@@ -39,10 +43,13 @@ export default function SuccessStep({ onDone }: { onDone: () => void }) {
         </span>
       </SparkRing>
 
-      <h1 className="mt-8 text-[40px] font-extrabold leading-[1] tracking-[-0.045em] text-[var(--pact-text)] text-balance">Dare sent.</h1>
+      <h1 className="mt-8 text-[40px] font-extrabold leading-[1] tracking-[-0.045em] text-[var(--pact-text)] text-balance">{many ? 'Dares sent.' : 'Dare sent.'}</h1>
       <p className="mt-3 max-w-xs text-[16px] leading-[1.4] text-[var(--pact-text-dim)]">
-        {first} has {draft.respondByHours} hours to say yes. Give them a nudge so they open it.
+        {many ? `${list} each have ${draft.respondByHours} hours to say yes.` : `${first} has ${draft.respondByHours} hours to say yes.`} Give them a nudge so they open it.
       </p>
+      {failedFor.length > 0 && (
+        <p className="mt-3 max-w-xs text-[14px] font-semibold text-[#B3261E]">Couldn&apos;t send to {failedFor.join(', ')}. Try them again.</p>
+      )}
 
       <div className="mt-10 flex w-full flex-col gap-3">
         <button type="button" onClick={() => void tell()} className="flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[var(--navy)] text-[16px] font-extrabold text-white">

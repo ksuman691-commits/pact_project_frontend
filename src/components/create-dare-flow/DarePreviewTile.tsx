@@ -12,7 +12,9 @@ import type { DareDraft } from '@/types/createDareFlow';
  */
 export default function DarePreviewTile({ draft }: { draft: DareDraft }) {
   const who = draft.recipients[0];
-  const name = who ? who.full_name || `@${who.username}` : null;
+  const first = who ? who.full_name || `@${who.username}` : null;
+  const extra = draft.recipients.length - 1;
+  const name = first ? (extra > 0 ? `${first.split(' ')[0]} and ${extra} ${extra === 1 ? 'other' : 'others'}` : first) : null;
   const title = draft.title.trim();
   return (
     <div

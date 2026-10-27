@@ -9,12 +9,15 @@ export default function ReviewStep() {
   const { draft, isSubmitting, submit } = useCreateDareFlow();
   const who = draft.recipients[0];
   const whoName = who?.full_name || (who ? `@${who.username}` : 'Someone');
+  const count = draft.recipients.length;
+  const names = draft.recipients.map((r) => (r.full_name || r.username).split(' ')[0]);
 
   const rows: { label: string; value: string }[] = [
+    ...(count > 1 ? [{ label: 'Sent to', value: names.join(', ') }] : []),
     { label: 'Time to accept', value: `${draft.respondByHours} ${draft.respondByHours === 1 ? 'hour' : 'hours'}` },
     { label: 'Time to do it', value: `${draft.completeByHours} hours from accepting` },
     { label: 'Proof', value: draft.verificationMethod === 'video' ? 'A short video' : 'A photo' },
-    { label: 'Reward', value: draft.rewardAmount ? `₹${draft.rewardAmount}, you pay after you mark it done` : 'None' },
+    { label: 'Reward', value: draft.rewardAmount ? (count > 1 ? `₹${draft.rewardAmount} each, you pay whoever does it (up to ₹${draft.rewardAmount * count})` : `₹${draft.rewardAmount}, you pay after you mark it done`) : 'None' },
   ];
 
   return (
@@ -41,7 +44,7 @@ export default function ReviewStep() {
           disabled={isSubmitting || !who}
           className="w-full rounded-full bg-[var(--navy)] py-3 font-bold text-white disabled:opacity-60"
         >
-          {isSubmitting ? 'Sending…' : `Send dare to ${whoName.split(' ')[0]}`}
+          {isSubmitting ? 'Sending…' : count > 1 ? `Send dare to ${count} people` : `Send dare to ${whoName.split(' ')[0]}`}
         </button>
       </div>
     </div>

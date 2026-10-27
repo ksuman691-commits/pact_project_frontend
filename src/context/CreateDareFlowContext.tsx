@@ -97,8 +97,14 @@ export function CreateDareFlowProvider({
 
   const submit = async () => {
     try {
-      const response = await createDareMutation.mutateAsync(dareDraftToApiPayload(draft));
-      setCreatedDare({ id: response.data.id, title: draft.title.trim() });
+      // One dare per person, each with its own clock, proof and reward.
+      const picks = draft.recipients;
+      const results = await Promise.allSettled(picks.map((r) => createDareMutation.mutateAsync(dareDraftToApiPayload(draft, r.id))));
+      const nameOf = (r: (typeof picks)[number]) => (r.full_name || r.username).split(' ')[0];
+      const sent = results.flatMap((res, i) => (res.status === 'fulfilled' ? [{ id: res.value.data.id as number, name: nameOf(picks[i]) }] : []));
+      const failed = results.flatMap((res, i) => (res.status === 'rejected' ? [nameOf(picks[i])] : []));
+      if (sent.length === 0) return;
+      setCreatedDare({ id: sent[0].id, title: draft.title.trim(), sentTo: sent.map((s) => s.name), failedFor: failed });
       setStepIndex(resolvedSteps.length - 1);
     } catch {
       // Error toast already handled by useCreateDare's onError.
