@@ -16,6 +16,7 @@ export interface RawNotification {
   related_circle_id?: number | null;
   related_user_id?: number | null;
   related_comment_id?: number | null;
+  related_dare_id?: number | null;
   actor?: NotificationActor | null;
   is_read: boolean;
   created_at: string;

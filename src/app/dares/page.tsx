@@ -1,44 +1,33 @@
 'use client';
 
-import Link from 'next/link';
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Plus, X } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Plus, Zap } from 'lucide-react';
 import DareCard from '@/components/DareCard';
-import FeaturedDareCard from '@/components/FeaturedDareCard';
-import DareTimeRing from '@/components/DareTimeRing';
 import CreateDareModal from '@/components/CreateDareModal';
-import CuratedContentGrid from '@/components/CuratedContentGrid';
+import RefreshButton from '@/components/RefreshButton';
 import { useDareFeed, useMyDares } from '@/hooks/useDareQueries';
-import { useFeaturedDare } from '@/hooks/useFeaturedDare';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { getTimeRing, isDareExpired, parseApiDate } from '@/lib/dareCountdown';
-import { getDisplayName } from '@/lib/displayName';
+import { dareRole, dareState, isActive, nextStep } from '@/lib/dareView';
+import type { Dare } from '@/types';
 
-type Tab = 'for-you' | 'sent' | 'discover' | 'expired';
-type StatusFilter = 'accepted' | 'completed';
+type Tab = 'for-you' | 'sent' | 'discover' | 'history';
 
-/** The deadline that actually applies to a dare right now — respond_by while
- * still pending a response, complete_by once accepted. Used uniformly for
- * both "For You" and "Sent by You" rows, since these are dare-level fields,
- * not per-viewer ones. */
-function getActiveTarget(dare: any) {
-  if (dare.my_recipient_status === 'accepted') return dare.complete_by;
-  if (dare.my_recipient_status === 'pending') return dare.respond_by;
-  // Creator's own sent dares have no personal recipient status — fall back
-  // to whichever deadline is still ahead of us.
-  const respondBy = parseApiDate(dare.respond_by);
-  if (respondBy && respondBy.getTime() > Date.now()) return dare.respond_by;
-  return dare.complete_by ?? dare.respond_by;
-}
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'for-you', label: 'For You' },
+  { id: 'sent', label: 'Sent' },
+  { id: 'discover', label: 'Discover' },
+  { id: 'history', label: 'History' },
+];
 
-function isResolved(dare: any) {
-  return ['completed', 'failed', 'declined', 'expired'].includes(dare.my_recipient_status || dare.status);
-}
+const EMPTY: Record<Tab, { title: string; body: string; cta?: 'create' | 'discover' }> = {
+  'for-you': { title: 'No dares waiting on you', body: 'When someone dares you, it shows up here with a clock.', cta: 'discover' },
+  sent: { title: 'Your next challenge starts with you', body: 'Dare one person to do one thing, soon.', cta: 'create' },
+  discover: { title: 'Nothing shared yet', body: 'Finished dares people choose to show off appear here.', cta: 'create' },
+  history: { title: 'Your past dares will appear here', body: 'Completed, declined and expired dares move here.' },
+};
 
-// useSearchParams() (for the ?tab=/?status= deep links from the dashboard
-// stat cards) requires a Suspense boundary around any client component that
-// calls it, or `next build` fails prerendering this page.
+// useSearchParams needs a Suspense boundary or `next build` fails prerendering.
 export default function DaresPage() {
   return (
     <Suspense fallback={null}>
@@ -48,402 +37,209 @@ export default function DaresPage() {
 }
 
 function DaresPageInner() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [tab, setTab] = useState<Tab>('for-you');
-  const [createModalOpen, setCreateModalOpen] = useState(false);
   const { user, isInitialized } = useRequireAuth();
+  const [tab, setTab] = useState<Tab>('for-you');
+  const [createOpen, setCreateOpen] = useState(false);
 
-  // Deep-link support for the dashboard stat cards: /dares?tab=for-you jumps
-  // straight to a tab, /dares?status=accepted shows a cross-tab status
-  // filter (see statusFilter below) since "Accepted"/"Completed" cut across
-  // For You and Sent by You rather than mapping to a single tab.
+  // Deep links: ?tab=for-you|sent|discover|history, plus the older
+  // ?tab=expired and ?status=accepted|completed links still land somewhere sensible.
   const tabParam = searchParams.get('tab');
   const statusParam = searchParams.get('status');
-  const statusFilter: StatusFilter | null = statusParam === 'accepted' || statusParam === 'completed' ? statusParam : null;
-  // `created` changes on every new dare, so landing on ?tab=sent again still
-  // re-selects the tab even if the user had switched away from it.
   const createdParam = searchParams.get('created');
   useEffect(() => {
-    if (tabParam === 'for-you' || tabParam === 'sent' || tabParam === 'discover' || tabParam === 'expired') {
-      setTab(tabParam);
+    if (tabParam === 'for-you' || tabParam === 'sent' || tabParam === 'discover' || tabParam === 'history') setTab(tabParam);
+    else if (tabParam === 'expired' || statusParam === 'completed') setTab('history');
+    else if (statusParam === 'accepted') setTab('for-you');
+  }, [tabParam, statusParam, createdParam]);
+
+  // Gate on auth: on a hard reload this page mounts before the session is restored.
+  const mine = useMyDares({ enabled: isInitialized && !!user });
+  const feed = useDareFeed();
+  const all: Dare[] = useMemo(() => mine.data?.pages?.flatMap((page: any) => page.data) || [], [mine.data]);
+  const discover: Dare[] = useMemo(() => feed.data?.pages?.flatMap((page: any) => page.data) || [], [feed.data]);
+
+  const lists = useMemo(() => {
+    const forYou: Dare[] = [];
+    const sent: Dare[] = [];
+    const history: Dare[] = [];
+    let yourMove = 0;
+    let inPlay = 0;
+    let doneByYou = 0;
+    for (const dare of all) {
+      const role = dareRole(dare, user?.id);
+      const mineToAct = nextStep(dare, role) !== null;
+      if (isActive(dare)) {
+        ;(role === 'creator' ? sent : forYou).push(dare);
+        if (mineToAct) yourMove += 1;
+        else inPlay += 1;
+      } else {
+        history.push(dare);
+      }
+      if (role === 'doer' && dareState(dare) === 'completed') doneByYou += 1;
     }
-  }, [tabParam, createdParam]);
+    // Things you need to act on come first; then whatever runs out soonest.
+    const byUrgency = (a: Dare, b: Dare) => {
+      const actA = nextStep(a, dareRole(a, user?.id)) ? 0 : 1;
+      const actB = nextStep(b, dareRole(b, user?.id)) ? 0 : 1;
+      if (actA !== actB) return actA - actB;
+      return new Date(a.respond_by).getTime() - new Date(b.respond_by).getTime();
+    };
+    forYou.sort(byUrgency);
+    sent.sort(byUrgency);
+    return { forYou, sent, history, yourMove, inPlay, doneByYou };
+  }, [all, user?.id]);
 
-  const clearStatusFilter = () => router.push('/dares');
-
-  const feedQuery = useDareFeed();
-  // GET /api/dares/mine already returns dares where the viewer is either
-  // the creator or a recipient — "For You" and "Sent by You" are both
-  // client-side filters over this single result, not separate endpoints.
-  //
-  // `enabled` MUST gate on isInitialized/user, matching BottomNav and the
-  // profile page's own use of this same hook (see its doc comment): this
-  // page mounts unconditionally on direct navigation/hard reload, before
-  // auth has finished rehydrating from localStorage. Firing unconditionally
-  // here raced the token refresh/verify in `initAuth()` and intermittently
-  // lost that race in production — the request either went out without a
-  // ready token or collided with initAuth's own refresh, got a 401 with no
-  // retry, and left the list (and its "WAITING ON YOU" / "RECEIVED &
-  // ACCEPTED" counts) stuck empty for the rest of the session even though
-  // the backend had the correct data the whole time.
-  const myDaresQuery = useMyDares({ enabled: isInitialized && !!user });
-  const mineAll = useMemo(
-    () => myDaresQuery.data?.pages?.flatMap((page) => page.data) || [],
-    [myDaresQuery.data],
-  );
-
-  // "For You" = dares the viewer is a recipient on AND still needs their
-  // attention: either awaiting a response (pending) or accepted but not
-  // yet past its complete_by deadline (in progress, needs proof). Expired
-  // ones move to their own "Expired" tab instead of sitting here looking
-  // actionable when they no longer are.
-  const forYou = useMemo(
-    () =>
-      mineAll.filter((d: any) => {
-        if (d.creator_id === user?.id) return false;
-        if (isDareExpired(d)) return false;
-        if (d.my_recipient_status === 'pending') return true;
-        if (d.my_recipient_status === 'accepted') {
-          const completeBy = parseApiDate(d.complete_by);
-          return !completeBy || completeBy.getTime() > Date.now();
-        }
-        return false;
-      }),
-    [mineAll, user?.id],
-  );
-  const sentByYou = useMemo(
-    () => mineAll.filter((d: any) => d.creator_id === user?.id && !isDareExpired(d)),
-    [mineAll, user?.id],
-  );
-  // Expired = missed its deadline without ever resolving (no accept/decline,
-  // or accepted but proof never uploaded) — pulled out of For You/Sent by
-  // You above so a dare that can no longer be acted on doesn't sit mixed in
-  // with ones that still can.
-  const expiredDares = useMemo(() => mineAll.filter((d: any) => isDareExpired(d)), [mineAll]);
-  const discover = feedQuery.data?.pages?.flatMap((page) => page.data) || [];
-
-  // Stat card scope: all three numbers read from the same mineAll set as
-  // the hero count above, so the header stays internally consistent.
-  // "Waiting on you" stays strictly-pending (awaiting your response) —
-  // the actionable-right-now number, matching the tab badge below.
-  //
-  // "Accepted"/"Completed" are scoped to `my_recipient_status` only — i.e.
-  // dares sent TO the viewer that they personally accepted/completed. The
-  // `dare.status === 'accepted'` fallback that used to be OR'd in here was
-  // dead code: per the backend (see app/api/dares.py accept_dare/
-  // decline_dare), accepting or declining only ever writes to the
-  // DareRecipient row, never to the top-level Dare.status field, so that
-  // field never actually reaches "accepted"/"completed" for dares the
-  // viewer created. Practically, this means these two stats can only ever
-  // reflect the viewer's own responses to dares THEY received — a dare the
-  // viewer sent that a recipient accepted does not increment either count,
-  // and there is currently no way to show that without a per-dare
-  // recipients fetch. See BACKEND_SPEC_DARE_SENT_STATUS_AGGREGATE.md for
-  // the aggregate field this needs from the backend to fix properly.
-  // Dares the viewer sent that no recipient has answered yet. Dare.status is
-  // only ever written at creation ("pending") for the creator's own row, so
-  // this is exactly "sent, unanswered" for dares that haven't expired.
-  const sentWaiting = useMemo(() => sentByYou.filter((d: any) => d.status === 'pending').length, [sentByYou]);
-  const waitingOnYou = useMemo(() => mineAll.filter((d: any) => d.my_recipient_status === 'pending').length, [mineAll]);
-  const acceptedDares = useMemo(() => mineAll.filter((d: any) => d.my_recipient_status === 'accepted'), [mineAll]);
-  const completedDares = useMemo(() => mineAll.filter((d: any) => d.my_recipient_status === 'completed'), [mineAll]);
-  const acceptedCount = acceptedDares.length;
-  const completedCount = completedDares.length;
-  const statusFiltered = statusFilter === 'accepted' ? acceptedDares : statusFilter === 'completed' ? completedDares : null;
-
-  // "Running out of time" — the 3 most time-critical active dares across
-  // both For You and Sent by You (per product decision: urgency should
-  // surface regardless of who needs to act next).
-  const urgentDares = useMemo(() => {
-    return mineAll
-      .filter((d: any) => !isResolved(d))
-      .map((d: any) => ({ dare: d, ring: getTimeRing(getActiveTarget(d), d.created_at) }))
-      .filter((entry) => entry.ring.tier !== 'expired')
-      .sort((a, b) => a.ring.hoursRemaining - b.ring.hoursRemaining)
-      .slice(0, 3);
-  }, [mineAll]);
-
-  // Featured dare: same shared selection the Home feed's Dare of the Day
-  // card uses (see useFeaturedDare) — one real "featured" mechanic, not a
-  // second one defined here that could drift out of sync with that one.
-  const { featuredDare } = useFeaturedDare();
-
-  const currentQuery = tab === 'discover' ? feedQuery : myDaresQuery;
-  // A status filter (from the "Accepted"/"Completed" stat) takes over the
-  // list entirely, independent of whichever tab happens to be selected —
-  // these statuses cut across For You and Sent by You, so pinning them to
-  // one tab would hide half the matches.
-  const dares = statusFiltered ?? (tab === 'for-you' ? forYou : tab === 'sent' ? sentByYou : tab === 'expired' ? expiredDares : discover);
-  const isLoading = tab === 'discover' ? feedQuery.isLoading : myDaresQuery.isLoading;
-
-  const emptyCopy: Record<Tab, string> = {
-    'for-you': 'No dares waiting on your response.',
-    sent: "You haven't sent any dares yet.",
-    discover: 'No dares available yet. Create one to get started!',
-    expired: 'No expired dares.',
+  const youOweForYou = lists.forYou.filter((d) => nextStep(d, 'doer')).length;
+  const youOweSent = lists.sent.filter((d) => nextStep(d, 'creator')).length;
+  const counts: Record<Tab, number | null> = {
+    'for-you': mine.isSuccess ? youOweForYou : null,
+    sent: mine.isSuccess ? youOweSent : null,
+    discover: null,
+    history: null,
   };
 
-  const tabs: { id: Tab; label: string; count?: number }[] = [
-    { id: 'for-you', label: 'For You', count: waitingOnYou },
-    { id: 'sent', label: 'Sent by You' },
-    { id: 'discover', label: 'Discover' },
-    { id: 'expired', label: 'Expired', count: expiredDares.length },
+  const shown = tab === 'for-you' ? lists.forYou : tab === 'sent' ? lists.sent : tab === 'history' ? lists.history : discover;
+  const query = tab === 'discover' ? feed : mine;
+  const loading = tab === 'discover' ? feed.isLoading : mine.isLoading || !isInitialized;
+  const summary = mine.isSuccess
+    ? [lists.yourMove > 0 ? `${lists.yourMove} need${lists.yourMove === 1 ? 's' : ''} you` : '', lists.inPlay > 0 ? `${lists.inPlay} in play` : '']
+        .filter(Boolean)
+        .join(' · ') || 'One person, one challenge, a short clock.'
+    : ' ';
+
+  const stats: { label: string; value: number; tab: Tab }[] = [
+    { label: 'Your move', value: lists.yourMove, tab: lists.forYou.some((d) => nextStep(d, 'doer')) || !lists.sent.some((d) => nextStep(d, 'creator')) ? 'for-you' : 'sent' },
+    { label: 'In play', value: lists.inPlay, tab: lists.sent.some((d) => !nextStep(d, 'creator')) ? 'sent' : 'for-you' },
+    { label: 'Done by you', value: lists.doneByYou, tab: 'history' },
   ];
 
   return (
-    <main className="min-h-screen bg-[var(--pact-bg)] pb-28 text-[var(--pact-text)]">
-      <div className="mx-auto max-w-2xl px-5 pb-10 pt-8 md:px-10 md:pt-14">
-        {/* Hero */}
-        <header className="border-b border-[var(--pact-hairline)] pb-8">
-          <h1 className="text-[34px] font-bold leading-none tracking-[-0.035em] text-[var(--pact-text)]">Dares</h1>
-          <p className="mt-3 text-[14px] text-[var(--pact-text-muted)]">
-            {myDaresQuery.isLoading
-              ? '\u00A0'
-              : [waitingOnYou > 0 ? `${waitingOnYou} waiting on you` : '', sentWaiting > 0 ? `${sentWaiting} sent, waiting` : ''].filter(Boolean).join(' · ') || 'No active dares yet'}
-          </p>
-
-          {/* Unified stat card — each stat is a real link into the filtered
-              view it describes, not just a static number. */}
-          <div className="mt-6 flex items-stretch divide-x divide-[var(--pact-hairline)] rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)]">
-            <Link
-              href="/dares?tab=for-you"
-              className="flex-1 px-4 py-3 text-center transition hover:bg-[var(--pact-surface-2)]"
-            >
-              <p className="text-lg font-black text-[var(--pact-text)]">{waitingOnYou}</p>
-              <p className="mt-0.5 text-[10px] font-semibold text-[var(--pact-text-faint)]">Waiting on you</p>
-            </Link>
-            <Link
-              href="/dares?status=accepted"
-              className="flex-1 px-4 py-3 text-center transition hover:bg-[var(--pact-surface-2)]"
-            >
-              <p className="text-lg font-black text-[var(--pact-text)]">{acceptedCount}</p>
-              <p className="mt-0.5 text-[10px] font-semibold text-[var(--pact-text-faint)]">Received &amp; accepted</p>
-            </Link>
-            <Link
-              href="/dares?status=completed"
-              className="flex-1 px-4 py-3 text-center transition hover:bg-[var(--pact-surface-2)]"
-            >
-              <p className="text-lg font-black text-[var(--pact-text)]">{completedCount}</p>
-              <p className="mt-0.5 text-[10px] font-semibold text-[var(--pact-text-faint)]">Completed</p>
-            </Link>
+    <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
+      <div className="mx-auto max-w-2xl">
+        <header className="flex items-start justify-between gap-3 px-6 pb-1.5 pt-9">
+          <div className="flex min-w-0 flex-col gap-2">
+            <h1 className="text-[34px] font-bold leading-none tracking-[-0.035em]">Dares</h1>
+            <p className="text-[14px] text-[var(--muted)]">{summary}</p>
           </div>
+          <RefreshButton label="Refresh dares" onRefresh={() => Promise.all([mine.refetch(), feed.refetch()])} />
         </header>
 
-        {/* Featured dare: photo-forward hero matching the approved mockup's
-            dare-of-the-day treatment, sourced from a real open public dare
-            in Discover (see featuredDare above) rather than any curated
-            "pick of the day" that doesn't exist in the data model. */}
-        {featuredDare && (
-          <div className="pt-6">
-            <FeaturedDareCard dare={featuredDare} />
+        <div className="flex items-stretch gap-3 px-6 pb-3 pt-5">
+          <div className="flex min-w-0 flex-1 divide-x divide-[var(--line)] rounded-[18px] border border-[var(--line)] bg-[var(--card)]">
+            {stats.map((stat) => (
+              <button
+                key={stat.label}
+                type="button"
+                onClick={() => setTab(stat.tab)}
+                className="flex min-w-0 flex-1 flex-col items-center justify-center px-1 py-2"
+                aria-label={`${stat.label}: ${mine.isSuccess ? stat.value : 'loading'}`}
+              >
+                <span className="text-[18px] font-extrabold leading-tight">{mine.isSuccess ? stat.value : '–'}</span>
+                <span className="truncate text-[11px] font-semibold text-[var(--muted)]">{stat.label}</span>
+              </button>
+            ))}
           </div>
-        )}
-
-        {/* "New" gets its own centered row directly under the stat card —
-            previously it shared a cramped flex row with the tab nav, which
-            forced "For You" and "Sent by You" to wrap onto two lines. */}
-        <div className="flex justify-center pt-6">
           <button
-            onClick={() => setCreateModalOpen(true)}
-            className=" flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold text-[var(--card-text)]"
-            style={{ background: 'var(--navy)' }}
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="flex shrink-0 items-center gap-2 self-center rounded-full bg-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--card)] transition hover:bg-[var(--navy-hover)] h-11"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
             New Dare
           </button>
         </div>
 
-        {/* Tabs — replaced by a status-filter banner when a stat with a
-            cross-tab status (Accepted/Completed) was clicked, since that
-            filter doesn't belong to any single tab. Own row, horizontally
-            scrollable so labels never wrap even on narrow screens. */}
-        <div className="border-b border-[var(--pact-hairline)] pt-5">
-          {statusFilter ? (
-            <div className="flex items-center gap-2 pb-3 text-sm font-semibold text-[var(--pact-text)]">
-              Showing:{' '}
-              <span className="capitalize" style={{ color: 'var(--pact-violet)' }}>{statusFilter}</span>
+        <nav className="flex gap-1.5 overflow-x-auto px-4 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Dare lists">
+          {TABS.map((item) => {
+            const selected = tab === item.id;
+            const count = counts[item.id];
+            return (
               <button
+                key={item.id}
                 type="button"
-                onClick={clearStatusFilter}
-                className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold text-[var(--pact-text-muted)] transition hover:text-[var(--pact-text)]"
+                onClick={() => setTab(item.id)}
+                aria-pressed={selected}
+                className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold transition ${
+                  selected ? 'bg-[var(--ink)] text-[var(--card)]' : 'border border-[var(--line)] text-[var(--ink-soft)]'
+                }`}
               >
-                <X className="h-3 w-3" />
-                Clear
+                {item.label}
+                {count != null && count > 0 && (
+                  <span
+                    className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-bold ${selected ? 'bg-white text-[var(--ink)]' : 'bg-[var(--navy)] text-white'}`}
+                    aria-label={`${count} need you`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        <section className="space-y-4 px-[10px] sm:px-6" aria-live="polite">
+          {loading ? (
+            [0, 1].map((i) => (
+              <div key={i} className="pact-card overflow-hidden rounded-[22px]">
+                <div className="pact-shimmer aspect-[16/10]" />
+                <div className="flex items-center gap-3 p-3.5">
+                  <div className="pact-shimmer h-4 flex-1 rounded-full" />
+                  <div className="pact-shimmer h-11 w-28 rounded-full" />
+                </div>
+              </div>
+            ))
+          ) : query.isError && shown.length === 0 ? (
+            <div className="rounded-[22px] border border-[var(--line)] bg-[var(--card)] px-6 py-8 text-center">
+              <p className="text-[16px] font-extrabold">Dares didn&apos;t load</p>
+              <p className="mt-1 text-[14px] text-[var(--muted)]">Check your connection and try again.</p>
+              <button type="button" onClick={() => query.refetch()} className="mt-4 inline-flex h-11 items-center rounded-full bg-[var(--navy)] px-6 text-[14px] font-extrabold text-white">
+                Try again
               </button>
             </div>
-          ) : (
-            <nav className="flex gap-5 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Dare filters">
-              {tabs.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setTab(t.id)}
-                  className={`relative flex flex-shrink-0 items-center gap-1.5 pb-3 text-sm font-semibold transition ${
-                    tab === t.id ? 'text-[var(--pact-text)]' : 'text-[var(--pact-text-muted)] hover:text-[var(--pact-text-dim)]'
-                  }`}
-                >
-                  {t.label}
-                  {!!t.count && (
-                    <span
-                      className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-[var(--pact-bg)]"
-                      style={{ background: 'var(--navy)' }}
-                    >
-                      {t.count}
-                    </span>
-                  )}
-                  {tab === t.id && (
-                    <span className="absolute inset-x-0 -bottom-px h-[2px] rounded-full" style={{ background: 'var(--pact-violet)' }} />
-                  )}
+          ) : shown.length === 0 ? (
+            <div className="rounded-[22px] border border-[var(--line)] bg-[var(--card)] px-6 py-8 text-center">
+              <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-[var(--navy)]/10 text-[var(--navy)]">
+                <Zap className="size-6" strokeWidth={2} aria-hidden="true" />
+              </span>
+              <h2 className="mt-4 text-[20px] font-extrabold tracking-[-0.02em]">{EMPTY[tab].title}</h2>
+              <p className="mt-2 text-[14px] leading-[1.5] text-[var(--muted)]">{EMPTY[tab].body}</p>
+              {EMPTY[tab].cta === 'create' && (
+                <button type="button" onClick={() => setCreateOpen(true)} className="mt-5 inline-flex h-11 items-center gap-2 rounded-full bg-[var(--navy)] px-6 text-[14px] font-extrabold text-white">
+                  <Plus className="size-4" aria-hidden="true" />
+                  Create a dare
                 </button>
-              ))}
-            </nav>
-          )}
-        </div>
-
-        {/* Running out of time */}
-        {!isLoading && urgentDares.length > 0 && (
-          <section className="border-b border-[var(--pact-hairline)] py-6" aria-label="Running out of time">
-            <h2 className="mb-4 text-xs font-bold text-[var(--pact-text-muted)]">Running out of time</h2>
-            <div className="flex gap-6 overflow-x-auto pb-1">
-              {urgentDares.map(({ dare }: any) => {
-                const isSent = dare.creator_id === user?.id;
-                const target = getActiveTarget(dare);
-                const name = isSent
-                  ? dare.recipients?.[0]?.full_name || dare.recipients?.[0]?.username || 'Recipient'
-                  : getDisplayName(dare.creator_id, dare.creator_full_name || dare.creator_username);
-                const avatarUrl = isSent ? dare.recipients?.[0]?.avatar_url : dare.creator_avatar_url;
-                const username = isSent ? dare.recipients?.[0]?.username : dare.creator_username;
-                return (
-                  <Link key={dare.id} href={`/dares/${dare.id}`} className="flex shrink-0 flex-col items-center gap-1 text-center">
-                    <DareTimeRing name={name} avatarUrl={avatarUrl} username={username} target={target} windowStart={dare.created_at} size={64} showLabel={false} />
-                    <span className="max-w-20 truncate text-[11px] font-semibold text-[var(--pact-text-dim)]">{dare.title}</span>
-                    <span className="text-[10px] font-bold" style={{ color: getTimeRing(target, dare.created_at).color }}>
-                      {getTimeRing(target, dare.created_at).label}
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* Content */}
-        <div className="py-6">
-          {isLoading && (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="pact-shimmer h-28 rounded-[28px]" />
-              ))}
-            </div>
-          )}
-
-          {!isLoading && dares.length === 0 && (
-            <div className="pact-card rounded-[14px] text-center py-12" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
-              <p className="text-[var(--pact-text-dim)] mb-4">
-                {statusFilter ? `No ${statusFilter} dares.` : emptyCopy[tab]}
-              </p>
-              {/* CTA is tab-contextual — "Send Your First Dare" only makes
-                  sense on Sent by You (sending is something the viewer does),
-                  not on "For You" (a page of dares the viewer receives).
-                  Expired and the status-filtered views get no CTA at all —
-                  there's nothing actionable to do about either. */}
-              {!statusFilter && tab === 'for-you' && (
-                <button
-                  onClick={() => setTab('discover')}
-                  className=" inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--card-text)]"
-                  style={{ background: 'var(--navy)' }}
-                >
+              )}
+              {EMPTY[tab].cta === 'discover' && (
+                <button type="button" onClick={() => setTab('discover')} className="mt-5 inline-flex h-11 items-center rounded-full border-[1.5px] border-[var(--navy)] px-6 text-[14px] font-extrabold text-[var(--navy)]">
                   Browse Discover
                 </button>
               )}
-              {!statusFilter && tab === 'sent' && (
-                <button
-                  onClick={() => setCreateModalOpen(true)}
-                  className=" inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--card-text)]"
-                  style={{ background: 'var(--navy)' }}
-                >
-                  <Plus className="w-4 h-4" />
-                  Send Your First Dare
-                </button>
-              )}
-              {!statusFilter && tab === 'discover' && (
-                <button
-                  onClick={() => setCreateModalOpen(true)}
-                  className=" inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold text-[var(--card-text)]"
-                  style={{ background: 'var(--navy)' }}
-                >
-                  <Plus className="w-4 h-4" />
-                  Create a Dare
-                </button>
-              )}
             </div>
+          ) : (
+            shown.map((dare, index) => (
+              <div key={dare.id} className="pact-list-item" style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}>
+                <DareCard dare={dare} />
+              </div>
+            ))
           )}
 
-          {dares.length > 0 && (
-            <div className="space-y-4">
-              {dares.map((dare: any, index: number) => (
-                <div key={dare.id} className="pact-list-item" style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}>
-                  {/* acceptedDares/completedDares are always scoped to
-                      my_recipient_status, i.e. dares the viewer received, so
-                      that view is always "for-you" context. The Expired tab
-                      mixes both directions, so it's determined per-dare
-                      instead of from the tab itself. */}
-                  <DareCard
-                    dare={dare}
-                    viewerContext={
-                      statusFilter
-                        ? 'for-you'
-                        : tab === 'expired'
-                          ? dare.creator_id === user?.id ? 'sent' : 'for-you'
-                          : tab
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Load More — only meaningful for Discover, which is
-              server-paginated; For You / Sent by You are client-side
-              filters over the single getMine() page set. */}
-          {tab === 'discover' && currentQuery.hasNextPage && !isLoading && (
-            <div className="flex justify-center mt-8">
+          {!loading && query.hasNextPage && (
+            <div className="flex justify-center pt-2">
               <button
-                onClick={() => currentQuery.fetchNextPage()}
-                disabled={currentQuery.isFetchingNextPage}
-                className=" px-6 py-2.5 rounded-full border text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ borderColor: 'var(--pact-violet)', background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
+                type="button"
+                onClick={() => query.fetchNextPage()}
+                disabled={query.isFetchingNextPage}
+                className="h-11 rounded-full border-[1.5px] border-[var(--line)] px-6 text-[14px] font-semibold text-[var(--ink)] disabled:opacity-50"
               >
-                {currentQuery.isFetchingNextPage ? 'Loading…' : 'Load More'}
+                {query.isFetchingNextPage ? 'Loading…' : tab === 'discover' ? 'Load more' : 'Load older dares'}
               </button>
             </div>
           )}
-
-          {/* The former standalone "Curated" bottom-nav destination now lives
-              here, folded into Discover — staff-picked dares alongside the
-              open-feed ones above rather than a separate nav item duplicating
-              the same "browse things you haven't joined yet" purpose. */}
-          {tab === 'discover' && !statusFilter && (
-            <div className="mt-10 border-t border-[var(--pact-hairline)] pt-8">
-              <CuratedContentGrid type="dare" />
-            </div>
-          )}
-
-          {currentQuery.isError && (
-            <div className="text-center py-8">
-              <p className="mb-4" style={{ color: 'var(--pact-pink)' }}>Failed to load dares</p>
-              <button
-                onClick={() => currentQuery.refetch()}
-                className=" px-4 py-2 rounded-full border border-[var(--pact-hairline)] text-sm font-semibold text-[var(--pact-text)] hover:bg-[var(--pact-surface)]"
-              >
-                Try Again
-              </button>
-            </div>
-          )}
-        </div>
+        </section>
       </div>
 
-      <CreateDareModal isOpen={createModalOpen} onClose={() => setCreateModalOpen(false)} />
+      <CreateDareModal isOpen={createOpen} onClose={() => setCreateOpen(false)} />
     </main>
   );
 }

@@ -22,13 +22,13 @@ export default function TimingStep() {
   return (
     <div className="pact-step-enter flex flex-1 flex-col">
       <h1 className="text-2xl font-bold text-[var(--pact-text)] text-balance">Set the clock</h1>
-      <p className="mt-2 text-sm text-[var(--pact-text-dim)]">How long do they have?</p>
+      <p className="mt-2 text-sm text-[var(--pact-text-dim)]">Dares are quick. Anything longer is a pact.</p>
 
       <div className="mt-6 space-y-6">
         <div>
           <label className="mb-2 flex items-center gap-2 text-xs text-[var(--pact-text-dim)]">
             <Clock className="h-4 w-4" />
-            Respond By
+            Time to accept
           </label>
           <div className="flex flex-wrap gap-2">
             {RESPOND_BY_OPTIONS.map((option) => (
@@ -45,13 +45,13 @@ export default function TimingStep() {
               </button>
             ))}
           </div>
-          <p className="mt-2 text-xs text-[var(--pact-text-faint)]">Users have {draft.respondByHours} hours to accept</p>
+          <p className="mt-2 text-xs text-[var(--pact-text-faint)]">They have {draft.respondByHours} {draft.respondByHours === 1 ? 'hour' : 'hours'} to say yes or no</p>
         </div>
 
         <div>
           <label className="mb-2 flex items-center gap-2 text-xs text-[var(--pact-text-dim)]">
             <Clock className="h-4 w-4" />
-            Complete By
+            Time to do it
           </label>
           <div className="flex flex-wrap gap-2">
             {COMPLETE_BY_OPTIONS.map((option) => (
@@ -68,7 +68,7 @@ export default function TimingStep() {
               </button>
             ))}
           </div>
-          <p className="mt-2 text-xs text-[var(--pact-text-faint)]">Users must complete within {draft.completeByHours} hours</p>
+          <p className="mt-2 text-xs text-[var(--pact-text-faint)]">Their clock starts when they accept, so they always get {draft.completeByHours} hours</p>
         </div>
       </div>
 

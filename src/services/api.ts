@@ -747,6 +747,23 @@ export const dareService = {
   },
   verify: (id: number, data: any) => api.post(`/api/dares/${id}/verify`, data),
   cancel: (id: number) => api.delete(`/api/dares/${id}`),
+  /** Creator: was it done? */
+  review: async (id: number, done: boolean) => {
+    const response = await api.post(`/api/dares/${id}/review`, { done });
+    return { ...response, data: mapDare(response.data) };
+  },
+  /** Creator: who to pay, how much, and the code for the UPI note. */
+  rewardStart: (id: number) =>
+    api.post<{ status: string; amount: number; code: string; upi_id: string; payee_name?: string | null }>(`/api/dares/${id}/reward/start`),
+  rewardStep: async (id: number, step: 'sent' | 'received' | 'not-received') => {
+    const response = await api.post(`/api/dares/${id}/reward/${step}`);
+    return { ...response, data: mapDare(response.data) };
+  },
+  /** The doer shows it in Discover (or either side takes it down). */
+  share: async (id: number, shared: boolean) => {
+    const response = await api.post(`/api/dares/${id}/share`, { shared });
+    return { ...response, data: mapDare(response.data) };
+  },
   getRecipients: async (id: number, skip = 0, limit = 20) => {
     const response = await api.get(`/api/dares/${id}/recipients`, { params: { skip, limit } });
     return normalizeListResponse(response);

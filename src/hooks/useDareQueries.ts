@@ -55,6 +55,8 @@ export function useDareDetail(dareId: number | null | undefined, options?: { ena
       return dareService.getById(dareId);
     },
     enabled: !!dareId && (options?.enabled ?? true),
+    // A dare you can't see answers 404; asking again won't change that.
+    retry: (count, error: any) => ![403, 404].includes(error?.response?.status) && count < 2,
   });
 }
 

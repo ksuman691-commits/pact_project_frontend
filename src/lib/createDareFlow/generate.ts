@@ -8,14 +8,9 @@ export function generateDareSummary(draft: DareDraft): string {
 
   let summary = `"${draft.title.trim()}"`;
 
-  if (draft.visibility === 'private' && draft.recipients.length > 0) {
-    const names = draft.recipients.map((r) => `@${r.username}`).join(', ');
-    summary += ` — dared to ${names}`;
-  } else if (draft.visibility === 'public') {
-    summary += ' — open for anyone to claim';
-  }
-
-  summary += `. Respond within ${draft.respondByHours}h, complete within ${draft.completeByHours}h.`;
+  if (draft.recipients.length > 0) summary += ` for @${draft.recipients[0].username}`;
+  if (draft.rewardAmount) summary += ` · ₹${draft.rewardAmount} reward`;
+  summary += `. ${draft.respondByHours}h to accept, then ${draft.completeByHours}h to do it.`;
 
   return summary;
 }
