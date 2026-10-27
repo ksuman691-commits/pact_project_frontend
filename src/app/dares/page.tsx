@@ -4,6 +4,7 @@ import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Plus, Zap } from 'lucide-react';
 import DareCard from '@/components/DareCard';
+import SparkRing from '@/components/dares/SparkRing';
 import CreateDareModal from '@/components/CreateDareModal';
 import RefreshButton from '@/components/RefreshButton';
 import { useDareFeed, useMyDares } from '@/hooks/useDareQueries';
@@ -102,12 +103,6 @@ function DaresPageInner() {
   const shown = tab === 'for-you' ? lists.forYou : tab === 'sent' ? lists.sent : tab === 'history' ? lists.history : discover;
   const query = tab === 'discover' ? feed : mine;
   const loading = tab === 'discover' ? feed.isLoading : mine.isLoading || !isInitialized;
-  const summary = mine.isSuccess
-    ? [lists.yourMove > 0 ? `${lists.yourMove} need${lists.yourMove === 1 ? 's' : ''} you` : '', lists.inPlay > 0 ? `${lists.inPlay} in play` : '']
-        .filter(Boolean)
-        .join(' · ') || 'One person, one challenge, a short clock.'
-    : ' ';
-
   const stats: { label: string; value: number; tab: Tab }[] = [
     { label: 'Your move', value: lists.yourMove, tab: lists.forYou.some((d) => nextStep(d, 'doer')) || !lists.sent.some((d) => nextStep(d, 'creator')) ? 'for-you' : 'sent' },
     { label: 'In play', value: lists.inPlay, tab: lists.sent.some((d) => !nextStep(d, 'creator')) ? 'sent' : 'for-you' },
@@ -117,38 +112,57 @@ function DaresPageInner() {
   return (
     <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
       <div className="mx-auto max-w-2xl">
-        <header className="flex items-start justify-between gap-3 px-6 pb-1.5 pt-9">
-          <div className="flex min-w-0 flex-col gap-2">
-            <h1 className="text-[34px] font-bold leading-none tracking-[-0.035em]">Dares</h1>
-            <p className="text-[14px] text-[var(--muted)]">{summary}</p>
-          </div>
+        <header className="flex items-center justify-between gap-3 px-6 pb-3 pt-9">
+          <h1 className="text-[40px] font-extrabold leading-none tracking-[-0.045em]">Dares</h1>
           <RefreshButton label="Refresh dares" onRefresh={() => Promise.all([mine.refetch(), feed.refetch()])} />
         </header>
 
-        <div className="flex items-stretch gap-3 px-6 pb-3 pt-5">
-          <div className="flex min-w-0 flex-1 divide-x divide-[var(--line)] rounded-[18px] border border-[var(--line)] bg-[var(--card)]">
-            {stats.map((stat) => (
-              <button
-                key={stat.label}
-                type="button"
-                onClick={() => setTab(stat.tab)}
-                className="flex min-w-0 flex-1 flex-col items-center justify-center px-1 py-2"
-                aria-label={`${stat.label}: ${mine.isSuccess ? stat.value : 'loading'}`}
-              >
-                <span className="text-[18px] font-extrabold leading-tight">{mine.isSuccess ? stat.value : '–'}</span>
-                <span className="truncate text-[11px] font-semibold text-[var(--muted)]">{stat.label}</span>
-              </button>
-            ))}
+        <section
+          className="relative mx-[10px] mb-4 overflow-hidden rounded-[22px] px-5 pb-5 pt-5 text-white sm:mx-6"
+          style={{ background: 'radial-gradient(120% 100% at 80% 10%, #2F4486 0%, #141A2E 55%, #0C0D11 100%)' }}
+          aria-label="Your dares at a glance"
+        >
+          <div className="flex items-center gap-4">
+            <div className="min-w-0 flex-1">
+              {mine.isSuccess && lists.yourMove > 0 ? (
+                <>
+                  <p className="text-[64px] font-extrabold leading-[0.9] tracking-[-0.06em]">{lists.yourMove}</p>
+                  <p className="mt-1.5 text-[22px] font-extrabold leading-[1.1] tracking-[-0.025em]">{lists.yourMove === 1 ? 'dare needs you' : 'dares need you'}</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[32px] font-extrabold leading-[1.02] tracking-[-0.035em]">Dare someone.</p>
+                  <p className="mt-2 text-[14.5px] leading-[1.4]" style={{ color: 'rgba(255,255,255,0.78)' }}>
+                    One person, one challenge, a short clock.
+                  </p>
+                </>
+              )}
+            </div>
+            <SparkRing size={112} tone="dark" duration="30s" left={lists.yourMove > 0 ? null : 1}>
+              <Zap className="size-9" strokeWidth={2.2} fill="#FFD84D" color="#FFD84D" aria-hidden="true" />
+            </SparkRing>
           </div>
-          <button
-            type="button"
-            onClick={() => setCreateOpen(true)}
-            className="flex shrink-0 items-center gap-2 self-center rounded-full bg-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--card)] transition hover:bg-[var(--navy-hover)] h-11"
-          >
-            <Plus className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
-            New Dare
-          </button>
-        </div>
+
+          <div className="mt-5 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setCreateOpen(true)}
+              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-white text-[16px] font-extrabold text-[var(--navy)] transition active:scale-[0.98]"
+            >
+              <Zap className="size-4" strokeWidth={2.6} fill="currentColor" aria-hidden="true" />
+              New dare
+            </button>
+            {mine.isSuccess && (lists.inPlay > 0 || lists.doneByYou > 0) && (
+              <p className="flex shrink-0 flex-col text-right text-[12.5px] font-semibold leading-snug" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                {stats.slice(1).map((stat) => (
+                  <button key={stat.label} type="button" onClick={() => setTab(stat.tab)} className="min-h-6 text-right underline-offset-4 hover:underline">
+                    {stat.value} {stat.label.toLowerCase()}
+                  </button>
+                ))}
+              </p>
+            )}
+          </div>
+        </section>
 
         <nav className="flex gap-1.5 overflow-x-auto px-4 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Dare lists">
           {TABS.map((item) => {
@@ -199,10 +213,12 @@ function DaresPageInner() {
             </div>
           ) : shown.length === 0 ? (
             <div className="rounded-[22px] border border-[var(--line)] bg-[var(--card)] px-6 py-8 text-center">
-              <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-[var(--navy)]/10 text-[var(--navy)]">
-                <Zap className="size-6" strokeWidth={2} aria-hidden="true" />
+              <span className="mx-auto flex justify-center">
+                <SparkRing size={96} tone="light" duration="30s">
+                  <Zap className="size-7 text-[var(--navy)]" strokeWidth={2.2} fill="currentColor" aria-hidden="true" />
+                </SparkRing>
               </span>
-              <h2 className="mt-4 text-[20px] font-extrabold tracking-[-0.02em]">{EMPTY[tab].title}</h2>
+              <h2 className="mt-4 text-[22px] font-extrabold tracking-[-0.03em]">{EMPTY[tab].title}</h2>
               <p className="mt-2 text-[14px] leading-[1.5] text-[var(--muted)]">{EMPTY[tab].body}</p>
               {EMPTY[tab].cta === 'create' && (
                 <button type="button" onClick={() => setCreateOpen(true)} className="mt-5 inline-flex h-11 items-center gap-2 rounded-full bg-[var(--navy)] px-6 text-[14px] font-extrabold text-white">

@@ -28,7 +28,7 @@ export default function RewardStep() {
 
   return (
     <div className="pact-step-enter flex flex-1 flex-col">
-      <h1 className="text-2xl font-bold text-[var(--pact-text)] text-balance">Add a reward?</h1>
+      <h1 className="text-[32px] font-extrabold leading-[1.04] tracking-[-0.035em] text-[var(--pact-text)] text-balance">Add a reward?</h1>
       <p className="mt-2 text-sm leading-[1.5] text-[var(--pact-text-dim)]">
         Optional. You pay {name} over UPI after you mark the dare done. They never pay anything.
       </p>

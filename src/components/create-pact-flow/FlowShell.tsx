@@ -32,6 +32,8 @@ interface FlowShellProps {
   titleStripIcon?: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   /** Optional persistent context banner (e.g. an already-attached participant) shown under the title strip on every step. */
   banner?: React.ReactNode;
+  /** Replaces the live-title strip (Create Dare shows a growing card instead). */
+  strip?: React.ReactNode;
 }
 
 /**
@@ -53,6 +55,7 @@ export default function FlowShell({
   accent,
   titleStripIcon,
   banner,
+  strip,
 }: FlowShellProps) {
   return (
     <div
@@ -94,7 +97,7 @@ export default function FlowShell({
 
       {showChrome && (
         <div className="px-5 pt-6">
-          <LiveTitleStrip text={titleStripText} placeholder={titleStripPlaceholder} icon={titleStripIcon} />
+          {strip ?? <LiveTitleStrip text={titleStripText} placeholder={titleStripPlaceholder} icon={titleStripIcon} />}
         </div>
       )}
 

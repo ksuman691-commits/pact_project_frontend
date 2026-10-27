@@ -5,6 +5,7 @@ import { CreateDareFlowProvider, useCreateDareFlow } from '@/context/CreateDareF
 import { generateDareSummary, DARE_LIVE_TITLE_PLACEHOLDER } from '@/lib/createDareFlow/generate';
 import FlowShell from '@/components/create-pact-flow/FlowShell';
 import TaggedParticipantBanner from '@/components/create-pact-flow/TaggedParticipantBanner';
+import DarePreviewTile from './DarePreviewTile';
 import TitleStep from './TitleStep';
 import DescriptionStep from './DescriptionStep';
 import TimingStep from './TimingStep';
@@ -33,6 +34,7 @@ function StepRouter({ onExit }: { onExit: () => void }) {
       showChrome={currentStep !== 'success'}
       titleStripText={generateDareSummary(draft)}
       titleStripPlaceholder={DARE_LIVE_TITLE_PLACEHOLDER}
+      strip={<DarePreviewTile draft={draft} />}
       banner={
         draft.recipientPreset && draft.recipients[0] ? (
           <TaggedParticipantBanner userId={draft.recipients[0].id} label="Daring" />

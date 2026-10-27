@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { useParams } from 'next/navigation';
-import { Globe } from 'lucide-react';
+import { Globe, Share2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import DetailPageHeader from '@/components/DetailPageHeader';
 import DareCard from '@/components/DareCard';
 import Avatar from '@/components/Avatar';
@@ -11,6 +12,7 @@ import { useDareDetail } from '@/hooks/useDareQueries';
 import { useShareDare } from '@/hooks/useDareMutations';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { parseApiDate } from '@/lib/dareCountdown';
+import { buildDareCard } from '@/lib/dareShareCard';
 import { creatorFace, dareRole, dareState, firstName, recipientFace, type DareFace } from '@/lib/dareView';
 
 function when(raw?: string | null): string {
@@ -27,6 +29,7 @@ export default function DareDetailPage() {
   // Gate on auth: this page can mount before the session is restored.
   const dareQuery = useDareDetail(dareId, { enabled: isInitialized });
   const share = useShareDare();
+  const [sharing, setSharing] = React.useState(false);
   const dare = dareQuery.data?.data;
 
   if (!isInitialized || dareQuery.isLoading) {
@@ -60,6 +63,33 @@ export default function DareDetailPage() {
   const recipient = recipientFace(dare);
   const involved = role !== 'viewer';
   const canShare = role === 'doer' && state === 'completed';
+  const shareWin = async () => {
+    if (!dare || sharing) return;
+    setSharing(true);
+    try {
+      const blob = await buildDareCard({
+        title: dare.title,
+        byName: firstName(creator.name),
+        doerName: firstName(recipient?.name ?? 'They'),
+        photoUrl: dare.proof_type === 'video' ? null : dare.proof_url,
+      });
+      const file = new File([blob], 'circlepact-dare.png', { type: 'image/png' });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], text: `${firstName(recipient?.name ?? 'I')} did the dare: ${dare.title}` });
+      } else {
+        const href = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = href;
+        a.download = file.name;
+        a.click();
+        window.setTimeout(() => URL.revokeObjectURL(href), 2000);
+      }
+    } catch (err: any) {
+      if (err?.name !== 'AbortError') toast.error("Couldn't make the picture. Try again.");
+    } finally {
+      setSharing(false);
+    }
+  };
   const canUnshare = involved && Boolean(dare.shared_publicly);
 
   const facts: { label: string; value: string }[] = [
@@ -84,6 +114,18 @@ export default function DareDetailPage() {
       <DetailPageHeader title="Dare" fallbackHref="/dares" />
       <div className="mx-auto max-w-2xl space-y-4 px-[10px] py-3 sm:px-6">
         <DareCard dare={dare} variant="detail" />
+
+        {role === 'doer' && state === 'completed' && (
+          <button
+            type="button"
+            onClick={() => void shareWin()}
+            disabled={sharing}
+            className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[var(--navy)] text-[16px] font-extrabold text-white transition active:scale-[0.98] disabled:opacity-60"
+          >
+            <Share2 className="size-4" strokeWidth={2.4} aria-hidden="true" />
+            {sharing ? 'Making your picture…' : 'Share your win'}
+          </button>
+        )}
 
         <section className="rounded-[22px] border border-[var(--line)] bg-[var(--card)] px-4 py-2" aria-label="Who's in this dare">
           <Person label="Dared by" face={creator} you={role === 'creator'} />

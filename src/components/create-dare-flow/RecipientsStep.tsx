@@ -35,7 +35,7 @@ export default function RecipientsStep() {
 
   return (
     <div className="pact-step-enter flex flex-1 flex-col">
-      <h1 className="text-2xl font-bold text-[var(--pact-text)] text-balance">Who are you daring?</h1>
+      <h1 className="text-[32px] font-extrabold leading-[1.04] tracking-[-0.035em] text-[var(--pact-text)] text-balance">Who are you daring?</h1>
       <p className="mt-2 flex items-center gap-2 text-sm text-[var(--pact-text-dim)]">
         <Users className="h-4 w-4" aria-hidden="true" />
         Dares are one-to-one. Pick one person.

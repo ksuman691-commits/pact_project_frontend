@@ -21,7 +21,7 @@ export default function TimingStep() {
 
   return (
     <div className="pact-step-enter flex flex-1 flex-col">
-      <h1 className="text-2xl font-bold text-[var(--pact-text)] text-balance">Set the clock</h1>
+      <h1 className="text-[32px] font-extrabold leading-[1.04] tracking-[-0.035em] text-[var(--pact-text)] text-balance">Set the clock</h1>
       <p className="mt-2 text-sm text-[var(--pact-text-dim)]">Dares are quick. Anything longer is a pact.</p>
 
       <div className="mt-6 space-y-6">
