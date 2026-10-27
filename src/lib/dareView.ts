@@ -1,5 +1,5 @@
 import type { Dare, DarePerson, DareState } from '@/types'
-import { isDareExpired } from '@/lib/dareCountdown'
+import { isDareExpired, parseApiDate } from '@/lib/dareCountdown'
 
 /**
  * One place that turns a dare + who's looking into what the screens show:
@@ -126,4 +126,46 @@ export function timeLeft(target: string | null | undefined, now = Date.now()): s
   const hours = Math.floor(minutes / 60)
   if (hours < 24) return `${hours}h ${minutes % 60}m`
   return `${Math.floor(hours / 24)}d ${hours % 24}h`
+}
+
+const HOUR = 3_600_000
+
+/**
+ * How much of the running clock is left, 0 to 1, for the ring on a dare card.
+ * Waiting to be answered: from sent to the answer-by time. On the clock: from
+ * the moment it was accepted to the finish-by time. Null when no clock runs.
+ */
+export function clockLeft(dare: Dare, now = Date.now()): number | null {
+  const deadline = activeDeadline(dare)
+  if (!deadline) return null
+  const end = parseDate(deadline.target)
+  if (end == null) return null
+  const startRaw = deadline.verb === 'respond' ? dare.created_at : dare.accepted_at
+  let start = parseDate(startRaw)
+  if (start == null) {
+    // Older response without accepted_at: the finish window is 24h or 48h.
+    if (deadline.verb === 'complete') start = end - (end - now > 24 * HOUR ? 48 : 24) * HOUR
+    else return null
+  }
+  const total = end - start
+  if (total <= 0) return 0
+  return Math.min(1, Math.max(0, (end - now) / total))
+}
+
+function parseDate(raw?: string | null): number | null {
+  const at = parseApiDate(raw)
+  return at ? at.getTime() : null
+}
+
+/** "11h", "42m", "<1m": the short form that fits in the middle of the ring. */
+export function compactLeft(target: string | null | undefined, now = Date.now()): string | null {
+  const end = parseDate(target)
+  if (end == null) return null
+  const ms = end - now
+  if (ms <= 0) return '0m'
+  const hours = Math.floor(ms / HOUR)
+  if (hours >= 48) return `${Math.floor(hours / 24)}d`
+  if (hours >= 1) return `${hours}h`
+  const minutes = Math.floor(ms / 60_000)
+  return minutes < 1 ? '<1m' : `${minutes}m`
 }

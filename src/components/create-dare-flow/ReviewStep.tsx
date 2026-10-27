@@ -9,33 +9,23 @@ export default function ReviewStep() {
   const { draft, isSubmitting, submit } = useCreateDareFlow();
   const who = draft.recipients[0];
   const whoName = who?.full_name || (who ? `@${who.username}` : 'Someone');
+  const count = draft.recipients.length;
+  const names = draft.recipients.map((r) => (r.full_name || r.username).split(' ')[0]);
 
   const rows: { label: string; value: string }[] = [
+    ...(count > 1 ? [{ label: 'Sent to', value: names.join(', ') }] : []),
     { label: 'Time to accept', value: `${draft.respondByHours} ${draft.respondByHours === 1 ? 'hour' : 'hours'}` },
     { label: 'Time to do it', value: `${draft.completeByHours} hours from accepting` },
     { label: 'Proof', value: draft.verificationMethod === 'video' ? 'A short video' : 'A photo' },
-    { label: 'Reward', value: draft.rewardAmount ? `₹${draft.rewardAmount}, you pay after you mark it done` : 'None' },
+    { label: 'Reward', value: draft.rewardAmount ? (count > 1 ? `₹${draft.rewardAmount} each, you pay whoever does it (up to ₹${draft.rewardAmount * count})` : `₹${draft.rewardAmount}, you pay after you mark it done`) : 'None' },
   ];
 
   return (
     <div className="pact-step-enter flex flex-1 flex-col">
-      <h1 className="text-2xl font-bold text-[var(--pact-text)] text-balance">Ready to send?</h1>
+      <h1 className="text-[32px] font-extrabold leading-[1.04] tracking-[-0.035em] text-[var(--pact-text)] text-balance">Ready to send?</h1>
 
-      {/* A small preview in the card's own look, so the sender sees what lands. */}
-      <div className="mt-6 overflow-hidden rounded-[22px] border border-[var(--line)] bg-[var(--card)]">
-        <div className="relative px-4 pb-4 pt-3 text-white" style={{ background: 'radial-gradient(120% 90% at 30% 20%, #2A3A6E 0%, #141A2E 55%, #0F1014 100%)' }}>
-          <div className="flex items-center gap-2.5">
-            <span className="inline-flex size-[30px] overflow-hidden rounded-full ring-2 ring-white/70">
-              <Avatar name={whoName} avatarUrl={who?.avatar_url} size={30} />
-            </span>
-            <span className="truncate text-[14px] font-bold">To {whoName}</span>
-          </div>
-          <span className="mt-6 inline-flex items-center gap-1 rounded-[9px] bg-white px-2.5 py-[3px] text-[11.5px] font-extrabold text-[var(--navy)]">
-            <Zap className="size-3" strokeWidth={2.6} aria-hidden="true" />
-            Dare
-          </span>
-          <p className="mt-1.5 line-clamp-2 text-[20px] font-extrabold leading-[1.15] tracking-[-0.02em]">{draft.title}</p>
-        </div>
+      {/* The growing card above already shows the dare; this is the small print. */}
+      <div className="mt-5 overflow-hidden rounded-[22px] border border-[var(--line)] bg-[var(--card)]">
         {draft.description && <p className="px-4 pt-3 text-[14px] leading-[1.45] text-[var(--ink)]">{draft.description}</p>}
         <dl className="mt-1 divide-y divide-[var(--line)] px-4">
           {rows.map((row) => (
@@ -54,7 +44,7 @@ export default function ReviewStep() {
           disabled={isSubmitting || !who}
           className="w-full rounded-full bg-[var(--navy)] py-3 font-bold text-white disabled:opacity-60"
         >
-          {isSubmitting ? 'Sending…' : `Send dare to ${whoName.split(' ')[0]}`}
+          {isSubmitting ? 'Sending…' : count > 1 ? `Send dare to ${count} people` : `Send dare to ${whoName.split(' ')[0]}`}
         </button>
       </div>
     </div>

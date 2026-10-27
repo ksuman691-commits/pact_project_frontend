@@ -54,6 +54,15 @@ interface StoryCaptureSheetProps {
   autoStart?: boolean
   /** Shows "Skip, Start Without Day 1" under the shutter (new pact: Day 1 is optional). */
   onSkip?: () => void
+  /**
+   * Take it live, no library: hides both "choose from library" buttons.
+   * Dare proof uses this so it is shot in the moment, like pact proof.
+   */
+  liveOnly?: boolean
+  /** Fix the camera to photo or video and hide the switch (a dare asks for one kind). */
+  lockMode?: Mode
+  /** Replaces the pact blurb on the start screen. */
+  introText?: string
 }
 
 type Step = 'idle' | 'live' | 'preview'
@@ -72,7 +81,7 @@ function canRecordInPage() {
   return typeof window !== 'undefined' && typeof window.MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
 }
 
-export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: rawTitle, canJoin = false, onJoin, initialClip = null, onCaptured, autoStart = true, onSkip }: StoryCaptureSheetProps) {
+export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: rawTitle, canJoin = false, onJoin, initialClip = null, onCaptured, autoStart = true, onSkip, liveOnly = false, lockMode, introText }: StoryCaptureSheetProps) {
   const pactTitle = rawTitle ? cleanTitle(rawTitle) : rawTitle
   const [step, setStep] = useState<Step>(initialClip ? 'preview' : 'idle')
   const [clip, setClip] = useState<Clip | null>(initialClip)
@@ -85,7 +94,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
   const [facing, setFacing] = useState<'environment' | 'user'>('environment')
   const [filterId, setFilterId] = useState('none')
   const [filtersSupported, setFiltersSupported] = useState(false)
-  const [mode, setModeState] = useState<Mode>('video')
+  const [mode, setModeState] = useState<Mode>(lockMode ?? 'video')
   const setMode = (next: Mode) => {
     setModeState(next)
     try {
@@ -119,11 +128,11 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
     setInPageSupported(canRecordInPage())
     setFiltersSupported(canRecordWithFilters())
     try {
-      if (localStorage.getItem(MODE_KEY) === 'photo') setModeState('photo')
+      if (!lockMode && localStorage.getItem(MODE_KEY) === 'photo') setModeState('photo')
     } catch {
       // Private mode: start on video.
     }
-  }, [])
+  }, [lockMode])
 
   const stopStream = useCallback(() => {
     if (drawFrameRef.current) cancelAnimationFrame(drawFrameRef.current)
@@ -174,6 +183,11 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
       setNotice("That photo couldn't be used. Try another one under 10 MB.")
       return
     }
+    // Live-only capture hands the shot straight back; the caller has its own review.
+    if (liveOnly && onCaptured) {
+      onCaptured({ blob: ready.blob, contentType: ready.contentType, duration: 0 })
+      return
+    }
     replaceClip({ blob: ready.blob, contentType: ready.contentType, duration: 0, url: URL.createObjectURL(ready.blob) })
     reset()
     setStep('preview')
@@ -204,6 +218,10 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
     }
     if (!isDurationAllowed(duration)) {
       setNotice('Moments can be 15 seconds at most')
+      return
+    }
+    if (liveOnly && onCaptured) {
+      onCaptured({ blob, contentType, duration })
       return
     }
     replaceClip({ blob, contentType, duration, url: URL.createObjectURL(blob) })
@@ -253,7 +271,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
       setStep('live')
       attachStream(stream)
     } catch (err: any) {
-      setNotice(err?.name === 'NotAllowedError' ? CAMERA_BLOCKED : "Couldn't open the camera here. Choose a photo or video from your library instead.")
+      setNotice(err?.name === 'NotAllowedError' ? (liveOnly ? CAMERA_BLOCKED.replace(', or choose a photo or video from your library', '') : CAMERA_BLOCKED) : liveOnly ? "Couldn't open the camera here. Check that this site is allowed to use it, then try again." : "Couldn't open the camera here. Choose a photo or video from your library instead.")
     }
   }
 
@@ -314,6 +332,10 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
           return
         }
         stopStream()
+        if (liveOnly && onCaptured) {
+          onCaptured({ blob, contentType: 'image/jpeg', duration: 0 })
+          return
+        }
         replaceClip({ blob, contentType: 'image/jpeg', duration: 0, url: URL.createObjectURL(blob) })
         reset()
         setStep('preview')
@@ -485,6 +507,9 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
             {recording ? `${Math.ceil(STORY_MAX_SECONDS - elapsed)} s left` : notice ? notice : mode === 'photo' ? 'Tap to take a photo.' : `Tap to record. Stops at ${STORY_MAX_SECONDS} seconds.`}
           </p>
           <div className="flex w-full items-center justify-between px-9">
+          {liveOnly ? (
+            <span className="size-[52px]" aria-hidden="true" />
+          ) : (
           <button
             type="button"
             onClick={() => cameraInputRef.current?.click()}
@@ -495,6 +520,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
           >
             <Images className="h-5 w-5" aria-hidden="true" />
           </button>
+          )}
           {mode === 'photo' ? (
             <div className="relative flex h-[104px] w-[104px] items-center justify-center">
               <span className="absolute inset-[4px] rounded-full" style={{ border: '5px solid #FFFFFF' }} aria-hidden="true" />
@@ -525,7 +551,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
           )}
           <span className="size-[52px]" aria-hidden="true" />
           </div>
-          {!recording && (
+          {!recording && !lockMode && (
             <div className="flex gap-1 rounded-full p-1" role="radiogroup" aria-label="Photo or video" style={{ background: 'rgba(0,0,0,0.35)' }}>
               {(['photo', 'video'] as Mode[]).map((option) => (
                 <button
@@ -576,9 +602,9 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
         {step === 'idle' && (
           <>
             <p className="text-[15px] leading-relaxed text-[var(--ink)]">
-              A photo or a video up to 15 seconds. It goes on today&apos;s day of your pact, for everyone who can watch it.
+              {introText ?? "A photo or a video up to 15 seconds. It goes on today's day of your pact, for everyone who can watch it."}
             </p>
-            <p className="rounded-[6px] border border-[var(--hairline)] bg-[var(--card)] px-4 py-3 text-[14px] text-[var(--muted)]">{STORY_LIMITS_TEXT}</p>
+            {!introText && <p className="rounded-[6px] border border-[var(--hairline)] bg-[var(--card)] px-4 py-3 text-[14px] text-[var(--muted)]">{STORY_LIMITS_TEXT}</p>}
 
             {comingSoon ? (
               <p className="rounded-[6px] border border-dashed border-[var(--seat-border)] px-4 py-4 text-[14px] text-[var(--muted)]">
@@ -598,6 +624,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
                     Open camera
                   </button>
                 )}
+                {!liveOnly && (
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   <button
                     type="button"
@@ -609,6 +636,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
                     Choose from library
                   </button>
                 </div>
+                )}
               </div>
             )}
             {notice && (

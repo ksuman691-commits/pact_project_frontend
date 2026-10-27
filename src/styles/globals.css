@@ -567,3 +567,18 @@ section + section {
 @media (prefers-reduced-motion: reduce) {
   .cp-orbit-spin, .cp-orbit-upright { animation: none; }
 }
+
+/* Dares: lightning bolts turn around a clock ring (SparkRing), the way faces turn around a circle. */
+@keyframes cp-spark-glow {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(255, 216, 77, 0.55)); }
+  50% { filter: drop-shadow(0 0 7px rgba(255, 216, 77, 1)); }
+}
+@keyframes cp-spark-burst {
+  0% { transform: scale(0.4); opacity: 0.9; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+.cp-spark-glow { animation: cp-spark-glow 2.4s ease-in-out infinite; }
+.cp-spark-burst { animation: cp-spark-burst 1.1s ease-out 1 both; }
+@media (prefers-reduced-motion: reduce) {
+  .cp-spark-glow, .cp-spark-burst { animation: none; }
+}

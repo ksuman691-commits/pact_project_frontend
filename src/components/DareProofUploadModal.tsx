@@ -1,250 +1,161 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Upload, Image as ImageIcon, Video, CheckSquare } from 'lucide-react';
+import { Loader, RotateCcw, X } from 'lucide-react';
+import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet';
 import toast from 'react-hot-toast';
+import ProofEditor from '@/components/dares/ProofEditor';
 import { useUploadDareProof } from '@/hooks/useDareMutations';
+import { canEditVideo, hasEdits, NO_EDITS, renderPhoto, renderVideo, type ProofEdits } from '@/lib/proofEdit';
 
-interface DareProofUploadModalProps {
+interface Props {
   isOpen: boolean;
   onClose: () => void;
   dareId: number;
+  dareTitle?: string;
+  /** Who the proof goes to: the person who sent the dare. */
+  toName?: string;
+  /** What the dare asks for. Anything else lets the doer pick photo or video. */
+  method?: string | null;
 }
 
-const PROOF_TYPES = [
-  { id: 'photo', label: 'Photo', icon: ImageIcon },
-  { id: 'video', label: 'Video', icon: Video },
-  { id: 'checklist', label: 'Checklist', icon: CheckSquare },
-] as const;
+type Clip = { blob: Blob; contentType: string; duration: number; url: string };
 
-export default function DareProofUploadModal({ isOpen, onClose, dareId }: DareProofUploadModalProps) {
-  const uploadMutation = useUploadDareProof(dareId);
-  const [proofType, setProofType] = useState<'photo' | 'video' | 'checklist'>('photo');
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+const EXTENSION: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'video/mp4': 'mp4',
+  'video/webm': 'webm',
+  'video/quicktime': 'mov',
+};
+
+/**
+ * Dare proof is shot live with the same camera as Moments (photo/video
+ * switch, filters, no library), then reviewed with an optional caption and
+ * sent straight to the person who dared. Nothing is posted until "Send".
+ */
+export default function DareProofUploadModal({ isOpen, onClose, dareId, dareTitle, toName, method }: Props) {
+  const upload = useUploadDareProof(dareId);
+  const [clip, setClip] = useState<Clip | null>(null);
   const [caption, setCaption] = useState('');
+  const [edits, setEdits] = useState<ProofEdits>(NO_EDITS);
+  const [rendering, setRendering] = useState<number | null>(null);
+  const lockMode = method === 'photo' || method === 'video' ? method : undefined;
+  const first = toName ? toName.split(' ')[0] : 'them';
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
-
-    // Validate file size (max 50MB)
-    if (selectedFile.size > 50 * 1024 * 1024) {
-      toast.error('File size must be less than 50MB');
-      return;
-    }
-
-    // Validate file type based on proof type
-    if (proofType === 'photo' && !selectedFile.type.startsWith('image/')) {
-      toast.error('Please select an image file');
-      return;
-    }
-    if (proofType === 'video' && !selectedFile.type.startsWith('video/')) {
-      toast.error('Please select a video file');
-      return;
-    }
-
-    setFile(selectedFile);
-
-    // Create preview for images
-    if (proofType === 'photo') {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setPreview(event.target?.result as string);
-      };
-      reader.readAsDataURL(selectedFile);
-    } else if (proofType === 'video') {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setPreview(event.target?.result as string);
-      };
-      reader.readAsDataURL(selectedFile);
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (proofType !== 'checklist' && !file) {
-      toast.error('Please select a file');
-      return;
-    }
-
-    if (proofType === 'checklist' && !caption.trim()) {
-      toast.error('Please provide your completion status');
-      return;
-    }
-
-    // Checklist proofs don't collect a file (there's no file-picker step for
-    // them above), but the upload-proof endpoint's FormData contract always
-    // requires a `file` part. Without this, `file` stays null and the guard
-    // below used to silently no-op on submit — no request, no error, no
-    // feedback. Synthesize a small text file from the completion status so
-    // the request actually fires and the existing onError toast can report
-    // any real failure.
-    const proofFile =
-      file ?? (proofType === 'checklist' ? new File([caption], 'checklist.txt', { type: 'text/plain' }) : null);
-
-    if (proofFile) {
-      uploadMutation.mutate(
-        {
-          proof_file: proofFile,
-          proof_type: proofType,
-          caption,
-        },
-        {
-          onSuccess: () => {
-            setFile(null);
-            setPreview(null);
-            setCaption('');
-            onClose();
-          },
-        }
-      );
-    }
-  };
-
-  const handleClose = () => {
-    if (!uploadMutation.isPending) {
-      setFile(null);
-      setPreview(null);
+  // Start from the camera each time the sheet opens.
+  useEffect(() => {
+    if (!isOpen) {
+      setClip((prev) => {
+        if (prev) URL.revokeObjectURL(prev.url);
+        return null;
+      });
       setCaption('');
-      onClose();
+      setEdits(NO_EDITS);
     }
-  };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  // Portalled straight to document.body. Rendering this inline where the
-  // card lives isn't enough to guarantee `fixed inset-0` covers the real
-  // viewport: any ancestor card — even ones with no explicit z-index — can
-  // create its own CSS stacking context (backdrop-filter, or a lingering
-  // non-"none" transform left behind by a mount-in animation, like the
-  // .pact-list-item wrapper every list card sits in here) and silently cap
-  // this modal's z-50 below feed-wide chrome like the bottom nav (z-40).
-  // A portal sidesteps the whole class of ancestor-stacking-context bugs.
+  const retake = () => {
+    if (clip) URL.revokeObjectURL(clip.url);
+    setClip(null);
+    setEdits(NO_EDITS);
+  };
+
+  const send = async () => {
+    if (!clip) return;
+    const sourceIsPhoto = clip.contentType.startsWith('image/');
+    let blob = clip.blob;
+    let type = clip.contentType;
+    const editable = sourceIsPhoto || canEditVideo();
+    if (editable && hasEdits(edits)) {
+      try {
+        setRendering(0);
+        const out = sourceIsPhoto ? await renderPhoto(clip.url, edits) : await renderVideo(clip.url, edits, setRendering);
+        blob = out.blob;
+        type = out.contentType;
+      } catch {
+        toast.error("Couldn't add your edits. Tap Reset to send it as shot.");
+        setRendering(null);
+        return;
+      }
+      setRendering(null);
+    }
+    const isPhoto = type.startsWith('image/');
+    const base = type.split(';')[0];
+    const file = new File([blob], `proof-${Date.now()}.${EXTENSION[base] ?? (isPhoto ? 'jpg' : 'mp4')}`, { type: base });
+    upload.mutate(
+      { proof_file: file, proof_type: isPhoto ? 'photo' : 'video', caption: caption.trim() || undefined },
+      { onSuccess: onClose },
+    );
+  };
+
+  if (!clip) {
+    return createPortal(
+      <StoryCaptureSheet
+        isOpen
+        autoStart
+        liveOnly
+        lockMode={lockMode}
+        pactId={0}
+        pactTitle={dareTitle || 'Dare proof'}
+        introText={`Shoot your proof now. It goes straight to ${first}.`}
+        onCaptured={(captured) => setClip({ ...captured, url: URL.createObjectURL(captured.blob) })}
+        onClose={onClose}
+      />,
+      document.body,
+    );
+  }
+
+  const isPhoto = clip.contentType.startsWith('image/');
+  const busy = upload.isPending || rendering !== null;
   return createPortal(
-    <div className="pact-flow fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="pact-card w-full max-w-md rounded-[28px] overflow-hidden" style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}>
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[var(--pact-hairline)]">
-          <h2 className="text-lg font-bold text-[var(--pact-text)]">Submit Proof</h2>
+    <div className="fixed inset-0 z-50 flex flex-col bg-[var(--paper)] text-[var(--ink)]" role="dialog" aria-modal="true" aria-label="Send your proof">
+      <header className="flex items-center justify-between px-4 pb-2 pt-[max(1rem,env(safe-area-inset-top))]">
+        <h2 className="text-[18px] font-extrabold tracking-[-0.02em]">Send your proof</h2>
+        <button type="button" onClick={onClose} disabled={busy} aria-label="Close" className="flex size-11 items-center justify-center rounded-full disabled:opacity-50">
+          <X className="size-5" aria-hidden="true" />
+        </button>
+      </header>
+
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 overflow-y-auto px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        {dareTitle && <p className="truncate text-[14px] font-semibold text-[var(--muted)]">{dareTitle}</p>}
+        <ProofEditor url={clip.url} isPhoto={isPhoto} edits={edits} onChange={setEdits} disabled={busy} canEdit={isPhoto || canEditVideo()} />
+        <textarea
+          value={caption}
+          onChange={(e) => setCaption(e.target.value)}
+          disabled={busy}
+          maxLength={280}
+          rows={2}
+          placeholder={`Add a caption for ${first} (optional)`}
+          aria-label="Caption"
+          className="w-full resize-none rounded-[16px] border border-[var(--line)] bg-[var(--card)] px-4 py-3 text-[15px] outline-none focus:border-[var(--navy)] disabled:opacity-50"
+        />
+        <div className="mt-auto flex gap-3 pt-2">
           <button
-            onClick={handleClose}
-            disabled={uploadMutation.isPending}
-            className="p-1.5 rounded-[28px] transition hover:bg-[var(--pact-surface-2)]"
+            type="button"
+            onClick={retake}
+            disabled={busy}
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full border-[1.5px] border-[var(--line)] text-[15px] font-semibold disabled:opacity-50"
           >
-            <X className="w-5 h-5 text-[var(--pact-text)]" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          {/* Proof Type Selection */}
-          <div>
-            <label className="block text-sm font-semibold text-[var(--pact-text)] mb-3">Proof Type</label>
-            <div className="grid grid-cols-3 gap-3">
-              {PROOF_TYPES.map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  onClick={() => {
-                    setProofType(id);
-                    setFile(null);
-                    setPreview(null);
-                  }}
-                  disabled={uploadMutation.isPending}
-                  className="p-3 rounded-[28px] border-2 transition flex flex-col items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={
-                    proofType === id
-                      ? { borderColor: 'var(--pact-pink)', background: 'var(--pact-surface-raised)', color: 'var(--pact-text)' }
-                      : { borderColor: 'var(--pact-hairline)', color: 'var(--pact-text-dim)' }
-                  }
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="text-xs font-semibold">{label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* File Upload */}
-          {proofType !== 'checklist' && (
-            <div>
-              <label className="block text-sm font-semibold text-[var(--pact-text)] mb-3">
-                {proofType === 'photo' ? 'Select Photo' : 'Select Video'}
-              </label>
-              <label
-                className="rounded-[28px] p-6 flex flex-col items-center justify-center cursor-pointer transition border-2 border-dashed"
-                style={{ borderColor: 'var(--pact-hairline)', background: 'var(--pact-surface-2)' }}
-              >
-                <Upload className="w-8 h-8 mb-2 text-[var(--pact-text-faint)]" />
-                <p className="text-sm font-semibold text-[var(--pact-text)]">Click to upload</p>
-                <p className="text-xs text-[var(--pact-text-faint)]">or drag and drop</p>
-                <input
-                  type="file"
-                  accept={proofType === 'photo' ? 'image/*' : 'video/*'}
-                  onChange={handleFileSelect}
-                  disabled={uploadMutation.isPending}
-                  className="hidden"
-                />
-              </label>
-
-              {preview && (
-                <div className="mt-3">
-                  <p className="text-xs text-[var(--pact-text-faint)] mb-2">Preview:</p>
-                  {proofType === 'photo' ? (
-                    <img src={preview} alt="Preview" className="w-full rounded-[28px] max-h-40 object-cover" />
-                  ) : (
-                    <video src={preview} className="w-full rounded-[28px] max-h-40" controls />
-                  )}
-                  {file && <p className="text-xs text-[var(--pact-text-faint)] mt-2">{file.name}</p>}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Caption / Status */}
-          <div>
-            <label className="block text-sm font-semibold text-[var(--pact-text)] mb-3">
-              {proofType === 'checklist' ? 'Completion Status' : 'Optional Caption'}
-            </label>
-            <textarea
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              disabled={uploadMutation.isPending}
-              placeholder={proofType === 'checklist' ? 'Describe your completion...' : 'Add a caption (optional)'}
-              rows={4}
-              className="w-full px-4 py-2.5 rounded-[28px] resize-none disabled:opacity-50 focus:outline-none focus:ring-2"
-              style={{
-                background: 'var(--pact-surface-2)',
-                border: '1px solid var(--pact-hairline)',
-                color: 'var(--pact-text)',
-                ['--tw-ring-color' as any]: 'var(--pact-violet)',
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex gap-3 p-4 border-t border-[var(--pact-hairline)]" style={{ background: 'var(--pact-surface-2)' }}>
-          <button
-            onClick={handleClose}
-            disabled={uploadMutation.isPending}
-            className="flex-1 px-4 py-2.5 rounded-[28px] transition disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--pact-surface-raised)]"
-            style={{ color: 'var(--pact-text)' }}
-          >
-            Cancel
+            <RotateCcw className="size-4" aria-hidden="true" />
+            Retake
           </button>
           <button
-            onClick={handleSubmit}
-            disabled={uploadMutation.isPending || (proofType !== 'checklist' && !file)}
-            className=" flex-1 px-4 py-2.5 rounded-[28px] disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
+            type="button"
+            onClick={() => void send()}
+            disabled={busy}
+            className="flex h-12 flex-[1.4] items-center justify-center gap-2 rounded-full bg-[var(--navy)] text-[15px] font-semibold text-white disabled:opacity-60"
           >
-            {uploadMutation.isPending ? 'Uploading...' : 'Submit Proof'}
+            {busy && <Loader className="size-4 animate-spin" aria-hidden="true" />}
+            {rendering !== null ? (rendering > 0 ? `Adding edits ${Math.round(rendering * 100)}%` : 'Adding edits…') : upload.isPending ? 'Sending…' : `Send to ${first}`}
           </button>
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

@@ -10,6 +10,7 @@ import AutoPlayVideo from '@/components/media/AutoPlayVideo';
 import ConfirmModal from '@/components/ConfirmModal';
 import DareProofUploadModal from '@/components/DareProofUploadModal';
 import DareRewardPaySheet from '@/components/dares/DareRewardPaySheet';
+import SparkRing from '@/components/dares/SparkRing';
 import { useAuthStore } from '@/store/auth';
 import { useAcceptDare, useCancelDare, useClaimDare, useDareRewardStep, useDeclineDare, useReviewDare } from '@/hooks/useDareMutations';
 import { copyText } from '@/lib/circleInvite';
@@ -17,6 +18,8 @@ import { parseApiDate } from '@/lib/dareCountdown';
 import {
   STATE_LABEL,
   activeDeadline,
+  clockLeft,
+  compactLeft,
   creatorFace,
   dareRole,
   dareState,
@@ -79,6 +82,8 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
     return () => window.clearInterval(timer);
   }, [deadline]);
   const left = deadline ? timeLeft(deadline.target) : null;
+  const ringLeft = clockLeft(dare);
+  const ringTime = deadline ? compactLeft(deadline.target) : null;
 
   const [mediaFailed, setMediaFailed] = useState(false);
   const [proofOpen, setProofOpen] = useState(false);
@@ -151,7 +156,10 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
           </span>
         )}
       </div>
-      <h2 className="mt-1.5 line-clamp-2 text-balance text-[20px] font-extrabold leading-[1.15] tracking-[-0.02em]" style={{ color: '#fff', textShadow: '0 1px 8px rgba(0,0,0,0.45)' }}>
+      <h2
+        className={`mt-2 text-balance font-extrabold ${showMedia ? 'line-clamp-3 text-[26px] leading-[1.05] tracking-[-0.03em]' : variant === 'detail' ? 'line-clamp-4 text-[36px] leading-[1.02] tracking-[-0.035em]' : 'line-clamp-4 text-[32px] leading-[1.03] tracking-[-0.035em]'}`}
+        style={{ color: '#fff', textShadow: '0 1px 8px rgba(0,0,0,0.45)' }}
+      >
         {dare.title}
       </h2>
       {left && (
@@ -312,17 +320,36 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/75 to-transparent" />
             </div>
           ) : (
-            // No photo yet: the same dark tile a new pact gets, a little taller so
-            // the title and clock have room. Finished-without-success dares go grey.
+            // No photo yet: a dark tile the size of a Pact card. A clock ring with
+            // lightning turning around it carries the time; the title sits big
+            // underneath. Dares that ended without success go grey and calm.
             <div
-              className="relative aspect-[16/10] w-full"
+              className={`relative w-full ${inactive ? 'aspect-[16/10]' : 'aspect-[4/5]'}`}
               style={{
                 background: inactive
                   ? 'radial-gradient(120% 90% at 30% 20%, #3A3C44 0%, #1E1F24 60%, #141519 100%)'
-                  : 'radial-gradient(120% 90% at 30% 20%, #2A3A6E 0%, #141A2E 55%, #0F1014 100%)',
+                  : 'radial-gradient(120% 90% at 75% 18%, #2F4486 0%, #141A2E 52%, #0C0D11 100%)',
               }}
             >
-              <Zap className="pointer-events-none absolute -right-3 top-10 size-36 text-white/[0.06]" strokeWidth={1.4} aria-hidden="true" />
+              {!inactive && (
+                <div className="pointer-events-none absolute left-1/2 top-[76px] -translate-x-1/2">
+                  <SparkRing size={184} left={ringLeft} tone="dark" duration="34s">
+                    <span className="flex flex-col items-center justify-center text-white" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.4)' }}>
+                      {ringTime ? (
+                        <>
+                          <span className="text-[48px] font-extrabold leading-none tracking-[-0.05em]">{ringTime}</span>
+                          <span className="mt-1.5 text-[12.5px] font-bold opacity-80">{deadline?.verb === 'respond' ? 'to answer' : 'to finish'}</span>
+                        </>
+                      ) : state === 'completed' ? (
+                        <Check className="size-9" strokeWidth={2.6} />
+                      ) : (
+                        <Zap className="size-9" strokeWidth={2.2} fill="#FFD84D" color="#FFD84D" />
+                      )}
+                    </span>
+                  </SparkRing>
+                </div>
+              )}
+              {inactive && <Zap className="pointer-events-none absolute -right-3 top-10 size-36 text-white/[0.06]" strokeWidth={1.4} aria-hidden="true" />}
             </div>
           )}
           {identity}
@@ -348,7 +375,7 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
       {/* Sheets and dialogs sit outside the card so taps inside them never open the dare. */}
       {role === 'doer' && state === 'in_progress' && (
         <div onClick={stop}>
-          <DareProofUploadModal isOpen={proofOpen} onClose={() => setProofOpen(false)} dareId={dare.id} />
+          <DareProofUploadModal isOpen={proofOpen} onClose={() => setProofOpen(false)} dareId={dare.id} dareTitle={dare.title} toName={creator.name} method={dare.verification_method} />
         </div>
       )}
       {role === 'creator' && (

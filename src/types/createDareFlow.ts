@@ -10,7 +10,7 @@ export interface DareDraft {
   description: string;
   respondByHours: number;
   completeByHours: number;
-  /** Dares are one-to-one: this holds exactly one person once picked. */
+  /** Each person picked gets their own one-to-one dare (up to MAX_DARE_RECIPIENTS). */
   recipients: DareRecipientPick[];
   verificationMethod: 'photo' | 'video';
   /** Optional reward in rupees (1 to 500), paid by you over UPI after you mark it done. */
@@ -47,7 +47,12 @@ export type DareFlowStep =
   | 'review'
   | 'success';
 
+export const MAX_DARE_RECIPIENTS = 5;
+
 export interface CreatedDare {
   id: number;
   title: string;
+  /** Everyone a dare reached, and anyone it could not be sent to. */
+  sentTo?: string[];
+  failedFor?: string[];
 }

@@ -311,6 +311,8 @@ export interface Dare {
   completed_at?: string | null;
   proof_caption?: string | null;
   proof_submitted_at?: string | null;
+  /** When the person dared said yes; their clock to finish runs from here. */
+  accepted_at?: string | null;
   // Derived client-side in mapDare from my_recipient_status, since the
   // backend has no is_accepted_by_me/is_completed_by_me fields.
   recipientCount?: number;
