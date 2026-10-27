@@ -348,7 +348,7 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
       {/* Sheets and dialogs sit outside the card so taps inside them never open the dare. */}
       {role === 'doer' && state === 'in_progress' && (
         <div onClick={stop}>
-          <DareProofUploadModal isOpen={proofOpen} onClose={() => setProofOpen(false)} dareId={dare.id} />
+          <DareProofUploadModal isOpen={proofOpen} onClose={() => setProofOpen(false)} dareId={dare.id} dareTitle={dare.title} toName={creator.name} method={dare.verification_method} />
         </div>
       )}
       {role === 'creator' && (
