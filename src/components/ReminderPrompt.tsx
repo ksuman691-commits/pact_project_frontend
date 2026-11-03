@@ -62,7 +62,8 @@ export default function ReminderPrompt() {
       let tries = 0
       const check = () => {
         tries += 1
-        if (!document.querySelector('[role="dialog"][aria-label="Post a moment"]')) {
+        // Also wait for the check-in celebration, so the two never sit on top of each other.
+        if (!document.querySelector('[role="dialog"][aria-label="Post a moment"]') && !document.body.dataset.celebrating) {
           void pushService
             .vapidKey()
             .then(({ data }) => data?.enabled && setOpen(true))

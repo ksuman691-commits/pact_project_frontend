@@ -19,6 +19,7 @@ import { createStory, putStoryVideo, requestStoryUploadUrl } from '@/lib/api/sto
 import { IDEAS, parseSentence, sentenceTitle, type Frequency } from '@/lib/pactSentence'
 import { STORY_MAX_SECONDS } from '@/lib/stories'
 import { titleCase } from '@/lib/titleCase'
+import PactLiveBeat from '@/components/celebrations/PactLiveBeat'
 
 const INK = '#17181D'
 const MUTED = '#5A5C63'
@@ -98,6 +99,8 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   const [watchPrice, setWatchPrice] = useState<number | null>(null)
   const [autoApprove, setAutoApprove] = useState(false)
   const [created, setCreated] = useState<{ id: number; title: string; days: number } | null>(null)
+  // The full-screen "your pact is live" moment plays once, then the share screen is there underneath.
+  const [beatDone, setBeatDone] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const audience: Audience | null = chosenAudience
@@ -611,6 +614,21 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
             </button>
           </div>
         </>
+      )}
+
+      {step === 'live' && created && !beatDone && (
+        <PactLiveBeat
+          title={created.title}
+          days={created.days}
+          hasDay1={!!clip}
+          subtitle={audience === 'circle' ? circle?.name ?? 'Your circle' : audience === 'followers' ? 'Your followers' : 'Everyone'}
+          inviteLabel={audience === 'circle' ? 'Invite your circle' : 'Share your pact'}
+          onInvite={() => {
+            setBeatDone(true)
+            void share('native')
+          }}
+          onOpen={openPact}
+        />
       )}
 
       {step === 'live' && created && (

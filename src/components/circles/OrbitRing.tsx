@@ -82,6 +82,7 @@ export default function OrbitRing({
   center,
   discSize,
   faceSize,
+  assemble = false,
 }: {
   name: string
   photoUrl?: string | null
@@ -95,6 +96,8 @@ export default function OrbitRing({
   /** For small rings: the centre disc and the faces in px, instead of scaling down from 116. */
   discSize?: number
   faceSize?: number
+  /** Play the "circle is born" entrance: the centre pops in, faces fly out from it. */
+  assemble?: boolean
 }) {
   const [coverBroken, setCoverBroken] = useState(false)
   const scale = size / 116
@@ -125,7 +128,7 @@ export default function OrbitRing({
         )}
       </svg>
       <span
-        className="absolute flex items-center justify-center overflow-hidden rounded-full font-extrabold tracking-[-0.02em]"
+        className={`absolute flex items-center justify-center overflow-hidden rounded-full font-extrabold tracking-[-0.02em]${assemble ? ' cp-assemble-disc' : ''}`}
         style={{ left: (size - disc) / 2, top: (size - disc) / 2, width: disc, height: disc, fontSize: discSize ? Math.round(discSize * 0.4) : Math.round(17 * scale), background: INK, color: '#FFFFFF', boxShadow: `0 0 0 ${halo}px ${compact ? '#FBF8F1' : '#FFFFFF'}` }}
       >
         {cover ? (
@@ -138,7 +141,11 @@ export default function OrbitRing({
       {center}
       <span className="cp-orbit-spin absolute inset-0" style={{ animationDuration: duration }} aria-hidden="true">
         {faces.map((member, i) => (
-          <span key={member.user_id ?? i} className="absolute size-0" style={at(i)}>
+          <span
+            key={member.user_id ?? i}
+            className={`absolute size-0${assemble ? ' cp-assemble-face' : ''}`}
+            style={assemble ? ({ ...at(i), '--fx': `${size / 2 - at(i).left}px`, '--fy': `${size / 2 - at(i).top}px`, '--cp-delay': `${0.35 + i * 0.08}s` } as React.CSSProperties) : at(i)}
+          >
             <Face member={member} size={face} duration={duration} compact={compact} />
           </span>
         ))}

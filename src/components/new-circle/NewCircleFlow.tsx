@@ -12,6 +12,8 @@ import { useFollowers, useFollowing } from '@/hooks/useFollows'
 import { useAuthStore } from '@/store/auth'
 import { shareCircle, type ShareKind } from '@/lib/circleInvite'
 import { titleCase } from '@/lib/titleCase'
+import { fireConfetti, stopConfetti } from '@/lib/celebrations'
+import { haptic } from '@/lib/motion'
 
 const INK = '#17181D'
 const MUTED = '#5A5C63'
@@ -59,6 +61,19 @@ export default function NewCircleFlow({
   const following = useMemo(() => listOf(followingQuery.data).filter((p) => p?.id != null && p.id !== me?.id), [followingQuery.data, me?.id])
 
   const [step, setStep] = useState<Step>('name')
+
+  // The circle is born: a little confetti and a buzz, once, when it goes live.
+  useEffect(() => {
+    if (step !== 'live') return
+    const timer = window.setTimeout(() => {
+      haptic(30)
+      fireConfetti('medium', { y: 0.34 })
+    }, 600)
+    return () => {
+      window.clearTimeout(timer)
+      stopConfetti()
+    }
+  }, [step])
   const [name, setName] = useState('')
   const [about, setAbout] = useState(initialCategory ? `Chasing ${titleCase(initialCategory.replace(/_/g, ' '))} goals together` : '')
   const [photo, setPhoto] = useState<{ file: File; url: string } | null>(null)
@@ -403,9 +418,10 @@ export default function NewCircleFlow({
               active={0}
               size={208}
               duration="70s"
+              assemble
             />
-            <h1 className="mt-4 text-center text-[30px] font-extrabold leading-tight tracking-[-0.035em]" style={{ color: INK }}>{created.name} is live.</h1>
-            <p className="mt-1.5 max-w-[310px] text-center text-[14.5px] leading-snug" style={{ color: MUTED }}>
+            <h1 className="cp-rise mt-4 text-center text-[30px] font-extrabold leading-tight tracking-[-0.035em]" style={{ color: INK, ['--cp-delay' as string]: '0.9s' }}>{created.name} is live.</h1>
+            <p className="cp-rise mt-1.5 max-w-[310px] text-center text-[14.5px] leading-snug" style={{ color: MUTED, ['--cp-delay' as string]: '1s' }}>
               {[
                 created.invitesSent > 0 ? `${created.invitesSent} ${created.invitesSent === 1 ? 'invite' : 'invites'} sent. They join the ring when they say yes.` : 'Bring a few people in. Circles work best with three or more.',
                 created.told ? `${followerCount.toLocaleString('en-IN')} ${followerCount === 1 ? 'follower' : 'followers'} heard about it.` : '',
@@ -419,8 +435,8 @@ export default function NewCircleFlow({
               <span className="rounded-full px-3 py-1 text-[12px] font-extrabold" style={{ background: CARD, border: `1px solid ${LINE}`, color: INK }}>1 Member</span>
             </div>
 
-            <div className="mt-5 self-stretch text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>GET MORE PEOPLE IN</div>
-            <div className="mt-2.5 grid grid-cols-3 gap-2 self-stretch">
+            <div className="cp-rise mt-5 self-stretch text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED, ['--cp-delay' as string]: '1.15s' }}>GET MORE PEOPLE IN</div>
+            <div className="cp-rise mt-2.5 grid grid-cols-3 gap-2 self-stretch" style={{ ['--cp-delay' as string]: '1.25s' }}>
               {(
                 [
                   ['native', 'Invite', <UserPlus key="i" className="size-[22px]" />],
