@@ -147,8 +147,8 @@ export default function CpScorePage() {
             {isOwn && (
               <>
                 <div className="flex items-center justify-between px-5 pt-6">
-                  <h2 className="text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>RECENT CHANGES</h2>
-                  <span className="text-[12px] font-bold" style={{ color: MUTED }}>Only you see these</span>
+                  <h2 className="text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>WHAT&apos;S MOVING YOUR SCORE</h2>
+                  <span className="text-[12px] font-bold" style={{ color: MUTED }}>Estimates · only you see these</span>
                 </div>
                 <div className="mx-4 mt-2.5 overflow-hidden rounded-[22px]" style={{ background: '#FFFFFF', border: `1px solid ${LINE}` }}>
                   {(data.recent ?? []).length === 0 ? (

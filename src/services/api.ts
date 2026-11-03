@@ -126,7 +126,7 @@ export const mapPact = (raw: any) => ({
   circle: raw?.circle_name ? titleCase(raw.circle_name) : raw?.circle?.name ?? null,
   circleEmoji: raw?.circle_icon_emoji ?? null,
   daysTotal: Number(raw?.duration_days ?? 0) || undefined,
-  daysCurrent: calculateCurrentDay(raw?.start_date, Number(raw?.duration_days ?? 0) || undefined),
+  daysCurrent: raw?.current_day ?? calculateCurrentDay(raw?.start_date, Number(raw?.duration_days ?? 0) || undefined),
   timeRemaining: formatTimeRemaining(raw?.end_date),
   believers: raw?.support_count ?? raw?.believers ?? 0,
   doubters: raw?.doubters ?? 0,

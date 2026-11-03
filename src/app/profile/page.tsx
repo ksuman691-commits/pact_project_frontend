@@ -161,7 +161,7 @@ function ProfileContent() {
           onChange={(id) => setTab(id as Tab)}
           tabs={[
             { id: 'active', label: 'Active', count: activePacts.length },
-            { id: 'completed', label: 'Completed', count: finishedPacts.length },
+            { id: 'completed', label: 'Ended', count: finishedPacts.length },
             { id: 'circles', label: 'Circles', count: myCircles.length },
             ...(myDares.length > 0 ? [{ id: 'dares', label: 'Dares', count: myDares.length }] : []),
           ]}

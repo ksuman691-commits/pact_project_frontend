@@ -27,7 +27,7 @@ export default function NotFound() {
       <p className="mt-6 text-sm font-semibold " style={{ color: 'var(--pact-text-faint)' }}>
         404
       </p>
-      <h1 className="mt-2 text-3xl font-black text-[var(--pact-text)]">This pact doesn&apos;t exist</h1>
+      <h1 className="mt-2 text-3xl font-black text-[var(--pact-text)]">This page doesn&apos;t exist</h1>
       <p className="mt-3 max-w-sm text-sm leading-relaxed text-[var(--pact-text-dim)]">
         The page you&apos;re looking for was moved, deleted, or never existed. Let&apos;s get you back to your Circle.
       </p>

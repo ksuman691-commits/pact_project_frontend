@@ -604,3 +604,14 @@ section + section {
 @media (prefers-reduced-motion: reduce) {
   .cp-assemble-disc, .cp-assemble-face, .cp-rise { animation: none; }
 }
+
+
+/* Pinch-zoom is allowed (WCAG 1.4.4). iPhone Safari zooms into any text field under 16px on focus,
+   which the old zoom lock used to hide, so text fields are 16px there. */
+@supports (-webkit-touch-callout: none) {
+  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}

@@ -119,6 +119,8 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
   const { phase, progress, error, retryable, unavailable: postUnavailable, post, reset } = usePostStory(pactId)
   const comingSoon = !onCaptured && (today.unavailable || postUnavailable)
   const autoStarted = useRef(false)
+  // If the camera hasn't come up after a few seconds, offer the gallery and a retry instead of a dead screen.
+  const [slowOpen, setSlowOpen] = useState(false)
   const openRef = useRef(isOpen)
   useEffect(() => {
     openRef.current = isOpen
@@ -304,6 +306,14 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, autoStart, inPageSupported, step])
 
+  const waitingForCamera = isOpen && autoStart && step === 'idle' && !notice && !comingSoon && inPageSupported !== false
+  useEffect(() => {
+    setSlowOpen(false)
+    if (!waitingForCamera) return
+    const timer = window.setTimeout(() => setSlowOpen(true), 8000)
+    return () => window.clearTimeout(timer)
+  }, [waitingForCamera])
+
   /** A still from the live camera, with the chosen look and the selfie mirror baked in. */
   const takePhoto = () => {
     const video = liveVideoRef.current
@@ -429,9 +439,22 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
             <X className="h-5 w-5" />
           </button>
         </header>
-        <div className="flex flex-1 items-center justify-center">
-          <p className="text-[15px] font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }} aria-live="polite">Opening camera…</p>
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 text-center">
+          <p className="text-[15px] font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }} aria-live="polite">
+            {slowOpen ? 'The camera is taking a while.' : 'Opening camera…'}
+          </p>
+          {slowOpen && (
+            <div className="flex w-full max-w-[260px] flex-col gap-2.5">
+              <button type="button" onClick={() => cameraInputRef.current?.click()} className="h-12 rounded-full bg-white text-[15px] font-semibold text-[var(--ink)]">
+                Choose from gallery
+              </button>
+              <button type="button" onClick={() => { setSlowOpen(false); void openLiveCamera() }} className="h-12 rounded-full text-[15px] font-semibold text-white" style={{ border: '1px solid rgba(255,255,255,0.4)' }}>
+                Try again
+              </button>
+            </div>
+          )}
         </div>
+        <input ref={cameraInputRef} type="file" accept="image/*,video/*" className="sr-only" onChange={onFilePicked} tabIndex={-1} aria-hidden="true" />
       </div>
     )
   }

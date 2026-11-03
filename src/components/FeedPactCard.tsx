@@ -535,19 +535,31 @@ export default function FeedPactCard({
     : momentStory
       ? [audienceLabel, postedAgo(momentStory.created_at)].filter(Boolean).join(' · ')
       : [audienceLabel, postedAt].filter(Boolean).join(' · ') || pactCategoryLabel;
-  const dayNo = progressInfo ? Math.min(progressInfo.totalDays, Math.max(1, progressInfo.elapsedDays)) : 0;
+  // Today's day comes from the server (the pact's own calendar day, the same number Home shows). The old
+  // phone-side guess, rounding elapsed time, is only for payloads that don't carry it yet.
+  const serverDay = pact.current_day != null ? Number(pact.current_day) : null;
+  const dayNo = serverDay != null
+    ? serverDay
+    : 'current_day' in pact
+      ? 0
+      : progressInfo ? Math.min(progressInfo.totalDays, Math.max(1, progressInfo.elapsedDays)) : 0;
   // The badge follows the moment on screen: swipe to a Day 1 clip and it says Day 1.
   const slideDay = tiles.length > 0 && activeProof?.day ? Number(activeProof.day) : null;
-  const badgeDay = slideDay || dayNo;
   // "Day 1 · 2 of 3" when a day has several moments, counted in the order you swipe them.
   const sameDayTiles = slideDay ? tiles.filter((tile) => Number(tile.day) === slideDay) : [];
   const positionInDay = activeProof ? sameDayTiles.findIndex((tile) => tile.id === activeProof.id) + 1 : 0;
-  const totalDays = Number(pact.duration_days ?? progressInfo?.totalDays ?? 0);
+  const totalDays = Number(pact.total_days ?? pact.duration_days ?? progressInfo?.totalDays ?? 0);
   const finishedPact = pactEnded && (pact.status === 'completed' || Number(pact.days_completed ?? 0) >= Math.ceil(0.75 * Math.max(1, totalDays)));
+  // The chip is always TODAY's progress, matching Home and the "Post Day N" button. The day of the
+  // clip on screen is a separate, smaller "Posted Day N" chip, only when it adds something.
   const badgeText = pactEnded
     ? `${finishedPact ? 'Finished' : 'Ended'}${totalDays ? ` · ${Number(pact.days_completed ?? 0)} of ${totalDays} days` : ''}`
-    : badgeDay
-      ? `Day ${badgeDay}${sameDayTiles.length > 1 && positionInDay > 0 ? ` · ${positionInDay} of ${sameDayTiles.length}` : ''}`
+    : dayNo
+      ? `Day ${dayNo}${totalDays ? ` of ${totalDays}` : ''}`
+      : null;
+  const postedText =
+    slideDay && (pactEnded || slideDay !== dayNo || sameDayTiles.length > 1)
+      ? `Posted Day ${slideDay}${sameDayTiles.length > 1 && positionInDay > 0 ? ` · ${positionInDay} of ${sameDayTiles.length}` : ''}`
       : null;
   const privateTag = pact.media_locked ? (pact.watch_price ? `Private · ₹${pact.watch_price}` : 'Private') : null;
   const todayKey = new Date().toDateString();
@@ -796,12 +808,17 @@ export default function FeedPactCard({
 
   const mediaCaption = (
     <div className="pointer-events-none absolute inset-x-3.5 bottom-3.5" style={{ color: '#fff' }}>
-      {(badgeText || privateTag || watch) && (
+      {(badgeText || postedText || privateTag || watch) && (
         <div className="flex flex-wrap items-center gap-1.5">
           {badgeText && (
             <span className="rounded-[9px] px-2.5 py-[3px] text-[11.5px] font-extrabold" style={{ color: '#fff', backgroundColor: 'rgba(255,255,255,0.24)' }}>
-              {showMomentum && !pactEnded && badgeDay === dayNo ? '🔥 ' : ''}
+              {showMomentum && !pactEnded ? '🔥 ' : ''}
               {badgeText}
+            </span>
+          )}
+          {postedText && (
+            <span className="rounded-[9px] px-2 py-[3px] text-[11px] font-bold" style={{ color: '#fff', backgroundColor: 'rgba(255,255,255,0.14)' }}>
+              {postedText}
             </span>
           )}
           {watch ? (
