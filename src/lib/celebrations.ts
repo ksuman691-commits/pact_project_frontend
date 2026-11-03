@@ -30,15 +30,34 @@ export function stopConfetti(): void {
   }
 }
 
-/** Optional numbers from the server for the check-in moment (streak, circle progress). */
+/** A real threshold the server says was reached. */
+export interface MilestoneData {
+  type: 'streak' | 'halfway' | 'final_day' | string
+  value: number
+}
+
+/** Numbers from GET /api/pacts/{id}/celebration for the check-in moment. */
 export interface CheckInExtras {
   streak?: { before: number; after: number } | null
   circle?: { name?: string | null; before: number; after: number; total: number } | null
+  milestone?: MilestoneData | null
 }
 
 export interface CheckInCelebrationData extends CheckInExtras {
+  kind: 'check-in'
   pactId: number
   title?: string | null
   day?: number | null
   totalDays?: number | null
 }
+
+export interface MilestoneCelebrationData {
+  kind: 'milestone'
+  pactId: number
+  title?: string | null
+  day?: number | null
+  totalDays?: number | null
+  milestone: MilestoneData
+}
+
+export type CelebrationItem = CheckInCelebrationData | MilestoneCelebrationData

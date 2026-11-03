@@ -383,6 +383,8 @@ export const circleJoinRequestService = {
 
 // Pact Services
 export const pactService = {
+  /** Real numbers for the check-in moment: day, streak, circle progress, milestone. Members only. */
+  celebration: (id: number) => api.get(`/api/pacts/${id}/celebration`, { timeout: 4000 }),
   /** Creator only. The server refuses (409) when the pact is paid or ever was. */
   remove: (id: number) => api.delete(`/api/pacts/${id}`),
   create: async (data: any) => {
