@@ -10,6 +10,7 @@ import InAppNavigationTracker from '@/components/InAppNavigationTracker';
 import QueryProvider from '@/providers/QueryProvider';
 import BottomNav from '@/components/BottomNav';
 import ReminderPrompt from '@/components/ReminderPrompt';
+import CelebrationHost from '@/components/celebrations/CelebrationHost';
 
 // "Classic" redesign type system v2 — ONE family site-wide (Inter Tight),
 // used for every role (headings, body, buttons, nav, the wordmark logo).
@@ -59,6 +60,7 @@ export default function RootLayout({
           <NotificationRealtimeBridge />
           {children}
           <BottomNav />
+          <CelebrationHost />
           <ReminderPrompt />
           <Toaster
             position="top-center"
