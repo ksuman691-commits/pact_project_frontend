@@ -536,6 +536,9 @@ export const userService = {
 
 // Leaderboard Services
 export const leaderboardService = {
+  /** A circle's board, ranked by days showed up. Members only. */
+  circleBoard: (circleId: number, period: 'week' | 'month' | 'all', tz?: string) =>
+    api.get(`/api/circles/${circleId}/leaderboard`, { params: { period, tz } }),
   getGlobal: (skip?: number, limit?: number) =>
     api.get('/api/leaderboards/global', { params: { skip, limit } }),
   getCircle: (circleId: number, skip?: number, limit?: number) =>

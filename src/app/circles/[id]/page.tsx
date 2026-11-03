@@ -20,6 +20,7 @@ import { CircleInviteQRSheet } from '@/components/CircleInviteQR'
 import FeedPactCard from '@/components/FeedPactCard'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
 import OrbitRing from '@/components/circles/OrbitRing'
+import CircleBoard from '@/components/circles/CircleBoard'
 import Seat from '@/components/classic/Seat'
 
 const PRIVACY_LABEL: Record<string, string> = {
@@ -323,6 +324,8 @@ export default function CircleDetailPage() {
           )}
         </div>
       </section>
+
+      {isMember && <CircleBoard circleId={circleId} />}
 
       {(isMember || !isPrivateCircle) && members.length > 0 && (
         <section className="mx-4 mt-8 rounded-[24px] px-4 pb-2 pt-4" style={{ background: '#FFFFFF', border: '1px solid #DCD3C1' }}>
