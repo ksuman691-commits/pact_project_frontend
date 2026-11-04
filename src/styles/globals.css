@@ -490,9 +490,40 @@ section + section {
   }
 }
 
-.pact-flow .pact-shimmer {
-  background: var(--pact-surface-3);
-  animation: pact-shimmer-sweep 1.8s ease-in-out infinite;
+/* Loading placeholders. The old version animated background-position over a flat colour, so
+   nothing moved, and outside .pact-flow it had no colour at all (blank boxes). Now: a paper-tone
+   block on every page with a soft sheen sliding across (transform only, cheap on phones). */
+.pact-shimmer,
+.cp-media-loading {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.pact-shimmer {
+  background: #ECE6D8;
+}
+.pact-shimmer::after,
+.cp-media-loading::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  animation: cp-sheen 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+.pact-shimmer::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+}
+/* Dark media tiles (photos and videos) while they load: a slow light sweep under the media, so a
+   slow network shows "loading", not an empty black panel. The media covers it once it arrives. */
+.cp-media-loading::before {
+  /* Behind everything in the tile (the container isolates), above its black background. */
+  z-index: -1;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.09), transparent);
+  animation-duration: 1.8s;
+}
+@keyframes cp-sheen {
+  to { transform: translateX(100%); }
 }
 
 /* Rewarded micro-action: spring pop with a soft glow burst. Applied
@@ -542,7 +573,6 @@ section + section {
   }
   .pact-flow .pact-page-enter,
   .pact-flow .pact-list-item,
-  .pact-flow .pact-shimmer,
   .pact-flow .pact-spring-pop,
   .pact-flow .pact-new-item {
     animation: none;
@@ -658,4 +688,8 @@ section + section {
 @media (prefers-reduced-motion: reduce) {
   .cp-flame-outer, .cp-flame-inner, .cp-streak-blaze, .cp-streak-levelup, .cp-spark, .cp-tick, .cp-pop-in { animation: none; }
   .cp-spark { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pact-shimmer::after, .cp-media-loading::before { animation: none; display: none; }
 }

@@ -277,7 +277,7 @@ export default function PactGallery({
                   ? `${tile.kind === 'cheer' ? 'Cheer' : tile.type === 'video' ? 'Video proof' : 'Photo proof'}${tile.day ? `, day ${tile.day}` : ''}`
                   : undefined
               }
-              className={`group relative ${fillHeight ? 'h-full' : aspectClassName} w-full flex-shrink-0 snap-center overflow-hidden bg-white/5 text-left focus:outline-none ${
+              className={`cp-media-loading group relative ${fillHeight ? 'h-full' : aspectClassName} w-full flex-shrink-0 snap-center overflow-hidden bg-white/5 text-left focus:outline-none ${
                 interactive ? 'rounded-2xl' : ''
               }`}
             >
@@ -315,7 +315,7 @@ export default function PactGallery({
                   />
                 )
               ) : (
-                <div className="relative h-full w-full bg-[var(--ink)]">
+                <div className="relative h-full w-full cp-media-loading bg-[var(--ink)]">
                   {/* Plays muted while on screen. The tile is itself a button (opens the viewer
                       with sound), so the sound toggle lives there, not here. */}
                   <AutoPlayVideo src={tile.url} soundButton={false} className="h-full w-full object-cover" />
