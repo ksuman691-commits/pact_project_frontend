@@ -241,7 +241,7 @@ export default function PublicProfilePage() {
           onChange={(id) => setTab(id as Tab)}
           tabs={[
             { id: 'active', label: 'Active', count: activePacts.length },
-            { id: 'completed', label: 'Completed', count: completedPacts.length },
+            { id: 'completed', label: 'Ended', count: completedPacts.length },
             { id: 'circles', label: 'Circles', count: profileCircles.length },
           ]}
         />

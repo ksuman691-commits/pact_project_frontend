@@ -1,5 +1,6 @@
 'use client'
 
+import { isFinishedPact } from '@/lib/pactOutcome'
 import Link from 'next/link'
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -17,9 +18,9 @@ import FeedPactCard from '@/components/FeedPactCard'
 import { usePactsStoriesToday } from '@/hooks/useStories'
 import { isStoriesUnavailable, STORIES_ENABLED } from '@/lib/stories'
 
-// All = Watching + Active + Done. Watching is pacts the viewer paid to watch and
-// the creator accepted (plus open asks); once one ends it moves to Done.
-const filters = ['All', 'Active', 'Watching', 'Done'] as const
+// All = Watching + Active + Ended. Watching is pacts the viewer paid to watch and
+// the creator accepted (plus open asks); once one ends it moves to Ended.
+const filters = ['All', 'Active', 'Watching', 'Ended'] as const
 
 // useSearchParams() requires a Suspense boundary or `next build` fails.
 export default function PactsPage() {
@@ -30,12 +31,13 @@ export default function PactsPage() {
   )
 }
 
-function SectionLabel({ label, count, tone, muted }: { label: string; count: number; tone?: 'navy'; muted?: boolean }) {
+function SectionLabel({ label, count, tone, muted, note }: { label: string; count: number; tone?: 'navy'; muted?: boolean; note?: string }) {
   return (
     <h2
       className={`px-2 pt-3 text-[12px] font-extrabold uppercase tracking-[0.08em] ${tone === 'navy' ? 'text-[var(--navy)]' : muted ? 'text-[var(--muted)]' : 'text-[var(--ink)]'}`}
     >
       {label} <span className="font-bold text-[var(--muted)]">{count}</span>
+      {note && <span className="ml-1.5 font-semibold normal-case tracking-normal text-[var(--muted)]">· {note}</span>}
     </h2>
   )
 }
@@ -126,7 +128,7 @@ function PactsPageInner() {
 
   const matchesSearch = (title: string) => (title || '').toLowerCase().includes(search.toLowerCase())
   const isBroken = (p: any) => p.status === 'failed' || p.status === 'cancelled'
-  // Live means active and its last day hasn't passed; anything past its end goes to Done.
+  // Live means active and its last day hasn't passed; anything past its end goes to Ended.
   const today = new Date().toLocaleDateString('en-CA')
   const isActive = (p: any) => p.status === 'active' && (!p.end_date || String(p.end_date).slice(0, 10) >= today)
 
@@ -140,7 +142,7 @@ function PactsPageInner() {
     [pacts, search], // eslint-disable-line react-hooks/exhaustive-deps
   )
 
-  // Paid pacts: running ones are Watching, ended ones are Done (they keep their Watching chip).
+  // Paid pacts: running ones are Watching, ended ones are Ended (they keep their Watching chip).
   const watchingLive = useMemo(() => watchingAll.filter((p) => isActive(p) && matchesSearch(p.title)), [watchingAll, search]) // eslint-disable-line react-hooks/exhaustive-deps
   const watchingEnded = useMemo(() => watchingAll.filter((p) => !isActive(p) && matchesSearch(p.title)), [watchingAll, search]) // eslint-disable-line react-hooks/exhaustive-deps
   const doneAll = useMemo(() => [...finished, ...broken, ...watchingEnded], [finished, broken, watchingEnded])
@@ -149,14 +151,14 @@ function PactsPageInner() {
   const counts = {
     Active: pacts.filter((p) => isActive(p) && p.is_joined_by_me !== false).length,
     Watching: watchingAll.filter(isActive).length,
-    Done: pacts.filter((p) => !isActive(p)).length + watchingAll.filter((p) => !isActive(p)).length,
+    Ended: pacts.filter((p) => !isActive(p)).length + watchingAll.filter((p) => !isActive(p)).length,
   }
-  const countAll = counts.Active + counts.Watching + counts.Done
+  const countAll = counts.Active + counts.Watching + counts.Ended
   const watchingHasNew = watchingAll.some((p) => isActive(p) && Number(p.watch?.new_moments ?? 0) > 0)
 
   const showActive = filter === 'All' || filter === 'Active'
   const showWatching = filter === 'All' || filter === 'Watching'
-  const showDone = filter === 'All' || filter === 'Done'
+  const showDone = filter === 'All' || filter === 'Ended'
   const showDares = filter === 'All' || filter === 'Active'
 
   const participantPacts = useMemo(() => pacts.filter((pact: any) => pact.is_joined_by_me !== false), [pacts])
@@ -172,7 +174,7 @@ function PactsPageInner() {
   const storiesUnavailable = storyQueries.length > 0 && storyQueries.every((q) => q.isError && isStoriesUnavailable(q.error))
   const storiesKnown = storyQueries.length > 0 && storyQueries.every((q) => q.isSuccess)
   const postedCount = storiesKnown ? storyQueries.filter((q) => q.data?.some((s) => s.user_id === user?.id)).length : null
-  const storySummary = `${allActive.length} ${allActive.length === 1 ? 'pact' : 'pacts'}.${
+  const storySummary = `${allActive.length} active ${allActive.length === 1 ? 'pact' : 'pacts'}.${
     postedCount != null ? ` ${postedCount} ${postedCount === 1 ? 'moment' : 'moments'} shared today.` : ''
   }`
   const [capturePact, setCapturePact] = useState<any | null>(null)
@@ -376,7 +378,7 @@ function PactsPageInner() {
               </div>
             )}
 
-            {showDone && doneAll.length > 0 && <SectionLabel label="Done" count={doneAll.length} muted />}
+            {showDone && doneAll.length > 0 && <SectionLabel label="Ended" count={doneAll.length} muted note={`${doneAll.filter(isFinishedPact).length} finished`} />}
             {showDone &&
               doneAll.map((pact) => (
                 <div key={pact.id} className="-mx-4">

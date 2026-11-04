@@ -39,7 +39,12 @@ export interface NotificationRow {
   source: RawNotification;
 }
 
-const nameOf = (actor: NotificationActor) => actor.full_name || actor.username || 'Someone';
+/** A person's name for display: never an email address (some usernames were made from one). */
+const nameOf = (actor: NotificationActor) => {
+  const full = (actor.full_name || '').trim();
+  if (full && !full.includes('@')) return full;
+  return (actor.username || '').split('@')[0] || full.split('@')[0] || 'Someone';
+};
 const firstName = (actor: NotificationActor) => String(nameOf(actor)).trim().split(/\s+/)[0] || 'Someone';
 
 /** Older rows have no subtype; their titles say what they are. */
@@ -58,7 +63,7 @@ export function kindOf(n: RawNotification): RowKind {
 function afterName(description: string, actor?: NotificationActor | null): string {
   const text = String(description || '').trim();
   if (!actor) return text;
-  for (const candidate of [actor.full_name, actor.username]) {
+  for (const candidate of [nameOf(actor), actor.full_name, actor.username]) {
     if (candidate && text.startsWith(`${candidate} `)) return text.slice(candidate.length + 1);
   }
   return text;

@@ -2,6 +2,15 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  async redirects() {
+    // People type these; the screens live under /auth.
+    return [
+      { source: '/login', destination: '/auth/login', permanent: false },
+      { source: '/signin', destination: '/auth/login', permanent: false },
+      { source: '/signup', destination: '/auth/register', permanent: false },
+      { source: '/register', destination: '/auth/register', permanent: false },
+    ]
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.amazonaws.com' },

@@ -294,7 +294,7 @@ export default function PactMomentsDetail({
                 Day {day} of {total}
               </h2>
               <p className="whitespace-nowrap text-[11.5px] font-semibold text-[var(--muted)]">
-                {isMoments75 ? `${completed} of ${requiredDays} needed` : dayLabel}
+                {isMoments75 ? `${completed} of ${requiredDays} days to finish` : dayLabel}
               </p>
             </div>
           ) : null
@@ -470,7 +470,7 @@ export default function PactMomentsDetail({
               </div>
               <div className="pointer-events-none absolute inset-x-3.5 bottom-3.5 z-10 text-white">
                 <span className="rounded-[9px] px-2.5 py-[3px] text-[11.5px] font-extrabold" style={{ backgroundColor: 'rgba(255,255,255,0.24)' }}>
-                  Day {current.day || day}
+                  Posted Day {current.day || day}
                   {currentDayMoments.length > 1 ? ` · ${positionInDay + 1} of ${currentDayMoments.length}` : ''}
                 </span>
                 <p className="mt-1.5 line-clamp-2 text-[17px] font-extrabold leading-[1.2]" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.45)' }}>{caption}</p>
