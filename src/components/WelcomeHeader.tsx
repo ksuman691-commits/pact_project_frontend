@@ -1,6 +1,7 @@
 'use client'
 
-import { Bell, Flame, Search } from 'lucide-react'
+import { Bell, Search } from 'lucide-react'
+import StreakChip from '@/components/StreakChip'
 import { useEffect, useState } from 'react'
 import UserAvatarLink from '@/components/UserAvatarLink'
 import MemberSearchModal from '@/components/MemberSearchModal'
@@ -60,12 +61,7 @@ export default function WelcomeHeader({
             atRisk={atRisk}
           />
           <div className="min-w-0 flex-1">
-            {typeof streak === 'number' && streak > 0 && (
-              <span className="mb-0.5 inline-flex items-center gap-1 rounded-full bg-[var(--navy)] px-2 py-0.5 text-[11px] font-bold text-white">
-                <Flame className="h-3 w-3" strokeWidth={2.4} aria-hidden="true" />
-                {streak}-day streak
-              </span>
-            )}
+            {typeof streak === 'number' && streak > 0 && <StreakChip streak={streak} />}
             <h1 className="truncate text-[20px] font-extrabold leading-tight tracking-[-0.015em] text-[var(--ink)]">
               {greeting}, {firstName}
             </h1>

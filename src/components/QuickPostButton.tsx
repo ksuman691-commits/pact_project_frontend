@@ -64,7 +64,7 @@ export default function QuickPostButton({ onCreatePact }: { onCreatePact?: () =>
         >
           <Camera className="size-6" strokeWidth={2.2} aria-hidden="true" />
           {waiting.length > 0 && (
-            <span aria-hidden="true" className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full px-[5px] text-[11px] font-extrabold" style={{ background: '#FFFFFF', color: '#1F3A93', boxShadow: '0 0 0 1.5px #1F3A93' }}>
+            <span key={waiting.length} aria-hidden="true" className="cp-pop-in absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full px-[5px] text-[11px] font-extrabold" style={{ background: '#FFFFFF', color: '#1F3A93', boxShadow: '0 0 0 1.5px #1F3A93' }}>
               {waiting.length}
             </span>
           )}

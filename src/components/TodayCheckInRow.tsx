@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Camera, Check, Plus } from 'lucide-react'
 import { STORIES_ENABLED } from '@/lib/stories'
+import { useCountUp } from '@/components/pact-ui/useCountUp'
 import { useTodayStatus, type TodayPact } from '@/hooks/useTodayStatus'
 import { useSnapSwipe } from '@/hooks/useSnapSwipe'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
@@ -152,6 +153,7 @@ export default function TodayCheckInRow({ onCreatePact, peers = [] }: { onCreate
 
   const waiting = pacts.filter((p) => !p.posted_today)
   const done = pacts.filter((p) => p.posted_today)
+  const doneShown = useCountUp(done.length, 600)
   const slides = [...waiting, ...done]
   const single = slides.length === 1
 
@@ -213,7 +215,7 @@ export default function TodayCheckInRow({ onCreatePact, peers = [] }: { onCreate
       ) : allDone ? (
         <div className="flex min-h-[32px] items-center gap-2 px-0.5">
           <h2 className="text-[17px] font-extrabold tracking-[-0.01em] text-[var(--ink)]">Today</h2>
-          <span className="ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white" style={{ background: 'var(--success, #2E7D4F)' }}>
+          <span className="cp-pop-in ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white" style={{ background: 'var(--success, #2E7D4F)' }}>
             <Check className="h-[11px] w-[11px]" strokeWidth={3.4} aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1 truncate text-[13.5px] font-bold" style={{ color: 'var(--success, #2E7D4F)' }}>
@@ -225,8 +227,13 @@ export default function TodayCheckInRow({ onCreatePact, peers = [] }: { onCreate
         <>
           <div className="flex items-center gap-2 px-0.5">
             <h2 className="text-[17px] font-extrabold tracking-[-0.01em] text-[var(--ink)]">Today</h2>
-            <span className="text-[13px] font-semibold text-[var(--muted)]">
-              {done.length} of {pacts.length} done
+            <span className="flex items-center gap-2 text-[13px] font-semibold text-[var(--muted)]">
+              <span>
+                <span key={done.length} className="cp-tick inline-block text-[var(--ink)]">{doneShown}</span> of {pacts.length} done
+              </span>
+              <span className="h-1.5 w-12 overflow-hidden rounded-full bg-[var(--hairline)]" aria-hidden="true">
+                <span className="block h-full rounded-full bg-[var(--navy)] transition-[width] duration-700 ease-out" style={{ width: `${pacts.length ? (done.length / pacts.length) * 100 : 0}%` }} />
+              </span>
             </span>
             <span className="flex-1" />
             {newPact}

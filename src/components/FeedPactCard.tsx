@@ -870,7 +870,16 @@ export default function FeedPactCard({
         className={`flex h-11 items-center gap-1.5 px-2 text-[14px] font-extrabold transition ${liked ? 'text-[var(--like)]' : 'text-[var(--ink)]'} ${isLikeBouncing ? 'scale-110' : 'scale-100'}`}
         style={{ transitionDuration: '150ms' }}
       >
-        <Heart className="h-6 w-6" strokeWidth={2} fill={liked ? 'var(--like)' : 'none'} />
+        <span className="relative inline-flex">
+          <Heart className="h-6 w-6" strokeWidth={2} fill={liked ? 'var(--like)' : 'none'} />
+          {liked && isLikeBouncing && (
+            <span className="pointer-events-none absolute left-1/2 top-1/2" aria-hidden="true">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <span key={i} className="cp-spark cp-spark-like" style={{ ['--a' as string]: `${i * 60}deg` }} />
+              ))}
+            </span>
+          )}
+        </span>
         {likeLabelCount}
       </button>
       <button type="button" onClick={() => setCommentSheetOpen(true)} aria-label="open chat" className="flex h-11 items-center gap-1.5 px-2 text-[14px] font-extrabold text-[var(--ink)] transition active:scale-95">
