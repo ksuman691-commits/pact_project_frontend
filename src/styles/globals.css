@@ -693,3 +693,19 @@ section + section {
 @media (prefers-reduced-motion: reduce) {
   .pact-shimmer::after, .cp-media-loading::before { animation: none; display: none; }
 }
+
+
+/* Bigger tap area without changing how a control looks (WCAG 2.5.5 / 44 px). The control must be
+   positioned; the invisible layer reaches out so a 34-38 px control still takes a 44 px finger. */
+.cp-hit::before {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * var(--cp-hit, 5px));
+}
+
+/* One visible keyboard focus ring everywhere (mouse and touch taps don't show it). Controls that
+   draw their own ring with Tailwind focus-visible:ring keep theirs. */
+:where(a, button, [role='button'], [role='tab'], [role='radio'], summary, input, select, textarea, [tabindex]:not([tabindex='-1'])):focus-visible {
+  outline: 2.5px solid var(--navy, #1F3A93);
+  outline-offset: 2px;
+}
