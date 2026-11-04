@@ -13,11 +13,8 @@ export function circleLink(circleId: number | string): string {
   return `${origin}/circles/${circleId}`
 }
 
-export function circleInviteMessage(name: string, isPrivate: boolean): string {
-  return isPrivate
-    ? `I started "${name}" on CirclePact. Ask to join and I'll let you in.`
-    : `Join my circle "${name}" on CirclePact. We keep each other going.`
-}
+export { circleInviteMessage } from '@/lib/inviteMessages'
+import { circleInviteMessage } from '@/lib/inviteMessages'
 
 /** Copies text, with a fallback for browsers that block the clipboard API. */
 export async function copyText(text: string): Promise<boolean> {
@@ -45,9 +42,9 @@ export async function copyText(text: string): Promise<boolean> {
   }
 }
 
-export async function shareCircle(kind: ShareKind, circle: { id: number | string; name: string; isPrivate: boolean }) {
+export async function shareCircle(kind: ShareKind, circle: { id: number | string; name: string; isPrivate: boolean; purpose?: string | null }) {
   const url = circleLink(circle.id)
-  const message = circleInviteMessage(circle.name, circle.isPrivate)
+  const message = circleInviteMessage(circle.name, circle.isPrivate, circle.purpose)
 
   if (kind === 'whatsapp') {
     window.open(`https://wa.me/?text=${encodeURIComponent(`${message} ${url}`)}`, '_blank', 'noopener')
@@ -64,7 +61,7 @@ export async function shareCircle(kind: ShareKind, circle: { id: number | string
     }
   }
 
-  const ok = await copyText(kind === 'copy' ? url : `${message} ${url}`)
-  if (ok) toast.success(kind === 'copy' ? 'Link copied' : 'Invite copied. Paste it anywhere.')
+  const ok = await copyText(`${message} ${url}`)
+  if (ok) toast.success('Invite copied. Paste it anywhere.')
   else toast.error('Could not copy. Long-press the link to copy it.')
 }

@@ -20,6 +20,7 @@ import { IDEAS, parseSentence, sentenceTitle, type Frequency } from '@/lib/pactS
 import { STORY_MAX_SECONDS } from '@/lib/stories'
 import { titleCase } from '@/lib/titleCase'
 import PactLiveBeat from '@/components/celebrations/PactLiveBeat'
+import { pactInviteMessage } from '@/lib/inviteMessages'
 
 const INK = '#17181D'
 const MUTED = '#5A5C63'
@@ -205,7 +206,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   const pactUrl = created && typeof window !== 'undefined' ? `${window.location.origin}/pacts/${created.id}` : ''
   const share = async (kind: 'native' | 'whatsapp' | 'copy') => {
     if (!created) return
-    const message = `I just started a pact: ${created.title}. Keep me honest on CirclePact`
+    const message = pactInviteMessage({ title: created.title, mine: true })
     if (kind === 'whatsapp') {
       window.open(`https://wa.me/?text=${encodeURIComponent(`${message} ${pactUrl}`)}`, '_blank', 'noopener')
       return
@@ -219,8 +220,8 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
       }
     }
     try {
-      await navigator.clipboard.writeText(pactUrl)
-      toast.success('Link copied')
+      await navigator.clipboard.writeText(`${message} ${pactUrl}`)
+      toast.success('Invite copied. Paste it anywhere.')
     } catch {
       toast.error('Could not copy the link')
     }

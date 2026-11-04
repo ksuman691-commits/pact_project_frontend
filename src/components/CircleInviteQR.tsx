@@ -1,5 +1,7 @@
 'use client';
 
+import { circleInviteMessage } from '@/lib/inviteMessages';
+
 import { useEffect, useMemo, useState } from 'react';
 import QRCode from 'qrcode';
 import toast from 'react-hot-toast';
@@ -51,7 +53,7 @@ function fileName(circle: CircleLike) {
 }
 
 function inviteText(circle: CircleLike, url: string) {
-  return `Join "${circle.name}" on CirclePact: ${url}`;
+  return `${circleInviteMessage(circle.name, Boolean((circle as any).visibility === 'private' || (circle as any).is_private), (circle as any).description)} ${url}`;
 }
 
 function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
