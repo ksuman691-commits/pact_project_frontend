@@ -886,7 +886,7 @@ export default function FeedPactCard({
         <MessageCircle className="h-[23px] w-[23px]" strokeWidth={2} />
         {chatLabelCount}
       </button>
-      <button type="button" onClick={() => void handleCopyShareLink()} aria-label="share pact" className="flex h-11 w-10 items-center justify-center text-[var(--ink)] transition active:scale-95">
+      <button type="button" onClick={() => void handleCopyShareLink()} aria-label="share pact" className="flex h-11 w-11 items-center justify-center text-[var(--ink)] transition active:scale-95">
         <Share className="h-[21px] w-[21px]" strokeWidth={2} />
       </button>
       <div className="ml-auto flex items-center gap-1.5">

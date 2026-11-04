@@ -107,7 +107,7 @@ function CheckInSlide({ pact, peers, fullWidth, onCapture }: { pact: TodayPact; 
               type="button"
               onClick={() => onCapture(pact)}
               aria-label={`Add another moment to ${pact.title}`}
-              className="flex h-[38px] shrink-0 items-center gap-1.5 rounded-full border-[1.5px] border-[var(--navy)] pl-[11px] pr-[13px] text-[13.5px] font-extrabold text-[var(--navy)] transition active:scale-[0.97]"
+              className="cp-hit relative flex h-[38px] shrink-0 items-center gap-1.5 rounded-full border-[1.5px] border-[var(--navy)] pl-[11px] pr-[13px] text-[13.5px] font-extrabold text-[var(--navy)] transition active:scale-[0.97]"
             >
               <Camera className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
               Add
@@ -127,7 +127,7 @@ function CheckInSlide({ pact, peers, fullWidth, onCapture }: { pact: TodayPact; 
               type="button"
               onClick={() => onCapture(pact)}
               aria-label={`Check in to ${pact.title}`}
-              className="flex h-[38px] shrink-0 items-center gap-1.5 rounded-full bg-[var(--navy)] pl-3 pr-3.5 text-[13.5px] font-extrabold text-white transition hover:bg-[var(--navy-hover)] active:scale-[0.97]"
+              className="cp-hit relative flex h-[38px] shrink-0 items-center gap-1.5 rounded-full bg-[var(--navy)] pl-3 pr-3.5 text-[13.5px] font-extrabold text-white transition hover:bg-[var(--navy-hover)] active:scale-[0.97]"
             >
               <Camera className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
               Check in
