@@ -13,7 +13,7 @@ import { useAcceptFollow, usePendingFollowRequests, useRejectFollow } from '@/ho
 import { RequestsList } from '@/components/requests/RequestsList';
 import { useRequestCount } from '@/components/requests/RequestsEntryCard';
 import Avatar from '@/components/Avatar';
-import { buildRows, rowTarget, shortTime } from '@/lib/notificationView';
+import { buildRows, isRecent, rowTarget, shortTime } from '@/lib/notificationView';
 import type { NotificationRow, RawNotification } from '@/lib/notificationView';
 
 const isJoinRequestNotification = (notification: any) => {
@@ -107,7 +107,7 @@ export default function NotificationsPage() {
     if (add.length) setNewIds((prev) => new Set([...Array.from(prev), ...add]));
   }, [notifications, newIds]);
   const { fresh, earlier } = useMemo(
-    () => buildRows(notifications as RawNotification[], (n) => !n.is_read || newIds.has(n.id)),
+    () => buildRows(notifications as RawNotification[], (n) => (!n.is_read || newIds.has(n.id)) && isRecent(n.created_at)),
     [notifications, newIds],
   );
 

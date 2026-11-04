@@ -154,9 +154,21 @@ export function rowTarget(row: NotificationRow): string | null {
   return null;
 }
 
-export function shortTime(iso: string): string {
+/** Server times are UTC; older ones come without a zone marker. */
+export function serverTime(iso: string): number {
   const raw = /[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso : `${iso}Z`;
-  const at = new Date(raw).getTime();
+  return new Date(raw).getTime();
+}
+
+/** "New" means unread AND recent. An unread nudge from last week goes under Earlier, still with its dot. */
+export const NEW_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
+export function isRecent(iso: string, now = Date.now()): boolean {
+  const at = serverTime(iso);
+  return !Number.isNaN(at) && now - at <= NEW_WINDOW_MS;
+}
+
+export function shortTime(iso: string): string {
+  const at = serverTime(iso);
   if (Number.isNaN(at)) return '';
   const seconds = Math.max(0, (Date.now() - at) / 1000);
   if (seconds < 60) return 'now';
