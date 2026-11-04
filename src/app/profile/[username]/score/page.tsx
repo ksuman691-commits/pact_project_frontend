@@ -104,6 +104,9 @@ export default function CpScorePage() {
                 <span className="text-[24px] font-extrabold tracking-[-0.02em]" style={{ color: INK }}>
                   {data.band}
                 </span>
+                {data.status === 'resting' && (
+                  <span className="rounded-full px-2.5 py-1 text-[12.5px] font-extrabold" style={{ background: '#ECE6D8', color: MUTED }}>Resting</span>
+                )}
                 {data.change_30d != null && data.change_30d !== 0 && (
                   <span className="rounded-full px-2.5 py-1 text-[12.5px] font-extrabold" style={data.change_30d > 0 ? { background: '#E6F2EA', color: '#22663F' } : { background: '#F8E3DF', color: '#A23B2A' }}>
                     {data.change_30d > 0 ? '+' : '−'}
@@ -112,7 +115,11 @@ export default function CpScorePage() {
                 )}
               </div>
               <p className="mt-1.5 max-w-[300px] text-[14px] leading-snug" style={{ color: MUTED }}>
-                How reliably {isOwn ? 'you do' : 'they do'} what {isOwn ? 'you' : 'they'} say, from the last 90 days. Everyone who visits {isOwn ? 'your' : 'their'} profile sees it.
+                {data.status === 'resting'
+                  ? `No pacts in the last 90 days, so ${isOwn ? 'your' : 'their'} score is kept as it was. Start a pact to move it again.`
+                  : data.is_new
+                    ? `Everyone starts at 75. Showing up on the days ${isOwn ? 'your' : 'their'} pacts need moves it up; missing them moves it down. Day ${Math.max(1, data.new_day ?? 1)} of ${data.new_days ?? 14} as New.`
+                    : `How reliably ${isOwn ? 'you do' : 'they do'} what ${isOwn ? 'you' : 'they'} say, from the last 90 days. Everyone who visits ${isOwn ? 'your' : 'their'} profile sees it.`}
               </p>
             </section>
 

@@ -17,11 +17,17 @@ export interface CpScoreChange {
 
 export interface CpScore {
   user_id: number
-  status: 'ready' | 'building' | 'unavailable'
+  /** building: old servers only. resting: nothing in 90 days, score kept as of the last moment. */
+  status: 'ready' | 'resting' | 'building' | 'unavailable'
   score: number | null
   band: string | null
   building_day?: number
   building_days?: number
+  /** First 14 days: band reads New, everyone starts at 75. */
+  is_new?: boolean
+  new_day?: number | null
+  new_days?: number
+  resting_since?: string | null
   change_30d?: number | null
   summary?: string
   parts?: CpScorePart[]

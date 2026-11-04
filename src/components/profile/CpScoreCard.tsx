@@ -72,6 +72,12 @@ export default function CpScoreCard({ userId, username, isOwn = false }: { userI
         <span className="block text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>CP SCORE</span>
         <span className="mt-1 flex flex-wrap items-center gap-2">
           <span className="text-[20px] font-extrabold tracking-[-0.02em]">{data.band}</span>
+          {data.is_new && data.new_day != null && (
+            <span className="text-[13px] font-bold" style={{ color: MUTED }}>Day {Math.max(1, data.new_day)} of {data.new_days ?? 14}</span>
+          )}
+          {data.status === 'resting' && (
+            <span className="rounded-full px-2.5 py-0.5 text-[12px] font-extrabold" style={{ background: '#ECE6D8', color: MUTED }}>Resting</span>
+          )}
           {change != null && change !== 0 && (
             <span className="rounded-full px-2.5 py-0.5 text-[12px] font-extrabold" style={change > 0 ? { background: '#E6F2EA', color: '#22663F' } : { background: '#F8E3DF', color: '#A23B2A' }}>
               {change > 0 ? '+' : '−'}
