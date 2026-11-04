@@ -1,6 +1,7 @@
 'use client'
 
 import { isFinishedPact } from '@/lib/pactOutcome'
+import { isActive as isDareActive } from '@/lib/dareView'
 import Link from 'next/link'
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -125,7 +126,8 @@ function PactsPageInner() {
 
   // A dare needs attention when the viewer sent it and it is still pending.
   const dareRows = useMemo(
-    () => allDares.filter((d) => d.creator_id === user?.id && d.status === 'pending' && !d.my_recipient_status),
+    // The server may not have marked a dare expired yet, so the clock decides, as on the Dares page.
+    () => allDares.filter((d) => d.creator_id === user?.id && d.status === 'pending' && !d.my_recipient_status && isDareActive(d)),
     [allDares, user?.id],
   )
 
