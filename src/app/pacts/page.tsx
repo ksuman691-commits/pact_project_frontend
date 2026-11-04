@@ -42,9 +42,12 @@ function SectionLabel({ label, count, tone, muted, note }: { label: string; coun
   )
 }
 
-function deadlineOf(p: any) {
-  const t = new Date(p.end_date || p.deadline || '').getTime()
-  return Number.isNaN(t) ? Number.MAX_SAFE_INTEGER : t
+/** Latest moment, else when the pact was made: the same order as Home's feed, so a new pact is on top. */
+function lastActivityOf(p: any) {
+  const times = [p.created_at, p.start_date, ...(Array.isArray(p.recent_proofs) ? p.recent_proofs.map((r: any) => r?.uploaded_at || r?.created_at) : [])]
+    .map((t) => new Date(t || '').getTime())
+    .filter((t) => !Number.isNaN(t))
+  return times.length ? Math.max(...times) : 0
 }
 
 function summaryLine(going: number, waiting: number, broken: number) {
@@ -133,7 +136,7 @@ function PactsPageInner() {
   const isActive = (p: any) => p.status === 'active' && (!p.end_date || String(p.end_date).slice(0, 10) >= today)
 
   const active = useMemo(
-    () => pacts.filter((p) => isActive(p) && matchesSearch(p.title)).sort((a, b) => deadlineOf(a) - deadlineOf(b)),
+    () => pacts.filter((p) => isActive(p) && matchesSearch(p.title)).sort((a, b) => lastActivityOf(b) - lastActivityOf(a)),
     [pacts, search], // eslint-disable-line react-hooks/exhaustive-deps
   )
   const broken = useMemo(() => pacts.filter((p) => isBroken(p) && matchesSearch(p.title)), [pacts, search]) // eslint-disable-line react-hooks/exhaustive-deps
