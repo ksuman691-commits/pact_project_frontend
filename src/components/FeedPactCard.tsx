@@ -979,7 +979,7 @@ export default function FeedPactCard({
                 onActiveIndexChange={setActiveProofIndex}
               />
             ) : (
-              <div className="relative aspect-[4/5] w-full overflow-hidden bg-[var(--ink)]">
+              <div className="relative aspect-[4/5] w-full overflow-hidden cp-media-loading bg-[var(--ink)]">
                 {isPhotoStory(momentStory!) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={momentStory!.video_url} alt="" className="absolute inset-0 h-full w-full object-cover" />

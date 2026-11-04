@@ -30,7 +30,16 @@ export default function CpScoreCard({ userId, username, isOwn = false }: { userI
   }
 
   if (isLoading || !data) {
-    return <div className="mx-4 mt-4 h-[118px] rounded-[22px] pact-shimmer" style={{ background: '#FFFFFF', border: `1px solid ${LINE}` }} aria-hidden="true" />
+    return (
+      <div className="mx-4 mt-4 flex h-[118px] items-center gap-4 rounded-[22px] p-4" style={{ background: '#FFFFFF', border: `1px solid ${LINE}` }} role="status" aria-label="Loading CP Score">
+        <span className="pact-shimmer block size-[78px] shrink-0 rounded-full" />
+        <span className="flex min-w-0 flex-1 flex-col gap-2">
+          <span className="pact-shimmer block h-3 w-20 rounded-full" />
+          <span className="pact-shimmer block h-5 w-36 rounded-full" />
+          <span className="pact-shimmer block h-3 w-28 rounded-full" />
+        </span>
+      </div>
+    )
   }
 
   if (data.status === 'building') {
