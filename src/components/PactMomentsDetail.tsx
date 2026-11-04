@@ -281,7 +281,7 @@ export default function PactMomentsDetail({
             {!isCreatorView && !(!presentationEnded && !lockedForMe && (hasMoments || isParticipant)) && (
               <TipButton creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} pactId={Number(pact?.id)} tipsEnabled={typeof pact?.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined} locked={Boolean(pact?.media_locked)} className="ml-auto !h-8 !px-3 !text-[13px]" />
             )}
-            {isCreatorView && pact?.id != null && <PactOwnerMenu pact={pact} />}
+            {pact?.id != null && (isCreatorView || isParticipant) && <PactOwnerMenu pact={pact} role={isCreatorView ? 'creator' : 'member'} />}
           </div>
           <h1 className="mt-0.5 line-clamp-2 font-sans text-[19px] font-extrabold leading-[1.15] tracking-[-0.025em] text-[var(--ink)]">
             {cleanTitle(pact?.title)}

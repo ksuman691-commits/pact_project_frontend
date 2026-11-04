@@ -404,6 +404,8 @@ export const pactService = {
     return { ...response, data: mapPact(response.data) };
   },
   update: (id: number, data: any) => api.put(`/api/pacts/${id}`, data),
+  /** Creator only; refused once anyone has paid or after the pact has ended. */
+  extend: (id: number, days: number) => api.post(`/api/pacts/${id}/extend`, { days }),
   uploadProof: (id: number, payload: any) =>
     api.post(`/api/pacts/${id}/upload-proof`, payload),
   uploadProofFile: (id: number, file: File, proofType: 'photo' | 'video' | 'checklist' = 'photo', caption?: string, dayNumber?: number, onProgress?: (fraction: number) => void) => {
