@@ -20,6 +20,7 @@ import PactOwnerMenu from '@/components/pacts/PactOwnerMenu'
 import MomentViewer from '@/components/MomentViewer'
 import type { ViewerMoment } from '@/components/MomentViewer'
 import type { PactDayStripEntry } from '@/types'
+import { pactInviteMessage } from '@/lib/inviteMessages'
 
 type Moment = ViewerMoment & { userId?: number | string }
 
@@ -164,17 +165,18 @@ export default function PactMomentsDetail({
   const sharePact = async () => {
     const url = typeof window !== 'undefined' ? `${window.location.origin}/pacts/${pact?.id}` : ''
     const title = cleanTitle(pact?.title)
+    const message = pactInviteMessage({ title, mine: isCreatorView, day: currentDay, totalDays: total, creatorName })
     try {
       if (navigator.share) {
-        await navigator.share({ title, text: `${title} on CirclePact`, url })
+        await navigator.share({ title, text: message, url })
         return
       }
     } catch (error: any) {
       if (error?.name === 'AbortError') return
     }
     try {
-      await navigator.clipboard.writeText(url)
-      toast.success('Link copied')
+      await navigator.clipboard.writeText(`${message} ${url}`)
+      toast.success('Invite copied. Paste it anywhere.')
     } catch {
       toast.error('Could not copy the link')
     }

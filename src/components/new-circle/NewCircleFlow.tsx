@@ -447,7 +447,7 @@ export default function NewCircleFlow({
                 <button
                   key={kind}
                   type="button"
-                  onClick={() => void shareCircle(kind, { id: created.id, name: created.name, isPrivate })}
+                  onClick={() => void shareCircle(kind, { id: created.id, name: created.name, isPrivate, purpose: about })}
                   className="flex h-[76px] flex-col items-center justify-center gap-1.5 rounded-[18px] text-[13px] font-bold transition active:scale-95"
                   style={{ background: CARD, border: `1px solid ${LINE}`, color: INK }}
                 >

@@ -2,6 +2,7 @@
 
 import TipButton from '@/components/tips/TipButton';
 import AutoPlayVideo from '@/components/media/AutoPlayVideo';
+import { pactInviteMessage } from '@/lib/inviteMessages';
 import { cleanTitle } from '@/lib/titleCase';
 import LockedMedia from '@/components/private/LockedMedia';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -673,14 +674,16 @@ export default function FeedPactCard({
 
   const handleCopyShareLink = async () => {
     const url = `${window.location.origin}${resolvedDetailHref}`;
+    // The goal and the ask go with the link, so the person opening it knows why they got it.
+    const text = `${pactInviteMessage({ title: pact.title, mine: isOwnPact, day: dayNo || null, totalDays: totalDays || null, creatorName: pact.creator_full_name || pact.creator_username })} ${url}`;
 
     try {
       if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
+        await navigator.clipboard.writeText(text);
       } else {
         // Fallback for browsers/contexts without the Clipboard API.
         const textarea = document.createElement('textarea');
-        textarea.value = url;
+        textarea.value = text;
         textarea.style.position = 'fixed';
         textarea.style.opacity = '0';
         document.body.appendChild(textarea);
@@ -693,9 +696,9 @@ export default function FeedPactCard({
       // link is opened, not by anything on this button — warn the creator so
       // a "Just me"/private pact link isn't shared assuming it's locked down.
       if (pact.visibility === 'private') {
-        toast('Link copied — heads up, this pact is private so only people with access can open it', { icon: '🔒' });
+        toast('Invite copied. Heads up: this pact is private, so only people with access can open it', { icon: '🔒' });
       } else {
-        toast.success('Link copied');
+        toast.success('Invite copied. Paste it anywhere.');
       }
     } catch {
       toast.error('Could not copy link');
