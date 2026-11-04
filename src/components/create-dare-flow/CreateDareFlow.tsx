@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import ConfirmModal from '@/components/ConfirmModal';
 import { CreateDareFlowProvider, useCreateDareFlow } from '@/context/CreateDareFlowContext';
 import { generateDareSummary, DARE_LIVE_TITLE_PLACEHOLDER } from '@/lib/createDareFlow/generate';
 import FlowShell from '@/components/create-pact-flow/FlowShell';
@@ -23,10 +24,17 @@ interface CreateDareFlowProps {
 
 function StepRouter({ onExit }: { onExit: () => void }) {
   const { currentStep, draft, stepIndex, resolvedSteps, canGoBack, goBack } = useCreateDareFlow();
+  const [confirmExit, setConfirmExit] = useState(false);
+  // Closing with typed details used to throw them away silently. Ask first when there is something to lose.
+  const typedSomething =
+    currentStep !== 'success' &&
+    Boolean(draft.title?.trim() || draft.description?.trim() || (!draft.recipientPreset && draft.recipients?.length));
+  const requestExit = () => (typedSomething ? setConfirmExit(true) : onExit());
 
   return (
+    <>
     <FlowShell
-      onExit={onExit}
+      onExit={requestExit}
       stepIndex={stepIndex}
       totalSteps={resolvedSteps.length - 1}
       canGoBack={canGoBack}
@@ -50,6 +58,20 @@ function StepRouter({ onExit }: { onExit: () => void }) {
       {currentStep === 'review' && <ReviewStep />}
       {currentStep === 'success' && <SuccessStep onDone={onExit} />}
     </FlowShell>
+    <ConfirmModal
+      isOpen={confirmExit}
+      onClose={() => setConfirmExit(false)}
+      onConfirm={() => {
+        setConfirmExit(false);
+        onExit();
+      }}
+      title="Discard this dare?"
+      description="What you've typed will be lost."
+      confirmLabel="Discard"
+      cancelLabel="Keep editing"
+      destructive
+    />
+    </>
   );
 }
 

@@ -32,6 +32,17 @@ export const metadata: Metadata = {
   // additive: prepares the site for an Android TWA wrapper and has no
   // effect on existing behavior in a normal browser tab.
   manifest: '/manifest.json',
+  // Absolute URLs for link previews. Vercel sets the production host; the fallback is the current one.
+  metadataBase: new URL(
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'https://pact-project-frontend.vercel.app',
+  ),
+  openGraph: {
+    siteName: 'CirclePact',
+    title: 'CirclePact - Accountability, together',
+    description: 'Say it. Show it. Your circle keeps you honest.',
+    type: 'website',
+  },
+  twitter: { card: 'summary_large_image' },
 };
 
 export const viewport: Viewport = {

@@ -23,7 +23,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 const EMPTY: Record<Tab, { title: string; body: string; cta?: 'create' | 'discover' }> = {
   'for-you': { title: 'No dares waiting on you', body: 'When someone dares you, it shows up here with a clock.', cta: 'discover' },
-  sent: { title: 'Your next challenge starts with you', body: 'Dare one person to do one thing, soon.', cta: 'create' },
+  sent: { title: 'Nothing in play right now', body: 'Dares you sent that finished or ran out of time are in History. Dare one person to do one thing, soon.', cta: 'create' },
   discover: { title: 'Nothing shared yet', body: 'Finished dares people choose to show off appear here.', cta: 'create' },
   history: { title: 'Your past dares will appear here', body: 'Completed, declined and expired dares move here.' },
 };
