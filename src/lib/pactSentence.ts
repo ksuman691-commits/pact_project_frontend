@@ -45,11 +45,23 @@ export function parseSentence(text: string): ParsedSentence {
   return { days, frequency, category: rule ? rule[1] : 'habits', categoryLabel: rule ? rule[2] : 'Habits' }
 }
 
-/** "run 5 km every morning" + 30 -> "Run 5 Km Every Morning In 30 Days". */
+const LENGTH_PHRASE = /\s*\b(?:for|in|over|within)?\s*(?:the\s+next\s+)?\d+\s*(?:day|days|night|nights|week|weeks|month|months)\b/gi
+
+/**
+ * The title always states the length the pact will actually run for. Any length typed in the
+ * sentence is taken out first, so picking 7 days after typing "30 days" can't give
+ * "No Junk Food 30 Days In 7 Days".
+ * "run 5 km every morning for 30 days" + 30 -> "Run 5 Km Every Morning For 30 Days".
+ */
 export function sentenceTitle(text: string, days: number): string {
   const clean = text.trim().replace(/\s+/g, ' ').replace(/^i will\s+/i, '').replace(/[.!]+$/, '')
-  const hasLength = /(\d+)\s*(day|days|night|nights|week|weeks|month|months)\b/i.test(clean)
-  return titleCase(hasLength ? clean : `${clean} in ${days} days`)
+  const action = clean.replace(LENGTH_PHRASE, '').replace(/\s+/g, ' ').replace(/\s+(for|in|over|within)$/i, '').trim() || clean
+  // A habit ("every morning", "daily") runs FOR the length; a total to reach ("7 entries") is done IN it.
+  const habit = /\b(every|each|daily|nightly|weekly|weekdays|a day|a night|a week|per)\b/i.test(action)
+  const total = !habit && /\b\d+\s*[a-z₹]/i.test(action)
+  const inWeeks = days % 7 === 0 && /\bweeks?\b/i.test(clean)
+  const length = inWeeks ? `${days / 7} ${days === 7 ? 'week' : 'weeks'}` : `${days} ${days === 1 ? 'day' : 'days'}`
+  return titleCase(`${action} ${total ? 'in' : 'for'} ${length}`)
 }
 
 export const IDEAS = [

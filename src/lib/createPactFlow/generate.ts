@@ -35,10 +35,22 @@ function activityPhrase(draft: PactDraft, activity: Activity): string {
   return phrase;
 }
 
+const DAY_UNITS = ['day', 'days', 'night', 'nights'];
+
+/** A goal counted in days or nights is a share of the pact's length: "20 of 30 nights", never more than the length. */
+function dayCountPhrase(draft: PactDraft, activity: Activity, days: number): string | null {
+  if (activity.milestone || draft.target == null || !activity.unit || !DAY_UNITS.includes(activity.unit.toLowerCase()) || days <= 0) return null;
+  const label = resolveActivityLabel(draft, activity);
+  const unit = activity.unit.toLowerCase().startsWith('night') ? 'nights' : 'days';
+  return draft.target >= days ? `${label} every ${unit === 'nights' ? 'night' : 'day'} for ${days} ${unit}` : `${label} ${draft.target} of ${days} ${unit}`;
+}
+
 export function generateTitle(draft: PactDraft, activity: Activity | null): string {
   if (!activity) return '';
-  let title = `${activity.emoji} ${activityPhrase(draft, activity)}`;
   const days = resolveDurationDays(draft);
+  const counted = dayCountPhrase(draft, activity, days);
+  if (counted) return titleCase(`${activity.emoji} ${counted}`);
+  let title = `${activity.emoji} ${activityPhrase(draft, activity)}`;
   if (days > 0) {
     title += ` in ${days} Days`;
   }
