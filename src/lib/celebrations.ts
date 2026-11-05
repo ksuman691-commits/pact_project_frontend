@@ -32,8 +32,10 @@ export function stopConfetti(): void {
 
 /** A real threshold the server says was reached. */
 export interface MilestoneData {
-  type: 'streak' | 'halfway' | 'final_day' | string
+  type: 'streak' | 'halfway' | 'final_day' | 'comeback' | string
   value: number
+  /** comeback: posted again within 48 hours, so the miss costs half */
+  within_48h?: boolean | null
 }
 
 /** Numbers from GET /api/pacts/{id}/celebration for the check-in moment. */

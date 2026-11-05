@@ -116,6 +116,8 @@ export interface PactDayStripEntry {
   day: number;
   date: string;
   has_moment: boolean;
+  /** A missed day that's this week's rest day: not counted as missed. */
+  is_rest?: boolean;
   type: 'photo' | 'video' | null;
   thumbnail_url: string | null;
 }

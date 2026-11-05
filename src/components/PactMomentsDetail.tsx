@@ -98,7 +98,9 @@ export default function PactMomentsDetail({
       })
     : null
   const total = Math.max(1, Number(strip ? pact?.duration_days ?? progress?.total ?? 7 : progress?.total ?? 7))
-  const completed = Math.min(total, Number(pact?.days_completed ?? fallbackCompleted))
+  // Rest days (one per pact week) count toward finishing, like posted days.
+  const restDays = Array.isArray(pact?.rest_days) ? pact.rest_days.length : 0
+  const completed = Math.min(total, Number(pact?.days_completed ?? fallbackCompleted) + restDays)
   const missed = progress?.missed || 0
   const localToday = (() => {
     try {
@@ -307,7 +309,8 @@ export default function PactMomentsDetail({
                   const isToday = !visualDayEnded && entry.date === localToday
                   const isPast = entry.date < localToday
                   const isSelected = effectiveDay === entry.day
-                  const isMissed = !entry.has_moment && isPast
+                  const isRest = !entry.has_moment && isPast && Boolean(entry.is_rest)
+                  const isMissed = !entry.has_moment && isPast && !isRest
                   const isFuture = !entry.has_moment && !isPast && !isToday
                   const videoUrl = entry.video_url || undefined
                   return (
@@ -315,11 +318,11 @@ export default function PactMomentsDetail({
                       key={entry.day}
                       ref={isSelected ? selectedTileRef : undefined}
                       type="button"
-                      aria-label={`Day ${entry.day}${entry.has_moment ? `, ${(momentsPerDay.get(entry.day) || 0) > 1 ? `${momentsPerDay.get(entry.day)} moments` : entry.type === 'video' ? 'video' : 'photo'}` : isToday ? ', today' : isMissed ? ', no post' : ', upcoming'}`}
+                      aria-label={`Day ${entry.day}${entry.has_moment ? `, ${(momentsPerDay.get(entry.day) || 0) > 1 ? `${momentsPerDay.get(entry.day)} moments` : entry.type === 'video' ? 'video' : 'photo'}` : isToday ? ', today' : isRest ? ', rest day' : isMissed ? ', no post' : ', upcoming'}`}
                       aria-pressed={isSelected}
                       onClick={() => selectDay(entry)}
                       disabled={!entry.has_moment}
-                      className={`relative size-[34px] shrink-0 overflow-hidden rounded-[9px] transition-transform active:scale-95 ${entry.has_moment ? 'cursor-pointer bg-[var(--navy)]' : isMissed ? 'border border-[var(--hairline)] bg-[var(--card)]' : 'bg-[var(--card-muted)]'} ${isToday && !entry.has_moment ? 'ring-2 ring-[var(--navy)]' : ''} ${isFuture ? 'border border-dashed border-[var(--seat-border)]' : ''} ${isSelected && entry.has_moment ? 'ring-2 ring-[var(--navy)]' : ''}`}
+                      className={`relative size-[34px] shrink-0 overflow-hidden rounded-[9px] transition-transform active:scale-95 ${entry.has_moment ? 'cursor-pointer bg-[var(--navy)]' : isRest ? 'bg-[#E6F2EA]' : isMissed ? 'border border-[var(--hairline)] bg-[var(--card)]' : 'bg-[var(--card-muted)]'} ${isToday && !entry.has_moment ? 'ring-2 ring-[var(--navy)]' : ''} ${isFuture ? 'border border-dashed border-[var(--seat-border)]' : ''} ${isSelected && entry.has_moment ? 'ring-2 ring-[var(--navy)]' : ''}`}
                     >
                       {entry.has_moment && entry.type === 'photo' && entry.thumbnail_url ? (
                         <SafePhoto src={entry.thumbnail_url!} className="size-full object-cover" />
@@ -331,7 +334,7 @@ export default function PactMomentsDetail({
                           {momentsPerDay.get(entry.day)}
                         </span>
                       )}
-                      <span className={`absolute inset-0 z-10 flex items-center justify-center text-[9px] font-extrabold ${entry.has_moment ? 'text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.7)]' : 'text-[var(--muted)]'}`}>D{entry.day}</span>
+                      <span className={`absolute inset-0 z-10 flex items-center justify-center text-[9px] font-extrabold ${entry.has_moment ? 'text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.7)]' : 'text-[var(--muted)]'}`}>{isRest ? 'Rest' : `D${entry.day}`}</span>
                     </button>
                   )
                 })}
