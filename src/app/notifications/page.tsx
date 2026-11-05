@@ -7,7 +7,8 @@ import { Bell, CheckCheck, Heart, MessageCircle, Settings } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import TopNav from '@/components/TopNav';
 import { queryKeys } from '@/lib/queryKeys';
-import { notificationService } from '@/services/api';
+import { notificationService, pactService } from '@/services/api';
+import toast from 'react-hot-toast';
 import { useMarkAllNotificationsAsRead, useNotifications } from '@/hooks/useNotifications';
 import { useAcceptFollow, usePendingFollowRequests, useRejectFollow } from '@/hooks/useFollows';
 import { RequestsList } from '@/components/requests/RequestsList';
@@ -80,6 +81,22 @@ export default function NotificationsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isUpdating, setIsUpdating] = useState(false);
+  // "Rahul missed yesterday" rows: nudged from here this visit.
+  const [nudged, setNudged] = useState<Set<number>>(() => new Set());
+  const nudge = async (n: RawNotification) => {
+    if (!n.related_pact_id || !n.related_user_id) return;
+    setNudged((prev) => new Set(prev).add(n.id));
+    try {
+      await pactService.nudge(n.related_pact_id, n.related_user_id);
+    } catch (error: any) {
+      setNudged((prev) => {
+        const next = new Set(prev);
+        next.delete(n.id);
+        return next;
+      });
+      toast.error(error?.response?.data?.detail || "Couldn't send the nudge. Try again.");
+    }
+  };
 
   const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage } = useNotifications();
   const markAllAsRead = useMarkAllNotificationsAsRead();
@@ -262,6 +279,17 @@ export default function NotificationsPage() {
                                 <button onClick={() => rejectFollow.mutate(pendingFollowId)} disabled={acceptFollow.isPending || rejectFollow.isPending} className="h-9 rounded-full border border-[var(--hairline)] px-4 text-[13px] font-bold text-[var(--ink)] disabled:opacity-60">
                                   Decline
                                 </button>
+                              </div>
+                            ) : null}
+                            {row.source.subtype === 'missed_day' && row.source.related_user_id ? (
+                              <div className="ml-14 mt-2">
+                                {nudged.has(row.source.id) ? (
+                                  <span className="cp-pop-in inline-flex h-9 items-center rounded-full bg-[#E6F2EA] px-4 text-[13px] font-bold text-[#22663F]">Nudged ✓</span>
+                                ) : (
+                                  <button onClick={() => void nudge(row.source)} className="h-9 rounded-full bg-[var(--navy)] px-4 text-[13px] font-bold text-white">
+                                    Nudge {String(row.source.title || '').split(' ')[0]}
+                                  </button>
+                                )}
                               </div>
                             ) : null}
                             {wantsReview ? (

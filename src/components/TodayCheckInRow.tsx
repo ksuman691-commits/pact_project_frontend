@@ -122,7 +122,12 @@ function CheckInSlide({ pact, peers, fullWidth, onCapture }: { pact: TodayPact; 
                 ))}
               </span>
             )}
-            <span className="min-w-0 flex-1 truncate text-[12.5px] text-[var(--muted)]">{socialLine}</span>
+            {pact.nudged_by?.count ? (
+              // Being nudged by several people is the point: show who, in navy, where you check in.
+              <span key={pact.nudged_by.count} className="cp-pop-in min-w-0 flex-1 truncate text-[12.5px] font-bold text-[var(--navy)]">{pact.nudged_by.line}</span>
+            ) : (
+              <span className="min-w-0 flex-1 truncate text-[12.5px] text-[var(--muted)]">{socialLine}</span>
+            )}
             <button
               type="button"
               onClick={() => onCapture(pact)}
