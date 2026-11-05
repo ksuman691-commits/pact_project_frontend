@@ -56,9 +56,10 @@ const LENGTH_PHRASE = /\s*\b(?:for|in|over|within)?\s*(?:the\s+next\s+)?\d+\s*(?
 export function sentenceTitle(text: string, days: number): string {
   const clean = text.trim().replace(/\s+/g, ' ').replace(/^i will\s+/i, '').replace(/[.!]+$/, '')
   const action = clean.replace(LENGTH_PHRASE, '').replace(/\s+/g, ' ').replace(/\s+(for|in|over|within)$/i, '').trim() || clean
-  // A habit ("every morning", "daily") runs FOR the length; a total to reach ("7 entries") is done IN it.
+  // Every pact has a cadence (the "How often" chip), so it runs FOR its length. Only when the person
+  // typed "in 30 days" themselves ("journal 7 entries in 30 days") is it a total done IN that time.
   const habit = /\b(every|each|daily|nightly|weekly|weekdays|a day|a night|a week|per)\b/i.test(action)
-  const total = !habit && /\b\d+\s*[a-z₹]/i.test(action)
+  const total = !habit && /\bin\s+(?:the\s+next\s+)?\d+\s*(?:day|days|week|weeks|month|months)\b/i.test(clean)
   const inWeeks = days % 7 === 0 && /\bweeks?\b/i.test(clean)
   const length = inWeeks ? `${days / 7} ${days === 7 ? 'week' : 'weeks'}` : `${days} ${days === 1 ? 'day' : 'days'}`
   return titleCase(`${action} ${total ? 'in' : 'for'} ${length}`)

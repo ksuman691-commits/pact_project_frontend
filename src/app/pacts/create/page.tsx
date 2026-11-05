@@ -5,10 +5,15 @@ import { useSearchParams } from 'next/navigation';
 import CreatePactFlow from '@/components/create-pact-flow/CreatePactFlow';
 import NewPactFlow from '@/components/new-pact/NewPactFlow';
 import { useSmartBack } from '@/hooks/useSmartBack';
+import { useRouter } from 'next/navigation';
 
 function CreatePactPageContent() {
-  const exitFlow = useSmartBack('/pacts');
+  const smartBack = useSmartBack('/pacts');
+  const router = useRouter();
   const searchParams = useSearchParams();
+  // A brand-new person after sign-up: closing goes to Home, not back through the sign-up screens.
+  const firstRun = searchParams.get('first') === '1';
+  const exitFlow = firstRun ? () => router.replace('/feed') : smartBack;
   const circleIdParam = searchParams.get('circleId');
   const initialCircleId = circleIdParam ? Number(circleIdParam) : null;
   // Carries over free text from the Dare flow's "switch to a Pact" nudge.
@@ -31,7 +36,7 @@ function CreatePactPageContent() {
   // attach that person. Everything else, including "Start my own version"
   // (which arrives with the other pact's text), gets the short flow.
   if (!initialParticipantId) {
-    return <NewPactFlow onExit={exitFlow} initialCircleId={Number.isFinite(initialCircleId) ? initialCircleId : null} initialText={initialDescription} sprint={searchParams.get('sprint') === '1'} />;
+    return <NewPactFlow onExit={exitFlow} initialCircleId={Number.isFinite(initialCircleId) ? initialCircleId : null} initialText={initialDescription} sprint={searchParams.get('sprint') === '1'} first={firstRun} />;
   }
 
   return (
