@@ -18,6 +18,12 @@ function copy(data: MilestoneCelebrationData): { title: string; line: string } {
   const { type, value } = data.milestone
   if (type === 'halfway') return { title: 'Halfway there', line: `Day ${data.day ?? value} of ${data.totalDays ?? ''}. The rest is the same as today.`.replace(' of .', '.') }
   if (type === 'final_day') return { title: 'Final day', line: 'The last day of your pact. Finish strong.' }
+  if (type === 'comeback') {
+    const missed = `${value} ${value === 1 ? 'day' : 'days'}`
+    return data.milestone.within_48h
+      ? { title: "You're back", line: `You missed ${missed} and came straight back, so ${value === 1 ? 'it costs' : 'they cost'} only half. Keep it going today.` }
+      : { title: "You're back", line: `${missed} away, and you came back. That's the hard part. Day one of a new streak.` }
+  }
   return { title: `${value}-day streak`, line: STREAK_LINES[value] ?? `${value} days in a row.` }
 }
 
@@ -28,6 +34,7 @@ function copy(data: MilestoneCelebrationData): { title: string; line: string } {
 export default function MilestoneSheet({ data, onClose }: { data: MilestoneCelebrationData; onClose: () => void }) {
   const reduce = useReducedMotion()
   const isStreak = data.milestone.type === 'streak'
+  const isComeback = data.milestone.type === 'comeback'
   const target = isStreak ? data.milestone.value : 0
   const [count, setCount] = useState(0)
   const shown = useCountUp(count, 900)
@@ -79,7 +86,7 @@ export default function MilestoneSheet({ data, onClose }: { data: MilestoneCeleb
         <div className="mx-auto mb-3.5 h-1 w-[38px] rounded-full" style={{ background: 'var(--seat-border, #CFC5B0)' }} aria-hidden="true" />
 
         <div className="relative mx-auto size-24" aria-hidden="true">
-          {isStreak ? (
+          {isStreak || isComeback ? (
             <>
               {!reduce && (
                 <motion.span

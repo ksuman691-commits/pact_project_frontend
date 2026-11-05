@@ -550,7 +550,8 @@ export default function FeedPactCard({
   const sameDayTiles = slideDay ? tiles.filter((tile) => Number(tile.day) === slideDay) : [];
   const positionInDay = activeProof ? sameDayTiles.findIndex((tile) => tile.id === activeProof.id) + 1 : 0;
   const totalDays = Number(pact.total_days ?? pact.duration_days ?? progressInfo?.totalDays ?? 0);
-  const finishedPact = pactEnded && (pact.status === 'completed' || Number(pact.days_completed ?? 0) >= Math.ceil(0.75 * Math.max(1, totalDays)));
+  const restDays = Array.isArray(pact.rest_days) ? pact.rest_days.length : 0;
+  const finishedPact = pactEnded && (pact.status === 'completed' || Number(pact.days_completed ?? 0) + restDays >= Math.ceil(0.75 * Math.max(1, totalDays)));
   // The chip is always TODAY's progress, matching Home and the "Post Day N" button. The day of the
   // clip on screen is a separate, smaller "Posted Day N" chip, only when it adds something.
   const badgeText = pactEnded
