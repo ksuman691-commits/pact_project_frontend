@@ -79,6 +79,11 @@ export default function Register() {
         </button>
       </form>
 
+      <p className="mt-3 text-center text-[12px] text-[var(--muted)]">
+        By creating an account you agree to our{' '}
+        <Link href="/terms" className="font-semibold text-[var(--navy)] underline">Terms of Service</Link>.
+      </p>
+
       <div className="mt-3 overflow-hidden rounded-full border border-[var(--hairline)] bg-[var(--card)] [&>*]:w-full">
         <GoogleSignInButton />
       </div>

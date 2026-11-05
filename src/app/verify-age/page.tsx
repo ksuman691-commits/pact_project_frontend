@@ -155,7 +155,7 @@ export default function VerifyAgePage() {
           />
           <span>
             I confirm I am {MIN_AGE} or older and agree to CirclePact&apos;s{' '}
-            <span className="font-semibold text-ink">Terms of Service</span>.
+            <a href="/terms" target="_blank" rel="noopener" className="font-semibold text-ink underline">Terms of Service</a>.
           </span>
         </label>
 

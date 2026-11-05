@@ -32,6 +32,8 @@ export default function BottomNav() {
   const isHiddenRoute =
     pathname?.startsWith('/auth') ||
     pathname?.startsWith('/onboarding') ||
+    pathname === '/terms' ||
+    pathname === '/privacy' ||
     pathname?.startsWith('/pacts/create') ||
     pathname?.startsWith('/circles/create') ||
     // The circle wall is a public, unauthenticated share surface (linked from

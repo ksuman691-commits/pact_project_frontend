@@ -22,7 +22,7 @@ export default function AgeVerificationGate() {
 
   useEffect(() => {
     if (!isInitialized || !user) return;
-    if (pathname === '/verify-age') return;
+    if (pathname === '/verify-age' || pathname === '/terms' || pathname === '/privacy') return;
 
     // Only a date of birth the backend returned counts; a local flag can
     // disagree with the backend, which then rejects every create call.
