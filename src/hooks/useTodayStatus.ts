@@ -19,6 +19,8 @@ export interface TodayPact {
   /** Today's day number in the pact's own time zone. */
   day?: number | null
   total_days?: number | null
+  /** Who nudged you on this pact today: "Priya and 2 others nudged you". */
+  nudged_by?: { count: number; line: string } | null
 }
 
 const storageKey = (userId: number | string) => `cp:today:${userId}`

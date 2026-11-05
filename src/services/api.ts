@@ -404,6 +404,8 @@ export const pactService = {
     return { ...response, data: mapPact(response.data) };
   },
   update: (id: number, data: any) => api.put(`/api/pacts/${id}`, data),
+  /** Anyone in the pact's group; once a day per person. Returns { nudged_by }. */
+  nudge: (pactId: number, memberId: number) => api.post(`/api/pacts/${pactId}/nudge/${memberId}`),
   /** Creator only; refused once anyone has paid or after the pact has ended. */
   extend: (id: number, days: number) => api.post(`/api/pacts/${id}/extend`, { days }),
   uploadProof: (id: number, payload: any) =>
