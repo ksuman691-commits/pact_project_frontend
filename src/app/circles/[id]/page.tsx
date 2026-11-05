@@ -325,6 +325,22 @@ export default function CircleDetailPage() {
         </div>
       </section>
 
+      {isMember && Number((circle as any).quiet_days ?? 0) >= 5 && (
+        // A quiet circle: offer a short, shared restart instead of a guilt trip.
+        <section className="mx-4 mt-6 rounded-[24px] p-4" style={{ background: '#1F3A93', color: '#FFFFFF' }} aria-label="Start a sprint">
+          <p className="text-[12px] font-extrabold uppercase tracking-[0.1em]" style={{ opacity: 0.75 }}>Quiet for {(circle as any).quiet_days} days</p>
+          <h2 className="mt-1 text-[19px] font-extrabold leading-tight tracking-[-0.02em]">Start a 7-day sprint together</h2>
+          <p className="mt-1 text-[13.5px] leading-snug" style={{ opacity: 0.85 }}>Pick one small thing, post it for 7 days. Everyone in {circle.name} gets asked to join.</p>
+          <button
+            type="button"
+            onClick={() => router.push(`/pacts/create?circleId=${circleId}&sprint=1`)}
+            className="mt-3 h-11 w-full rounded-full bg-white text-[14.5px] font-extrabold text-[var(--navy)] transition active:scale-[0.97]"
+          >
+            Start a sprint
+          </button>
+        </section>
+      )}
+
       {isMember && <CircleBoard circleId={circleId} />}
 
       {(isMember || !isPrivateCircle) && members.length > 0 && (

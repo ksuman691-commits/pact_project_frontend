@@ -31,7 +31,7 @@ function CreatePactPageContent() {
   // attach that person. Everything else, including "Start my own version"
   // (which arrives with the other pact's text), gets the short flow.
   if (!initialParticipantId) {
-    return <NewPactFlow onExit={exitFlow} initialCircleId={Number.isFinite(initialCircleId) ? initialCircleId : null} initialText={initialDescription} />;
+    return <NewPactFlow onExit={exitFlow} initialCircleId={Number.isFinite(initialCircleId) ? initialCircleId : null} initialText={initialDescription} sprint={searchParams.get('sprint') === '1'} />;
   }
 
   return (
