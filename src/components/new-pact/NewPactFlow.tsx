@@ -61,7 +61,7 @@ function pill(on: boolean): React.CSSProperties {
  * pick who's in, and it's live with the moment already in it.
  * Replaces the six-step "What's the vibe?" wizard.
  */
-export default function NewPactFlow({ onExit, initialCircleId = null, initialText = '', sprint = false }: { onExit: () => void; initialCircleId?: number | null; initialText?: string | null; /** From a quiet circle's "Start a 7-day sprint": 7 days, and the circle's members are told. */ sprint?: boolean }) {
+export default function NewPactFlow({ onExit, initialCircleId = null, initialText = '', sprint = false, first = false }: { onExit: () => void; initialCircleId?: number | null; initialText?: string | null; /** From a quiet circle's "Start a 7-day sprint": 7 days, and the circle's members are told. */ sprint?: boolean; /** Right after sign-up: suggests 7 days and says it's their first. */ first?: boolean }) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const createPact = useCreatePact()
@@ -88,7 +88,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   const [step, setStep] = useState<Step>('say')
   const [clip, setClip] = useState<Clip | null>(null)
   const [text, setText] = useState(initialText || '')
-  const [pickedDays, setPickedDays] = useState<number | null>(sprint ? 7 : null)
+  const [pickedDays, setPickedDays] = useState<number | null>(sprint || first ? 7 : null)
   const [pickedFrequency, setPickedFrequency] = useState<Frequency | null>(null)
   // Nothing is pre-selected: unless opened from a circle, the creator chooses.
   const [chosenAudience, setAudience] = useState<Audience | null>(initialCircleId != null ? 'circle' : null)
@@ -269,6 +269,11 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
           {header(onExit, 0)}
           <div className="mx-auto w-full max-w-md flex-1 px-5">
             <label className="mt-5 block">
+              {first && (
+                <span className="mb-1 block text-[13.5px] font-semibold" style={{ color: MUTED }}>
+                  Your first pact. Start small: 7 days is plenty. You can close this and look around first.
+                </span>
+              )}
               <span className="block text-[30px] font-extrabold tracking-[-0.03em]" style={{ color: INK }}>I will…</span>
               <input
                 ref={inputRef}

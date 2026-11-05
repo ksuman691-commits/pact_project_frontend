@@ -1,4 +1,4 @@
-import { Target, Users, Flame, LucideIcon } from 'lucide-react';
+import { Target, Camera, Users, LucideIcon } from 'lucide-react';
 
 export interface OnboardingSlide {
   icon: LucideIcon;
@@ -10,30 +10,29 @@ export interface OnboardingSlide {
 }
 
 /**
- * The three onboarding beats — commit to it, get verified, build your streak.
- * CirclePact has no wagering or financial-stakes mechanic — accountability
- * comes from your Circle seeing your progress and proof, not money at risk.
+ * The three onboarding beats, matching how CirclePact works today (rewritten 5 Nov):
+ * say it, show it, your circle keeps you honest. No money at stake and no voting on proof.
  */
 export const onboardingSlides: OnboardingSlide[] = [
   {
     icon: Target,
     emoji: '🎯',
-    headline: 'Make it a Pact.',
-    body: 'Turn a goal — a savings target, a workout streak, anything — into a Pact with a deadline, so it actually holds you to it.',
+    headline: 'Say it.',
+    body: 'Turn something you keep meaning to do into a pact: "Run 5 km every morning for 30 days." Start small; 7 days is plenty.',
     accent: 'var(--pact-pink)',
   },
   {
-    icon: Users,
-    emoji: '🖐️',
-    headline: 'Your Circle keeps you honest.',
-    body: 'People you trust vote Believe or Doubt on your proof. No self-grading — verification comes from your Circle.',
+    icon: Camera,
+    emoji: '📸',
+    headline: 'Show it.',
+    body: 'Post a photo or a 15-second video each day you do it. One missed day a week is a rest day, so a bad day doesn\'t undo your streak.',
     accent: 'var(--pact-gold)',
   },
   {
-    icon: Flame,
-    emoji: '🔥',
-    headline: 'Show up. Build your streak.',
-    body: 'Follow through and your reputation grows. Your streak builds with every Pact you keep, cheered on by the people who believed in you.',
+    icon: Users,
+    emoji: '🤝',
+    headline: 'Your circle keeps you honest.',
+    body: 'Friends see your days, cheer you on and nudge you when you slip. Your CP Score starts at 75 and moves with what you actually do.',
     accent: 'var(--pact-mint)',
   },
 ];

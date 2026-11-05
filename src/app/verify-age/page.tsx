@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import AuthShell from '@/components/AuthShell';
 import { useAuthStore } from '@/store/auth';
+import { readNext } from '@/lib/authNext';
 
 const MIN_AGE = 18;
 
@@ -89,8 +90,9 @@ export default function VerifyAgePage() {
     setIsSubmitting(true);
     try {
       await completeAgeVerification(dateOfBirth);
-      toast.success('Age verified — welcome to CirclePact!');
-      router.replace('/feed');
+      toast.success('Welcome to CirclePact!');
+      // Back to the invite they opened; otherwise straight into a first pact (they can skip it).
+      router.replace(readNext('') || '/pacts/create?first=1');
     } catch (err: any) {
       // The client-side check above already caught this in the normal
       // case — this only fires if the backend's own calculation disagrees

@@ -27,7 +27,10 @@ export default function AgeVerificationGate() {
     // Only a date of birth the backend returned counts; a local flag can
     // disagree with the backend, which then rejects every create call.
     if (!user.date_of_birth) {
-      router.replace('/verify-age');
+      // Remember where they were going (a circle or pact invite) so the age step doesn't lose it.
+      const here = `${window.location.pathname}${window.location.search}`;
+      const generic = ['/', '/feed', '/profile', '/onboarding'].includes(window.location.pathname);
+      router.replace(generic ? '/verify-age' : `/verify-age?next=${encodeURIComponent(here)}`);
     }
   }, [isInitialized, user, pathname, router]);
 
