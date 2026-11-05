@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import api, { authService } from '@/services/api';
 import { useAuthStore } from '@/store/auth';
 import { useSmartBack } from '@/hooks/useSmartBack';
+import DeleteAccount from '@/components/profile/DeleteAccount';
 
 const INK = '#17181D';
 const MUTED = '#5A5C63';
@@ -143,6 +144,8 @@ export default function EditProfilePage() {
           <span className="flex-1 text-[15px] font-bold" style={{ color: INK }}>Tips</span>
           <ChevronRight className="size-5" style={{ color: MUTED }} />
         </Link>
+
+        <DeleteAccount />
       </div>
     </main>
   );
