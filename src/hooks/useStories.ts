@@ -5,7 +5,8 @@ import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createStory, getFollowingMoments, getMyStoriesToday, getStoryViewers, getTodayStories, markStorySeen, putStoryVideo, requestStoryUploadUrl } from '@/lib/api/stories'
 import { isStoriesUnavailable, storyErrorMessage, STORIES_ENABLED, STORY_MAX_SECONDS, type PactStory } from '@/lib/stories'
 import { queryKeys } from '@/lib/queryKeys'
-import { circleService, pactService } from '@/services/api'
+import api, { circleService, pactService } from '@/services/api'
+import toast from 'react-hot-toast'
 import { MOMENT_POSTED_EVENT } from '@/lib/push'
 
 export const storyKeys = {
@@ -180,4 +181,36 @@ export function usePostStory(pactId: number) {
   }, [])
 
   return { phase, progress, error, retryable, unavailable, post, reset }
+}
+
+/** Delete one of your own moments (by its proof or its story) and refresh everything that shows it. */
+export function useDeleteMoment() {
+  const queryClient = useQueryClient()
+  const [deleting, setDeleting] = useState(false)
+  const remove = useCallback(
+    async (target: { pactId: number; proofId?: number; storyId?: number }) => {
+      setDeleting(true)
+      try {
+        if (target.proofId != null) await api.delete(`/api/pacts/${target.pactId}/proofs/${target.proofId}`)
+        else if (target.storyId != null) await api.delete(`/api/stories/${target.storyId}`)
+        void Promise.all([
+          queryClient.invalidateQueries({ queryKey: storyKeys.all }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.pacts.all }),
+          queryClient.invalidateQueries({ queryKey: ['my-pacts'] }),
+          queryClient.invalidateQueries({ queryKey: ['me-today'] }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.feed.all }),
+          queryClient.invalidateQueries({ queryKey: queryKeys.circles.all }),
+        ])
+        return true
+      } catch (error: any) {
+        const detail = error?.response?.data?.detail
+        toast.error(typeof detail === 'string' ? detail : 'Could not delete this moment. Try again.')
+        return false
+      } finally {
+        setDeleting(false)
+      }
+    },
+    [queryClient],
+  )
+  return { remove, deleting }
 }

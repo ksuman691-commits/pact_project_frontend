@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronRight, Eye, Globe, Send, User, Users, X } from 'lucide-react'
+import { ChevronRight, Eye, Globe, Send, Trash2, User, Users, X } from 'lucide-react'
+import toast from 'react-hot-toast'
+import DeleteMomentSheet from './DeleteMomentSheet'
 import { reactToStory, replyToStory, STORY_REACTIONS } from '@/lib/api/stories'
 import { useAuthStore } from '@/store/auth'
-import { useMarkStorySeen, useStoryViewers } from '@/hooks/useStories'
+import { useDeleteMoment, useMarkStorySeen, useStoryViewers } from '@/hooks/useStories'
 import { useBackToClose } from '@/hooks/useBackToClose'
 import { isPhotoStory, monogram, postedAgo, STORIES_COMING_SOON, type PactStory } from '@/lib/stories'
 import { RingFace } from './StoryRing'
@@ -39,6 +41,8 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
   const [paused, setPaused] = useState(false)
   const [broken, setBroken] = useState(false)
   const [viewersOpen, setViewersOpen] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const { remove: removeMoment, deleting } = useDeleteMoment()
   const [composing, setComposing] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [sent, setSent] = useState<string | null>(null)
@@ -143,16 +147,16 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
-    if (paused || viewersOpen || composing) video.pause()
+    if (paused || viewersOpen || composing || confirmDelete) video.pause()
     else void video.play().catch(() => {})
-  }, [paused, viewersOpen, composing, index])
+  }, [paused, viewersOpen, composing, confirmDelete, index])
 
   // A photo has no timeline of its own: it stays up for PHOTO_MS, pausing like a video does.
   useEffect(() => {
     photoElapsed.current = 0
   }, [index])
   useEffect(() => {
-    if (!open || !photo || broken || paused || viewersOpen || composing) return
+    if (!open || !photo || broken || paused || viewersOpen || composing || confirmDelete) return
     let last = performance.now()
     const timer = window.setInterval(() => {
       const now = performance.now()
@@ -166,7 +170,7 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
       }
     }, 50)
     return () => window.clearInterval(timer)
-  }, [open, photo, broken, paused, viewersOpen, composing, index, go, markSeen, story])
+  }, [open, photo, broken, paused, viewersOpen, composing, confirmDelete, index, go, markSeen, story])
 
   const sendReaction = async (emoji: string) => {
     if (!story) return
@@ -377,6 +381,7 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
       )}
 
       {isOwn && (
+        <div className="flex items-center pr-2">
         <button
           type="button"
           onClick={() => setViewersOpen(true)}
@@ -397,7 +402,31 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
             </span>
           )}
         </button>
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            aria-label="Delete this moment"
+            className="ml-auto flex size-12 items-center justify-center rounded-full pb-[max(0rem,env(safe-area-inset-bottom))]"
+          >
+            <Trash2 className="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
       )}
+
+      <DeleteMomentSheet
+        open={confirmDelete && !!story}
+        busy={deleting}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={async () => {
+          if (!story || story.pact_id == null) return
+          const ok = await removeMoment({ pactId: story.pact_id, storyId: story.id })
+          setConfirmDelete(false)
+          if (ok) {
+            toast.success('Moment deleted')
+            onClose()
+          }
+        }}
+      />
 
       {viewersOpen && (
         <div className="fixed inset-0 z-[95] flex items-end" role="dialog" aria-modal="true" aria-label="Viewers">
