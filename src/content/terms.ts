@@ -91,7 +91,7 @@ You also must not:
 - We may keep some information for longer when the law requires it, for example to deal with a legal claim or a request from authorities.
 
 ## 12. Privacy
-Our Privacy Policy explains what information we collect, why, and the choices you have. It's part of these terms.
+Our [Privacy Policy](/privacy) explains what information we collect, why, and the choices you have. It's part of these terms.
 
 ## 13. Our name and app
 The CirclePact name, logo, design and software belong to us. You may not copy them or use them in a way that suggests we endorse you. If you send us ideas or feedback, we may use them without paying you.

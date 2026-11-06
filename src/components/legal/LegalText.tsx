@@ -1,15 +1,19 @@
 import React from 'react';
 
 // Renders the small markdown subset used by src/content/*.ts:
-// "## " headings, "- " bullets, **bold**, blank-line separated paragraphs.
+// "## " headings, "- " bullets, **bold**, [links](/path), blank-line separated paragraphs.
+// Links are written [text](/path); placeholders like [Name] have no (path).
 function inline(text: string): React.ReactNode[] {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
-    part.startsWith('**') && part.endsWith('**') ? (
-      <strong key={i} className="font-bold text-ink">{part.slice(2, -2)}</strong>
-    ) : (
-      part
-    ),
-  );
+  return text.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\(\/[^)]*\))/g).map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="font-bold text-ink">{part.slice(2, -2)}</strong>;
+    }
+    const link = part.match(/^\[([^\]]+)\]\((\/[^)]*)\)$/);
+    if (link) {
+      return <a key={i} href={link[2]} className="font-semibold text-[var(--navy)] underline">{link[1]}</a>;
+    }
+    return part;
+  });
 }
 
 export default function LegalText({ source }: { source: string }) {

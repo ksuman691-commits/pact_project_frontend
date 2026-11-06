@@ -146,6 +146,12 @@ export default function EditProfilePage() {
         </Link>
 
         <DeleteAccount />
+
+        <p className="mt-6 text-center text-[13px] text-[var(--muted)]">
+          <Link href="/terms" className="font-semibold underline">Terms of Service</Link>
+          {' · '}
+          <Link href="/privacy" className="font-semibold underline">Privacy Policy</Link>
+        </p>
       </div>
     </main>
   );
