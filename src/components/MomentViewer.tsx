@@ -1,7 +1,11 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { MessageCircle, Play, Volume2, VolumeX, X } from 'lucide-react'
+import { MessageCircle, Play, Trash2, Volume2, VolumeX, X } from 'lucide-react'
+import toast from 'react-hot-toast'
+import DeleteMomentSheet from '@/components/stories/DeleteMomentSheet'
+import { useDeleteMoment } from '@/hooks/useStories'
+import { useAuthStore } from '@/store/auth'
 import LikeButton from '@/components/LikeButton'
 
 export interface ViewerMoment {
@@ -14,6 +18,7 @@ export interface ViewerMoment {
   username?: string
   authorName?: string
   avatarUrl?: string
+  userId?: number | string
 }
 
 interface MomentViewerProps {
@@ -41,6 +46,9 @@ export default function MomentViewer({ moments, startIndex, pactId, likeCount, l
   const [swipeStart, setSwipeStart] = useState<{ x: number; y: number } | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const holdTimer = useRef<number | null>(null)
+  const me = useAuthStore((state) => state.user)
+  const { remove: removeMoment, deleting } = useDeleteMoment()
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const held = useRef(false)
   const startedAt = useRef(Date.now())
   const startingFraction = useRef(0)
@@ -209,6 +217,11 @@ export default function MomentViewer({ moments, startIndex, pactId, likeCount, l
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {me?.id != null && moment.userId != null && Number(moment.userId) === me.id && typeof moment.id === 'number' && (
+            <button type="button" aria-label="Delete this moment" onClick={() => { pause(); setConfirmDelete(true) }} className="flex size-11 items-center justify-center rounded-full bg-white/15">
+              <Trash2 className="size-5" />
+            </button>
+          )}
           {moment.type === 'video' && (
             <button type="button" aria-label={muted ? 'Unmute video' : 'Mute video'} onClick={() => setMuted((value) => !value)} className="flex size-11 items-center justify-center rounded-full bg-white/15">
               {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
@@ -252,6 +265,21 @@ export default function MomentViewer({ moments, startIndex, pactId, likeCount, l
         <LikeButton pactId={pactId} count={likeCount} liked={liked} />
         <button type="button" onClick={onComment} aria-label="Comment on this moment" className="flex size-12 items-center justify-center rounded-full bg-white/15"><MessageCircle className="size-5" /></button>
       </footer>
+      <DeleteMomentSheet
+        open={confirmDelete}
+        day={moment.day ?? null}
+        busy={deleting}
+        onCancel={() => { setConfirmDelete(false); resume() }}
+        onConfirm={async () => {
+          if (typeof moment.id !== 'number') return
+          const ok = await removeMoment({ pactId, proofId: moment.id })
+          setConfirmDelete(false)
+          if (ok) {
+            toast.success('Moment deleted')
+            close()
+          } else resume()
+        }}
+      />
     </div>
   )
 }

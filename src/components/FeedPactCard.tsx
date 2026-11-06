@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import {
   ChevronRight,
   Flag,
+  Trash2,
   MessageCircle,
   Check,
   Camera,
@@ -31,7 +32,8 @@ import PactGallery, { buildGalleryTiles } from './PactGallery';
 import { useReportPact } from '@/hooks/usePactActions';
 import { useGoalMatches } from '@/hooks/usePactMatches';
 import { useAuthStore } from '@/store/auth';
-import { usePactStoriesToday } from '@/hooks/useStories';
+import { useDeleteMoment, usePactStoriesToday } from '@/hooks/useStories';
+import DeleteMomentSheet from './stories/DeleteMomentSheet';
 import { isPhotoStory, postedAgo } from '@/lib/stories';
 import { getDisplayName } from '@/lib/displayName';
 import { hasPactMomentum } from '@/lib/pactMomentum';
@@ -301,6 +303,8 @@ export default function FeedPactCard({
   const reportMutation = useReportPact(pact.id);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [confirmDeleteMoment, setConfirmDeleteMoment] = useState(false);
+  const { remove: removeMoment, deleting: deletingMoment } = useDeleteMoment();
   const [commentSheetOpen, setCommentSheetOpen] = useState(false);
   // The feed/detail list responses don't serialize a live comment count yet
   // (see BACKEND_SPEC_COMMENT_COUNT.md — the `Pact.comment_count` column
@@ -765,6 +769,25 @@ export default function FeedPactCard({
   // hero) fall back to a compact plain layout.
   // Private pact the viewer hasn't been let into: the server sent no media.
   const lockedForMe = !hideHeroAndTitle && Boolean(pact.media_locked) && pact.can_view_media === false;
+  // The moment on screen, if it's the viewer's own and a real stored moment
+  // (not a cheer photo, and not the single-photo fallback built from the pact).
+  const realProofIds = useMemo(() => {
+    const source: any[] = galleryProofs ?? (Array.isArray(pact.recent_proofs) ? pact.recent_proofs : []);
+    return new Set(source.map((p: any) => p?.id).filter((id: any) => typeof id === 'number' && id > 0));
+  }, [galleryProofs, pact.recent_proofs]);
+  const myUsername = user?.username || null;
+  const deletableMoment: { proofId?: number; storyId?: number; day?: number | null } | null =
+    momentStory && user?.id != null && momentStory.user_id === user.id
+      ? { storyId: momentStory.id }
+      : activeProof &&
+          activeProof.kind === 'proof' &&
+          typeof activeProof.id === 'number' &&
+          realProofIds.has(activeProof.id) &&
+          myUsername != null &&
+          (activeProof.uploader === myUsername || (isOwnPact && !activeProof.uploader))
+        ? { proofId: activeProof.id, day: activeProof.day != null ? Number(activeProof.day) : null }
+        : null;
+
   const immersive = !lockedForMe && !hideHeroAndTitle && (tiles.length > 0 || momentStory !== null);
   const momentAuthor = momentStory ? (user?.id != null && momentStory.user_id === user.id ? 'You' : momentStory.name || 'Member') : null;
   const likeLabelCount = likeCount > 0 ? formatCompactCount(likeCount) : null;
@@ -786,9 +809,27 @@ export default function FeedPactCard({
         <button type="button" aria-label="close more options menu" onClick={() => setMoreMenuOpen(false)} className="fixed inset-0 z-40 cursor-default" />
         <div role="menu" className="absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-2xl border border-[var(--pact-hairline)] bg-[var(--pact-surface)] py-1.5 shadow-xl">
           {uploadAllowed && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); openCamera(); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--pact-text)] transition hover:bg-white/5"><Camera className="h-4 w-4" />Add a moment{proofCount > 0 && <span className="ml-auto text-xs text-[var(--pact-text-faint)]">{formatCompactCount(proofCount)}</span>}</button>}
+          {deletableMoment && pact.id != null && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); setConfirmDeleteMoment(true); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--warn-text)] transition hover:bg-white/5"><Trash2 className="h-4 w-4" />Delete this moment</button>}
           {canReport && <button type="button" role="menuitem" onClick={() => { setMoreMenuOpen(false); setReportSheetOpen(true); }} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-[var(--warn-text)] transition hover:bg-white/5"><Flag className="h-4 w-4" />Report pact</button>}
         </div>
       </>}
+      <BodyPortal>
+        <DeleteMomentSheet
+          open={confirmDeleteMoment && !!deletableMoment}
+          day={deletableMoment?.day ?? null}
+          busy={deletingMoment}
+          onCancel={() => setConfirmDeleteMoment(false)}
+          onConfirm={async () => {
+            if (!deletableMoment || pact.id == null) return;
+            const ok = await removeMoment({ pactId: Number(pact.id), ...deletableMoment });
+            setConfirmDeleteMoment(false);
+            if (ok) {
+              setActiveProofIndex(0);
+              toast.success('Moment deleted');
+            }
+          }}
+        />
+      </BodyPortal>
     </div>
   );
 

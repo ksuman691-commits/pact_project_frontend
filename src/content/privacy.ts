@@ -104,7 +104,7 @@ We use reasonable security safeguards: encrypted connections (HTTPS), passwords 
 ## 9. Your rights and choices
 You can:
 - **See and correct** your information. Most of it is in Edit profile. You can also ask us for a summary of what we hold about you and who we've shared it with.
-- **Delete** moments, comments and pacts at any time, or your whole account from **Edit profile → Delete account**.
+- **Delete** moments, comments and pacts at any time (tap the bin on your moment), or your whole account from **Edit profile → Delete account**. In a paid pact that people have paid to watch, moments and the pact stay up until it ends.
 - **Choose who sees** each pact, and turn notifications on or off in the app or on your phone.
 - **Change your privacy choices** for advertising and AI training in **Edit profile → Privacy choices**.
 - **Withdraw your consent** by changing those choices or deleting your account. This won't affect anything we did before you withdrew it.
