@@ -9,6 +9,7 @@ import api, { authService } from '@/services/api';
 import { useAuthStore } from '@/store/auth';
 import { useSmartBack } from '@/hooks/useSmartBack';
 import DeleteAccount from '@/components/profile/DeleteAccount';
+import PrivacyChoices from '@/components/profile/PrivacyChoices';
 
 const INK = '#17181D';
 const MUTED = '#5A5C63';
@@ -145,7 +146,15 @@ export default function EditProfilePage() {
           <ChevronRight className="size-5" style={{ color: MUTED }} />
         </Link>
 
+        <PrivacyChoices />
+
         <DeleteAccount />
+
+        <p className="mt-6 text-center text-[13px] text-[var(--muted)]">
+          <Link href="/terms" className="font-semibold underline">Terms of Service</Link>
+          {' · '}
+          <Link href="/privacy" className="font-semibold underline">Privacy Policy</Link>
+        </p>
       </div>
     </main>
   );
