@@ -32,6 +32,7 @@ export default function BottomNav() {
   const isHiddenRoute =
     pathname?.startsWith('/auth') ||
     pathname?.startsWith('/onboarding') ||
+    pathname === '/' ||
     pathname === '/terms' ||
     pathname === '/privacy' ||
     pathname?.startsWith('/pacts/create') ||
