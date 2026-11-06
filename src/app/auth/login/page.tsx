@@ -45,7 +45,10 @@ export default function Login() {
           <input id="email" type="email" name="email" autoComplete="email" value={formData.email} onChange={handleChange} required className={authInputClass} />
         </div>
         <div>
-          <label htmlFor="password" className={authLabelClass}>Password</label>
+          <div className="flex items-baseline justify-between">
+            <label htmlFor="password" className={authLabelClass}>Password</label>
+            <Link href="/auth/forgot" className="text-[13px] font-semibold text-[var(--navy)] hover:underline">Forgot password?</Link>
+          </div>
           <input id="password" type="password" name="password" autoComplete="current-password" value={formData.password} onChange={handleChange} required className={authInputClass} />
         </div>
         <button type="submit" disabled={isLoading} className={`${authPrimaryButtonClass} mt-1`}>
