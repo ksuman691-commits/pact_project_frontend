@@ -1,7 +1,8 @@
 'use client'
 
+import LogoSpinner from '@/components/LogoSpinner'
 import { useEffect, useMemo, useState } from 'react'
-import { Copy, ExternalLink, Loader } from 'lucide-react'
+import { Copy, ExternalLink } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { CircleQR } from '@/components/CircleQR'
 import { dareService } from '@/services/api'
@@ -72,7 +73,7 @@ export default function DareRewardPaySheet({
       <div className="relative flex max-h-[92vh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-t-[22px] bg-[var(--card)] px-6 pb-8 pt-3 text-[var(--ink)]" style={{ boxShadow: '0 -12px 30px -12px rgba(23,24,29,0.35)' }}>
         <div className="mx-auto h-1 w-10 rounded-full bg-[var(--seat-border)]" aria-hidden="true" />
         {!payment && !error && (
-          <div className="flex justify-center py-10"><Loader className="size-6 animate-spin text-[var(--navy)]" aria-label="Loading" /></div>
+          <div className="flex justify-center py-10"><LogoSpinner size={32} /></div>
         )}
         {error && <p className="py-6 text-center text-[14px] text-[var(--muted)]">{error}</p>}
         {payment && (

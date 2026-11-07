@@ -1,8 +1,9 @@
 'use client';
 
+import LogoSpinner from '@/components/LogoSpinner';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Loader, Sparkles, Users, X } from 'lucide-react';
+import { ChevronLeft, Sparkles, Users, X } from 'lucide-react';
 import { VIBES } from '@/lib/createPactFlow/content';
 import { VIBE_TO_CATEGORY } from '@/lib/createPactFlow/toApiPayload';
 import { useCategoryMatches } from '@/hooks/useCategoryMatches';
@@ -63,7 +64,7 @@ function ResultsStep({ vibeId, onBack, onClose }: { vibeId: VibeId; onBack: () =
       <div className="flex-1 overflow-y-auto p-4">
         {matchesQuery.isLoading ? (
           <div className="flex items-center justify-center py-10">
-            <Loader className="h-5 w-5 animate-spin" style={{ color: 'var(--pact-violet)' }} />
+            <LogoSpinner size={28} />
           </div>
         ) : people.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-10 text-center" style={{ color: 'var(--pact-text-faint)' }}>

@@ -1,5 +1,6 @@
 'use client';
 
+import LogoSpinner from '@/components/LogoSpinner';
 import React, { useState } from 'react';
 import { X, Copy, Check, Link as LinkIcon, Search, Loader, UserPlus, MessageCircle } from 'lucide-react';
 import { circleLink, copyText, shareCircle } from '@/lib/circleInvite';
@@ -71,7 +72,7 @@ function SearchInviteTab({ circleId, existingMemberIds }: { circleId: number; ex
           </div>
         ) : isLoading ? (
           <div className="flex items-center justify-center py-10">
-            <Loader className="h-5 w-5 animate-spin" style={{ color: 'var(--pact-violet)' }} />
+            <LogoSpinner size={28} />
           </div>
         ) : results.length === 0 ? (
           <div className="flex items-center justify-center py-10 text-center" style={{ color: 'var(--pact-text-faint)' }}>

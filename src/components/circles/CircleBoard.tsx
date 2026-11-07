@@ -1,5 +1,6 @@
 'use client'
 
+import { MarkProgress } from '@/components/brand/CircleMark'
 import { useMemo, useRef, useState } from 'react'
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'framer-motion'
 import Avatar from '@/components/Avatar'
@@ -98,7 +99,12 @@ export default function CircleBoard({ circleId }: { circleId: number }) {
     <section className="mx-4 mt-8 rounded-[24px] px-3 pb-3 pt-4" style={{ background: '#FFFFFF', border: '1px solid #DCD3C1' }} aria-label="Leaderboard">
       <div className="flex items-baseline justify-between px-1.5">
         <h2 className="text-[17px] font-extrabold">Leaderboard</h2>
-        {board && <span className="text-[12px]" style={{ color: 'var(--muted)' }}>{board.showed_up} of {board.total} showed up</span>}
+        {board && (
+          <span className="flex items-center gap-1.5 text-[12px]" style={{ color: 'var(--muted)' }}>
+            {board.total > 0 && <MarkProgress value={board.showed_up / board.total} size={13} track="var(--hairline, #DCD3C1)" />}
+            {board.showed_up} of {board.total} showed up
+          </span>
+        )}
       </div>
 
       <div className="relative mx-1 mt-2.5 flex border-b" style={{ borderColor: 'var(--hairline, #DCD3C1)' }} role="tablist">

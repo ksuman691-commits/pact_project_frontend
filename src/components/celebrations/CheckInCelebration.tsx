@@ -7,11 +7,13 @@ import { useBackToClose } from '@/hooks/useBackToClose'
 import { fireConfetti, stopConfetti, type CheckInCelebrationData } from '@/lib/celebrations'
 import { EASE, haptic } from '@/lib/motion'
 import StreakFlame from './StreakFlame'
+import CircleMark from '@/components/brand/CircleMark'
 
 const AUTO_CLOSE_MS = 5000
 
 /**
- * Shown right after a moment posts. A ring draws, a tick lands, and the real
+ * Shown right after a moment posts. The CirclePact mark draws in, today's
+ * missing slice closes and a tick lands, and the real
  * numbers count up. It only shows what the app actually knows: the day always,
  * the streak and the circle's progress when the server sent them.
  */
@@ -25,6 +27,7 @@ export default function CheckInCelebration({ data, onClose }: { data: CheckInCel
   const streakShown = useCountUp(streakTarget, 500)
   const circleShown = useCountUp(circleTarget, 500)
   const [flamePop, setFlamePop] = useState(false)
+  const [phase, setPhase] = useState<'draw' | 'close'>(reduce ? 'close' : 'draw')
 
   useBackToClose(true, onClose)
 
@@ -72,43 +75,13 @@ export default function CheckInCelebration({ data, onClose }: { data: CheckInCel
       animate={{ opacity: 1 }}
       transition={{ duration: 0.22 }}
     >
-      <div className="relative size-[128px]" aria-hidden="true">
-        <svg viewBox="0 0 120 120" className="size-full -rotate-90">
-          <circle cx="60" cy="60" r="52" fill="none" stroke="var(--hairline, #DCD3C1)" strokeWidth="7" />
-          <motion.circle
-            cx="60"
-            cy="60"
-            r="52"
-            fill="none"
-            stroke="var(--navy, #1F3A93)"
-            strokeWidth="7"
-            strokeLinecap="round"
-            initial={{ pathLength: reduce ? 1 : 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 0.75, delay: 0.1, ease: EASE }}
-          />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <motion.svg
-            viewBox="0 0 50 50"
-            className="size-[62px] overflow-visible"
-            initial={{ scale: 1 }}
-            animate={reduce ? undefined : { scale: [1, 1.12, 1] }}
-            transition={{ duration: 0.4, delay: 1 }}
-          >
-            <motion.path
-              d="M8 27 L21 40 L43 12"
-              fill="none"
-              stroke="var(--navy, #1F3A93)"
-              strokeWidth="7"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              initial={{ pathLength: reduce ? 1 : 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 0.35, delay: 0.7, ease: 'easeOut' }}
-            />
-          </motion.svg>
-        </div>
+      <div className="relative flex size-[128px] items-center justify-center" aria-hidden="true">
+        {/* The mark draws in, then today's missing slice closes with a tick. */}
+        {phase === 'draw' ? (
+          <CircleMark key="draw" size={112} animation="draw" delay={0.1} onDone={() => setPhase('close')} />
+        ) : (
+          <CircleMark key="close" size={112} animation="close" tick />
+        )}
       </div>
 
       <div className="mt-[18px] text-[34px] font-extrabold tracking-[-0.03em]" aria-live="polite">

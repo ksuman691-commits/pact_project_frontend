@@ -7,8 +7,9 @@
 // live, folded into the Pacts and Dares pages' own Discover tabs instead of
 // a separate bottom-nav destination.
 
+import LogoSpinner from '@/components/LogoSpinner';
 import { useState } from 'react';
-import { ArrowRight, Flame, Loader2, Sparkles } from 'lucide-react';
+import { ArrowRight, Loader2, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCuratedContent, useDeployCuratedContent } from '@/hooks/useCuratedContent';
 import { useCircles } from '@/hooks/useCircles';
@@ -46,7 +47,7 @@ function SendToCircle({ item, onClose }: { item: CuratedContent; onClose: () => 
         </div>
         <div className="flex flex-col gap-2">
           {circles.isLoading ? (
-            <div className="flex justify-center py-8"><Loader2 className="animate-spin text-primary" /></div>
+            <div className="flex justify-center py-8"><LogoSpinner size={28} /></div>
           ) : list.length ? (
             list.map((circle: any) => (
               <button
@@ -133,7 +134,7 @@ export default function CuratedContentGrid({ type }: { type: 'pact' | 'dare' }) 
       </div>
 
       {query.isLoading ? (
-        <div className="flex justify-center py-16"><Loader2 className="animate-spin text-primary" /></div>
+        <div className="flex justify-center py-16"><LogoSpinner size={32} /></div>
       ) : query.isError ? (
         <div className="rounded-3xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
           Couldn&apos;t load curated {type === 'pact' ? 'pacts' : 'dares'} right now. Please try again shortly.

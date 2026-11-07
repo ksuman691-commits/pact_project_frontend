@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og'
+import { MARK_DARK, MARK_ON_DISC, MARK_RED, MARK_SWEEP, piePath } from '@/lib/circleMark'
 
 export const OG_SIZE = { width: 1200, height: 630 }
 
@@ -20,7 +21,10 @@ export function ogImage(kicker: string, headline: string) {
               />
             )
           })}
-          <div style={{ width: 130, height: 130, borderRadius: 9999, background: '#17181D', color: '#FFFFFF', fontSize: 52, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>CP</div>
+          <svg width="140" height="140" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="50" fill={MARK_DARK} />
+            <path d={piePath(50, 50, 50 * MARK_ON_DISC, MARK_SWEEP)} fill={MARK_RED} />
+          </svg>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', marginLeft: 60, color: '#17181D' }}>
           <div style={{ fontSize: 30, color: '#1F3A93', letterSpacing: 4, textTransform: 'uppercase', display: 'flex' }}>{kicker}</div>

@@ -33,6 +33,7 @@ export default function BottomNav() {
     pathname?.startsWith('/auth') ||
     pathname?.startsWith('/onboarding') ||
     pathname === '/verify-age' ||
+    pathname === '/' ||
     pathname === '/terms' ||
     pathname === '/privacy' ||
     pathname?.startsWith('/pacts/create') ||

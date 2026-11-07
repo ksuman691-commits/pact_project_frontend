@@ -1,3 +1,4 @@
+import CircleMark from '@/components/brand/CircleMark';
 import type { ReactNode } from 'react';
 
 interface AuthShellProps {
@@ -23,6 +24,7 @@ export default function AuthShell({ heading, subheading, children }: AuthShellPr
   return (
     <main className="mx-auto flex min-h-[100dvh] max-w-md flex-col bg-[var(--paper)]">
       <header className="flex min-h-[320px] flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+        <CircleMark size={64} variant="disc" animation="draw" className="mb-2" />
         <h1 className="m-0 text-[66px] font-bold leading-none tracking-[-0.045em] text-[var(--ink)]">CirclePact</h1>
         <p className="m-0 text-[17px] text-[var(--muted)]">Say it. Do it. Let people see.</p>
       </header>

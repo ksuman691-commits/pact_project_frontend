@@ -9,19 +9,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  ChevronRight,
-  Flag,
-  Trash2,
-  MessageCircle,
-  Check,
-  Camera,
-  Heart,
-  MoreVertical,
-  Flame,
-  Lock,
-  Share,
-} from 'lucide-react';
+import { ChevronRight, Flag, Trash2, MessageCircle, Check, Camera, Heart, MoreVertical, Lock, Share } from 'lucide-react';
 import BodyPortal from './BodyPortal';
 import StoryCaptureSheet from './stories/StoryCaptureSheet';
 import CommentsBottomSheet from './CommentsBottomSheet';
@@ -34,6 +22,7 @@ import { useGoalMatches } from '@/hooks/usePactMatches';
 import { useAuthStore } from '@/store/auth';
 import { useDeleteMoment, usePactStoriesToday } from '@/hooks/useStories';
 import DeleteMomentSheet from './stories/DeleteMomentSheet';
+import { MarkProgress } from './brand/CircleMark';
 import { isPhotoStory, postedAgo } from '@/lib/stories';
 import { getDisplayName } from '@/lib/displayName';
 import { hasPactMomentum } from '@/lib/pactMomentum';
@@ -856,7 +845,15 @@ export default function FeedPactCard({
       {(badgeText || postedText || privateTag || watch) && (
         <div className="flex flex-wrap items-center gap-1.5">
           {badgeText && (
-            <span className="rounded-[9px] px-2.5 py-[3px] text-[11.5px] font-extrabold" style={{ color: '#fff', backgroundColor: 'rgba(255,255,255,0.24)' }}>
+            <span className="flex items-center gap-1.5 rounded-[9px] px-2.5 py-[3px] text-[11.5px] font-extrabold" style={{ color: '#fff', backgroundColor: 'rgba(255,255,255,0.24)' }}>
+              {totalDays > 0 && (
+                <MarkProgress
+                  value={pactEnded ? (finishedPact ? 1 : Number(pact.days_completed ?? 0) / totalDays) : dayNo / totalDays}
+                  size={12}
+                  color="#fff"
+                  track="rgba(255,255,255,0.32)"
+                />
+              )}
               {showMomentum && !pactEnded ? '🔥 ' : ''}
               {badgeText}
             </span>

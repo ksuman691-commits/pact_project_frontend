@@ -1,7 +1,8 @@
 'use client';
 
+import LogoSpinner from '@/components/LogoSpinner';
 import React, { useEffect, useState } from 'react';
-import { Loader, Users, X } from 'lucide-react';
+import { Users, X } from 'lucide-react';
 import { useCreateDareFlow } from '@/context/CreateDareFlowContext';
 import { useSearchUsers } from '@/hooks/useUserQueries';
 import { MAX_DARE_RECIPIENTS, type DareRecipientPick } from '@/types/createDareFlow';
@@ -80,7 +81,7 @@ export default function RecipientsStep() {
           >
             {isLoading ? (
               <div className="flex items-center justify-center py-6">
-                <Loader className="h-5 w-5 animate-spin text-[var(--pact-violet)]" />
+                <LogoSpinner size={28} />
               </div>
             ) : searchResults.length === 0 ? (
               <div className="flex items-center justify-center py-6 text-[var(--pact-text-faint)]">

@@ -1,5 +1,6 @@
 'use client'
 
+import LogoSpinner from '@/components/LogoSpinner';
 import { useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 
@@ -28,7 +29,7 @@ export default function RefreshButton({ onRefresh, label = 'Refresh', className 
       title={label}
       className={`flex size-11 shrink-0 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--card)] text-[var(--ink)] transition active:scale-95 disabled:opacity-70 ${className}`}
     >
-      <RefreshCw className={`size-[18px] ${busy ? 'animate-spin' : ''}`} strokeWidth={2} aria-hidden="true" />
+      {busy ? <LogoSpinner size={18} aria-label="Refreshing" /> : <RefreshCw className="size-[18px]" strokeWidth={2} aria-hidden="true" />}
     </button>
   )
 }

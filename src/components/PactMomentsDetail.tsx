@@ -18,6 +18,7 @@ import { pactLocalToday, resolvePactCompletionViewState } from '@/lib/pactComple
 import { PactAudienceLine, PactAudienceSheet, useAudience } from '@/components/pacts/PactAudience'
 import PactOwnerMenu from '@/components/pacts/PactOwnerMenu'
 import MomentViewer from '@/components/MomentViewer'
+import { MarkProgress } from '@/components/brand/CircleMark'
 import type { ViewerMoment } from '@/components/MomentViewer'
 import type { PactDayStripEntry } from '@/types'
 import { pactInviteMessage } from '@/lib/inviteMessages'
@@ -295,6 +296,7 @@ export default function PactMomentsDetail({
             <div className="shrink-0 text-right leading-[1.25]">
               <h2 className="flex items-center justify-end gap-1 whitespace-nowrap text-[14px] font-extrabold">
                 {isParticipant && !isEnded && postedToday && <Check className="size-3.5" strokeWidth={3} style={{ color: '#22663F' }} aria-label={`Day ${currentDay} done`} />}
+                <MarkProgress value={total ? day / total : 0} size={14} track="var(--hairline)" />
                 Day {day} of {total}
               </h2>
               <p className="whitespace-nowrap text-[11.5px] font-semibold text-[var(--muted)]">

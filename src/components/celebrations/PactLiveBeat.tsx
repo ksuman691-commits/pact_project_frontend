@@ -1,5 +1,6 @@
 'use client'
 
+import CircleMark from '@/components/brand/CircleMark'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, useReducedMotion } from 'framer-motion'
@@ -72,6 +73,7 @@ export default function PactLiveBeat({
       className="fixed inset-0 z-[95] flex flex-col items-center justify-center px-6 text-center text-white"
       style={{ background: 'var(--navy, #1F3A93)' }}
     >
+      <CircleMark size={44} variant="disc" discColor="rgba(255,255,255,0.12)" animation="draw" className="mb-3" />
       <motion.div {...rise(0.05)} className="text-[12px] font-bold uppercase tracking-[0.14em] opacity-75">
         Your pact is live
       </motion.div>
