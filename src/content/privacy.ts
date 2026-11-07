@@ -1,7 +1,7 @@
 // CirclePact Privacy Policy. Rendered by src/components/legal/LegalText.tsx.
 // Items in [square brackets] must be filled in before this goes live.
 
-export const PRIVACY_UPDATED = '6 November 2026';
+export const PRIVACY_UPDATED = '7 November 2026';
 
 export const PRIVACY = `
 This policy explains what personal information CirclePact collects, how we use it, who we share it with, and the choices you have. [Company legal name] ("CirclePact", "we", "us") is responsible for your information.
@@ -49,6 +49,7 @@ We use your information because you agree to it when you sign up and use CircleP
 We, and companies working for us, may use your pacts, moments (photos and videos), stories, comments and activity to train, test and improve artificial intelligence and machine-learning models. For example: models that check whether a moment is real or unsafe, recommend pacts and people, or power new features.
 - This is **on unless you opt out** in **Edit profile → Privacy choices**.
 - Opting out stops your content being used for training from then on. It can't undo models already trained.
+- We don't use your photos or videos for face recognition, we don't create face prints or other biometric templates, and we don't identify people in them.
 - Separately from training, every photo moment is checked by an automated moderation service to keep CirclePact safe. That check is part of running CirclePact and doesn't depend on this choice.
 
 ## 4. Advertising and selling data
@@ -101,7 +102,14 @@ Some of these companies store or process information outside India. By using Cir
 ## 8. Keeping it safe
 We use reasonable security safeguards: encrypted connections (HTTPS), passwords and reset links stored only in hashed form, limited staff access, and media kept in private storage behind expiring links. **No system is completely secure, and we can't guarantee that your information will never be accessed, lost or stolen.** You're responsible for keeping your password safe and your devices secure. Our [Terms](/terms) (section 16) explain the limits of our responsibility for security incidents. If a breach affects your information, we'll tell you and the authorities as the law requires.
 
-## 9. Your rights and choices
+## 9. Cookies and storage on your device
+- We don't use advertising cookies, tracking pixels, analytics tools or session recording.
+- We keep your sign-in tokens and a few settings (for example, prompts you've dismissed) in your browser's storage. CirclePact can't work without them, so we don't ask for consent to them.
+- If you use **Sign in with Google**, Google's sign-in button loads on that page and Google may set its own cookies, under Google's privacy policy. Profile photos of people who signed up with Google are loaded from Google's servers.
+- Our fonts are served by us, not loaded from Google or other font services.
+- If we ever add optional cookies or analytics, we'll ask you first.
+
+## 10. Your rights and choices
 You can:
 - **See and correct** your information. Most of it is in Edit profile. You can also ask us for a summary of what we hold about you and who we've shared it with.
 - **Delete** moments, comments and pacts at any time (tap the bin on your moment), or your whole account from **Edit profile → Delete account**. In a paid pact that people have paid to watch, moments and the pact stay up until it ends.
@@ -113,13 +121,13 @@ You can:
 
 To make a request, email [privacy email] from the address on your account. We'll reply within the time the law requires. We may ask you to confirm it's you, and we may refuse requests that are unreasonable, repeated, or that the law lets us refuse.
 
-## 10. Age
+## 11. Age
 CirclePact is only for people aged 18 or older. We don't knowingly collect information from anyone younger. If you think someone under 18 has an account, tell us and we'll remove it.
 
-## 11. Changes to this policy
+## 12. Changes to this policy
 We may update this policy at any time. If a change matters, we'll tell you in the app before it takes effect. We'll never start sharing your information with advertisers unless you've switched that on.
 
-## 12. Contact and Grievance Officer
+## 13. Contact and Grievance Officer
 - **Grievance Officer:** [Name], [email], [address].
 - **Company:** [Company legal name], [registered address]. Email: [support email].
 `;
