@@ -1,7 +1,8 @@
 'use client';
 
+import LogoSpinner from '@/components/LogoSpinner';
 import React, { useState } from 'react';
-import { Search, X, Loader } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useSearchUsers } from '@/hooks/useUserQueries';
 import Avatar from '@/components/Avatar';
@@ -63,7 +64,7 @@ export default function MemberSearchModal({ isOpen, onClose }: MemberSearchModal
           <div className="flex-1 overflow-y-auto">
             {isLoading && searchQuery ? (
               <div className="flex items-center justify-center py-8">
-                <Loader className="w-5 h-5 animate-spin" style={{ color: 'var(--pact-violet)' }} />
+                <LogoSpinner size={28} />
               </div>
             ) : searchQuery.length === 0 ? (
               <div className="flex items-center justify-center py-8" style={{ color: 'var(--pact-text-faint)' }}>

@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Camera, Check, Flame, Moon, Target, Users } from 'lucide-react';
+import CircleMark, { MarkProgress } from '@/components/brand/CircleMark';
 
 const INK = '#17181D';
 const MUTED = '#5A5C63';
@@ -42,7 +43,10 @@ function PactPreview() {
             <path d="M0 120 Q60 70 120 105 T240 90 T300 100 V160 H0Z" fill="#1E2257" />
             <path d="M0 140 Q80 110 160 135 T300 125 V160 H0Z" fill="#14173F" />
           </svg>
-          <span className="relative rounded-full bg-white/90 px-2.5 py-1 text-[12px] font-bold" style={{ color: INK }}>Day 5 of 7</span>
+          <span className="relative flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[12px] font-bold" style={{ color: INK }}>
+            <MarkProgress value={5 / 7} size={13} track="rgba(23,24,29,0.14)" />
+            Day 5 of 7
+          </span>
         </div>
         <div className="px-4 pb-4 pt-3">
           <div className="text-[17px] font-extrabold" style={{ color: INK }}>Run 3 km every morning</div>
@@ -103,7 +107,7 @@ export default function Landing() {
     <div className="min-h-dvh" style={{ background: 'var(--paper)', color: INK }}>
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 pt-5">
         <span className="flex items-center gap-2 text-[18px] font-extrabold tracking-tight">
-          <span className="size-6 rounded-full border-[4px]" style={{ borderColor: NAVY }} aria-hidden />
+          <CircleMark size={28} variant="disc" animation="draw" delay={0.15} />
           CirclePact
         </span>
         <Link href="/auth/login" className="rounded-full px-4 py-2 text-[14px] font-bold" style={{ color: NAVY }}>

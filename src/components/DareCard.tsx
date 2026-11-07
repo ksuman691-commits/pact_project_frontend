@@ -1,5 +1,6 @@
 'use client';
 
+import { MarkProgress } from '@/components/brand/CircleMark';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Camera, Check, Clock, Link2, MoreHorizontal, X, Zap } from 'lucide-react';
@@ -164,7 +165,11 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
       </h2>
       {left && (
         <p className="mt-1 flex items-center gap-1 text-[12.5px] font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>
-          <Clock className="size-3.5" strokeWidth={2.4} aria-hidden="true" />
+          {ringLeft != null ? (
+            <MarkProgress value={ringLeft} size={14} color="#fff" track="rgba(255,255,255,0.3)" title={`${Math.round(ringLeft * 100)}% of the time left`} />
+          ) : (
+            <Clock className="size-3.5" strokeWidth={2.4} aria-hidden="true" />
+          )}
           {left} to {deadline!.verb}
         </p>
       )}

@@ -1,5 +1,6 @@
 'use client'
 
+import CircleMark, { MarkProgress } from '@/components/brand/CircleMark'
 import { useCallback, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -204,6 +205,7 @@ export default function TodayCheckInRow({ onCreatePact, peers = [] }: { onCreate
             <h2 className="text-[17px] font-extrabold tracking-[-0.01em] text-[var(--ink)]">Today</h2>
           </div>
           <div className="flex items-center gap-3 rounded-[20px] border border-[var(--hairline)] bg-[var(--card)] p-3">
+            <CircleMark size={34} animation="draw" className="ml-1" />
             <div className="min-w-0 flex-1 px-1">
               <div className="text-[14.5px] font-bold text-[var(--ink)]">No active pact yet</div>
               <p className="mt-0.5 text-[12.5px] text-[var(--muted)]">Start one and show your circle how it goes.</p>
@@ -220,9 +222,8 @@ export default function TodayCheckInRow({ onCreatePact, peers = [] }: { onCreate
       ) : allDone ? (
         <div className="flex min-h-[32px] items-center gap-2 px-0.5">
           <h2 className="text-[17px] font-extrabold tracking-[-0.01em] text-[var(--ink)]">Today</h2>
-          <span className="cp-pop-in ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white" style={{ background: 'var(--success, #2E7D4F)' }}>
-            <Check className="h-[11px] w-[11px]" strokeWidth={3.4} aria-hidden="true" />
-          </span>
+          {/* Every pact done today: the circle closes. */}
+          <CircleMark size={20} animation="close" tick className="ml-1" />
           <span className="min-w-0 flex-1 truncate text-[13.5px] font-bold" style={{ color: 'var(--success, #2E7D4F)' }}>
             {pacts.length === 1 ? 'Checked in' : `All ${pacts.length} checked in`}
           </span>
@@ -236,9 +237,7 @@ export default function TodayCheckInRow({ onCreatePact, peers = [] }: { onCreate
               <span>
                 <span key={done.length} className="cp-tick inline-block text-[var(--ink)]">{doneShown}</span> of {pacts.length} done
               </span>
-              <span className="h-1.5 w-12 overflow-hidden rounded-full bg-[var(--hairline)]" aria-hidden="true">
-                <span className="block h-full rounded-full bg-[var(--navy)] transition-[width] duration-700 ease-out" style={{ width: `${pacts.length ? (done.length / pacts.length) * 100 : 0}%` }} />
-              </span>
+              <MarkProgress value={pacts.length ? done.length / pacts.length : 0} size={16} track="var(--hairline)" />
             </span>
             <span className="flex-1" />
             {newPact}

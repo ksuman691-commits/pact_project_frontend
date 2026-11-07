@@ -1,5 +1,6 @@
 'use client';
 
+import CircleMark from '@/components/brand/CircleMark'
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Plus, Zap } from 'lucide-react';
@@ -214,9 +215,7 @@ function DaresPageInner() {
           ) : shown.length === 0 ? (
             <div className="rounded-[22px] border border-[var(--line)] bg-[var(--card)] px-6 py-8 text-center">
               <span className="mx-auto flex justify-center">
-                <SparkRing size={96} tone="light" duration="30s">
-                  <Zap className="size-7 text-[var(--navy)]" strokeWidth={2.2} fill="currentColor" aria-hidden="true" />
-                </SparkRing>
+                <CircleMark key={tab} size={72} animation="draw" />
               </span>
               <h2 className="mt-4 text-[22px] font-extrabold tracking-[-0.03em]">{EMPTY[tab].title}</h2>
               <p className="mt-2 text-[14px] leading-[1.5] text-[var(--muted)]">{EMPTY[tab].body}</p>

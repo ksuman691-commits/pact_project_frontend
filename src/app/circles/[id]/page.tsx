@@ -1,5 +1,6 @@
 'use client'
 
+import CircleMark from '@/components/brand/CircleMark'
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/queryKeys'
@@ -362,7 +363,10 @@ export default function CircleDetailPage() {
             )}
           </div>
           {notYet.length === 0 ? (
-            <p className="py-3 text-[13.5px]" style={{ color: '#22663F' }}>Everyone showed up this week.</p>
+            <p className="flex items-center gap-2 py-3 text-[13.5px]" style={{ color: '#22663F' }}>
+              <CircleMark size={20} animation="close" tick />
+              Everyone showed up this week.
+            </p>
           ) : (
             <ul>{notYet.map((m: any) => memberRow(m, true))}</ul>
           )}

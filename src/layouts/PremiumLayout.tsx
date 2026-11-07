@@ -1,5 +1,6 @@
 'use client';
 
+import LogoSpinner from '@/components/LogoSpinner';
 import React, { useState } from 'react';
 import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'next/navigation';
@@ -27,7 +28,7 @@ export default function PremiumLayout({ children, showNav = true }: PremiumLayou
     return (
       <div className="flex items-center justify-center h-screen bg-[var(--paper)]">
         <div className="text-center">
-          <div className="w-12 h-12 rounded-full border-4 border-[var(--hairline)] border-t-[var(--navy)] animate-spin mx-auto mb-4" />
+          <LogoSpinner size={44} className="mx-auto mb-4" />
           <p className="text-[var(--muted)] font-medium">Loading CirclePact...</p>
         </div>
       </div>

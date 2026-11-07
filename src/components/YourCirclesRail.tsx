@@ -1,5 +1,6 @@
 'use client'
 
+import CircleMark from '@/components/brand/CircleMark';
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight } from 'lucide-react'
@@ -37,6 +38,7 @@ export default function YourCirclesRail({ circles, isLoading }: YourCirclesRailP
         className="pact-card rounded-3xl border border-dashed px-6 py-8 text-center"
         style={{ borderColor: 'var(--pact-hairline)' }}
       >
+        <CircleMark size={44} animation="draw" className="mx-auto mb-3" />
         <p className="text-base font-semibold text-[var(--pact-text)]">Nothing here yet</p>
         <p className="mt-1 text-sm text-[var(--pact-text-muted)]">Join or create a circle to hold each other accountable.</p>
         <Link

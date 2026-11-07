@@ -1,5 +1,7 @@
 'use client';
 
+import CircleMark from '@/components/brand/CircleMark'
+import LogoSpinner from '@/components/LogoSpinner'
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -226,10 +228,10 @@ export default function NotificationsPage() {
         ) : (
         <div className="px-4 py-4 space-y-3">
           {isLoading ? (
-            <div className="text-[var(--muted)] text-sm">Loading notifications...</div>
+            <div className="flex justify-center py-10"><LogoSpinner size={32} aria-label="Loading notifications" /></div>
           ) : notifications.length === 0 ? (
             <div className="rounded-[24px] border border-dashed border-[var(--hairline)] bg-[var(--card)] p-8 text-center">
-              <Bell className="w-10 h-10 text-[var(--muted)] mx-auto mb-3" />
+              <CircleMark size={44} animation="draw" className="mx-auto mb-3" />
               <p className="font-semibold text-[var(--ink)]">No notifications yet</p>
               <p className="text-sm text-[var(--muted)] mt-1">You will see join requests and activity updates here.</p>
             </div>

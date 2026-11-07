@@ -1,5 +1,6 @@
 'use client'
 
+import CircleMark, { MarkProgress } from '@/components/brand/CircleMark'
 import Link from 'next/link'
 import { Lock } from 'lucide-react'
 import type { CircleActivity } from '@/lib/circleActivity'
@@ -45,7 +46,12 @@ export default function OrbitCircleCard({ circle, activity, index = 0 }: { circl
           <span className="truncate text-[17px] font-extrabold tracking-[-0.02em]" style={{ color: INK }}>{circle?.name}</span>
           {isPrivate && <Lock className="size-[13px] shrink-0" strokeWidth={2.4} style={{ color: MUTED }} aria-label="Private circle" />}
         </span>
-        <span className="text-[13.5px] leading-snug" style={{ color: MUTED }}>{status}</span>
+        <span className="flex items-center gap-1.5 text-[13.5px] leading-snug" style={{ color: MUTED }}>
+          {activity.known && total > 0 && active > 0 && (
+            active >= total ? <CircleMark size={14} animation="close" /> : <MarkProgress value={active / total} size={14} track="var(--hairline, #DCD3C1)" />
+          )}
+          {status}
+        </span>
         <span className="mt-1 flex flex-wrap gap-1.5">
           {live != null && (
             <span className="rounded-full px-2.5 py-1 text-[12px] font-extrabold" style={{ background: '#F4EFE4', color: INK }}>

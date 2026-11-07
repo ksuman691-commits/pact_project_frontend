@@ -1,5 +1,6 @@
 'use client';
 
+import LogoSpinner from '@/components/LogoSpinner';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Plus, Check, Loader, Users } from 'lucide-react';
@@ -109,7 +110,7 @@ export default function AddToCircleSheet({ isOpen, onClose, targetUserId, target
         <div className="overflow-y-auto p-4 flex-1">
           {circlesQuery.isLoading ? (
             <div className="flex items-center justify-center py-10">
-              <Loader className="h-5 w-5 animate-spin" style={{ color: 'var(--pact-violet)' }} />
+              <LogoSpinner size={28} />
             </div>
           ) : myCircles.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center" style={{ color: 'var(--pact-text-faint)' }}>

@@ -5,7 +5,8 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { useCountUp } from '@/components/pact-ui/useCountUp'
 import { useBackToClose } from '@/hooks/useBackToClose'
 import { fireConfetti, stopConfetti, type MilestoneCelebrationData } from '@/lib/celebrations'
-import { EASE, haptic } from '@/lib/motion'
+import { haptic } from '@/lib/motion'
+import { MarkProgress } from '@/components/brand/CircleMark'
 
 const STREAK_LINES: Record<number, string> = {
   3: 'A streak is forming.',
@@ -109,21 +110,10 @@ export default function MilestoneSheet({ data, onClose }: { data: MilestoneCeleb
               </motion.svg>
             </>
           ) : (
-            <svg viewBox="0 0 120 120" className="size-24 -rotate-90">
-              <circle cx="60" cy="60" r="52" fill="none" stroke="var(--hairline, #DCD3C1)" strokeWidth="9" />
-              <motion.circle
-                cx="60"
-                cy="60"
-                r="52"
-                fill="none"
-                stroke="var(--navy, #1F3A93)"
-                strokeWidth="9"
-                strokeLinecap="round"
-                initial={{ pathLength: reduce ? progress : 0 }}
-                animate={{ pathLength: progress }}
-                transition={{ duration: 0.9, delay: 0.3, ease: EASE }}
-              />
-            </svg>
+            <span className="flex size-24 items-center justify-center">
+              {/* How far through the pact: the pie fills to today; on the final day it closes. */}
+              <MarkProgress value={progress} size={92} track="var(--hairline, #DCD3C1)" />
+            </span>
           )}
         </div>
 
