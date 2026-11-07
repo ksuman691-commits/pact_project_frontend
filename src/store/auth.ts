@@ -9,7 +9,7 @@ interface AuthState {
   error: string | null;
   isInitialized: boolean;
 
-  register: (username: string, email: string, full_name: string, password: string) => Promise<void>;
+  register: (username: string, email: string, full_name: string, password: string, date_of_birth: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: (idToken: string) => Promise<void>;
   logout: () => void;
@@ -25,7 +25,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   error: null,
   isInitialized: false,
 
-  register: async (username, email, full_name, password) => {
+  register: async (username, email, full_name, password, date_of_birth) => {
     set({ isLoading: true, error: null });
     try {
       const response = await authService.register({
@@ -33,6 +33,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         email,
         full_name,
         password,
+        date_of_birth,
       });
       const { access_token, refresh_token } = response.data;
       setAuthTokens(access_token, refresh_token);

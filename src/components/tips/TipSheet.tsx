@@ -223,7 +223,7 @@ export default function TipSheet({ open, onClose, tip, context, pactId, creatorN
               </button>
             )}
             <div className="mt-1 text-center text-[12px] leading-snug" style={{ color: MUTED }}>
-              Goes straight to {firstName}&apos;s UPI. CirclePact never sees the money.{fixedAmount ? ' Sort out any problem with the payment directly with ' + firstName + '.' : ' One tip a day per person. Tips are never refunded.'}
+              One-time payment, nothing renews. Goes straight to {firstName}&apos;s UPI. CirclePact never sees the money.{fixedAmount ? ' Sort out any problem with the payment directly with ' + firstName + '.' : ' One tip a day per person. Tips are never refunded.'}
             </div>
           </>
         )}

@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import AuthShell from '@/components/AuthShell';
+import AuthShell, { authPrimaryButtonClass } from '@/components/AuthShell';
+import { clearToken } from '@/services/api';
 import { useAuthStore } from '@/store/auth';
 import { readNext } from '@/lib/authNext';
 
@@ -32,13 +33,15 @@ export default function VerifyAgePage() {
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [tosAccepted, setTosAccepted] = useState(false);
   const [underageMessage, setUnderageMessage] = useState<string | null>(null);
+  const [removed, setRemoved] = useState(false);
+  const setUser = useAuthStore((state) => state.setUser);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Guards direct navigation: signed-out visitors have nothing to verify
   // (bounce to login), already-verified users don't need to see this again
   // (bounce to the feed) — e.g. a bookmarked link or the back button.
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!isInitialized || removed) return;
     if (!user) {
       router.replace('/auth/login');
       return;
@@ -46,18 +49,7 @@ export default function VerifyAgePage() {
     if (user.date_of_birth) {
       router.replace('/feed');
     }
-  }, [isInitialized, user, router]);
-
-  const calculateAge = (isoDate: string): number => {
-    const dob = new Date(isoDate);
-    const today = new Date();
-    let age = today.getFullYear() - dob.getFullYear();
-    const monthDiff = today.getMonth() - dob.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-      age -= 1;
-    }
-    return age;
-  };
+  }, [isInitialized, user, router, removed]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,14 +71,8 @@ export default function VerifyAgePage() {
       return;
     }
 
-    const age = calculateAge(dateOfBirth);
-    if (age < MIN_AGE) {
-      setUnderageMessage(
-        `You must be ${MIN_AGE} or older to use CirclePact. Based on the date you entered, you don't currently meet that requirement.`
-      );
-      return;
-    }
-
+    // Under 18 still goes to the server: it deletes the account straight away,
+    // so we don't keep a minor's name and email.
     setIsSubmitting(true);
     try {
       await completeAgeVerification(dateOfBirth);
@@ -101,6 +87,13 @@ export default function VerifyAgePage() {
       // response. Any other failure (after the store's retries) means the
       // backend never saved the date, so the user must try again.
       const detail = err?.response?.data?.detail;
+      if (err?.response?.status === 403 && detail?.code === 'underage_account_removed') {
+        clearToken();
+        useAuthStore.setState({ token: null });
+        setUser(null);
+        setRemoved(true);
+        return;
+      }
       if (err?.response?.status !== 403 || detail?.code !== 'underage_user') {
         toast.error("Couldn't save your date of birth. Please try again.");
         return;
@@ -113,6 +106,17 @@ export default function VerifyAgePage() {
       setIsSubmitting(false);
     }
   };
+
+  if (removed) {
+    return (
+      <AuthShell heading="CirclePact is for adults">
+        <p className="text-center text-[15px] leading-relaxed text-[var(--ink-soft)]">
+          You need to be {MIN_AGE} or older to use CirclePact, so we&apos;ve deleted this account and its details.
+        </p>
+        <a href="/" className={`${authPrimaryButtonClass} mt-6 flex items-center justify-center`}>OK</a>
+      </AuthShell>
+    );
+  }
 
   if (!isInitialized || !user) {
     return null;
