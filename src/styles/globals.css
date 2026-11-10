@@ -763,3 +763,8 @@ section + section {
 @media (prefers-reduced-motion: reduce) {
   .cp-zap, .cp-zap-glow { animation: none; }
 }
+
+/* Slide to send a dare: the bolt leans forward to show which way to drag. */
+@keyframes cp-slide-hint { 0%, 100% { margin-left: 0; } 50% { margin-left: 8px; } }
+.cp-slide-hint { animation: cp-slide-hint 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .cp-slide-hint { animation: none; } }
