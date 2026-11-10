@@ -9,6 +9,8 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import AuthShell, { authInputClass, authLabelClass, authPrimaryButtonClass } from '@/components/AuthShell';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
+import ConsentNotice from '@/components/legal/ConsentNotice';
+import { EMPTY_CONSENT, isPolicyVersionMismatch, type ConsentChoices } from '@/lib/consent';
 
 const MIN_AGE = 18;
 const MIN_PASSWORD = 8;
@@ -50,6 +52,7 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [tooYoung, setTooYoung] = useState(false);
+  const [consent, setConsent] = useState<ConsentChoices>(EMPTY_CONSENT);
 
   const maxDob = new Date().toISOString().slice(0, 10);
 
@@ -69,14 +72,19 @@ export default function Register() {
       setTooYoung(true);
       return;
     }
+    if (!consent.accepted) {
+      toast.error('Please read and agree to how we use your data');
+      return;
+    }
     try {
-      await register(username.trim(), email.trim(), fullName.trim(), password, dateOfBirth);
+      await register(username.trim(), email.trim(), fullName.trim(), password, dateOfBirth, consent);
       toast.success('Account created');
       // Back to the invite they opened; otherwise straight into a first pact (they can skip it).
       router.push(readNext('') || '/pacts/create?first=1');
     } catch (error: any) {
       const detail = error.response?.data?.detail;
       if (detail?.code === 'underage_user') setTooYoung(true);
+      else if (isPolicyVersionMismatch(error)) toast.error('Our Terms or Privacy Policy just changed. Refresh the page to see the latest.');
       else toast.error(typeof detail === 'string' ? detail : detail?.message || 'Registration failed');
     }
   };
@@ -151,19 +159,14 @@ export default function Register() {
             You need to be {MIN_AGE} or older to use CirclePact. We haven’t saved anything you entered.
           </p>
         )}
-        <button type="submit" disabled={isLoading} className={`${authPrimaryButtonClass} mt-1`}>
+        <ConsentNotice value={consent} onChange={setConsent} />
+        <button type="submit" disabled={isLoading || !consent.accepted} className={`${authPrimaryButtonClass} mt-1`}>
           {isLoading ? 'Creating account…' : 'Create account'}
         </button>
       </form>
 
-      <p className="mt-3 text-center text-[12px] text-[var(--muted)]">
-        By creating an account you agree to our{' '}
-        <Link href="/terms" className="font-semibold text-[var(--navy)] underline">Terms of Service</Link>{' '}
-        and <Link href="/privacy" className="font-semibold text-[var(--navy)] underline">Privacy Policy</Link>.
-      </p>
-
       <div className="mt-3 overflow-hidden rounded-full border border-[var(--hairline)] bg-[var(--card)] [&>*]:w-full">
-        <GoogleSignInButton />
+        <GoogleSignInButton consent={consent} />
       </div>
 
       <p className="mt-6 text-center text-[14px] text-[var(--muted)]">

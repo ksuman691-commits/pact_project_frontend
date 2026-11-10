@@ -16,6 +16,8 @@ export interface User {
   // localStorage-only fallback (see lib/ageVerification.ts) for transient
   // failures so the gate isn't unpassable if that call hiccups.
   date_of_birth?: string | null;
+  // True until the person accepts the current Terms and Privacy Policy (see /consent).
+  needs_consent?: boolean;
 }
 
 export type CuratedContentType = 'pact' | 'dare';

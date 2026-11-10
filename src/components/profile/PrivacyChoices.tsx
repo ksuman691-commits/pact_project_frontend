@@ -21,7 +21,7 @@ function Switch({ on }: { on: boolean }) {
   );
 }
 
-/** Edit profile → Privacy choices. Ads sharing is opt-in; AI training is opt-out. */
+/** Edit profile → Privacy choices. Both are opt-in and off by default. */
 export default function PrivacyChoices() {
   const qc = useQueryClient();
   const { data } = useQuery<Choices>({

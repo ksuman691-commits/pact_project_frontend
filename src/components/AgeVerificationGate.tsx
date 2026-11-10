@@ -22,14 +22,24 @@ export default function AgeVerificationGate() {
 
   useEffect(() => {
     if (!isInitialized || !user) return;
-    if (pathname === '/verify-age' || pathname === '/terms' || pathname === '/privacy') return;
+    // Edit profile stays open so someone who doesn't agree can still delete their account.
+    if (pathname === '/consent' || pathname === '/terms' || pathname === '/privacy' || pathname === '/profile/edit') return;
+
+    // Remember where they were going (a circle or pact invite) so these steps don't lose it.
+    const here = `${window.location.pathname}${window.location.search}`;
+    const generic = ['/', '/feed', '/profile', '/onboarding', '/verify-age'].includes(window.location.pathname);
+
+    // First: the current Terms and Privacy Policy must be accepted (DPDP consent). Existing
+    // accounts and anyone who accepted an older version land on /consent once.
+    if (user.needs_consent) {
+      router.replace(generic ? '/consent' : `/consent?next=${encodeURIComponent(here)}`);
+      return;
+    }
+    if (pathname === '/verify-age') return;
 
     // Only a date of birth the backend returned counts; a local flag can
     // disagree with the backend, which then rejects every create call.
     if (!user.date_of_birth) {
-      // Remember where they were going (a circle or pact invite) so the age step doesn't lose it.
-      const here = `${window.location.pathname}${window.location.search}`;
-      const generic = ['/', '/feed', '/profile', '/onboarding'].includes(window.location.pathname);
       router.replace(generic ? '/verify-age' : `/verify-age?next=${encodeURIComponent(here)}`);
     }
   }, [isInitialized, user, pathname, router]);

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { User } from '@/types';
 import { authService, clearToken, getRefreshToken, setAuthTokens, setToken } from '@/services/api';
+import { consentPayload, type ConsentChoices } from '@/lib/consent';
 
 interface AuthState {
   user: User | null;
@@ -9,9 +10,12 @@ interface AuthState {
   error: string | null;
   isInitialized: boolean;
 
-  register: (username: string, email: string, full_name: string, password: string, date_of_birth: string) => Promise<void>;
+  register: (username: string, email: string, full_name: string, password: string, date_of_birth: string, consent: ConsentChoices) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: (idToken: string) => Promise<void>;
+  /** consent is needed only when the Google account is new; without it a new account gets 409 consent_required. */
+  loginWithGoogle: (idToken: string, consent?: ConsentChoices) => Promise<void>;
+  /** Existing accounts accepting the current Terms and Privacy Policy (/consent). */
+  acceptConsent: (consent: ConsentChoices) => Promise<void>;
   logout: () => void;
   setUser: (user: User | null) => void;
   initAuth: () => Promise<void>;
@@ -25,7 +29,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   error: null,
   isInitialized: false,
 
-  register: async (username, email, full_name, password, date_of_birth) => {
+  register: async (username, email, full_name, password, date_of_birth, consent) => {
     set({ isLoading: true, error: null });
     try {
       const response = await authService.register({
@@ -34,6 +38,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         full_name,
         password,
         date_of_birth,
+        ...consentPayload(consent),
       });
       const { access_token, refresh_token } = response.data;
       setAuthTokens(access_token, refresh_token);
@@ -65,10 +70,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  loginWithGoogle: async (idToken) => {
+  loginWithGoogle: async (idToken, consent) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await authService.googleLogin({ id_token: idToken });
+      const response = await authService.googleLogin({ id_token: idToken, ...(consent ? consentPayload(consent) : {}) });
       const { access_token, refresh_token } = response.data;
       setAuthTokens(access_token, refresh_token);
       const profile = await authService.getProfile();
@@ -94,6 +99,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   setUser: (user) => set({ user }),
+
+  acceptConsent: async (consent) => {
+    await authService.acceptConsent(consentPayload(consent));
+    const profile = await authService.getProfile();
+    set({ user: profile.data });
+  },
 
   // Called once, right after a first-time user passes the client-side
   // 18+ check on /verify-age — never before that check, so this action
