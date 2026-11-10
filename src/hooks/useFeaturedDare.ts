@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useDareFeed } from './useDareQueries';
+import { useDareFeed, useTodaysDare } from './useDareQueries';
 import { getTimeRing, isDareExpired } from '@/lib/dareCountdown';
 
 /**
@@ -18,6 +18,8 @@ import { getTimeRing, isDareExpired } from '@/lib/dareCountdown';
  */
 export function useFeaturedDare() {
   const feedQuery = useDareFeed();
+  // Today's CirclePact dare wins whenever one is live; the Discover pick below is the fallback.
+  const today = useTodaysDare();
   const discover = useMemo(
     () => feedQuery.data?.pages?.flatMap((page) => page.data) || [],
     [feedQuery.data],
@@ -38,5 +40,5 @@ export function useFeaturedDare() {
     })[0];
   }, [discover]);
 
-  return { featuredDare, isLoading: feedQuery.isLoading };
+  return { featuredDare: today.data ?? featuredDare, isLoading: feedQuery.isLoading || today.isLoading };
 }

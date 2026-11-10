@@ -38,7 +38,7 @@ export function useClaimDare() {
       queryClient.invalidateQueries({ queryKey: queryKeys.dares.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.dares.feed() });
       queryClient.invalidateQueries({ queryKey: queryKeys.dares.mine() });
-      toast.success('Dare claimed successfully!');
+      toast.success("You're in.");
     },
     onError: (error: any) => {
       toast.error(toErrorMessage(error, 'Failed to claim dare'));

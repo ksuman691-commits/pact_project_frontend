@@ -81,3 +81,13 @@ export function useDareStats(dareId: number | null | undefined, options?: { enab
     enabled: !!dareId && (options?.enabled ?? true),
   });
 }
+
+/** Today's CirclePact dare (one shared dare everyone joins), or null when none is live. */
+export function useTodaysDare(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: queryKeys.dares.today(),
+    queryFn: () => dareService.getToday(),
+    staleTime: 60_000,
+    enabled: options?.enabled ?? true,
+  });
+}

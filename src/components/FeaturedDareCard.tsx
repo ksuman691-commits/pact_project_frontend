@@ -46,7 +46,7 @@ export default function FeaturedDareCard({ dare }: FeaturedDareCardProps) {
   const expired = isDareExpired(dare);
   const live = dare.recipient_count ?? dare.recipients?.length ?? 0;
   const took = dare.completed_count;
-  const canJoin = dare.audience === 'public' && !dare.my_recipient_status && !expired;
+  const canJoin = dare.audience === 'public' && !expired && (dare.state ? dare.state === 'open' : !dare.my_recipient_status);
   const open = () => router.push(`/dares/${dare.id}`);
 
   return (
@@ -92,7 +92,7 @@ export default function FeaturedDareCard({ dare }: FeaturedDareCardProps) {
             </button>
           ) : (
             <button type="button" onClick={open} className="flex h-12 flex-1 items-center justify-center rounded-full bg-[var(--ink)] text-[15px] font-bold text-white transition active:scale-[0.98]">
-              {dare.my_recipient_status ? "You're in. Open dare" : 'See dare'}
+              {dare.state === 'completed' ? 'Done. See your proof' : dare.my_recipient_status ? 'Post proof' : 'See dare'}
             </button>
           )}
           <button

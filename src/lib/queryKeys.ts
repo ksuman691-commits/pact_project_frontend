@@ -129,6 +129,7 @@ export const queryKeys = {
     list: (filters?: any) => [...queryKeys.dares.lists(), filters],
     feed: () => [...queryKeys.dares.all, 'feed'],
     mine: () => [...queryKeys.dares.all, 'mine'],
+    today: () => [...queryKeys.dares.all, 'today'] as const,
     details: () => [...queryKeys.dares.all, 'detail'],
     detail: (id: number) => [...queryKeys.dares.details(), id],
     recipients: (dareId: number) => [...queryKeys.dares.detail(dareId), 'recipients'],
