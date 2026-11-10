@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import LogoSpinner from './LogoSpinner';
+import { haptic } from '@/lib/motion';
 
 interface PullToRefreshProps {
   /** Called on release once the user has pulled past the threshold. Awaited so the spinner keeps spinning until data actually arrives. */
@@ -20,6 +21,24 @@ const MAX_PULL = 96;
 const RESISTANCE = 0.5;
 // How far a finger moves before we decide whether this is a pull (down) or something else.
 const CAPTURE_DRAG_THRESHOLD_PX = 10;
+// Long enough to see the mark tick round once, so a fast refresh doesn't just flicker.
+const MIN_SPIN_MS = 550;
+
+/**
+ * A pull that starts inside a sheet, a dialog, the bottom bar or anything that scrolls
+ * on its own belongs to that thing, not to the page.
+ */
+function startsInOverlay(target: EventTarget | null, wrapper: HTMLElement): boolean {
+  let node = target instanceof Element ? target : null;
+  while (node && node !== wrapper && node !== document.body) {
+    const style = window.getComputedStyle(node);
+    if (style.position === 'fixed') return true;
+    if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && node.scrollHeight > node.clientHeight + 1) return true;
+    node = node.parentElement;
+  }
+  // Portals (camera, sheets) sit outside the wrapper altogether.
+  return node !== wrapper;
+}
 
 /**
  * Pull down at the top of the page to refresh.
@@ -53,7 +72,7 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
 
     const onStart = (event: TouchEvent) => {
       const s = stateRef.current;
-      tracking = !s.disabled && !s.isRefreshing && event.touches.length === 1 && atTop();
+      tracking = !s.disabled && !s.isRefreshing && event.touches.length === 1 && atTop() && !startsInOverlay(event.target, el);
       pulling = false;
       if (!tracking) return;
       startX = event.touches[0].clientX;
@@ -76,6 +95,8 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
       }
       if (event.cancelable) event.preventDefault();
       const distance = Math.min(Math.max(0, dy - CAPTURE_DRAG_THRESHOLD_PX) * RESISTANCE, MAX_PULL);
+      // One light tap under the finger the moment letting go will refresh.
+      if (distance >= THRESHOLD && stateRef.current.distance < THRESHOLD) haptic(8);
       stateRef.current.distance = distance;
       setPullDistance(distance);
     };
@@ -90,7 +111,9 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
         setIsRefreshing(true);
         setPullDistance(THRESHOLD);
         try {
-          await stateRef.current.onRefresh();
+          await Promise.all([stateRef.current.onRefresh(), new Promise((resolve) => window.setTimeout(resolve, MIN_SPIN_MS))]);
+        } catch {
+          // The page's own error state says what went wrong.
         } finally {
           setIsRefreshing(false);
           setPullDistance(0);
@@ -134,8 +157,8 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
           className="flex h-9 w-9 items-center justify-center rounded-full"
           style={{
             opacity: progress,
-            transform: `scale(${0.5 + progress * 0.5})`,
-            transition: isPulling ? 'none' : 'opacity 220ms ease, transform 220ms ease',
+            transform: `scale(${0.5 + progress * 0.5 + (progress >= 1 && !isRefreshing ? 0.12 : 0)})`,
+            transition: isPulling ? 'transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1)' : 'opacity 220ms ease, transform 220ms ease',
           }}
         >
           <LogoSpinner

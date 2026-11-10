@@ -23,6 +23,9 @@ export default function DarePreviewTile({ draft }: { draft: DareDraft }) {
       <p className="relative flex items-center gap-1.5 text-[13px] font-bold">
         <Zap className="cp-zap h-3.5 w-3.5" fill="currentColor" strokeWidth={0} aria-hidden="true" />
         {to ? `I dare you, ${to}` : 'I dare you'}
+        {draft.rewardAmount ? (
+          <span key={draft.rewardAmount} className="cp-pop-in ml-auto rounded-full bg-[var(--ink)] px-2.5 py-1 text-[13px] font-bold text-[var(--dare)]">for ₹{draft.rewardAmount}</span>
+        ) : null}
       </p>
       <p className={`relative mt-2.5 line-clamp-3 text-balance text-[26px] font-bold leading-[1.08] tracking-[-0.03em] ${title ? '' : 'opacity-45'}`}>
         {title || 'What will you dare them to do?'}
@@ -34,7 +37,7 @@ export default function DarePreviewTile({ draft }: { draft: DareDraft }) {
         </span>
         <span className="rounded-full bg-[var(--ink)] px-2 py-[3px] text-[11.5px] font-bold text-[var(--dare)]">{draft.respondByHours}h to answer</span>
         <span className="rounded-full bg-[var(--ink)] px-2 py-[3px] text-[11.5px] font-bold text-[var(--dare)]">{draft.completeByHours}h to do it</span>
-        {draft.rewardAmount ? <span className="rounded-full border-[1.5px] border-[var(--ink)] px-2 py-[2px] text-[11.5px] font-bold">₹{draft.rewardAmount}</span> : null}
+        
       </div>
     </div>
   );

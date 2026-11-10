@@ -3,12 +3,12 @@
 import { isFinishedPact } from '@/lib/pactOutcome'
 import { isActive as isDareActive } from '@/lib/dareView'
 import Link from 'next/link'
+import CircleMark from '@/components/brand/CircleMark'
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { Eye, Plus, Search } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import RefreshButton from '@/components/RefreshButton'
 import { getMyWatching, withdrawAsk, type WatchRequest } from '@/lib/api/access'
 import { DarePactCard } from '@/components/classic/PactCard'
 import { pactAdvancedService, dareService, pactService } from '@/services/api'
@@ -35,7 +35,7 @@ export default function PactsPage() {
 function SectionLabel({ label, count, tone, muted, note }: { label: string; count: number; tone?: 'navy'; muted?: boolean; note?: string }) {
   return (
     <h2
-      className={`px-2 pt-3 text-[12px] font-extrabold uppercase tracking-[0.08em] ${tone === 'navy' ? 'text-[var(--navy)]' : muted ? 'text-[var(--muted)]' : 'text-[var(--ink)]'}`}
+      className={`px-2 pt-3 text-[13px] font-bold ${tone === 'navy' ? 'text-[var(--navy)]' : muted ? 'text-[var(--muted)]' : 'text-[var(--ink)]'}`}
     >
       {label} <span className="font-bold text-[var(--muted)]">{count}</span>
       {note && <span className="ml-1.5 font-semibold normal-case tracking-normal text-[var(--muted)]">· {note}</span>}
@@ -198,51 +198,65 @@ function PactsPageInner() {
   }
 
   const activeShown = active.filter((pact: any) => pact.is_joined_by_me !== false)
+  const glance: { label: string; value: string | number; filter: (typeof filters)[number] }[] = [
+    { label: 'Active', value: counts.Active, filter: 'Active' },
+    // How many of today's check-ins are in, when the app knows; otherwise how many you finished.
+    postedCount != null
+      ? { label: 'Checked in today', value: `${postedCount}/${allActive.length}`, filter: 'Active' }
+      : { label: 'Ended', value: counts.Ended, filter: 'Ended' },
+    { label: 'Watching', value: counts.Watching, filter: 'Watching' },
+  ]
   const nothingToShow =
     (!showActive || activeShown.length === 0) &&
     (!showWatching || (watchingLive.length === 0 && (filter !== 'Watching' || visibleRequests.length === 0))) &&
     (!showDares || dareRows.length === 0) &&
     (!showDone || doneAll.length === 0)
-  const refreshAll = () => Promise.all([query.refetch(), watchingQuery.refetch(), daresQuery.refetch()])
 
   return (
     <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
       <div className="mx-auto max-w-2xl">
-        <header className="flex items-start justify-between gap-3 px-6 pb-1.5 pt-9">
-          <div className="flex min-w-0 flex-col gap-2">
-            <h1 className="text-[34px] font-bold leading-none tracking-[-0.035em]">Your Pacts</h1>
-            {STORIES_ENABLED ? (
-              <>
-                {query.isSuccess && <p className="text-[14px] text-[var(--muted)]">{storySummary}</p>}
-              </>
-            ) : (
-              summary && <p className="text-[14px] text-[var(--muted)]">{summary}</p>
-            )}
-          </div>
-          <RefreshButton label="Refresh pacts" onRefresh={refreshAll} />
+        <header className="flex items-center justify-between gap-3 px-5 pb-3 pt-7">
+          <h1 className="flex items-center gap-2.5 text-[32px] font-bold leading-none tracking-[-0.045em]">
+            <CircleMark size={24} />
+            Pacts
+          </h1>
         </header>
 
-        <div className="flex items-center justify-between gap-3 px-6 pb-3 pt-5">
-          <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--card)] px-4 text-[14px] text-[var(--muted)]">
-            <Search className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search pacts"
-              aria-label="Search pacts"
-              className="min-w-0 flex-1 bg-transparent text-[var(--ink)] outline-none placeholder:text-[var(--muted)]"
-            />
-          </label>
+        {/* Your pacts at a glance: three numbers that jump to the right list, and the way to start one. */}
+        <section className="mx-[10px] mb-3 rounded-[22px] bg-[var(--navy)] p-3 text-white sm:mx-6" aria-label="Your pacts at a glance">
+          <div className="grid grid-cols-3 text-center">
+            {glance.map((stat) => (
+              <button key={stat.label} type="button" onClick={() => setFilter(stat.filter)} className="min-h-[56px] rounded-[14px] px-1 active:bg-white/10">
+                <span key={String(stat.value)} className="cp-tick block text-[26px] font-bold leading-none tracking-[-0.03em]">{query.isSuccess ? stat.value : '–'}</span>
+                <span className="mt-1 block text-[12.5px]" style={{ color: '#D4DBFA' }}>{stat.label}</span>
+              </button>
+            ))}
+          </div>
           <Link
             href="/pacts/create"
-            className="ml-auto flex h-11 shrink-0 items-center gap-2 rounded-full bg-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--card)] transition hover:bg-[var(--navy-hover)]"
+            className="mt-2.5 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white text-[16px] font-bold text-[var(--navy)] transition active:scale-[0.98]"
           >
-            <Plus className="h-4 w-4" strokeWidth={2} />
-            New Pact
+            <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" />
+            New pact
           </Link>
-        </div>
+        </section>
 
-        <nav className="flex gap-2 overflow-x-auto px-6 pb-4" aria-label="Pact filters">
+        {(pacts.length + watchingAll.length > 4 || search) && (
+          <div className="px-4 pb-3">
+            <label className="flex h-11 min-w-0 items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--card)] px-4 text-[var(--muted)]">
+              <Search className="h-4 w-4 shrink-0" strokeWidth={1.7} aria-hidden="true" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search pacts"
+                aria-label="Search pacts"
+                className="min-w-0 flex-1 bg-transparent text-[16px] text-[var(--ink)] outline-none placeholder:text-[var(--muted)]"
+              />
+            </label>
+          </div>
+        )}
+
+        <nav className="flex gap-1.5 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Pact filters">
           {filters.map((item) => {
             const count = item === 'All' ? countAll : counts[item]
             const selected = filter === item
@@ -252,7 +266,7 @@ function PactsPageInner() {
                 type="button"
                 onClick={() => setFilter(item)}
                 aria-pressed={selected}
-                className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-[13px] font-semibold transition ${
+                className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-[13px] font-bold transition ${
                   selected
                     ? item === 'Watching'
                       ? 'bg-[var(--navy)] text-white'
@@ -284,30 +298,56 @@ function PactsPageInner() {
         )}
 
         {query.isLoading ? (
-          <p className="px-6 py-10 text-[14px] text-[var(--muted)]">Loading pacts…</p>
+          <div className="flex flex-col gap-3.5 px-[10px] pt-2" aria-busy="true" aria-label="Loading pacts">
+            {[0, 1].map((i) => (
+              <div key={i} className="overflow-hidden rounded-[22px] border border-[var(--line)] bg-[var(--card)]">
+                <div className="pact-shimmer aspect-[16/10]" />
+                <div className="flex items-center gap-3 p-3.5">
+                  <div className="pact-shimmer h-4 flex-1 rounded-full" />
+                  <div className="pact-shimmer h-11 w-28 rounded-full" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : nothingToShow && !query.isError && filter === 'Watching' && search.trim() === '' ? (
           <div className="px-4 pt-2">
             <div className="rounded-[22px] border border-[var(--line)] bg-[var(--card)] px-6 py-8 text-center">
               <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-[var(--navy)]/10 text-[var(--navy)]">
                 <Eye className="size-6" strokeWidth={2} aria-hidden="true" />
               </span>
-              <h2 className="mt-4 text-[20px] font-extrabold tracking-[-0.02em]">Pacts You Watch Live Here</h2>
+              <h2 className="mt-4 text-[20px] font-extrabold tracking-[-0.02em]">Pacts you watch live here</h2>
               <p className="mt-2 text-[14px] leading-[1.5] text-[var(--muted)]">
                 When you pay to watch a pact and the creator accepts you, it shows up here, and it stays at the top of your feed.
               </p>
               <Link href="/feed?paid=1" className="mt-5 inline-flex h-11 items-center rounded-full bg-[var(--navy)] px-6 text-[14px] font-extrabold text-white transition hover:bg-[var(--navy-hover)]">
-                Browse The Feed
+                Browse the feed
               </Link>
             </div>
           </div>
         ) : nothingToShow && !query.isError ? (
-          <div className="flex flex-col items-start gap-3 px-6 py-8">
-            <p className="text-[14px] text-[var(--muted)]">{pacts.length === 0 && watchingAll.length === 0 ? 'You have no pacts yet.' : 'No pacts match that.'}</p>
-            {pacts.length === 0 && watchingAll.length === 0 && (
-              <Link href="/pacts/create" className="flex h-11 items-center rounded-full bg-[var(--navy)] px-5 text-[14px] font-semibold text-[var(--card)]">
-                Make a pact
-              </Link>
-            )}
+          <div className="px-4 pt-2">
+            <div className="rounded-[22px] border border-[var(--line)] bg-[var(--card)] px-6 py-8 text-center">
+              <span className="mx-auto flex justify-center">
+                <CircleMark key={filter} size={72} animation="draw" />
+              </span>
+              {pacts.length === 0 && watchingAll.length === 0 ? (
+                <>
+                  <h2 className="mt-4 text-[22px] font-bold tracking-[-0.03em]">Say it. Do it. Let people see.</h2>
+                  <p className="mt-2 text-[14px] leading-[1.5] text-[var(--muted)]">A pact is one thing you&apos;ll do for a set number of days, with a photo each day to show for it.</p>
+                  <Link href="/pacts/create" className="mt-5 inline-flex h-11 items-center gap-2 rounded-full bg-[var(--navy)] px-6 text-[14px] font-bold text-white">
+                    <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" />
+                    Make your first pact
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <h2 className="mt-4 text-[20px] font-bold tracking-[-0.03em]">{search.trim() ? 'No pacts match that' : `Nothing in ${filter.toLowerCase()} right now`}</h2>
+                  <button type="button" onClick={() => { setSearch(''); setFilter('All') }} className="mt-4 inline-flex h-11 items-center rounded-full border-[1.5px] border-[var(--navy)] px-6 text-[14px] font-bold text-[var(--navy)]">
+                    Show all pacts
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         ) : (
           <div className="flex flex-col gap-3.5 px-4 pt-2">
@@ -350,7 +390,7 @@ function PactsPageInner() {
 
             {showWatching && watchingLive.length > 0 && (
               <>
-                <SectionLabel label={filter === 'Watching' ? 'Watching Now' : 'Watching'} count={watchingLive.length} tone="navy" />
+                <SectionLabel label={filter === 'Watching' ? 'Watching now' : 'Watching'} count={watchingLive.length} tone="navy" />
                 {watchingLive.map((pact) => (
                   <div key={pact.id} className="-mx-4">
                     <FeedPactCard pact={pact} canReport={false} />
@@ -365,7 +405,7 @@ function PactsPageInner() {
                 const stories = storyQueries[activeIds.indexOf(Number(pact.id))]?.data
                 const postedToday = stories ? stories.some((story: any) => story.user_id === user?.id) : undefined
                 return (
-                  <div key={pact.id} className="-mx-4">
+                  <div key={pact.id} className="cp-rise-in -mx-4" style={{ ['--i' as string]: Math.min(activeShown.indexOf(pact), 6) }}>
                     <FeedPactCard
                       pact={pact}
                       postedToday={postedToday}

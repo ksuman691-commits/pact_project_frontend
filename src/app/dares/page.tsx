@@ -6,7 +6,6 @@ import { useSearchParams } from 'next/navigation';
 import { Zap } from 'lucide-react';
 import DareCard from '@/components/DareCard';
 import CreateDareModal from '@/components/CreateDareModal';
-import RefreshButton from '@/components/RefreshButton';
 import { useDareFeed, useMyDares } from '@/hooks/useDareQueries';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { dareRole, dareState, isActive, nextStep } from '@/lib/dareView';
@@ -117,7 +116,6 @@ function DaresPageInner() {
             <CircleMark size={24} />
             Dares
           </h1>
-          <RefreshButton label="Refresh dares" onRefresh={() => Promise.all([mine.refetch(), feed.refetch()])} />
         </header>
 
         {/* Your dares at a glance: three numbers that jump to the right list, and the way to send one. */}

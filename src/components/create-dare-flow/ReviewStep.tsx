@@ -38,12 +38,12 @@ export default function ReviewStep() {
 
       <div className="mt-auto pt-8">
         <SlideToSend
-          label={count > 2 ? `Slide to dare ${count} people` : count === 2 ? `Slide to dare ${names[0]} & ${names[1]}` : `Slide to dare ${whoName.split(' ')[0]}`}
+          label={`${count > 2 ? `Slide to dare ${count} people` : count === 2 ? `Slide to dare ${names[0]} & ${names[1]}` : `Slide to dare ${whoName.split(' ')[0]}`}${draft.rewardAmount && count <= 1 ? ` for ₹${draft.rewardAmount}` : ''}`}
           busy={isSubmitting}
           disabled={!who}
           onSend={submit}
         />
-        <p className="mt-2 text-center text-[12.5px] text-[var(--muted)]">You can call it off later.</p>
+        <p className="mt-2 text-center text-[12.5px] text-[var(--muted)]">{draft.rewardAmount ? `You pay only after you see the proof and mark it done.` : 'You can call it off later.'}</p>
       </div>
     </div>
   );

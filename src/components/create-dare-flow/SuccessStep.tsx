@@ -23,7 +23,8 @@ export default function SuccessStep({ onDone }: { onDone: () => void }) {
   const hours = `${draft.respondByHours} ${draft.respondByHours === 1 ? 'hour' : 'hours'}`;
 
   // They only know about the dare once they open the app, so make it one tap to tell them.
-  const message = `I dared you on CirclePact: "${title}". You have ${hours} to say yes.`;
+  const reward = draft.rewardAmount;
+  const message = `I dared you on CirclePact: "${title}".${reward ? ` Do it and I'll pay you ₹${reward}.` : ''} You have ${hours} to say yes.`;
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const tell = async () => {
     try {
@@ -66,7 +67,10 @@ export default function SuccessStep({ onDone }: { onDone: () => void }) {
       </div>
 
       <section className="mt-6 rounded-[22px] bg-[var(--ink)] px-4 py-3.5 text-white" aria-label="The dare you sent">
-        <p className="text-[13px] font-bold text-[var(--dare)]">I dare you</p>
+        <p className="flex items-center justify-between text-[13px] font-bold text-[var(--dare)]">
+          I dare you
+          {reward ? <span className="rounded-full bg-[var(--dare)] px-2.5 py-0.5 text-[var(--ink)]">for ₹{reward}</span> : null}
+        </p>
         <p className="mt-1 text-[20px] font-bold leading-[1.15] tracking-[-0.02em]">{title}</p>
         <div className="my-3 h-px" style={{ background: 'repeating-linear-gradient(90deg, #46454D 0 6px, transparent 6px 12px)' }} />
         <ul className="space-y-2">
@@ -82,6 +86,7 @@ export default function SuccessStep({ onDone }: { onDone: () => void }) {
             );
           })}
         </ul>
+        {reward ? <p className="mt-3 text-[12.5px] leading-[1.4]" style={{ color: '#C9C8CF' }}>You pay ₹{reward}{many ? ' to each person who does it' : ''} over UPI, only after you mark it done.</p> : null}
       </section>
 
       <div className="mt-auto flex flex-col gap-2 pt-8">
