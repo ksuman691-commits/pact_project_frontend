@@ -25,7 +25,7 @@ export default function DescriptionStep() {
         }}
         placeholder="Tell them more about the dare..."
         rows={6}
-        className="mt-6 w-full resize-none rounded-[28px] border border-[var(--pact-hairline)] bg-[var(--pact-surface)] px-4 py-3 text-[var(--pact-text)] placeholder:text-[var(--pact-text-faint)] focus:outline-none focus:border-[var(--pact-pink)]"
+        className="mt-6 w-full resize-none rounded-[28px] border border-[var(--pact-hairline)] bg-[var(--pact-surface)] px-4 py-3 text-[var(--pact-text)] placeholder:text-[var(--pact-text-faint)] focus:outline-none focus:border-[var(--ink)]"
       />
 
       {showNudge && <MultiDayNudge sourceText={draft.description} onDismiss={() => setNudgeDismissed(true)} />}
@@ -36,7 +36,7 @@ export default function DescriptionStep() {
           onClick={goNext}
           disabled={!draft.description.trim()}
           className=" w-full rounded-full py-3 font-bold disabled:opacity-40"
-          style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
+          style={{ background: 'var(--ink)', color: 'var(--dare)' }}
         >
           Continue
         </button>
