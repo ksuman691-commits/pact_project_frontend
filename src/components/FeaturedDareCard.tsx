@@ -1,77 +1,111 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Zap } from 'lucide-react';
+import { Send, Zap } from 'lucide-react';
 import type { Dare } from '@/types';
+import CircleMark from '@/components/brand/CircleMark';
+import CreateDareModal from '@/components/CreateDareModal';
 import { useClaimDare } from '@/hooks/useDareMutations';
-import { getTimeRing, isDareExpired } from '@/lib/dareCountdown';
+import { isDareExpired, parseApiDate } from '@/lib/dareCountdown';
 
 interface FeaturedDareCardProps {
   dare: Dare;
 }
 
+const two = (n: number) => String(n).padStart(2, '0');
+
+/** A ticking h:mm:ss until the dare closes (days shown once it is more than a day away). */
+function useClock(targetRaw?: string | null): string | null {
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const target = parseApiDate(targetRaw);
+  if (!target || now == null) return null;
+  const seconds = Math.max(0, Math.floor((target.getTime() - now) / 1000));
+  if (seconds <= 0) return null;
+  const days = Math.floor(seconds / 86400);
+  if (days >= 1) return `${days}d ${Math.floor((seconds % 86400) / 3600)}h`;
+  return `${two(Math.floor(seconds / 3600))}:${two(Math.floor((seconds % 3600) / 60))}:${two(seconds % 60)}`;
+}
+
 /**
- * Photo-forward "featured dare" hero for the top of the Dares page —
- * structurally matching the approved mockup's dare-of-the-day treatment,
- * but honestly labeled "Featured dare" rather than "Dare of the Day":
- * there's no daily-rotation/curation mechanic in the data model, so the
- * page picks the single most time-critical open public dare from Discover
- * instead of implying an editorial pick that doesn't exist. Every number
- * shown (recipient_count, the countdown) is a real field off the Dare
- * object, same as DareCard.
+ * The big yellow dare on Home and at the top of Dares. Yellow on ink is the
+ * dare colour everywhere; the red mark appears only when CirclePact itself
+ * posted the dare. Every number is a real field on the dare: how many people
+ * are in, and (when the server sends it) how many finished.
  */
 export default function FeaturedDareCard({ dare }: FeaturedDareCardProps) {
   const router = useRouter();
-  const claimMutation = useClaimDare();
-  const target = dare.expires_at ?? dare.respond_by;
-  const ring = getTimeRing(target, dare.created_at);
-  const isExpired = isDareExpired(dare);
-  const recipientCount = dare.recipient_count ?? dare.recipients?.length ?? 0;
-  const isPublicUnclaimed = dare.audience === 'public' && !dare.my_recipient_status;
+  const claim = useClaimDare();
+  const [sendOpen, setSendOpen] = useState(false);
+  const clock = useClock(dare.expires_at ?? dare.respond_by);
+  const expired = isDareExpired(dare);
+  const live = dare.recipient_count ?? dare.recipients?.length ?? 0;
+  const took = dare.completed_count;
+  const canJoin = dare.audience === 'public' && !dare.my_recipient_status && !expired;
+  const open = () => router.push(`/dares/${dare.id}`);
 
   return (
-    <div
-      onClick={() => router.push(`/dares/${dare.id}`)}
-      role="link"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/dares/${dare.id}`); }}
-      className="pact-card cursor-pointer overflow-hidden rounded-[28px]"
-      style={{ background: 'var(--pact-surface)', border: '1px solid var(--pact-hairline)' }}
-    >
-      <div className="relative flex aspect-[16/9] w-full items-end p-4" style={{ background: 'var(--navy)' }}>
-        <Zap className="pointer-events-none absolute right-4 top-4 h-14 w-14 text-white/25" strokeWidth={1.5} aria-hidden="true" />
-        <div className="relative z-10">
-          <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold text-white">
-            <Zap className="h-2.5 w-2.5" />
-            Featured dare
+    <>
+      <section
+        onClick={open}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && e.target === e.currentTarget) open();
+        }}
+        role="link"
+        tabIndex={0}
+        aria-label={dare.title}
+        className="relative cursor-pointer overflow-hidden rounded-[24px] bg-[var(--dare)] p-4 text-[var(--ink)]"
+      >
+        <Zap className="pointer-events-none absolute -right-7 -top-4 h-36 w-36 opacity-[0.08]" fill="currentColor" strokeWidth={0} aria-hidden="true" />
+        <div className="relative flex items-center justify-between gap-2">
+          <span className="flex min-w-0 items-center gap-1.5 text-[13px] font-bold">
+            {dare.is_official ? <CircleMark size={14} /> : <Zap className="h-3.5 w-3.5 shrink-0" fill="currentColor" strokeWidth={0} aria-hidden="true" />}
+            <span className="truncate">{dare.is_official ? 'CirclePact dare of the day' : 'Featured dare'}</span>
           </span>
-          <h3 className="text-xl font-black leading-tight text-white text-balance">{dare.title}</h3>
+          {clock && !expired && (
+            <span className="shrink-0 rounded-full bg-[var(--ink)] px-2.5 py-1 text-[12px] font-bold tabular-nums text-[var(--dare)]" aria-label={`${clock} left to join`}>
+              {clock}
+            </span>
+          )}
         </div>
-      </div>
-      <div className="flex items-center justify-between gap-3 p-4">
-        <p className="text-sm text-[var(--pact-text-muted)]">
-          <span className="font-bold text-[var(--pact-text)]">{recipientCount}</span> {recipientCount === 1 ? 'person' : 'people'} accepted
-        </p>
-        {!isExpired && (
-          <span className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: 'var(--pact-surface-2)', color: ring.color }}>
-            {ring.label}
+        <h2 className="relative mt-3 line-clamp-3 text-balance text-[24px] font-bold leading-[1.15] tracking-[-0.02em]">{dare.title}</h2>
+        <div className="relative mt-3 flex items-center justify-between gap-3 text-[13px]">
+          <span className="font-semibold">
+            {live > 0 ? `${live.toLocaleString()} live with the dare` : 'Be the first to take it'}
           </span>
-        )}
-      </div>
-      {isPublicUnclaimed && !isExpired && (
-        <div className="px-4 pb-4">
+          {typeof took === 'number' && took > 0 && <span className="shrink-0 font-bold">{took.toLocaleString()} took it</span>}
+        </div>
+        <div className="relative mt-3.5 flex gap-2" onClick={(e) => e.stopPropagation()}>
+          {canJoin ? (
+            <button
+              type="button"
+              onClick={() => claim.mutate(dare.id)}
+              disabled={claim.isPending}
+              className="flex h-12 flex-1 items-center justify-center rounded-full bg-[var(--ink)] text-[15px] font-bold text-white transition active:scale-[0.98] disabled:opacity-60"
+            >
+              {claim.isPending ? 'Accepting…' : 'Accept dare'}
+            </button>
+          ) : (
+            <button type="button" onClick={open} className="flex h-12 flex-1 items-center justify-center rounded-full bg-[var(--ink)] text-[15px] font-bold text-white transition active:scale-[0.98]">
+              {dare.my_recipient_status ? "You're in. Open dare" : 'See dare'}
+            </button>
+          )}
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); claimMutation.mutate(dare.id); }}
-            disabled={claimMutation.isPending}
-            className=" flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-bold disabled:opacity-50"
-            style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
+            onClick={() => setSendOpen(true)}
+            className="flex h-12 flex-1 items-center justify-center gap-1.5 rounded-full border-2 border-[var(--ink)] text-[15px] font-bold text-[var(--ink)] transition active:scale-[0.98]"
           >
-            <Zap className="h-4 w-4" />
-            {claimMutation.isPending ? 'Accepting…' : 'Accept Dare'}
+            <Send className="h-4 w-4" strokeWidth={2.4} aria-hidden="true" />
+            Dare a friend
           </button>
         </div>
-      )}
-    </div>
+      </section>
+      <CreateDareModal isOpen={sendOpen} onClose={() => setSendOpen(false)} />
+    </>
   );
 }

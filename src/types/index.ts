@@ -297,6 +297,10 @@ export interface Dare {
   circle_name?: string;
   // Real field from the backend — total recipients on the dare.
   recipient_count?: number;
+  // Optional, sent only by newer backends: how many finished it, and whether
+  // CirclePact itself posted it (the dare of the day).
+  completed_count?: number;
+  is_official?: boolean;
   // Real field: the viewer's own recipient status on this dare, or null if
   // the viewer isn't a recipient (e.g. they're the creator, or it's a
   // public dare they haven't claimed). Drives Accept/Decline/Upload Proof

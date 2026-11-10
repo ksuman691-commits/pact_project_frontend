@@ -1,12 +1,12 @@
 'use client'
 
-import CircleMark, { MarkProgress } from '@/components/brand/CircleMark'
+import CircleMark from '@/components/brand/CircleMark'
 import { useCallback, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Camera, Check, Plus } from 'lucide-react'
+import StreakChip from '@/components/StreakChip'
 import { STORIES_ENABLED } from '@/lib/stories'
-import { useCountUp } from '@/components/pact-ui/useCountUp'
 import { useTodayStatus, type TodayPact } from '@/hooks/useTodayStatus'
 import { useSnapSwipe } from '@/hooks/useSnapSwipe'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
@@ -58,88 +58,112 @@ function PeerFace({ name, imageUrl, tone }: { name?: string | null; imageUrl?: s
   )
 }
 
-function CheckInSlide({ pact, peers, fullWidth, onCapture }: { pact: TodayPact; peers: MomentPerson[]; fullWidth: boolean; onCapture: (pact: TodayPact) => void }) {
+interface SlideProps {
+  pact: TodayPact
+  peers: MomentPerson[]
+  fullWidth: boolean
+  onCapture: (pact: TodayPact) => void
+  done: number
+  total: number
+  streak: number
+  onCreatePact?: () => void
+}
+
+/**
+ * One slim navy card per pact: today's count and streak on top, the pact and
+ * who's posted in the middle, a thin progress bar underneath. The yellow
+ * button is the one thing to tap.
+ */
+function CheckInSlide({ pact, peers, fullWidth, onCapture, done, total, streak, onCreatePact }: SlideProps) {
   const hours = hoursLeft(pact)
   const urgent = !pact.posted_today && hours != null && hours < 24
   const dayLabel = pact.day && pact.total_days ? `Day ${pact.day} of ${pact.total_days}` : null
   const circlePeers = pact.circle_id != null ? peers.filter((p) => p.circleId === Number(pact.circle_id)) : []
   const firstPeer = circlePeers[0]?.name?.split(' ')[0] || 'Someone'
   // Who in this pact's circle already posted today, stated as a fact, never a guilt trip.
-  const socialLine =
+  const peersLine =
     circlePeers.length === 1
       ? `${firstPeer} posted`
       : circlePeers.length === 2
         ? `${firstPeer} and ${circlePeers[1].name?.split(' ')[0] || 'one other'} posted`
         : circlePeers.length > 2
           ? `${firstPeer} and ${circlePeers.length - 1} others posted`
-          : pact.circle_name
-            ? `Be the first in ${pact.circle_name}`
-            : hours != null
-              ? endsLabel(hours)
-              : null
+          : null
   const postedAt = timeOf(pact.posted_at)
+  const where = pact.circle_name || 'Personal'
+  const detail = urgent && hours != null ? endsLabel(hours) : peersLine || dayLabel
 
   return (
     <li
-      className="relative flex shrink-0 snap-start flex-col gap-1.5 rounded-[20px] border border-[var(--hairline)] bg-[var(--card)] pb-3 pl-3.5 pr-3 pt-[13px]"
+      className="relative flex shrink-0 snap-start flex-col rounded-[20px] bg-[var(--navy)] pb-3 pl-3.5 pr-2.5 pt-2.5 text-white"
       style={{ width: fullWidth ? '100%' : `calc(100% - ${32 + GAP}px)` }}
       aria-label={`${pact.title}${pact.posted_today ? ', checked in' : ', waiting'}`}
     >
-      <div className="flex min-w-0 items-center gap-1.5 text-[12px] text-[var(--muted)]">
-        <span className="truncate font-bold text-[var(--ink)]">{pact.circle_name || 'Personal'}</span>
-        {dayLabel && <span className="shrink-0">· {dayLabel}</span>}
+      <div className="relative z-[1] flex min-h-6 items-center gap-1.5 text-[12px] font-semibold" style={{ color: '#D4DBFA' }}>
+        <span>
+          Today <span key={done} className="cp-tick inline-block text-white">{done}</span>/{total}
+        </span>
+        {streak > 0 && <StreakChip streak={streak} tone="onNavy" />}
         <span className="flex-1" />
-        {urgent && hours != null && <span className="shrink-0 font-extrabold text-[#A4471F]">{endsLabel(hours)}</span>}
-      </div>
-      {/* The slide's top half opens the pact; the buttons below keep their own jobs. */}
-      <Link href={`/pacts/${pact.id}`} className="-mx-1 -my-0.5 truncate rounded-[10px] px-1 py-0.5 text-[16px] font-extrabold tracking-[-0.015em] text-[var(--ink)] after:absolute after:inset-x-0 after:top-0 after:h-[62%] after:content-['']">
-        {pact.title}
-      </Link>
-      <div className="relative z-[1] mt-0.5 flex items-center gap-2">
-        {pact.posted_today ? (
-          <>
-            <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full text-white" style={{ background: 'var(--success, #2E7D4F)' }}>
-              <Check className="h-3 w-3" strokeWidth={3.4} aria-hidden="true" />
-            </span>
-            <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold" style={{ color: 'var(--success, #2E7D4F)' }}>
-              {postedAt ? `Checked in · ${postedAt}` : 'Checked in'}
-            </span>
-            <button
-              type="button"
-              onClick={() => onCapture(pact)}
-              aria-label={`Add another moment to ${pact.title}`}
-              className="cp-hit relative flex h-[38px] shrink-0 items-center gap-1.5 rounded-full border-[1.5px] border-[var(--navy)] pl-[11px] pr-[13px] text-[13.5px] font-extrabold text-[var(--navy)] transition active:scale-[0.97]"
-            >
-              <Camera className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
-              Add
-            </button>
-          </>
-        ) : (
-          <>
-            {circlePeers.length > 0 && (
-              <span className="flex shrink-0 -space-x-1.5">
-                {circlePeers.slice(0, 2).map((p, i) => (
-                  <PeerFace key={p.userId} name={p.name} imageUrl={p.avatarUrl} tone={i === 0 ? 'var(--navy)' : 'var(--ink)'} />
-                ))}
-              </span>
-            )}
-            {pact.nudged_by?.count ? (
-              // Being nudged by several people is the point: show who, in navy, where you check in.
-              <span key={pact.nudged_by.count} className="cp-pop-in min-w-0 flex-1 truncate text-[12.5px] font-bold text-[var(--navy)]">{pact.nudged_by.line}</span>
-            ) : (
-              <span className="min-w-0 flex-1 truncate text-[12.5px] text-[var(--muted)]">{socialLine}</span>
-            )}
-            <button
-              type="button"
-              onClick={() => onCapture(pact)}
-              aria-label={`Check in to ${pact.title}`}
-              className="cp-hit relative flex h-[38px] shrink-0 items-center gap-1.5 rounded-full bg-[var(--navy)] pl-3 pr-3.5 text-[13.5px] font-extrabold text-white transition hover:bg-[var(--navy-hover)] active:scale-[0.97]"
-            >
-              <Camera className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
-              Check in
-            </button>
-          </>
+        {onCreatePact && (
+          <button type="button" onClick={onCreatePact} className="cp-hit relative flex h-6 items-center gap-0.5 pr-1 text-[12.5px] font-bold text-white" style={{ ['--cp-hit' as string]: '10px' }}>
+            <Plus className="h-3.5 w-3.5" strokeWidth={2.8} aria-hidden="true" />
+            New pact
+          </button>
         )}
+      </div>
+
+      <div className="mt-1 flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          {/* The text opens the pact; the button keeps its own job. */}
+          <Link href={`/pacts/${pact.id}`} className="block truncate text-[16px] font-bold tracking-[-0.015em] text-white">
+            {pact.title}
+          </Link>
+          {pact.posted_today ? (
+            <p className="mt-px flex items-center gap-1 truncate text-[12.5px] font-semibold text-white">
+              <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={3.2} aria-hidden="true" />
+              {postedAt ? `Checked in · ${postedAt}` : 'Checked in'}
+            </p>
+          ) : pact.nudged_by?.count ? (
+            // Being nudged by several people is the point: show who, where you check in.
+            <p key={pact.nudged_by.count} className="cp-pop-in mt-px truncate text-[12.5px] font-bold text-[var(--dare)]">{pact.nudged_by.line}</p>
+          ) : (
+            <p className="mt-px truncate text-[12.5px]" style={{ color: '#D4DBFA' }}>
+              {where}
+              {detail && (
+                <>
+                  {' · '}
+                  <span className={urgent ? 'font-bold text-[var(--dare)]' : undefined}>{detail}</span>
+                </>
+              )}
+            </p>
+          )}
+        </div>
+        {pact.posted_today ? (
+          <button
+            type="button"
+            onClick={() => onCapture(pact)}
+            aria-label={`Add another moment to ${pact.title}`}
+            className="flex h-11 shrink-0 items-center gap-1.5 rounded-full border-[1.5px] border-white/70 pl-3 pr-3.5 text-[14px] font-bold text-white transition active:scale-[0.97]"
+          >
+            <Camera className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
+            Add
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onCapture(pact)}
+            aria-label={`Check in to ${pact.title}`}
+            className="flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-[var(--dare-deep)] pl-3.5 pr-4 text-[15px] font-bold text-[var(--ink)] shadow-[0_4px_12px_rgba(0,0,0,0.25)] transition active:scale-[0.97]"
+          >
+            <Camera className="h-[18px] w-[18px]" strokeWidth={2.2} aria-hidden="true" />
+            Check in
+          </button>
+        )}
+      </div>
+
+      <div className="mr-1 mt-2.5 h-1 overflow-hidden rounded-full bg-white/20" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={done} aria-label={`${done} of ${total} pacts checked in today`}>
+        <div className="h-full rounded-full bg-white transition-[width] duration-500" style={{ width: `${total ? Math.max(done ? 4 : 0, (done / total) * 100) : 0}%` }} />
       </div>
     </li>
   )
@@ -150,7 +174,7 @@ function CheckInSlide({ pact, peers, fullWidth, onCapture }: { pact: TodayPact; 
  * waiting for today's moment come first; checked-in ones move to the end.
  * When every pact is checked in it shrinks to one quiet line.
  */
-export default function TodayCheckInRow({ onCreatePact, peers = [] }: { onCreatePact?: () => void; peers?: MomentPerson[] }) {
+export default function TodayCheckInRow({ onCreatePact, peers = [], streak = 0 }: { onCreatePact?: () => void; peers?: MomentPerson[]; streak?: number }) {
   const router = useRouter()
   const { pacts, allDone, isLoading } = useTodayStatus()
   const [capturePact, setCapturePact] = useState<TodayPact | null>(null)
@@ -159,7 +183,6 @@ export default function TodayCheckInRow({ onCreatePact, peers = [] }: { onCreate
 
   const waiting = pacts.filter((p) => !p.posted_today)
   const done = pacts.filter((p) => p.posted_today)
-  const doneShown = useCountUp(done.length, 600)
   const slides = [...waiting, ...done]
   const single = slides.length === 1
 
@@ -203,6 +226,7 @@ export default function TodayCheckInRow({ onCreatePact, peers = [] }: { onCreate
         <>
           <div className="flex items-center gap-2 px-0.5">
             <h2 className="text-[17px] font-extrabold tracking-[-0.01em] text-[var(--ink)]">Today</h2>
+            {streak > 0 && <StreakChip streak={streak} />}
           </div>
           <div className="flex items-center gap-3 rounded-[20px] border border-[var(--hairline)] bg-[var(--card)] p-3">
             <CircleMark size={34} animation="draw" className="ml-1" />
@@ -231,17 +255,7 @@ export default function TodayCheckInRow({ onCreatePact, peers = [] }: { onCreate
         </div>
       ) : (
         <>
-          <div className="flex items-center gap-2 px-0.5">
-            <h2 className="text-[17px] font-extrabold tracking-[-0.01em] text-[var(--ink)]">Today</h2>
-            <span className="flex items-center gap-2 text-[13px] font-semibold text-[var(--muted)]">
-              <span>
-                <span key={done.length} className="cp-tick inline-block text-[var(--ink)]">{doneShown}</span> of {pacts.length} done
-              </span>
-              <MarkProgress value={pacts.length ? done.length / pacts.length : 0} size={16} track="var(--hairline)" />
-            </span>
-            <span className="flex-1" />
-            {newPact}
-          </div>
+          <h2 className="sr-only">Today</h2>
           <ul
             ref={scrollerRef}
             onScroll={onScroll}
@@ -250,12 +264,15 @@ export default function TodayCheckInRow({ onCreatePact, peers = [] }: { onCreate
             aria-label={`${waiting.length} ${waiting.length === 1 ? 'pact' : 'pacts'} waiting for today's moment`}
           >
             {slides.map((pact) => (
-              <CheckInSlide key={pact.id} pact={pact} peers={peers} fullWidth={single} onCapture={capture} />
+              <CheckInSlide key={pact.id} pact={pact} peers={peers} fullWidth={single} onCapture={capture} done={done.length} total={pacts.length} streak={streak} onCreatePact={onCreatePact} />
             ))}
           </ul>
           {!single && (
-            <div className="flex justify-center pt-0.5 text-[11.5px] font-bold tabular-nums text-[var(--muted)]" aria-hidden="true">
-              {index + 1} / {slides.length}
+            <div className="flex items-center justify-center gap-1 pt-0.5" aria-hidden="true">
+              {slides.slice(0, 5).map((pact, i) => (
+                <span key={pact.id} className="h-1 rounded-full transition-all" style={{ width: Math.min(index, 4) === i ? 16 : 4, background: Math.min(index, 4) === i ? 'var(--navy)' : 'var(--hairline)' }} />
+              ))}
+              {slides.length > 5 && <span className="pl-0.5 text-[11px] font-semibold leading-none text-[var(--muted)]">+{slides.length - 5}</span>}
             </div>
           )}
         </>
