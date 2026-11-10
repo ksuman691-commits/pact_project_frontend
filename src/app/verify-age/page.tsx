@@ -31,7 +31,6 @@ export default function VerifyAgePage() {
   const completeAgeVerification = useAuthStore((state) => state.completeAgeVerification);
 
   const [dateOfBirth, setDateOfBirth] = useState('');
-  const [tosAccepted, setTosAccepted] = useState(false);
   const [underageMessage, setUnderageMessage] = useState<string | null>(null);
   const [removed, setRemoved] = useState(false);
   const setUser = useAuthStore((state) => state.setUser);
@@ -63,11 +62,6 @@ export default function VerifyAgePage() {
     const parsed = new Date(dateOfBirth);
     if (Number.isNaN(parsed.getTime()) || parsed.getTime() > Date.now()) {
       toast.error('Please enter a valid date of birth');
-      return;
-    }
-
-    if (!tosAccepted) {
-      toast.error('Please confirm you agree to the Terms of Service');
       return;
     }
 
@@ -150,20 +144,6 @@ export default function VerifyAgePage() {
           </p>
         )}
 
-        <label className="flex items-start gap-2.5 text-sm text-ink-soft">
-          <input
-            type="checkbox"
-            checked={tosAccepted}
-            onChange={(e) => setTosAccepted(e.target.checked)}
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--seat-border)] accent-[var(--navy)] focus:ring-navy"
-          />
-          <span>
-            I confirm I am {MIN_AGE} or older and agree to CirclePact&apos;s{' '}
-            <a href="/terms" target="_blank" rel="noopener" className="font-semibold text-ink underline">Terms of Service</a>{' '}
-            and{' '}
-            <a href="/privacy" target="_blank" rel="noopener" className="font-semibold text-ink underline">Privacy Policy</a>.
-          </span>
-        </label>
 
         <button
           type="submit"

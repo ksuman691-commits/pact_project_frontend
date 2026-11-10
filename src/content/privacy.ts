@@ -4,6 +4,8 @@
 // Items in [square brackets] must be filled in before this goes live.
 
 export const PRIVACY_UPDATED = '8 November 2026';
+// Sent with consent; must match PRIVACY_VERSION in the backend's app/core/legal.py.
+export const PRIVACY_VERSION = '2026-11-08';
 
 export const PRIVACY = `
 This Privacy Policy is our notice to you under India's Digital Personal Data Protection Act, 2023 (the "DPDP Act") and the Digital Personal Data Protection Rules, 2025. It explains what personal data CirclePact collects, why, who we share it with, how long we keep it, and how you can use your rights. [Company legal name] ("CirclePact", "we", "us") decides how and why your personal data is used, so under the DPDP Act we are the **Data Fiduciary** and we're responsible for it, including when companies we hire handle it for us.

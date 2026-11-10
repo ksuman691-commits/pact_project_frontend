@@ -39,6 +39,7 @@ const mapUser = (raw: any) => ({
   bio: raw?.bio ?? null,
   is_staff: raw?.is_staff ?? false,
   date_of_birth: raw?.date_of_birth ?? null,
+  needs_consent: raw?.needs_consent === true,
 });
 
 const formatTimeRemaining = (endDateRaw: string | undefined) => {
@@ -274,7 +275,8 @@ async function refreshAccessTokenSilently(): Promise<string | null> {
 export const authService = {
   register: (data: any) => api.post('/api/auth/register', data),
   login: (data: any) => api.post('/api/auth/login', data),
-  googleLogin: (data: { id_token: string }) => api.post('/api/auth/google', data),
+  googleLogin: (data: { id_token: string } & Record<string, unknown>) => api.post('/api/auth/google', data),
+  acceptConsent: (data: Record<string, unknown>) => api.post('/api/users/me/consent', data),
   refresh: (refresh_token: string) => api.post('/api/auth/refresh', { refresh_token }),
   getProfile: async () => {
     const response = await api.get('/api/auth/me');

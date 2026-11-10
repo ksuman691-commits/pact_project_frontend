@@ -3,6 +3,8 @@
 // Items in [square brackets] must be filled in before this goes live.
 
 export const TERMS_UPDATED = '8 November 2026';
+// Sent with consent; must match TERMS_VERSION in the backend's app/core/legal.py.
+export const TERMS_VERSION = '2026-11-08';
 
 export const TERMS = `
 These terms are the agreement between you and [Company legal name] ("CirclePact", "we", "us") for using the CirclePact app and website. By creating an account or using CirclePact you agree to them. If you don't agree, please don't use CirclePact.
