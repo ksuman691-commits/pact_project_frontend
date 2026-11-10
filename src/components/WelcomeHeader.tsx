@@ -1,8 +1,9 @@
 'use client'
 
-import { Bell, Search } from 'lucide-react'
-import StreakChip from '@/components/StreakChip'
-import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { Bell, Search, Zap } from 'lucide-react'
+import { useState } from 'react'
+import LogoMark from '@/components/LogoMark'
 import UserAvatarLink from '@/components/UserAvatarLink'
 import MemberSearchModal from '@/components/MemberSearchModal'
 
@@ -12,21 +13,21 @@ interface WelcomeHeaderProps {
   notificationCount?: number
   onNotificationsClick?: () => void
   onSearch?: () => void
-  /** Current streak in days — wraps the avatar in a tier ring and shows a chip once above zero. */
+  /** Current streak in days: wraps the avatar in a tier ring. The chip itself now sits in Today. */
   streak?: number
   /** Pulses the ring amber-red to signal an approaching deadline with no proof yet. */
   atRisk?: boolean
-}
-
-function greetingFor(hour: number) {
-  if (hour >= 5 && hour < 12) return 'Good morning'
-  if (hour >= 12 && hour < 17) return 'Good afternoon'
-  return 'Good evening'
+  /** Dares waiting for the viewer's answer. The lightning flickers while there are any. */
+  pendingDares?: number
 }
 
 const iconButton =
-  'relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--hairline)] bg-[var(--card)] text-[var(--ink)] transition active:scale-95'
+  'cp-hit relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--hairline)] bg-[var(--card)] text-[var(--ink)] transition active:scale-95'
 
+/**
+ * Home's top bar: the CirclePact wordmark (same as the sign-in page) on the
+ * left; dares, search, notifications and your profile on the right.
+ */
 export default function WelcomeHeader({
   userName = 'User',
   avatarUrl = null,
@@ -35,64 +36,54 @@ export default function WelcomeHeader({
   onSearch,
   streak,
   atRisk = false,
+  pendingDares = 0,
 }: WelcomeHeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false)
-  // Date and greeting depend on the viewer's clock, so they fill in after
-  // mount. Rendering them on the server would mismatch on hydration.
-  const [now, setNow] = useState<Date | null>(null)
-  useEffect(() => {
-    setNow(new Date())
-  }, [])
-
-  const firstName = userName.trim().split(/\s+/)[0] || userName
-  const greeting = now ? greetingFor(now.getHours()) : 'Welcome back'
+  const waiting = pendingDares > 0
 
   return (
     <>
-      <header className="mx-auto max-w-md px-4 pb-1 pt-5">
-        <div className="flex items-center gap-3">
-          <UserAvatarLink
-            name={userName}
-            avatarUrl={avatarUrl}
-            href="/profile"
-            size={44}
-            className="flex-shrink-0"
-            streak={streak}
-            atRisk={atRisk}
-          />
-          <div className="min-w-0 flex-1">
-            {typeof streak === 'number' && streak > 0 && <StreakChip streak={streak} />}
-            <h1 className="truncate text-[20px] font-extrabold leading-tight tracking-[-0.015em] text-[var(--ink)]">
-              {greeting}, {firstName}
-            </h1>
-          </div>
+      <header className="mx-auto max-w-md px-4 pb-1 pt-4" style={{ ['--cp-hit' as string]: '2px' }}>
+        <div className="flex items-center gap-1.5">
+          <h1 className="m-0 mr-auto flex min-w-0 items-center overflow-hidden">
+            <LogoMark size={20} />
+          </h1>
 
-          <div className="flex shrink-0 items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => {
-                setSearchOpen(true)
-                onSearch?.()
-              }}
-              className={iconButton}
-              aria-label="Search"
-              data-testid="search-button"
-            >
-              <Search className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
-            </button>
+          <Link
+            href="/dares?tab=for-you"
+            aria-label={waiting ? `Dares, ${pendingDares} waiting for you` : 'Dares'}
+            className={`cp-hit relative flex h-10 shrink-0 items-center justify-center gap-1 rounded-full bg-[var(--ink)] text-[14px] font-bold text-[var(--dare)] transition active:scale-95 ${waiting ? 'cp-zap-glow pl-2.5 pr-3' : 'w-10'}`}
+          >
+            <Zap className={`h-[18px] w-[18px] ${waiting ? 'cp-zap' : ''}`} fill="currentColor" strokeWidth={1.6} aria-hidden="true" />
+            {waiting && <span aria-hidden="true">{pendingDares > 9 ? '9+' : pendingDares}</span>}
+          </Link>
 
-            <button type="button" onClick={onNotificationsClick} className={iconButton} aria-label={notificationCount > 0 ? `Notifications, ${notificationCount} unread` : 'Notifications'}>
-              <Bell className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
-              {notificationCount > 0 && (
-                <span
-                  className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-[var(--paper)] bg-[var(--navy)] px-1 text-[10px] font-bold text-white"
-                  aria-hidden="true"
-                >
-                  {notificationCount > 9 ? '9+' : notificationCount}
-                </span>
-              )}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setSearchOpen(true)
+              onSearch?.()
+            }}
+            className={iconButton}
+            aria-label="Search"
+            data-testid="search-button"
+          >
+            <Search className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
+          </button>
+
+          <button type="button" onClick={onNotificationsClick} className={iconButton} aria-label={notificationCount > 0 ? `Notifications, ${notificationCount} unread` : 'Notifications'}>
+            <Bell className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
+            {notificationCount > 0 && (
+              <span
+                className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-[var(--paper)] bg-[var(--navy)] px-1 text-[10px] font-bold text-white"
+                aria-hidden="true"
+              >
+                {notificationCount > 9 ? '9+' : notificationCount}
+              </span>
+            )}
+          </button>
+
+          <UserAvatarLink name={userName} avatarUrl={avatarUrl} href="/profile" size={38} className="ml-0.5 flex-shrink-0" streak={streak} atRisk={atRisk} />
         </div>
       </header>
       <MemberSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />

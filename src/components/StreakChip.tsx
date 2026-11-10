@@ -36,7 +36,7 @@ function Flame({ size, hot }: { size: number; hot: boolean }) {
  * The streak chip on Home. The flame always flickers a little (it is alive). When the streak has grown
  * since this phone last saw it, the chip levels up once: it pops, the number rolls up, and sparks fly.
  */
-export default function StreakChip({ streak }: { streak: number }) {
+export default function StreakChip({ streak, tone = 'navy' }: { streak: number; tone?: 'navy' | 'onNavy' }) {
   const [shown, setShown] = useState(streak)
   const [levelUp, setLevelUp] = useState(false)
   // What this phone last saw, read once (so a re-run of the effect still knows the old value).
@@ -76,7 +76,7 @@ export default function StreakChip({ streak }: { streak: number }) {
   const size = level === 'blaze' ? 16 : level === 'flame' ? 14 : 13
   return (
     <span
-      className={`relative mb-0.5 inline-flex items-center gap-1 rounded-full bg-[var(--navy)] py-0.5 pl-1.5 pr-2 text-[11px] font-bold text-white ${levelUp ? 'cp-streak-levelup' : ''} ${level === 'blaze' ? 'cp-streak-blaze' : ''}`}
+      className={`relative mb-0.5 inline-flex items-center gap-1 rounded-full py-0.5 pl-1.5 pr-2 text-[11px] font-bold text-white ${tone === 'onNavy' ? 'bg-white/15' : 'bg-[var(--navy)]'} ${levelUp ? 'cp-streak-levelup' : ''} ${level === 'blaze' ? 'cp-streak-blaze' : ''}`}
       aria-label={`${streak}-day streak`}
     >
       <Flame size={size} hot={level !== 'spark'} />

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Lock, X } from 'lucide-react'
 import TodayCheckInRow from '@/components/TodayCheckInRow'
@@ -20,6 +21,7 @@ import { useUserStats } from '@/hooks/useUserQueries'
 import { useCircles } from '@/hooks/useCircles'
 import { useAtRiskPact } from '@/hooks/useAtRiskPact'
 import { useFeaturedDare } from '@/hooks/useFeaturedDare'
+import { usePendingDareCount } from '@/hooks/usePendingDareCount'
 import { useProfileCompletion } from '@/hooks/useProfileCompletion'
 import { isProfileNudgeDismissed, isProfileChecklistDismissed } from '@/lib/onboarding'
 import ProfileCompletionCard from '@/components/ProfileCompletionCard'
@@ -38,6 +40,7 @@ export default function FeedPageClient() {
   const momentPeople = useMomentPeople(circles, user?.id)
   const isAtRisk = useAtRiskPact(user?.id)
   const { featuredDare } = useFeaturedDare()
+  const pendingDares = usePendingDareCount()
   const profileCompletion = useProfileCompletion()
   const [nudgeDismissed, setNudgeDismissed] = useState(true)
   const [checklistDismissed, setChecklistDismissed] = useState(true)
@@ -150,6 +153,7 @@ export default function FeedPageClient() {
           onNotificationsClick={handleNotificationsClick}
           streak={currentStreak}
           atRisk={isAtRisk}
+          pendingDares={pendingDares}
         />
 
         {/* Header -> Moments -> Today -> feed. The "For you" chips are gone and
@@ -166,8 +170,8 @@ export default function FeedPageClient() {
         )}
 
         {isInitialized && user && (
-          <div className="max-w-md mx-auto px-4 pb-3 pt-[18px]">
-            <TodayCheckInRow onCreatePact={handleCreatePact} peers={momentPeople.people} />
+          <div className="max-w-md mx-auto px-4 pb-3 pt-3">
+            <TodayCheckInRow onCreatePact={handleCreatePact} peers={momentPeople.people} streak={currentStreak} />
           </div>
         )}
 
@@ -179,6 +183,18 @@ export default function FeedPageClient() {
         {isInitialized && user && featuredDare && showDare && (
           <div className="max-w-md mx-auto px-4 pb-4">
             <FeaturedDareCard dare={featuredDare} />
+            <nav aria-label="Dares" className="scrollbar-hide -mx-4 mt-3 flex gap-2 overflow-x-auto px-4">
+              <Link href="/dares?tab=for-you" className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-[var(--ink)] px-3 text-[13px] font-bold text-white">
+                For you
+                {pendingDares > 0 && <span className="rounded-full bg-[var(--dare)] px-1.5 text-[11px] leading-[18px] text-[var(--ink)]">{pendingDares > 9 ? '9+' : pendingDares}</span>}
+              </Link>
+              <Link href="/dares?tab=sent" className="flex h-9 shrink-0 items-center rounded-full border border-[var(--hairline)] bg-[var(--card)] px-3 text-[13px] font-bold text-[var(--ink)]">
+                Sent
+              </Link>
+              <Link href="/dares?tab=discover" className="flex h-9 shrink-0 items-center rounded-full border border-[var(--hairline)] bg-[var(--card)] px-3 text-[13px] font-bold text-[var(--ink)]">
+                Discover
+              </Link>
+            </nav>
           </div>
         )}
 

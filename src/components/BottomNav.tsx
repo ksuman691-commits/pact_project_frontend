@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Home, Users, Circle, Zap } from 'lucide-react'
-import { useMyDares } from '@/hooks/useDareQueries'
+import { usePendingDareCount } from '@/hooks/usePendingDareCount'
 import { useAuthStore } from '@/store/auth'
 import QuickPostButton from '@/components/QuickPostButton'
 import { STORIES_ENABLED } from '@/lib/stories'
@@ -45,19 +45,9 @@ export default function BottomNav() {
     // logged-out visitors into auth-gated routes that just bounce them to login.
     pathname?.endsWith('/wall')
 
-  // Same getMine() result the /dares "For You" tab filters — cached under
-  // the same query key, so this doesn't add an extra request beyond what
-  // that page already fetches once visited. Must stay disabled until the
-  // auth store has actually hydrated a session: this component lives in
-  // the root layout and mounts on every route (including /auth/login)
-  // before the pathname check below can bail out, so firing it while
-  // logged out 401s, which triggers the API client's hard redirect to
-  // /auth/login, which remounts this component and fires again — an
-  // infinite reload loop.
-  const myDaresQuery = useMyDares({ enabled: isInitialized && !!user && !isHiddenRoute })
-  const pendingForYouCount = (myDaresQuery.data?.pages?.flatMap((page) => page.data) || []).filter(
-    (d: any) => d.my_recipient_status === 'pending' && d.creator_id !== user?.id,
-  ).length
+  // Shares the Dares page's "my dares" query; off on signed-out and hidden
+  // routes (asking while signed out 401s and loops through sign-in).
+  const pendingForYouCount = usePendingDareCount(!isHiddenRoute)
 
   if (isHiddenRoute) {
     return null
@@ -88,25 +78,27 @@ export default function BottomNav() {
             className="relative flex flex-1 flex-col items-center justify-center gap-1"
             style={{ minHeight: 44 }}
             title={item.label}
-            aria-label={item.label}
+            aria-label={isDares && pendingForYouCount > 0 ? `Dares, ${pendingForYouCount} waiting for you` : item.label}
             aria-current={active ? 'page' : undefined}
           >
             <span className="relative flex items-center justify-center">
-              <Icon
-                className="h-5 w-5"
-                strokeWidth={1.8}
-                style={{ color: active ? 'var(--navy)' : 'var(--muted)' }}
-              />
-              {/* Dares indicator: only shows when the viewer actually has a
-                  pending dare waiting on their response — a plain navy dot,
-                  not a glowing/pulsing badge, since it is backed by real
-                  data but doesn't need decoration to be legible. */}
+              {isDares ? (
+                // Dares are yellow on ink everywhere; the bolt flickers while one waits for you.
+                <Icon
+                  className={`h-[22px] w-[22px] ${pendingForYouCount > 0 ? 'cp-zap' : ''}`}
+                  strokeWidth={1.6}
+                  style={{ color: 'var(--ink)', fill: 'var(--dare)' }}
+                />
+              ) : (
+                <Icon className="h-5 w-5" strokeWidth={1.8} style={{ color: active ? 'var(--navy)' : 'var(--muted)' }} />
+              )}
               {isDares && pendingForYouCount > 0 && (
                 <span
                   aria-hidden="true"
-                  className="pact-bottomnav-live-dot absolute -top-0.5 -right-1.5 h-[6px] w-[6px] rounded-full"
-                  style={{ background: 'var(--navy)' }}
-                />
+                  className="absolute -right-3 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--ink)] px-1 text-[10px] font-bold leading-none text-[var(--dare)]"
+                >
+                  {pendingForYouCount > 9 ? '9+' : pendingForYouCount}
+                </span>
               )}
             </span>
             {/* Active-state indicator: a small dot above the label instead
@@ -114,13 +106,13 @@ export default function BottomNav() {
             <span
               aria-hidden="true"
               className="h-[5px] w-[5px] rounded-full"
-              style={{ background: active ? 'var(--navy)' : 'transparent' }}
+              style={{ background: active ? (isDares ? 'var(--ink)' : 'var(--navy)') : 'transparent' }}
             />
             <span
               className="text-[12px] leading-none"
               style={{
-                color: active ? 'var(--navy)' : 'var(--muted)',
-                fontWeight: active ? 600 : 400,
+                color: isDares ? 'var(--ink)' : active ? 'var(--navy)' : 'var(--muted)',
+                fontWeight: active || isDares ? 600 : 400,
               }}
             >
               {item.label}
