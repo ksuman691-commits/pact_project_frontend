@@ -767,6 +767,10 @@ export const dareService = {
   },
   verify: (id: number, data: any) => api.post(`/api/dares/${id}/verify`, data),
   cancel: (id: number) => api.delete(`/api/dares/${id}`),
+  /** Step out of a dare you accepted. Never counts as a fail. */
+  leave: (id: number) => api.post(`/api/dares/${id}/leave`),
+  /** Delete your own proof for a dare. */
+  deleteProof: (id: number) => api.delete(`/api/dares/${id}/proof`),
   /** Creator: was it done? */
   review: async (id: number, done: boolean) => {
     const response = await api.post(`/api/dares/${id}/review`, { done });

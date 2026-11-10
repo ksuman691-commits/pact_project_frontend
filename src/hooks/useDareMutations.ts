@@ -118,11 +118,11 @@ export function useCancelDare() {
 
   return useMutation({
     mutationFn: (dareId: number) => dareService.cancel(dareId),
-    onSuccess: (_, dareId) => {
+    onSuccess: (response: any, dareId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.dares.detail(dareId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.dares.mine() });
       queryClient.invalidateQueries({ queryKey: queryKeys.dares.all });
-      toast.success('Dare cancelled');
+      toast.success(response?.data?.message === 'Dare called off' ? 'Dare called off' : 'Dare cancelled');
     },
     onError: (error: any) => {
       toast.error(toErrorMessage(error, 'Failed to cancel dare'));
@@ -173,5 +173,31 @@ export function useShareDare() {
       return refresh(dareId);
     },
     onError: (error: any) => toast.error(toErrorMessage(error, "Couldn't change that. Try again.")),
+  });
+}
+
+/** Step out of a dare you accepted. The server records it as a pass, never a fail. */
+export function useLeaveDare() {
+  const refresh = useRefreshDare();
+  return useMutation({
+    mutationFn: (dareId: number) => dareService.leave(dareId),
+    onSuccess: (_, dareId) => {
+      toast.success("You left the dare. It doesn't count against you.");
+      return refresh(dareId);
+    },
+    onError: (error: any) => toast.error(toErrorMessage(error, "Couldn't leave the dare. Try again.")),
+  });
+}
+
+export function useDeleteDareProof() {
+  const refresh = useRefreshDare();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (dareId: number) => dareService.deleteProof(dareId),
+    onSuccess: (_, dareId) => {
+      toast.success('Proof deleted');
+      return Promise.all([refresh(dareId), queryClient.invalidateQueries({ queryKey: queryKeys.feed.all })]);
+    },
+    onError: (error: any) => toast.error(toErrorMessage(error, "Couldn't delete the proof. Try again.")),
   });
 }

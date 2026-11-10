@@ -3,7 +3,7 @@
 import { MarkProgress } from '@/components/brand/CircleMark';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Camera, Check, Clock, Link2, MoreHorizontal, X, Zap } from 'lucide-react';
+import { Camera, Check, Clock, Link2, LogOut, MoreHorizontal, Trash2, X, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { Dare, DareState } from '@/types';
 import Avatar from '@/components/Avatar';
@@ -13,7 +13,7 @@ import DareProofUploadModal from '@/components/DareProofUploadModal';
 import DareRewardPaySheet from '@/components/dares/DareRewardPaySheet';
 import SparkRing from '@/components/dares/SparkRing';
 import { useAuthStore } from '@/store/auth';
-import { useAcceptDare, useCancelDare, useClaimDare, useDareRewardStep, useDeclineDare, useReviewDare } from '@/hooks/useDareMutations';
+import { useAcceptDare, useCancelDare, useClaimDare, useDareRewardStep, useDeclineDare, useDeleteDareProof, useLeaveDare, useReviewDare } from '@/hooks/useDareMutations';
 import { copyText } from '@/lib/circleInvite';
 import { parseApiDate } from '@/lib/dareCountdown';
 import {
@@ -91,6 +91,9 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
   const [payOpen, setPayOpen] = useState(false);
   const [confirmNotDone, setConfirmNotDone] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [confirmCallOff, setConfirmCallOff] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [confirmDeleteProof, setConfirmDeleteProof] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const accept = useAcceptDare();
@@ -99,6 +102,8 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
   const review = useReviewDare();
   const rewardStep = useDareRewardStep();
   const cancel = useCancelDare();
+  const leave = useLeaveDare();
+  const deleteProof = useDeleteDareProof();
 
   // Who sits on top of the card: whoever the viewer is dealing with.
   const face: DareFace = role === 'creator' ? recipient ?? { name: 'Someone' } : role === 'viewer' && recipient && state === 'completed' ? recipient : creator;
@@ -126,6 +131,17 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
   const menuItems: { label: string; icon: React.ReactNode; onSelect: () => void; danger?: boolean }[] = [];
   if (role === 'creator' && state === 'awaiting_response') {
     menuItems.push({ label: 'Cancel dare', icon: <X className="size-4" aria-hidden="true" />, onSelect: () => setConfirmCancel(true), danger: true });
+  }
+  // Once they've said yes the creator can still call it off; nobody is failed.
+  // With a reward on it, proof has to be reviewed first (the server enforces this too).
+  if (role === 'creator' && (state === 'in_progress' || (state === 'awaiting_review' && !dare.reward_amount))) {
+    menuItems.push({ label: 'Call off dare', icon: <X className="size-4" aria-hidden="true" />, onSelect: () => setConfirmCallOff(true), danger: true });
+  }
+  if (role === 'doer' && state === 'in_progress') {
+    menuItems.push({ label: 'Leave dare', icon: <LogOut className="size-4" aria-hidden="true" />, onSelect: () => setConfirmLeave(true), danger: true });
+  }
+  if (role === 'doer' && dare.proof_url && (state === 'awaiting_review' || state === 'completed')) {
+    menuItems.push({ label: 'Delete my proof', icon: <Trash2 className="size-4" aria-hidden="true" />, onSelect: () => setConfirmDeleteProof(true), danger: true });
   }
   if (shareable) {
     menuItems.push({
@@ -414,6 +430,52 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
         destructive
         loading={cancel.isPending}
       />
+      <ConfirmModal
+        isOpen={confirmCallOff}
+        onClose={() => setConfirmCallOff(false)}
+        onConfirm={async () => {
+          await cancel.mutateAsync(dare.id);
+          setConfirmCallOff(false);
+        }}
+        title="Call off this dare?"
+        description={`${otherName} will be told. It won't count as a fail for them${dare.proof_url ? ', and their proof stays theirs' : ''}.`}
+        confirmLabel="Call off"
+        cancelLabel="Keep it going"
+        destructive
+        loading={cancel.isPending}
+      />
+      <ConfirmModal
+        isOpen={confirmLeave}
+        onClose={() => setConfirmLeave(false)}
+        onConfirm={async () => {
+          await leave.mutateAsync(dare.id);
+          setConfirmLeave(false);
+        }}
+        title="Leave this dare?"
+        description={`It won't show as a fail. ${otherName} will see that you stepped out.`}
+        confirmLabel="Leave dare"
+        cancelLabel="Stay in"
+        destructive
+        loading={leave.isPending}
+      />
+      <ConfirmModal
+        isOpen={confirmDeleteProof}
+        onClose={() => setConfirmDeleteProof(false)}
+        onConfirm={async () => {
+          await deleteProof.mutateAsync(dare.id);
+          setConfirmDeleteProof(false);
+        }}
+        title="Delete your proof?"
+        description={
+          state === 'completed'
+            ? 'It is removed everywhere, including shared links. The dare stays marked done.'
+            : "It is removed right away. You'll be back to posting proof before the time runs out."
+        }
+        confirmLabel="Delete proof"
+        cancelLabel="Keep it"
+        destructive
+        loading={deleteProof.isPending}
+      />
     </>
   );
 }
@@ -445,7 +507,7 @@ function quietLine(dare: Dare, state: DareState, role: DareRole, other: string, 
     case 'expired':
       return 'Nobody answered in time';
     case 'cancelled':
-      return 'Cancelled';
+      return role === 'doer' ? `${other} called it off. It doesn't count against you.` : 'Cancelled';
     default:
       return STATE_LABEL[state];
   }
