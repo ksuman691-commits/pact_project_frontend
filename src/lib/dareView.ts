@@ -57,7 +57,8 @@ export type DareNext =
 
 export function nextStep(dare: Dare, role: DareRole): DareNext {
   const state = dareState(dare)
-  if (state === 'open') return role === 'viewer' ? 'claim' : null
+  // Open to join: anyone looking, and someone who left a CirclePact dare and may come back.
+  if (state === 'open') return role === 'viewer' || (dare.is_official && role === 'doer') ? 'claim' : null
   if (role === 'doer') {
     if (state === 'awaiting_response') return 'respond'
     if (state === 'in_progress') return 'post_proof'
