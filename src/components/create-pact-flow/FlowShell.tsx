@@ -26,7 +26,7 @@ interface FlowShellProps {
    * Circle's violet→mint pairing instead. Create Dare never sets this,
    * so it keeps the default pink→violet chrome unchanged.
    */
-  accent?: 'pact' | 'circle';
+  accent?: 'pact' | 'circle' | 'dare';
   /** Small icon shown in the live-title strip to hint at the flow's own
    * visual language (e.g. a target for Pact, people for Circle). */
   titleStripIcon?: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
@@ -63,7 +63,9 @@ export default function FlowShell({
       style={
         accent === 'circle'
           ? ({ '--flow-accent': 'var(--pact-violet)', '--flow-accent-2': 'var(--pact-mint)' } as React.CSSProperties)
-          : undefined
+          : accent === 'dare'
+            ? ({ '--flow-accent': 'var(--ink)', '--flow-accent-2': 'var(--dare-deep)' } as React.CSSProperties)
+            : undefined
       }
     >
       {showChrome && (

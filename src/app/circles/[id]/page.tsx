@@ -329,7 +329,7 @@ export default function CircleDetailPage() {
       {isMember && Number((circle as any).quiet_days ?? 0) >= 5 && (
         // A quiet circle: offer a short, shared restart instead of a guilt trip.
         <section className="mx-4 mt-6 rounded-[24px] p-4" style={{ background: '#1F3A93', color: '#FFFFFF' }} aria-label="Start a sprint">
-          <p className="text-[12px] font-extrabold uppercase tracking-[0.1em]" style={{ opacity: 0.75 }}>Quiet for {(circle as any).quiet_days} days</p>
+          <p className="text-[13px] font-bold" style={{ opacity: 0.75 }}>Quiet for {(circle as any).quiet_days} days</p>
           <h2 className="mt-1 text-[19px] font-extrabold leading-tight tracking-[-0.02em]">Start a 7-day sprint together</h2>
           <p className="mt-1 text-[13.5px] leading-snug" style={{ opacity: 0.85 }}>Pick one small thing, post it for 7 days. Everyone in {circle.name} gets asked to join.</p>
           <button
@@ -345,9 +345,9 @@ export default function CircleDetailPage() {
       {isMember && <CircleBoard circleId={circleId} />}
 
       {(isMember || !isPrivateCircle) && members.length > 0 && (
-        <section className="mx-4 mt-8 rounded-[24px] px-4 pb-2 pt-4" style={{ background: '#FFFFFF', border: '1px solid #DCD3C1' }}>
+        <section className="mx-4 mt-8 rounded-[24px] px-4 pb-2 pt-4" style={{ background: '#FBF8F1', border: '1px solid #DCD3C1' }}>
           <div className="flex items-center justify-between">
-            <h2 className="text-[17px] font-extrabold" style={{ color: '#17181D' }}>Showed Up This Week · {showedUp.length}</h2>
+            <h2 className="text-[17px] font-extrabold" style={{ color: '#17181D' }}>Showed up this week · {showedUp.length}</h2>
           </div>
           {showedUp.length === 0 ? (
             <p className="py-3 text-[13.5px]" style={{ color: '#5A5C63' }}>Nobody yet. Post today and be the first.</p>
@@ -355,7 +355,7 @@ export default function CircleDetailPage() {
             <ul>{showedUp.map((m: any) => memberRow(m, false))}</ul>
           )}
           <div className="mt-2 flex items-center justify-between border-t pt-4" style={{ borderColor: '#ECE6D8' }}>
-            <h2 className="text-[17px] font-extrabold" style={{ color: '#17181D' }}>Not Yet · {notYet.length}</h2>
+            <h2 className="text-[17px] font-extrabold" style={{ color: '#17181D' }}>Not yet · {notYet.length}</h2>
             {isMember && nudgeable.length > 1 && (
               <button type="button" onClick={() => void nudgeAll()} className="h-9 rounded-full px-3.5 text-[13px] font-extrabold" style={{ background: '#1F3A93', color: '#FFFFFF' }}>
                 Nudge all {nudgeable.length}
@@ -376,7 +376,7 @@ export default function CircleDetailPage() {
       {isOwner && (
         <section className="mx-4 mt-6 rounded-[24px] p-4" style={{ background: '#FBF8F1', border: '1px solid #DCD3C1' }}>
           <div className="flex items-center justify-between">
-            <h2 className="text-[17px] font-extrabold" style={{ color: '#17181D' }}>Circle Settings</h2>
+            <h2 className="text-[17px] font-extrabold" style={{ color: '#17181D' }}>Circle settings</h2>
             {!editing && (
               <button type="button" onClick={() => { setDraftName(circle.name || ''); setDraftDescription(circle.description || ''); setEditing(true) }} className="flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-extrabold" style={{ color: '#1F3A93', border: '1.5px solid #1F3A93' }}>
                 <Pencil className="size-3.5" strokeWidth={2.4} aria-hidden="true" />
@@ -405,7 +405,7 @@ export default function CircleDetailPage() {
               <Lock className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
             </span>
             <span className="min-w-0 flex-1 text-left">
-              <span className="block text-[15px] font-bold" style={{ color: '#17181D' }}>Private Circle</span>
+              <span className="block text-[15px] font-bold" style={{ color: '#17181D' }}>Private circle</span>
               <span className="block text-[12.5px] leading-snug" style={{ color: '#5A5C63' }}>{isPrivateCircle ? 'People ask to join and you approve.' : 'Anyone can join. Turn on to approve each person; everyone already in stays.'}</span>
             </span>
             <button type="button" role="switch" aria-checked={isPrivateCircle} aria-label="Private circle" onClick={() => void togglePrivacy()} disabled={savingPrivacy} className="relative h-8 w-[52px] shrink-0 rounded-full transition-colors disabled:opacity-60" style={{ background: isPrivateCircle ? '#1F3A93' : '#D4D5D9' }}>

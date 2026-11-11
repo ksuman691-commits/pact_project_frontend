@@ -39,7 +39,7 @@ export default function TimingStep() {
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                   draft.respondByHours === option.hours ? '' : 'bg-[var(--pact-surface)] text-[var(--pact-text-dim)] hover:bg-[var(--pact-surface-2)]'
                 }`}
-                style={draft.respondByHours === option.hours ? { background: 'var(--pact-pink)', color: 'var(--pact-bg)' } : undefined}
+                style={draft.respondByHours === option.hours ? { background: 'var(--ink)', color: 'var(--dare)' } : undefined}
               >
                 {option.label}
               </button>
@@ -62,7 +62,7 @@ export default function TimingStep() {
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                   draft.completeByHours === option.hours ? '' : 'bg-[var(--pact-surface)] text-[var(--pact-text-dim)] hover:bg-[var(--pact-surface-2)]'
                 }`}
-                style={draft.completeByHours === option.hours ? { background: 'var(--pact-pink)', color: 'var(--pact-bg)' } : undefined}
+                style={draft.completeByHours === option.hours ? { background: 'var(--ink)', color: 'var(--dare)' } : undefined}
               >
                 {option.label}
               </button>
@@ -77,7 +77,7 @@ export default function TimingStep() {
           type="button"
           onClick={goNext}
           className=" w-full rounded-full py-3 font-bold"
-          style={{ background: 'var(--pact-pink)', color: 'var(--pact-bg)' }}
+          style={{ background: 'var(--ink)', color: 'var(--dare)' }}
         >
           Continue
         </button>

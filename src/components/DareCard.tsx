@@ -155,7 +155,7 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
 
   const statusPill = (
     <span
-      className={`flex items-center gap-1 rounded-[9px] px-2.5 py-[3px] text-[11.5px] font-extrabold ${inactive ? 'text-white' : 'bg-white text-[var(--navy)]'}`}
+      className={`flex items-center gap-1 rounded-[9px] px-2.5 py-[3px] text-[11.5px] font-extrabold ${inactive ? 'text-white' : 'bg-[var(--dare)] text-[var(--ink)]'}`}
       style={inactive ? { backgroundColor: 'rgba(255,255,255,0.24)' } : undefined}
     >
       {state === 'completed' ? <Check className="size-3" strokeWidth={3} aria-hidden="true" /> : <Zap className="size-3" strokeWidth={2.6} aria-hidden="true" />}
@@ -168,8 +168,8 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
       <div className="flex flex-wrap items-center gap-1.5">
         {statusPill}
         {reward && (
-          <span className="rounded-[9px] px-2.5 py-[3px] text-[11.5px] font-extrabold text-white" style={{ backgroundColor: 'rgba(255,255,255,0.24)' }}>
-            ₹{reward} reward
+          <span className="rounded-[9px] bg-[var(--ink)] px-2.5 py-[3px] text-[11.5px] font-extrabold text-[var(--dare)]">
+            {state === 'completed' ? `₹${reward} reward` : role === 'creator' ? `You pay ₹${reward}` : `₹${reward} if you do it`}
           </span>
         )}
       </div>
@@ -231,7 +231,8 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
     </div>
   );
 
-  const primary = 'flex h-11 items-center justify-center gap-1.5 rounded-full bg-[var(--navy)] px-4 text-[14px] font-extrabold text-white transition hover:bg-[var(--navy-hover)] active:scale-95 disabled:opacity-50';
+  // Dare actions are yellow on ink; navy stays for pacts.
+  const primary = 'flex h-11 items-center justify-center gap-1.5 rounded-full bg-[var(--ink)] px-4 text-[14px] font-extrabold text-[var(--dare)] transition active:scale-95 disabled:opacity-50';
   const secondary = 'flex h-11 items-center justify-center gap-1.5 rounded-full border-[1.5px] border-[var(--line)] px-4 text-[14px] font-extrabold text-[var(--ink)] transition active:scale-95 disabled:opacity-50';
   const note = 'min-w-0 flex-1 text-[13px] leading-[1.35] text-[var(--muted)]';
 
@@ -244,7 +245,7 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
         </button>
         <button type="button" className={primary} disabled={accept.isPending || decline.isPending} onClick={() => accept.mutate(dare.id)}>
           <Zap className="size-4" strokeWidth={2.4} aria-hidden="true" />
-          {accept.isPending ? 'Accepting…' : 'Accept dare'}
+          {accept.isPending ? 'Accepting…' : reward ? `Accept for ₹${reward}` : 'Accept dare'}
         </button>
       </div>
     );
@@ -275,7 +276,7 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
       <>
         <p className={note}>{dare.reward?.status === 'not_received' ? `${otherName} hasn't received it yet` : `${otherName} did it. Time to pay.`}</p>
         <button type="button" className={primary} onClick={() => setPayOpen(true)}>
-          Pay ₹{dare.reward_amount}
+          Pay {otherName} ₹{dare.reward_amount}
         </button>
       </>
     );
@@ -349,7 +350,7 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
               style={{
                 background: inactive
                   ? 'radial-gradient(120% 90% at 30% 20%, #3A3C44 0%, #1E1F24 60%, #141519 100%)'
-                  : 'radial-gradient(120% 90% at 75% 18%, #2F4486 0%, #141A2E 52%, #0C0D11 100%)',
+                  : 'radial-gradient(120% 90% at 75% 18%, #3B3C45 0%, #1D1E24 52%, #0C0D11 100%)',
               }}
             >
               {!inactive && (

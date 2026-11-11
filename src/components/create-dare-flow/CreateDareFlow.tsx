@@ -34,6 +34,7 @@ function StepRouter({ onExit }: { onExit: () => void }) {
   return (
     <>
     <FlowShell
+      accent="dare"
       onExit={requestExit}
       stepIndex={stepIndex}
       totalSteps={resolvedSteps.length - 1}

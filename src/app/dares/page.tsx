@@ -3,11 +3,10 @@
 import CircleMark from '@/components/brand/CircleMark'
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Plus, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
+import GlanceStrip from '@/components/GlanceStrip';
 import DareCard from '@/components/DareCard';
-import SparkRing from '@/components/dares/SparkRing';
 import CreateDareModal from '@/components/CreateDareModal';
-import RefreshButton from '@/components/RefreshButton';
 import { useDareFeed, useMyDares } from '@/hooks/useDareQueries';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { dareRole, dareState, isActive, nextStep } from '@/lib/dareView';
@@ -16,7 +15,7 @@ import type { Dare } from '@/types';
 type Tab = 'for-you' | 'sent' | 'discover' | 'history';
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'for-you', label: 'For You' },
+  { id: 'for-you', label: 'For you' },
   { id: 'sent', label: 'Sent' },
   { id: 'discover', label: 'Discover' },
   { id: 'history', label: 'History' },
@@ -113,57 +112,21 @@ function DaresPageInner() {
   return (
     <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
       <div className="mx-auto max-w-2xl">
-        <header className="flex items-center justify-between gap-3 px-6 pb-3 pt-9">
-          <h1 className="text-[40px] font-extrabold leading-none tracking-[-0.045em]">Dares</h1>
-          <RefreshButton label="Refresh dares" onRefresh={() => Promise.all([mine.refetch(), feed.refetch()])} />
+        <header className="flex items-center justify-between gap-3 px-5 pb-3 pt-7">
+          <h1 className="flex items-center gap-2.5 text-[32px] font-bold leading-none tracking-[-0.045em]">
+            <CircleMark size={24} />
+            Dares
+          </h1>
         </header>
 
-        <section
-          className="relative mx-[10px] mb-4 overflow-hidden rounded-[22px] px-5 pb-5 pt-5 text-white sm:mx-6"
-          style={{ background: 'radial-gradient(120% 100% at 80% 10%, #2F4486 0%, #141A2E 55%, #0C0D11 100%)' }}
-          aria-label="Your dares at a glance"
-        >
-          <div className="flex items-center gap-4">
-            <div className="min-w-0 flex-1">
-              {mine.isSuccess && lists.yourMove > 0 ? (
-                <>
-                  <p className="text-[64px] font-extrabold leading-[0.9] tracking-[-0.06em]">{lists.yourMove}</p>
-                  <p className="mt-1.5 text-[22px] font-extrabold leading-[1.1] tracking-[-0.025em]">{lists.yourMove === 1 ? 'dare needs you' : 'dares need you'}</p>
-                </>
-              ) : (
-                <>
-                  <p className="text-[32px] font-extrabold leading-[1.02] tracking-[-0.035em]">Dare someone.</p>
-                  <p className="mt-2 text-[14.5px] leading-[1.4]" style={{ color: 'rgba(255,255,255,0.78)' }}>
-                    One person, one challenge, a short clock.
-                  </p>
-                </>
-              )}
-            </div>
-            <SparkRing size={112} tone="dark" duration="30s" left={lists.yourMove > 0 ? null : 1}>
-              <Zap className="size-9" strokeWidth={2.2} fill="#FFD84D" color="#FFD84D" aria-hidden="true" />
-            </SparkRing>
-          </div>
-
-          <div className="mt-5 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setCreateOpen(true)}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-white text-[16px] font-extrabold text-[var(--navy)] transition active:scale-[0.98]"
-            >
-              <Zap className="size-4" strokeWidth={2.6} fill="currentColor" aria-hidden="true" />
-              New dare
-            </button>
-            {mine.isSuccess && (lists.inPlay > 0 || lists.doneByYou > 0) && (
-              <p className="flex shrink-0 flex-col text-right text-[12.5px] font-semibold leading-snug" style={{ color: 'rgba(255,255,255,0.8)' }}>
-                {stats.slice(1).map((stat) => (
-                  <button key={stat.label} type="button" onClick={() => setTab(stat.tab)} className="min-h-6 text-right underline-offset-4 hover:underline">
-                    {stat.value} {stat.label.toLowerCase()}
-                  </button>
-                ))}
-              </p>
-            )}
-          </div>
-        </section>
+        <div className="mb-4">
+          <GlanceStrip
+            tone="ink"
+            label="Your dares at a glance"
+            stats={stats.map((stat) => ({ label: stat.label, value: mine.isSuccess ? stat.value : null, onSelect: () => setTab(stat.tab) }))}
+            action={{ label: 'Send a dare', onClick: () => setCreateOpen(true), icon: <Zap className="size-4" strokeWidth={0} fill="currentColor" aria-hidden="true" /> }}
+          />
+        </div>
 
         <nav className="flex gap-1.5 overflow-x-auto px-4 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Dare lists">
           {TABS.map((item) => {
@@ -175,16 +138,13 @@ function DaresPageInner() {
                 type="button"
                 onClick={() => setTab(item.id)}
                 aria-pressed={selected}
-                className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold transition ${
-                  selected ? 'bg-[var(--ink)] text-[var(--card)]' : 'border border-[var(--line)] text-[var(--ink-soft)]'
+                className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-[13px] font-bold transition ${
+                  selected ? 'bg-[var(--dare)] text-[var(--ink)]' : 'border border-[var(--line)] text-[var(--ink-soft)]'
                 }`}
               >
                 {item.label}
                 {count != null && count > 0 && (
-                  <span
-                    className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-bold ${selected ? 'bg-white text-[var(--ink)]' : 'bg-[var(--navy)] text-white'}`}
-                    aria-label={`${count} need you`}
-                  >
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--ink)] px-1.5 text-[11px] font-bold text-[var(--dare)]" aria-label={`${count} need you`}>
                     {count}
                   </span>
                 )}
@@ -208,7 +168,7 @@ function DaresPageInner() {
             <div className="rounded-[22px] border border-[var(--line)] bg-[var(--card)] px-6 py-8 text-center">
               <p className="text-[16px] font-extrabold">Dares didn&apos;t load</p>
               <p className="mt-1 text-[14px] text-[var(--muted)]">Check your connection and try again.</p>
-              <button type="button" onClick={() => query.refetch()} className="mt-4 inline-flex h-11 items-center rounded-full bg-[var(--navy)] px-6 text-[14px] font-extrabold text-white">
+              <button type="button" onClick={() => query.refetch()} className="mt-4 inline-flex h-11 items-center rounded-full bg-[var(--ink)] px-6 text-[14px] font-extrabold text-[var(--dare)]">
                 Try again
               </button>
             </div>
@@ -220,13 +180,13 @@ function DaresPageInner() {
               <h2 className="mt-4 text-[22px] font-extrabold tracking-[-0.03em]">{EMPTY[tab].title}</h2>
               <p className="mt-2 text-[14px] leading-[1.5] text-[var(--muted)]">{EMPTY[tab].body}</p>
               {EMPTY[tab].cta === 'create' && (
-                <button type="button" onClick={() => setCreateOpen(true)} className="mt-5 inline-flex h-11 items-center gap-2 rounded-full bg-[var(--navy)] px-6 text-[14px] font-extrabold text-white">
-                  <Plus className="size-4" aria-hidden="true" />
-                  Create a dare
+                <button type="button" onClick={() => setCreateOpen(true)} className="mt-5 inline-flex h-11 items-center gap-2 rounded-full bg-[var(--ink)] px-6 text-[14px] font-extrabold text-[var(--dare)]">
+                  <Zap className="size-4" strokeWidth={0} fill="currentColor" aria-hidden="true" />
+                  Send a dare
                 </button>
               )}
               {EMPTY[tab].cta === 'discover' && (
-                <button type="button" onClick={() => setTab('discover')} className="mt-5 inline-flex h-11 items-center rounded-full border-[1.5px] border-[var(--navy)] px-6 text-[14px] font-extrabold text-[var(--navy)]">
+                <button type="button" onClick={() => setTab('discover')} className="mt-5 inline-flex h-11 items-center rounded-full border-[1.5px] border-[var(--ink)] px-6 text-[14px] font-extrabold text-[var(--ink)]">
                   Browse Discover
                 </button>
               )}

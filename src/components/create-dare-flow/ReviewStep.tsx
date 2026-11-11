@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Zap } from 'lucide-react';
-import Avatar from '@/components/Avatar';
+import SlideToSend from './SlideToSend';
 import { useCreateDareFlow } from '@/context/CreateDareFlowContext';
 
 export default function ReviewStep() {
@@ -38,14 +37,13 @@ export default function ReviewStep() {
       </div>
 
       <div className="mt-auto pt-8">
-        <button
-          type="button"
-          onClick={submit}
-          disabled={isSubmitting || !who}
-          className="w-full rounded-full bg-[var(--navy)] py-3 font-bold text-white disabled:opacity-60"
-        >
-          {isSubmitting ? 'Sending…' : count > 1 ? `Send dare to ${count} people` : `Send dare to ${whoName.split(' ')[0]}`}
-        </button>
+        <SlideToSend
+          label={`${count > 2 ? `Slide to dare ${count} people` : count === 2 ? `Slide to dare ${names[0]} & ${names[1]}` : `Slide to dare ${whoName.split(' ')[0]}`}${draft.rewardAmount && count <= 1 ? ` for ₹${draft.rewardAmount}` : ''}`}
+          busy={isSubmitting}
+          disabled={!who}
+          onSend={submit}
+        />
+        <p className="mt-2 text-center text-[12.5px] text-[var(--muted)]">{draft.rewardAmount ? `You pay only after you see the proof and mark it done.` : 'You can call it off later.'}</p>
       </div>
     </div>
   );

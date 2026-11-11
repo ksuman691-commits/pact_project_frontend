@@ -107,7 +107,7 @@ function ProofHero({ share }: { share: DarePublicShare }) {
   const hasPhoto = Boolean(share.proof_url) && share.proof_type !== 'video';
   return (
     <header className="pb-6">
-      <p className="text-xs font-bold uppercase tracking-[0.28em] text-[var(--pact-violet)]">Dare completed</p>
+      <p className="text-xs font-bold text-[var(--pact-violet)]">Dare completed</p>
       <h1 className="mt-2 text-balance text-3xl font-black tracking-[-0.05em] text-[var(--pact-text)]">{share.title}</h1>
       {share.description && (
         <p className="mt-2 text-pretty text-sm leading-relaxed text-[var(--pact-text-muted)]">{share.description}</p>
@@ -124,7 +124,7 @@ function ProofHero({ share }: { share: DarePublicShare }) {
             crossOrigin="anonymous"
           />
           <span
-            className="absolute left-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
+            className="absolute left-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold text-white"
             style={{ background: 'var(--pact-mint)' }}
           >
             <CheckCheck className="h-2.5 w-2.5" />

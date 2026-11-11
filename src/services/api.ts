@@ -733,6 +733,15 @@ export const dareService = {
     const response = await api.get('/api/dares/feed', { params: { skip, limit } });
     return normalizeListResponse(response, mapDare);
   },
+  /** The CirclePact dare open to join right now, or null. Older backends 404/422 here: treated as none. */
+  getToday: async () => {
+    try {
+      const response = await api.get('/api/dares/today');
+      return response.data ?? null;
+    } catch {
+      return null;
+    }
+  },
   getMine: async (skip = 0, limit = 20) => {
     const response = await api.get('/api/dares/mine', { params: { skip, limit } });
     return normalizeListResponse(response, mapDare);

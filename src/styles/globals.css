@@ -763,3 +763,14 @@ section + section {
 @media (prefers-reduced-motion: reduce) {
   .cp-zap, .cp-zap-glow { animation: none; }
 }
+
+/* Slide to send a dare: the bolt leans forward to show which way to drag. */
+@keyframes cp-slide-hint { 0%, 100% { margin-left: 0; } 50% { margin-left: 8px; } }
+.cp-slide-hint { animation: cp-slide-hint 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .cp-slide-hint { animation: none; } }
+
+
+/* Lists settle in from just below, one after another. Set --i on each item (capped by the page). */
+@keyframes cp-rise-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.cp-rise-in { animation: cp-rise-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: calc(var(--i, 0) * 45ms); }
+@media (prefers-reduced-motion: reduce) { .cp-rise-in { animation: none; } }

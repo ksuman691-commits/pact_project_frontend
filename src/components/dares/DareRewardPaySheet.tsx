@@ -84,7 +84,7 @@ export default function DareRewardPaySheet({
             </div>
 
             {mobile ? (
-              <a href={uri} className="flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-6 text-[16px] font-semibold text-white">
+              <a href={uri} className="flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[var(--ink)] px-6 text-[16px] font-bold text-[var(--dare)]">
                 <ExternalLink className="size-4" strokeWidth={2.2} aria-hidden="true" />
                 Open UPI app
               </a>
@@ -104,7 +104,7 @@ export default function DareRewardPaySheet({
               type="button"
               onClick={() => void markSent()}
               disabled={step.isPending}
-              className="flex min-h-[52px] items-center justify-center rounded-full border-[1.5px] border-[var(--navy)] px-6 text-[16px] font-semibold text-[var(--navy)] disabled:opacity-50"
+              className="flex min-h-[52px] items-center justify-center rounded-full border-[1.5px] border-[var(--ink)] px-6 text-[16px] font-bold text-[var(--ink)] disabled:opacity-50"
             >
               {step.isPending ? 'Saving…' : "I've paid"}
             </button>
@@ -123,7 +123,7 @@ function Row({ label, value, hint, onCopy }: { label: string; value: string; hin
         <dd className="truncate font-bold">{value}</dd>
         {hint && <p className="text-[12px] text-[var(--muted)]">{hint}</p>}
       </div>
-      <button type="button" onClick={onCopy} aria-label={`Copy ${label}`} className="flex size-11 shrink-0 items-center justify-center rounded-full text-[var(--navy)]">
+      <button type="button" onClick={onCopy} aria-label={`Copy ${label}`} className="flex size-11 shrink-0 items-center justify-center rounded-full text-[var(--ink)]">
         <Copy className="size-4" strokeWidth={2} aria-hidden="true" />
       </button>
     </div>

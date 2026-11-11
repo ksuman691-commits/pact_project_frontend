@@ -1,3 +1,4 @@
+import AppPullToRefresh from '@/components/AppPullToRefresh';
 import '@/styles/globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Inter_Tight } from 'next/font/google';
@@ -68,7 +69,7 @@ export default function RootLayout({
           <ProfileTimezoneSync />
           <AgeVerificationGate />
           <NotificationRealtimeBridge />
-          {children}
+          <AppPullToRefresh>{children}</AppPullToRefresh>
           <BottomNav />
           <CelebrationHost />
           <AppSplash />

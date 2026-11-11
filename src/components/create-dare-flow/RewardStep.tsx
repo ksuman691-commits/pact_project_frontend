@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { useCreateDareFlow } from '@/context/CreateDareFlowContext';
 import { REWARD_MAX } from '@/lib/createDareFlow/toApiPayload';
 
-const PRESETS = [21, 51, 101];
+// Small, lucky-number amounts: enough to make it fun, never enough to make it a bet.
+const PRESETS = [9, 21, 51, 101];
 
 /**
  * Optional reward. You pay it, over UPI, after you've seen the proof and
@@ -16,7 +17,7 @@ export default function RewardStep() {
   const name = draft.recipients[0]?.full_name?.split(' ')[0] || (draft.recipients[0] ? `@${draft.recipients[0].username}` : 'them');
 
   const chip = (selected: boolean) =>
-    `h-11 rounded-full px-4 text-[14px] font-semibold transition ${selected ? 'bg-[var(--navy)] text-white' : 'border border-[var(--line)] bg-[var(--card)] text-[var(--ink)]'}`;
+    `h-11 rounded-full px-4 text-[14px] font-semibold transition ${selected ? 'bg-[var(--ink)] text-[var(--dare)]' : 'border border-[var(--line)] bg-[var(--card)] text-[var(--ink)]'}`;
 
   const setCustomAmount = (raw: string) => {
     const digits = raw.replace(/\D/g, '').slice(0, 3);
@@ -28,9 +29,9 @@ export default function RewardStep() {
 
   return (
     <div className="pact-step-enter flex flex-1 flex-col">
-      <h1 className="text-[32px] font-extrabold leading-[1.04] tracking-[-0.035em] text-[var(--pact-text)] text-balance">Add a reward?</h1>
+      <h1 className="text-[32px] font-extrabold leading-[1.04] tracking-[-0.035em] text-[var(--pact-text)] text-balance">Put something on it?</h1>
       <p className="mt-2 text-sm leading-[1.5] text-[var(--pact-text-dim)]">
-        Optional. You pay {name} over UPI after you mark the dare done. They never pay anything.
+        Optional. If {name} does it, you pay them over UPI after you mark it done. They never pay anything.
       </p>
 
       <div className="mt-6 flex flex-wrap gap-2" role="group" aria-label="Reward amount">
@@ -66,9 +67,9 @@ export default function RewardStep() {
           type="button"
           onClick={goNext}
           disabled={overMax}
-          className="w-full rounded-full bg-[var(--navy)] py-3 font-bold text-white disabled:opacity-40"
+          className="w-full rounded-full bg-[var(--ink)] py-3 font-bold text-[var(--dare)] disabled:opacity-40"
         >
-          {draft.rewardAmount ? `Continue with ₹${draft.rewardAmount}` : 'Continue without a reward'}
+          {draft.rewardAmount ? `Dare for ₹${draft.rewardAmount}` : 'Continue without a reward'}
         </button>
       </div>
     </div>
