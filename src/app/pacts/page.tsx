@@ -4,6 +4,8 @@ import { isFinishedPact } from '@/lib/pactOutcome'
 import { isActive as isDareActive } from '@/lib/dareView'
 import Link from 'next/link'
 import CircleMark from '@/components/brand/CircleMark'
+import GlanceStrip from '@/components/GlanceStrip'
+import { useTodayStatus } from '@/hooks/useTodayStatus'
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
@@ -82,6 +84,9 @@ function PactsPageInner() {
     queryFn: () => pactAdvancedService.getMyPacts(0, pactLimit),
     enabled: !!user?.id,
     placeholderData: (previousData) => previousData,
+    // Coming back from a check-in or a new pact, the numbers must be current.
+    refetchOnMount: 'always',
+    staleTime: 30_000,
   })
   const watchingQuery = useQuery({
     queryKey: ['my-watching', user?.id],
@@ -91,6 +96,7 @@ function PactsPageInner() {
   })
   const daresQuery = useQuery({ queryKey: ['my-dares-page', user?.id], queryFn: () => dareService.getMine(0, 50), enabled: !!user?.id })
 
+  const today = useTodayStatus()
   const pacts: any[] = query.data?.data || []
   const watchingAll: any[] = watchingQuery.data?.watching || []
   const requests: WatchRequest[] = watchingQuery.data?.requests || []
@@ -134,8 +140,8 @@ function PactsPageInner() {
   const matchesSearch = (title: string) => (title || '').toLowerCase().includes(search.toLowerCase())
   const isBroken = (p: any) => p.status === 'failed' || p.status === 'cancelled'
   // Live means active and its last day hasn't passed; anything past its end goes to Ended.
-  const today = new Date().toLocaleDateString('en-CA')
-  const isActive = (p: any) => p.status === 'active' && (!p.end_date || String(p.end_date).slice(0, 10) >= today)
+  const todayIso = new Date().toLocaleDateString('en-CA')
+  const isActive = (p: any) => p.status === 'active' && (!p.end_date || String(p.end_date).slice(0, 10) >= todayIso)
 
   const active = useMemo(
     () => pacts.filter((p) => isActive(p) && matchesSearch(p.title)).sort((a, b) => lastActivityOf(b) - lastActivityOf(a)),
@@ -198,13 +204,12 @@ function PactsPageInner() {
   }
 
   const activeShown = active.filter((pact: any) => pact.is_joined_by_me !== false)
-  const glance: { label: string; value: string | number; filter: (typeof filters)[number] }[] = [
-    { label: 'Active', value: counts.Active, filter: 'Active' },
-    // How many of today's check-ins are in, when the app knows; otherwise how many you finished.
-    postedCount != null
-      ? { label: 'Checked in today', value: `${postedCount}/${allActive.length}`, filter: 'Active' }
-      : { label: 'Ended', value: counts.Ended, filter: 'Ended' },
-    { label: 'Watching', value: counts.Watching, filter: 'Watching' },
+  // Left today comes from the same "today" answer Home uses, so it drops the moment you check in anywhere.
+  const leftToday = today.isLoading ? null : today.pacts.filter((p) => !p.posted_today).length
+  const glance: { label: string; value: string | number | null; filter: (typeof filters)[number]; selects: boolean }[] = [
+    { label: 'Active', value: counts.Active, filter: 'Active', selects: true },
+    { label: leftToday === 0 && counts.Active > 0 ? 'All done today' : 'Left today', value: leftToday, filter: 'Active', selects: false },
+    { label: 'Ended', value: counts.Ended, filter: 'Ended', selects: true },
   ]
   const nothingToShow =
     (!showActive || activeShown.length === 0) &&
@@ -222,24 +227,14 @@ function PactsPageInner() {
           </h1>
         </header>
 
-        {/* Your pacts at a glance: three numbers that jump to the right list, and the way to start one. */}
-        <section className="mx-[10px] mb-3 rounded-[22px] bg-[var(--navy)] p-3 text-white sm:mx-6" aria-label="Your pacts at a glance">
-          <div className="grid grid-cols-3 text-center">
-            {glance.map((stat) => (
-              <button key={stat.label} type="button" onClick={() => setFilter(stat.filter)} className="min-h-[56px] rounded-[14px] px-1 active:bg-white/10">
-                <span key={String(stat.value)} className="cp-tick block text-[26px] font-bold leading-none tracking-[-0.03em]">{query.isSuccess ? stat.value : '–'}</span>
-                <span className="mt-1 block text-[12.5px]" style={{ color: '#D4DBFA' }}>{stat.label}</span>
-              </button>
-            ))}
-          </div>
-          <Link
-            href="/pacts/create"
-            className="mt-2.5 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white text-[16px] font-bold text-[var(--navy)] transition active:scale-[0.98]"
-          >
-            <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" />
-            New pact
-          </Link>
-        </section>
+        <div className="mb-3">
+          <GlanceStrip
+            tone="navy"
+            label="Your pacts at a glance"
+            stats={glance.map((stat) => ({ label: stat.label, value: query.isSuccess ? stat.value : null, selected: stat.selects && filter === stat.filter, onSelect: () => setFilter(stat.selects && filter === stat.filter ? 'All' : stat.filter) }))}
+            action={{ label: 'New pact', href: '/pacts/create', icon: <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" /> }}
+          />
+        </div>
 
         {(pacts.length + watchingAll.length > 4 || search) && (
           <div className="px-4 pb-3">
@@ -341,7 +336,7 @@ function PactsPageInner() {
                 </>
               ) : (
                 <>
-                  <h2 className="mt-4 text-[20px] font-bold tracking-[-0.03em]">{search.trim() ? 'No pacts match that' : `Nothing in ${filter.toLowerCase()} right now`}</h2>
+                  <h2 className="mt-4 text-[20px] font-bold tracking-[-0.03em]">{search.trim() ? 'No pacts match that' : filter === 'Ended' ? 'No ended pacts yet' : filter === 'Active' ? 'No active pacts right now' : 'Nothing here right now'}</h2>
                   <button type="button" onClick={() => { setSearch(''); setFilter('All') }} className="mt-4 inline-flex h-11 items-center rounded-full border-[1.5px] border-[var(--navy)] px-6 text-[14px] font-bold text-[var(--navy)]">
                     Show all pacts
                   </button>

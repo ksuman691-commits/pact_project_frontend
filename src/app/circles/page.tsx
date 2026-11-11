@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { Search, SlidersHorizontal, Plus, Users } from 'lucide-react'
+import { ChevronRight, Search, SlidersHorizontal, Plus, Users } from 'lucide-react'
+import GlanceStrip from '@/components/GlanceStrip'
 import CircleMark from '@/components/brand/CircleMark'
 import { useCircles } from '@/hooks/useCircles'
 import PendingCircleInvites from '@/components/PendingCircleInvites'
@@ -13,11 +14,12 @@ import { readCircleActivity } from '@/lib/circleActivity'
 import { useRequireAuth } from '@/hooks/useRequireAuth'
 
 const SORT_OPTIONS = ['Most active', 'Alphabetical (A-Z)', 'Member count'] as const
-type Filter = 'all' | 'quiet' | 'mine'
+type Filter = 'all' | 'active' | 'quiet' | 'mine'
 
 
 function matchesFilter(item: { circle: any; activity: ReturnType<typeof readCircleActivity> }, filter: Filter, viewerId: unknown) {
   if (filter === 'all') return true
+  if (filter === 'active') return item.activity.known && item.activity.activeCount > 0
   if (filter === 'quiet') return item.activity.known && item.activity.activeCount === 0
   return viewerId != null && String(item.circle.owner_id) === String(viewerId)
 }
@@ -50,10 +52,10 @@ export default function CirclesPage() {
     () => withActivity.filter(({ circle }) => (circle.name || '').toLowerCase().includes(search.toLowerCase())),
     [withActivity, search],
   )
+  // The strip above already switches between all, active and quiet; this row only adds "yours".
   const filters: { id: Filter; label: string }[] = [
     { id: 'all', label: 'All' },
-    { id: 'quiet', label: 'Quiet this week' },
-    { id: 'mine', label: 'Yours' },
+    { id: 'mine', label: 'Started by you' },
   ]
   const filterCount = (filter: Filter) => searchFiltered.filter((item) => matchesFilter(item, filter, viewerId)).length
 
@@ -72,10 +74,12 @@ export default function CirclesPage() {
   const allActivityKnown = withActivity.length > 0 && withActivity.every(({ activity }) => activity.known)
   const activeCircles = withActivity.filter(({ activity }) => activity.known && activity.activeCount > 0).length
 
-  const glance: { label: string; value: number | string; filter: Filter }[] = [
+  // Circles = active + quiet, so the three numbers always add up. They come from the same list as the cards below.
+  const quietCircles = withActivity.filter(({ activity }) => activity.known && activity.activeCount === 0).length
+  const glance: { label: string; hint?: string; value: number | null; filter: Filter }[] = [
     { label: circles.length === 1 ? 'Circle' : 'Circles', value: circles.length, filter: 'all' },
-    { label: 'Active this week', value: allActivityKnown ? activeCircles : '–', filter: 'all' },
-    { label: 'Started by you', value: withActivity.filter((item) => matchesFilter(item, 'mine', viewerId)).length, filter: 'mine' },
+    { label: 'Active', hint: 'Someone posted this week', value: allActivityKnown ? activeCircles : null, filter: 'active' },
+    { label: 'Quiet', hint: 'Nobody posted this week', value: allActivityKnown ? quietCircles : null, filter: 'quiet' },
   ]
 
   return (
@@ -88,27 +92,12 @@ export default function CirclesPage() {
           </h1>
         </header>
 
-        {/* Your circles at a glance, and the two ways to get into one. */}
-        <section className="mx-[10px] rounded-[22px] bg-[var(--navy)] p-3 text-white sm:mx-6" aria-label="Your circles at a glance">
-          <div className="grid grid-cols-3 text-center">
-            {glance.map((stat) => (
-              <button key={stat.label} type="button" onClick={() => setMembershipFilter(stat.filter)} className="min-h-[56px] rounded-[14px] px-1 active:bg-white/10">
-                <span key={String(stat.value)} className="cp-tick block text-[26px] font-bold leading-none tracking-[-0.03em]">{circlesQuery.isSuccess ? stat.value : '–'}</span>
-                <span className="mt-1 block text-[12.5px]" style={{ color: '#D4DBFA' }}>{stat.label}</span>
-              </button>
-            ))}
-          </div>
-          <div className="mt-2.5 flex gap-2">
-            <Link href="/circles/create" className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-white text-[16px] font-bold text-[var(--navy)] transition active:scale-[0.98]">
-              <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" />
-              New circle
-            </Link>
-            <button type="button" onClick={() => setConnectModalOpen(true)} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full border-[1.5px] border-white/70 text-[16px] font-bold text-white transition active:scale-[0.98]">
-              <Users className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
-              Find people
-            </button>
-          </div>
-        </section>
+        <GlanceStrip
+          tone="navy"
+          label="Your circles at a glance"
+          stats={glance.map((stat) => ({ label: stat.label, hint: stat.hint, value: circlesQuery.isSuccess ? stat.value : null, selected: membershipFilter === stat.filter, onSelect: () => setMembershipFilter(stat.filter) }))}
+          action={{ label: 'New circle', href: '/circles/create', icon: <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" /> }}
+        />
 
         <div className="mt-3">
           <PendingCircleInvites key={invitesKey} />
@@ -197,11 +186,14 @@ export default function CirclesPage() {
               {circles.length === 0 ? (
                 <>
                   <h2 className="mt-4 text-[22px] font-bold tracking-[-0.03em]">Better with people watching</h2>
-                  <p className="mt-2 text-[14px] leading-[1.5] text-[var(--muted)]">A circle is a small group that sees each other&apos;s check-ins. Start one with friends, or let us find people with the same goal.</p>
+                  <p className="mt-2 text-[14px] leading-[1.5] text-[var(--muted)]">A circle is a small group that sees each other&apos;s check-ins. Start one with friends, or find people working on the same thing.</p>
                   <Link href="/circles/create" className="mt-5 inline-flex h-11 items-center gap-2 rounded-full bg-[var(--navy)] px-6 text-[14px] font-bold text-white">
                     <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" />
                     Start a circle
                   </Link>
+                  <button type="button" onClick={() => setConnectModalOpen(true)} className="mt-3 block w-full text-[14px] font-bold text-[var(--navy)] underline underline-offset-4">
+                    Find people instead
+                  </button>
                 </>
               ) : (
                 <>
@@ -217,6 +209,15 @@ export default function CirclesPage() {
               {visible.map(({ circle, activity }, index) => (
                 <OrbitCircleCard key={circle.id} circle={circle} activity={activity} index={index} />
               ))}
+              {/* A quiet way out for anyone who wants more people, kept off the top of the page. */}
+              <button type="button" onClick={() => setConnectModalOpen(true)} className="mt-1 flex min-h-[56px] items-center gap-3 rounded-[18px] border border-dashed border-[var(--line)] px-4 text-left">
+                <Users className="h-5 w-5 shrink-0 text-[var(--navy)]" strokeWidth={2} aria-hidden="true" />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14.5px] font-bold">Looking for more people?</span>
+                  <span className="block text-[12.5px] text-[var(--muted)]">Find people working on the same thing</span>
+                </span>
+                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--muted)]" strokeWidth={2.2} aria-hidden="true" />
+              </button>
             </div>
           )}
         </section>

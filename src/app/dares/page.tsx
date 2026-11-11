@@ -4,6 +4,7 @@ import CircleMark from '@/components/brand/CircleMark'
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Zap } from 'lucide-react';
+import GlanceStrip from '@/components/GlanceStrip';
 import DareCard from '@/components/DareCard';
 import CreateDareModal from '@/components/CreateDareModal';
 import { useDareFeed, useMyDares } from '@/hooks/useDareQueries';
@@ -118,25 +119,14 @@ function DaresPageInner() {
           </h1>
         </header>
 
-        {/* Your dares at a glance: three numbers that jump to the right list, and the way to send one. */}
-        <section className="mx-[10px] mb-4 rounded-[22px] bg-[var(--ink)] p-3 text-white sm:mx-6" aria-label="Your dares at a glance">
-          <div className="grid grid-cols-3 text-center">
-            {stats.map((stat) => (
-              <button key={stat.label} type="button" onClick={() => setTab(stat.tab)} className="min-h-[56px] rounded-[14px] px-1 active:bg-white/10">
-                <span className="block text-[26px] font-bold leading-none tracking-[-0.03em] text-[var(--dare)]">{mine.isSuccess ? stat.value : '–'}</span>
-                <span className="mt-1 block text-[12.5px]" style={{ color: '#C9C8CF' }}>{stat.label}</span>
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => setCreateOpen(true)}
-            className="mt-2.5 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--dare)] text-[16px] font-bold text-[var(--ink)] transition active:scale-[0.98]"
-          >
-            <Zap className="size-4" strokeWidth={0} fill="currentColor" aria-hidden="true" />
-            Send a dare
-          </button>
-        </section>
+        <div className="mb-4">
+          <GlanceStrip
+            tone="ink"
+            label="Your dares at a glance"
+            stats={stats.map((stat) => ({ label: stat.label, value: mine.isSuccess ? stat.value : null, onSelect: () => setTab(stat.tab) }))}
+            action={{ label: 'Send a dare', onClick: () => setCreateOpen(true), icon: <Zap className="size-4" strokeWidth={0} fill="currentColor" aria-hidden="true" /> }}
+          />
+        </div>
 
         <nav className="flex gap-1.5 overflow-x-auto px-4 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Dare lists">
           {TABS.map((item) => {
