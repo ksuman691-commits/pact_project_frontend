@@ -12,6 +12,8 @@ export interface DareDraft {
   completeByHours: number;
   /** Each person picked gets their own one-to-one dare (up to MAX_DARE_RECIPIENTS). */
   recipients: DareRecipientPick[];
+  /** Or dare a whole circle instead: every other member gets their own dare. */
+  circle?: { id: number; name: string; others: number } | null;
   verificationMethod: 'photo' | 'video';
   /** Optional reward in rupees (1 to 500), paid by you over UPI after you mark it done. */
   rewardAmount: number | null;
@@ -54,5 +56,7 @@ export interface CreatedDare {
   title: string;
   /** Everyone a dare reached, and anyone it could not be sent to. */
   sentTo?: string[];
+  /** Set when the dare went to a whole circle. */
+  circle?: { name: string; sent: number };
   failedFor?: string[];
 }

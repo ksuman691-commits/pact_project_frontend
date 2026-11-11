@@ -2,6 +2,9 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import { useQueryClient } from '@tanstack/react-query';
+import { dareService } from '@/services/api';
+import { queryKeys } from '@/lib/queryKeys';
 import { useCreateDare } from '@/hooks/useDareMutations';
 import { useUser } from '@/hooks/useUserQueries';
 import { resolveDareSteps } from '@/lib/createDareFlow/steps';
@@ -47,6 +50,8 @@ export function CreateDareFlowProvider({
     return base;
   });
   const [stepIndex, setStepIndex] = useState(0);
+  const [circleSending, setCircleSending] = useState(false);
+  const queryClient = useQueryClient();
   const [createdDare, setCreatedDare] = useState<CreatedDare | null>(null);
   const createDareMutation = useCreateDare();
   const { data: presetUserData } = useUser(initialRecipientId ?? 0);
@@ -84,7 +89,7 @@ export function CreateDareFlowProvider({
       toast.error('Add a description so they know what to do');
       return;
     }
-    if (currentStep === 'recipients' && draft.recipients.length === 0) {
+    if (currentStep === 'recipients' && draft.recipients.length === 0 && !draft.circle) {
       toast.error('Pick who you are daring');
       return;
     }
@@ -96,6 +101,23 @@ export function CreateDareFlowProvider({
   };
 
   const submit = async () => {
+    if (draft.circle) {
+      setCircleSending(true);
+      try {
+        const { recipient_user_ids: _one, audience: _audience, ...payload } = dareDraftToApiPayload(draft, 0) as Record<string, unknown>;
+        const response = await dareService.createForCircle({ ...payload, circle_id: draft.circle.id });
+        const sent = response.data;
+        await queryClient.invalidateQueries({ queryKey: queryKeys.dares.all });
+        setCreatedDare({ id: sent.dares?.[0]?.id, title: draft.title.trim(), sentTo: [sent.circle_name], failedFor: [], circle: { name: sent.circle_name, sent: sent.sent } });
+        setStepIndex(resolvedSteps.length - 1);
+      } catch (error: any) {
+        const detail = error?.response?.data?.detail;
+        toast.error(typeof detail === 'string' ? detail : "Couldn't send that dare. Try again.");
+      } finally {
+        setCircleSending(false);
+      }
+      return;
+    }
     try {
       // One dare per person, each with its own clock, proof and reward.
       const picks = draft.recipients;
@@ -128,7 +150,7 @@ export function CreateDareFlowProvider({
     canGoBack: safeIndex > 0 && currentStep !== 'success',
     goNext,
     goBack,
-    isSubmitting: createDareMutation.isPending,
+    isSubmitting: createDareMutation.isPending || circleSending,
     submit,
     createdDare,
     reset,

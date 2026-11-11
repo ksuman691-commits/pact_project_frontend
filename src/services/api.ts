@@ -767,6 +767,9 @@ export const dareService = {
   },
   verify: (id: number, data: any) => api.post(`/api/dares/${id}/verify`, data),
   cancel: (id: number) => api.delete(`/api/dares/${id}`),
+  /** Dare everyone else in one of your circles; each person gets their own dare. */
+  createForCircle: (data: any) => api.post('/api/dares/circle', data),
+  report: (id: number, reason: string, note?: string) => api.post(`/api/dares/${id}/report`, { reason, note: note || undefined }),
   /** Step out of a dare you accepted. Never counts as a fail. */
   leave: (id: number) => api.post(`/api/dares/${id}/leave`),
   /** Delete your own proof for a dare. */

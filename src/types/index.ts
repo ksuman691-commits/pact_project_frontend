@@ -301,6 +301,7 @@ export interface Dare {
   // CirclePact itself posted it (the dare of the day).
   completed_count?: number;
   is_official?: boolean;
+  reported_by_me?: boolean;
   // Real field: the viewer's own recipient status on this dare, or null if
   // the viewer isn't a recipient (e.g. they're the creator, or it's a
   // public dare they haven't claimed). Drives Accept/Decline/Upload Proof

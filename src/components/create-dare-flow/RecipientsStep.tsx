@@ -2,9 +2,10 @@
 
 import LogoSpinner from '@/components/LogoSpinner';
 import React, { useEffect, useState } from 'react';
-import { Users, X } from 'lucide-react';
+import { Check, Users, X } from 'lucide-react';
 import { useCreateDareFlow } from '@/context/CreateDareFlowContext';
 import { useSearchUsers } from '@/hooks/useUserQueries';
+import { useCircles } from '@/hooks/useCircles';
 import { MAX_DARE_RECIPIENTS, type DareRecipientPick } from '@/types/createDareFlow';
 import Avatar from '@/components/Avatar';
 
@@ -17,6 +18,19 @@ export default function RecipientsStep() {
     const timeout = setTimeout(() => setDebouncedQuery(query.trim()), 300);
     return () => clearTimeout(timeout);
   }, [query]);
+
+  // People or a whole circle: a circle dare gives every other member their own dare.
+  const [mode, setMode] = useState<'people' | 'circle'>(draft.circle ? 'circle' : 'people');
+  const circlesQuery = useCircles(mode === 'circle');
+  const circles: any[] = (circlesQuery.data?.data || circlesQuery.data || []) as any[];
+  const pickMode = (next: 'people' | 'circle') => {
+    setMode(next);
+    if (next === 'people') updateDraft({ circle: null });
+  };
+  const pickCircle = (circle: any) => {
+    const others = Math.max(0, (circle.member_count ?? 1) - 1);
+    updateDraft({ circle: draft.circle?.id === circle.id ? null : { id: circle.id, name: circle.name, others }, recipients: [] });
+  };
 
   const { data: results, isLoading } = useSearchUsers(debouncedQuery, 8);
   const searchResults = (results?.data || []).filter(
@@ -39,6 +53,64 @@ export default function RecipientsStep() {
   return (
     <div className="pact-step-enter flex flex-1 flex-col">
       <h1 className="text-[32px] font-extrabold leading-[1.04] tracking-[-0.035em] text-[var(--pact-text)] text-balance">Who&apos;s brave enough?</h1>
+      <div className="mt-4 grid grid-cols-2 gap-1 rounded-full p-1" style={{ background: 'var(--pact-surface-2)' }} role="group" aria-label="Who to dare">
+        {(['people', 'circle'] as const).map((item) => (
+          <button
+            key={item}
+            type="button"
+            aria-pressed={mode === item}
+            onClick={() => pickMode(item)}
+            className={`h-10 rounded-full text-[14px] font-bold transition ${mode === item ? 'bg-[var(--ink)] text-[var(--dare)]' : 'text-[var(--pact-text)]'}`}
+          >
+            {item === 'people' ? 'People' : 'A whole circle'}
+          </button>
+        ))}
+      </div>
+
+      {mode === 'circle' ? (
+        <div className="mt-4 flex flex-col gap-2">
+          <p className="text-sm text-[var(--pact-text-dim)]">Everyone else in the circle gets their own dare to accept or pass.</p>
+          {circlesQuery.isLoading ? (
+            <div className="flex justify-center py-6">
+              <LogoSpinner size={28} />
+            </div>
+          ) : circles.length === 0 ? (
+            <p className="rounded-[20px] px-4 py-3 text-sm text-[var(--pact-text-dim)]" style={{ background: 'var(--pact-surface-2)' }}>
+              You&apos;re not in a circle yet. Pick people instead.
+            </p>
+          ) : (
+            circles.map((circle) => {
+              const picked = draft.circle?.id === circle.id;
+              const others = Math.max(0, (circle.member_count ?? 1) - 1);
+              return (
+                <button
+                  key={circle.id}
+                  type="button"
+                  disabled={others === 0}
+                  aria-pressed={picked}
+                  onClick={() => pickCircle(circle)}
+                  className="flex min-h-[60px] items-center gap-3 rounded-[18px] border px-3.5 text-left transition active:scale-[0.99] disabled:opacity-50"
+                  style={picked ? { background: 'var(--ink)', borderColor: 'var(--ink)', color: 'white', boxShadow: '0 0 0 2px var(--dare)' } : { background: 'var(--pact-surface)', borderColor: 'var(--pact-hairline)' }}
+                >
+                  <Avatar name={circle.name} avatarUrl={circle.photo_url || circle.avatar_url} size={36} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-bold">{circle.name}</span>
+                    <span className="block text-[12.5px]" style={{ color: picked ? '#C9C8CF' : 'var(--pact-text-dim)' }}>
+                      {others === 0 ? 'Just you so far' : `${others} ${others === 1 ? 'person' : 'people'} will be dared`}
+                    </span>
+                  </span>
+                  {picked && (
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--dare)] text-[var(--ink)]">
+                      <Check className="h-3.5 w-3.5" strokeWidth={3.5} aria-hidden="true" />
+                    </span>
+                  )}
+                </button>
+              );
+            })
+          )}
+        </div>
+      ) : (
+      <>
       <p className="mt-2 flex items-center gap-2 text-sm text-[var(--pact-text-dim)]">
         <Users className="h-4 w-4" aria-hidden="true" />
         {draft.recipients.length > 1 ? `${draft.recipients.length} people. Each gets their own dare.` : `Pick up to ${MAX_DARE_RECIPIENTS}. Each gets their own dare.`}
@@ -118,14 +190,17 @@ export default function RecipientsStep() {
         )}
       </div>
 
+      </>
+      )}
+
       <div className="mt-auto pt-8">
         <button
           type="button"
           onClick={goNext}
-          disabled={draft.recipients.length === 0}
+          disabled={draft.recipients.length === 0 && !draft.circle}
           className="h-[52px] w-full rounded-full bg-[var(--ink)] text-[16px] font-bold text-[var(--dare)] disabled:opacity-40"
         >
-          {draft.recipients.length === 0 ? 'Continue' : draft.recipients.length === 1 ? `Dare ${(draft.recipients[0].full_name || draft.recipients[0].username).split(' ')[0]}` : `Dare ${draft.recipients.length} people`}
+          {draft.circle ? `Dare ${draft.circle.name}` : draft.recipients.length === 0 ? 'Continue' : draft.recipients.length === 1 ? `Dare ${(draft.recipients[0].full_name || draft.recipients[0].username).split(' ')[0]}` : `Dare ${draft.recipients.length} people`}
         </button>
       </div>
     </div>
