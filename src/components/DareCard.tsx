@@ -3,7 +3,8 @@
 import { MarkProgress } from '@/components/brand/CircleMark';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Camera, Check, Clock, Link2, LogOut, MoreHorizontal, Trash2, X, Zap } from 'lucide-react';
+import { Camera, Check, Clock, Flag, Link2, LogOut, MoreHorizontal, Trash2, X, Zap } from 'lucide-react';
+import ReportDareSheet from '@/components/dares/ReportDareSheet';
 import toast from 'react-hot-toast';
 import type { Dare, DareState } from '@/types';
 import Avatar from '@/components/Avatar';
@@ -69,6 +70,10 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
   const router = useRouter();
   const { user } = useAuthStore();
   const role = dareRole(dare, user?.id);
+  // A reported dare is gone from your lists, so its own page has nothing left to show.
+  const onReported = () => {
+    if (variant === 'detail') router.replace('/dares');
+  };
   const state = dareState(dare);
   const next = nextStep(dare, role);
   const deadline = activeDeadline(dare);
@@ -93,6 +98,7 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmCallOff, setConfirmCallOff] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [confirmDeleteProof, setConfirmDeleteProof] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -151,6 +157,10 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
         if (await copyText(`${window.location.origin}/dares/${dare.id}/public`)) toast.success('Link copied');
       },
     });
+  }
+  // Anyone but the sender can report; a CirclePact dare can be reported by anyone.
+  if ((role !== 'creator' || dare.is_official) && !dare.reported_by_me) {
+    menuItems.push({ label: 'Report dare', icon: <Flag className="size-4" aria-hidden="true" />, onSelect: () => setReportOpen(true) });
   }
 
   const statusPill = (
@@ -476,6 +486,7 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
         destructive
         loading={deleteProof.isPending}
       />
+      {reportOpen && <ReportDareSheet dareId={dare.id} onClose={() => setReportOpen(false)} onDone={onReported} />}
     </>
   );
 }

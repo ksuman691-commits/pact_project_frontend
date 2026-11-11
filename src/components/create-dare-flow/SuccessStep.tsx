@@ -16,15 +16,17 @@ export default function SuccessStep({ onDone }: { onDone: () => void }) {
   const who = draft.recipients[0];
   const sentTo = createdDare?.sentTo?.length ? createdDare.sentTo : [(who?.full_name || who?.username || 'them').replace(/^@/, '').split(' ')[0]];
   const failedFor = createdDare?.failedFor ?? [];
-  const many = sentTo.length > 1;
+  const circle = createdDare?.circle;
+  const many = sentTo.length > 1 || !!circle;
   const first = many ? 'them' : sentTo[0];
+  const youOrCircle = circle ? `everyone in ${circle.name}` : 'you';
   const list = sentTo.length > 2 ? `${sentTo.slice(0, -1).join(', ')} and ${sentTo[sentTo.length - 1]}` : sentTo.join(' and ');
   const title = createdDare?.title || draft.title;
   const hours = `${draft.respondByHours} ${draft.respondByHours === 1 ? 'hour' : 'hours'}`;
 
   // They only know about the dare once they open the app, so make it one tap to tell them.
   const reward = draft.rewardAmount;
-  const message = `I dared you on CirclePact: "${title}".${reward ? ` Do it and I'll pay you ₹${reward}.` : ''} You have ${hours} to say yes.`;
+  const message = `I dared ${youOrCircle} on CirclePact: "${title}".${reward ? ` Do it and I'll pay you ₹${reward}.` : ''} You have ${hours} to say yes.`;
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const tell = async () => {
     try {
@@ -60,7 +62,7 @@ export default function SuccessStep({ onDone }: { onDone: () => void }) {
         </span>
         <h1 className="mt-4 text-[48px] font-bold leading-none tracking-[-0.05em]">{many ? 'Dares sent.' : 'Dare sent.'}</h1>
         <p className="mt-2.5 max-w-[310px] text-[17px] font-medium leading-[1.4]">
-          {many ? `${list} each have ` : `${first} has `}
+          {circle ? `Everyone in ${circle.name} has ` : many ? `${list} each have ` : `${first} has `}
           <b>{hours}</b> to say yes. We&apos;ll tell you the moment they do.
         </p>
         {failedFor.length > 0 && <p className="mt-2 max-w-xs text-[14px] font-bold text-[#8E1B14]">Couldn&apos;t send to {failedFor.join(', ')}. Try them again.</p>}
@@ -74,6 +76,13 @@ export default function SuccessStep({ onDone }: { onDone: () => void }) {
         <p className="mt-1 text-[20px] font-bold leading-[1.15] tracking-[-0.02em]">{title}</p>
         <div className="my-3 h-px" style={{ background: 'repeating-linear-gradient(90deg, #46454D 0 6px, transparent 6px 12px)' }} />
         <ul className="space-y-2">
+          {circle && (
+            <li className="flex items-center gap-2.5">
+              <Avatar name={circle.name} size={30} />
+              <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{circle.name}</span>
+              <span className="text-[13px] font-semibold" style={{ color: '#C9C8CF' }}>{circle.sent} {circle.sent === 1 ? 'dare' : 'dares'} sent</span>
+            </li>
+          )}
           {(draft.recipients.length ? draft.recipients : []).map((r) => {
             const name = (r.full_name || r.username).split(' ')[0];
             const failed = failedFor.includes(name);

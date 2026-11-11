@@ -15,7 +15,7 @@ export default function DarePreviewTile({ draft }: { draft: DareDraft }) {
   const { user } = useAuthStore();
   const me = (user?.full_name || user?.username || 'you').split(' ')[0];
   const names = draft.recipients.map((r) => (r.full_name || r.username).split(' ')[0]);
-  const to = names.length === 0 ? null : names.length === 1 ? names[0] : names.length === 2 ? `${names[0]} and ${names[1]}` : `${names[0]} and ${names.length - 1} others`;
+  const to = draft.circle ? draft.circle.name : names.length === 0 ? null : names.length === 1 ? names[0] : names.length === 2 ? `${names[0]} and ${names[1]}` : `${names[0]} and ${names.length - 1} others`;
   const title = draft.title.trim();
   return (
     <div className="relative overflow-hidden rounded-[24px] bg-[var(--dare)] p-4 text-[var(--ink)]" aria-live="polite" aria-label="Preview of your dare">

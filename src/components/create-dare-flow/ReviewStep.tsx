@@ -8,11 +8,12 @@ export default function ReviewStep() {
   const { draft, isSubmitting, submit } = useCreateDareFlow();
   const who = draft.recipients[0];
   const whoName = who?.full_name || (who ? `@${who.username}` : 'Someone');
-  const count = draft.recipients.length;
+  const circle = draft.circle ?? null;
+  const count = circle ? circle.others : draft.recipients.length;
   const names = draft.recipients.map((r) => (r.full_name || r.username).split(' ')[0]);
 
   const rows: { label: string; value: string }[] = [
-    ...(count > 1 ? [{ label: 'Sent to', value: names.join(', ') }] : []),
+    ...(circle ? [{ label: 'Sent to', value: `${circle.name} (${circle.others} ${circle.others === 1 ? 'person' : 'people'}, one dare each)` }] : count > 1 ? [{ label: 'Sent to', value: names.join(', ') }] : []),
     { label: 'Time to accept', value: `${draft.respondByHours} ${draft.respondByHours === 1 ? 'hour' : 'hours'}` },
     { label: 'Time to do it', value: `${draft.completeByHours} hours from accepting` },
     { label: 'Proof', value: draft.verificationMethod === 'video' ? 'A short video' : 'A photo' },
@@ -38,9 +39,9 @@ export default function ReviewStep() {
 
       <div className="mt-auto pt-8">
         <SlideToSend
-          label={`${count > 2 ? `Slide to dare ${count} people` : count === 2 ? `Slide to dare ${names[0]} & ${names[1]}` : `Slide to dare ${whoName.split(' ')[0]}`}${draft.rewardAmount && count <= 1 ? ` for ₹${draft.rewardAmount}` : ''}`}
+          label={`${circle ? `Slide to dare ${circle.name}` : count > 2 ? `Slide to dare ${count} people` : count === 2 ? `Slide to dare ${names[0]} & ${names[1]}` : `Slide to dare ${whoName.split(' ')[0]}`}${draft.rewardAmount && count <= 1 ? ` for ₹${draft.rewardAmount}` : ''}`}
           busy={isSubmitting}
-          disabled={!who}
+          disabled={!who && !circle}
           onSend={submit}
         />
         <p className="mt-2 text-center text-[12.5px] text-[var(--muted)]">{draft.rewardAmount ? `You pay only after you see the proof and mark it done.` : 'You can call it off later.'}</p>
