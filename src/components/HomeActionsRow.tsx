@@ -42,7 +42,7 @@ export default function HomeActionsRow({ onNavigateCircles, onCreatePact, disabl
         style={{ borderColor: 'var(--pact-violet)', background: 'var(--pact-surface-2)', color: 'var(--pact-violet)' }}
       >
         <Plus className="h-4 w-4" strokeWidth={2.2} />
-        New Pact
+        New pact
       </button>
     </div>
   )

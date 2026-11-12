@@ -6,22 +6,21 @@ const INK = '#17181D'
 const MUTED = '#5A5C63'
 const NAVY = '#1F3A93'
 const LINE = '#DCD3C1'
-const GOLD = '#F2C14E'
 const PRESETS = [21, 51, 101]
 
 function chip(on: boolean, dark: boolean): React.CSSProperties {
   if (dark) {
     return on
-      ? { background: GOLD, color: INK, border: `1px solid ${GOLD}`, fontWeight: 800 }
+      ? { background: '#FFFFFF', color: NAVY, border: '1px solid #FFFFFF', fontWeight: 800 }
       : { background: 'transparent', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.28)' }
   }
-  return on ? { background: INK, color: '#FFFFFF', border: `1px solid ${INK}` } : { background: '#FBF8F1', color: INK, border: `1px solid ${LINE}` }
+  return on ? { background: NAVY, color: '#FFFFFF', border: `1px solid ${NAVY}` } : { background: '#FBF8F1', color: INK, border: `1px solid ${LINE}` }
 }
 
 /**
  * Price to watch a private pact, paid over UPI. There is no "free" lock: if a
  * pact's moments are free they're simply open. Plus when people get in once
- * they say they paid. `dark` is for the dark "paid moments" card in New Pact.
+ * they say they paid. `dark` is for the blue "paid moments" card in New Pact.
  */
 export default function PriceChooser({
   price,
@@ -44,7 +43,7 @@ export default function PriceChooser({
   const custom = price != null && !PRESETS.includes(price)
   const [editing, setEditing] = useState(custom)
   const [draft, setDraft] = useState(custom ? String(price) : '')
-  const label = dark ? '#BFC2CB' : MUTED
+  const label = dark ? '#DCE3F7' : MUTED
   const text = dark ? '#FFFFFF' : INK
 
   return (
@@ -57,7 +56,7 @@ export default function PriceChooser({
           </button>
         ))}
         {editing ? (
-          <label className={`flex ${dark ? 'h-10' : 'h-9'} items-center rounded-full px-3 text-[13.5px] font-bold`} style={dark ? { background: 'transparent', border: `1.5px solid ${GOLD}`, color: '#FFFFFF' } : { background: '#FFFFFF', border: `1.5px solid ${INK}`, color: INK }}>
+          <label className={`flex ${dark ? 'h-10' : 'h-9'} items-center rounded-full px-3 text-[13.5px] font-bold`} style={dark ? { background: 'transparent', border: '1.5px solid #FFFFFF', color: '#FFFFFF' } : { background: '#FFFFFF', border: `1.5px solid ${INK}`, color: INK }}>
             ₹
             <input
               autoFocus
@@ -101,8 +100,8 @@ export default function PriceChooser({
               {autoApprove ? 'Instant for buyers. Remove anyone whose payment never shows up.' : 'Off: you confirm each payment in your UPI app first.'}
             </span>
           </span>
-          <span className="relative h-7 w-12 shrink-0 rounded-full transition-colors" style={{ background: autoApprove ? (dark ? GOLD : NAVY) : dark ? '#5A5C63' : '#D4D5D9' }}>
-            <span className="absolute top-0.5 size-6 rounded-full bg-white transition-all" style={{ left: autoApprove ? 22 : 2, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+          <span className="relative h-7 w-12 shrink-0 rounded-full transition-colors" style={{ background: autoApprove ? (dark ? '#FFFFFF' : NAVY) : dark ? 'rgba(255,255,255,0.28)' : '#D4D5D9' }}>
+            <span className="absolute top-0.5 size-6 rounded-full transition-all" style={{ background: dark && autoApprove ? NAVY : '#FFFFFF', left: autoApprove ? 22 : 2, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
           </span>
         </button>
       )}

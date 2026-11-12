@@ -1105,7 +1105,7 @@ export default function FeedPactCard({
               <div
                 className="relative aspect-[2/1] w-full overflow-hidden"
                 onClick={handleMediaTap}
-                style={{ ...transformStyle, background: 'radial-gradient(120% 90% at 30% 20%, #2A3A6E 0%, #141A2E 55%, #0F1014 100%)' }}
+                style={{ ...transformStyle, background: 'radial-gradient(120% 90% at 25% 15%, #2E4DB3 0%, #1F3A93 55%, #142766 100%)' }}
               >
                 <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center gap-2.5 pl-3.5 pr-0.5 pt-2">
                   {identity(true)}

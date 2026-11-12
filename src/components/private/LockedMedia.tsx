@@ -49,7 +49,7 @@ export default function LockedMedia({ pact, variant = 'card', className = '' }: 
     <div
       onClick={stop}
       className={`relative flex w-full flex-col items-center justify-center overflow-hidden px-6 text-center ${variant === 'card' ? 'aspect-[4/3]' : 'h-full min-h-[280px]'} ${className}`}
-      style={{ background: 'radial-gradient(120% 90% at 30% 20%, #2A3A6E 0%, #141A2E 55%, #0F1014 100%)', color: '#FFFFFF' }}
+      style={{ background: 'radial-gradient(120% 90% at 25% 15%, #2E4DB3 0%, #1F3A93 55%, #142766 100%)', color: '#FFFFFF' }}
     >
       <span className="flex size-14 items-center justify-center rounded-full" style={{ background: 'rgba(255,255,255,0.12)', border: '1.5px solid rgba(255,255,255,0.35)' }}>
         <Lock className="size-6" strokeWidth={2.2} aria-hidden="true" />
