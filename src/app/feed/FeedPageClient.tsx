@@ -21,10 +21,6 @@ import { useCircles } from '@/hooks/useCircles'
 import { useAtRiskPact } from '@/hooks/useAtRiskPact'
 import { useFeaturedDare } from '@/hooks/useFeaturedDare'
 import { usePendingDareCount } from '@/hooks/usePendingDareCount'
-import { useProfileCompletion } from '@/hooks/useProfileCompletion'
-import { isProfileNudgeDismissed, isProfileChecklistDismissed } from '@/lib/onboarding'
-import ProfileCompletionCard from '@/components/ProfileCompletionCard'
-import ProfileNudgeCard from '@/components/ProfileNudgeCard'
 import toast from 'react-hot-toast'
 
 export default function FeedPageClient() {
@@ -40,9 +36,6 @@ export default function FeedPageClient() {
   const isAtRisk = useAtRiskPact(user?.id)
   const { featuredDare } = useFeaturedDare()
   const pendingDares = usePendingDareCount()
-  const profileCompletion = useProfileCompletion()
-  const [nudgeDismissed, setNudgeDismissed] = useState(true)
-  const [checklistDismissed, setChecklistDismissed] = useState(true)
   const [pactModalOpen, setPactModalOpen] = useState(false)
   const [, setFeedBusy] = useState(false)
   const firstLoadRef = useRef(true)
@@ -74,13 +67,6 @@ export default function FeedPageClient() {
       router.replace('/auth/register')
     }
   }, [isInitialized, user, router])
-
-  // Read the dismissal flag on mount only (client-only localStorage), rather
-  // than during render, so this never causes a hydration mismatch.
-  useEffect(() => {
-    setNudgeDismissed(isProfileNudgeDismissed())
-    setChecklistDismissed(isProfileChecklistDismissed())
-  }, [])
 
   // "Back to Feed" on the create-pact success screen pushes /feed?created=id.
   // When the modal was opened from this same page (Feed's own "New Pact"
@@ -114,11 +100,6 @@ export default function FeedPageClient() {
     feedAnchor?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [category, paidOnly])
 
-  // Home shows one card between Today and the feed: a profile reminder while
-  // one is due, otherwise the dare of the day. Never both.
-  const showChecklist = profileCompletion.showChecklist && !checklistDismissed
-  const showNudge = !showChecklist && profileCompletion.showSingleNudge && !nudgeDismissed && Boolean(profileCompletion.missingItem)
-  const showDare = !showChecklist && !showNudge
 
   const handleCreatePact = () => {
     if (!user) {
@@ -170,7 +151,7 @@ export default function FeedPageClient() {
             than a second, home-feed-specific pick. Renders nothing when
             Discover has no open public dare, same as the Dares page's own
             hero. */}
-        {isInitialized && user && featuredDare && showDare && (
+        {isInitialized && user && featuredDare && (
           <div className="max-w-md mx-auto px-4 pb-4">
             <FeaturedDareCard dare={featuredDare} />
             <nav aria-label="Dares" className="scrollbar-hide -mx-4 mt-3 flex gap-2 overflow-x-auto px-4">
@@ -185,22 +166,6 @@ export default function FeedPageClient() {
                 Discover
               </Link>
             </nav>
-          </div>
-        )}
-
-        {showChecklist && (
-          <div className="max-w-md mx-auto px-4 pb-4">
-            <ProfileCompletionCard
-              percent={profileCompletion.percent}
-              checklist={profileCompletion.checklist}
-              onDismiss={() => setChecklistDismissed(true)}
-            />
-          </div>
-        )}
-
-        {showNudge && profileCompletion.missingItem && (
-          <div className="max-w-md mx-auto px-4 pb-4">
-            <ProfileNudgeCard itemId={profileCompletion.missingItem.id} onDismiss={() => setNudgeDismissed(true)} />
           </div>
         )}
 
