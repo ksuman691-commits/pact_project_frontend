@@ -38,6 +38,60 @@ export interface ActivityRow {
   user_agent: string | null;
 }
 
+export type DayState = 'live' | 'scheduled' | 'ended' | 'ended_early' | 'empty' | 'none';
+
+export interface ScheduleDay {
+  date: string;
+  today: boolean;
+  state: DayState;
+  dare_id: number | null;
+  title: string | null;
+  description: string | null;
+  curated_content_id: number | null;
+  verification_method: 'photo' | 'video' | null;
+  joined: number;
+  took: number;
+}
+
+export interface Draft {
+  id: number;
+  type: 'dare' | 'pact';
+  title: string;
+  description: string;
+  category: string;
+  status: 'draft' | 'approved' | 'rejected';
+  source: 'ai_generated' | 'manual';
+  created_at: string;
+  updated_at: string;
+  created_by_member_id: number | null;
+  created_by_name: string | null;
+  reviewed_by_name: string | null;
+  review_note: string | null;
+  mine: boolean;
+  used_on: string | null;
+}
+
+export interface ReportItem {
+  dare_id: number;
+  title: string;
+  description: string;
+  creator_username: string | null;
+  is_official: boolean;
+  hidden: boolean;
+  open_reports: number;
+  reasons: Record<string, number>;
+  notes: string[];
+  first_reported_at: string;
+  created_at: string | null;
+  audience: string | null;
+  recipients: number;
+  accepted: number;
+  reward_amount: number | null;
+  resolved_at: string | null;
+}
+
+export type Proof = 'photo' | 'video';
+
 export const consoleSession = {
   get: (): string | null => {
     try {
@@ -124,4 +178,23 @@ export const consoleApi = {
   remove: (id: number) => client.delete(`/team/${id}`).then((r) => r.data),
 
   activity: (params: { category?: string; days?: number }) => client.get<ActivityRow[]>('/activity', { params }).then((r) => r.data),
+
+  schedule: () => client.get<ScheduleDay[]>('/schedule').then((r) => r.data),
+  scheduleDay: (body: { live_on: string; curated_content_id?: number; title?: string; description?: string; verification_method: Proof }) =>
+    client.post('/dares/official', body).then((r) => r.data),
+  swapDay: (dareId: number, body: { curated_content_id?: number; title?: string; description?: string; verification_method: Proof }) =>
+    client.put(`/dares/${dareId}`, body).then((r) => r.data),
+  clearDay: (dareId: number) => client.delete(`/dares/${dareId}`).then((r) => r.data),
+  endEarly: (dareId: number) => client.post(`/dares/${dareId}/end`).then((r) => r.data),
+
+  drafts: (status?: Draft['status']) => client.get<Draft[]>('/drafts', { params: { type: 'dare', ...(status ? { status } : {}) } }).then((r) => r.data),
+  writeDraft: (body: { title: string; description: string; category: string }) =>
+    client.post<Draft>('/drafts', { type: 'dare', source: 'manual', ...body }).then((r) => r.data),
+  editDraft: (id: number, body: { title?: string; description?: string; category?: string }) => client.patch<Draft>(`/drafts/${id}`, body).then((r) => r.data),
+  approve: (id: number) => client.post<Draft>(`/drafts/${id}/approve`).then((r) => r.data),
+  reject: (id: number, reason: string) => client.post<Draft>(`/drafts/${id}/reject`, { reason }).then((r) => r.data),
+
+  reports: (status: 'open' | 'dismissed' | 'removed' = 'open') => client.get<ReportItem[]>('/reports', { params: { status } }).then((r) => r.data),
+  dismissReports: (dareId: number) => client.post(`/reports/${dareId}/dismiss`).then((r) => r.data),
+  removeReported: (dareId: number) => client.post(`/reports/${dareId}/remove`).then((r) => r.data),
 };
