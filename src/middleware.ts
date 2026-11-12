@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 /**
  * The console lives on its own address (NEXT_PUBLIC_CONSOLE_HOST, e.g.
- * console.circlepact.app). On that address only the console's pages are
+ * console.circlepact.com). On that address only the console's pages are
  * served; everywhere else /console isn't there. With the variable unset
  * (local runs, previews) /console works on any address. This only keeps the
  * two apart; every console action is still checked by the server.
