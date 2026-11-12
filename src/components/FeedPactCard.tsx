@@ -4,6 +4,9 @@ import TipButton from '@/components/tips/TipButton';
 import AutoPlayVideo from '@/components/media/AutoPlayVideo';
 import { pactInviteMessage } from '@/lib/inviteMessages';
 import { cleanTitle } from '@/lib/titleCase';
+import { endedShort } from '@/lib/pactEnded';
+import CircleWatch from '@/components/brand/CircleWatch';
+import { useTodayStatus } from '@/hooks/useTodayStatus';
 import LockedMedia from '@/components/private/LockedMedia';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -289,6 +292,7 @@ export default function FeedPactCard({
   }: FeedPactCardProps) {
   const router = useRouter();
   const { user } = useAuthStore();
+  const { pacts: todayPacts } = useTodayStatus();
   const reportMutation = useReportPact(pact.id);
   const [reportSheetOpen, setReportSheetOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
@@ -548,7 +552,7 @@ export default function FeedPactCard({
   // The chip is always TODAY's progress, matching Home and the "Post Day N" button. The day of the
   // clip on screen is a separate, smaller "Posted Day N" chip, only when it adds something.
   const badgeText = pactEnded
-    ? `${finishedPact ? 'Finished' : 'Ended'}${totalDays ? ` · ${Number(pact.days_completed ?? 0)} of ${totalDays} days` : ''}`
+    ? `${finishedPact ? 'Finished' : endedShort(pact.end_date)}${totalDays ? ` · ${Math.min(totalDays, Number(pact.days_completed ?? 0) + restDays)} of ${totalDays} days` : ''}`
     : dayNo
       ? `Day ${dayNo}${totalDays ? ` of ${totalDays}` : ''}`
       : null;
@@ -563,6 +567,24 @@ export default function FeedPactCard({
   const postedToday =
     Boolean(postedTodayProp) ||
     tiles.some((tile) => tile.uploadedAt && new Date(tile.uploadedAt).toDateString() === todayKey && (!tile.uploader || tile.uploader === user?.username));
+  // Your own live pact: your face sits in the CirclePact watch, filling with red as
+  // today runs out (midnight in the pact's time zone), and turning to a check once you've posted.
+  const todayRow = todayPacts.find((row) => row.id === pact.id);
+  const todayEndsAt = todayRow?.day_ends_at ? Date.parse(todayRow.day_ends_at) : NaN;
+  const todayWatch =
+    todayRow && !pactEnded && creatorLabel === 'You' && (!momentStory || (user?.id != null && momentStory.user_id === user.id)) && Number.isFinite(todayEndsAt)
+      ? (() => {
+          const leftMs = Math.max(0, todayEndsAt - Date.now());
+          const hours = Math.floor(leftMs / 3_600_000);
+          const minutes = Math.floor((leftMs % 3_600_000) / 60_000);
+          return {
+            endsAt: todayEndsAt,
+            elapsed: 1 - Math.min(1, leftMs / 86_400_000),
+            done: Boolean(todayRow.posted_today || postedToday),
+            leftLabel: hours > 0 ? `${hours}h ${minutes}m` : `${Math.max(1, minutes)}m`,
+          };
+        })()
+      : null;
   const openCamera = () => {
     if (!uploadAllowed) return;
     if (onAddMoment) onAddMoment();
@@ -824,6 +846,17 @@ export default function FeedPactCard({
 
   const identity = (onPhoto: boolean) => (
     <div className="pointer-events-auto flex min-w-0 flex-1 items-center gap-2.5" onClick={(event) => event.stopPropagation()}>
+      {todayWatch ? (
+        <CircleWatch
+          size={46}
+          elapsed={todayWatch.elapsed}
+          endsAt={todayWatch.endsAt}
+          state={todayWatch.done ? 'done' : 'running'}
+          title={todayWatch.done ? 'Checked in today' : `${todayWatch.leftLabel} left to check in today`}
+        >
+          <Avatar name={user?.full_name || user?.username || 'You'} avatarUrl={user?.avatar_url || null} size={29} />
+        </CircleWatch>
+      ) : (
       <span className={`inline-flex h-[34px] w-[34px] shrink-0 overflow-hidden rounded-full ${onPhoto ? 'ring-2 ring-white/70' : ''}`}>
         {momentStory ? (
           <Avatar name={momentAuthor === 'You' ? user?.full_name || user?.username || 'You' : momentAuthor} avatarUrl={momentStory.avatar_url || (momentAuthor === 'You' ? user?.avatar_url : null) || null} size={34} />
@@ -833,6 +866,7 @@ export default function FeedPactCard({
           <Avatar name={creatorAvatarName} avatarUrl={creatorAvatarUrl} size={34} />
         )}
       </span>
+      )}
       <div className="min-w-0" style={onPhoto ? { color: '#fff', textShadow: '0 1px 6px rgba(0,0,0,0.45)' } : undefined}>
         <div className={`truncate text-[14.5px] font-bold ${onPhoto ? '' : 'text-[var(--ink)]'}`}>{momentStory ? momentAuthor : creatorLabel === 'You' ? 'You' : pact.creator_full_name || `@${creatorLabel}`}</div>
         {headerSub && <div className={`truncate text-[12px] ${onPhoto ? '' : 'text-[var(--muted)]'}`} style={onPhoto ? { opacity: 0.92 } : undefined}>{headerSub}</div>}
@@ -856,6 +890,20 @@ export default function FeedPactCard({
               )}
               {showMomentum && !pactEnded ? '🔥 ' : ''}
               {badgeText}
+            </span>
+          )}
+          {todayWatch && (
+            <span
+              className="rounded-[9px] px-2.5 py-[3px] text-[11.5px] font-extrabold tabular-nums"
+              style={
+                todayWatch.done
+                  ? { color: '#fff', backgroundColor: '#2E8B57' }
+                  : todayWatch.endsAt - Date.now() < 3 * 3_600_000
+                    ? { color: '#17181D', backgroundColor: '#FFD23F' }
+                    : { color: '#fff', backgroundColor: 'rgba(255,255,255,0.24)' }
+              }
+            >
+              {todayWatch.done ? 'Done today' : `${todayWatch.leftLabel} left today`}
             </span>
           )}
           {postedText && (

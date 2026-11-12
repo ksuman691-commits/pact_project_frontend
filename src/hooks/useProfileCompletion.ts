@@ -60,6 +60,11 @@ export function useProfileCompletion() {
   // returning users. Photo first since it's the fastest, one-tap fix.
   const missingItem = checklist.find((item) => item.id !== 'account' && !item.done) ?? null;
 
+  // Decide nothing until we actually know: right after sign-in the user and
+  // their stats are still on the way, and an empty user looks like "no photo,
+  // no circle", which flashed the reminder for a few seconds and then hid it.
+  const known = Boolean(user?.id) && Boolean(user?.created_at) && statsQuery.isSuccess;
+
   return {
     isLoading,
     isReady: !!user,
@@ -68,8 +73,8 @@ export function useProfileCompletion() {
     isComplete,
     // New user → show the full checklist card. Returning/inactive user with
     // something missing → show the single quiet nudge instead.
-    showChecklist: !isComplete && isNewAccount,
-    showSingleNudge: !isComplete && !isNewAccount && !!missingItem,
+    showChecklist: known && !isComplete && isNewAccount,
+    showSingleNudge: known && !isComplete && !isNewAccount && !!missingItem,
     missingItem,
   };
 }

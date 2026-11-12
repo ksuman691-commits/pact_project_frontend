@@ -19,6 +19,8 @@ export interface TodayPact {
   /** Today's day number in the pact's own time zone. */
   day?: number | null
   total_days?: number | null
+  /** When today's check-in closes: midnight in the pact's time zone (UTC ISO). */
+  day_ends_at?: string | null
   /** Who nudged you on this pact today: "Priya and 2 others nudged you". */
   nudged_by?: { count: number; line: string } | null
 }

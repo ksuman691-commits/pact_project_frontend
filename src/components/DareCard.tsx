@@ -13,6 +13,7 @@ import ConfirmModal from '@/components/ConfirmModal';
 import DareProofUploadModal from '@/components/DareProofUploadModal';
 import DareRewardPaySheet from '@/components/dares/DareRewardPaySheet';
 import SparkRing from '@/components/dares/SparkRing';
+import CircleWatch from '@/components/brand/CircleWatch';
 import { useAuthStore } from '@/store/auth';
 import { useAcceptDare, useCancelDare, useClaimDare, useDareRewardStep, useDeclineDare, useDeleteDareProof, useLeaveDare, useReviewDare } from '@/hooks/useDareMutations';
 import { copyText } from '@/lib/circleInvite';
@@ -189,7 +190,8 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
       >
         {dare.title}
       </h2>
-      {left && (
+      {/* With no photo the watch above already shows the time, so it isn't repeated here. */}
+      {left && (showMedia || inactive) && (
         <p className="mt-1 flex items-center gap-1 text-[12.5px] font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>
           {ringLeft != null ? (
             <MarkProgress value={ringLeft} size={14} color="#fff" track="rgba(255,255,255,0.3)" title={`${Math.round(ringLeft * 100)}% of the time left`} />
@@ -363,21 +365,27 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
                   : 'radial-gradient(120% 90% at 75% 18%, #3B3C45 0%, #1D1E24 52%, #0C0D11 100%)',
               }}
             >
-              {!inactive && (
+              {!inactive && (ringTime || state === 'completed') && (
+                <div className="pointer-events-none absolute left-1/2 top-[64px] flex -translate-x-1/2 flex-col items-center text-white">
+                  <CircleWatch
+                    size={variant === 'detail' ? 150 : 136}
+                    elapsed={ringLeft != null ? 1 - ringLeft : 0}
+                    endsAt={deadline ? parseApiDate(deadline.target)?.getTime() ?? null : null}
+                    state={state === 'completed' ? 'done' : 'running'}
+                    title={left ? `${left} left to ${deadline?.verb === 'respond' ? 'answer' : 'finish'}` : undefined}
+                  />
+                  {ringTime && left && (
+                    <span className="mt-2.5 flex flex-col items-center" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.4)' }}>
+                      <span className="text-[30px] font-extrabold leading-none tracking-[-0.03em] tabular-nums">{left}</span>
+                      <span className="mt-1 text-[12.5px] font-bold opacity-80">{deadline?.verb === 'respond' ? 'left to answer' : 'left to finish'}</span>
+                    </span>
+                  )}
+                </div>
+              )}
+              {!inactive && !ringTime && state !== 'completed' && (
                 <div className="pointer-events-none absolute left-1/2 top-[76px] -translate-x-1/2">
                   <SparkRing size={184} left={ringLeft} tone="dark" duration="34s">
-                    <span className="flex flex-col items-center justify-center text-white" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.4)' }}>
-                      {ringTime ? (
-                        <>
-                          <span className="text-[48px] font-extrabold leading-none tracking-[-0.05em]">{ringTime}</span>
-                          <span className="mt-1.5 text-[12.5px] font-bold opacity-80">{deadline?.verb === 'respond' ? 'to answer' : 'to finish'}</span>
-                        </>
-                      ) : state === 'completed' ? (
-                        <Check className="size-9" strokeWidth={2.6} />
-                      ) : (
-                        <Zap className="size-9" strokeWidth={2.2} fill="#FFD84D" color="#FFD84D" />
-                      )}
-                    </span>
+                    <Zap className="size-9" strokeWidth={2.2} fill="#FFD84D" color="#FFD84D" />
                   </SparkRing>
                 </div>
               )}
