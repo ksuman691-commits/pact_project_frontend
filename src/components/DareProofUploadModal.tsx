@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Loader, RotateCcw, X, Zap } from 'lucide-react';
+import { ImagePlus, Loader, RotateCcw, X, Zap } from 'lucide-react';
 import LogoMark from '@/components/LogoMark';
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet';
 import toast from 'react-hot-toast';
@@ -35,14 +35,20 @@ const EXTENSION: Record<string, string> = {
   'video/quicktime': 'mov',
 };
 
+const MAX_PHOTOS = 4;
+
 /**
- * Dare proof is shot live with the same camera as Moments (photo/video
- * switch, filters, no library), then reviewed with an optional caption and
- * sent straight to the person who dared, with a line on how it went. Nothing is posted until "Send".
+ * Dare proof uses the same camera as Moments (photo/video switch, filters), or
+ * a photo or video from the phone's gallery. Photo proof can be up to 4 photos
+ * sent together. It's reviewed with an optional line on how it went and sent
+ * straight to the person who dared. Nothing is posted until "Send".
  */
 export default function DareProofUploadModal({ isOpen, onClose, dareId, dareTitle, toName, method }: Props) {
   const upload = useUploadDareProof(dareId);
   const [clip, setClip] = useState<Clip | null>(null);
+  // More photos from the gallery, after the first (up to 4 in all).
+  const [extra, setExtra] = useState<Clip[]>([]);
+  const galleryRef = useRef<HTMLInputElement>(null);
   const [caption, setCaption] = useState('');
   const [edits, setEdits] = useState<ProofEdits>(NO_EDITS);
   const [rendering, setRendering] = useState<number | null>(null);
@@ -56,6 +62,10 @@ export default function DareProofUploadModal({ isOpen, onClose, dareId, dareTitl
         if (prev) URL.revokeObjectURL(prev.url);
         return null;
       });
+      setExtra((prev) => {
+        prev.forEach((c) => URL.revokeObjectURL(c.url));
+        return [];
+      });
       setCaption('');
       setEdits(NO_EDITS);
     }
@@ -65,8 +75,29 @@ export default function DareProofUploadModal({ isOpen, onClose, dareId, dareTitl
 
   const retake = () => {
     if (clip) URL.revokeObjectURL(clip.url);
+    extra.forEach((c) => URL.revokeObjectURL(c.url));
     setClip(null);
+    setExtra([]);
     setEdits(NO_EDITS);
+  };
+
+  const addFromGallery = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(event.target.files ?? []).filter((f) => f.type.startsWith('image/'));
+    event.target.value = '';
+    const room = MAX_PHOTOS - 1 - extra.length;
+    if (picked.length > room) toast(`Up to ${MAX_PHOTOS} photos. We kept the first ${Math.max(room, 0)}.`);
+    const added = picked.slice(0, Math.max(room, 0)).map((f) => ({ blob: f, contentType: f.type, duration: 0, url: URL.createObjectURL(f) }));
+    if (added.length) {
+      setExtra((prev) => [...prev, ...added]);
+      setEdits(NO_EDITS); // edits are for a single photo
+    }
+  };
+
+  const removeExtra = (i: number) => {
+    setExtra((prev) => {
+      URL.revokeObjectURL(prev[i].url);
+      return prev.filter((_, n) => n !== i);
+    });
   };
 
   const send = async () => {
@@ -89,10 +120,13 @@ export default function DareProofUploadModal({ isOpen, onClose, dareId, dareTitl
       setRendering(null);
     }
     const isPhoto = type.startsWith('image/');
-    const base = type.split(';')[0];
-    const file = new File([blob], `proof-${Date.now()}.${EXTENSION[base] ?? (isPhoto ? 'jpg' : 'mp4')}`, { type: base });
+    const toFile = (b: Blob, t: string, i: number) => {
+      const base = t.split(';')[0];
+      return new File([b], `proof-${Date.now()}-${i}.${EXTENSION[base] ?? (base.startsWith('image/') ? 'jpg' : 'mp4')}`, { type: base });
+    };
+    const files = [toFile(blob, type, 0), ...(isPhoto ? extra.map((c, i) => toFile(c.blob, c.contentType, i + 1)) : [])];
     upload.mutate(
-      { proof_file: file, proof_type: isPhoto ? 'photo' : 'video', caption: caption.trim() || undefined },
+      { proof_file: files, proof_type: isPhoto ? 'photo' : 'video', caption: caption.trim() || undefined },
       { onSuccess: onClose },
     );
   };
@@ -102,11 +136,10 @@ export default function DareProofUploadModal({ isOpen, onClose, dareId, dareTitl
       <StoryCaptureSheet
         isOpen
         autoStart
-        liveOnly
         lockMode={lockMode}
         pactId={0}
         pactTitle={dareTitle || 'Dare proof'}
-        introText={`Shoot your proof now. It goes straight to ${first}.`}
+        introText={`Shoot your proof or pick it from your gallery. It goes straight to ${first}.`}
         onCaptured={(captured) => setClip({ ...captured, url: URL.createObjectURL(captured.blob) })}
         onClose={onClose}
       />,
@@ -129,7 +162,38 @@ export default function DareProofUploadModal({ isOpen, onClose, dareId, dareTitl
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-3 overflow-y-auto px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         {/* The dare frames the proof, the way it will look to the person who sent it. */}
         <div className="rounded-[24px] bg-[var(--dare)] p-2.5">
-          <ProofEditor url={clip.url} isPhoto={isPhoto} edits={edits} onChange={setEdits} disabled={busy} canEdit={isPhoto || canEditVideo()} />
+          <ProofEditor url={clip.url} isPhoto={isPhoto} edits={edits} onChange={setEdits} disabled={busy} canEdit={extra.length === 0 && (isPhoto || canEditVideo())} />
+          {isPhoto && (
+            <div className="scrollbar-hide mt-2 flex gap-2 overflow-x-auto px-0.5">
+              {extra.map((c, i) => (
+                <span key={c.url} className="relative size-[64px] shrink-0 overflow-hidden rounded-[12px] bg-[var(--ink)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={c.url} alt={`Photo ${i + 2}`} className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => removeExtra(i)}
+                    aria-label={`Remove photo ${i + 2}`}
+                    className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-full bg-black/60 text-white"
+                  >
+                    <X className="size-3.5" aria-hidden="true" />
+                  </button>
+                </span>
+              ))}
+              {extra.length < MAX_PHOTOS - 1 && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => galleryRef.current?.click()}
+                  className="flex size-[64px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-[12px] border-[1.5px] border-dashed border-[var(--ink)] text-[11px] font-bold disabled:opacity-50"
+                >
+                  <ImagePlus className="size-5" aria-hidden="true" />
+                  {extra.length + 1}/{MAX_PHOTOS}
+                </button>
+              )}
+              <input ref={galleryRef} type="file" accept="image/*" multiple className="sr-only" onChange={addFromGallery} tabIndex={-1} aria-hidden="true" />
+            </div>
+          )}
           <div className="px-1.5 pb-1 pt-2.5">
             <div className="flex items-center justify-between gap-2">
               <span className="flex items-center gap-1.5 text-[13px] font-bold">
@@ -194,7 +258,7 @@ export default function DareProofUploadModal({ isOpen, onClose, dareId, dareTitl
             {rendering !== null ? (rendering > 0 ? `Adding edits ${Math.round(rendering * 100)}%` : 'Adding edits…') : upload.isPending ? 'Sending…' : `Send to ${first}`}
           </button>
         </div>
-        <p className="text-center text-[12.5px] text-[var(--muted)]">You can delete your proof anytime.</p>
+        <p className="text-center text-[12.5px] text-[var(--muted)]">{isPhoto ? `Up to ${MAX_PHOTOS} photos. ` : ''}You can delete your proof anytime.</p>
       </div>
     </div>,
     document.body,

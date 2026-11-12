@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
-import { Camera, Check, ChevronLeft, ChevronRight, Globe, Heart, Link2, Lock, MessageCircle, Plus, Search, UserPlus, Users, X } from 'lucide-react'
+import { Camera, ChevronLeft, ChevronRight, Globe, Heart, Lock, Plus, Search, Users, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
 import PriceChooser from '@/components/private/PriceChooser'
@@ -103,7 +103,6 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   const [autoApprove, setAutoApprove] = useState(false)
   const [created, setCreated] = useState<{ id: number; title: string; days: number } | null>(null)
   // The full-screen "your pact is live" moment plays once, then the share screen is there underneath.
-  const [beatDone, setBeatDone] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const audience: Audience | null = chosenAudience
@@ -207,13 +206,9 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   }
 
   const pactUrl = created && typeof window !== 'undefined' ? `${window.location.origin}/pacts/${created.id}` : ''
-  const share = async (kind: 'native' | 'whatsapp' | 'copy') => {
+  const share = async (kind: 'native' | 'copy') => {
     if (!created) return
     const message = pactInviteMessage({ title: created.title, mine: true })
-    if (kind === 'whatsapp') {
-      window.open(`https://wa.me/?text=${encodeURIComponent(`${message} ${pactUrl}`)}`, '_blank', 'noopener')
-      return
-    }
     if (kind === 'native' && navigator.share) {
       try {
         await navigator.share({ title: created.title, text: message, url: pactUrl })
@@ -625,85 +620,20 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
         </>
       )}
 
-      {step === 'live' && created && !beatDone && (
+      {step === 'live' && created && (
         <PactLiveBeat
           title={created.title}
           days={created.days}
           hasDay1={!!clip}
           subtitle={audience === 'circle' ? circle?.name ?? 'Your circle' : audience === 'followers' ? 'Your followers' : 'Everyone'}
-          inviteLabel={audience === 'circle' ? 'Invite your circle' : 'Share your pact'}
-          onInvite={() => {
-            setBeatDone(true)
-            void share('native')
-          }}
+          inviteLabel={audience === 'circle' ? 'Tell your circle' : 'Share your pact'}
+          message={pactInviteMessage({ title: created.title, mine: true })}
+          onInvite={() => void share('native')}
+          onCopy={() => void share('copy')}
           onOpen={openPact}
         />
       )}
 
-      {step === 'live' && created && (
-        <>
-          <div className="flex justify-end px-1 pt-[max(0.75rem,env(safe-area-inset-top))]">
-            <button type="button" onClick={openPact} aria-label="Close" className="flex size-11 items-center justify-center" style={{ color: INK }}>
-              <X className="size-5" />
-            </button>
-          </div>
-          <div className="mx-auto w-full max-w-md flex-1 px-5">
-            <div className="text-center">
-              <div className="text-[30px] font-extrabold tracking-[-0.035em]" style={{ color: INK }}>{clip ? 'You’re on Day 1.' : 'Your pact is live.'}</div>
-              <div className="mt-1.5 text-[14.5px]" style={{ color: MUTED }}>
-                {audience === 'circle' ? `${circle?.name ?? 'Your circle'} can see it now.` : audience === 'followers' ? 'Your followers can see it now.' : 'It’s live in Discover.'}
-                {locked && watchPrice != null ? ` Moments are ₹${watchPrice} to watch.` : ''}
-              </div>
-            </div>
-            <div className="mt-5 overflow-hidden rounded-[24px]" style={{ background: CARD, border: `1px solid ${LINE}` }}>
-              <div className="relative h-[300px]" style={{ background: clip ? INK : PACT_BLUE_TILE }}>
-                {clip && (isPhoto ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={clip.url} alt="" className="absolute inset-0 size-full object-cover" />
-                ) : (
-                  <video src={clip.url} autoPlay loop muted playsInline className="absolute inset-0 size-full object-cover" />
-                ))}
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5" style={{ background: 'linear-gradient(0deg, rgba(15,16,20,0.75), rgba(15,16,20,0))' }} />
-                {locked && (
-                  <span className="absolute left-3 top-3 flex items-center gap-1 rounded-xl px-2.5 py-1 text-[12px] font-extrabold" style={{ background: 'rgba(15,16,20,0.6)', color: '#FFFFFF' }}>
-                    <Lock className="size-3" strokeWidth={2.6} /> {watchPrice != null ? `Private · ₹${watchPrice}` : 'Private'}
-                  </span>
-                )}
-                <div className="absolute inset-x-3.5 bottom-3" style={{ color: '#FFFFFF' }}>
-                  <span className="rounded-[10px] px-2.5 py-0.5 text-[12px] font-extrabold" style={{ background: 'rgba(255,255,255,0.24)' }}>Day 1 of {created.days}</span>
-                  <div className="mt-1.5 text-[19px] font-extrabold leading-tight tracking-[-0.02em]">{created.title}</div>
-                </div>
-              </div>
-            </div>
-            <div className="mt-5 text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>GET PEOPLE IN</div>
-            <div className="mt-2.5 grid grid-cols-3 gap-2">
-              {(
-                [
-                  ['native', 'Invite', <UserPlus key="i" className="size-[22px]" />],
-                  ['whatsapp', 'WhatsApp', <MessageCircle key="w" className="size-[22px]" />],
-                  ['copy', 'Copy link', <Link2 key="c" className="size-[22px]" />],
-                ] as const
-              ).map(([kind, label, icon]) => (
-                <button key={kind} type="button" onClick={() => void share(kind)} className="flex h-[76px] flex-col items-center justify-center gap-1.5 rounded-[18px] text-[13px] font-bold" style={{ background: CARD, border: `1px solid ${LINE}`, color: INK }}>
-                  {icon}
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="mx-auto w-full max-w-md px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
-            <button
-              type="button"
-              onClick={openPact}
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-full text-[16.5px] font-extrabold"
-              style={{ background: NAVY, color: '#FFFFFF', boxShadow: '0 8px 22px rgba(31,58,147,0.28)' }}
-            >
-              <Check className="size-5" strokeWidth={2.6} />
-              See my pact
-            </button>
-          </div>
-        </>
-      )}
     </div>
   )
 }

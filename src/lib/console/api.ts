@@ -119,6 +119,11 @@ export interface PersonPage extends Person {
 
 export interface Overview {
   today: string;
+  places: {
+    located_30d: number;
+    countries: { code: string; people: number }[];
+    cities: { city: string; region: string | null; country: string | null; people: number }[];
+  };
   people: { signups_today: number; signups_7d: number; checked_in_today: number; with_live_pact: number; pacts_started_7d: number; circles_created_7d: number };
   dares: {
     dare_of_the_day: { title: string; joined: number; took: number; state: string } | null;

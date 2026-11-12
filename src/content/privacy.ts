@@ -3,9 +3,9 @@
 // Rendered by src/components/legal/LegalText.tsx.
 // Items in [square brackets] must be filled in before this goes live.
 
-export const PRIVACY_UPDATED = '8 November 2026';
+export const PRIVACY_UPDATED = '12 November 2026';
 // Sent with consent; must match PRIVACY_VERSION in the backend's app/core/legal.py.
-export const PRIVACY_VERSION = '2026-11-08';
+export const PRIVACY_VERSION = '2026-11-12';
 
 export const PRIVACY = `
 This Privacy Policy is our notice to you under India's Digital Personal Data Protection Act, 2023 (the "DPDP Act") and the Digital Personal Data Protection Rules, 2025. It explains what personal data CirclePact collects, why, who we share it with, how long we keep it, and how you can use your rights. [Company legal name] ("CirclePact", "we", "us") decides how and why your personal data is used, so under the DPDP Act we are the **Data Fiduciary** and we're responsible for it, including when companies we hire handle it for us.
@@ -56,6 +56,7 @@ We also use some data without asking, where the DPDP Act allows it (section 7 of
 **Collected automatically (needed)**
 - **Sign-in records:** a record of each device you're signed in on, so you stay signed in and can be signed out everywhere.
 - **Technical logs:** IP address, browser or device type and the time of requests, to keep CirclePact secure, detect misuse and fix problems.
+- **Approximate location:** when you sign in, we work out your country, state and city from your IP address, to understand where CirclePact is used and to plan features and support for those places. We look this up on our own servers (no other company sees your IP for this), keep only the place and when we saw it, not the IP address, and update it at most once a day. It's never shown to other people or shared with advertisers.
 - **Notification address (optional):** if you allow notifications, the address your browser or phone gives us and the device type, to send reminders.
 - **Your privacy choices:** what you chose and when, as our record of your consent.
 
@@ -63,7 +64,7 @@ We also use some data without asking, where the DPDP Act allows it (section 7 of
 - From what you post and do, we work out things like your interests (for example, fitness or reading pacts) and how active you are, to suggest pacts and people. We only share these with advertisers if you switch that on.
 
 **What we don't collect**
-- We don't access your contacts or precise location.
+- We don't access your contacts or your precise location (GPS). The approximate city above comes only from your IP address.
 - We don't use face recognition, create face prints or other biometric templates, or identify people in your photos.
 
 ## 3. How we use your data

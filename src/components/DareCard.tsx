@@ -123,6 +123,8 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
           ? `Dared by ${firstName(creator.name)} · ${shortDate(dare.completed_at)}`
           : `Dare · ${ago(dare.created_at)}`;
 
+  // Up to 4 photos sent together; older proofs have just proof_url.
+  const photos = (dare.proof_media ?? []).filter((m) => m.type === 'photo' && m.url).map((m) => m.url as string);
   const showMedia = Boolean(dare.proof_url) && !mediaFailed && (state === 'awaiting_review' || state === 'completed' || state === 'not_completed');
   const isVideo = dare.proof_type === 'video';
   const inactive = !ACTIVE.includes(state) && state !== 'completed';
@@ -346,6 +348,8 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
             <div className="relative aspect-[4/5] w-full bg-[var(--ink)]">
               {isVideo ? (
                 <AutoPlayVideo src={dare.proof_url as string} className="absolute inset-0 h-full w-full object-cover" />
+              ) : photos.length > 1 ? (
+                <ProofPhotos urls={photos} title={dare.title} onFail={() => setMediaFailed(true)} />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={dare.proof_url as string} alt={`Proof for ${dare.title}`} onError={() => setMediaFailed(true)} className="absolute inset-0 h-full w-full object-cover" />
@@ -530,4 +534,29 @@ function quietLine(dare: Dare, state: DareState, role: DareRole, other: string, 
     default:
       return STATE_LABEL[state];
   }
+}
+
+/** Several proof photos: swipe through them, with "2 / 4" in the corner. */
+function ProofPhotos({ urls, title, onFail }: { urls: string[]; title: string; onFail: () => void }) {
+  const [index, setIndex] = useState(0);
+  return (
+    <>
+      <div
+        className="scrollbar-hide absolute inset-0 flex snap-x snap-mandatory overflow-x-auto"
+        style={{ overscrollBehaviorX: 'contain' }}
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          setIndex(Math.round(el.scrollLeft / Math.max(1, el.clientWidth)));
+        }}
+      >
+        {urls.map((url, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={url} src={url} alt={`Proof ${i + 1} of ${urls.length} for ${title}`} onError={i === 0 ? onFail : undefined} className="h-full w-full shrink-0 snap-center object-cover" />
+        ))}
+      </div>
+      <span className="pointer-events-none absolute right-3 top-[60px] z-[1] rounded-full bg-black/55 px-2 py-0.5 text-[11.5px] font-bold text-white tabular-nums">
+        {index + 1} / {urls.length}
+      </span>
+    </>
+  );
 }

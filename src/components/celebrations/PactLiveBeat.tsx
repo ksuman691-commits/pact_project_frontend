@@ -1,6 +1,7 @@
 'use client'
 
 import CircleMark from '@/components/brand/CircleMark'
+import { Link2, Send } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, useReducedMotion } from 'framer-motion'
@@ -20,7 +21,9 @@ export default function PactLiveBeat({
   hasDay1,
   subtitle,
   inviteLabel,
+  message,
   onInvite,
+  onCopy,
   onOpen,
 }: {
   title: string
@@ -28,7 +31,10 @@ export default function PactLiveBeat({
   hasDay1: boolean
   subtitle: string
   inviteLabel: string
+  /** What gets shared, shown so people know what they're sending. */
+  message?: string
   onInvite: () => void
+  onCopy?: () => void
   onOpen: () => void
 }) {
   const reduce = useReducedMotion()
@@ -105,24 +111,45 @@ export default function PactLiveBeat({
         ))}
       </div>
 
-      <motion.div {...rise(1.9)} className="mb-5 mt-3 text-[12.5px] opacity-80">
+      <motion.div {...rise(1.9)} className="mb-4 mt-3 text-[12.5px] opacity-80">
         {subtitle} · {days} {days === 1 ? 'day' : 'days'}
       </motion.div>
+      {message && (
+        <motion.p
+          {...rise(2.0)}
+          className="mb-4 w-full max-w-[320px] rounded-[16px] px-4 py-3 text-left text-[13.5px] leading-[1.45]"
+          style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)' }}
+        >
+          {message}
+        </motion.p>
+      )}
       <motion.button
         type="button"
         onClick={onInvite}
         {...rise(2.1)}
-        className="h-12 w-[240px] rounded-full bg-white text-[14.5px] font-semibold active:scale-[0.96]"
+        className="flex h-[52px] w-full max-w-[320px] items-center justify-center gap-2 rounded-full bg-white text-[16px] font-bold active:scale-[0.97]"
         style={{ color: 'var(--navy, #1F3A93)' }}
       >
+        <Send className="size-[18px]" aria-hidden="true" />
         {inviteLabel}
       </motion.button>
+      {onCopy && (
+        <motion.button
+          type="button"
+          onClick={onCopy}
+          {...rise(2.15)}
+          className="mt-2.5 flex h-[52px] w-full max-w-[320px] items-center justify-center gap-2 rounded-full text-[16px] font-bold text-white active:scale-[0.97]"
+          style={{ border: '1.5px solid rgba(255,255,255,0.85)' }}
+        >
+          <Link2 className="size-[18px]" aria-hidden="true" />
+          Copy message
+        </motion.button>
+      )}
       <motion.button
         type="button"
         onClick={onOpen}
         {...rise(2.2)}
-        className="mt-2 h-12 w-[240px] rounded-full text-[14.5px] font-semibold active:scale-[0.96]"
-        style={{ border: '1px solid rgba(255,255,255,0.4)' }}
+        className="mt-4 text-[15px] font-bold text-white underline decoration-white/60 underline-offset-4 active:opacity-70"
       >
         Go to pact
       </motion.button>

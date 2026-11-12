@@ -84,7 +84,7 @@ export function useUploadDareProof(dareId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { proof_file: File; proof_type: 'photo' | 'video' | 'checklist'; caption?: string }) =>
+    mutationFn: (data: { proof_file: File | File[]; proof_type: 'photo' | 'video' | 'checklist'; caption?: string }) =>
       dareService.uploadProof(dareId, data.proof_file, data.proof_type, data.caption),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.dares.detail(dareId) });
