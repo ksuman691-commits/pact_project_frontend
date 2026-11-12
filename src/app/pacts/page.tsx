@@ -269,9 +269,7 @@ function PactsPageInner() {
                 aria-pressed={selected}
                 className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-[13px] font-bold transition ${
                   selected
-                    ? item === 'Watching'
-                      ? 'bg-[var(--navy)] text-white'
-                      : 'bg-[var(--ink)] text-[var(--card)]'
+                    ? 'bg-[var(--navy)] text-white'
                     : item === 'Watching' && watchingHasNew
                       ? 'border border-[var(--navy)] bg-[var(--navy)]/10 text-[var(--navy)]'
                       : 'border border-[var(--line)] text-[var(--ink-soft)]'

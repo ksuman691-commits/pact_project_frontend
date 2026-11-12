@@ -296,7 +296,7 @@ export default function CircleDetailPage() {
           <>
             <button onClick={() => router.push(`/pacts/create?circleId=${circleId}`)} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--navy)] text-[15px] font-extrabold text-white">
               <Plus className="h-4 w-4" strokeWidth={2.4} />
-              {pacts.length === 0 ? 'First Pact' : 'New Pact'}
+              {pacts.length === 0 ? 'First pact' : 'New pact'}
             </button>
             <button onClick={() => setInviteModal(true)} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full border-[1.5px] border-[var(--navy)] text-[15px] font-extrabold text-[var(--navy)]">
               <UserPlus className="h-4 w-4" strokeWidth={2.2} />

@@ -268,7 +268,7 @@ export default function PactMomentsDetail({
                 {pact?.watch_price ? `Private · ₹${pact.watch_price}` : 'Private'}
               </span>
             ) : pact?.circle_id != null ? (
-              <span className="flex h-7 items-center gap-1.5 rounded-full pl-2 pr-2.5 text-[12px] font-extrabold" style={{ background: '#17181D', color: '#FFFFFF' }}>
+              <span className="flex h-7 items-center gap-1.5 rounded-full pl-2 pr-2.5 text-[12px] font-extrabold" style={{ background: '#1F3A93', color: '#FFFFFF' }}>
                 <Users className="size-[13px]" strokeWidth={2.4} aria-hidden="true" />
                 Circle only
               </span>
@@ -394,7 +394,7 @@ export default function PactMomentsDetail({
             if (Date.now() - lastSwipeAt.current < 450) return
             openViewer()
           }}
-          className={`relative -mx-1.5 min-h-[320px] flex-1 cursor-pointer overflow-hidden rounded-[22px] ${!hasMoments && !presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : presentationEnded ? 'bg-[linear-gradient(160deg,#F4B26A_0%,#E4684F_48%,#5B3A78_100%)]' : 'bg-[var(--navy)]'}`}
+          className={`relative -mx-1.5 min-h-[320px] flex-1 cursor-pointer overflow-hidden rounded-[22px] ${!hasMoments || presentationEnded ? 'bg-[radial-gradient(120%_90%_at_25%_15%,#2E4DB3_0%,#1F3A93_55%,#142766_100%)]' : 'bg-[var(--navy)]'}`}
           aria-label="Moments"
         >
           {lockedForMe && (
@@ -404,15 +404,15 @@ export default function PactMomentsDetail({
           )}
           {!hasMoments && (
             <>
-              <div className="absolute left-[60px] top-0 size-[190px] rounded-full bg-[#FFE3A8]/90" />
-              <div className={`absolute bottom-0 left-[-20px] right-[-20px] h-[210px] rounded-[50%_50%_0_0] ${completionView === 'partial' || completionView === 'provisional_not_completed' ? 'bg-[#3C2650]' : 'bg-[#3C2650]'}`} />
-              <div className="absolute inset-x-0 bottom-0 h-[190px] bg-[linear-gradient(180deg,rgba(18,19,26,0)_0%,rgba(18,19,26,0.72)_100%)]" />
+              <div className="absolute left-[60px] top-0 size-[190px] rounded-full bg-white/[0.08]" />
+              <div className={`absolute bottom-0 left-[-20px] right-[-20px] h-[210px] rounded-[50%_50%_0_0] bg-[#142766]`} />
+              <div className="absolute inset-x-0 bottom-0 h-[190px] bg-[linear-gradient(180deg,rgba(20,39,102,0)_0%,rgba(14,26,70,0.6)_100%)]" />
             </>
           )}
           {hasMoments && <div className="absolute inset-x-0 bottom-0 h-[190px] bg-[linear-gradient(180deg,rgba(18,19,26,0)_0%,rgba(18,19,26,0.72)_100%)]" />}
 
           {presentationEnded && !watchingRecap ? (
-            <div className={`absolute inset-0 z-10 flex flex-col items-center justify-center px-6 text-center text-white ${completionView === 'partial' || completionView === 'provisional_not_completed' || completionView === 'empty' ? 'bg-[linear-gradient(180deg,rgba(18,19,26,0.72)_0%,rgba(18,19,26,0.72)_100%)]' : ''}`}>
+            <div className={`absolute inset-0 z-10 flex flex-col items-center justify-center px-6 text-center text-white ${completionView === 'partial' || completionView === 'provisional_not_completed' || completionView === 'empty' ? 'bg-[rgba(20,39,102,0.55)]' : ''}`}>
               {completionLooksSuccessful ? (
                 <>
                   <span className="mb-3 flex size-12 items-center justify-center rounded-full border-[3px] border-white text-white">

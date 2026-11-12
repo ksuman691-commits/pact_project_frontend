@@ -28,6 +28,8 @@ const NAVY = '#1F3A93'
 const LINE = '#DCD3C1'
 const CARD = '#FBF8F1'
 const PAPER = '#F4EFE4'
+/** A pact with no photo yet: true blue, lighter top-left. The same tile as pact cards. */
+const PACT_BLUE_TILE = 'radial-gradient(120% 90% at 25% 15%, #2E4DB3 0%, #1F3A93 55%, #142766 100%)'
 
 /** Say it, choose who, shoot Day 1, review, then it's live. The camera comes after the audience is decided. */
 type Step = 'say' | 'who' | 'shoot' | 'review' | 'live'
@@ -52,7 +54,7 @@ function localToday(): string {
 
 function pill(on: boolean): React.CSSProperties {
   return on
-    ? { background: INK, color: '#FFFFFF', border: `1px solid ${INK}` }
+    ? { background: NAVY, color: '#FFFFFF', border: `1px solid ${NAVY}` }
     : { background: CARD, color: INK, border: `1px solid ${LINE}` }
 }
 
@@ -253,7 +255,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
       </button>
       <div className="flex flex-1 justify-center gap-1.5">
         {[0, 1, 2].map((i) => (
-          <span key={i} className="h-[5px] w-[22px] rounded-full" style={{ background: i <= index ? INK : '#D4CBB8' }} />
+          <span key={i} className="h-[5px] w-[22px] rounded-full" style={{ background: i <= index ? NAVY : '#D4CBB8' }} />
         ))}
       </div>
       <button type="button" onClick={onExit} aria-label="Close" className="flex size-11 items-center justify-center" style={{ color: INK }}>
@@ -281,8 +283,8 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                 onChange={(e) => setText(e.target.value.slice(0, 120))}
                 placeholder="run 5 km every morning"
                 enterKeyHint="next"
-                className="mt-2 w-full border-0 border-b-2 bg-transparent pb-2.5 pt-1.5 text-[21px] font-semibold outline-none placeholder:text-[17px] placeholder:font-medium placeholder:text-[#A39C8C]"
-                style={{ borderColor: INK, color: INK }}
+                className="mt-2 w-full border-0 border-b-2 bg-transparent pb-2.5 pt-1.5 text-[21px] font-semibold outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-none placeholder:text-[17px] placeholder:font-medium placeholder:text-[#A39C8C]"
+                style={{ borderColor: NAVY, color: INK }}
               />
             </label>
 
@@ -318,7 +320,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                 <div className="mt-2.5 flex flex-col gap-2">
                   {IDEAS.map((idea) => (
                     <button key={idea} type="button" onClick={() => setText(idea)} className="min-h-12 rounded-[16px] px-3.5 py-2.5 text-left text-[14.5px] font-semibold" style={{ background: CARD, border: `1px solid ${LINE}`, color: INK }}>
-                      {titleCase(idea)}
+                      {idea.charAt(0).toUpperCase() + idea.slice(1)}
                     </button>
                   ))}
                 </div>
@@ -331,7 +333,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
               disabled={!ready}
               onClick={() => setStep('who')}
               className="h-14 w-full rounded-full text-[16.5px] font-extrabold"
-              style={ready ? { background: INK, color: '#FFFFFF' } : { background: '#E1DACB', color: '#7A7B80' }}
+              style={ready ? { background: NAVY, color: '#FFFFFF', boxShadow: '0 8px 22px rgba(31,58,147,0.28)' } : { background: '#E1DACB', color: '#7A7B80' }}
             >
               Next
             </button>
@@ -343,7 +345,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
         <>
           {header(() => setStep('say'), 1)}
           <div className="mx-auto w-full max-w-md flex-1 px-5">
-            <div className="pt-3 text-[28px] font-extrabold leading-tight tracking-[-0.03em]" style={{ color: INK }}>Who&apos;s In On It?</div>
+            <div className="pt-3 text-[28px] font-extrabold leading-tight tracking-[-0.03em]" style={{ color: INK }}>Who&apos;s in on it?</div>
             <div className="mt-1.5 text-[14px]" style={{ color: MUTED }}>{title}</div>
             <div className="mt-5 text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>WHO SEES IT</div>
             <div className="mt-2 flex flex-col gap-2.5" role="radiogroup" aria-label="Who sees it">
@@ -351,11 +353,11 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                 [
                   {
                     id: 'circle' as Audience,
-                    name: 'A Circle',
+                    name: 'A circle',
                     desc: circles.length === 0 ? 'You have no circles yet. Make one.' : circle && audience === 'circle' ? titleCase(String(circle.name || '')) : `Choose one of your ${circles.length} ${circles.length === 1 ? 'circle' : 'circles'}.`,
                     icon: <Users className="size-[22px]" />,
                   },
-                  { id: 'followers' as Audience, name: 'My Followers', desc: followerCount > 0 ? `${followerCount.toLocaleString('en-IN')} ${followerCount === 1 ? 'follower sees' : 'followers see'} it in their feed.` : 'Shows on your profile and to people who follow you.', icon: <Heart className="size-[22px]" /> },
+                  { id: 'followers' as Audience, name: 'My followers', desc: followerCount > 0 ? `${followerCount.toLocaleString('en-IN')} ${followerCount === 1 ? 'follower sees' : 'followers see'} it in their feed.` : 'Shows on your profile and to people who follow you.', icon: <Heart className="size-[22px]" /> },
                   { id: 'public' as Audience, name: 'Everyone', desc: 'Shows in Discover. Anyone can find it.', icon: <Globe className="size-[22px]" /> },
                 ]
               ).map((option) => {
@@ -376,9 +378,9 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                       setAudience(option.id)
                     }}
                     className="flex min-h-[72px] w-full items-center gap-3 rounded-[20px] px-3.5 py-3 text-left"
-                    style={{ background: on ? '#FFFFFF' : CARD, border: on ? `2px solid ${INK}` : `1px solid ${LINE}` }}
+                    style={{ background: on ? '#FFFFFF' : CARD, border: on ? `2px solid ${NAVY}` : `1px solid ${LINE}` }}
                   >
-                    <span className="flex size-11 shrink-0 items-center justify-center rounded-full" style={on ? { background: INK, color: '#FFFFFF' } : { background: '#E8E2D4', color: INK }}>
+                    <span className="flex size-11 shrink-0 items-center justify-center rounded-full" style={on ? { background: NAVY, color: '#FFFFFF' } : { background: '#E8E2D4', color: INK }}>
                       {option.icon}
                     </span>
                     <span className="min-w-0 flex-1">
@@ -391,7 +393,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                       <ChevronRight className="size-[18px] shrink-0" style={{ color: MUTED }} strokeWidth={2.4} aria-hidden="true" />
                     ) : null}
                     {!(isCircle && !on) && (
-                      <span className="size-6 shrink-0 rounded-full" style={on ? { border: `8px solid ${INK}` } : { border: '2px solid #B9AF9A' }} />
+                      <span className="size-6 shrink-0 rounded-full" style={on ? { border: `8px solid ${NAVY}` } : { border: '2px solid #B9AF9A' }} />
                     )}
                   </button>
                 )
@@ -399,12 +401,12 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
             </div>
 
             <div className="mt-6 text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>EARN FROM IT</div>
-            <div className="mt-2 rounded-[24px] p-[18px]" style={{ background: INK, color: '#FFFFFF' }}>
+            <div className="mt-2 rounded-[24px] p-[18px]" style={{ background: NAVY, color: '#FFFFFF' }}>
               <div className="flex items-start gap-3.5">
-                <span className="flex size-12 shrink-0 items-center justify-center rounded-full text-[22px] font-extrabold" style={{ background: '#F2C14E', color: INK }} aria-hidden="true">₹</span>
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-full text-[22px] font-extrabold" style={{ background: '#FFFFFF', color: NAVY }} aria-hidden="true">₹</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[19px] font-extrabold leading-tight tracking-[-0.02em]">{locked ? 'Paid Moments Are On' : 'Get Paid For Your Moments'}</span>
-                  <span className="mt-1.5 block text-[13.5px] leading-snug" style={{ color: '#D4D6DD' }}>
+                  <span className="block text-[19px] font-extrabold leading-tight tracking-[-0.02em]">{locked ? 'Paid moments are on' : 'Get paid for your moments'}</span>
+                  <span className="mt-1.5 block text-[13.5px] leading-snug" style={{ color: '#DCE3F7' }}>
                     {locked ? lockHint : 'Lock your moments. People pay to watch, and the money goes straight to your UPI.'}
                   </span>
                 </span>
@@ -416,9 +418,9 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                     aria-label="Paid moments"
                     onClick={() => setLocked(false)}
                     className="relative h-8 w-[52px] shrink-0 rounded-full"
-                    style={{ background: '#F2C14E' }}
+                    style={{ background: '#FFFFFF' }}
                   >
-                    <span className="absolute top-1 size-6 rounded-full" style={{ background: INK, left: 24 }} />
+                    <span className="absolute top-1 size-6 rounded-full" style={{ background: NAVY, left: 24 }} />
                   </button>
                 )}
               </div>
@@ -426,12 +428,12 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                 <div className="mt-4">
                   <PriceChooser dark price={watchPrice} onPrice={setWatchPrice} autoApprove={autoApprove} onAutoApprove={setAutoApprove} />
                   {watchPrice != null && (
-                    <div className="mt-3.5 rounded-[14px] px-3.5 py-2.5 text-[13px] leading-snug" style={{ background: 'rgba(255,255,255,0.08)', color: '#E6E7EC' }}>
-                      <span className="font-extrabold" style={{ color: '#F2C14E' }}>Example</span> · 20 people at ₹{watchPrice} is ₹{(20 * watchPrice).toLocaleString('en-IN')} for one pact.
+                    <div className="mt-3.5 rounded-[14px] px-3.5 py-2.5 text-[13px] leading-snug" style={{ background: 'rgba(255,255,255,0.12)', color: '#EEF2FC' }}>
+                      <span className="font-extrabold" style={{ color: '#FFFFFF' }}>Example</span> · 20 people at ₹{watchPrice} is ₹{(20 * watchPrice).toLocaleString('en-IN')} for one pact.
                     </div>
                   )}
                   {tips.data && !tips.data.enabled ? (
-                    <Link href="/profile/tips" className="mt-3.5 flex min-h-11 items-center rounded-[14px] px-3.5 text-[13.5px] font-bold" style={{ border: '1.5px dashed #F2C14E', color: '#F2C14E' }}>
+                    <Link href="/profile/tips" className="mt-3.5 flex min-h-11 items-center rounded-[14px] px-3.5 text-[13.5px] font-bold" style={{ border: '1.5px dashed #FFFFFF', color: '#FFFFFF' }}>
                       Add your UPI first, so people can pay you
                     </Link>
                   ) : tips.data?.upi_id ? (
@@ -446,8 +448,8 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                 </div>
               ) : (
                 <>
-                  <div className="mt-3.5 rounded-[14px] px-3.5 py-2.5 text-[13px] leading-snug" style={{ background: 'rgba(255,255,255,0.08)', color: '#E6E7EC' }}>
-                    <span className="font-extrabold" style={{ color: '#F2C14E' }}>Example</span> · 20 people at ₹51 is ₹1,020 for one pact.
+                  <div className="mt-3.5 rounded-[14px] px-3.5 py-2.5 text-[13px] leading-snug" style={{ background: 'rgba(255,255,255,0.12)', color: '#EEF2FC' }}>
+                    <span className="font-extrabold" style={{ color: '#FFFFFF' }}>Example</span> · 20 people at ₹51 is ₹1,020 for one pact.
                   </div>
                   <button
                     type="button"
@@ -456,9 +458,9 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                       setLocked(true)
                     }}
                     className="mt-3.5 h-12 w-full rounded-full text-[15px] font-extrabold"
-                    style={{ background: '#F2C14E', color: INK }}
+                    style={{ background: '#FFFFFF', color: NAVY }}
                   >
-                    Turn On Paid Moments
+                    Turn on paid moments
                   </button>
                 </>
               )}
@@ -477,11 +479,11 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
               }
             >
               {!audience || (audience === 'circle' && circleId == null) ? (
-                'Choose Who Sees It'
+                'Choose who sees it'
               ) : (
                 <>
                   <Camera className="size-5" strokeWidth={2.2} aria-hidden="true" />
-                  Next: Shoot Day 1
+                  Next: shoot Day 1
                 </>
               )}
             </button>
@@ -493,14 +495,14 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
               <div className="relative flex max-h-[85dvh] min-h-[60dvh] w-full max-w-md flex-col rounded-t-[28px] px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3" style={{ background: CARD, color: INK }}>
                 <div className="mx-auto mb-1.5 h-[5px] w-10 rounded-full" style={{ background: '#D9D2C2' }} />
                 <div className="flex items-center justify-between">
-                  <div className="text-[20px] font-extrabold tracking-[-0.02em]">Choose Your Circle</div>
+                  <div className="text-[20px] font-extrabold tracking-[-0.02em]">Choose your circle</div>
                   <button type="button" onClick={() => setPickingCircle(false)} aria-label="Close" className="-mr-2 flex size-11 items-center justify-center">
                     <X className="size-5" />
                   </button>
                 </div>
                 <label className="mt-1 flex h-[46px] shrink-0 items-center gap-2.5 rounded-full px-4" style={{ background: '#FFFFFF', border: `1px solid ${LINE}` }}>
                   <Search className="size-[18px]" style={{ color: MUTED }} aria-hidden="true" />
-                  <input value={circleSearch} onChange={(e) => setCircleSearch(e.target.value)} placeholder="Search Your Circles" aria-label="Search your circles" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#7A7B80]" />
+                  <input value={circleSearch} onChange={(e) => setCircleSearch(e.target.value)} placeholder="Search your circles" aria-label="Search your circles" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#7A7B80]" />
                 </label>
                 <div className="mt-1.5 min-h-0 flex-1 overflow-y-auto overscroll-contain">
                   {(() => {
@@ -541,7 +543,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                                 <span className="block truncate text-[15.5px] font-bold">{titleCase(String(c.name || ''))}</span>
                                 <span className="block text-[12.5px]" style={{ color: MUTED }}>{same ? `${c.member_count ?? 0} ${Number(c.member_count ?? 0) === 1 ? 'member' : 'members'}` : g.sub}</span>
                               </span>
-                              <span className="size-6 shrink-0 rounded-full" style={picked ? { border: `8px solid ${INK}` } : { border: '2px solid #B9AF9A' }} />
+                              <span className="size-6 shrink-0 rounded-full" style={picked ? { border: `8px solid ${NAVY}` } : { border: '2px solid #B9AF9A' }} />
                             </button>
                           )
                         })}
@@ -551,7 +553,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                 </div>
                 <Link href="/circles/create" className="mt-2 flex h-[50px] shrink-0 items-center justify-center gap-1.5 rounded-full text-[15px] font-extrabold" style={{ border: `1.5px dashed ${NAVY}`, background: '#F5F7FD', color: NAVY }}>
                   <Plus className="size-4" strokeWidth={2.6} aria-hidden="true" />
-                  Create A New Circle
+                  Create a new circle
                 </Link>
               </div>
             </div>
@@ -563,10 +565,10 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
         <>
           {header(() => setStep('who'), 2)}
           <div className="mx-auto w-full max-w-md flex-1 px-5">
-            <div className="pt-3 text-[28px] font-extrabold leading-tight tracking-[-0.03em]" style={{ color: INK }}>Ready To Start</div>
+            <div className="pt-3 text-[28px] font-extrabold leading-tight tracking-[-0.03em]" style={{ color: INK }}>Ready to start</div>
             <div className="mt-1.5 text-[14px]" style={{ color: MUTED }}>{clip ? 'Day 1 goes up the moment you start.' : 'No Day 1 yet. You can add it from the pact.'}</div>
 
-            <div className="relative mt-5 h-[300px] overflow-hidden rounded-[24px]" style={{ background: clip ? INK : 'radial-gradient(120% 80% at 30% 20%, #2A3A6E 0%, #141A2E 60%, #0F1014 100%)' }}>
+            <div className="relative mt-5 h-[300px] overflow-hidden rounded-[24px]" style={{ background: clip ? INK : PACT_BLUE_TILE }}>
               {clip && (isPhoto ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={clip.url} alt="Your Day 1 photo" className="absolute inset-0 size-full object-cover" />
@@ -591,15 +593,15 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
               <div className="text-[11.5px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>YOUR PACT</div>
               <div className="mt-1 text-[18px] font-extrabold leading-tight tracking-[-0.02em]" style={{ color: INK }}>{title}</div>
               <div className="mt-2.5 flex flex-wrap gap-2">
-                <span className="flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-extrabold" style={{ background: INK, color: '#FFFFFF' }}>
+                <span className="flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-extrabold" style={{ background: NAVY, color: '#FFFFFF' }}>
                   {audience === 'circle' ? <Users className="size-3" strokeWidth={2.6} /> : audience === 'followers' ? <Heart className="size-3" strokeWidth={2.6} /> : <Globe className="size-3" strokeWidth={2.6} />}
-                  {audience === 'circle' ? titleCase(String(circle?.name || 'Your circle')) : audience === 'followers' ? 'My Followers' : 'Everyone'}
+                  {audience === 'circle' ? titleCase(String(circle?.name || 'Your circle')) : audience === 'followers' ? 'My followers' : 'Everyone'}
                 </span>
                 <span className="flex h-7 items-center rounded-full px-2.5 text-[12px] font-bold" style={{ background: CARD, border: `1px solid ${LINE}`, color: INK }}>
                   {frequency} · {days} days
                 </span>
                 {locked && watchPrice != null && (
-                  <span className="flex h-7 items-center gap-1 rounded-full px-2.5 text-[12px] font-extrabold" style={{ background: '#F2C14E', color: INK }}>
+                  <span className="flex h-7 items-center gap-1 rounded-full px-2.5 text-[12px] font-extrabold" style={{ background: '#E8EDFA', color: NAVY }}>
                     <Lock className="size-3" strokeWidth={2.6} /> ₹{watchPrice} to watch
                   </span>
                 )}
@@ -617,7 +619,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
               className="h-14 w-full rounded-full text-[16.5px] font-extrabold disabled:opacity-70"
               style={{ background: NAVY, color: '#FFFFFF', boxShadow: '0 8px 22px rgba(31,58,147,0.28)' }}
             >
-              {posting || (clip ? 'Start Pact And Post Day 1' : 'Start Pact')}
+              {posting || (clip ? 'Start pact and post Day 1' : 'Start pact')}
             </button>
           </div>
         </>
@@ -654,7 +656,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
               </div>
             </div>
             <div className="mt-5 overflow-hidden rounded-[24px]" style={{ background: CARD, border: `1px solid ${LINE}` }}>
-              <div className="relative h-[300px]" style={{ background: clip ? INK : 'radial-gradient(120% 80% at 30% 20%, #2A3A6E 0%, #141A2E 60%, #0F1014 100%)' }}>
+              <div className="relative h-[300px]" style={{ background: clip ? INK : PACT_BLUE_TILE }}>
                 {clip && (isPhoto ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={clip.url} alt="" className="absolute inset-0 size-full object-cover" />
@@ -694,7 +696,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
               type="button"
               onClick={openPact}
               className="flex h-14 w-full items-center justify-center gap-2 rounded-full text-[16.5px] font-extrabold"
-              style={{ background: INK, color: '#FFFFFF' }}
+              style={{ background: NAVY, color: '#FFFFFF', boxShadow: '0 8px 22px rgba(31,58,147,0.28)' }}
             >
               <Check className="size-5" strokeWidth={2.6} />
               See my pact
