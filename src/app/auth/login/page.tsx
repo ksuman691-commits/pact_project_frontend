@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import AuthShell, { authInputClass, authLabelClass, authPrimaryButtonClass } from '@/components/AuthShell';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
+import { pausedFrom, rememberPaused } from '@/lib/paused';
 
 export default function Login() {
   const router = useRouter();
@@ -33,6 +34,12 @@ export default function Login() {
       toast.success('Signed in');
       router.push(readNext('/'));
     } catch (error: any) {
+      const paused = pausedFrom(error);
+      if (paused) {
+        rememberPaused(paused);
+        router.push('/auth/paused');
+        return;
+      }
       toast.error(error.response?.data?.detail || 'Sign in failed');
     }
   };

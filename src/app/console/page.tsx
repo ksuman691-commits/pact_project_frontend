@@ -10,7 +10,7 @@ function Home() {
   const router = useRouter();
   useEffect(() => {
     if (!member) return;
-    router.replace(member.role === 'moderator' ? '/console/reports' : '/console/studio');
+    router.replace(member.role === 'creator' ? '/console/studio' : '/console/overview');
   }, [member, router]);
   return null;
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { pausedFrom, rememberPaused } from '@/lib/paused';
 import { useState } from 'react';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import { useRouter } from 'next/navigation';
@@ -33,6 +34,12 @@ export default function GoogleSignInButton({ consent }: { consent?: ConsentChoic
       router.push(readNext('/'));
     } catch (error: any) {
       const detail = error.response?.data?.detail;
+      const paused = pausedFrom(error);
+      if (paused) {
+        rememberPaused(paused);
+        router.push('/auth/paused');
+        return;
+      }
       if (error.response?.status === 409 && detail?.code === 'consent_required') {
         setChoices({ ...EMPTY_CONSENT, ai_training: !!consent?.ai_training, ads_sharing: !!consent?.ads_sharing });
         setPendingCredential(credential);

@@ -7,10 +7,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { dareService } from '@/services/api';
 import { queryKeys } from '@/lib/queryKeys';
 
-const REASONS: { id: 'unsafe' | 'mean' | 'spam' | 'other'; label: string; hint: string }[] = [
-  { id: 'unsafe', label: 'It could hurt someone', hint: 'Dangerous, illegal, or risky for health' },
+const REASONS: { id: 'scam' | 'unsafe' | 'mean' | 'spam' | 'other'; label: string; hint: string }[] = [
+  { id: 'scam', label: 'Scam or fraud', hint: 'Asking you to pay first, fake rewards, or something feels off with money' },
+  { id: 'unsafe', label: 'Harmful or dangerous', hint: 'Could hurt someone, illegal, or risky for health' },
   { id: 'mean', label: "It's mean or humiliating", hint: 'Bullying, pressure, or harassment' },
-  { id: 'spam', label: "It's spam or a scam", hint: 'Ads, links, or asking for money' },
+  { id: 'spam', label: "It's spam", hint: 'Ads, links, or the same thing over and over' },
   { id: 'other', label: 'Something else', hint: 'Tell us below' },
 ];
 
@@ -29,7 +30,7 @@ export default function ReportDareSheet({ dareId, onClose, onDone }: { dareId: n
     setBusy(true);
     try {
       await dareService.report(dareId, reason, note.trim());
-      toast.success("Reported. It's gone from your dares.");
+      toast.success(reason === 'scam' ? "Reported. Don't send any money; we've paused payments on it while we check." : "Reported. It's gone from your dares.");
       await queryClient.invalidateQueries({ queryKey: queryKeys.dares.all });
       onDone?.();
       onClose();

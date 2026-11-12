@@ -30,7 +30,7 @@ export interface ActivityRow {
   at: string;
   actor_name: string | null;
   actor_role: TeamRole | null;
-  category: 'sign_in' | 'team' | 'dares' | 'drafts' | 'reports';
+  category: 'sign_in' | 'team' | 'dares' | 'drafts' | 'reports' | 'users';
   action: string;
   summary: string;
   ok: boolean;
@@ -91,6 +91,53 @@ export interface ReportItem {
 }
 
 export type Proof = 'photo' | 'video';
+
+export interface PersonStatus {
+  state: 'active' | 'suspended' | 'deleting' | 'deleted';
+  until?: string | null;
+  reason?: string | null;
+  since?: string | null;
+}
+
+export interface Person {
+  id: number;
+  name: string;
+  username: string;
+  email: string;
+  avatar_url: string | null;
+  joined_at: string;
+  last_seen_at: string | null;
+  status: PersonStatus;
+  reported_dares: number;
+}
+
+export interface PersonPage extends Person {
+  stats: { live_pacts: number; circles: number; dares_sent: number; dares_done: number; streak_days: number };
+  reports: { dare_id: number; title: string; created_at: string; reasons: Record<string, number>; count: number; outcome: string; resolved_by: string | null }[];
+  history: { at: string; summary: string }[];
+}
+
+export interface Overview {
+  today: string;
+  people: { signups_today: number; signups_7d: number; checked_in_today: number; with_live_pact: number; pacts_started_7d: number; circles_created_7d: number };
+  dares: {
+    dare_of_the_day: { title: string; joined: number; took: number; state: string } | null;
+    sent_7d: number;
+    accepted_share_7d: number | null;
+    done_7d: number;
+    rewards_marked_paid_7d: number;
+  };
+  attention: { open_reports: number; oldest_report_at: string | null; scam_reports: number; drafts_to_review: number; oldest_draft_at: string | null; empty_days_ahead: string[] };
+  series: { first_day: string; signups: number[]; check_ins: number[]; dares_sent: number[] };
+}
+
+type Sum = { count: number; amount: number };
+export interface Money {
+  days: number;
+  between_people: { dare_rewards_marked_paid: Sum; dare_rewards_confirmed: Sum; paid_pacts: Sum; tips: Sum };
+  disputes: { rewards_not_received: Sum; tips_not_received: Sum };
+  circlepact: { revenue: number; commission: number; gst_on_commission: number; tcs_collected: number; tds_deducted: number; commission_rate: number | null };
+}
 
 export const consoleSession = {
   get: (): string | null => {
@@ -193,6 +240,13 @@ export const consoleApi = {
   editDraft: (id: number, body: { title?: string; description?: string; category?: string }) => client.patch<Draft>(`/drafts/${id}`, body).then((r) => r.data),
   approve: (id: number) => client.post<Draft>(`/drafts/${id}/approve`).then((r) => r.data),
   reject: (id: number, reason: string) => client.post<Draft>(`/drafts/${id}/reject`, { reason }).then((r) => r.data),
+
+  overview: () => client.get<Overview>('/overview').then((r) => r.data),
+  findPeople: (q: string) => client.get<Person[]>('/users', { params: { q } }).then((r) => r.data),
+  person: (id: number) => client.get<PersonPage>(`/users/${id}`).then((r) => r.data),
+  suspend: (id: number, days: 1 | 7 | 30 | null, reason: string) => client.post<{ status: PersonStatus }>(`/users/${id}/suspend`, { days, reason }).then((r) => r.data),
+  lift: (id: number) => client.post<{ status: PersonStatus }>(`/users/${id}/lift`).then((r) => r.data),
+  money: (days: number) => client.get<Money>('/money', { params: { days } }).then((r) => r.data),
 
   reports: (status: 'open' | 'dismissed' | 'removed' = 'open') => client.get<ReportItem[]>('/reports', { params: { status } }).then((r) => r.data),
   dismissReports: (dareId: number) => client.post(`/reports/${dareId}/dismiss`).then((r) => r.data),
