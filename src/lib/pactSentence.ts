@@ -48,7 +48,16 @@ export function parseSentence(text: string): ParsedSentence {
 const LENGTH_PHRASE = /\s*\b(?:for|in|over|within)?\s*(?:the\s+next\s+)?\d+\s*(?:day|days|night|nights|week|weeks|month|months)\b/gi
 
 /**
- * The title always states the length the pact will actually run for. Any length typed in the
+ * The title exactly as the person typed it: only extra spaces, a leading "I will" and a
+ * trailing full stop are tidied. Their capitals stay theirs, and nothing is added.
+ */
+export function typedTitle(text: string): string {
+  const clean = text.trim().replace(/\s+/g, ' ').replace(/^i will\s+/i, '').replace(/[.!]+$/, '').trim()
+  return clean || text.trim()
+}
+
+/**
+ * (Older behaviour, kept for reference.) The title always states the length the pact will actually run for. Any length typed in the
  * sentence is taken out first, so picking 7 days after typing "30 days" can't give
  * "No Junk Food 30 Days In 7 Days".
  * "run 5 km every morning for 30 days" + 30 -> "Run 5 Km Every Morning For 30 Days".
