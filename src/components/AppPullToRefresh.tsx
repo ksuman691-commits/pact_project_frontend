@@ -19,6 +19,7 @@ export default function AppPullToRefresh({ children }: { children: React.ReactNo
   const off =
     pathname === '/' ||
     pathname.startsWith('/auth') ||
+    pathname.startsWith('/console') ||
     pathname.startsWith('/onboarding') ||
     pathname === '/verify-age' ||
     pathname === '/consent' ||

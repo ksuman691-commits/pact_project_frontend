@@ -1,4 +1,5 @@
 import AppPullToRefresh from '@/components/AppPullToRefresh';
+import AppOnly from '@/components/AppOnly';
 import '@/styles/globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Inter_Tight } from 'next/font/google';
@@ -65,15 +66,19 @@ export default function RootLayout({
       >
         <QueryProvider>
           <InAppNavigationTracker />
-          <AuthInitializer />
-          <ProfileTimezoneSync />
-          <AgeVerificationGate />
-          <NotificationRealtimeBridge />
+          <AppOnly>
+            <AuthInitializer />
+            <ProfileTimezoneSync />
+            <AgeVerificationGate />
+            <NotificationRealtimeBridge />
+          </AppOnly>
           <AppPullToRefresh>{children}</AppPullToRefresh>
-          <BottomNav />
-          <CelebrationHost />
-          <AppSplash />
-          <ReminderPrompt />
+          <AppOnly>
+            <BottomNav />
+            <CelebrationHost />
+            <AppSplash />
+            <ReminderPrompt />
+          </AppOnly>
           <Toaster
             position="top-center"
             toastOptions={{
