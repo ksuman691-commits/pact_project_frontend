@@ -24,7 +24,7 @@ import { copyText } from '@/lib/circleInvite';
 type CircleLike = { id: number; name: string; icon_emoji?: string | null; member_count?: number };
 
 export const circleWallUrl = (id: number) => {
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://circlepact.app';
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://circlepact.com';
   return `${origin}/circles/${id}/wall`;
 };
 

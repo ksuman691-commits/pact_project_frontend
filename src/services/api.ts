@@ -920,10 +920,6 @@ export const sponsorService = {
 export const curatedContentService = {
   discover: async (params: { type?: string; category?: string; trending?: boolean; page?: number; limit?: number } = {}) =>
     api.get('/api/curated-content', { params }),
-  review: async (status = 'draft') => api.get('/api/admin/curated-content', { params: { status } }),
-  update: async (id: number, payload: Partial<import('@/types').CuratedContent>) => api.patch(`/api/admin/curated-content/${id}`, payload),
-  approve: async (id: number) => api.post(`/api/admin/curated-content/${id}/approve`),
-  reject: async (id: number, reason?: string) => api.post(`/api/admin/curated-content/${id}/reject`, { reason }),
   deploy: async (id: number, circleId: number) => api.post(`/api/curated-content/${id}/deploy`, { circle_id: circleId }),
 };
 
