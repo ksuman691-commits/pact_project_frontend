@@ -9,8 +9,8 @@ export function titleCase(value: string | null | undefined): string {
 }
 
 /**
- * A pact title as people should see it: no emoji (older pacts had one stuck
- * on the front), single spaces, Title Case.
+ * A pact title as people should see it: as they typed it, minus emoji (older
+ * pacts had one stuck on the front) and extra spaces. No forced capitals.
  */
 export function cleanTitle(value: string | null | undefined): string {
   if (!value) return ''
@@ -18,5 +18,5 @@ export function cleanTitle(value: string | null | undefined): string {
     .replace(/[\p{Extended_Pictographic}\p{Emoji_Modifier}‍️⃣]/gu, '')
     .replace(/\s+/g, ' ')
     .trim()
-  return titleCase(stripped || value.trim())
+  return stripped || value.trim()
 }

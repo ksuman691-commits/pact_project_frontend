@@ -16,9 +16,8 @@ import { useMyTipSettings } from '@/hooks/useTips'
 import { useFollowers } from '@/hooks/useFollows'
 import { useAuthStore } from '@/store/auth'
 import { createStory, putStoryVideo, requestStoryUploadUrl } from '@/lib/api/stories'
-import { IDEAS, parseSentence, sentenceTitle, type Frequency } from '@/lib/pactSentence'
+import { IDEAS, parseSentence, typedTitle, type Frequency } from '@/lib/pactSentence'
 import { STORY_MAX_SECONDS } from '@/lib/stories'
-import { titleCase } from '@/lib/titleCase'
 import PactLiveBeat from '@/components/celebrations/PactLiveBeat'
 import { pactInviteMessage } from '@/lib/inviteMessages'
 
@@ -121,7 +120,8 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   const frequency = pickedFrequency ?? parsed.frequency ?? 'Every day'
   const cleanText = text.trim()
   const ready = cleanText.length >= 4
-  const title = ready ? sentenceTitle(cleanText, days) : ''
+  // Kept exactly as typed; the length shows on its own chip.
+  const title = ready ? typedTitle(cleanText) : ''
   const circle = circles.find((c) => Number(c.id) === circleId)
   const circleIsPrivate = audience === 'circle' && circle?.visibility === 'private'
   // Selling access needs somewhere for the money to go.
@@ -349,7 +349,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                   {
                     id: 'circle' as Audience,
                     name: 'A circle',
-                    desc: circles.length === 0 ? 'You have no circles yet. Make one.' : circle && audience === 'circle' ? titleCase(String(circle.name || '')) : `Choose one of your ${circles.length} ${circles.length === 1 ? 'circle' : 'circles'}.`,
+                    desc: circles.length === 0 ? 'You have no circles yet. Make one.' : circle && audience === 'circle' ? String(circle.name || '') : `Choose one of your ${circles.length} ${circles.length === 1 ? 'circle' : 'circles'}.`,
                     icon: <Users className="size-[22px]" />,
                   },
                   { id: 'followers' as Audience, name: 'My followers', desc: followerCount > 0 ? `${followerCount.toLocaleString('en-IN')} ${followerCount === 1 ? 'follower sees' : 'followers see'} it in their feed.` : 'Shows on your profile and to people who follow you.', icon: <Heart className="size-[22px]" /> },
@@ -535,7 +535,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                                 {String(c.name || '?').trim().charAt(0).toUpperCase()}
                               </span>
                               <span className="min-w-0 flex-1">
-                                <span className="block truncate text-[15.5px] font-bold">{titleCase(String(c.name || ''))}</span>
+                                <span className="block truncate text-[15.5px] font-bold">{String(c.name || '')}</span>
                                 <span className="block text-[12.5px]" style={{ color: MUTED }}>{same ? `${c.member_count ?? 0} ${Number(c.member_count ?? 0) === 1 ? 'member' : 'members'}` : g.sub}</span>
                               </span>
                               <span className="size-6 shrink-0 rounded-full" style={picked ? { border: `8px solid ${NAVY}` } : { border: '2px solid #B9AF9A' }} />
@@ -590,7 +590,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
               <div className="mt-2.5 flex flex-wrap gap-2">
                 <span className="flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-extrabold" style={{ background: NAVY, color: '#FFFFFF' }}>
                   {audience === 'circle' ? <Users className="size-3" strokeWidth={2.6} /> : audience === 'followers' ? <Heart className="size-3" strokeWidth={2.6} /> : <Globe className="size-3" strokeWidth={2.6} />}
-                  {audience === 'circle' ? titleCase(String(circle?.name || 'Your circle')) : audience === 'followers' ? 'My followers' : 'Everyone'}
+                  {audience === 'circle' ? String(circle?.name || 'Your circle') : audience === 'followers' ? 'My followers' : 'Everyone'}
                 </span>
                 <span className="flex h-7 items-center rounded-full px-2.5 text-[12px] font-bold" style={{ background: CARD, border: `1px solid ${LINE}`, color: INK }}>
                   {frequency} · {days} days
@@ -602,7 +602,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                 )}
               </div>
               <div className="mt-2.5 text-[13px] leading-snug" style={{ color: MUTED }}>
-                {audience === 'circle' ? `Members of ${titleCase(String(circle?.name || 'your circle'))} can see it now.` : audience === 'followers' ? 'Your followers can see it now.' : 'It goes live in Discover.'}
+                {audience === 'circle' ? `Members of ${String(circle?.name || 'your circle')} can see it now.` : audience === 'followers' ? 'Your followers can see it now.' : 'It goes live in Discover.'}
               </div>
             </div>
           </div>

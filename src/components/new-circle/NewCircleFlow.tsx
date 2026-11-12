@@ -11,7 +11,6 @@ import { circleAdvancedService, circleService } from '@/services/api'
 import { useFollowers, useFollowing } from '@/hooks/useFollows'
 import { useAuthStore } from '@/store/auth'
 import { shareCircle, type ShareKind } from '@/lib/circleInvite'
-import { titleCase } from '@/lib/titleCase'
 import { fireConfetti, stopConfetti } from '@/lib/celebrations'
 import { haptic } from '@/lib/motion'
 
@@ -75,7 +74,7 @@ export default function NewCircleFlow({
     }
   }, [step])
   const [name, setName] = useState('')
-  const [about, setAbout] = useState(initialCategory ? `Chasing ${titleCase(initialCategory.replace(/_/g, ' '))} goals together` : '')
+  const [about, setAbout] = useState(initialCategory ? `Chasing ${initialCategory.replace(/_/g, ' ')} goals together` : '')
   const [photo, setPhoto] = useState<{ file: File; url: string } | null>(null)
   const [isPrivate, setIsPrivate] = useState(false)
   const [invited, setInvited] = useState<number[]>(initialInviteUserIds)
@@ -96,7 +95,7 @@ export default function NewCircleFlow({
 
   const cleanName = name.trim().replace(/\s+/g, ' ')
   const ready = cleanName.length >= 2
-  const displayName = titleCase(cleanName)
+  const displayName = cleanName
   const notify = followerCount > 0 && tellFollowers
 
   const people = useMemo(() => {
