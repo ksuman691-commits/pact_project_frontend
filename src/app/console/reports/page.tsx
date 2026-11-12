@@ -9,7 +9,7 @@ import { consoleApi, errorText, type ReportItem } from '@/lib/console/api';
 const RED = '#B3261E';
 type Status = 'open' | 'dismissed' | 'removed';
 
-const REASON: Record<string, string> = { unsafe: 'Unsafe', mean: 'Mean', spam: 'Spam', other: 'Other' };
+const REASON: Record<string, string> = { scam: 'Scam or fraud', unsafe: 'Harmful', mean: 'Mean', spam: 'Spam', other: 'Other' };
 
 function ago(iso: string | null): string {
   if (!iso) return '';

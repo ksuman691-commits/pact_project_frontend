@@ -29,8 +29,11 @@ export function RolePill({ role }: { role: TeamRole }) {
 
 /** Only what's built is in the menu; each role sees its own tools. */
 const NAV: { href: string; label: string; roles: TeamRole[] }[] = [
+  { href: '/console/overview', label: 'Overview', roles: ['staff', 'moderator', 'creator'] },
   { href: '/console/studio', label: 'Dare studio', roles: ['staff', 'creator'] },
   { href: '/console/reports', label: 'Reports', roles: ['moderator'] },
+  { href: '/console/users', label: 'Users', roles: ['moderator'] },
+  { href: '/console/money', label: 'Money', roles: ['owner'] },
   { href: '/console/team', label: 'Team', roles: ['owner'] },
   { href: '/console/activity', label: 'Activity log', roles: ['owner'] },
 ];

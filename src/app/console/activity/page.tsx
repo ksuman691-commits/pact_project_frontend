@@ -11,6 +11,7 @@ const FILTERS: { id: string | undefined; label: string }[] = [
   { id: 'dares', label: 'Dares' },
   { id: 'drafts', label: 'Drafts' },
   { id: 'reports', label: 'Reports' },
+  { id: 'users', label: 'People' },
 ];
 const RANGES = [1, 7, 30, 90];
 
