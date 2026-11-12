@@ -1,5 +1,6 @@
 'use client'
 
+import { endedLabel } from '@/lib/pactEnded'
 import Image from 'next/image'
 import AutoPlayVideo from '@/components/media/AutoPlayVideo'
 import { cleanTitle } from '@/lib/titleCase'
@@ -428,7 +429,7 @@ export default function PactMomentsDetail({
                 </>
               ) : completionView === 'partial' || completionView === 'provisional_not_completed' ? (
                 <>
-                  <h2 className="text-[28px] font-extrabold leading-8 text-white">Ended</h2>
+                  <h2 className="text-[28px] font-extrabold leading-8 text-white">{endedLabel(pact?.end_date)}</h2>
                   <p className="mt-1 text-[17px] font-bold text-white">{completed} of {total} days done</p>
                   <button type="button" onClick={() => { setActiveIndex(0); setWatchingRecap(true) }} className="mt-6 rounded-full border border-white/80 px-5 py-3 text-[15px] font-extrabold text-white">
                     Watch your moments

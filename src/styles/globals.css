@@ -774,3 +774,22 @@ section + section {
 @keyframes cp-rise-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .cp-rise-in { animation: cp-rise-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: calc(var(--i, 0) * 45ms); }
 @media (prefers-reduced-motion: reduce) { .cp-rise-in { animation: none; } }
+
+/* CircleWatch: the second hand steps once a second; the yellow ring breathes in the last hour. */
+.cp-watch-sec {
+  transform-origin: 50px 50px;
+  animation: cp-watch-sec 60s steps(60) infinite;
+}
+@keyframes cp-watch-sec {
+  to { transform: rotate(360deg); }
+}
+.cp-watch-breathe {
+  animation: cp-watch-breathe 2.4s ease-in-out infinite;
+}
+@keyframes cp-watch-breathe {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cp-watch-sec, .cp-watch-breathe { animation: none; }
+}

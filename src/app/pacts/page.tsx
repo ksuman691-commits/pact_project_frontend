@@ -144,8 +144,14 @@ function PactsPageInner() {
   const isActive = (p: any) => p.status === 'active' && (!p.end_date || String(p.end_date).slice(0, 10) >= todayIso)
 
   const active = useMemo(
-    () => pacts.filter((p) => isActive(p) && matchesSearch(p.title)).sort((a, b) => lastActivityOf(b) - lastActivityOf(a)),
-    [pacts, search], // eslint-disable-line react-hooks/exhaustive-deps
+    () => {
+      // Pacts you still have to check in on today come first, so the ones whose watch is filling up are on top.
+      const waiting = new Set(today.pacts.filter((t) => !t.posted_today).map((t) => t.id))
+      return pacts
+        .filter((p) => isActive(p) && matchesSearch(p.title))
+        .sort((a, b) => Number(waiting.has(Number(b.id))) - Number(waiting.has(Number(a.id))) || lastActivityOf(b) - lastActivityOf(a))
+    },
+    [pacts, search, today.pacts], // eslint-disable-line react-hooks/exhaustive-deps
   )
   const broken = useMemo(() => pacts.filter((p) => isBroken(p) && matchesSearch(p.title)), [pacts, search]) // eslint-disable-line react-hooks/exhaustive-deps
   const finished = useMemo(
