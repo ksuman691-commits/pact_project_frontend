@@ -753,9 +753,10 @@ export const dareService = {
   claim: (id: number) => api.post(`/api/dares/${id}/claim`),
   accept: (id: number) => api.post(`/api/dares/${id}/accept`),
   decline: (id: number) => api.post(`/api/dares/${id}/decline`),
-  uploadProof: (id: number, file: File, proofType: 'photo' | 'video' | 'checklist' = 'photo', caption?: string) => {
+  /** One video, or up to 4 photos sent together as one proof. */
+  uploadProof: (id: number, files: File | File[], proofType: 'photo' | 'video' | 'checklist' = 'photo', caption?: string) => {
     const formData = new FormData();
-    formData.append('file', file);
+    for (const file of Array.isArray(files) ? files : [files]) formData.append('files', file);
     formData.append('proof_type', proofType);
     if (caption) formData.append('caption', caption);
     // See uploadAvatar above: Content-Type must be explicitly cleared, not

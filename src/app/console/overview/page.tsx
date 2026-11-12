@@ -36,6 +36,43 @@ function Chart({ title, values, color }: { title: string; values: number[]; colo
   );
 }
 
+function countryName(code: string | null): string {
+  if (!code) return '';
+  try {
+    return new Intl.DisplayNames(['en'], { type: 'region' }).of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
+function Ranked({ title, rows, total }: { title: string; rows: { label: string; sub?: string; people: number }[]; total: number }) {
+  const top = Math.max(1, ...rows.map((r) => r.people));
+  return (
+    <div className="rounded-[16px] border border-[var(--hairline)] bg-[var(--card)] px-4 py-3.5">
+      <div className="flex justify-between text-[13px]">
+        <b>{title}</b>
+        <span className="text-[var(--muted)]">{n(total)} people located</span>
+      </div>
+      <ul className="mt-2.5 space-y-2">
+        {rows.map((r) => (
+          <li key={`${r.label}-${r.sub ?? ''}`} className="text-[13.5px]">
+            <div className="flex justify-between gap-2">
+              <span className="min-w-0 truncate">
+                <b>{r.label}</b>
+                {r.sub && <span className="text-[var(--muted)]"> · {r.sub}</span>}
+              </span>
+              <span className="tabular-nums text-[var(--muted)]">{n(r.people)}</span>
+            </div>
+            <div className="mt-1 h-1.5 rounded-full bg-[#E6DFD0]">
+              <div className="h-1.5 rounded-full bg-[var(--navy)]" style={{ width: `${(r.people / top) * 100}%` }} />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function Board() {
   const member = useConsoleMember();
   const [data, setData] = useState<Overview | null>(null);
@@ -117,6 +154,22 @@ function Board() {
               href={canStudio ? '/console/studio' : undefined}
               warn={data.attention.empty_days_ahead.length > 0}
             />
+          </Section>
+          <Section title="Where people are (last 30 days, approximate)" cols="grid-cols-1 lg:grid-cols-2">
+            {data.places.located_30d === 0 ? (
+              <div className="rounded-[16px] border border-[var(--hairline)] bg-[var(--card)] px-4 py-3.5 text-[13.5px] text-[var(--muted)] lg:col-span-2">
+                No places yet. They fill in as people sign in once the MaxMind key is set on the server.
+              </div>
+            ) : (
+              <>
+                <Ranked title="Countries" total={data.places.located_30d} rows={data.places.countries.map((c) => ({ label: countryName(c.code), people: c.people }))} />
+                <Ranked
+                  title="Cities"
+                  total={data.places.located_30d}
+                  rows={data.places.cities.map((c) => ({ label: c.city, sub: [c.region, c.country && c.country !== 'IN' ? countryName(c.country) : null].filter(Boolean).join(', ') || undefined, people: c.people }))}
+                />
+              </>
+            )}
           </Section>
           <Section title="Last 30 days" cols="grid-cols-1 lg:grid-cols-3">
             <Chart title="Sign-ups" values={data.series.signups} />

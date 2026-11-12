@@ -287,6 +287,8 @@ export interface Dare {
   verification_method?: string;
   verification_questions?: string[];
   proof_url?: string;
+  /** Every photo sent together as the proof (up to 4), or the one video. */
+  proof_media?: { url: string | null; type: 'photo' | 'video' | 'checklist' }[];
   proof_type?: string;
   created_at: string;
   updated_at?: string;
