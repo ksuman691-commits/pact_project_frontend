@@ -1,6 +1,8 @@
 'use client'
 
 import CircleMark from '@/components/brand/CircleMark'
+import CircleWatch from '@/components/brand/CircleWatch'
+import SetupSlide, { useSetupSteps, type SetupStep } from '@/components/home/SetupSlide'
 import { useCallback, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -13,6 +15,8 @@ import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
 import type { MomentPerson } from '@/hooks/useMomentPeople'
 
 const GAP = 8
+
+type Slide = { kind: 'pact'; pact: TodayPact } | { kind: 'setup'; step: SetupStep }
 
 /** Hours left until the end of the pact's last day (local midnight after end_date). */
 function hoursLeft(pact: TodayPact): number | null {
@@ -29,6 +33,13 @@ function endsLabel(hours: number): string {
   if (hours < 24) return `Ends in ${hours}h`
   const days = Math.round(hours / 24)
   return `Ends in ${days} ${days === 1 ? 'day' : 'days'}`
+}
+
+/** "15h 12m", "48m": time left in today's window. */
+function leftLabel(ms: number): string {
+  const hours = Math.floor(ms / 3_600_000)
+  const minutes = Math.floor((ms % 3_600_000) / 60_000)
+  return hours > 0 ? `${hours}h ${minutes}m` : `${Math.max(1, minutes)}m`
 }
 
 function timeOf(iso?: string | null): string | null {
@@ -91,7 +102,13 @@ function CheckInSlide({ pact, peers, fullWidth, onCapture, done, total, streak, 
           : null
   const postedAt = timeOf(pact.posted_at)
   const where = pact.circle_name || 'Personal'
-  const detail = urgent && hours != null ? endsLabel(hours) : peersLine || dayLabel
+  // Today's window: midnight in the pact's time zone. The watch fills up toward it.
+  const endsAt = pact.day_ends_at ? Date.parse(pact.day_ends_at) : NaN
+  const todayMs = Number.isFinite(endsAt) ? Math.max(0, endsAt - Date.now()) : null
+  const todayLeft = todayMs != null ? leftLabel(todayMs) : null
+  const lastHours = todayMs != null && todayMs < 3 * 3_600_000
+  const detail = todayLeft ? `${todayLeft} left` : urgent && hours != null ? endsLabel(hours) : peersLine || dayLabel
+  const loud = todayLeft ? lastHours : urgent
 
   return (
     <li
@@ -114,6 +131,15 @@ function CheckInSlide({ pact, peers, fullWidth, onCapture, done, total, streak, 
       </div>
 
       <div className="mt-1 flex items-center gap-3">
+        {todayMs != null && (
+          <CircleWatch
+            size={36}
+            elapsed={1 - Math.min(1, todayMs / 86_400_000)}
+            endsAt={endsAt}
+            state={pact.posted_today ? 'done' : 'running'}
+            title={pact.posted_today ? 'Checked in today' : `${todayLeft} left to check in today`}
+          />
+        )}
         <div className="min-w-0 flex-1">
           {/* The text opens the pact; the button keeps its own job. */}
           <Link href={`/pacts/${pact.id}`} className="block truncate text-[16px] font-bold tracking-[-0.015em] text-white">
@@ -129,11 +155,13 @@ function CheckInSlide({ pact, peers, fullWidth, onCapture, done, total, streak, 
             <p key={pact.nudged_by.count} className="cp-pop-in mt-px truncate text-[12.5px] font-bold text-[var(--dare)]">{pact.nudged_by.line}</p>
           ) : (
             <p className="mt-px truncate text-[12.5px]" style={{ color: '#D4DBFA' }}>
-              {where}
-              {detail && (
+              {todayLeft ? (
+                <span className={loud ? 'font-bold text-[var(--dare)]' : 'font-bold text-white'}>{todayLeft} left today</span>
+              ) : where}
+              {!todayLeft && detail && (
                 <>
                   {' · '}
-                  <span className={urgent ? 'font-bold text-[var(--dare)]' : undefined}>{detail}</span>
+                  <span className={loud ? 'font-bold text-[var(--dare)]' : todayLeft ? 'font-bold text-white' : undefined}>{detail}</span>
                 </>
               )}
             </p>
@@ -183,14 +211,20 @@ export default function TodayCheckInRow({ onCreatePact, peers = [], streak = 0 }
 
   const waiting = pacts.filter((p) => !p.posted_today)
   const done = pacts.filter((p) => p.posted_today)
-  const slides = [...waiting, ...done]
+  // Setup steps (first pact, photo, circle) ride at the end of the same swipe, after every check-in.
+  const setup = useSetupSteps(pacts.length)
+  const showFirst = setup.steps.includes('first')
+  const slides: Slide[] = [
+    ...(allDone ? [] : [...waiting, ...done].map((pact) => ({ kind: 'pact' as const, pact }))),
+    ...setup.steps.map((step) => ({ kind: 'setup' as const, step })),
+  ]
   const single = slides.length === 1
 
   const stepOf = useCallback((scroller: HTMLElement) => {
     const first = scroller.firstElementChild as HTMLElement | null
     return first ? first.offsetWidth + GAP : scroller.clientWidth
   }, [])
-  useSnapSwipe(scrollerRef, slides.length, !allDone && slides.length > 1, stepOf)
+  useSnapSwipe(scrollerRef, slides.length, slides.length > 1, stepOf)
 
   const onScroll = () => {
     const scroller = scrollerRef.current
@@ -213,6 +247,45 @@ export default function TodayCheckInRow({ onCreatePact, peers = [], streak = 0 }
     </button>
   )
 
+  const setupCount = setup.steps.length
+  const rail =
+    slides.length === 0 ? null : (
+      <>
+        <ul
+          ref={scrollerRef}
+          onScroll={onScroll}
+          className="scrollbar-hide -mx-4 flex snap-x snap-mandatory overflow-x-auto scroll-px-4 px-4"
+          style={{ gap: GAP, overscrollBehaviorX: 'contain' }}
+          aria-label={`${waiting.length} ${waiting.length === 1 ? 'pact' : 'pacts'} waiting for today's moment`}
+        >
+          {slides.map((slide) =>
+            slide.kind === 'pact' ? (
+              <CheckInSlide key={slide.pact.id} pact={slide.pact} peers={peers} fullWidth={single} onCapture={capture} done={done.length} total={pacts.length} streak={streak} onCreatePact={onCreatePact} />
+            ) : (
+              <SetupSlide
+                key={slide.step}
+                step={slide.step}
+                position={setup.steps.indexOf(slide.step) + 1}
+                count={setupCount}
+                fullWidth={single}
+                width={`calc(100% - ${32 + GAP}px)`}
+                onCreatePact={onCreatePact}
+                onSnooze={setup.snooze}
+              />
+            ),
+          )}
+        </ul>
+        {!single && (
+          <div className="flex items-center justify-center gap-1 pt-0.5" aria-hidden="true">
+            {slides.slice(0, 5).map((slide, i) => (
+              <span key={slide.kind === 'pact' ? slide.pact.id : slide.step} className="h-1 rounded-full transition-all" style={{ width: Math.min(index, 4) === i ? 16 : 4, background: Math.min(index, 4) === i ? 'var(--navy)' : 'var(--hairline)' }} />
+            ))}
+            {slides.length > 5 && <span className="pl-0.5 text-[11px] font-semibold leading-none text-[var(--muted)]">+{slides.length - 5}</span>}
+          </div>
+        )}
+      </>
+    )
+
   return (
     <section aria-label="Today" className="mb-0 flex flex-col gap-2">
       {isLoading ? (
@@ -222,7 +295,7 @@ export default function TodayCheckInRow({ onCreatePact, peers = [], streak = 0 }
           </div>
           <div className="pact-shimmer h-[112px] rounded-[20px]" aria-hidden="true" />
         </>
-      ) : pacts.length === 0 ? (
+      ) : pacts.length === 0 && !showFirst ? (
         <>
           <div className="flex items-center gap-2 px-0.5">
             <h2 className="text-[17px] font-extrabold tracking-[-0.01em] text-[var(--ink)]">Today</h2>
@@ -242,39 +315,25 @@ export default function TodayCheckInRow({ onCreatePact, peers = [], streak = 0 }
               New pact
             </button>
           </div>
+          {rail}
         </>
       ) : allDone ? (
-        <div className="flex min-h-[32px] items-center gap-2 px-0.5">
-          <h2 className="text-[17px] font-extrabold tracking-[-0.01em] text-[var(--ink)]">Today</h2>
-          {/* Every pact done today: the circle closes. */}
-          <CircleMark size={20} animation="close" tick className="ml-1" />
-          <span className="min-w-0 flex-1 truncate text-[13.5px] font-bold" style={{ color: 'var(--success, #2E7D4F)' }}>
-            {pacts.length === 1 ? 'Checked in' : `All ${pacts.length} checked in`}
-          </span>
-          {newPact}
-        </div>
+        <>
+          <div className="flex min-h-[32px] items-center gap-2 px-0.5">
+            <h2 className="text-[17px] font-extrabold tracking-[-0.01em] text-[var(--ink)]">Today</h2>
+            {/* Every pact done today: the circle closes. */}
+            <CircleMark size={20} animation="close" tick className="ml-1" />
+            <span className="min-w-0 flex-1 truncate text-[13.5px] font-bold" style={{ color: 'var(--success, #2E7D4F)' }}>
+              {pacts.length === 1 ? 'Checked in' : `All ${pacts.length} checked in`}
+            </span>
+            {newPact}
+          </div>
+          {rail}
+        </>
       ) : (
         <>
           <h2 className="sr-only">Today</h2>
-          <ul
-            ref={scrollerRef}
-            onScroll={onScroll}
-            className="scrollbar-hide -mx-4 flex snap-x snap-mandatory overflow-x-auto scroll-px-4 px-4"
-            style={{ gap: GAP, overscrollBehaviorX: 'contain' }}
-            aria-label={`${waiting.length} ${waiting.length === 1 ? 'pact' : 'pacts'} waiting for today's moment`}
-          >
-            {slides.map((pact) => (
-              <CheckInSlide key={pact.id} pact={pact} peers={peers} fullWidth={single} onCapture={capture} done={done.length} total={pacts.length} streak={streak} onCreatePact={onCreatePact} />
-            ))}
-          </ul>
-          {!single && (
-            <div className="flex items-center justify-center gap-1 pt-0.5" aria-hidden="true">
-              {slides.slice(0, 5).map((pact, i) => (
-                <span key={pact.id} className="h-1 rounded-full transition-all" style={{ width: Math.min(index, 4) === i ? 16 : 4, background: Math.min(index, 4) === i ? 'var(--navy)' : 'var(--hairline)' }} />
-              ))}
-              {slides.length > 5 && <span className="pl-0.5 text-[11px] font-semibold leading-none text-[var(--muted)]">+{slides.length - 5}</span>}
-            </div>
-          )}
+          {rail}
         </>
       )}
 

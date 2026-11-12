@@ -68,6 +68,10 @@ export function useProfileCompletion() {
   return {
     isLoading,
     isReady: !!user,
+    known,
+    hasPhoto,
+    hasCircle,
+    hasCreatedPact,
     checklist,
     percent,
     isComplete,
