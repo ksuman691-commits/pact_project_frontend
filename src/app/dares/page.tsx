@@ -7,6 +7,8 @@ import { Zap } from 'lucide-react';
 import GlanceStrip from '@/components/GlanceStrip';
 import DareCard from '@/components/DareCard';
 import CreateDareModal from '@/components/CreateDareModal';
+import PausedNote from '@/components/app/PausedNote';
+import { usePaused } from '@/lib/appStatus';
 import { useDareFeed, useMyDares } from '@/hooks/useDareQueries';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { dareRole, dareState, isActive, nextStep } from '@/lib/dareView';
@@ -100,6 +102,8 @@ function DaresPageInner() {
     history: null,
   };
 
+  const daresPaused = usePaused('dares');
+  const discoverPaused = usePaused('discover');
   const shown = tab === 'for-you' ? lists.forYou : tab === 'sent' ? lists.sent : tab === 'history' ? lists.history : discover;
   const query = tab === 'discover' ? feed : mine;
   const loading = tab === 'discover' ? feed.isLoading : mine.isLoading || !isInitialized;
@@ -124,8 +128,9 @@ function DaresPageInner() {
             tone="ink"
             label="Your dares at a glance"
             stats={stats.map((stat) => ({ label: stat.label, value: mine.isSuccess ? stat.value : null, onSelect: () => setTab(stat.tab) }))}
-            action={{ label: 'Send a dare', onClick: () => setCreateOpen(true), icon: <Zap className="size-4" strokeWidth={0} fill="currentColor" aria-hidden="true" /> }}
+            action={daresPaused ? undefined : { label: 'Send a dare', onClick: () => setCreateOpen(true), icon: <Zap className="size-4" strokeWidth={0} fill="currentColor" aria-hidden="true" /> }}
           />
+          {daresPaused && <PausedNote text={daresPaused} className="mx-4 mt-3" />}
         </div>
 
         <nav className="flex gap-1.5 overflow-x-auto px-4 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Dare lists">
@@ -154,7 +159,9 @@ function DaresPageInner() {
         </nav>
 
         <section className="space-y-4 px-[10px] sm:px-6" aria-live="polite">
-          {loading ? (
+          {tab === 'discover' && discoverPaused ? (
+            <PausedNote text={discoverPaused} />
+          ) : loading ? (
             [0, 1].map((i) => (
               <div key={i} className="pact-card overflow-hidden rounded-[22px]">
                 <div className="pact-shimmer aspect-[16/10]" />
@@ -179,7 +186,7 @@ function DaresPageInner() {
               </span>
               <h2 className="mt-4 text-[22px] font-extrabold tracking-[-0.03em]">{EMPTY[tab].title}</h2>
               <p className="mt-2 text-[14px] leading-[1.5] text-[var(--muted)]">{EMPTY[tab].body}</p>
-              {EMPTY[tab].cta === 'create' && (
+              {EMPTY[tab].cta === 'create' && !daresPaused && (
                 <button type="button" onClick={() => setCreateOpen(true)} className="mt-5 inline-flex h-11 items-center gap-2 rounded-full bg-[var(--ink)] px-6 text-[14px] font-extrabold text-[var(--dare)]">
                   <Zap className="size-4" strokeWidth={0} fill="currentColor" aria-hidden="true" />
                   Send a dare

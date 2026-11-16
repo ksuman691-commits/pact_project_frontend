@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCreateDareFlow } from '@/context/CreateDareFlowContext';
 import { REWARD_MAX } from '@/lib/createDareFlow/toApiPayload';
+import { usePaused } from '@/lib/appStatus';
+import PausedNote from '@/components/app/PausedNote';
 
 // Small, lucky-number amounts: enough to make it fun, never enough to make it a bet.
 const PRESETS = [9, 21, 51, 101];
@@ -26,6 +28,24 @@ export default function RewardStep() {
   };
 
   const overMax = draft.rewardAmount != null && draft.rewardAmount > REWARD_MAX;
+  const paused = usePaused('dare_money');
+  useEffect(() => {
+    if (paused && draft.rewardAmount != null) updateDraft({ rewardAmount: null });
+  }, [paused, draft.rewardAmount, updateDraft]);
+
+  if (paused) {
+    return (
+      <div className="pact-step-enter flex flex-1 flex-col">
+        <h1 className="text-[32px] font-extrabold leading-[1.04] tracking-[-0.035em] text-[var(--pact-text)] text-balance">Put something on it?</h1>
+        <PausedNote text={paused} className="mt-4" />
+        <div className="mt-auto pt-8">
+          <button type="button" onClick={goNext} className="w-full rounded-full bg-[var(--ink)] py-3 font-bold text-[var(--dare)]">
+            Continue without a reward
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pact-step-enter flex flex-1 flex-col">

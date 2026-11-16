@@ -19,6 +19,8 @@ export function usePact(id: number) {
     queryFn: () => pactService.getById(id),
     enabled: !!id,
     staleTime: 1000 * 60 * 5,
+    // Not allowed or gone (e.g. taken down): say so at once instead of retrying.
+    retry: (count, error: any) => ![403, 404].includes(error?.response?.status) && count < 3,
   });
 }
 

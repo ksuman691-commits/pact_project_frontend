@@ -73,6 +73,8 @@ export interface PactStory {
   id: number
   user_id: number
   pact_id?: number | null
+  /** The moment this is the 24-hour copy of; used to report it. */
+  proof_id?: number | null
   username?: string | null
   /** Filled in by the Home row: which pact the moment belongs to and who it is open to. */
   pact_title?: string | null

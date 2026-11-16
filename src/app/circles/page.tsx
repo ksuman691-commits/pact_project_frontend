@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronRight, Search, SlidersHorizontal, Plus, Users } from 'lucide-react'
 import GlanceStrip from '@/components/GlanceStrip'
+import PausedNote from '@/components/app/PausedNote'
+import { usePaused } from '@/lib/appStatus'
 import CircleMark from '@/components/brand/CircleMark'
 import { useCircles } from '@/hooks/useCircles'
 import PendingCircleInvites from '@/components/PendingCircleInvites'
@@ -26,6 +28,7 @@ function matchesFilter(item: { circle: any; activity: ReturnType<typeof readCirc
 
 export default function CirclesPage() {
   const [connectModalOpen, setConnectModalOpen] = useState(false)
+  const circlesPaused = usePaused('circles')
   const { user, isInitialized } = useRequireAuth()
   const circlesQuery = useCircles(isInitialized && !!user)
   const [invitesKey, setInvitesKey] = useState(0)
@@ -96,8 +99,9 @@ export default function CirclesPage() {
           tone="navy"
           label="Your circles at a glance"
           stats={glance.map((stat) => ({ label: stat.label, hint: stat.hint, value: circlesQuery.isSuccess ? stat.value : null, selected: membershipFilter === stat.filter, onSelect: () => setMembershipFilter(stat.filter) }))}
-          action={{ label: 'New circle', href: '/circles/create', icon: <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" /> }}
+          action={circlesPaused ? undefined : { label: 'New circle', href: '/circles/create', icon: <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" /> }}
         />
+        {circlesPaused && <PausedNote text={circlesPaused} className="mt-3" />}
 
         <div className="mt-3">
           <PendingCircleInvites key={invitesKey} />

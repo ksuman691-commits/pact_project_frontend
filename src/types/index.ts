@@ -80,6 +80,8 @@ export interface Pact {
   creator_id: number;
   circle_id?: number;
   title: string;
+  /** Set only for the creator, when the team took the pact down. */
+  taken_down?: { at: string; reason: string | null; reason_label: string; note: string | null } | null;
   description: string;
   deadline?: string;
   end_date?: string;

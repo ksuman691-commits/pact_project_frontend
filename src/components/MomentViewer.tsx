@@ -1,9 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { MessageCircle, Play, Trash2, Volume2, VolumeX, X } from 'lucide-react'
+import { Flag, MessageCircle, Play, Trash2, Volume2, VolumeX, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import DeleteMomentSheet from '@/components/stories/DeleteMomentSheet'
+import ReportMomentSheet from '@/components/stories/ReportMomentSheet'
 import { useDeleteMoment } from '@/hooks/useStories'
 import { useAuthStore } from '@/store/auth'
 import LikeButton from '@/components/LikeButton'
@@ -49,6 +50,7 @@ export default function MomentViewer({ moments, startIndex, pactId, likeCount, l
   const me = useAuthStore((state) => state.user)
   const { remove: removeMoment, deleting } = useDeleteMoment()
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [reporting, setReporting] = useState(false)
   const held = useRef(false)
   const startedAt = useRef(Date.now())
   const startingFraction = useRef(0)
@@ -222,6 +224,11 @@ export default function MomentViewer({ moments, startIndex, pactId, likeCount, l
               <Trash2 className="size-5" />
             </button>
           )}
+          {me?.id != null && moment.userId != null && Number(moment.userId) !== me.id && typeof moment.id === 'number' && (
+            <button type="button" aria-label="Report this moment" onClick={() => { pause(); setReporting(true) }} className="flex size-11 items-center justify-center rounded-full bg-white/15">
+              <Flag className="size-5" />
+            </button>
+          )}
           {moment.type === 'video' && (
             <button type="button" aria-label={muted ? 'Unmute video' : 'Mute video'} onClick={() => setMuted((value) => !value)} className="flex size-11 items-center justify-center rounded-full bg-white/15">
               {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
@@ -265,6 +272,9 @@ export default function MomentViewer({ moments, startIndex, pactId, likeCount, l
         <LikeButton pactId={pactId} count={likeCount} liked={liked} />
         <button type="button" onClick={onComment} aria-label="Comment on this moment" className="flex size-12 items-center justify-center rounded-full bg-white/15"><MessageCircle className="size-5" /></button>
       </footer>
+      {reporting && typeof moment.id === 'number' && (
+        <ReportMomentSheet pactId={pactId} proofId={moment.id} onClose={() => { setReporting(false); resume() }} />
+      )}
       <DeleteMomentSheet
         open={confirmDelete}
         day={moment.day ?? null}
