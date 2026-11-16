@@ -198,6 +198,14 @@ api.interceptors.response.use(
         window.location.href = '/auth/login';
       }
     }
+    // The team paused this part of the app from the console. Turn the detail into
+    // the friendly note so every screen's usual error toast shows it, and let the
+    // app refresh what's paused so buttons swap for the note.
+    const detail = response?.data?.detail;
+    if (response?.status === 503 && detail && typeof detail === 'object' && detail.code === 'feature_paused') {
+      response.data.detail = detail.message || 'This is paused for a bit. Please try again later.';
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event('cp:feature-paused'));
+    }
     return Promise.reject(error);
   }
 );
@@ -442,6 +450,9 @@ export const pactService = {
   join: (id: number) => api.post(`/api/pacts/${id}/join`),
   report: (id: number, reason: 'fake_or_ai' | 'spam' | 'offensive') =>
     api.post(`/api/pacts/${id}/report`, { reason }),
+  /** Report one moment (a photo or video check-in) to the team. */
+  reportMoment: (pactId: number, proofId: number, reason: MomentReportReason, note?: string) =>
+    api.post(`/api/pacts/${pactId}/proofs/${proofId}/report`, { reason, note: note || undefined }),
   getReportCount: (id: number) => api.get(`/api/pacts/${id}/report-count`),
   getReportLogs: (id: number) => api.get(`/api/pacts/${id}/report-logs`),
   getMyReports: (skip = 0, limit = 20) =>
@@ -645,6 +656,8 @@ export const followService = {
   state: (userId: number) => api.get(`/api/follows/state/${userId}`),
   setAnnouncements: (userId: number, muted: boolean) => api.post(`/api/follows/state/${userId}/announcements`, null, { params: { muted } }),
 };
+
+export type MomentReportReason = 'fake_or_ai' | 'spam' | 'offensive' | 'harmful' | 'scam';
 
 // Feed Services (Personalized feed, trending, discover)
 export const feedService = {

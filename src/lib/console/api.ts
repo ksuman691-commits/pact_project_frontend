@@ -144,6 +144,78 @@ export interface Money {
   circlepact: { revenue: number; commission: number; gst_on_commission: number; tcs_collected: number; tds_deducted: number; commission_rate: number | null };
 }
 
+export type ContentReason = 'fake_or_ai' | 'spam' | 'offensive' | 'harmful' | 'scam' | 'other';
+
+export interface TakenDown {
+  at: string;
+  reason: ContentReason | null;
+  reason_label: string;
+  note: string | null;
+}
+
+/** A reported (or taken-down) pact or single moment. */
+export interface ContentItem {
+  kind: 'pact' | 'moment';
+  id: number;
+  pact_id: number;
+  title: string;
+  pact_title?: string | null;
+  owner_username: string | null;
+  where: string;
+  started?: string | null;
+  duration_days?: number | null;
+  moments?: number;
+  proof_type?: 'photo' | 'video';
+  posted_at?: string | null;
+  photos: string[];
+  reports: number;
+  reasons: Record<string, number>;
+  notes: string[];
+  first_reported_at: string | null;
+  taken_down: TakenDown | null;
+  resolved_at: string | null;
+}
+
+export type Audience = 'everyone' | 'active_30' | 'city';
+export type AnnouncementLink = 'home' | 'dares' | 'discover' | 'today' | 'circles' | 'new_pact';
+
+export interface Announcement {
+  id: number;
+  title: string;
+  message: string;
+  link: AnnouncementLink;
+  audience: Audience;
+  city: string | null;
+  sent_by: string;
+  created_at: string;
+  in_app: number;
+  pushed: number;
+  skipped: number;
+  opened: number;
+}
+
+export interface AudienceSize {
+  people: number;
+  in_app: number;
+  push: number;
+  skipped: number;
+}
+
+export interface SwitchRow {
+  key: string;
+  label: string;
+  about: string;
+  enabled: boolean;
+  reason: string | null;
+  changed_by: string | null;
+  changed_at: string | null;
+}
+
+export interface Switches {
+  switches: SwitchRow[];
+  banner: { text: string | null; changed_by: string | null; changed_at: string | null };
+}
+
 export const consoleSession = {
   get: (): string | null => {
     try {
@@ -256,4 +328,22 @@ export const consoleApi = {
   reports: (status: 'open' | 'dismissed' | 'removed' = 'open') => client.get<ReportItem[]>('/reports', { params: { status } }).then((r) => r.data),
   dismissReports: (dareId: number) => client.post(`/reports/${dareId}/dismiss`).then((r) => r.data),
   removeReported: (dareId: number) => client.post(`/reports/${dareId}/remove`).then((r) => r.data),
+
+  contentReports: (status: 'open' | 'dismissed' | 'taken_down' = 'open') =>
+    client.get<ContentItem[]>('/content-reports', { params: { status } }).then((r) => r.data),
+  dismissContent: (kind: ContentItem['kind'], id: number) => client.post(`/content/${kind}/${id}/dismiss`).then((r) => r.data),
+  takeDown: (kind: ContentItem['kind'], id: number, reason: ContentReason, note: string) =>
+    client.post(`/content/${kind}/${id}/take-down`, { reason, note: note.trim() || null }).then((r) => r.data),
+  restore: (kind: ContentItem['kind'], id: number) => client.post(`/content/${kind}/${id}/restore`).then((r) => r.data),
+
+  announcements: () => client.get<Announcement[]>('/announcements').then((r) => r.data),
+  audienceSize: (audience: Audience, city?: string) =>
+    client.get<AudienceSize>('/announcements/audience', { params: { audience, ...(city ? { city } : {}) } }).then((r) => r.data),
+  cities: () => client.get<{ city: string; country: string | null; people: number }[]>('/announcements/cities').then((r) => r.data),
+  sendAnnouncement: (body: { title: string; message: string; link: AnnouncementLink; audience: Audience; city?: string }) =>
+    client.post<Announcement>('/announcements', body).then((r) => r.data),
+
+  switches: () => client.get<Switches>('/switches').then((r) => r.data),
+  setSwitch: (key: string, enabled: boolean, reason: string, text?: string) =>
+    client.put<Switches>(`/switches/${key}`, { enabled, reason, ...(text !== undefined ? { text } : {}) }).then((r) => r.data),
 };

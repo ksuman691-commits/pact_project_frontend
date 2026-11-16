@@ -10,6 +10,8 @@ import Link from 'next/link';
 import AuthShell, { authInputClass, authLabelClass, authPrimaryButtonClass } from '@/components/AuthShell';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 import ConsentNotice from '@/components/legal/ConsentNotice';
+import PausedNote from '@/components/app/PausedNote';
+import { usePaused } from '@/lib/appStatus';
 import { EMPTY_CONSENT, isPolicyVersionMismatch, type ConsentChoices } from '@/lib/consent';
 
 const MIN_AGE = 18;
@@ -37,6 +39,7 @@ export default function Register() {
   const router = useRouter();
   const register = useAuthStore((state) => state.register);
   const isLoading = useAuthStore((state) => state.isLoading);
+  const signupsPaused = usePaused('signups');
 
   const [loginHref, setLoginHref] = useState('/auth/login');
   useEffect(() => {
@@ -92,6 +95,7 @@ export default function Register() {
   return (
     <AuthShell heading="Create your account">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {signupsPaused && <PausedNote text={signupsPaused} />}
         <div>
           <label htmlFor="full_name" className={authLabelClass}>Name</label>
           <input
@@ -160,7 +164,7 @@ export default function Register() {
           </p>
         )}
         <ConsentNotice value={consent} onChange={setConsent} />
-        <button type="submit" disabled={isLoading || !consent.accepted} className={`${authPrimaryButtonClass} mt-1`}>
+        <button type="submit" disabled={isLoading || !consent.accepted || !!signupsPaused} className={`${authPrimaryButtonClass} mt-1`}>
           {isLoading ? 'Creating account…' : 'Create account'}
         </button>
       </form>

@@ -33,6 +33,8 @@ const NAV: { href: string; label: string; roles: TeamRole[] }[] = [
   { href: '/console/studio', label: 'Dare studio', roles: ['staff', 'creator'] },
   { href: '/console/reports', label: 'Reports', roles: ['moderator'] },
   { href: '/console/users', label: 'Users', roles: ['moderator'] },
+  { href: '/console/announcements', label: 'Announcements', roles: ['staff'] },
+  { href: '/console/switches', label: 'Switches', roles: ['owner'] },
   { href: '/console/money', label: 'Money', roles: ['owner'] },
   { href: '/console/team', label: 'Team', roles: ['owner'] },
   { href: '/console/activity', label: 'Activity log', roles: ['owner'] },

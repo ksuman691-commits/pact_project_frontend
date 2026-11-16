@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronRight, Eye, Globe, Send, Trash2, User, Users, X } from 'lucide-react'
+import { ChevronRight, Eye, Flag, Globe, Send, Trash2, User, Users, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import DeleteMomentSheet from './DeleteMomentSheet'
+import ReportMomentSheet from './ReportMomentSheet'
 import { reactToStory, replyToStory, STORY_REACTIONS } from '@/lib/api/stories'
 import { useAuthStore } from '@/store/auth'
 import { useDeleteMoment, useMarkStorySeen, useStoryViewers } from '@/hooks/useStories'
@@ -42,6 +43,7 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
   const [broken, setBroken] = useState(false)
   const [viewersOpen, setViewersOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [reporting, setReporting] = useState(false)
   const { remove: removeMoment, deleting } = useDeleteMoment()
   const [composing, setComposing] = useState(false)
   const [replyText, setReplyText] = useState('')
@@ -147,16 +149,16 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
-    if (paused || viewersOpen || composing || confirmDelete) video.pause()
+    if (paused || viewersOpen || composing || confirmDelete || reporting) video.pause()
     else void video.play().catch(() => {})
-  }, [paused, viewersOpen, composing, confirmDelete, index])
+  }, [paused, viewersOpen, composing, confirmDelete, reporting, index])
 
   // A photo has no timeline of its own: it stays up for PHOTO_MS, pausing like a video does.
   useEffect(() => {
     photoElapsed.current = 0
   }, [index])
   useEffect(() => {
-    if (!open || !photo || broken || paused || viewersOpen || composing || confirmDelete) return
+    if (!open || !photo || broken || paused || viewersOpen || composing || confirmDelete || reporting) return
     let last = performance.now()
     const timer = window.setInterval(() => {
       const now = performance.now()
@@ -170,7 +172,7 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
       }
     }, 50)
     return () => window.clearInterval(timer)
-  }, [open, photo, broken, paused, viewersOpen, composing, confirmDelete, index, go, markSeen, story])
+  }, [open, photo, broken, paused, viewersOpen, composing, confirmDelete, reporting, index, go, markSeen, story])
 
   const sendReaction = async (emoji: string) => {
     if (!story) return
@@ -259,9 +261,16 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
             </div>
           </div>
         </div>
-        <button type="button" onClick={close} aria-label="Close moments" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
-          <X className="h-6 w-6" />
-        </button>
+        <div className="flex shrink-0 items-center">
+          {story && !isOwn && story.pact_id != null && story.proof_id != null && (
+            <button type="button" onClick={() => setReporting(true)} aria-label="Report this moment" className="flex h-11 w-11 items-center justify-center rounded-full">
+              <Flag className="h-5 w-5" />
+            </button>
+          )}
+          <button type="button" onClick={close} aria-label="Close moments" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
+            <X className="h-6 w-6" />
+          </button>
+        </div>
       </div>
 
       {story ? (
@@ -413,6 +422,9 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
         </div>
       )}
 
+      {reporting && story?.pact_id != null && story.proof_id != null && (
+        <ReportMomentSheet pactId={story.pact_id} proofId={story.proof_id} onClose={() => setReporting(false)} />
+      )}
       <DeleteMomentSheet
         open={confirmDelete && !!story}
         busy={deleting}

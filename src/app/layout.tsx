@@ -1,3 +1,4 @@
+import AppBanner from '@/components/app/AppBanner';
 import AppPullToRefresh from '@/components/AppPullToRefresh';
 import AppOnly from '@/components/AppOnly';
 import '@/styles/globals.css';
@@ -71,6 +72,7 @@ export default function RootLayout({
             <ProfileTimezoneSync />
             <AgeVerificationGate />
             <NotificationRealtimeBridge />
+            <AppBanner />
           </AppOnly>
           <AppPullToRefresh>{children}</AppPullToRefresh>
           <AppOnly>

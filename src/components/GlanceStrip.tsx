@@ -19,7 +19,8 @@ interface GlanceStripProps {
   tone: 'navy' | 'ink'
   label: string
   stats: GlanceStat[]
-  action: { label: string; icon: React.ReactNode; href?: string; onClick?: () => void }
+  /** Left out when the action is paused; the page shows a note instead. */
+  action?: { label: string; icon: React.ReactNode; href?: string; onClick?: () => void }
 }
 
 /**
@@ -58,7 +59,7 @@ export default function GlanceStrip({ tone, label, stats, action }: GlanceStripP
           </button>
         ))}
       </div>
-      <div className="mt-1.5">
+      {action && <div className="mt-1.5">
         {action.href ? (
           <Link href={action.href} className={actionClass} style={actionStyle}>
             {action.icon}
@@ -70,7 +71,7 @@ export default function GlanceStrip({ tone, label, stats, action }: GlanceStripP
             {action.label}
           </button>
         )}
-      </div>
+      </div>}
     </section>
   )
 }

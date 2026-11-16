@@ -4,10 +4,16 @@ import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import ConsoleFrame, { useConsoleMember } from '@/components/console/ConsoleFrame';
 import NotYours from '@/components/console/NotYours';
+import ContentReports from '@/components/console/ContentReports';
 import { consoleApi, errorText, type ReportItem } from '@/lib/console/api';
 
 const RED = '#B3261E';
 type Status = 'open' | 'dismissed' | 'removed';
+
+const WHAT = [
+  ['dares', 'Dares'],
+  ['content', 'Pacts and moments'],
+] as const;
 
 const REASON: Record<string, string> = { scam: 'Scam or fraud', unsafe: 'Harmful', mean: 'Mean', spam: 'Spam', other: 'Other' };
 
@@ -105,6 +111,9 @@ function Reports() {
   const [status, setStatus] = useState<Status>('open');
   const [items, setItems] = useState<ReportItem[] | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
+  const [what, setWhat] = useState<'dares' | 'content'>(() =>
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('what') === 'content' ? 'content' : 'dares',
+  );
   const allowed = member?.role === 'moderator' || member?.role === 'owner';
 
   const load = useCallback(async () => {
@@ -130,8 +139,25 @@ function Reports() {
   return (
     <>
       <h1 className="text-[30px] font-bold tracking-[-0.04em]">Reports</h1>
-      <p className="mt-1 text-[14.5px] text-[var(--muted)]">Dares people reported in the app. Most reported first.</p>
-      <div role="tablist" className="mt-5 flex flex-wrap gap-1.5">
+      <p className="mt-1 text-[14.5px] text-[var(--muted)]">What people reported in the app. Harmful and scam first, then most reported.</p>
+      <div className="mt-5 inline-flex rounded-full border border-[var(--hairline)] bg-white p-1" role="group" aria-label="What was reported">
+        {WHAT.map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            aria-pressed={what === k}
+            onClick={() => {
+              setWhat(k);
+              window.history.replaceState(null, '', k === 'content' ? '?what=content' : window.location.pathname);
+            }}
+            className={`h-9 rounded-full px-4 text-[14px] font-bold ${what === k ? 'bg-[var(--ink)] text-white' : 'text-[var(--ink)]'}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {what === 'content' ? <ContentReports /> : <>
+      <div role="tablist" className="mt-3 flex flex-wrap gap-1.5">
         {(['open', 'dismissed', 'removed'] as Status[]).map((s) => (
           <button
             key={s}
@@ -189,6 +215,7 @@ function Reports() {
           {item && <Detail item={item} status={status} onDone={() => void load()} />}
         </div>
       )}
+      </>}
     </>
   );
 }

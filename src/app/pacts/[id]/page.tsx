@@ -7,6 +7,7 @@ import { AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import DetailPageHeader from '@/components/DetailPageHeader';
 import PactMomentsDetail from '@/components/PactMomentsDetail';
+import TakenDownPact from '@/components/pacts/TakenDownPact';
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet';
 import CommentsBottomSheet from '@/components/CommentsBottomSheet';
 import { usePact, usePactProofs } from '@/hooks/usePacts';
@@ -225,6 +226,10 @@ export default function PactDetailPage() {
         </div>
       </>
     );
+  }
+
+  if (pact.taken_down) {
+    return <TakenDownPact title={pact.title} takenDown={pact.taken_down} />;
   }
 
   return (

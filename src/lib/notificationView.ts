@@ -17,6 +17,8 @@ export interface RawNotification {
   related_user_id?: number | null;
   related_comment_id?: number | null;
   related_dare_id?: number | null;
+  /** Team announcements: where tapping goes. */
+  link?: string | null;
   actor?: NotificationActor | null;
   is_read: boolean;
   created_at: string;
