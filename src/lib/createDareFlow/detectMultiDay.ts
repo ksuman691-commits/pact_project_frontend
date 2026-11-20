@@ -1,6 +1,6 @@
 // Lightweight keyword heuristic — NOT exhaustive NLP. Dares are meant to be
 // single-day (respond within up to 24h, complete within up to 48h — see
-// TimingStep.tsx), but the free-text title/description fields accept
+// the Send step), but the free-text title/description fields accept
 // arbitrary text with zero constraint. This flags language that suggests the
 // user is actually describing a multi-day/recurring commitment (a Pact),
 // so the UI can nudge them — not block them, since phrases like "practice

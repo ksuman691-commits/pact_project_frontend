@@ -85,15 +85,11 @@ export function CreateDareFlowProvider({
       toast.error('Give the dare a title first');
       return;
     }
-    if (currentStep === 'description' && !draft.description.trim()) {
-      toast.error('Add a description so they know what to do');
-      return;
-    }
     if (currentStep === 'recipients' && draft.recipients.length === 0 && !draft.circle) {
       toast.error('Pick who you are daring');
       return;
     }
-    if (currentStep === 'reward' && draft.rewardAmount != null && (draft.rewardAmount < 1 || draft.rewardAmount > 500 || !Number.isInteger(draft.rewardAmount))) {
+    if (currentStep === 'terms' && draft.rewardAmount != null && (draft.rewardAmount < 1 || draft.rewardAmount > 500 || !Number.isInteger(draft.rewardAmount))) {
       toast.error('A reward is a whole amount from ₹1 to ₹500');
       return;
     }

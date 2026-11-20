@@ -1,13 +1,20 @@
 import type { DareDraft, DareFlowStep } from '@/types/createDareFlow';
 
 /**
- * Dares are one-to-one, so there's no audience question: you pick the one
- * person you're daring, unless the flow was opened from their profile
- * ("Dare [Name]"), in which case they're already attached.
+ * Three steps: What (the dare, details optional), Who (skipped when the flow
+ * was opened from someone's profile, "Dare [Name]"), and Send: the clock,
+ * proof and reward on one screen with the slide to send. These used to be
+ * seven screens; the live ticket at the top replaced the review list.
  */
 export function resolveDareSteps(draft: DareDraft): DareFlowStep[] {
-  const steps: DareFlowStep[] = ['title', 'description', 'timing'];
+  const steps: DareFlowStep[] = ['title'];
   if (!draft.recipientPreset) steps.push('recipients');
-  steps.push('reward', 'verification', 'review', 'success');
+  steps.push('terms', 'success');
   return steps;
 }
+
+export const DARE_STEP_LABEL: Record<Exclude<DareFlowStep, 'success'>, string> = {
+  title: 'What',
+  recipients: 'Who',
+  terms: 'Send',
+};

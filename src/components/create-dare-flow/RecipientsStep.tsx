@@ -3,6 +3,7 @@
 import LogoSpinner from '@/components/LogoSpinner';
 import React, { useEffect, useState } from 'react';
 import { Check, Users, X } from 'lucide-react';
+import { FlowFooter } from '@/components/flow/FlowHero';
 import { useCreateDareFlow } from '@/context/CreateDareFlowContext';
 import { useSearchUsers } from '@/hooks/useUserQueries';
 import { useCircles } from '@/hooks/useCircles';
@@ -51,8 +52,9 @@ export default function RecipientsStep() {
   };
 
   return (
-    <div className="pact-step-enter flex flex-1 flex-col">
-      <h1 className="text-[32px] font-extrabold leading-[1.04] tracking-[-0.035em] text-[var(--pact-text)] text-balance">Who&apos;s brave enough?</h1>
+    <>
+    <div className="pact-step-enter flex flex-1 flex-col px-5 pt-6">
+      <h2 className="text-[26px] font-bold leading-[1.1] tracking-[-0.03em] text-[var(--ink)]">Who&apos;s brave enough?</h2>
       <div className="mt-4 grid grid-cols-2 gap-1 rounded-full p-1" style={{ background: 'var(--pact-surface-2)' }} role="group" aria-label="Who to dare">
         {(['people', 'circle'] as const).map((item) => (
           <button
@@ -193,16 +195,17 @@ export default function RecipientsStep() {
       </>
       )}
 
-      <div className="mt-auto pt-8">
+    </div>
+    <FlowFooter>
         <button
           type="button"
           onClick={goNext}
           disabled={draft.recipients.length === 0 && !draft.circle}
-          className="h-[52px] w-full rounded-full bg-[var(--ink)] text-[16px] font-bold text-[var(--dare)] disabled:opacity-40"
+          className="h-[54px] w-full rounded-full bg-[var(--ink)] text-[16px] font-bold text-[var(--dare)] transition active:scale-[0.98] disabled:opacity-40"
         >
-          {draft.circle ? `Dare ${draft.circle.name}` : draft.recipients.length === 0 ? 'Continue' : draft.recipients.length === 1 ? `Dare ${(draft.recipients[0].full_name || draft.recipients[0].username).split(' ')[0]}` : `Dare ${draft.recipients.length} people`}
+          {draft.circle ? `Next: dare ${draft.circle.name}` : draft.recipients.length === 0 ? 'Pick someone' : draft.recipients.length === 1 ? `Next: dare ${(draft.recipients[0].full_name || draft.recipients[0].username).split(' ')[0]}` : `Next: dare ${draft.recipients.length} people`}
         </button>
-      </div>
-    </div>
+    </FlowFooter>
+    </>
   );
 }

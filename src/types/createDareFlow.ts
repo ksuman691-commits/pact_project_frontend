@@ -39,15 +39,8 @@ export function createEmptyDareDraft(): DareDraft {
   };
 }
 
-export type DareFlowStep =
-  | 'title'
-  | 'description'
-  | 'timing'
-  | 'recipients'
-  | 'reward'
-  | 'verification'
-  | 'review'
-  | 'success';
+/** What → Who → Send (the terms and the slide), then the "Dare sent." screen. */
+export type DareFlowStep = 'title' | 'recipients' | 'terms' | 'success';
 
 export const MAX_DARE_RECIPIENTS = 5;
 
