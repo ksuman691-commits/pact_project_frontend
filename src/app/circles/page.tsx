@@ -106,8 +106,8 @@ export default function CirclesPage() {
               hint: stat.hint,
               value: circlesQuery.isSuccess ? stat.value : null,
               sub: i === 0 ? 'You belong to' : i === 1 ? 'Posted this week' : 'Need a nudge',
-              icon: i === 0 ? <Users className="size-4 text-white" strokeWidth={2.4} aria-hidden="true" /> : i === 1 ? <Sparkles className="size-4 text-white" strokeWidth={2.4} aria-hidden="true" /> : <Moon className="size-4 text-white" strokeWidth={2.4} aria-hidden="true" />,
-              iconBg: i === 0 ? 'rgba(255,255,255,0.18)' : i === 1 ? 'linear-gradient(160deg, #4ADE80, #16A34A)' : 'linear-gradient(160deg, #A5B4FC, #6366F1)',
+              icon: i === 0 ? <Users className="size-4 text-[var(--navy)]" strokeWidth={2.4} aria-hidden="true" /> : i === 1 ? <Sparkles className="size-4 text-white" strokeWidth={2.4} aria-hidden="true" /> : <Moon className="size-4 text-[var(--ink)]" strokeWidth={2.4} aria-hidden="true" />,
+              iconBg: i === 0 ? '#FFFFFF' : i === 1 ? '#22C55E' : '#A5B4FC',
               selected: membershipFilter === stat.filter,
               onSelect: () => setMembershipFilter(stat.filter),
             }))}

@@ -8,12 +8,13 @@ import PageHero from '@/components/PageHero'
 import HeroStats, { HeroSteps, type HeroStat } from '@/components/HeroStats'
 import { MarkProgress } from '@/components/brand/CircleMark'
 import { useCpScore } from '@/hooks/useCpScore'
+import { CheckBadge, FlameBadge, GaugeBadge } from '@/components/hero/HeroBadges'
 import { useUserStats } from '@/hooks/useUserQueries'
 import { useTodayStatus } from '@/hooks/useTodayStatus'
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
-import { Camera, Check, Eye, Flame, Gauge, Megaphone, Plus, Search } from 'lucide-react'
+import { Camera, Check, Eye, Megaphone, Plus, Search } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { getMyWatching, withdrawAsk, type WatchRequest } from '@/lib/api/access'
 import { DarePactCard } from '@/components/classic/PactCard'
@@ -277,8 +278,7 @@ function PactsPageInner() {
       value: streak,
       unit: streak === 1 ? 'day' : 'days',
       sub: streakSub,
-      icon: <Flame className="cp-flame size-4 text-white" strokeWidth={0} fill="currentColor" aria-hidden="true" />,
-      iconBg: 'linear-gradient(160deg, #FFB547, #FF5A1F)',
+      icon: <FlameBadge />,
       hint: 'Days in a row you showed up',
       onSelect: () => setFilter('Active'),
       selected: false,
@@ -289,8 +289,7 @@ function PactsPageInner() {
       value: query.isSuccess ? kept : null,
       unit: endedMine.length ? `of ${endedMine.length}` : undefined,
       sub: endedMine.length ? `${Math.round(keptRate * 100)}% finished` : 'Your first one ends soon',
-      icon: <Check className="size-4 text-white" strokeWidth={3} aria-hidden="true" />,
-      iconBg: 'linear-gradient(160deg, #4ADE80, #16A34A)',
+      icon: <CheckBadge />,
       visual: endedMine.length ? <MarkProgress value={keptRate} size={22} color="#4ADE80" track="rgba(255,255,255,0.18)" /> : undefined,
       hint: 'Ended pacts you finished',
       selected: filter === 'Ended',
@@ -301,8 +300,7 @@ function PactsPageInner() {
       label: 'CP Score',
       value: scoreValue,
       sub: scoreSub,
-      icon: <Gauge className="size-4 text-white" strokeWidth={2.4} aria-hidden="true" />,
-      iconBg: 'linear-gradient(160deg, #FF7A7E, #E5363B)',
+      icon: <GaugeBadge value={scoreValue} />,
       visual: scoreData?.trend && scoreData.trend.length > 1 ? <Sparkline points={scoreData.trend.map((t) => t.score)} /> : undefined,
       hint: 'Your public reliability score, 0 to 100',
       href: (user as any)?.username ? `/profile/${(user as any).username}/score` : '/profile',
