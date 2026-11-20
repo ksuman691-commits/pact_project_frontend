@@ -103,7 +103,7 @@ export interface Pact {
   visibility?: 'public' | 'private' | 'circle_only';
   // Closed enum on the backend (pactcategory): fitness | startup | coding |
   // creator | study | habits | social. Sent on create via the VIBE_TO_CATEGORY
-  // map (src/lib/createPactFlow/toApiPayload.ts) and already used to filter
+  // map (VIBE_TO_CATEGORY in src/lib/createPactFlow/content.ts) and already used to filter
   // the personalized feed (usePersonalizedFeed(category)).
   category?: string;
   created_at: string;

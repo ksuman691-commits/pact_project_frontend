@@ -137,3 +137,17 @@ export const CUSTOM_ACTIVITY_DEFAULTS = {
   defaultTarget: 10,
   quickTargets: [5, 10, 20, 30],
 };
+
+/** Which backend category each vibe maps to (used to find people with similar goals). */
+export const VIBE_TO_CATEGORY: Record<VibeId, string> = {
+  glowup: 'fitness',
+  money: 'startup',
+  dare: 'habits',
+  adventure: 'social',
+  love: 'social',
+  social: 'social',
+  create: 'creator',
+  build: 'startup',
+  levelup: 'study',
+  wellbeing: 'fitness',
+};

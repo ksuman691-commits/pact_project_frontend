@@ -14,6 +14,8 @@ import { useCircles } from '@/hooks/useCircles'
 import { useBackToClose } from '@/hooks/useBackToClose'
 import { useMyTipSettings } from '@/hooks/useTips'
 import { useFollowers } from '@/hooks/useFollows'
+import { useUser } from '@/hooks/useUserQueries'
+import Avatar from '@/components/Avatar'
 import { useAuthStore } from '@/store/auth'
 import { createStory, putStoryVideo, requestStoryUploadUrl } from '@/lib/api/stories'
 import { IDEAS, parseSentence, typedTitle, type Frequency } from '@/lib/pactSentence'
@@ -67,7 +69,7 @@ function pill(on: boolean): React.CSSProperties {
  * shoot Day 1 (or start without it). The coloured top holds a live card of
  * the pact, so every answer lands on it and nothing needs reviewing.
  */
-export default function NewPactFlow({ onExit, initialCircleId = null, initialText = '', sprint = false, first = false }: { onExit: () => void; initialCircleId?: number | null; initialText?: string | null; /** From a quiet circle's "Start a 7-day sprint": 7 days, and the circle's members are told. */ sprint?: boolean; /** Right after sign-up: suggests 7 days and says it's their first. */ first?: boolean }) {
+export default function NewPactFlow({ onExit, initialCircleId = null, initialText = '', sprint = false, first = false, withUserId = null }: { onExit: () => void; initialCircleId?: number | null; initialText?: string | null; /** From a quiet circle's "Start a 7-day sprint": 7 days, and the circle's members are told. */ sprint?: boolean; /** Right after sign-up: suggests 7 days and says it's their first. */ first?: boolean; /** "Start a pact with [Name]": shown on the card, and the live screen's invite goes to them. */ withUserId?: number | null }) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const createPact = useCreatePact()
@@ -90,6 +92,8 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   const tips = useMyTipSettings()
   const me = useAuthStore((state) => state.user)
   const followerCount = (((useFollowers(me?.id).data as any)?.data || []) as any[]).length
+  const withUser = (useUser(withUserId ?? 0).data as any)?.data as { full_name?: string; username?: string; avatar_url?: string | null } | undefined
+  const withName = withUser ? (withUser.full_name || withUser.username || '').split(' ')[0] : null
 
   const [step, setStep] = useState<Step>('say')
   const [clip, setClip] = useState<Clip | null>(null)
@@ -273,6 +277,12 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
         <span key={frequency} className="cp-pop-in flex h-6 items-center rounded-full px-2 text-[11.5px] font-bold" style={{ background: '#E8EDFA', color: NAVY }}>{frequency}</span>
         <span key={`d${days}`} className="cp-pop-in flex h-6 items-center rounded-full px-2 text-[11.5px] font-bold" style={{ background: '#E8EDFA', color: NAVY }}>{days} days</span>
         {ready && <span className="flex h-6 items-center rounded-full px-2 text-[11.5px] font-bold" style={{ background: '#F1ECE1', color: INK }}>{parsed.categoryLabel}</span>}
+        {withUser && (
+          <span className="flex h-6 items-center gap-1 rounded-full py-0.5 pl-0.5 pr-2 text-[11.5px] font-bold" style={{ background: '#F1ECE1', color: INK }}>
+            <Avatar name={withUser.full_name || withUser.username || ''} avatarUrl={withUser.avatar_url} size={20} />
+            With {withName}
+          </span>
+        )}
         {audienceLabel && (
           <span key={audienceLabel} className="cp-pop-in flex h-6 items-center gap-1 rounded-full px-2 text-[11.5px] font-bold text-white" style={{ background: NAVY }}>
             {audience === 'circle' ? <Users className="size-3" strokeWidth={2.6} /> : audience === 'followers' ? <Heart className="size-3" strokeWidth={2.6} /> : <Globe className="size-3" strokeWidth={2.6} />}
@@ -593,7 +603,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
           days={created.days}
           hasDay1={!!clip}
           subtitle={audience === 'circle' ? circle?.name ?? 'Your circle' : audience === 'followers' ? 'Your followers' : 'Everyone'}
-          inviteLabel={audience === 'circle' ? 'Tell your circle' : 'Share your pact'}
+          inviteLabel={withName ? `Tell ${withName}` : audience === 'circle' ? 'Tell your circle' : 'Share your pact'}
           message={pactInviteMessage({ title: created.title, mine: true })}
           onInvite={() => void share('native')}
           onCopy={() => void share('copy')}
