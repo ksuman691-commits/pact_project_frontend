@@ -885,3 +885,8 @@ section + section {
 @keyframes cp-badge-pop { 0% { transform: scale(.4) rotate(-20deg); opacity: 0; } 60% { transform: scale(1.15) rotate(4deg); opacity: 1; } 100% { transform: none; } }
 .cp-badge-pop { animation: cp-badge-pop .5s cubic-bezier(.3,1.4,.5,1) both; }
 @media (prefers-reduced-motion: reduce) { .cp-badge-pop { animation: none; } }
+
+/* Camera: the look's name flashes up when it changes. */
+@keyframes cp-look-toast { 0% { opacity: 0; transform: scale(0.92); } 15% { opacity: 1; transform: none; } 70% { opacity: 1; } 100% { opacity: 0; } }
+.cp-look-toast { animation: cp-look-toast 1.1s ease-out forwards; }
+@media (prefers-reduced-motion: reduce) { .cp-look-toast { animation-duration: 1.4s; } }

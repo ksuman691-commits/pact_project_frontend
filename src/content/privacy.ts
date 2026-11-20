@@ -66,6 +66,7 @@ We also use some data without asking, where the DPDP Act allows it (section 7 of
 **What we don't collect**
 - We don't access your contacts or your precise location (GPS). The approximate city above comes only from your IP address.
 - We don't use face recognition, create face prints or other biometric templates, or identify people in your photos.
+- Camera effects (like the streak crown or sunglasses) find where a face is in the camera view so the sticker can follow it. This happens only on your phone while the camera is open. Those face points are never stored or sent to us or anyone else, and they can't tell who someone is.
 
 ## 3. How we use your data
 - **To run CirclePact:** your account, pacts, moments, circles, streaks, leaderboards, CP Score, comments and notifications.
