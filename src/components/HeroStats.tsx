@@ -15,8 +15,8 @@ export interface HeroStat {
   /** One short line of meaning under the label. */
   sub?: React.ReactNode
   icon: React.ReactNode
-  /** Background of the icon chip. */
-  iconBg: string
+  /** Background of a plain icon chip. Leave out when `icon` is a drawn badge. */
+  iconBg?: string
   /** Something small drawn in the tile's corner: a ring, a sparkline, faces. */
   visual?: React.ReactNode
   selected?: boolean
@@ -79,10 +79,17 @@ export default function HeroStats({ tone, label, stats, action, ready = true }: 
           const body = (
             <>
               {/* soft light on the top edge */}
-              <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-1/2" style={{ background: dare ? 'linear-gradient(180deg, rgba(255,255,255,0.07), transparent)' : 'linear-gradient(180deg, rgba(255,255,255,0.12), transparent)' }} />
+              <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-1/2" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.05), transparent)' }} />
               <span className="flex items-center justify-between">
-                <span className="flex size-7 items-center justify-center rounded-full" style={{ background: stat.iconBg }}>
-                  {stat.icon}
+                {/* Remounted when the numbers land, so the badge's own motion plays with the pop. */}
+                <span key={ready ? 'ready' : 'wait'} className="cp-badge-pop flex">
+                  {stat.iconBg ? (
+                    <span className="flex size-8 items-center justify-center rounded-full" style={{ background: stat.iconBg, boxShadow: 'inset 0 0 0 1.5px #17181D' }}>
+                      {stat.icon}
+                    </span>
+                  ) : (
+                    stat.icon
+                  )}
                 </span>
                 {stat.visual ?? <ChevronRight className="h-4 w-4 opacity-50" strokeWidth={2.4} aria-hidden="true" />}
               </span>
@@ -114,8 +121,8 @@ export default function HeroStats({ tone, label, stats, action, ready = true }: 
             ...(stat.selected
               ? { background: dare ? 'var(--dare)' : '#FFFFFF', color: dare ? 'var(--ink)' : 'var(--navy)', boxShadow: '0 10px 24px -12px rgba(0,0,0,0.5)' }
               : dare
-                ? { background: 'var(--ink)', color: '#fff', boxShadow: '0 14px 28px -16px rgba(23,24,29,0.75), inset 0 0 0 1px rgba(255,255,255,0.06)' }
-                : { background: 'rgba(255,255,255,0.12)', color: '#fff', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.16), 0 12px 26px -16px rgba(5,10,40,0.8)' }),
+                ? { background: 'var(--ink)', color: '#fff', boxShadow: '0 3px 0 rgba(23,24,29,0.35)' }
+                : { background: '#2A4AAC', color: '#fff', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.22), 0 2px 0 rgba(10,20,70,0.55)' }),
           }
           const aria = `${stat.label}${stat.hint ? ` (${stat.hint.toLowerCase()})` : ''}: ${stat.value ?? 'loading'}${stat.unit ? ` ${stat.unit}` : ''}`
           return stat.href ? (
@@ -176,7 +183,7 @@ export function HeroSteps({ tone, steps }: { tone: 'dare' | 'navy'; steps: { ico
           }}
         >
           <span className="flex items-center justify-between">
-            <span className="flex size-7 items-center justify-center rounded-full" style={{ background: dare ? 'var(--dare)' : '#FFFFFF', color: dare ? 'var(--ink)' : 'var(--navy)' }}>
+            <span className="flex size-8 items-center justify-center rounded-full" style={{ background: dare ? 'var(--dare)' : '#FFFFFF', color: dare ? 'var(--ink)' : 'var(--navy)', boxShadow: 'inset 0 0 0 1.5px #17181D' }}>
               {step.icon}
             </span>
             <span className="text-[12px] font-bold opacity-60">{i + 1}</span>
