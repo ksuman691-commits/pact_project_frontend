@@ -1,6 +1,7 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import type { Dare } from '@/types';
 import { dareService } from '@/services/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { toErrorMessage } from '@/lib/errorMessages';
@@ -140,15 +141,63 @@ function useRefreshDare() {
     ]);
 }
 
+type DarePatch = (dare: Dare) => Dare;
+
+/**
+ * Change one dare everywhere it's cached (My dares, Discover, Today, the
+ * detail page) without a round trip, and hand back what was there so a
+ * failed request can put it back.
+ */
+function patchDareEverywhere(queryClient: QueryClient, dareId: number, patch: DarePatch) {
+  const snapshot = queryClient.getQueriesData({ queryKey: queryKeys.dares.all });
+  queryClient.setQueriesData({ queryKey: queryKeys.dares.all }, (old: any) => {
+    if (!old) return old;
+    const fix = (d: any) => (d && d.id === dareId ? patch(d) : d);
+    // Infinite lists: { pages: [{ data: Dare[] }] }
+    if (Array.isArray(old.pages)) {
+      return { ...old, pages: old.pages.map((p: any) => (p && Array.isArray(p.data) ? { ...p, data: p.data.map(fix) } : p)) };
+    }
+    // Detail: { data: Dare }
+    if (old.data && !Array.isArray(old.data) && old.data.id === dareId) return { ...old, data: patch(old.data) };
+    if (Array.isArray(old.data)) return { ...old, data: old.data.map(fix) };
+    if (old.id === dareId) return patch(old);
+    return old;
+  });
+  return () => snapshot.forEach(([key, data]) => queryClient.setQueryData(key, data));
+}
+
+/**
+ * Marking a dare done used to wait for the server and then for every dares
+ * list to refetch before the button let go, so it felt stuck for seconds.
+ * Now the card flips at once, the server's answer replaces it when it lands,
+ * and the lists refresh quietly in the background.
+ */
 export function useReviewDare() {
-  const refresh = useRefreshDare();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ dareId, done }: { dareId: number; done: boolean }) => dareService.review(dareId, done),
-    onSuccess: (_, { dareId, done }) => {
+    onMutate: async ({ dareId, done }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.dares.all });
+      const now = new Date().toISOString();
+      const rollback = patchDareEverywhere(queryClient, dareId, (d) => ({
+        ...d,
+        state: done ? 'completed' : 'not_completed',
+        status: done ? 'completed' : 'failed',
+        completed_at: done ? now : d.completed_at,
+      } as Dare));
       toast.success(done ? 'Marked done' : 'Marked not done');
-      return refresh(dareId);
+      return { rollback };
     },
-    onError: (error: any) => toast.error(toErrorMessage(error, "Couldn't save that. Try again.")),
+    onSuccess: (response: any, { dareId }) => {
+      const fresh = response?.data as Dare | undefined;
+      if (fresh?.id === dareId) patchDareEverywhere(queryClient, dareId, () => fresh);
+      // Not awaited: the button is already free.
+      queryClient.invalidateQueries({ queryKey: queryKeys.dares.all });
+    },
+    onError: (error: any, _vars, context) => {
+      context?.rollback();
+      toast.error(toErrorMessage(error, "Couldn't save that. Try again."));
+    },
   });
 }
 

@@ -5,6 +5,7 @@ import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Zap } from 'lucide-react';
 import GlanceStrip from '@/components/GlanceStrip';
+import PageHero from '@/components/PageHero';
 import DareCard from '@/components/DareCard';
 import CreateDareModal from '@/components/CreateDareModal';
 import PausedNote from '@/components/app/PausedNote';
@@ -20,14 +21,14 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'for-you', label: 'For you' },
   { id: 'sent', label: 'Sent' },
   { id: 'discover', label: 'Discover' },
-  { id: 'history', label: 'History' },
+  { id: 'history', label: 'Done by you' },
 ];
 
 const EMPTY: Record<Tab, { title: string; body: string; cta?: 'create' | 'discover' }> = {
   'for-you': { title: 'No dares waiting on you', body: 'When someone dares you, it shows up here with a clock.', cta: 'discover' },
-  sent: { title: 'Nothing in play right now', body: 'Dares you sent that finished or ran out of time are in History. Dare one person to do one thing, soon.', cta: 'create' },
+  sent: { title: 'Nothing in play right now', body: 'Dares you sent that finished or ran out of time are in Done by you. Dare one person to do one thing, soon.', cta: 'create' },
   discover: { title: 'Nothing shared yet', body: 'Finished dares people choose to show off appear here.', cta: 'create' },
-  history: { title: 'Your past dares will appear here', body: 'Completed, declined and expired dares move here.' },
+  history: { title: 'Nothing done yet', body: 'Dares you finish, and dares you mark done for friends, land here.' },
 };
 
 // useSearchParams needs a Suspense boundary or `next build` fails prerendering.
@@ -79,8 +80,17 @@ function DaresPageInner() {
       } else {
         history.push(dare);
       }
-      if (role === 'doer' && dareState(dare) === 'completed') doneByYou += 1;
+      // Counts dares you did and dares you sent and marked done: both are
+      // "done" from where you sit, and both live in the Done by you list.
+      if (role !== 'viewer' && dareState(dare) === 'completed') doneByYou += 1;
     }
+    // Done first (newest on top), then the ones that didn't happen.
+    const finishedAt = (d: Dare) => new Date(d.completed_at || d.created_at).getTime();
+    history.sort((a, b) => {
+      const doneA = dareState(a) === 'completed' ? 0 : 1;
+      const doneB = dareState(b) === 'completed' ? 0 : 1;
+      return doneA !== doneB ? doneA - doneB : finishedAt(b) - finishedAt(a);
+    });
     // Things you need to act on come first; then whatever runs out soonest.
     const byUrgency = (a: Dare, b: Dare) => {
       const actA = nextStep(a, dareRole(a, user?.id)) ? 0 : 1;
@@ -101,6 +111,7 @@ function DaresPageInner() {
     discover: null,
     history: null,
   };
+  const firstNotDone = tab === 'history' ? lists.history.findIndex((d) => dareState(d) !== 'completed') : -1;
 
   const daresPaused = usePaused('dares');
   const discoverPaused = usePaused('discover');
@@ -113,25 +124,36 @@ function DaresPageInner() {
     { label: 'Done by you', value: lists.doneByYou, tab: 'history' },
   ];
 
+  const heroLine = !mine.isSuccess
+    ? 'Dare one person to do one thing, soon.'
+    : lists.yourMove > 0
+      ? <><b>{lists.yourMove} {lists.yourMove === 1 ? 'dare needs' : 'dares need'} you.</b> The clock is running.</>
+      : lists.inPlay > 0
+        ? <><b>{lists.inPlay} in play.</b> We&apos;ll tell you the moment they move.</>
+        : lists.doneByYou > 0
+          ? <><b>{lists.doneByYou} done.</b> Who&apos;s next?</>
+          : 'Dare one person to do one thing, soon.';
+
   return (
     <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
       <div className="mx-auto max-w-2xl">
-        <header className="flex items-center justify-between gap-3 px-5 pb-3 pt-7">
-          <h1 className="flex items-center gap-2.5 text-[32px] font-bold leading-none tracking-[-0.045em]">
-            <CircleMark size={24} />
-            Dares
-          </h1>
-        </header>
-
-        <div className="mb-4">
+        <PageHero
+          tone="dare"
+          title="Dares"
+          line={heroLine}
+          watermark={<Zap className="size-[250px] text-[var(--ink)]" strokeWidth={0} fill="currentColor" />}
+        >
           <GlanceStrip
             tone="ink"
+            inHero
             label="Your dares at a glance"
-            stats={stats.map((stat) => ({ label: stat.label, value: mine.isSuccess ? stat.value : null, onSelect: () => setTab(stat.tab) }))}
+            stats={stats.map((stat) => ({ label: stat.label, value: mine.isSuccess ? stat.value : null, selected: stat.tab === 'history' && tab === 'history', onSelect: () => setTab(stat.tab) }))}
             action={daresPaused ? undefined : { label: 'Send a dare', onClick: () => setCreateOpen(true), icon: <Zap className="size-4" strokeWidth={0} fill="currentColor" aria-hidden="true" /> }}
           />
-          {daresPaused && <PausedNote text={daresPaused} className="mx-4 mt-3" />}
-        </div>
+          {daresPaused && <PausedNote text={daresPaused} className="mt-3" />}
+        </PageHero>
+
+        <div className="h-4" />
 
         <nav className="flex gap-1.5 overflow-x-auto px-4 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Dare lists">
           {TABS.map((item) => {
@@ -200,9 +222,14 @@ function DaresPageInner() {
             </div>
           ) : (
             shown.map((dare, index) => (
-              <div key={dare.id} className="pact-list-item" style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}>
-                <DareCard dare={dare} />
-              </div>
+              <React.Fragment key={dare.id}>
+                {index === firstNotDone && (
+                  <h2 className="px-1 pt-2 text-[15px] font-bold text-[var(--muted)]">Didn&apos;t happen</h2>
+                )}
+                <div className="pact-list-item" style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}>
+                  <DareCard dare={dare} />
+                </div>
+              </React.Fragment>
             ))
           )}
 

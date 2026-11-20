@@ -5,6 +5,7 @@ import { isActive as isDareActive } from '@/lib/dareView'
 import Link from 'next/link'
 import CircleMark from '@/components/brand/CircleMark'
 import GlanceStrip from '@/components/GlanceStrip'
+import PageHero from '@/components/PageHero'
 import { useTodayStatus } from '@/hooks/useTodayStatus'
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -223,24 +224,30 @@ function PactsPageInner() {
     (!showDares || dareRows.length === 0) &&
     (!showDone || doneAll.length === 0)
 
+  const heroLine = !query.isSuccess
+    ? 'Say it, show up, keep the streak.'
+    : counts.Active === 0
+      ? 'Nothing running. Start one today.'
+      : leftToday == null
+        ? 'Say it, show up, keep the streak.'
+        : leftToday > 0
+        ? <><b>{leftToday} {leftToday === 1 ? 'check-in' : 'check-ins'} left today.</b> Keep the streak alive.</>
+        : <><b>All done today.</b> See you tomorrow.</>
+
   return (
     <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
       <div className="mx-auto max-w-2xl">
-        <header className="flex items-center justify-between gap-3 px-5 pb-3 pt-7">
-          <h1 className="flex items-center gap-2.5 text-[32px] font-bold leading-none tracking-[-0.045em]">
-            <CircleMark size={24} />
-            Pacts
-          </h1>
-        </header>
-
-        <div className="mb-3">
+        <PageHero tone="navy" title="Pacts" line={heroLine}>
           <GlanceStrip
             tone="navy"
+            inHero
             label="Your pacts at a glance"
             stats={glance.map((stat) => ({ label: stat.label, value: query.isSuccess ? stat.value : null, selected: stat.selects && filter === stat.filter, onSelect: () => setFilter(stat.selects && filter === stat.filter ? 'All' : stat.filter) }))}
             action={{ label: 'New pact', href: '/pacts/create', icon: <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" /> }}
           />
-        </div>
+        </PageHero>
+
+        <div className="h-4" />
 
         {(pacts.length + watchingAll.length > 4 || search) && (
           <div className="px-4 pb-3">

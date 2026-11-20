@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronRight, Search, SlidersHorizontal, Plus, Users } from 'lucide-react'
 import GlanceStrip from '@/components/GlanceStrip'
+import PageHero from '@/components/PageHero'
 import PausedNote from '@/components/app/PausedNote'
 import { usePaused } from '@/lib/appStatus'
 import CircleMark from '@/components/brand/CircleMark'
@@ -88,20 +89,20 @@ export default function CirclesPage() {
   return (
     <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
       <div className="mx-auto max-w-2xl">
-        <header className="flex items-center justify-between gap-3 px-5 pb-3 pt-7">
-          <h1 className="flex items-center gap-2.5 text-[32px] font-bold leading-none tracking-[-0.045em]">
-            <CircleMark size={24} />
-            Circles
-          </h1>
-        </header>
-
-        <GlanceStrip
+        <PageHero
           tone="navy"
-          label="Your circles at a glance"
-          stats={glance.map((stat) => ({ label: stat.label, hint: stat.hint, value: circlesQuery.isSuccess ? stat.value : null, selected: membershipFilter === stat.filter, onSelect: () => setMembershipFilter(stat.filter) }))}
-          action={circlesPaused ? undefined : { label: 'New circle', href: '/circles/create', icon: <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" /> }}
-        />
-        {circlesPaused && <PausedNote text={circlesPaused} className="mt-3" />}
+          title="Circles"
+          line={!circlesQuery.isSuccess || !allActivityKnown ? 'Your people, keeping each other honest.' : activeCircles > 0 ? <><b>{activeCircles} {activeCircles === 1 ? 'circle is' : 'circles are'} moving</b> this week.</> : circles.length > 0 ? 'Quiet week. Post something to wake them up.' : 'Start a circle with the people who keep you honest.'}
+        >
+          <GlanceStrip
+            tone="navy"
+            inHero
+            label="Your circles at a glance"
+            stats={glance.map((stat) => ({ label: stat.label, hint: stat.hint, value: circlesQuery.isSuccess ? stat.value : null, selected: membershipFilter === stat.filter, onSelect: () => setMembershipFilter(stat.filter) }))}
+            action={circlesPaused ? undefined : { label: 'New circle', href: '/circles/create', icon: <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" /> }}
+          />
+          {circlesPaused && <PausedNote text={circlesPaused} className="mt-3" />}
+        </PageHero>
 
         <div className="mt-3">
           <PendingCircleInvites key={invitesKey} />

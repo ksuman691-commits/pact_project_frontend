@@ -21,6 +21,8 @@ interface GlanceStripProps {
   stats: GlanceStat[]
   /** Left out when the action is paused; the page shows a note instead. */
   action?: { label: string; icon: React.ReactNode; href?: string; onClick?: () => void }
+  /** Sitting inside a PageHero: no side margins, and on navy no box of its own. */
+  inHero?: boolean
 }
 
 /**
@@ -29,14 +31,17 @@ interface GlanceStripProps {
  * number is its own button with a pressed state and lights up while the list
  * below is filtered to it.
  */
-export default function GlanceStrip({ tone, label, stats, action }: GlanceStripProps) {
+export default function GlanceStrip({ tone, label, stats, action, inHero = false }: GlanceStripProps) {
   const navy = tone === 'navy'
   const accent = navy ? 'white' : 'var(--dare)'
   const onAccent = navy ? 'var(--navy)' : 'var(--ink)'
   const actionClass = 'flex h-11 w-full items-center justify-center gap-2 rounded-full text-[15px] font-bold transition active:scale-[0.98]'
   const actionStyle = { background: accent, color: onAccent }
   return (
-    <section className={`mx-[10px] rounded-[20px] p-2 text-white sm:mx-6 ${navy ? 'bg-[var(--navy)]' : 'bg-[var(--ink)]'}`} aria-label={label}>
+    <section
+      className={`rounded-[20px] text-white ${inHero ? '' : 'mx-[10px] sm:mx-6'} ${inHero && navy ? 'p-0' : 'p-2'} ${inHero && navy ? '' : navy ? 'bg-[var(--navy)]' : 'bg-[var(--ink)]'} ${inHero && !navy ? 'shadow-[0_14px_30px_-14px_rgba(23,24,29,0.55)]' : ''}`}
+      aria-label={label}
+    >
       <div className="grid grid-cols-3 gap-1.5">
         {stats.map((stat) => (
           <button
@@ -47,7 +52,7 @@ export default function GlanceStrip({ tone, label, stats, action }: GlanceStripP
             aria-label={`${stat.label}${stat.hint ? ` (${stat.hint.toLowerCase()})` : ''}: ${stat.value ?? 'loading'}`}
             title={stat.hint}
             className="group relative flex min-h-[58px] flex-col justify-center rounded-[14px] px-3 text-left transition active:scale-[0.97]"
-            style={stat.selected ? { background: accent, color: onAccent } : { background: 'rgba(255,255,255,0.1)' }}
+            style={stat.selected ? { background: accent, color: onAccent } : { background: inHero && navy ? 'rgba(255,255,255,0.13)' : 'rgba(255,255,255,0.1)', backdropFilter: inHero ? 'blur(6px)' : undefined }}
           >
             <span key={String(stat.value)} className="cp-tick block text-[22px] font-bold leading-none tracking-[-0.03em]" style={stat.selected || navy ? undefined : { color: accent }}>
               {stat.value ?? '–'}
