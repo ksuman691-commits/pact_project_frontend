@@ -4,7 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, Circle, ImageIcon as Images, RefreshCw, RotateCcw, Square, X } from 'lucide-react'
 import LogoMark from '@/components/LogoMark'
 import { cleanTitle } from '@/lib/titleCase'
-import { CAMERA_FILTERS, canRecordWithFilters } from '@/lib/cameraFilters'
+import { CAMERA_FILTERS } from '@/lib/cameraFilters'
+import { useCameraPipeline } from '@/lib/camera/useCameraPipeline'
+import CameraEffectsBar from '@/components/stories/CameraEffectsBar'
+import type { FaceEffectId } from '@/lib/camera/faceEffects'
 import { useAuthStore } from '@/store/auth'
 import { useUserStats } from '@/hooks/useUserQueries'
 import { usePactStoriesToday, usePostStory } from '@/hooks/useStories'
@@ -93,7 +96,14 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
   const [inPageSupported, setInPageSupported] = useState<boolean | null>(null)
   const [facing, setFacing] = useState<'environment' | 'user'>('environment')
   const [filterId, setFilterId] = useState('none')
-  const [filtersSupported, setFiltersSupported] = useState(false)
+  const [effectId, setEffectId] = useState<FaceEffectId>('none')
+  // The look's name flashes over the camera when it changes, like Instagram.
+  const [lookToast, setLookToast] = useState<{ name: string; key: number } | null>(null)
+  const pickLook = (id: string) => {
+    setFilterId(id)
+    setLookToast({ name: CAMERA_FILTERS.find((f) => f.id === id)?.name ?? '', key: Date.now() })
+  }
+  const swipeStart = useRef<{ x: number; y: number } | null>(null)
   const [mode, setModeState] = useState<Mode>(lockMode ?? 'video')
   const setMode = (next: Mode) => {
     setModeState(next)
@@ -109,6 +119,15 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
 
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const liveVideoRef = useRef<HTMLVideoElement>(null)
+  // Looks and face effects are drawn into one canvas: what's on screen is what gets posted.
+  const pipeline = useCameraPipeline({
+    videoRef: liveVideoRef,
+    active: isOpen && step === 'live',
+    look: (CAMERA_FILTERS.find((f) => f.id === filterId) ?? CAMERA_FILTERS[0]).gl,
+    mirror: facing === 'user',
+    effect: effectId,
+    streak,
+  })
   const streamRef = useRef<MediaStream | null>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
   const startedAtRef = useRef(0)
@@ -128,7 +147,6 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
 
   useEffect(() => {
     setInPageSupported(canRecordInPage())
-    setFiltersSupported(canRecordWithFilters())
     try {
       if (!lockMode && localStorage.getItem(MODE_KEY) === 'photo') setModeState('photo')
     } catch {
@@ -314,7 +332,22 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
     return () => window.clearTimeout(timer)
   }, [waitingForCamera])
 
-  /** A still from the live camera, with the chosen look and the selfie mirror baked in. */
+  const handPhoto = (blob: Blob | null) => {
+    if (!blob) {
+      setNotice("Couldn't take the photo. Try again.")
+      return
+    }
+    stopStream()
+    if (liveOnly && onCaptured) {
+      onCaptured({ blob, contentType: 'image/jpeg', duration: 0 })
+      return
+    }
+    replaceClip({ blob, contentType: 'image/jpeg', duration: 0, url: URL.createObjectURL(blob) })
+    reset()
+    setStep('preview')
+  }
+
+  /** A still from the live camera: exactly what's on screen, look, effect and selfie mirror included. */
   const takePhoto = () => {
     const video = liveVideoRef.current
     if (!video || !video.videoWidth) {
@@ -322,60 +355,32 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
       return
     }
     setNotice(null)
+    if (pipeline.ready && pipeline.canvasRef.current) {
+      pipeline.canvasRef.current.toBlob(handPhoto, 'image/jpeg', 0.92)
+      return
+    }
     const scale = Math.min(1, 2048 / Math.max(video.videoWidth, video.videoHeight))
     const canvas = document.createElement('canvas')
     canvas.width = Math.round(video.videoWidth * scale)
     canvas.height = Math.round(video.videoHeight * scale)
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    const preset = CAMERA_FILTERS.find((f) => f.id === filterId)
-    if (preset && preset.css !== 'none' && filtersSupported) ctx.filter = preset.css
     if (facing === 'user') {
       ctx.translate(canvas.width, 0)
       ctx.scale(-1, 1)
     }
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) {
-          setNotice("Couldn't take the photo. Try again.")
-          return
-        }
-        stopStream()
-        if (liveOnly && onCaptured) {
-          onCaptured({ blob, contentType: 'image/jpeg', duration: 0 })
-          return
-        }
-        replaceClip({ blob, contentType: 'image/jpeg', duration: 0, url: URL.createObjectURL(blob) })
-        reset()
-        setStep('preview')
-      },
-      'image/jpeg',
-      0.9,
-    )
+    canvas.toBlob(handPhoto, 'image/jpeg', 0.9)
   }
 
   const finishRecording = () => {
     if (recorderRef.current && recorderRef.current.state !== 'inactive') recorderRef.current.stop()
   }
 
-  /** With a filter picked, record a canvas copy of the camera with the filter baked in. */
+  /** Record the canvas on screen (look and effect baked in), with the microphone. */
   const filteredStream = (stream: MediaStream): MediaStream => {
-    const preset = CAMERA_FILTERS.find((f) => f.id === filterId)
-    const video = liveVideoRef.current
-    if (!preset || preset.css === 'none' || !filtersSupported || !video || !video.videoWidth) return stream
-    const scale = Math.min(1, 1280 / Math.max(video.videoWidth, video.videoHeight))
-    const canvas = document.createElement('canvas')
-    canvas.width = Math.round(video.videoWidth * scale)
-    canvas.height = Math.round(video.videoHeight * scale)
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return stream
-    const draw = () => {
-      ctx.filter = preset.css
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-      drawFrameRef.current = requestAnimationFrame(draw)
-    }
-    draw()
+    const canvas = pipeline.canvasRef.current
+    if (!pipeline.ready || !canvas || typeof (canvas as any).captureStream !== 'function') return stream
     const out = (canvas as any).captureStream(30) as MediaStream
     stream.getAudioTracks().forEach((track) => out.addTrack(track))
     return out
@@ -461,14 +466,41 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
 
   if (step === 'live') {
     return (
-      <div role="dialog" aria-modal="true" aria-label="Record a moment" className="fixed inset-0 z-[80] bg-black text-white">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Record a moment"
+        className="fixed inset-0 z-[80] bg-black text-white"
+        // Swipe sideways on the camera to change look.
+        onTouchStart={(e) => {
+          const target = e.target as HTMLElement
+          swipeStart.current = target.closest('button, [role="radiogroup"], [role="tablist"]') ? null : { x: e.touches[0].clientX, y: e.touches[0].clientY }
+        }}
+        onTouchEnd={(e) => {
+          const start = swipeStart.current
+          swipeStart.current = null
+          if (!start || recording || !pipeline.ready) return
+          const dx = e.changedTouches[0].clientX - start.x
+          const dy = e.changedTouches[0].clientY - start.y
+          if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+          const i = CAMERA_FILTERS.findIndex((f) => f.id === filterId)
+          const next = (i + (dx < 0 ? 1 : -1) + CAMERA_FILTERS.length) % CAMERA_FILTERS.length
+          pickLook(CAMERA_FILTERS[next].id)
+        }}
+      >
         <video
           ref={liveVideoRef}
           muted
           playsInline
           className={`absolute inset-0 h-full w-full object-cover ${facing === 'user' ? '-scale-x-100' : ''}`}
-          style={{ filter: CAMERA_FILTERS.find((f) => f.id === filterId)?.css ?? 'none' }}
         />
+        {/* The drawn camera (look + effect) sits over the raw video once it's running. */}
+        <canvas ref={pipeline.canvasRef} className="absolute inset-0 h-full w-full object-cover" style={{ opacity: pipeline.ready ? 1 : 0 }} aria-hidden="true" />
+        {lookToast && (
+          <div key={lookToast.key} className="cp-look-toast pointer-events-none absolute inset-x-0 top-[38%] text-center text-[34px] font-bold tracking-[-0.03em]" style={{ textShadow: '0 2px 14px rgba(0,0,0,0.45)' }} aria-live="polite">
+            {lookToast.name}
+          </div>
+        )}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-36" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0))' }} />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56" style={{ background: 'linear-gradient(0deg, rgba(0,0,0,0.65), rgba(0,0,0,0))' }} />
 
@@ -506,28 +538,18 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
 
         <input ref={cameraInputRef} type="file" accept="image/*,video/*" className="sr-only" onChange={(event) => { stopStream(); onFilePicked(event) }} tabIndex={-1} aria-hidden="true" />
         <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-3 pb-[max(2rem,env(safe-area-inset-bottom))]">
-          {filtersSupported && !recording && (
-            <div className="flex w-full gap-2 overflow-x-auto px-4 scrollbar-hide" role="radiogroup" aria-label="Camera look">
-              {CAMERA_FILTERS.map((preset) => {
-                const on = preset.id === filterId
-                return (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    onClick={() => setFilterId(preset.id)}
-                    className="h-9 shrink-0 rounded-full px-3.5 text-[13px] font-extrabold"
-                    style={on ? { background: '#FFFFFF', color: '#17181D' } : { background: 'rgba(255,255,255,0.16)', color: '#FFFFFF' }}
-                  >
-                    {preset.name}
-                  </button>
-                )
-              })}
-            </div>
+          {pipeline.ready && !recording && (
+            <CameraEffectsBar
+              looks={CAMERA_FILTERS}
+              lookId={filterId}
+              onLook={pickLook}
+              effectId={effectId}
+              onEffect={setEffectId}
+              effectStatus={pipeline.effectStatus}
+            />
           )}
           <p className="text-[14px] font-semibold tabular-nums" aria-live="polite" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.4)' }}>
-            {recording ? `${Math.ceil(STORY_MAX_SECONDS - elapsed)} s left` : notice ? notice : mode === 'photo' ? 'Tap to take a photo.' : `Tap to record. Stops at ${STORY_MAX_SECONDS} seconds.`}
+            {recording ? `${Math.ceil(STORY_MAX_SECONDS - elapsed)} s left` : notice ? notice : effectId !== 'none' && pipeline.effectStatus === 'loading' ? 'Loading effects… first time only.' : effectId !== 'none' && pipeline.effectStatus === 'error' ? "Effects couldn't load here. Looks still work." : effectId !== 'none' && pipeline.effectStatus === 'ready' && !pipeline.faceFound ? 'Point the camera at a face.' : mode === 'photo' ? 'Tap to take a photo.' : `Tap to record. Stops at ${STORY_MAX_SECONDS} seconds.`}
           </p>
           <div className="flex w-full items-center justify-between px-9">
           {liveOnly ? (
