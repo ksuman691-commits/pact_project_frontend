@@ -3,9 +3,10 @@
 import CircleMark from '@/components/brand/CircleMark'
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Camera, Check, Hourglass, Zap } from 'lucide-react';
+import { Camera, Check, Zap } from 'lucide-react';
 import PageHero from '@/components/PageHero';
 import HeroStats, { HeroSteps, TinyFace, type HeroStat } from '@/components/HeroStats';
+import { BoltBadge, CheckBadge, HourglassBadge } from '@/components/hero/HeroBadges';
 import DareCard from '@/components/DareCard';
 import CreateDareModal from '@/components/CreateDareModal';
 import PausedNote from '@/components/app/PausedNote';
@@ -149,8 +150,7 @@ function DaresPageInner() {
       label: 'Your move',
       value: mine.isSuccess ? lists.yourMove : null,
       sub: lists.yourMove > 0 ? (nextLeft ? `Next ends in ${nextLeft}` : 'Waiting on you') : 'All clear',
-      icon: <Zap className="size-4 text-[var(--ink)]" strokeWidth={0} fill="currentColor" aria-hidden="true" />,
-      iconBg: 'var(--dare)',
+      icon: <BoltBadge />,
       visual: lists.yourMove > 0 ? <span className="cp-pulse-dot mr-1 size-2.5 rounded-full bg-[#E5363B]" aria-hidden="true" /> : undefined,
       hint: 'Dares waiting on you to answer, post proof or review',
       selected: tab === moveTab && lists.yourMove > 0,
@@ -161,8 +161,7 @@ function DaresPageInner() {
       label: 'In play',
       value: mine.isSuccess ? lists.inPlay : null,
       sub: faces.length ? `With ${firstName(faces[0].name)}${faces.length > 1 ? ` +${faces.length - 1}` : ''}` : 'Nothing running',
-      icon: <Hourglass className="size-4 text-white" strokeWidth={2.4} aria-hidden="true" />,
-      iconBg: 'rgba(255,255,255,0.16)',
+      icon: <HourglassBadge />,
       visual: faces.length ? (
         <span className="flex -space-x-1.5">
           {faces.slice(0, 2).map((f) => (
@@ -178,8 +177,7 @@ function DaresPageInner() {
       label: 'Done by you',
       value: mine.isSuccess ? lists.doneByYou : null,
       sub: lists.won > 0 ? `₹${lists.won} won` : lists.paid > 0 ? `₹${lists.paid} paid out` : lists.doneByYou > 0 ? 'Proof or it didn\u2019t happen' : 'None yet',
-      icon: <Check className="size-4 text-white" strokeWidth={3} aria-hidden="true" />,
-      iconBg: 'linear-gradient(160deg, #4ADE80, #16A34A)',
+      icon: <CheckBadge />,
       hint: 'Dares you did, and dares you sent and marked done',
       selected: tab === 'history',
       onSelect: () => setTab('history'),

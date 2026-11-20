@@ -27,8 +27,7 @@ const SPARKS = Array.from({ length: 14 }, (_, i) => {
  * The coloured top of Dares, Pacts and Circles. The whole top is the colour,
  * like the "Dare sent." screen; a big CirclePact mark sits sunk into it. The
  * mark draws itself when the page opens, closes as you pull down, turns while
- * the page loads, then pops with a ring and sparks and a sheen of light runs
- * across when the numbers land. Reduced motion keeps all of it still.
+ * the page loads, then pops with a crisp ring and sparks when the numbers land. Reduced motion keeps all of it still.
  */
 export default function PageHero({ tone, title, tagline, line, busy = false, children }: PageHeroProps) {
   const dare = tone === 'dare'
@@ -38,46 +37,40 @@ export default function PageHero({ tone, title, tagline, line, busy = false, chi
     <section
       className={`cp-hero relative isolate overflow-hidden rounded-b-[34px] px-5 pb-5 pt-9 ${dare ? 'bg-[var(--dare)] text-[var(--ink)]' : 'bg-[var(--navy)] text-white'}`}
     >
-      {/* Glow: light from the top left, a deeper pool bottom right. */}
+      {/* A flat, even tone: one quiet step lighter at the top. No blur. */}
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-20"
-        style={{
-          background: dare
-            ? 'radial-gradient(120% 75% at 0% 0%, rgba(255,255,255,0.6), transparent 55%), radial-gradient(90% 70% at 100% 100%, rgba(245,150,0,0.5), transparent 60%)'
-            : 'radial-gradient(110% 80% at 0% 0%, rgba(110,145,255,0.55), transparent 55%), radial-gradient(80% 70% at 100% 100%, rgba(6,14,60,0.85), transparent 60%)',
-        }}
+        style={{ background: dare ? 'linear-gradient(180deg, #FFDA5C 0%, #FFD23F 55%)' : 'linear-gradient(180deg, #2546A6 0%, #1F3A93 60%)' }}
       />
 
-      {/* The mark, sunk into the colour: faded at its edges like it's under water. */}
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute -z-10"
-        style={{
-          right: -92,
-          top: -46,
-          opacity: dare ? 0.55 : 0.5,
-          mixBlendMode: dare ? 'multiply' : 'screen',
-          WebkitMaskImage: 'radial-gradient(closest-side, #000 55%, transparent 100%)',
-          maskImage: 'radial-gradient(closest-side, #000 55%, transparent 100%)',
-        }}
-      >
+      {/* The mark, set into the colour: a tone of the background with a crisp 2px edge, and two orbit rings. */}
+      <span aria-hidden="true" className="pointer-events-none absolute -z-10" style={{ right: -66, top: -64 }}>
         <span className="cp-hero-float block">
-          <HeroMark size={300} color={dare ? '#E5363B' : '#FF5A5F'} busy={busy} onPop={() => setPopKey((k) => k + 1)} />
+          <HeroMark
+            size={224}
+            color={dare ? '#FFC414' : '#2A4CB0'}
+            stroke={dare ? '#17181D' : 'rgba(255,255,255,0.55)'}
+            ringColor={dare ? 'rgba(23,24,29,0.16)' : 'rgba(255,255,255,0.16)'}
+            busy={busy}
+            onPop={() => setPopKey((k) => k + 1)}
+          />
         </span>
       </span>
 
       {/* Sparks thrown out by the pop, from the mark's centre. */}
       {popKey > 0 && (
-        <span key={popKey} aria-hidden="true" className="pointer-events-none absolute -z-10" style={{ right: 58, top: 104 }}>
+        <span key={popKey} aria-hidden="true" className="pointer-events-none absolute -z-10" style={{ right: 46, top: 48 }}>
           {SPARKS.map((s, i) => (
             <span
               key={i}
-              className="cp-spark absolute rounded-full"
+              className="cp-spark absolute"
               style={{
-                width: s.size,
-                height: s.size,
-                background: i % 3 === 0 ? '#E5363B' : dare ? '#17181D' : '#FFFFFF',
+                width: s.size + 2,
+                height: s.size + 2,
+                borderRadius: i % 2 ? 999 : 2,
+                background: i % 3 === 0 ? '#E5363B' : dare ? '#FFFFFF' : '#FFD23F',
+                boxShadow: '0 0 0 1.5px #17181D',
                 animationDelay: `${s.delay}ms`,
                 ['--dx' as string]: `${s.dx}px`,
                 ['--dy' as string]: `${s.dy}px`,
@@ -87,21 +80,24 @@ export default function PageHero({ tone, title, tagline, line, busy = false, chi
         </span>
       )}
 
-      {/* A sheen of light across the whole top when fresh numbers land. */}
-      {popKey > 0 && <span key={`sheen-${popKey}`} aria-hidden="true" className="cp-hero-sheen pointer-events-none absolute inset-0 -z-10" />}
 
-      {/* Slow twinkles. */}
+      {/* Three small four-point stars that twinkle. */}
       {[
-        { top: '18%', left: '52%', size: 5, delay: '0s' },
-        { top: '9%', left: '70%', size: 3.5, delay: '1.3s' },
-        { top: '36%', left: '46%', size: 4, delay: '2.4s' },
+        { top: '13%', left: '56%', size: 12, delay: '0s' },
+        { top: '8%', left: '68%', size: 9, delay: '1.3s' },
+        { top: '30%', left: '83%', size: 10, delay: '2.4s' },
       ].map((s, i) => (
-        <span
+        <svg
           key={i}
           aria-hidden="true"
-          className="cp-hero-spark pointer-events-none absolute -z-10 rounded-full"
-          style={{ top: s.top, left: s.left, width: s.size, height: s.size, animationDelay: s.delay, background: dare ? '#17181D' : '#FFFFFF' }}
-        />
+          viewBox="-1 -1 14 14"
+          width={s.size}
+          height={s.size}
+          className="cp-hero-spark pointer-events-none absolute -z-10"
+          style={{ top: s.top, left: s.left, animationDelay: s.delay }}
+        >
+          <path d="M6 0Q7 5 12 6Q7 7 6 12Q5 7 0 6Q5 5 6 0Z" fill={dare ? '#FFFFFF' : '#FFD23F'} stroke="#17181D" strokeWidth={1} strokeLinejoin="round" />
+        </svg>
       ))}
 
       <h1 className="cp-hero-title flex items-center gap-2.5 text-[46px] font-bold leading-none tracking-[-0.05em]" style={{ color: dare ? 'var(--ink)' : '#FFFFFF' }}>
@@ -116,7 +112,7 @@ export default function PageHero({ tone, title, tagline, line, busy = false, chi
         </p>
       )}
       {line && (
-        <p className="cp-hero-title mt-1 max-w-[290px] text-[16.5px] font-medium leading-[1.3]" style={{ animationDelay: '140ms', color: dare ? 'var(--ink)' : '#FFFFFF' }}>
+        <p className="cp-hero-title mt-1 max-w-[255px] text-[16.5px] font-medium leading-[1.3]" style={{ animationDelay: '140ms', color: dare ? 'var(--ink)' : '#FFFFFF' }}>
           {line}
         </p>
       )}

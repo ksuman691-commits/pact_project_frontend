@@ -862,3 +862,26 @@ section + section {
   .cp-flame, .cp-pulse-dot { animation: none; }
   .cp-draw-line { animation: none; stroke-dasharray: none; }
 }
+
+/* Hero badges (HeroBadges.tsx). transform-box keeps each origin on its own shape. */
+@keyframes cp-b-flame-o { 0%,100% { transform: scale(1,1) skewX(0); } 25% { transform: scale(.96,1.05) skewX(-3deg); } 55% { transform: scale(1.03,.96) skewX(2deg); } 80% { transform: scale(.98,1.03) skewX(-1deg); } }
+@keyframes cp-b-flame-i { 0%,100% { transform: scale(1); } 35% { transform: scale(.82,1.14); } 70% { transform: scale(1.1,.88); } }
+@keyframes cp-b-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes cp-b-bolt { 0%, 86%, 100% { transform: none; } 89% { transform: scale(1.18) rotate(-8deg); } 93% { transform: scale(.94) rotate(4deg); } }
+@keyframes cp-b-glass { 0%, 78% { transform: rotate(0); } 92%, 100% { transform: rotate(180deg); } }
+@keyframes cp-b-sand-t { 0% { transform: scaleY(1); } 78%, 100% { transform: scaleY(.15); } }
+@keyframes cp-b-sand-b { 0% { transform: scaleY(.15); } 78%, 100% { transform: scaleY(1); } }
+.cp-b-flame-outer { transform-box: fill-box; transform-origin: 50% 100%; animation: cp-b-flame-o 1.5s ease-in-out infinite; }
+.cp-b-flame-inner { transform-box: fill-box; transform-origin: 50% 100%; animation: cp-b-flame-i .9s ease-in-out infinite; }
+.cp-b-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: cp-b-draw .55s cubic-bezier(.65,0,.35,1) .35s forwards; }
+.cp-b-bolt { transform-box: fill-box; transform-origin: 50% 50%; animation: cp-b-bolt 3.8s ease-in-out 1s infinite; }
+.cp-b-glass { transform-box: fill-box; transform-origin: 50% 50%; animation: cp-b-glass 3.4s cubic-bezier(.65,0,.35,1) infinite; }
+.cp-b-sand-top { transform-box: fill-box; transform-origin: 50% 100%; animation: cp-b-sand-t 3.4s linear infinite; }
+.cp-b-sand-bottom { transform-box: fill-box; transform-origin: 50% 100%; animation: cp-b-sand-b 3.4s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .cp-b-flame-outer, .cp-b-flame-inner, .cp-b-bolt, .cp-b-glass, .cp-b-sand-top, .cp-b-sand-bottom { animation: none; }
+  .cp-b-draw { animation: none; stroke-dashoffset: 0; }
+}
+@keyframes cp-badge-pop { 0% { transform: scale(.4) rotate(-20deg); opacity: 0; } 60% { transform: scale(1.15) rotate(4deg); opacity: 1; } 100% { transform: none; } }
+.cp-badge-pop { animation: cp-badge-pop .5s cubic-bezier(.3,1.4,.5,1) both; }
+@media (prefers-reduced-motion: reduce) { .cp-badge-pop { animation: none; } }

@@ -11,6 +11,10 @@ const easeInOut: [number, number, number, number] = [0.65, 0, 0.35, 1]
 interface HeroMarkProps {
   size: number
   color?: string
+  /** Edge drawn round the mark at a constant 2px, whatever its size. */
+  stroke?: string
+  /** Faint rings round the mark, also 2px. */
+  ringColor?: string
   /** The page is loading: the mark keeps turning until it's done, then pops. */
   busy?: boolean
   /** Called at the moment of the pop, for the sparks around it. */
@@ -29,7 +33,7 @@ interface HeroMarkProps {
  *
  * Reduced motion: it just sits there.
  */
-export default function HeroMark({ size, color = MARK_RED, busy = false, onPop, className, style }: HeroMarkProps) {
+export default function HeroMark({ size, color = MARK_RED, stroke, ringColor, busy = false, onPop, className, style }: HeroMarkProps) {
   const reduce = useReducedMotion()
   const [sweep, setSweep] = useState(reduce ? MARK_SWEEP : 0)
   const [rot, setRot] = useState(reduce ? 0 : -140)
@@ -161,14 +165,25 @@ export default function HeroMark({ size, color = MARK_RED, busy = false, onPop, 
 
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true" className={`overflow-visible ${className ?? ''}`} style={style}>
-      {burst > 0 && burst < 1 && (
+      {/* Orbit rings: always there, thin and crisp; they ripple out on the pop. */}
+      {ringColor && (
         <>
-          <circle cx="50" cy="50" r={50 + 34 * burst} fill="none" stroke={color} strokeWidth={5 * (1 - burst) + 0.5} opacity={1 - burst} />
-          <circle cx="50" cy="50" r={50 + 18 * burst} fill="none" stroke={color} strokeWidth={2} opacity={(1 - burst) * 0.6} />
+          <circle cx="50" cy="50" r={62 + 10 * burst} fill="none" stroke={ringColor} strokeWidth={2} vectorEffect="non-scaling-stroke" opacity={burst ? 1 - burst * 0.6 : 1} />
+          <circle cx="50" cy="50" r={76 + 16 * burst} fill="none" stroke={ringColor} strokeWidth={2} vectorEffect="non-scaling-stroke" strokeDasharray="2 7" opacity={burst ? 1 - burst * 0.6 : 0.8} />
         </>
       )}
+      {burst > 0 && burst < 1 && (
+        <circle cx="50" cy="50" r={50 + 40 * burst} fill="none" stroke={stroke ?? color} strokeWidth={2} vectorEffect="non-scaling-stroke" opacity={1 - burst} />
+      )}
       <g transform={`rotate(${rot} 50 50) translate(50 50) scale(${scale}) translate(-50 -50)`}>
-        <path d={piePath(50, 50, 50, sweep, MARK_START)} fill={color} />
+        <path
+          d={piePath(50, 50, 50, sweep, MARK_START)}
+          fill={color}
+          stroke={stroke}
+          strokeWidth={stroke ? 2 : undefined}
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+        />
       </g>
     </svg>
   )
