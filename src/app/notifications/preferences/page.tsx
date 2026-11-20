@@ -20,7 +20,7 @@ const HOURS: { hour: 9 | 13 | 19; label: string }[] = [
   { hour: 19, label: '7 pm' },
 ];
 
-const DEFAULTS: PushPreferences = { daily_reminder: true, reminder_hour: 19, last_call: true, circle_nudges: true, devices: 0 };
+const DEFAULTS: PushPreferences = { daily_reminder: true, reminder_hour: 19, last_call: true, circle_nudges: true, comments: true, circle_pacts: true, devices: 0 };
 
 type DeviceState = 'loading' | 'on' | 'off' | 'blocked' | 'needs-install' | 'unsupported' | 'server-off';
 
@@ -231,10 +231,29 @@ export default function NotificationPreferencesPage() {
             </span>
             <Switch on={prefs.circle_nudges} label="Nudges" onChange={() => void save({ circle_nudges: !prefs.circle_nudges })} />
           </div>
+          <div className="mx-3.5 h-px bg-[#E6E1D6]" />
+          <div className="flex items-center gap-3 p-3.5">
+            <span className="flex flex-1 flex-col gap-0.5">
+              <span className="text-[15px] font-extrabold">New pacts</span>
+              <span className="text-[13px] leading-snug text-[var(--muted)]">When someone starts a pact in one of your circles. At most 3 a day.</span>
+            </span>
+            <Switch on={prefs.circle_pacts} label="New pacts in your circles" onChange={() => void save({ circle_pacts: !prefs.circle_pacts })} />
+          </div>
+        </section>
+
+        <h2 className="px-0.5 pt-1 text-[12px] font-extrabold tracking-[0.08em] text-[var(--muted)]">ON YOUR PACTS</h2>
+        <section className="mb-0 rounded-[20px] border border-[var(--hairline)] bg-[var(--card)]" aria-label="On your pacts">
+          <div className="flex items-center gap-3 p-3.5">
+            <span className="flex flex-1 flex-col gap-0.5">
+              <span className="text-[15px] font-extrabold">Comments and replies</span>
+              <span className="text-[13px] leading-snug text-[var(--muted)]">Comments on your pacts and replies to your comments. A busy pact shows as one notification.</span>
+            </span>
+            <Switch on={prefs.comments} label="Comments and replies" onChange={() => void save({ comments: !prefs.comments })} />
+          </div>
         </section>
 
         <p className="px-1 text-[12.5px] leading-[1.45] text-[var(--muted)]">
-          At most 2 reminders a day, never between 10 pm and 8 am, in your phone&apos;s time zone.
+          At most 2 reminders a day, never between 10 pm and 8 am, in your phone&apos;s time zone. Comments and new pacts arrive when they happen.
         </p>
       </div>
     </div>
