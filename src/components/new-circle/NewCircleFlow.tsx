@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
-import { Camera, Check, ChevronLeft, Globe, Link2, Lock, MessageCircle, Plus, Search, UserPlus, X } from 'lucide-react'
+import { Camera, Check, Globe, Link2, Lock, MessageCircle, Plus, Search, UserPlus, X } from 'lucide-react'
+import FlowHero, { FlowFooter, Segmented } from '@/components/flow/FlowHero'
+import HeroMark from '@/components/brand/HeroMark'
 import toast from 'react-hot-toast'
 import Avatar from '@/components/Avatar'
 import OrbitRing, { type OrbitMember } from '@/components/circles/OrbitRing'
@@ -37,8 +39,10 @@ function listOf(data: any): any[] {
 }
 
 /**
- * New circle, the short way: name it, choose who's in, and it's live with a
- * way to bring people in. Replaces the six-step "What's the vibe?" wizard.
+ * New circle in two screens: name it, choose who's in, and it's live with a
+ * way to bring people in. Same look as New pact and Send a dare: the navy top
+ * holds a live card of the circle (ring, name, purpose, open or private,
+ * who's invited), so nothing is repeated on the screens below.
  */
 export default function NewCircleFlow({
   onExit,
@@ -166,62 +170,64 @@ export default function NewCircleFlow({
     router.push(`/pacts/create?${params.toString()}`)
   }
 
-  const header = (back: (() => void) | null, index: number) => (
-    <div className="flex items-center px-1 pt-[max(0.75rem,env(safe-area-inset-top))]">
-      {back ? (
-        <button type="button" onClick={back} aria-label="Back" className="flex size-11 items-center justify-center" style={{ color: INK }}>
-          <ChevronLeft className="size-6" />
-        </button>
-      ) : (
-        <span className="size-11" />
-      )}
-      <div className="flex flex-1 justify-center gap-1.5" aria-hidden="true">
-        {[0, 1, 2].map((i) => (
-          <span key={i} className="h-[5px] w-[22px] rounded-full" style={{ background: i <= index ? INK : '#D4CBB8' }} />
-        ))}
+  const meFace: OrbitMember = { user_id: me?.id, full_name: me?.full_name, username: me?.username, avatar_url: me?.avatar_url, sent_proof_this_week: true, is_you: true }
+  const invitedPeople = invited.map((id) => following.find((p) => p.id === id)).filter(Boolean) as any[]
+  const ringMembers: OrbitMember[] = [
+    meFace,
+    ...invitedPeople.slice(0, 6).map((p) => ({ user_id: p.id, full_name: p.full_name, username: p.username, avatar_url: p.avatar_url, sent_proof_this_week: false })),
+  ]
+  const primary = 'flex h-[54px] w-full items-center justify-center gap-2 rounded-full text-[16px] font-bold transition active:scale-[0.98]'
+
+  // The live card: the circle as it will look, filling in as you answer.
+  const card = (
+    <div className="flex items-center gap-3.5 rounded-[22px] bg-white px-3.5 py-3 text-[var(--ink)]" style={{ boxShadow: '0 0 0 1.5px #17181D, 0 3px 0 rgba(10,20,70,0.45)' }} aria-live="polite" aria-label="Preview of your circle">
+      <div className="relative shrink-0">
+        <OrbitRing name={displayName || 'New circle'} photoUrl={photo?.url} members={ringMembers} total={ringMembers.length} active={0} size={92} />
+        {step === 'name' && (
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            aria-label={photo ? 'Change the circle photo' : 'Add a circle photo'}
+            className="absolute -bottom-0.5 -right-0.5 z-10 flex size-[30px] items-center justify-center rounded-full bg-white"
+            style={{ color: INK, boxShadow: `0 0 0 1.5px ${INK}` }}
+          >
+            <Camera className="size-[15px]" strokeWidth={2.2} />
+          </button>
+        )}
       </div>
-      <button type="button" onClick={onExit} aria-label="Close" className="flex size-11 items-center justify-center" style={{ color: INK }}>
-        <X className="size-5" />
-      </button>
+      <div className="min-w-0 flex-1">
+        <p className={`line-clamp-2 text-[22px] font-bold leading-[1.1] tracking-[-0.03em] ${displayName ? '' : 'opacity-35'}`}>{displayName || 'Morning Runners'}</p>
+        {about.trim() && <p className="mt-1 line-clamp-2 text-[13px] leading-snug" style={{ color: MUTED }}>{about.trim()}</p>}
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <span key={String(isPrivate)} className="cp-pop-in flex h-6 items-center gap-1 rounded-full px-2 text-[11.5px] font-bold" style={{ background: '#E8EDFA', color: NAVY }}>
+            {isPrivate ? <Lock className="size-3" strokeWidth={2.6} /> : <Globe className="size-3" strokeWidth={2.6} />}
+            {isPrivate ? 'Private' : 'Open'}
+          </span>
+          {invited.length > 0 && (
+            <span key={invited.length} className="cp-pop-in flex h-6 items-center rounded-full px-2 text-[11.5px] font-bold text-white" style={{ background: NAVY }}>
+              {invited.length} invited
+            </span>
+          )}
+        </div>
+      </div>
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { pickPhoto(e.target.files?.[0]); e.target.value = '' }} />
     </div>
   )
 
-  const meFace: OrbitMember = { user_id: me?.id, full_name: me?.full_name, username: me?.username, avatar_url: me?.avatar_url, sent_proof_this_week: true, is_you: true }
-
   return (
     <div className="fixed inset-0 z-[70] flex flex-col overflow-y-auto" style={{ background: PAPER, color: INK }}>
+      {(step === 'name' || step === 'who') && (
+        <FlowHero tone="navy" steps={['Name it', "Who's in"]} current={step === 'name' ? 0 : 1} onBack={step === 'who' ? () => setStep('name') : undefined} onExit={onExit}>
+          {card}
+        </FlowHero>
+      )}
+
       {step === 'name' && (
         <>
-          {header(null, 0)}
-          <div className="mx-auto w-full max-w-md flex-1 px-5">
-            <div className="flex items-center gap-4 pt-2.5">
-              <OrbitRing
-                name={displayName || 'New Circle'}
-                photoUrl={photo?.url}
-                members={[meFace]}
-                total={1}
-                active={0}
-                size={116}
-                center={
-                  <button
-                    type="button"
-                    onClick={() => fileRef.current?.click()}
-                    aria-label={photo ? 'Change the circle photo' : 'Add a circle photo'}
-                    className="absolute bottom-[18px] right-[18px] z-10 flex size-[30px] items-center justify-center rounded-full"
-                    style={{ background: '#FFFFFF', color: INK, boxShadow: `0 0 0 1px ${LINE}, 0 4px 10px -4px rgba(23,24,29,0.35)` }}
-                  >
-                    <Camera className="size-[15px]" strokeWidth={2.2} />
-                  </button>
-                }
-              />
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { pickPhoto(e.target.files?.[0]); e.target.value = '' }} />
-              <p className="text-[13.5px] leading-snug" style={{ color: MUTED }}>
-                This is your circle&apos;s ring. Members show up on it, and it fills as they post each week.
-              </p>
-            </div>
-
-            <label className="mt-6 block">
-              <span className="block text-[30px] font-extrabold tracking-[-0.03em]" style={{ color: INK }}>Name it</span>
+          <div key="name" className="pact-step-enter mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-6">
+            <label className="block">
+              <span className="block text-[26px] font-bold leading-[1.1] tracking-[-0.03em]">Name your circle</span>
+              <span className="mt-1.5 block text-[14.5px]" style={{ color: MUTED }}>Its ring fills up as members post each week.</span>
               <input
                 ref={nameRef}
                 value={name}
@@ -229,95 +235,85 @@ export default function NewCircleFlow({
                 placeholder="Morning Runners"
                 enterKeyHint="next"
                 onKeyDown={(e) => { if (e.key === 'Enter' && ready) setStep('who') }}
-                className="mt-2 w-full border-0 border-b-2 bg-transparent pb-2.5 pt-1.5 text-[21px] font-semibold outline-none placeholder:text-[17px] placeholder:font-medium placeholder:text-[#A39C8C]"
-                style={{ borderColor: INK, color: INK }}
+                className="mt-4 h-14 w-full rounded-[18px] bg-[var(--card)] px-4 text-[20px] font-semibold shadow-[inset_0_0_0_1.5px_#DCD3C1] outline-none placeholder:font-medium placeholder:text-[#A39C8C] focus:shadow-[inset_0_0_0_2px_#1F3A93] focus-visible:outline-none"
+                style={{ color: INK }}
               />
             </label>
 
             <label className="mt-5 block">
-              <span className="block text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>WHAT IT&apos;S FOR · OPTIONAL</span>
+              <span className="mb-2 flex items-baseline justify-between">
+                <span className="text-[14px] font-bold">What it&apos;s for</span>
+                <span className="text-[12.5px]" style={{ color: MUTED }}>Optional</span>
+              </span>
               <input
                 value={about}
                 onChange={(e) => setAbout(e.target.value.slice(0, 140))}
                 placeholder="5 km before 7 am on weekdays"
-                className="mt-2 h-12 w-full rounded-[14px] px-3.5 text-[15px] font-medium outline-none placeholder:text-[#A39C8C]"
-                style={{ background: CARD, border: `1px solid ${LINE}`, color: INK }}
+                className="h-12 w-full rounded-[14px] bg-[var(--card)] px-3.5 text-[15px] font-medium shadow-[inset_0_0_0_1px_#DCD3C1] outline-none placeholder:text-[#A39C8C] focus:shadow-[inset_0_0_0_2px_#1F3A93] focus-visible:outline-none"
+                style={{ color: INK }}
               />
             </label>
 
-            <div className="mt-5 text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>OR START FROM ONE OF THESE</div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {STARTERS.map((starter) => (
-                <button key={starter} type="button" onClick={() => setName(starter)} className="h-9 rounded-full px-3.5 text-[13.5px] font-bold" style={pill(displayName === starter)}>
-                  {starter}
-                </button>
-              ))}
+            {!ready && (
+              <>
+                <div className="mb-2 mt-5 text-[14px] font-bold">Or start from one of these</div>
+                <div className="flex flex-wrap gap-2">
+                  {STARTERS.map((starter) => (
+                    <button key={starter} type="button" onClick={() => setName(starter)} className="h-10 rounded-full px-3.5 text-[14px] font-bold transition active:scale-95" style={pill(displayName === starter)}>
+                      {starter}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+          <FlowFooter>
+            <div className="mx-auto max-w-md">
+              <button
+                type="button"
+                disabled={!ready}
+                onClick={() => setStep('who')}
+                className={primary}
+                style={ready ? { background: NAVY, color: '#FFFFFF', boxShadow: '0 3px 0 #142766' } : { background: '#E1DACB', color: '#7A7B80' }}
+              >
+                Next: who&apos;s in
+              </button>
             </div>
-          </div>
-          <div className="mx-auto w-full max-w-md px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
-            <button
-              type="button"
-              disabled={!ready}
-              onClick={() => setStep('who')}
-              className="h-14 w-full rounded-full text-[16.5px] font-extrabold"
-              style={ready ? { background: INK, color: '#FFFFFF' } : { background: '#E1DACB', color: '#7A7B80' }}
-            >
-              Next
-            </button>
-          </div>
+          </FlowFooter>
         </>
       )}
 
       {step === 'who' && (
         <>
-          {header(() => setStep('name'), 1)}
-          <div className="mx-auto w-full max-w-md flex-1 px-5">
-            <div className="pt-2 text-[28px] font-extrabold leading-tight tracking-[-0.03em]" style={{ color: INK }}>Who&apos;s in?</div>
-            <div className="mt-1.5 text-[14px]" style={{ color: MUTED }}>{displayName}</div>
+          <div key="who" className="pact-step-enter mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-6">
+            <div className="text-[26px] font-bold leading-[1.1] tracking-[-0.03em]">Who&apos;s in?</div>
 
-            <div className="mt-5 text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>WHO CAN JOIN</div>
-            <div className="mt-2 flex gap-2" role="radiogroup" aria-label="Who can join">
-              {(
-                [
-                  { id: false, label: 'Open', desc: 'Anyone can join and watch its open pacts.', icon: <Globe className="size-4" strokeWidth={2.2} /> },
-                  { id: true, label: 'Private', desc: 'You approve each person who asks.', icon: <Lock className="size-[15px]" strokeWidth={2.2} /> },
-                ] as const
-              ).map((option) => {
-                const on = isPrivate === option.id
-                return (
-                  <button
-                    key={option.label}
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    onClick={() => setIsPrivate(option.id)}
-                    className="flex min-w-0 flex-1 flex-col gap-1.5 rounded-[18px] p-3 text-left"
-                    style={{ background: on ? '#FFFFFF' : CARD, border: on ? `2px solid ${INK}` : `1px solid ${LINE}` }}
-                  >
-                    <span className="flex items-center justify-between">
-                      <span className="flex size-8 items-center justify-center rounded-full" style={on ? { background: INK, color: '#FFFFFF' } : { background: '#EFEBE1', color: INK }}>
-                        {option.icon}
-                      </span>
-                      <span className="size-5 rounded-full" style={on ? { border: `6px solid ${INK}` } : { border: '2px solid #B9AF9A' }} />
-                    </span>
-                    <span className="text-[15.5px] font-extrabold" style={{ color: INK }}>{option.label}</span>
-                    <span className="text-[12.5px] leading-snug" style={{ color: MUTED }}>{option.desc}</span>
-                  </button>
-                )
-              })}
-            </div>
+            <div className="mb-2 mt-4 text-[14px] font-bold">Who can join</div>
+            <Segmented
+              tone="navy"
+              label="Who can join"
+              value={isPrivate ? 'private' : 'open'}
+              options={[
+                { value: 'open', label: 'Open' },
+                { value: 'private', label: 'Private' },
+              ]}
+              onChange={(v) => setIsPrivate(v === 'private')}
+            />
+            <p className="mt-2 text-[13px] leading-snug" style={{ color: MUTED }}>
+              {isPrivate ? 'People ask to join and you approve each one.' : 'Anyone can join and watch its open pacts.'}
+            </p>
 
-            <div className="mt-5 flex items-baseline justify-between">
-              <span className="text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>INVITE PEOPLE YOU FOLLOW</span>
-              {invited.length > 0 && <span className="text-[12.5px] font-extrabold" style={{ color: NAVY }}>{invited.length} picked</span>}
+            <div className="mb-2 mt-5 flex items-baseline justify-between">
+              <span className="text-[14px] font-bold">Invite people you follow</span>
+              {invited.length > 0 && <span className="text-[13px] font-bold" style={{ color: NAVY }}>{invited.length} picked</span>}
             </div>
             {following.length > 6 && (
-              <label className="mt-2 flex h-11 items-center gap-2 rounded-[14px] px-3.5" style={{ background: CARD, border: `1px solid ${LINE}`, color: MUTED }}>
+              <label className="mb-2 flex h-11 items-center gap-2 rounded-[14px] px-3.5" style={{ background: CARD, boxShadow: `inset 0 0 0 1px ${LINE}`, color: MUTED }}>
                 <Search className="size-4 shrink-0" strokeWidth={2.2} />
-                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search names" aria-label="Search people you follow" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#A39C8C]" style={{ color: INK }} />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search names" aria-label="Search people you follow" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none focus-visible:outline-none placeholder:text-[#A39C8C]" style={{ color: INK }} />
               </label>
             )}
-            <div className="mt-2 overflow-hidden rounded-[18px]" style={{ background: '#FFFFFF', border: `1px solid ${LINE}` }}>
+            <div className="overflow-hidden rounded-[18px]" style={{ background: '#FFFFFF', boxShadow: `inset 0 0 0 1px ${LINE}` }}>
               {followingQuery.isLoading ? (
                 <div className="px-4 py-4 text-[13.5px]" style={{ color: MUTED }}>Loading people you follow…</div>
               ) : following.length === 0 ? (
@@ -344,7 +340,7 @@ export default function NewCircleFlow({
                           {person.username && <span className="block truncate text-[12.5px]" style={{ color: MUTED }}>@{person.username}</span>}
                         </span>
                         {on ? (
-                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full" style={{ background: NAVY, color: '#FFFFFF' }}>
+                          <span className="cp-pop-in flex size-6 shrink-0 items-center justify-center rounded-full" style={{ background: NAVY, color: '#FFFFFF', boxShadow: `0 0 0 1.5px ${INK}` }}>
                             <Check className="size-[13px]" strokeWidth={3} />
                           </span>
                         ) : (
@@ -357,9 +353,9 @@ export default function NewCircleFlow({
               )}
             </div>
 
-            <div className="mt-3 flex items-center gap-3 rounded-[18px] px-3.5 py-3" style={{ background: CARD, border: `1px solid ${LINE}` }}>
+            <div className="mt-3 flex items-center gap-3 rounded-[18px] px-3.5 py-3" style={{ background: CARD, boxShadow: `inset 0 0 0 1px ${LINE}` }}>
               <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-extrabold" style={{ color: INK }}>Tell My Followers</span>
+                <span className="block text-[15px] font-bold" style={{ color: INK }}>Tell my followers</span>
                 <span className="mt-0.5 block text-[12.5px] leading-snug" style={{ color: MUTED }}>
                   {followerCount === 0
                     ? 'No followers yet. Share the link once it’s live.'
@@ -374,73 +370,67 @@ export default function NewCircleFlow({
                 disabled={followerCount === 0}
                 onClick={() => setTellFollowers((value) => !value)}
                 className="relative h-8 w-[52px] shrink-0 rounded-full transition-colors disabled:opacity-50"
-                style={{ background: notify ? NAVY : '#D4D5D9' }}
+                style={{ background: notify ? NAVY : '#D4CBB8', boxShadow: `inset 0 0 0 1.5px ${INK}` }}
               >
-                <span className="absolute top-1 size-6 rounded-full bg-white transition-all" style={{ left: notify ? 24 : 4, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                <span className="absolute top-1 size-6 rounded-full bg-white transition-[left]" style={{ left: notify ? 24 : 4, boxShadow: `0 0 0 1.5px ${INK}` }} />
               </button>
             </div>
           </div>
-          <div className="mx-auto w-full max-w-md px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
-            <button
-              type="button"
-              onClick={() => void create()}
-              disabled={creating}
-              className="h-14 w-full rounded-full text-[16.5px] font-extrabold disabled:opacity-70"
-              style={{ background: NAVY, color: '#FFFFFF', boxShadow: '0 8px 22px rgba(31,58,147,0.28)' }}
-            >
-              {creating ? 'Starting your circle…' : 'Start the Circle'}
-            </button>
-          </div>
+          <FlowFooter>
+            <div className="mx-auto max-w-md">
+              <button type="button" onClick={() => void create()} disabled={creating} className={primary} style={{ background: NAVY, color: '#FFFFFF', boxShadow: '0 3px 0 #142766', opacity: creating ? 0.7 : 1 }}>
+                {creating ? 'Starting your circle…' : invited.length > 0 ? `Start the circle and invite ${invited.length}` : 'Start the circle'}
+              </button>
+            </div>
+          </FlowFooter>
         </>
       )}
 
+      {/* Live: the navy register of "Your pact is live" and "Dare sent.", with the ring assembling. */}
       {step === 'live' && created && (
-        <>
-          <div className="flex justify-end px-1 pt-[max(0.75rem,env(safe-area-inset-top))]">
-            <button type="button" onClick={() => router.push(`/circles/${created.id}`)} aria-label="Close" className="flex size-11 items-center justify-center" style={{ color: INK }}>
+        <div className="relative isolate flex min-h-full flex-1 flex-col overflow-hidden text-white" style={{ background: 'linear-gradient(180deg, #2546A6 0%, #1F3A93 60%)' }}>
+          <span aria-hidden="true" className="pointer-events-none absolute -z-10" style={{ right: -90, top: -90 }}>
+            <HeroMark size={240} color="#2A4CB0" stroke="rgba(255,255,255,0.55)" ringColor="rgba(255,255,255,0.16)" />
+          </span>
+          <div className="flex justify-end px-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+            <button type="button" onClick={() => router.push(`/circles/${created.id}`)} aria-label="Close" className="flex size-10 items-center justify-center rounded-full" style={{ background: 'rgba(255,255,255,0.12)', boxShadow: 'inset 0 0 0 1.5px rgba(255,255,255,0.45)' }}>
               <X className="size-5" />
             </button>
           </div>
           <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center px-5">
-            <OrbitRing
-              name={created.name}
-              photoUrl={created.photoUrl || photo?.url}
-              members={[
-                meFace,
-                ...invited
-                  .map((id) => following.find((p) => p.id === id))
-                  .filter(Boolean)
-                  .slice(0, 6)
-                  .map((p: any) => ({ user_id: p.id, full_name: p.full_name, username: p.username, avatar_url: p.avatar_url, sent_proof_this_week: false })),
-              ]}
-              total={1 + invited.length}
-              active={0}
-              size={208}
-              duration="70s"
-              assemble
-            />
-            <h1 className="cp-rise mt-4 text-center text-[30px] font-extrabold leading-tight tracking-[-0.035em]" style={{ color: INK, ['--cp-delay' as string]: '0.9s' }}>{created.name} is live.</h1>
-            <p className="cp-rise mt-1.5 max-w-[310px] text-center text-[14.5px] leading-snug" style={{ color: MUTED, ['--cp-delay' as string]: '1s' }}>
+            <div className="rounded-full bg-white p-2" style={{ boxShadow: `0 0 0 1.5px ${INK}, 0 4px 0 rgba(10,20,70,0.45)` }}>
+              <OrbitRing
+                name={created.name}
+                photoUrl={created.photoUrl || photo?.url}
+                members={ringMembers}
+                total={1 + invited.length}
+                active={0}
+                size={196}
+                duration="70s"
+                assemble
+              />
+            </div>
+            <h1 className="cp-rise mt-5 text-center text-[36px] font-bold leading-[1.05] tracking-[-0.04em]" style={{ ['--cp-delay' as string]: '0.9s' }}>{created.name} is live.</h1>
+            <p className="cp-rise mt-2 max-w-[310px] text-center text-[15px] leading-snug" style={{ color: '#D4DBFA', ['--cp-delay' as string]: '1s' }}>
               {[
                 created.invitesSent > 0 ? `${created.invitesSent} ${created.invitesSent === 1 ? 'invite' : 'invites'} sent. They join the ring when they say yes.` : 'Bring a few people in. Circles work best with three or more.',
                 created.told ? `${followerCount.toLocaleString('en-IN')} ${followerCount === 1 ? 'follower' : 'followers'} heard about it.` : '',
               ].filter(Boolean).join(' ')}
             </p>
             <div className="mt-3 flex flex-wrap justify-center gap-1.5">
-              <span className="flex items-center gap-1 rounded-full px-3 py-1 text-[12px] font-extrabold" style={{ background: CARD, border: `1px solid ${LINE}`, color: INK }}>
+              <span className="flex h-7 items-center gap-1 rounded-full px-3 text-[12.5px] font-bold" style={{ background: 'rgba(255,255,255,0.12)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.3)' }}>
                 {isPrivate ? <Lock className="size-3" strokeWidth={2.6} /> : <Globe className="size-3" strokeWidth={2.6} />}
-                {isPrivate ? 'Private · You Approve' : 'Open · Anyone Can Join'}
+                {isPrivate ? 'Private, you approve' : 'Open, anyone can join'}
               </span>
-              <span className="rounded-full px-3 py-1 text-[12px] font-extrabold" style={{ background: CARD, border: `1px solid ${LINE}`, color: INK }}>1 Member</span>
             </div>
 
-            <div className="cp-rise mt-5 self-stretch text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED, ['--cp-delay' as string]: '1.15s' }}>GET MORE PEOPLE IN</div>
-            <div className="cp-rise mt-2.5 grid grid-cols-3 gap-2 self-stretch" style={{ ['--cp-delay' as string]: '1.25s' }}>
+            <div className="cp-rise mt-6 self-stretch text-[14px] font-bold" style={{ ['--cp-delay' as string]: '1.15s' }}>Get more people in</div>
+            <div className="cp-rise mt-2 grid grid-cols-3 gap-2 self-stretch" style={{ ['--cp-delay' as string]: '1.25s' }}>
               {(
                 [
                   ['native', 'Invite', <UserPlus key="i" className="size-[22px]" />],
                   ['whatsapp', 'WhatsApp', <MessageCircle key="w" className="size-[22px]" />],
-                  ['copy', 'Copy Link', <Link2 key="c" className="size-[22px]" />],
+                  ['copy', 'Copy link', <Link2 key="c" className="size-[22px]" />],
                 ] as [ShareKind, string, React.ReactNode][]
               ).map(([kind, label, icon]) => (
                 <button
@@ -448,7 +438,7 @@ export default function NewCircleFlow({
                   type="button"
                   onClick={() => void shareCircle(kind, { id: created.id, name: created.name, isPrivate, purpose: about })}
                   className="flex h-[76px] flex-col items-center justify-center gap-1.5 rounded-[18px] text-[13px] font-bold transition active:scale-95"
-                  style={{ background: CARD, border: `1px solid ${LINE}`, color: INK }}
+                  style={{ background: '#2A4AAC', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.22), 0 2px 0 rgba(10,20,70,0.55)' }}
                 >
                   {icon}
                   {label}
@@ -456,26 +446,16 @@ export default function NewCircleFlow({
               ))}
             </div>
           </div>
-          <div className="mx-auto flex w-full max-w-md flex-col gap-2.5 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
-            <button
-              type="button"
-              onClick={firstPact}
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-full text-[16.5px] font-extrabold"
-              style={{ background: NAVY, color: '#FFFFFF', boxShadow: '0 8px 22px rgba(31,58,147,0.28)' }}
-            >
+          <div className="mx-auto flex w-full max-w-md flex-col gap-1 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5">
+            <button type="button" onClick={firstPact} className={primary} style={{ background: '#FFFFFF', color: NAVY, boxShadow: `0 0 0 1.5px ${INK}` }}>
               <Plus className="size-[18px]" strokeWidth={2.4} />
-              Start the First Pact
+              Start the first pact
             </button>
-            <button
-              type="button"
-              onClick={() => router.push(`/circles/${created.id}`)}
-              className="h-[52px] w-full rounded-full text-[15.5px] font-extrabold"
-              style={{ border: `1.5px solid ${INK}`, color: INK }}
-            >
-              See My Circle
+            <button type="button" onClick={() => router.push(`/circles/${created.id}`)} className="h-11 w-full text-[15px] font-bold underline decoration-2 underline-offset-4" style={{ textDecorationColor: 'rgba(255,255,255,0.4)' }}>
+              See my circle
             </button>
           </div>
-        </>
+        </div>
       )}
     </div>
   )

@@ -7,6 +7,8 @@ import { cleanTitle } from '@/lib/titleCase'
 import { CAMERA_FILTERS } from '@/lib/cameraFilters'
 import { useCameraPipeline } from '@/lib/camera/useCameraPipeline'
 import CameraEffectsBar from '@/components/stories/CameraEffectsBar'
+import TrimSheet from '@/components/stories/TrimSheet'
+import { canTrimVideo, TRIM_MAX_BYTES, TRIM_MAX_SECONDS } from '@/lib/camera/trimVideo'
 import type { FaceEffectId } from '@/lib/camera/faceEffects'
 import { useAuthStore } from '@/store/auth'
 import { useUserStats } from '@/hooks/useUserQueries'
@@ -97,6 +99,8 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
   const [facing, setFacing] = useState<'environment' | 'user'>('environment')
   const [filterId, setFilterId] = useState('none')
   const [effectId, setEffectId] = useState<FaceEffectId>('none')
+  // A picked video over 15 seconds waits here while you choose which 15 to keep.
+  const [trimSource, setTrimSource] = useState<{ blob: Blob; duration: number } | null>(null)
   // The look's name flashes over the camera when it changes, like Instagram.
   const [lookToast, setLookToast] = useState<{ name: string; key: number } | null>(null)
   const pickLook = (id: string) => {
@@ -224,8 +228,8 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
       setNotice("That file type isn't supported. Use a photo, or an MP4, WebM or MOV video.")
       return
     }
-    if (blob.size > STORY_MAX_BYTES) {
-      setNotice(`That video is ${formatMb(blob.size)}. The limit is 30 MB.`)
+    if (blob.size > TRIM_MAX_BYTES) {
+      setNotice(`That video is ${formatMb(blob.size)}. Pick a shorter one.`)
       return
     }
     setChecking(true)
@@ -237,7 +241,16 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
       return
     }
     if (!isDurationAllowed(duration)) {
-      setNotice('Moments can be 15 seconds at most')
+      // Longer than 15 seconds: pick which 15 to keep, instead of starting over.
+      if (canTrimVideo() && duration <= TRIM_MAX_SECONDS) {
+        setTrimSource({ blob, duration })
+        return
+      }
+      setNotice(duration > TRIM_MAX_SECONDS ? 'That video is over 10 minutes. Pick a shorter one.' : 'Moments can be 15 seconds at most')
+      return
+    }
+    if (blob.size > STORY_MAX_BYTES) {
+      setNotice(`That video is ${formatMb(blob.size)}. The limit is 30 MB.`)
       return
     }
     if (liveOnly && onCaptured) {
@@ -428,6 +441,20 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
   }
 
   if (!isOpen) return null
+
+  if (trimSource) {
+    return (
+      <TrimSheet
+        blob={trimSource.blob}
+        duration={trimSource.duration}
+        onCancel={() => setTrimSource(null)}
+        onDone={(clip) => {
+          setTrimSource(null)
+          void acceptBlob(clip.blob, clip.duration)
+        }}
+      />
+    )
+  }
 
   const busy = phase === 'requesting' || phase === 'uploading' || phase === 'saving'
   const ringRadius = 46
@@ -647,7 +674,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
         {step === 'idle' && (
           <>
             <p className="text-[15px] leading-relaxed text-[var(--ink)]">
-              {introText ?? "A photo or a video up to 15 seconds. It goes on today's day of your pact, for everyone who can watch it."}
+              {introText ?? "A photo or a video up to 15 seconds (pick 15 seconds from a longer one). It goes on today's day of your pact, for everyone who can watch it."}
             </p>
             {!introText && <p className="rounded-[6px] border border-[var(--hairline)] bg-[var(--card)] px-4 py-3 text-[14px] text-[var(--muted)]">{STORY_LIMITS_TEXT}</p>}
 
