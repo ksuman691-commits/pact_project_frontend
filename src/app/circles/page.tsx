@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronRight, Search, SlidersHorizontal, Plus, Users } from 'lucide-react'
-import GlanceStrip from '@/components/GlanceStrip'
+import { ChevronRight, Moon, Search, SlidersHorizontal, Plus, Sparkles, Users } from 'lucide-react'
+import HeroStats from '@/components/HeroStats'
 import PageHero from '@/components/PageHero'
 import PausedNote from '@/components/app/PausedNote'
 import { usePaused } from '@/lib/appStatus'
@@ -92,13 +92,25 @@ export default function CirclesPage() {
         <PageHero
           tone="navy"
           title="Circles"
-          line={!circlesQuery.isSuccess || !allActivityKnown ? 'Your people, keeping each other honest.' : activeCircles > 0 ? <><b>{activeCircles} {activeCircles === 1 ? 'circle is' : 'circles are'} moving</b> this week.</> : circles.length > 0 ? 'Quiet week. Post something to wake them up.' : 'Start a circle with the people who keep you honest.'}
+          tagline="Your people, keeping you honest"
+          busy={circlesQuery.isFetching}
+          line={!circlesQuery.isSuccess || !allActivityKnown ? 'Loading your circles…' : activeCircles > 0 ? <><b>{activeCircles} {activeCircles === 1 ? 'circle is' : 'circles are'} moving</b> this week.</> : circles.length > 0 ? 'Quiet week. Post something to wake them up.' : 'Start a circle with the people who keep you honest.'}
         >
-          <GlanceStrip
+          <HeroStats
             tone="navy"
-            inHero
             label="Your circles at a glance"
-            stats={glance.map((stat) => ({ label: stat.label, hint: stat.hint, value: circlesQuery.isSuccess ? stat.value : null, selected: membershipFilter === stat.filter, onSelect: () => setMembershipFilter(stat.filter) }))}
+            ready={circlesQuery.isSuccess}
+            stats={glance.map((stat, i) => ({
+              key: stat.filter,
+              label: stat.label,
+              hint: stat.hint,
+              value: circlesQuery.isSuccess ? stat.value : null,
+              sub: i === 0 ? 'You belong to' : i === 1 ? 'Posted this week' : 'Need a nudge',
+              icon: i === 0 ? <Users className="size-4 text-white" strokeWidth={2.4} aria-hidden="true" /> : i === 1 ? <Sparkles className="size-4 text-white" strokeWidth={2.4} aria-hidden="true" /> : <Moon className="size-4 text-white" strokeWidth={2.4} aria-hidden="true" />,
+              iconBg: i === 0 ? 'rgba(255,255,255,0.18)' : i === 1 ? 'linear-gradient(160deg, #4ADE80, #16A34A)' : 'linear-gradient(160deg, #A5B4FC, #6366F1)',
+              selected: membershipFilter === stat.filter,
+              onSelect: () => setMembershipFilter(stat.filter),
+            }))}
             action={circlesPaused ? undefined : { label: 'New circle', href: '/circles/create', icon: <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" /> }}
           />
           {circlesPaused && <PausedNote text={circlesPaused} className="mt-3" />}

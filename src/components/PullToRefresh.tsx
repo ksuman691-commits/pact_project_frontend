@@ -12,6 +12,9 @@ interface PullToRefreshProps {
   disabled?: boolean;
 }
 
+/** Fired as you pull and while refreshing: detail = { progress: 0–1, refreshing }. */
+export const PULL_EVENT = 'cp:pull';
+
 // How far (in already-resisted px) the user must pull before release triggers a refresh.
 const THRESHOLD = 68;
 // Hard cap on how far the indicator can travel, however hard/far the finger drags.
@@ -140,6 +143,11 @@ export default function PullToRefresh({ onRefresh, children, disabled = false }:
 
   const displayDistance = isRefreshing ? THRESHOLD : pullDistance;
   const progress = Math.min(displayDistance / THRESHOLD, 1);
+
+  // Lets the big mark at the top of a page (PageHero) close as you pull and spin while it loads.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent(PULL_EVENT, { detail: { progress, refreshing: isRefreshing } }));
+  }, [progress, isRefreshing]);
 
   return (
     <div

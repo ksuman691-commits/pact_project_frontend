@@ -3,16 +3,16 @@
 import CircleMark from '@/components/brand/CircleMark'
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Zap } from 'lucide-react';
-import GlanceStrip from '@/components/GlanceStrip';
+import { Camera, Check, Hourglass, Zap } from 'lucide-react';
 import PageHero from '@/components/PageHero';
+import HeroStats, { HeroSteps, TinyFace, type HeroStat } from '@/components/HeroStats';
 import DareCard from '@/components/DareCard';
 import CreateDareModal from '@/components/CreateDareModal';
 import PausedNote from '@/components/app/PausedNote';
 import { usePaused } from '@/lib/appStatus';
 import { useDareFeed, useMyDares } from '@/hooks/useDareQueries';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { dareRole, dareState, isActive, nextStep } from '@/lib/dareView';
+import { activeDeadline, creatorFace, dareRole, dareState, firstName, isActive, nextStep, recipientFace, timeLeft, type DareFace } from '@/lib/dareView';
 import type { Dare } from '@/types';
 
 type Tab = 'for-you' | 'sent' | 'discover' | 'history';
@@ -70,19 +70,37 @@ function DaresPageInner() {
     let yourMove = 0;
     let inPlay = 0;
     let doneByYou = 0;
+    let won = 0;
+    let paid = 0;
+    let soonest: number | null = null;
+    const waitingOn: DareFace[] = [];
     for (const dare of all) {
       const role = dareRole(dare, user?.id);
       const mineToAct = nextStep(dare, role) !== null;
       if (isActive(dare)) {
         ;(role === 'creator' ? sent : forYou).push(dare);
-        if (mineToAct) yourMove += 1;
-        else inPlay += 1;
+        if (mineToAct) {
+          yourMove += 1;
+          const dl = activeDeadline(dare);
+          const at = dl ? new Date(/[Zz]|[+-]\d{2}:?\d{2}$/.test(dl.target) ? dl.target : `${dl.target}Z`).getTime() : NaN;
+          if (!Number.isNaN(at) && (soonest == null || at < soonest)) soonest = at;
+        } else {
+          inPlay += 1;
+          const face = role === 'creator' ? recipientFace(dare) : creatorFace(dare);
+          if (face && !waitingOn.some((f) => f.name === face.name)) waitingOn.push(face);
+        }
       } else {
         history.push(dare);
       }
       // Counts dares you did and dares you sent and marked done: both are
       // "done" from where you sit, and both live in the Done by you list.
-      if (role !== 'viewer' && dareState(dare) === 'completed') doneByYou += 1;
+      if (role !== 'viewer' && dareState(dare) === 'completed') {
+        doneByYou += 1;
+        if (dare.reward_amount) {
+          if (role === 'doer') won += Number(dare.reward_amount);
+          else paid += Number(dare.reward_amount);
+        }
+      }
     }
     // Done first (newest on top), then the ones that didn't happen.
     const finishedAt = (d: Dare) => new Date(d.completed_at || d.created_at).getTime();
@@ -100,7 +118,7 @@ function DaresPageInner() {
     };
     forYou.sort(byUrgency);
     sent.sort(byUrgency);
-    return { forYou, sent, history, yourMove, inPlay, doneByYou };
+    return { forYou, sent, history, yourMove, inPlay, doneByYou, won, paid, soonest: soonest as number | null, waitingOn };
   }, [all, user?.id]);
 
   const youOweForYou = lists.forYou.filter((d) => nextStep(d, 'doer')).length;
@@ -118,38 +136,89 @@ function DaresPageInner() {
   const shown = tab === 'for-you' ? lists.forYou : tab === 'sent' ? lists.sent : tab === 'history' ? lists.history : discover;
   const query = tab === 'discover' ? feed : mine;
   const loading = tab === 'discover' ? feed.isLoading : mine.isLoading || !isInitialized;
-  const stats: { label: string; value: number; tab: Tab }[] = [
-    { label: 'Your move', value: lists.yourMove, tab: lists.forYou.some((d) => nextStep(d, 'doer')) || !lists.sent.some((d) => nextStep(d, 'creator')) ? 'for-you' : 'sent' },
-    { label: 'In play', value: lists.inPlay, tab: lists.sent.some((d) => !nextStep(d, 'creator')) ? 'sent' : 'for-you' },
-    { label: 'Done by you', value: lists.doneByYou, tab: 'history' },
+  const moveTab: Tab = lists.forYou.some((d) => nextStep(d, 'doer')) || !lists.sent.some((d) => nextStep(d, 'creator')) ? 'for-you' : 'sent';
+  const playTab: Tab = lists.sent.some((d) => !nextStep(d, 'creator')) ? 'sent' : 'for-you';
+  const nextLeft = lists.soonest != null ? timeLeft(new Date(lists.soonest).toISOString()) : null;
+  const faces = lists.waitingOn;
+  const nothingYet = mine.isSuccess && all.length === 0;
+
+  // Each number says what it means for you right now, not just a count.
+  const heroStats: HeroStat[] = [
+    {
+      key: 'move',
+      label: 'Your move',
+      value: mine.isSuccess ? lists.yourMove : null,
+      sub: lists.yourMove > 0 ? (nextLeft ? `Next ends in ${nextLeft}` : 'Waiting on you') : 'All clear',
+      icon: <Zap className="size-4 text-[var(--ink)]" strokeWidth={0} fill="currentColor" aria-hidden="true" />,
+      iconBg: 'var(--dare)',
+      visual: lists.yourMove > 0 ? <span className="cp-pulse-dot mr-1 size-2.5 rounded-full bg-[#E5363B]" aria-hidden="true" /> : undefined,
+      hint: 'Dares waiting on you to answer, post proof or review',
+      selected: tab === moveTab && lists.yourMove > 0,
+      onSelect: () => setTab(moveTab),
+    },
+    {
+      key: 'play',
+      label: 'In play',
+      value: mine.isSuccess ? lists.inPlay : null,
+      sub: faces.length ? `With ${firstName(faces[0].name)}${faces.length > 1 ? ` +${faces.length - 1}` : ''}` : 'Nothing running',
+      icon: <Hourglass className="size-4 text-white" strokeWidth={2.4} aria-hidden="true" />,
+      iconBg: 'rgba(255,255,255,0.16)',
+      visual: faces.length ? (
+        <span className="flex -space-x-1.5">
+          {faces.slice(0, 2).map((f) => (
+            <TinyFace key={f.name} name={f.name} avatarUrl={f.avatarUrl} ring="var(--ink)" />
+          ))}
+        </span>
+      ) : undefined,
+      hint: 'Running dares waiting on someone else',
+      onSelect: () => setTab(playTab),
+    },
+    {
+      key: 'done',
+      label: 'Done by you',
+      value: mine.isSuccess ? lists.doneByYou : null,
+      sub: lists.won > 0 ? `₹${lists.won} won` : lists.paid > 0 ? `₹${lists.paid} paid out` : lists.doneByYou > 0 ? 'Proof or it didn\u2019t happen' : 'None yet',
+      icon: <Check className="size-4 text-white" strokeWidth={3} aria-hidden="true" />,
+      iconBg: 'linear-gradient(160deg, #4ADE80, #16A34A)',
+      hint: 'Dares you did, and dares you sent and marked done',
+      selected: tab === 'history',
+      onSelect: () => setTab('history'),
+    },
   ];
 
   const heroLine = !mine.isSuccess
-    ? 'Dare one person to do one thing, soon.'
-    : lists.yourMove > 0
-      ? <><b>{lists.yourMove} {lists.yourMove === 1 ? 'dare needs' : 'dares need'} you.</b> The clock is running.</>
-      : lists.inPlay > 0
-        ? <><b>{lists.inPlay} in play.</b> We&apos;ll tell you the moment they move.</>
-        : lists.doneByYou > 0
-          ? <><b>{lists.doneByYou} done.</b> Who&apos;s next?</>
-          : 'Dare one person to do one thing, soon.';
+    ? 'Loading your dares…'
+    : nothingYet
+      ? 'Dare one friend to do one thing. They post proof before the clock runs out.'
+      : lists.yourMove > 0
+        ? <><b>{lists.yourMove} {lists.yourMove === 1 ? 'dare needs' : 'dares need'} you.</b> The clock is running.</>
+        : lists.inPlay > 0
+          ? <><b>{lists.inPlay} in play.</b> We&apos;ll tell you the moment they move.</>
+          : lists.doneByYou > 0
+            ? <><b>{lists.doneByYou} done.</b> Who&apos;s next?</>
+            : 'Dare one person to do one thing, soon.';
+
+  const sendAction = daresPaused ? undefined : { label: nothingYet ? 'Send your first dare' : 'Send a dare', onClick: () => setCreateOpen(true), icon: <Zap className="size-4" strokeWidth={0} fill="currentColor" aria-hidden="true" /> };
 
   return (
     <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
       <div className="mx-auto max-w-2xl">
-        <PageHero
-          tone="dare"
-          title="Dares"
-          line={heroLine}
-          watermark={<Zap className="size-[250px] text-[var(--ink)]" strokeWidth={0} fill="currentColor" />}
-        >
-          <GlanceStrip
-            tone="ink"
-            inHero
-            label="Your dares at a glance"
-            stats={stats.map((stat) => ({ label: stat.label, value: mine.isSuccess ? stat.value : null, selected: stat.tab === 'history' && tab === 'history', onSelect: () => setTab(stat.tab) }))}
-            action={daresPaused ? undefined : { label: 'Send a dare', onClick: () => setCreateOpen(true), icon: <Zap className="size-4" strokeWidth={0} fill="currentColor" aria-hidden="true" /> }}
-          />
+        <PageHero tone="dare" title="Dares" tagline="Proof or it didn't happen" line={heroLine} busy={mine.isFetching}>
+          {nothingYet ? (
+            <>
+              <HeroSteps
+                tone="dare"
+                steps={[
+                  { icon: <Zap className="size-4" strokeWidth={0} fill="currentColor" />, title: 'Dare a friend', body: 'One thing, a clock on it' },
+                  { icon: <Camera className="size-4" strokeWidth={2.4} />, title: 'They post proof', body: 'Photo or video, in time' },
+                  { icon: <Check className="size-4" strokeWidth={3} />, title: 'Mark it done', body: 'Add a reward from ₹9' },
+                ]}
+              />
+              <HeroStats tone="dare" label="Start" stats={[]} action={sendAction} />
+            </>
+          ) : (
+            <HeroStats tone="dare" label="Your dares at a glance" stats={heroStats} ready={mine.isSuccess} action={sendAction} />
+          )}
           {daresPaused && <PausedNote text={daresPaused} className="mt-3" />}
         </PageHero>
 

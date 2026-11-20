@@ -4,13 +4,16 @@ import { isFinishedPact } from '@/lib/pactOutcome'
 import { isActive as isDareActive } from '@/lib/dareView'
 import Link from 'next/link'
 import CircleMark from '@/components/brand/CircleMark'
-import GlanceStrip from '@/components/GlanceStrip'
 import PageHero from '@/components/PageHero'
+import HeroStats, { HeroSteps, type HeroStat } from '@/components/HeroStats'
+import { MarkProgress } from '@/components/brand/CircleMark'
+import { useCpScore } from '@/hooks/useCpScore'
+import { useUserStats } from '@/hooks/useUserQueries'
 import { useTodayStatus } from '@/hooks/useTodayStatus'
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
-import { Eye, Plus, Search } from 'lucide-react'
+import { Camera, Check, Eye, Flame, Gauge, Megaphone, Plus, Search } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { getMyWatching, withdrawAsk, type WatchRequest } from '@/lib/api/access'
 import { DarePactCard } from '@/components/classic/PactCard'
@@ -43,6 +46,24 @@ function SectionLabel({ label, count, tone, muted, note }: { label: string; coun
       {label} <span className="font-bold text-[var(--muted)]">{count}</span>
       {note && <span className="ml-1.5 font-semibold normal-case tracking-normal text-[var(--muted)]">· {note}</span>}
     </h2>
+  )
+}
+
+/** The CP Score's last weeks as a small line. */
+function Sparkline({ points }: { points: number[] }) {
+  const pts = points.slice(-20)
+  const min = Math.min(...pts)
+  const max = Math.max(...pts)
+  const span = Math.max(1, max - min)
+  const w = 34
+  const h = 16
+  const d = pts.map((v, i) => `${i === 0 ? 'M' : 'L'}${((i / (pts.length - 1)) * w).toFixed(1)} ${(h - ((v - min) / span) * h).toFixed(1)}`).join(' ')
+  const up = pts[pts.length - 1] >= pts[0]
+  return (
+    <svg width={w} height={h + 2} viewBox={`0 -1 ${w} ${h + 2}`} aria-hidden="true" className="overflow-visible">
+      <path d={d} fill="none" stroke={up ? '#4ADE80' : '#FF8A80'} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="cp-draw-line" pathLength={1} />
+      <circle cx={w} cy={h - ((pts[pts.length - 1] - min) / span) * h} r={2.6} fill="#fff" />
+    </svg>
   )
 }
 
@@ -213,38 +234,114 @@ function PactsPageInner() {
   const activeShown = active.filter((pact: any) => pact.is_joined_by_me !== false)
   // Left today comes from the same "today" answer Home uses, so it drops the moment you check in anywhere.
   const leftToday = today.isLoading ? null : today.pacts.filter((p) => !p.posted_today).length
-  const glance: { label: string; value: string | number | null; filter: (typeof filters)[number]; selects: boolean }[] = [
-    { label: 'Active', value: counts.Active, filter: 'Active', selects: true },
-    { label: leftToday === 0 && counts.Active > 0 ? 'All done today' : 'Left today', value: leftToday, filter: 'Active', selects: false },
-    { label: 'Ended', value: counts.Ended, filter: 'Ended', selects: true },
-  ]
   const nothingToShow =
     (!showActive || activeShown.length === 0) &&
     (!showWatching || (watchingLive.length === 0 && (filter !== 'Watching' || visibleRequests.length === 0))) &&
     (!showDares || dareRows.length === 0) &&
     (!showDone || doneAll.length === 0)
 
+  // The three numbers that say how you're doing, not just what's open:
+  // your streak (and whether today keeps it), how many pacts you actually
+  // finished, and your public CP Score. Active count lives in the line above.
+  const statsQuery = useUserStats(Number(user?.id || 0))
+  const userStats: any = (statsQuery.data as any)?.data
+  const streak = userStats ? Number(userStats.current_streak ?? 0) : null
+  const bestStreak = Number(userStats?.longest_streak_days ?? 0)
+  const score = useCpScore(user?.id)
+  const endedMine = participantPacts.filter((p) => !isActive(p) && p.status !== 'cancelled')
+  const kept = endedMine.filter(isFinishedPact).length
+  const keptRate = endedMine.length ? kept / endedMine.length : 0
+  const runningCount = counts.Active
+  const nothingYet = query.isSuccess && pacts.length === 0 && watchingAll.length === 0
+
+  const streakSub =
+    streak == null
+      ? ' '
+      : runningCount === 0
+        ? bestStreak > 0 ? `Best ${bestStreak} days` : 'Starts with your first pact'
+        : leftToday != null && leftToday > 0
+          ? streak > 0 ? 'Post today to keep it' : 'Post today to start'
+          : leftToday === 0
+            ? 'Safe for today'
+            : bestStreak > 0 ? `Best ${bestStreak} days` : ' '
+  const scoreData = score.data
+  const scoreValue = scoreData && scoreData.status !== 'unavailable' && scoreData.score != null ? Math.round(scoreData.score) : null
+  const scoreSub = !scoreData
+    ? ' '
+    : [scoreData.is_new ? 'New' : scoreData.band, scoreData.change_30d ? `${scoreData.change_30d > 0 ? '▲' : '▼'}${Math.abs(scoreData.change_30d)} in 30 days` : null].filter(Boolean).join(' · ') || ' '
+
+  const heroStats: HeroStat[] = [
+    {
+      key: 'streak',
+      label: 'Streak',
+      value: streak,
+      unit: streak === 1 ? 'day' : 'days',
+      sub: streakSub,
+      icon: <Flame className="cp-flame size-4 text-white" strokeWidth={0} fill="currentColor" aria-hidden="true" />,
+      iconBg: 'linear-gradient(160deg, #FFB547, #FF5A1F)',
+      hint: 'Days in a row you showed up',
+      onSelect: () => setFilter('Active'),
+      selected: false,
+    },
+    {
+      key: 'kept',
+      label: 'Pacts kept',
+      value: query.isSuccess ? kept : null,
+      unit: endedMine.length ? `of ${endedMine.length}` : undefined,
+      sub: endedMine.length ? `${Math.round(keptRate * 100)}% finished` : 'Your first one ends soon',
+      icon: <Check className="size-4 text-white" strokeWidth={3} aria-hidden="true" />,
+      iconBg: 'linear-gradient(160deg, #4ADE80, #16A34A)',
+      visual: endedMine.length ? <MarkProgress value={keptRate} size={22} color="#4ADE80" track="rgba(255,255,255,0.18)" /> : undefined,
+      hint: 'Ended pacts you finished',
+      selected: filter === 'Ended',
+      onSelect: () => setFilter(filter === 'Ended' ? 'All' : 'Ended'),
+    },
+    {
+      key: 'score',
+      label: 'CP Score',
+      value: scoreValue,
+      sub: scoreSub,
+      icon: <Gauge className="size-4 text-white" strokeWidth={2.4} aria-hidden="true" />,
+      iconBg: 'linear-gradient(160deg, #FF7A7E, #E5363B)',
+      visual: scoreData?.trend && scoreData.trend.length > 1 ? <Sparkline points={scoreData.trend.map((t) => t.score)} /> : undefined,
+      hint: 'Your public reliability score, 0 to 100',
+      href: (user as any)?.username ? `/profile/${(user as any).username}/score` : '/profile',
+    },
+  ]
+
   const heroLine = !query.isSuccess
-    ? 'Say it, show up, keep the streak.'
-    : counts.Active === 0
-      ? 'Nothing running. Start one today.'
-      : leftToday == null
-        ? 'Say it, show up, keep the streak.'
-        : leftToday > 0
-        ? <><b>{leftToday} {leftToday === 1 ? 'check-in' : 'check-ins'} left today.</b> Keep the streak alive.</>
-        : <><b>All done today.</b> See you tomorrow.</>
+    ? 'Loading your pacts…'
+    : nothingYet
+      ? 'Make one promise. Show up once a day. Your circle sees it.'
+      : runningCount === 0
+        ? <><b>Nothing running right now.</b> Start the next one.</>
+        : <><b>{runningCount} {runningCount === 1 ? 'pact' : 'pacts'} running.</b> {leftToday === 0 ? 'Every one checked in today.' : 'Show up once a day to keep them.'}</>
 
   return (
     <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
       <div className="mx-auto max-w-2xl">
-        <PageHero tone="navy" title="Pacts" line={heroLine}>
-          <GlanceStrip
-            tone="navy"
-            inHero
-            label="Your pacts at a glance"
-            stats={glance.map((stat) => ({ label: stat.label, value: query.isSuccess ? stat.value : null, selected: stat.selects && filter === stat.filter, onSelect: () => setFilter(stat.selects && filter === stat.filter ? 'All' : stat.filter) }))}
-            action={{ label: 'New pact', href: '/pacts/create', icon: <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" /> }}
-          />
+        <PageHero tone="navy" title="Pacts" tagline="Promises you keep, out loud" line={heroLine} busy={query.isFetching || statsQuery.isFetching}>
+          {nothingYet ? (
+            <>
+              <HeroSteps
+                tone="navy"
+                steps={[
+                  { icon: <Megaphone className="size-4" strokeWidth={2.4} />, title: 'Say it', body: 'One goal, a number of days' },
+                  { icon: <Camera className="size-4" strokeWidth={2.4} />, title: 'Show up', body: 'A photo or clip each day' },
+                  { icon: <Check className="size-4" strokeWidth={3} />, title: 'Keep it', body: 'Finish and your score climbs' },
+                ]}
+              />
+              <HeroStats tone="navy" label="Start" stats={[]} action={{ label: 'Make your first pact', href: '/pacts/create', icon: <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" /> }} />
+            </>
+          ) : (
+            <HeroStats
+              tone="navy"
+              label="How you're doing"
+              stats={heroStats}
+              ready={query.isSuccess}
+              action={{ label: 'New pact', href: '/pacts/create', icon: <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" /> }}
+            />
+          )}
         </PageHero>
 
         <div className="h-4" />
