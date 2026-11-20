@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
-import { Camera, ChevronLeft, ChevronRight, Globe, Heart, Lock, Plus, Search, Users, X } from 'lucide-react'
+import { Camera, ChevronRight, Globe, Heart, Lock, Plus, Search, Users, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
 import PriceChooser from '@/components/private/PriceChooser'
@@ -19,6 +19,9 @@ import { createStory, putStoryVideo, requestStoryUploadUrl } from '@/lib/api/sto
 import { IDEAS, parseSentence, typedTitle, type Frequency } from '@/lib/pactSentence'
 import { STORY_MAX_SECONDS } from '@/lib/stories'
 import PactLiveBeat from '@/components/celebrations/PactLiveBeat'
+import FlowHero, { FlowFooter } from '@/components/flow/FlowHero'
+import HeroMark from '@/components/brand/HeroMark'
+import CircleMark from '@/components/brand/CircleMark'
 import { pactInviteMessage } from '@/lib/inviteMessages'
 
 const INK = '#17181D'
@@ -27,11 +30,13 @@ const NAVY = '#1F3A93'
 const LINE = '#DCD3C1'
 const CARD = '#FBF8F1'
 const PAPER = '#F4EFE4'
-/** A pact with no photo yet: true blue, lighter top-left. The same tile as pact cards. */
-const PACT_BLUE_TILE = 'radial-gradient(120% 90% at 25% 15%, #2E4DB3 0%, #1F3A93 55%, #142766 100%)'
 
-/** Say it, choose who, shoot Day 1, review, then it's live. The camera comes after the audience is decided. */
-type Step = 'say' | 'who' | 'shoot' | 'review' | 'live'
+/**
+ * Say it, choose who, then shoot Day 1 and it starts. The camera has its own
+ * "Use this / Retake", and the live card at the top already shows the whole
+ * pact, so there's no separate review screen any more.
+ */
+type Step = 'say' | 'who' | 'shoot' | 'live'
 /** Who sees the pact. Private moments are a separate lock on top of any of these. */
 type Audience = 'circle' | 'followers' | 'public'
 
@@ -58,9 +63,9 @@ function pill(on: boolean): React.CSSProperties {
 }
 
 /**
- * New pact, the short way: shoot Day 1, say what you'll do in one sentence,
- * pick who's in, and it's live with the moment already in it.
- * Replaces the six-step "What's the vibe?" wizard.
+ * New pact in two screens and the camera: say it, choose who sees it, then
+ * shoot Day 1 (or start without it). The coloured top holds a live card of
+ * the pact, so every answer lands on it and nothing needs reviewing.
  */
 export default function NewPactFlow({ onExit, initialCircleId = null, initialText = '', sprint = false, first = false }: { onExit: () => void; initialCircleId?: number | null; initialText?: string | null; /** From a quiet circle's "Start a 7-day sprint": 7 days, and the circle's members are told. */ sprint?: boolean; /** Right after sign-up: suggests 7 days and says it's their first. */ first?: boolean }) {
   const router = useRouter()
@@ -114,7 +119,6 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
     if (step === 'say') window.setTimeout(() => inputRef.current?.focus(), 250)
   }, [step])
 
-  const isPhoto = Boolean(clip?.contentType.startsWith('image/'))
   const parsed = parseSentence(text)
   const days = pickedDays ?? parsed.days ?? 30
   const frequency = pickedFrequency ?? parsed.frequency ?? 'Every day'
@@ -138,8 +142,9 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
         ? 'Followers see it locked in their feed. Anyone with the link can pay to watch.'
         : 'Shows in Discover, locked. Anyone can pay to watch.'
 
-  const post = async () => {
+  const post = async (dayOne: Clip | null) => {
     if (!ready || posting || !audience) return
+    const photo = Boolean(dayOne?.contentType.startsWith('image/'))
     const payload = {
       title,
       description: '',
@@ -165,20 +170,21 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
       if (!pactId) throw new Error('no id')
     } catch {
       setPosting(null)
+      setStep('who')
       return
     }
 
-    if (clip) {
+    if (dayOne) {
       try {
         setPosting('Posting Day 1… 0%')
         const onProgress = (fraction: number) => setPosting(`Posting Day 1… ${Math.round(fraction * 100)}%`)
-        if (isPhoto) {
-          const file = new File([clip.blob], clip.contentType === 'image/png' ? 'day-1.png' : 'day-1.jpg', { type: clip.contentType })
+        if (photo) {
+          const file = new File([dayOne.blob], dayOne.contentType === 'image/png' ? 'day-1.png' : 'day-1.jpg', { type: dayOne.contentType })
           await pactService.uploadProofFile(pactId, file, 'photo', undefined, undefined, onProgress)
         } else {
-          const { upload_url, object_key } = await requestStoryUploadUrl(pactId, { content_type: clip.contentType, size_bytes: clip.blob.size })
-          await putStoryVideo(upload_url, clip.blob, clip.contentType, onProgress)
-          await createStory(pactId, { object_key, duration_seconds: Math.min(STORY_MAX_SECONDS, Math.max(1, Math.round(clip.duration))) })
+          const { upload_url, object_key } = await requestStoryUploadUrl(pactId, { content_type: dayOne.contentType, size_bytes: dayOne.blob.size })
+          await putStoryVideo(upload_url, dayOne.blob, dayOne.contentType, onProgress)
+          await createStory(pactId, { object_key, duration_seconds: Math.min(STORY_MAX_SECONDS, Math.max(1, Math.round(dayOne.duration))) })
         }
       } catch {
         toast("Your pact is live. Day 1 didn't upload, add it from the pact.")
@@ -225,7 +231,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
     }
   }
 
-  if (step === 'shoot') {
+  if (step === 'shoot' && !posting) {
     return (
       <StoryCaptureSheet
         isOpen
@@ -233,88 +239,119 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
         pactId={0}
         pactTitle={title || 'New pact · Day 1'}
         onCaptured={(captured) => {
-          setClip({ ...captured, url: URL.createObjectURL(captured.blob) })
-          setStep('review')
+          const next = { ...captured, url: URL.createObjectURL(captured.blob) }
+          setClip(next)
+          void post(next)
         }}
-        // Closing the camera, or no camera, still lets the pact start; Day 1 can come later.
-        onClose={() => setStep('review')}
-        onSkip={() => setStep('review')}
+        // Closing the camera goes back a step; "skip" starts the pact without Day 1.
+        onClose={() => setStep('who')}
+        onSkip={() => void post(null)}
       />
     )
   }
 
-  const header = (back: () => void, index: number) => (
-    <div className="flex items-center px-1 pt-[max(0.75rem,env(safe-area-inset-top))]">
-      <button type="button" onClick={back} aria-label="Back" className="flex size-11 items-center justify-center" style={{ color: INK }}>
-        <ChevronLeft className="size-6" />
-      </button>
-      <div className="flex flex-1 justify-center gap-1.5">
-        {[0, 1, 2].map((i) => (
-          <span key={i} className="h-[5px] w-[22px] rounded-full" style={{ background: i <= index ? NAVY : '#D4CBB8' }} />
-        ))}
+  const audienceLabel = audience === 'circle' ? String(circle?.name || 'Your circle') : audience === 'followers' ? 'My followers' : audience === 'public' ? 'Everyone' : null
+  const blockedReason = !audience || (audience === 'circle' && circleId == null) ? 'Choose who sees it' : needsUpi ? 'Add your UPI first' : needsPrice ? 'Pick a price' : null
+
+  // The live card: what you're promising, filling in as you answer.
+  const card = (
+    <div className="rounded-[22px] bg-white px-4 py-3.5 text-[var(--ink)]" style={{ boxShadow: '0 0 0 1.5px #17181D, 0 3px 0 rgba(10,20,70,0.45)' }} aria-live="polite" aria-label="Preview of your pact">
+      <p className="flex items-center gap-1.5 text-[13px] font-bold" style={{ color: NAVY }}>
+        <CircleMark size={14} />
+        I will
+        {locked && watchPrice != null && (
+          <span key={watchPrice} className="cp-pop-in ml-auto flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[12.5px] font-bold text-white" style={{ background: NAVY }}>
+            <Lock className="size-3" strokeWidth={2.6} aria-hidden="true" />₹{watchPrice} to watch
+          </span>
+        )}
+      </p>
+      <p className={`mt-1 line-clamp-3 text-balance text-[24px] font-bold leading-[1.1] tracking-[-0.03em] ${title ? '' : 'opacity-35'}`}>
+        {title || 'run 5 km every morning'}
+      </p>
+      <div className="my-3 h-px" style={{ background: `repeating-linear-gradient(90deg, ${LINE} 0 6px, transparent 6px 12px)` }} />
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span key={frequency} className="cp-pop-in flex h-6 items-center rounded-full px-2 text-[11.5px] font-bold" style={{ background: '#E8EDFA', color: NAVY }}>{frequency}</span>
+        <span key={`d${days}`} className="cp-pop-in flex h-6 items-center rounded-full px-2 text-[11.5px] font-bold" style={{ background: '#E8EDFA', color: NAVY }}>{days} days</span>
+        {ready && <span className="flex h-6 items-center rounded-full px-2 text-[11.5px] font-bold" style={{ background: '#F1ECE1', color: INK }}>{parsed.categoryLabel}</span>}
+        {audienceLabel && (
+          <span key={audienceLabel} className="cp-pop-in flex h-6 items-center gap-1 rounded-full px-2 text-[11.5px] font-bold text-white" style={{ background: NAVY }}>
+            {audience === 'circle' ? <Users className="size-3" strokeWidth={2.6} /> : audience === 'followers' ? <Heart className="size-3" strokeWidth={2.6} /> : <Globe className="size-3" strokeWidth={2.6} />}
+            {audienceLabel}
+          </span>
+        )}
       </div>
-      <button type="button" onClick={onExit} aria-label="Close" className="flex size-11 items-center justify-center" style={{ color: INK }}>
-        <X className="size-5" />
-      </button>
     </div>
   )
 
+  const chip = 'h-10 shrink-0 rounded-full px-3.5 text-[14px] font-bold transition active:scale-95'
+  const primary = 'flex h-[54px] w-full items-center justify-center gap-2 rounded-full text-[16px] font-bold transition active:scale-[0.98]'
+
   return (
     <div className="fixed inset-0 z-[70] flex flex-col overflow-y-auto" style={{ background: PAPER, color: INK }}>
+      {(step === 'say' || step === 'who') && (
+        <FlowHero
+          tone="navy"
+          steps={['Say it', 'Who', 'Day 1']}
+          current={step === 'say' ? 0 : 1}
+          onBack={step === 'who' ? () => setStep('say') : undefined}
+          onExit={onExit}
+        >
+          {card}
+        </FlowHero>
+      )}
+
       {step === 'say' && (
         <>
-          {header(onExit, 0)}
-          <div className="mx-auto w-full max-w-md flex-1 px-5">
-            <label className="mt-5 block">
-              {first && (
-                <span className="mb-1 block text-[13.5px] font-semibold" style={{ color: MUTED }}>
-                  Your first pact. Start small: 7 days is plenty. You can close this and look around first.
-                </span>
-              )}
-              <span className="block text-[30px] font-extrabold tracking-[-0.03em]" style={{ color: INK }}>I will…</span>
-              <input
-                ref={inputRef}
-                value={text}
-                onChange={(e) => setText(e.target.value.slice(0, 120))}
-                placeholder="run 5 km every morning"
-                enterKeyHint="next"
-                className="mt-2 w-full border-0 border-b-2 bg-transparent pb-2.5 pt-1.5 text-[21px] font-semibold outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:shadow-none placeholder:text-[17px] placeholder:font-medium placeholder:text-[#A39C8C]"
-                style={{ borderColor: NAVY, color: INK }}
-              />
+          <div key="say" className="pact-step-enter mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-6">
+            {first && (
+              <p className="mb-2 text-[13.5px] font-semibold" style={{ color: MUTED }}>
+                Your first pact. Start small: 7 days is plenty. You can close this and look around first.
+              </p>
+            )}
+            <label className="block">
+              <span className="block text-[26px] font-bold leading-[1.1] tracking-[-0.03em]">Say it out loud</span>
+              <span className="mt-1.5 block text-[14.5px]" style={{ color: MUTED }}>Finish the sentence. Your circle will hold you to it.</span>
+              <span className="mt-4 flex items-center gap-2 rounded-[18px] bg-[var(--card)] px-4 shadow-[inset_0_0_0_1.5px_#DCD3C1] focus-within:shadow-[inset_0_0_0_2px_#1F3A93]">
+                <span className="text-[20px] font-bold" style={{ color: NAVY }}>I will</span>
+                <input
+                  ref={inputRef}
+                  value={text}
+                  onChange={(e) => setText(e.target.value.slice(0, 120))}
+                  placeholder="run 5 km every morning"
+                  enterKeyHint="next"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && ready) setStep('who')
+                  }}
+                  className="h-14 min-w-0 flex-1 bg-transparent text-[20px] font-semibold outline-none focus-visible:outline-none placeholder:font-medium placeholder:text-[#A39C8C]"
+                />
+              </span>
             </label>
 
             {ready ? (
               <>
-                <div className="mt-5 text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>HOW OFTEN</div>
-                <div className="mt-2 flex gap-2 overflow-x-auto scrollbar-hide">
+                <div className="mt-5 mb-2 text-[14px] font-bold">How often</div>
+                <div className="-mx-5 flex gap-2 overflow-x-auto px-5 scrollbar-hide">
                   {FREQUENCIES.map((f) => (
-                    <button key={f} type="button" onClick={() => setPickedFrequency(f)} className="h-9 shrink-0 rounded-full px-3.5 text-[13.5px] font-bold" style={pill(frequency === f)}>
+                    <button key={f} type="button" onClick={() => setPickedFrequency(f)} aria-pressed={frequency === f} className={chip} style={pill(frequency === f)}>
                       {f}
                     </button>
                   ))}
                 </div>
-                <div className="mt-4 text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>FOR HOW LONG</div>
-                <div className="mt-2 flex gap-2 overflow-x-auto scrollbar-hide">
+                <div className="mt-5 mb-2 text-[14px] font-bold">For how long</div>
+                <div className="-mx-5 flex gap-2 overflow-x-auto px-5 scrollbar-hide">
                   {[...new Set([...(parsed.days && !DAY_OPTIONS.includes(parsed.days) ? [parsed.days] : []), ...DAY_OPTIONS])].map((n) => (
-                    <button key={n} type="button" onClick={() => setPickedDays(n)} className="h-9 shrink-0 rounded-full px-3.5 text-[13.5px] font-bold" style={pill(days === n)}>
+                    <button key={n} type="button" onClick={() => setPickedDays(n)} aria-pressed={days === n} className={chip} style={pill(days === n)}>
                       {n} days
                     </button>
                   ))}
                 </div>
-                <div className="mt-5 rounded-[18px] p-4" style={{ background: CARD, border: `1px solid ${LINE}` }}>
-                  <div className="text-[11.5px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>YOUR PACT</div>
-                  <div className="mt-1 text-[19px] font-extrabold leading-tight tracking-[-0.02em]" style={{ color: INK }}>{title}</div>
-                  <div className="mt-1 text-[13px]" style={{ color: MUTED }}>
-                    {frequency} · {days} days · {parsed.categoryLabel}
-                  </div>
-                </div>
               </>
             ) : (
               <>
-                <div className="mt-6 text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>IDEAS TO START</div>
-                <div className="mt-2.5 flex flex-col gap-2">
+                <div className="mt-6 mb-2 text-[14px] font-bold">Or pick one to start</div>
+                <div className="flex flex-col gap-2">
                   {IDEAS.map((idea) => (
-                    <button key={idea} type="button" onClick={() => setText(idea)} className="min-h-12 rounded-[16px] px-3.5 py-2.5 text-left text-[14.5px] font-semibold" style={{ background: CARD, border: `1px solid ${LINE}`, color: INK }}>
+                    <button key={idea} type="button" onClick={() => setText(idea)} className="min-h-12 rounded-[16px] px-3.5 py-2.5 text-left text-[14.5px] font-semibold active:scale-[0.99]" style={{ background: CARD, boxShadow: `inset 0 0 0 1px ${LINE}`, color: INK }}>
                       {idea.charAt(0).toUpperCase() + idea.slice(1)}
                     </button>
                   ))}
@@ -322,38 +359,38 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
               </>
             )}
           </div>
-          <div className="mx-auto w-full max-w-md px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
-            <button
-              type="button"
-              disabled={!ready}
-              onClick={() => setStep('who')}
-              className="h-14 w-full rounded-full text-[16.5px] font-extrabold"
-              style={ready ? { background: NAVY, color: '#FFFFFF', boxShadow: '0 8px 22px rgba(31,58,147,0.28)' } : { background: '#E1DACB', color: '#7A7B80' }}
-            >
-              Next
-            </button>
-          </div>
+          <FlowFooter>
+            <div className="mx-auto max-w-md">
+              <button
+                type="button"
+                disabled={!ready}
+                onClick={() => setStep('who')}
+                className={primary}
+                style={ready ? { background: NAVY, color: '#FFFFFF', boxShadow: '0 3px 0 #142766' } : { background: '#E1DACB', color: '#7A7B80' }}
+              >
+                Next: who sees it
+              </button>
+            </div>
+          </FlowFooter>
         </>
       )}
 
       {step === 'who' && (
         <>
-          {header(() => setStep('say'), 1)}
-          <div className="mx-auto w-full max-w-md flex-1 px-5">
-            <div className="pt-3 text-[28px] font-extrabold leading-tight tracking-[-0.03em]" style={{ color: INK }}>Who&apos;s in on it?</div>
-            <div className="mt-1.5 text-[14px]" style={{ color: MUTED }}>{title}</div>
-            <div className="mt-5 text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>WHO SEES IT</div>
-            <div className="mt-2 flex flex-col gap-2.5" role="radiogroup" aria-label="Who sees it">
+          <div key="who" className="pact-step-enter mx-auto flex w-full max-w-md flex-1 flex-col px-5 pt-6">
+            <div className="text-[26px] font-bold leading-[1.1] tracking-[-0.03em]">Who sees it?</div>
+            <div className="mt-1.5 text-[14.5px]" style={{ color: MUTED }}>They see every day you show up, and every day you don&apos;t.</div>
+            <div className="mt-4 flex flex-col gap-2" role="radiogroup" aria-label="Who sees it">
               {(
                 [
                   {
                     id: 'circle' as Audience,
                     name: 'A circle',
                     desc: circles.length === 0 ? 'You have no circles yet. Make one.' : circle && audience === 'circle' ? String(circle.name || '') : `Choose one of your ${circles.length} ${circles.length === 1 ? 'circle' : 'circles'}.`,
-                    icon: <Users className="size-[22px]" />,
+                    icon: <Users className="size-5" />,
                   },
-                  { id: 'followers' as Audience, name: 'My followers', desc: followerCount > 0 ? `${followerCount.toLocaleString('en-IN')} ${followerCount === 1 ? 'follower sees' : 'followers see'} it in their feed.` : 'Shows on your profile and to people who follow you.', icon: <Heart className="size-[22px]" /> },
-                  { id: 'public' as Audience, name: 'Everyone', desc: 'Shows in Discover. Anyone can find it.', icon: <Globe className="size-[22px]" /> },
+                  { id: 'followers' as Audience, name: 'My followers', desc: followerCount > 0 ? `${followerCount.toLocaleString('en-IN')} ${followerCount === 1 ? 'follower sees' : 'followers see'} it in their feed.` : 'Your profile and people who follow you.', icon: <Heart className="size-5" /> },
+                  { id: 'public' as Audience, name: 'Everyone', desc: 'Shows in Discover. Anyone can find it.', icon: <Globe className="size-5" /> },
                 ]
               ).map((option) => {
                 const on = audience === option.id
@@ -372,117 +409,102 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                       }
                       setAudience(option.id)
                     }}
-                    className="flex min-h-[72px] w-full items-center gap-3 rounded-[20px] px-3.5 py-3 text-left"
-                    style={{ background: on ? '#FFFFFF' : CARD, border: on ? `2px solid ${NAVY}` : `1px solid ${LINE}` }}
+                    className="flex min-h-[66px] w-full items-center gap-3 rounded-[18px] px-3.5 py-2.5 text-left transition active:scale-[0.99]"
+                    style={{ background: on ? '#FFFFFF' : CARD, boxShadow: on ? `inset 0 0 0 2px ${NAVY}` : `inset 0 0 0 1px ${LINE}` }}
                   >
-                    <span className="flex size-11 shrink-0 items-center justify-center rounded-full" style={on ? { background: NAVY, color: '#FFFFFF' } : { background: '#E8E2D4', color: INK }}>
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full" style={on ? { background: NAVY, color: '#FFFFFF', boxShadow: `0 0 0 1.5px ${INK}` } : { background: '#E8E2D4', color: INK }}>
                       {option.icon}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[17px] font-extrabold tracking-[-0.01em]" style={{ color: INK }}>{option.name}</span>
-                      <span className="mt-px block text-[13.5px] leading-snug" style={{ color: on && isCircle ? NAVY : MUTED, fontWeight: on && isCircle ? 700 : 400 }}>{option.desc}</span>
+                      <span className="block text-[16px] font-bold">{option.name}</span>
+                      <span className="mt-px block text-[13px] leading-snug" style={{ color: on && isCircle ? NAVY : MUTED, fontWeight: on && isCircle ? 700 : 400 }}>{option.desc}</span>
                     </span>
                     {isCircle && on ? (
-                      <span className="flex h-9 shrink-0 items-center rounded-full px-3 text-[13px] font-extrabold" style={{ background: CARD, border: `1px solid ${LINE}`, color: INK }}>Change</span>
+                      <span className="flex h-8 shrink-0 items-center rounded-full px-3 text-[13px] font-bold" style={{ background: CARD, boxShadow: `inset 0 0 0 1px ${LINE}` }}>Change</span>
                     ) : isCircle ? (
                       <ChevronRight className="size-[18px] shrink-0" style={{ color: MUTED }} strokeWidth={2.4} aria-hidden="true" />
-                    ) : null}
-                    {!(isCircle && !on) && (
-                      <span className="size-6 shrink-0 rounded-full" style={on ? { border: `8px solid ${NAVY}` } : { border: '2px solid #B9AF9A' }} />
+                    ) : (
+                      <span className="size-[22px] shrink-0 rounded-full" style={on ? { border: `7px solid ${NAVY}` } : { border: '2px solid #B9AF9A' }} />
                     )}
                   </button>
                 )
               })}
             </div>
 
-            <div className="mt-6 text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>EARN FROM IT</div>
-            <div className="mt-2 rounded-[24px] p-[18px]" style={{ background: NAVY, color: '#FFFFFF' }}>
-              <div className="flex items-start gap-3.5">
-                <span className="flex size-12 shrink-0 items-center justify-center rounded-full text-[22px] font-extrabold" style={{ background: '#FFFFFF', color: NAVY }} aria-hidden="true">₹</span>
+            {/* Paid moments: one row until you want it. */}
+            <div className="mt-4 rounded-[18px] p-3.5" style={locked ? { background: NAVY, color: '#FFFFFF' } : { background: CARD, boxShadow: `inset 0 0 0 1px ${LINE}` }}>
+              <div className="flex items-center gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full text-[18px] font-bold" style={locked ? { background: '#FFFFFF', color: NAVY, boxShadow: `0 0 0 1.5px ${INK}` } : { background: '#E8E2D4', color: INK }} aria-hidden="true">₹</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[19px] font-extrabold leading-tight tracking-[-0.02em]">{locked ? 'Paid moments are on' : 'Get paid for your moments'}</span>
-                  <span className="mt-1.5 block text-[13.5px] leading-snug" style={{ color: '#DCE3F7' }}>
-                    {locked ? lockHint : 'Lock your moments. People pay to watch, and the money goes straight to your UPI.'}
+                  <span className="block text-[16px] font-bold">Paid moments</span>
+                  <span className="mt-px block text-[13px] leading-snug" style={{ color: locked ? '#DCE3F7' : MUTED }}>
+                    {locked ? lockHint : 'Lock your moments. People pay to watch, straight to your UPI.'}
                   </span>
                 </span>
-                {locked && (
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked
-                    aria-label="Paid moments"
-                    onClick={() => setLocked(false)}
-                    className="relative h-8 w-[52px] shrink-0 rounded-full"
-                    style={{ background: '#FFFFFF' }}
-                  >
-                    <span className="absolute top-1 size-6 rounded-full" style={{ background: NAVY, left: 24 }} />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={locked}
+                  aria-label="Paid moments"
+                  onClick={() => {
+                    if (!locked && watchPrice == null) setWatchPrice(51)
+                    setLocked(!locked)
+                  }}
+                  className="relative h-8 w-[52px] shrink-0 rounded-full transition-colors"
+                  style={{ background: locked ? '#FFFFFF' : '#D4CBB8', boxShadow: `inset 0 0 0 1.5px ${INK}` }}
+                >
+                  <span className="absolute top-1 size-6 rounded-full transition-[left]" style={{ background: locked ? NAVY : '#FFFFFF', left: locked ? 24 : 4, boxShadow: `0 0 0 1.5px ${INK}` }} />
+                </button>
               </div>
-              {locked ? (
-                <div className="mt-4">
+              {locked && (
+                <div className="mt-3.5">
                   <PriceChooser dark price={watchPrice} onPrice={setWatchPrice} autoApprove={autoApprove} onAutoApprove={setAutoApprove} />
                   {watchPrice != null && (
-                    <div className="mt-3.5 rounded-[14px] px-3.5 py-2.5 text-[13px] leading-snug" style={{ background: 'rgba(255,255,255,0.12)', color: '#EEF2FC' }}>
-                      <span className="font-extrabold" style={{ color: '#FFFFFF' }}>Example</span> · 20 people at ₹{watchPrice} is ₹{(20 * watchPrice).toLocaleString('en-IN')} for one pact.
+                    <div className="mt-3 rounded-[14px] px-3.5 py-2.5 text-[13px] leading-snug" style={{ background: 'rgba(255,255,255,0.12)', color: '#EEF2FC' }}>
+                      20 people at ₹{watchPrice} is <b className="text-white">₹{(20 * watchPrice).toLocaleString('en-IN')}</b> for one pact.
                     </div>
                   )}
                   {tips.data && !tips.data.enabled ? (
-                    <Link href="/profile/tips" className="mt-3.5 flex min-h-11 items-center rounded-[14px] px-3.5 text-[13.5px] font-bold" style={{ border: '1.5px dashed #FFFFFF', color: '#FFFFFF' }}>
+                    <Link href="/profile/tips" className="mt-3 flex min-h-11 items-center rounded-[14px] px-3.5 text-[13.5px] font-bold" style={{ border: '1.5px dashed #FFFFFF', color: '#FFFFFF' }}>
                       Add your UPI first, so people can pay you
                     </Link>
                   ) : tips.data?.upi_id ? (
-                    <div className="mt-3.5 flex items-center gap-2.5 rounded-[14px] px-3.5 py-2.5" style={{ border: '1px solid rgba(255,255,255,0.18)' }}>
+                    <div className="mt-3 flex items-center gap-2.5 rounded-[14px] px-3.5 py-2.5" style={{ border: '1px solid rgba(255,255,255,0.22)' }}>
                       <span className="min-w-0 flex-1">
                         <span className="block text-[12px]" style={{ color: '#BFC2CB' }}>Paid straight to your UPI</span>
                         <span className="mt-px block truncate text-[14.5px] font-bold">{tips.data.upi_id}</span>
                       </span>
-                      <Link href="/profile/tips" className="flex h-[34px] items-center rounded-full px-3 text-[13px] font-extrabold" style={{ background: 'rgba(255,255,255,0.14)' }}>Edit</Link>
+                      <Link href="/profile/tips" className="flex h-[34px] items-center rounded-full px-3 text-[13px] font-bold" style={{ background: 'rgba(255,255,255,0.14)' }}>Edit</Link>
                     </div>
                   ) : null}
                 </div>
-              ) : (
-                <>
-                  <div className="mt-3.5 rounded-[14px] px-3.5 py-2.5 text-[13px] leading-snug" style={{ background: 'rgba(255,255,255,0.12)', color: '#EEF2FC' }}>
-                    <span className="font-extrabold" style={{ color: '#FFFFFF' }}>Example</span> · 20 people at ₹51 is ₹1,020 for one pact.
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (watchPrice == null) setWatchPrice(51)
-                      setLocked(true)
-                    }}
-                    className="mt-3.5 h-12 w-full rounded-full text-[15px] font-extrabold"
-                    style={{ background: '#FFFFFF', color: NAVY }}
-                  >
-                    Turn on paid moments
-                  </button>
-                </>
               )}
             </div>
           </div>
-          <div className="mx-auto w-full max-w-md px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
-            <button
-              type="button"
-              onClick={() => setStep('shoot')}
-              disabled={!audience || (audience === 'circle' && circleId == null) || needsUpi || needsPrice}
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-full text-[16.5px] font-extrabold disabled:opacity-100"
-              style={
-                !audience || (audience === 'circle' && circleId == null) || needsUpi || needsPrice
-                  ? { background: '#E1DACB', color: '#6B6C72' }
-                  : { background: NAVY, color: '#FFFFFF', boxShadow: '0 8px 22px rgba(31,58,147,0.28)' }
-              }
-            >
-              {!audience || (audience === 'circle' && circleId == null) ? (
-                'Choose who sees it'
-              ) : (
-                <>
-                  <Camera className="size-5" strokeWidth={2.2} aria-hidden="true" />
-                  Next: shoot Day 1
-                </>
+
+          <FlowFooter>
+            <div className="mx-auto max-w-md">
+              <button
+                type="button"
+                onClick={() => setStep('shoot')}
+                disabled={Boolean(blockedReason) || Boolean(posting)}
+                className={primary}
+                style={blockedReason ? { background: '#E1DACB', color: '#6B6C72' } : { background: NAVY, color: '#FFFFFF', boxShadow: '0 3px 0 #142766' }}
+              >
+                {blockedReason ?? (
+                  <>
+                    <Camera className="size-5" strokeWidth={2.2} aria-hidden="true" />
+                    Shoot Day 1 and start
+                  </>
+                )}
+              </button>
+              {!blockedReason && (
+                <button type="button" onClick={() => void post(null)} disabled={Boolean(posting)} className="mt-1 h-11 w-full text-[14.5px] font-bold underline decoration-2 underline-offset-4" style={{ color: NAVY, textDecorationColor: '#C9D3F2' }}>
+                  Start now, add Day 1 later
+                </button>
               )}
-            </button>
-          </div>
+            </div>
+          </FlowFooter>
 
           {pickingCircle && (
             <div role="dialog" aria-modal="true" aria-label="Choose your circle" className="fixed inset-0 z-[75] flex items-end justify-center">
@@ -490,7 +512,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
               <div className="relative flex max-h-[85dvh] min-h-[60dvh] w-full max-w-md flex-col rounded-t-[28px] px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3" style={{ background: CARD, color: INK }}>
                 <div className="mx-auto mb-1.5 h-[5px] w-10 rounded-full" style={{ background: '#D9D2C2' }} />
                 <div className="flex items-center justify-between">
-                  <div className="text-[20px] font-extrabold tracking-[-0.02em]">Choose your circle</div>
+                  <div className="text-[20px] font-bold tracking-[-0.02em]">Choose your circle</div>
                   <button type="button" onClick={() => setPickingCircle(false)} aria-label="Close" className="-mr-2 flex size-11 items-center justify-center">
                     <X className="size-5" />
                   </button>
@@ -505,13 +527,13 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                     const matches = circles.filter((c) => !q || String(c.name || '').toLowerCase().includes(q))
                     // Private circles first, public ones below.
                     const groups = [
-                      { key: 'private', label: 'PRIVATE', icon: <Lock className="size-3" strokeWidth={2.6} aria-hidden="true" />, sub: 'Members only', list: matches.filter((c) => c.visibility === 'private') },
-                      { key: 'public', label: 'PUBLIC', icon: <Globe className="size-3" strokeWidth={2.6} aria-hidden="true" />, sub: 'Anyone can join', list: matches.filter((c) => c.visibility !== 'private') },
+                      { key: 'private', label: 'Private', icon: <Lock className="size-3" strokeWidth={2.6} aria-hidden="true" />, sub: 'Members only', list: matches.filter((c) => c.visibility === 'private') },
+                      { key: 'public', label: 'Public', icon: <Globe className="size-3" strokeWidth={2.6} aria-hidden="true" />, sub: 'Anyone can join', list: matches.filter((c) => c.visibility !== 'private') },
                     ].filter((g) => g.list.length > 0)
                     if (groups.length === 0) return <p className="px-1 py-6 text-center text-[14px]" style={{ color: MUTED }}>No circle by that name.</p>
                     return groups.map((g) => (
                       <div key={g.key} role="group" aria-label={`${g.label.toLowerCase()} circles`}>
-                        <div className="flex items-center gap-1.5 px-0.5 pb-0.5 pt-3.5 text-[12px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>
+                        <div className="flex items-center gap-1.5 px-0.5 pb-0.5 pt-3.5 text-[13px] font-bold" style={{ color: MUTED }}>
                           {g.icon}
                           {g.label} · {g.list.length}
                         </div>
@@ -531,7 +553,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                               className="flex min-h-[60px] w-full items-center gap-3 border-b py-1.5 text-left last:border-b-0"
                               style={{ borderColor: '#E6E1D6' }}
                             >
-                              <span className="flex size-10 shrink-0 items-center justify-center rounded-full text-[16px] font-extrabold" style={{ background: '#E8E2D4' }}>
+                              <span className="flex size-10 shrink-0 items-center justify-center rounded-full text-[16px] font-bold" style={{ background: '#E8E2D4' }}>
                                 {String(c.name || '?').trim().charAt(0).toUpperCase()}
                               </span>
                               <span className="min-w-0 flex-1">
@@ -546,7 +568,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
                     ))
                   })()}
                 </div>
-                <Link href="/circles/create" className="mt-2 flex h-[50px] shrink-0 items-center justify-center gap-1.5 rounded-full text-[15px] font-extrabold" style={{ border: `1.5px dashed ${NAVY}`, background: '#F5F7FD', color: NAVY }}>
+                <Link href="/circles/create" className="mt-2 flex h-[50px] shrink-0 items-center justify-center gap-1.5 rounded-full text-[15px] font-bold" style={{ border: `1.5px dashed ${NAVY}`, background: '#F5F7FD', color: NAVY }}>
                   <Plus className="size-4" strokeWidth={2.6} aria-hidden="true" />
                   Create a new circle
                 </Link>
@@ -556,68 +578,13 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
         </>
       )}
 
-      {step === 'review' && (
-        <>
-          {header(() => setStep('who'), 2)}
-          <div className="mx-auto w-full max-w-md flex-1 px-5">
-            <div className="pt-3 text-[28px] font-extrabold leading-tight tracking-[-0.03em]" style={{ color: INK }}>Ready to start</div>
-            <div className="mt-1.5 text-[14px]" style={{ color: MUTED }}>{clip ? 'Day 1 goes up the moment you start.' : 'No Day 1 yet. You can add it from the pact.'}</div>
-
-            <div className="relative mt-5 h-[300px] overflow-hidden rounded-[24px]" style={{ background: clip ? INK : PACT_BLUE_TILE }}>
-              {clip && (isPhoto ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={clip.url} alt="Your Day 1 photo" className="absolute inset-0 size-full object-cover" />
-              ) : (
-                <video src={clip.url} autoPlay loop muted playsInline className="absolute inset-0 size-full object-cover" />
-              ))}
-              {clip && <span className="absolute bottom-3 left-3 flex h-[26px] items-center rounded-full px-2.5 text-[12.5px] font-extrabold" style={{ background: 'rgba(15,16,20,0.62)', color: '#FFFFFF' }}>Day 1</span>}
-              <button
-                type="button"
-                onClick={() => {
-                  setClip(null)
-                  setStep('shoot')
-                }}
-                className="absolute bottom-3 right-3 h-9 rounded-full px-3.5 text-[13px] font-extrabold"
-                style={{ background: 'rgba(255,255,255,0.92)', color: INK }}
-              >
-                {clip ? 'Retake' : 'Shoot Day 1'}
-              </button>
-            </div>
-
-            <div className="mt-3.5 rounded-[20px] px-4 py-3.5" style={{ background: CARD, border: `1px solid ${LINE}` }}>
-              <div className="text-[11.5px] font-extrabold tracking-[0.08em]" style={{ color: MUTED }}>YOUR PACT</div>
-              <div className="mt-1 text-[18px] font-extrabold leading-tight tracking-[-0.02em]" style={{ color: INK }}>{title}</div>
-              <div className="mt-2.5 flex flex-wrap gap-2">
-                <span className="flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-extrabold" style={{ background: NAVY, color: '#FFFFFF' }}>
-                  {audience === 'circle' ? <Users className="size-3" strokeWidth={2.6} /> : audience === 'followers' ? <Heart className="size-3" strokeWidth={2.6} /> : <Globe className="size-3" strokeWidth={2.6} />}
-                  {audience === 'circle' ? String(circle?.name || 'Your circle') : audience === 'followers' ? 'My followers' : 'Everyone'}
-                </span>
-                <span className="flex h-7 items-center rounded-full px-2.5 text-[12px] font-bold" style={{ background: CARD, border: `1px solid ${LINE}`, color: INK }}>
-                  {frequency} · {days} days
-                </span>
-                {locked && watchPrice != null && (
-                  <span className="flex h-7 items-center gap-1 rounded-full px-2.5 text-[12px] font-extrabold" style={{ background: '#E8EDFA', color: NAVY }}>
-                    <Lock className="size-3" strokeWidth={2.6} /> ₹{watchPrice} to watch
-                  </span>
-                )}
-              </div>
-              <div className="mt-2.5 text-[13px] leading-snug" style={{ color: MUTED }}>
-                {audience === 'circle' ? `Members of ${String(circle?.name || 'your circle')} can see it now.` : audience === 'followers' ? 'Your followers can see it now.' : 'It goes live in Discover.'}
-              </div>
-            </div>
-          </div>
-          <div className="mx-auto w-full max-w-md px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4">
-            <button
-              type="button"
-              onClick={() => void post()}
-              disabled={Boolean(posting)}
-              className="h-14 w-full rounded-full text-[16.5px] font-extrabold disabled:opacity-70"
-              style={{ background: NAVY, color: '#FFFFFF', boxShadow: '0 8px 22px rgba(31,58,147,0.28)' }}
-            >
-              {posting || (clip ? 'Start pact and post Day 1' : 'Start pact')}
-            </button>
-          </div>
-        </>
+      {/* Starting: the same mark as the Pacts page, turning until it's live. */}
+      {posting && (
+        <div role="status" aria-live="polite" className="fixed inset-0 z-[80] flex flex-col items-center justify-center px-8 text-center text-white" style={{ background: 'linear-gradient(180deg, #2546A6 0%, #1F3A93 60%)' }}>
+          <HeroMark size={132} color="#2A4CB0" stroke="rgba(255,255,255,0.75)" ringColor="rgba(255,255,255,0.18)" busy />
+          <p className="mt-10 text-[26px] font-bold tracking-[-0.03em]">{title}</p>
+          <p className="mt-2 text-[15px] font-semibold tabular-nums" style={{ color: '#D4DBFA' }}>{posting}</p>
+        </div>
       )}
 
       {step === 'live' && created && (
@@ -633,7 +600,6 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
           onOpen={openPact}
         />
       )}
-
     </div>
   )
 }

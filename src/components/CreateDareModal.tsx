@@ -9,14 +9,8 @@ interface CreateDareModalProps {
 }
 
 /**
- * Full-screen overlay wrapper so CreateDareFlow can drop into the same
- * isOpen/onClose call sites the old grouped-step modal used (Dares page),
- * while rendering the flow's own immersive dark theme edge-to-edge — same
- * pattern as CreatePactFlowModal. The flow itself (title → description →
- * timing → visibility → recipients? → verification → review → success)
- * shares its chrome (FlowShell, ProgressDots, LiveTitleStrip) with Create
- * Pact and Create Circle so all three "create" experiences feel like one
- * product.
+ * Full-screen overlay for the dare flow: What → Who → Send, in the same
+ * yellow top as the Dares page, then the "Dare sent." screen.
  */
 export default function CreateDareModal({ isOpen, onClose }: CreateDareModalProps) {
   if (!isOpen) return null;

@@ -3,17 +3,13 @@
 import React, { useState } from 'react';
 import ConfirmModal from '@/components/ConfirmModal';
 import { CreateDareFlowProvider, useCreateDareFlow } from '@/context/CreateDareFlowContext';
-import { generateDareSummary, DARE_LIVE_TITLE_PLACEHOLDER } from '@/lib/createDareFlow/generate';
-import FlowShell from '@/components/create-pact-flow/FlowShell';
+import FlowHero from '@/components/flow/FlowHero';
 import TaggedParticipantBanner from '@/components/create-pact-flow/TaggedParticipantBanner';
+import { DARE_STEP_LABEL } from '@/lib/createDareFlow/steps';
 import DarePreviewTile from './DarePreviewTile';
 import TitleStep from './TitleStep';
-import DescriptionStep from './DescriptionStep';
-import TimingStep from './TimingStep';
 import RecipientsStep from './RecipientsStep';
-import RewardStep from './RewardStep';
-import VerificationStep from './VerificationStep';
-import ReviewStep from './ReviewStep';
+import TermsStep from './TermsStep';
 import SuccessStep from './SuccessStep';
 
 interface CreateDareFlowProps {
@@ -33,32 +29,31 @@ function StepRouter({ onExit }: { onExit: () => void }) {
 
   return (
     <>
-    <FlowShell
-      accent="dare"
-      onExit={requestExit}
-      stepIndex={stepIndex}
-      totalSteps={resolvedSteps.length - 1}
-      canGoBack={canGoBack}
-      onBack={goBack}
-      showChrome={currentStep !== 'success'}
-      titleStripText={generateDareSummary(draft)}
-      titleStripPlaceholder={DARE_LIVE_TITLE_PLACEHOLDER}
-      strip={<DarePreviewTile draft={draft} />}
-      banner={
-        draft.recipientPreset && draft.recipients[0] ? (
-          <TaggedParticipantBanner userId={draft.recipients[0].id} label="Daring" />
-        ) : null
-      }
-    >
-      {currentStep === 'title' && <TitleStep />}
-      {currentStep === 'description' && <DescriptionStep />}
-      {currentStep === 'timing' && <TimingStep />}
-      {currentStep === 'recipients' && <RecipientsStep />}
-      {currentStep === 'reward' && <RewardStep />}
-      {currentStep === 'verification' && <VerificationStep />}
-      {currentStep === 'review' && <ReviewStep />}
-      {currentStep === 'success' && <SuccessStep onDone={onExit} />}
-    </FlowShell>
+    {currentStep === 'success' ? (
+      <SuccessStep onDone={onExit} />
+    ) : (
+      <div className="fixed inset-0 z-10 flex flex-col overflow-y-auto bg-[var(--paper)] text-[var(--ink)]">
+        <FlowHero
+          tone="dare"
+          steps={resolvedSteps.filter((s) => s !== 'success').map((s) => DARE_STEP_LABEL[s as keyof typeof DARE_STEP_LABEL])}
+          current={stepIndex}
+          onBack={canGoBack ? goBack : undefined}
+          onExit={requestExit}
+        >
+          <DarePreviewTile draft={draft} />
+        </FlowHero>
+        {draft.recipientPreset && draft.recipients[0] && (
+          <div className="px-5 pt-4">
+            <TaggedParticipantBanner userId={draft.recipients[0].id} label="Daring" />
+          </div>
+        )}
+        <div key={currentStep} className="mx-auto flex w-full max-w-md flex-1 flex-col">
+          {currentStep === 'title' && <TitleStep />}
+          {currentStep === 'recipients' && <RecipientsStep />}
+          {currentStep === 'terms' && <TermsStep />}
+        </div>
+      </div>
+    )}
     <ConfirmModal
       isOpen={confirmExit}
       onClose={() => setConfirmExit(false)}
