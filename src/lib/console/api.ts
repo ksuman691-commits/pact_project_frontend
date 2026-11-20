@@ -240,6 +240,32 @@ export const consoleSession = {
   },
 };
 
+export type GrievanceKind = 'complaint' | 'access' | 'correction' | 'erasure' | 'consent' | 'nominee' | 'other';
+export type GrievanceChannel = 'email' | 'in_app' | 'post' | 'phone' | 'other';
+export type Grievance = {
+  id: number;
+  received_at: string;
+  channel: GrievanceChannel;
+  kind: GrievanceKind;
+  kind_label: string;
+  from_name: string | null;
+  from_email: string | null;
+  username: string | null;
+  user_id: number | null;
+  summary: string;
+  acknowledged_at: string | null;
+  resolved_at: string | null;
+  outcome: string | null;
+  notes: string | null;
+  ack_due: string;
+  resolve_due: string;
+  legal_cap: string;
+  ack_late: boolean;
+  resolve_late: boolean;
+  past_cap: boolean;
+  status: 'new' | 'acknowledged' | 'resolved';
+};
+
 const client = axios.create({ baseURL: `${API_URL}/api/console`, headers: { 'Content-Type': 'application/json' } });
 
 client.interceptors.request.use((config) => {
@@ -335,6 +361,15 @@ export const consoleApi = {
   takeDown: (kind: ContentItem['kind'], id: number, reason: ContentReason, note: string) =>
     client.post(`/content/${kind}/${id}/take-down`, { reason, note: note.trim() || null }).then((r) => r.data),
   restore: (kind: ContentItem['kind'], id: number) => client.post(`/content/${kind}/${id}/restore`).then((r) => r.data),
+
+  grievances: (status: 'open' | 'resolved' | 'all' = 'open') => client.get<Grievance[]>('/grievances', { params: { status } }).then((r) => r.data),
+  logGrievance: (body: { kind: GrievanceKind; channel: GrievanceChannel; received_at?: string; from_name?: string; from_email?: string; username?: string; summary: string }) =>
+    client.post<Grievance>('/grievances', body).then((r) => r.data),
+  acknowledgeGrievance: (id: number) => client.post<Grievance>(`/grievances/${id}/acknowledge`).then((r) => r.data),
+  resolveGrievance: (id: number, outcome: string) => client.post<Grievance>(`/grievances/${id}/resolve`, { outcome }).then((r) => r.data),
+  reopenGrievance: (id: number) => client.post<Grievance>(`/grievances/${id}/reopen`).then((r) => r.data),
+  grievanceNotes: (id: number, notes: string) => client.patch<Grievance>(`/grievances/${id}`, { notes }).then((r) => r.data),
+  grievancesCsv: () => client.get<Blob>('/grievances/export.csv', { responseType: 'blob' }).then((r) => r.data),
 
   announcements: () => client.get<Announcement[]>('/announcements').then((r) => r.data),
   audienceSize: (audience: Audience, city?: string) =>
