@@ -1,0 +1,8 @@
+# Gitleaks: default rules. Old debug pages held expired S3 presigned links
+# (access key ID only, no secret), removed in ee04b7c; ignore those commits.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Expired presigned URLs in removed debug pages"
+commits = ["860c52837a9e2b28d8e35ae1cafe04f3d131a8a0","aa9d0f564266d6df5fef09bba942a76ab1380e1f","ee04b7c2f1b3e46b0c38963d1e42448a0dfcf6f6"]
