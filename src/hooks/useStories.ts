@@ -3,9 +3,9 @@
 import { useCallback, useRef, useState } from 'react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createStory, getFollowingMoments, getMyStoriesToday, getStoryViewers, getTodayStories, markStorySeen, putStoryVideo, requestStoryUploadUrl } from '@/lib/api/stories'
-import { isStoriesUnavailable, storyErrorMessage, STORIES_ENABLED, STORY_MAX_SECONDS, type PactStory } from '@/lib/stories'
+import { isStoriesUnavailable, storyErrorMessage, STORIES_ENABLED, STORY_MAX_SECONDS } from '@/lib/stories'
 import { queryKeys } from '@/lib/queryKeys'
-import api, { circleService, pactService } from '@/services/api'
+import api, { pactService } from '@/services/api'
 import toast from 'react-hot-toast'
 import { MOMENT_POSTED_EVENT } from '@/lib/push'
 
@@ -41,43 +41,24 @@ export function useMyStoriesToday() {
 }
 
 /** Live moments from people the viewer follows (free pacts open to followers only). */
-export function useFollowingMoments() {
+/** Moments refresh this often while a Moments row is on screen (only when the tab is visible). */
+export const LIVE_MOMENTS_POLL_MS = 60_000
+
+export function useFollowingMoments(live = false) {
   return useQuery({
     queryKey: storyKeys.followingToday,
     queryFn: getFollowingMoments,
     enabled: STORIES_ENABLED,
     staleTime: 30_000,
+    refetchInterval: live ? LIVE_MOMENTS_POLL_MS : false,
     retry: (count: number, error: any) => !isStoriesUnavailable(error) && count < 1,
   })
 }
 
-export function usePactsStoriesToday(pactIds: number[]) {
+export function usePactsStoriesToday(pactIds: number[], live = false) {
   return useQueries({
-    queries: pactIds.map((id) => ({ ...todayQueryOptions(id), enabled: STORIES_ENABLED && !!id })),
+    queries: pactIds.map((id) => ({ ...todayQueryOptions(id), enabled: STORIES_ENABLED && !!id, refetchInterval: live ? LIVE_MOMENTS_POLL_MS : (false as const) })),
   })
-}
-
-/**
- * Today's stories across every active pact a circle owns. Only runs while
- * the viewer is open, so tapping one ring is the only thing that triggers it.
- */
-export function useCircleStoriesToday(circleId: number | null) {
-  const pactsQuery = useQuery({
-    queryKey: queryKeys.circles.pacts(circleId ?? 0),
-    queryFn: async () => (await circleService.listPacts(circleId as number)).data,
-    enabled: STORIES_ENABLED && !!circleId,
-    staleTime: 60_000,
-  })
-  const pacts: any[] = Array.isArray(pactsQuery.data) ? pactsQuery.data : (pactsQuery.data as any)?.data ?? []
-  const activeIds = pacts.filter((p) => !p.status || p.status === 'active').map((p) => Number(p.id)).filter(Boolean)
-  const storyQueries = usePactsStoriesToday(activeIds)
-
-  const stories: PactStory[] = storyQueries
-    .flatMap((q) => q.data ?? [])
-    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-  const isLoading = pactsQuery.isLoading || storyQueries.some((q) => q.isLoading)
-  const unavailable = storyQueries.length > 0 && storyQueries.every((q) => q.isError && isStoriesUnavailable(q.error))
-  return { stories, isLoading, unavailable, isError: pactsQuery.isError }
 }
 
 /** Who has watched one of the viewer's own moments. Polls gently while open. */

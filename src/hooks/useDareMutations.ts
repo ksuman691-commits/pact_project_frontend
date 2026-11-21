@@ -98,22 +98,6 @@ export function useUploadDareProof(dareId: number) {
   });
 }
 
-export function useVerifyDare(dareId: number) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: any) => dareService.verify(dareId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.dares.detail(dareId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.dares.stats(dareId) });
-      toast.success('Verification submitted!');
-    },
-    onError: (error: any) => {
-      toast.error(toErrorMessage(error, 'Failed to submit verification'));
-    },
-  });
-}
-
 export function useCancelDare() {
   const queryClient = useQueryClient();
 

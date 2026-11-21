@@ -4,7 +4,10 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Plus, User, Users, X } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
-import { HOME_MOMENT_LIMIT, useMomentPeople, type MomentPerson } from '@/hooks/useMomentPeople'
+import { HOME_MOMENT_LIMIT, isLive, useMomentPeople, type MomentPerson } from '@/hooks/useMomentPeople'
+import { useNow } from '@/hooks/useNow'
+import { MARK_RED } from '@/lib/circleMark'
+import { postedAgo } from '@/lib/stories'
 import { useMyMomentsToday } from '@/hooks/useMyMomentsToday'
 import { useMyPacts } from '@/hooks/useMyPacts'
 import StoryCaptureSheet from './StoryCaptureSheet'
@@ -118,6 +121,7 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
   useMyPacts()
 
   const loadingPeople = Boolean(isLoading || peopleLoading)
+  const now = useNow(60_000, people.length > 0)
   // Hidden only when it would be an empty "You": nobody else has posted and you
   // haven't either. Once you check in, your ring shows your moment.
   const hidden = !loadingPeople && people.length === 0 && !postedToday
@@ -133,7 +137,8 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
         </div>
       )}
       {!hidden && (
-        <ul className="scrollbar-hide -mx-4 flex gap-3.5 overflow-x-auto px-4 pb-0.5">
+        // Vertical padding gives the ring echoes room; the negative margin keeps the layout where it was.
+        <ul className="scrollbar-hide -mx-4 -my-2 flex gap-3.5 overflow-x-auto px-4 pb-2.5 pt-2">
           <li className="relative shrink-0">
             <button
               type="button"
@@ -161,20 +166,39 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
                   <span className="pact-shimmer h-3 w-10 rounded" />
                 </li>
               ))
-            : people.slice(0, HOME_MOMENT_LIMIT).map((person) => {
+            : people.slice(0, HOME_MOMENT_LIMIT).map((person, i) => {
                 const firstName = (person.name || 'Member').split(' ')[0]
                 const inCircle = person.circleId != null
                 const where = inCircle ? `in ${person.circleName}` : 'you follow'
+                const live = isLive(person, now)
+                const newest = person.stories[person.stories.length - 1]
                 return (
                   <li key={person.userId} className="shrink-0">
                     <button
                       type="button"
                       onClick={() => setViewing(person)}
                       className="flex w-[62px] flex-col items-center gap-[5px]"
-                      aria-label={`${firstName}'s moment${person.stories.length > 1 ? 's' : ''}${person.hasUnseen ? ', new' : ''}, ${where}`}
+                      aria-label={`${firstName}'s moment${person.stories.length > 1 ? 's' : ''}${person.hasUnseen ? ', new' : ''}${live ? `, posted ${postedAgo(newest?.created_at) ?? 'just now'}` : ''}, ${where}`}
                     >
                       <span className="relative inline-flex">
-                        <StoryRing state={person.hasUnseen ? 'unseen' : 'seen'} size={SIZE} name={person.name} imageUrl={person.avatarUrl} count={person.stories.length} />
+                        <StoryRing
+                          state={person.hasUnseen ? 'unseen' : 'seen'}
+                          size={SIZE}
+                          name={person.name}
+                          imageUrl={person.avatarUrl}
+                          count={person.stories.length}
+                          // Newest moment id: the arrival replays when a friend posts again.
+                          pulseKey={newest?.id ?? null}
+                          pulseDelay={Math.min(i, 5) * 90}
+                        />
+                        {live && (
+                          // Posted in the last 30 minutes.
+                          <span
+                            className="cp-pulse-dot absolute right-0.5 top-0.5 h-3 w-3 rounded-full border-2 border-[var(--paper)]"
+                            style={{ background: MARK_RED }}
+                            aria-hidden="true"
+                          />
+                        )}
                         <span
                           className="absolute -bottom-0.5 -right-1 flex h-[22px] w-[22px] items-center justify-center rounded-full border-[1.5px] bg-[var(--card)]"
                           style={{ borderColor: inCircle ? 'var(--navy)' : 'var(--muted)' }}

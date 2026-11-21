@@ -31,24 +31,6 @@ export function useUserStats(userId: number) {
   });
 }
 
-export function useUserFollowers(userId: number) {
-  return useQuery({
-    queryKey: queryKeys.users.followers(userId),
-    queryFn: () => userService.getFollowers(userId),
-    enabled: !!userId,
-    staleTime: 1000 * 60 * 5,
-  });
-}
-
-export function useUserFollowing(userId: number) {
-  return useQuery({
-    queryKey: queryKeys.users.following(userId),
-    queryFn: () => userService.getFollowing(userId),
-    enabled: !!userId,
-    staleTime: 1000 * 60 * 5,
-  });
-}
-
 export function useUserRelationship(userId: number) {
   return useQuery({
     queryKey: queryKeys.users.relationship(userId),
@@ -65,15 +47,6 @@ export function useUserCircles(userId: number) {
     queryFn: () => userService.getCircles(userId),
     enabled: !!userId,
     staleTime: 0,
-  });
-}
-
-export function useUserAnalytics(userId: number) {
-  return useQuery({
-    queryKey: queryKeys.users.analytics(userId),
-    queryFn: () => userService.getStats(userId), // Using stats endpoint for analytics
-    enabled: !!userId,
-    staleTime: 1000 * 60 * 10,
   });
 }
 

@@ -10,6 +10,7 @@ import { useDareRewardStep } from '@/hooks/useDareMutations'
 import { copyText } from '@/lib/circleInvite'
 import { buildUpiUri, isLikelyMobile } from '@/lib/upi'
 import { toErrorMessage } from '@/lib/errorMessages'
+import { useBackToClose } from '@/hooks/useBackToClose'
 
 type Payment = { status: string; amount: number; code: string; upi_id: string; payee_name?: string | null }
 
@@ -30,6 +31,7 @@ export default function DareRewardPaySheet({
   open: boolean
   onClose: () => void
 }) {
+  useBackToClose(open, onClose)
   const [payment, setPayment] = useState<Payment | null>(null)
   const [error, setError] = useState<string | null>(null)
   const step = useDareRewardStep()

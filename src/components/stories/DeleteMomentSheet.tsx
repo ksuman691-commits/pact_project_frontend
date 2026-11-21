@@ -1,6 +1,7 @@
 'use client'
 
 import { Trash2 } from 'lucide-react'
+import { useBackToClose } from '@/hooks/useBackToClose'
 
 /** "Delete this moment?" confirmation, shared by the Moments viewer and the pact card. */
 export default function DeleteMomentSheet({
@@ -16,6 +17,7 @@ export default function DeleteMomentSheet({
   onCancel: () => void
   onConfirm: () => void
 }) {
+  useBackToClose(open, onCancel)
   if (!open) return null
   return (
     <div className="fixed inset-0 z-[120] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-labelledby="delete-moment-title" onClick={(e) => e.stopPropagation()}>

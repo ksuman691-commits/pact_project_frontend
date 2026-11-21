@@ -47,7 +47,6 @@ export const queryKeys = {
     likes: (pactId: number) => [...queryKeys.pacts.detail(pactId), 'likes'],
     comments: (pactId: number) => [...queryKeys.pacts.detail(pactId), 'comments'],
     shares: (pactId: number) => [...queryKeys.pacts.detail(pactId), 'shares'],
-    cheers: (pactId: number) => [...queryKeys.pacts.detail(pactId), 'cheers'],
     matches: (pactId: number) => [...queryKeys.pacts.detail(pactId), 'matches'],
   },
 
@@ -60,7 +59,6 @@ export const queryKeys = {
     detail: (id: number) => [...queryKeys.circles.details(), id],
     public: () => [...queryKeys.circles.all, 'public'],
     members: (circleId: number) => [...queryKeys.circles.detail(circleId), 'members'],
-    leaderboard: (circleId: number) => [...queryKeys.circles.detail(circleId), 'leaderboard'],
     pacts: (circleId: number) => [...queryKeys.circles.detail(circleId), 'pacts'],
     search: (query: string) => [...queryKeys.circles.all, 'search', query],
     analytics: (circleId: number) => [...queryKeys.circles.detail(circleId), 'analytics'],
@@ -83,14 +81,6 @@ export const queryKeys = {
     following: () => [...queryKeys.feed.all, 'following'],
     suggestions: () => [...queryKeys.feed.all, 'suggestions'],
     categoryMatches: (category: string) => [...queryKeys.feed.all, 'category-matches', category],
-  },
-
-  // Leaderboards
-  leaderboards: {
-    all: ['leaderboards'],
-    global: () => [...queryKeys.leaderboards.all, 'global'],
-    circle: (circleId: number) => [...queryKeys.leaderboards.all, 'circle', circleId],
-    trending: () => [...queryKeys.leaderboards.all, 'trending'],
   },
 
   // Notifications

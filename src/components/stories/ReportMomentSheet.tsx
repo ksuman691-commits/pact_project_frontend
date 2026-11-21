@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { pactService, type MomentReportReason } from '@/services/api';
+import { useBackToClose } from '@/hooks/useBackToClose';
 
 const REASONS: { id: MomentReportReason; label: string; hint: string }[] = [
   { id: 'fake_or_ai', label: 'Fake or AI proof', hint: 'Not really them, a stock photo, or made with AI' },
@@ -15,6 +16,7 @@ const REASONS: { id: MomentReportReason; label: string; hint: string }[] = [
 
 /** Report one moment to the CirclePact team. The person who posted it isn't told who reported. */
 export default function ReportMomentSheet({ pactId, proofId, onClose }: { pactId: number; proofId: number; onClose: () => void }) {
+  useBackToClose(true, onClose);
   const [reason, setReason] = useState<MomentReportReason | null>(null);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);

@@ -34,6 +34,13 @@ export const HOME_MOMENT_LIMIT = 15
 
 const time = (iso: string) => new Date(iso).getTime()
 
+/** A moment counts as live (red dot) for this long after it's posted. */
+export const LIVE_MOMENT_MS = 30 * 60_000
+
+export function isLive(person: Pick<MomentPerson, 'latestAt'>, now: number) {
+  return person.latestAt > 0 && now - person.latestAt < LIVE_MOMENT_MS
+}
+
 /**
  * Who posted a moment today that the viewer can already watch, one entry per
  * person: people in the viewer's circles, plus people the viewer follows (free
@@ -71,8 +78,8 @@ export function useMomentPeople(circles: CircleLike[], viewerId?: number | null)
   }, [pactQueries.map((q) => q.dataUpdatedAt).join(','), active])
 
   const pactIds = useMemo(() => Array.from(pactInfo.keys()), [pactInfo])
-  const storyQueries = usePactsStoriesToday(pactIds)
-  const followingQuery = useFollowingMoments()
+  const storyQueries = usePactsStoriesToday(pactIds, true)
+  const followingQuery = useFollowingMoments(true)
 
   const grouped = useMemo(() => {
     const byUser = new Map<number, MomentPerson>()

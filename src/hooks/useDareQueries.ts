@@ -60,28 +60,6 @@ export function useDareDetail(dareId: number | null | undefined, options?: { ena
   });
 }
 
-export function useDareRecipients(dareId: number | null | undefined, options?: { enabled?: boolean }) {
-  return useQuery({
-    queryKey: dareId ? queryKeys.dares.recipients(dareId) : ['dare-recipients-null'],
-    queryFn: () => {
-      if (!dareId) throw new Error('Dare ID is required');
-      return dareService.getRecipients(dareId);
-    },
-    enabled: !!dareId && (options?.enabled ?? true),
-  });
-}
-
-export function useDareStats(dareId: number | null | undefined, options?: { enabled?: boolean }) {
-  return useQuery({
-    queryKey: dareId ? queryKeys.dares.stats(dareId) : ['dare-stats-null'],
-    queryFn: () => {
-      if (!dareId) throw new Error('Dare ID is required');
-      return dareService.getStats(dareId);
-    },
-    enabled: !!dareId && (options?.enabled ?? true),
-  });
-}
-
 /** Today's CirclePact dare (one shared dare everyone joins), or null when none is live. */
 export function useTodaysDare(options?: { enabled?: boolean }) {
   return useQuery({

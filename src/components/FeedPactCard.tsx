@@ -59,13 +59,6 @@ interface FeedPactCardProps {
   onJoined?: () => void | Promise<void>;
   onStartOwnVersion?: () => void;
   canReport?: boolean;
-  /**
-   * Pages that render their own dedicated cheer widget alongside this card
-   * (e.g. the pact detail page) should pass this through so swipe-right's
-   * cheer shortcut respects the same "already cheered" gate as that widget,
-   * instead of offering a second way to double-post a cheer.
-   */
-  hasCheered?: boolean;
   /** When nested in a detail-page shell, remove the card's outer chrome. */
   chromeless?: boolean;
   /**
@@ -77,14 +70,8 @@ interface FeedPactCardProps {
    * strip render — the parts the detail page doesn't build itself.
    */
   hideHeroAndTitle?: boolean;
-  /**
-   * Full proof/cheer lists fetched separately by the detail page (which has
-   * more data than the compact feed embeds on the pact object). When
-   * omitted, the card falls back to `pact.proofClips`/no cheers — same hero
-   * strip either way, just a richer photo set on the detail page.
-   */
+  /** Full proof list fetched separately by a detail page; the feed falls back to the proofs on the pact. */
   galleryProofs?: any[];
-  galleryCheers?: any[];
 }
 
 const REPORT_OPTIONS = [
@@ -284,11 +271,9 @@ export default function FeedPactCard({
   onJoined,
   onStartOwnVersion,
   canReport = true,
-  hasCheered = false,
   chromeless = false,
   hideHeroAndTitle = false,
   galleryProofs,
-  galleryCheers,
   }: FeedPactCardProps) {
   const router = useRouter();
   const { user } = useAuthStore();
@@ -400,14 +385,10 @@ export default function FeedPactCard({
   const proofs = useMemo(() => getProofs(pact), [pact]);
   const media = useMemo(() => getMedia(pact), [pact]);
   const progressInfo = useMemo(() => getDurationProgress(pact), [pact]);
-  // Single source of truth for "what photos does this pact have" — the
-  // detail page passes its separately-fetched proofs+cheers through
-  // galleryProofs/galleryCheers; the compact feed card (no such fetch) falls
-  // back to the proofs already embedded on the pact object. Either way this
-  // is the ONLY tile list rendered — there is no second, separate gallery.
+  // One tile list for the hero and the carousel.
   const tiles = useMemo(
-    () => buildGalleryTiles(galleryProofs ?? proofs, galleryCheers ?? []),
-    [galleryProofs, galleryCheers, proofs],
+    () => buildGalleryTiles(galleryProofs ?? proofs),
+    [galleryProofs, proofs],
   );
   const activeProof = tiles[activeProofIndex] ?? tiles[0] ?? null;
   const isExiting = exitDirection !== null;
@@ -1061,7 +1042,6 @@ export default function FeedPactCard({
             {tiles.length > 0 ? (
               <PactGallery
                 proofs={galleryProofs ?? proofs}
-                cheers={galleryCheers ?? []}
                 interactive
                 aspectClassName="aspect-[4/5]"
                 dotsPosition="none"

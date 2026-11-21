@@ -8,6 +8,7 @@ import ReportMomentSheet from '@/components/stories/ReportMomentSheet'
 import { useDeleteMoment } from '@/hooks/useStories'
 import { useAuthStore } from '@/store/auth'
 import LikeButton from '@/components/LikeButton'
+import { useBackToClose } from '@/hooks/useBackToClose'
 
 export interface ViewerMoment {
   id: number | string
@@ -37,6 +38,7 @@ const PHOTO_DURATION_MS = 5000
 const HOLD_MS = 220
 
 export default function MomentViewer({ moments, startIndex, pactId, likeCount, liked, onClose, onIndexChange, onComment }: MomentViewerProps) {
+  useBackToClose(true, onClose)
   const [index, setIndex] = useState(startIndex)
   const [muted, setMuted] = useState(false)
   const [paused, setPaused] = useState(false)

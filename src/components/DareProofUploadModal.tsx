@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import ProofEditor from '@/components/dares/ProofEditor';
 import { useUploadDareProof } from '@/hooks/useDareMutations';
 import { canEditVideo, hasEdits, NO_EDITS, renderPhoto, renderVideo, type ProofEdits } from '@/lib/proofEdit';
+import { useBackToClose } from '@/hooks/useBackToClose';
 
 interface Props {
   isOpen: boolean;
@@ -44,6 +45,7 @@ const MAX_PHOTOS = 4;
  * straight to the person who dared. Nothing is posted until "Send".
  */
 export default function DareProofUploadModal({ isOpen, onClose, dareId, dareTitle, toName, method }: Props) {
+  useBackToClose(isOpen, onClose);
   const upload = useUploadDareProof(dareId);
   const [clip, setClip] = useState<Clip | null>(null);
   // More photos from the gallery, after the first (up to 4 in all).

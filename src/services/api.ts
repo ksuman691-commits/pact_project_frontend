@@ -89,17 +89,6 @@ const mapProof = (raw: any) => ({
   uploaded_at: raw?.uploaded_at ?? raw?.created_at ?? null,
 });
 
-const mapCheer = (raw: any) => ({
-  id: raw?.id,
-  pact_id: raw?.pact_id,
-  sender_id: raw?.sender_id,
-  sender_username: raw?.sender_username ?? raw?.username ?? null,
-  sender_avatar_url: raw?.sender_avatar_url ?? raw?.avatar_url ?? null,
-  photo_url: raw?.photo_url ?? raw?.file_url ?? null,
-  created_at: raw?.created_at ?? null,
-  expires_at: raw?.expires_at ?? null,
-});
-
 export const normalizeListResponse = <T,>(response: any, mapper: (item: any) => T = (item) => item): any => {
   const payload = response.data;
   const rows = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
@@ -462,25 +451,6 @@ export const pactService = {
 };
 
 // Cheers (photo-only encouragement posts from non-creator members)
-export const cheerService = {
-  create: (pactId: number, file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    // The api instance sets a default 'Content-Type: application/json'
-    // header. That default must be explicitly cleared here (not just
-    // omitted) or it leaks onto this FormData request and the backend
-    // rejects it. Setting it to undefined lets the browser generate the
-    // correct multipart boundary itself.
-    return api.post(`/api/pacts/${pactId}/cheers`, formData, {
-      headers: { 'Content-Type': undefined },
-    });
-  },
-  list: async (pactId: number, skip = 0, limit = 50) => {
-    const response = await api.get(`/api/pacts/${pactId}/cheers`, { params: { skip, limit } });
-    return normalizeListResponse(response, mapCheer);
-  },
-};
-
 // Pact Join Requests (NEW)
 export const joinRequestService = {
   sendRequest: (pactId: number, message?: string) =>
@@ -555,12 +525,6 @@ export const leaderboardService = {
   /** A circle's board, ranked by days showed up. Members only. */
   circleBoard: (circleId: number, period: 'week' | 'month' | 'all', tz?: string) =>
     api.get(`/api/circles/${circleId}/leaderboard`, { params: { period, tz } }),
-  getGlobal: (skip?: number, limit?: number) =>
-    api.get('/api/leaderboards/global', { params: { skip, limit } }),
-  getCircle: (circleId: number, skip?: number, limit?: number) =>
-    api.get(`/api/leaderboards/circles/${circleId}`, { params: { skip, limit } }),
-  getTrending: (skip?: number, limit?: number) =>
-    api.get('/api/leaderboards/trending', { params: { skip, limit } }),
 };
 
 // Social Services (Likes, Comments, Shares)
@@ -813,18 +777,6 @@ export const dareService = {
   getStats: (id: number) => api.get(`/api/dares/${id}/verify/stats`),
 };
 
-// Verification Advanced Services
-export const verificationAdvancedService = {
-  listByPact: (pactId: number) =>
-    api.get(`/api/verifications/${pactId}`),
-  listByUser: (userId: number) =>
-    api.get(`/api/verifications/${userId}`),
-  submitVerification: (pactId: number, data: any) =>
-    api.post(`/api/verifications/${pactId}`, data),
-  getStats: (pactId: number) =>
-    api.get(`/api/verifications/${pactId}/stats`),
-};
-
 // Circle Advanced Services
 export const circleAdvancedService = {
   getPublicCircles: (skip?: number, limit?: number) =>
@@ -899,48 +851,6 @@ export const circleInviteService = {
     api.post(`/api/circles/${circleId}/invite/${inviteId}/accept`),
   decline: (circleId: number, inviteId: number) =>
     api.post(`/api/circles/${circleId}/invite/${inviteId}/decline`),
-};
-
-// Analytics Services
-export const analyticsService = {
-  getPactStats: (pactId: number) =>
-    api.get(`/api/pacts/${pactId}/analytics`),
-  getUserStats: (userId: number) =>
-    api.get(`/api/users/${userId}/analytics`),
-  getCircleStats: (circleId: number) =>
-    api.get(`/api/circles/${circleId}/analytics`),
-};
-
-// Sponsor Services
-export type Sponsor = {
-  name: string;
-  logo_url?: string | null;
-  headline: string;
-  subtext?: string | null;
-  cta_label: string;
-  affiliate_link: string;
-};
-
-export const sponsorService = {
-  getByCategory: async (category: string): Promise<Sponsor | null> => {
-    const response = await api.get('/api/sponsors', { params: { category } });
-    const payload = response.data;
-    const sponsor = Array.isArray(payload) ? payload[0] : payload?.sponsor ?? payload;
-    if (!sponsor?.name || !sponsor?.headline || !sponsor?.cta_label || !sponsor?.affiliate_link) return null;
-    return sponsor as Sponsor;
-  },
-};
-
-// Curated Pacts / Dares
-export const curatedContentService = {
-  discover: async (params: { type?: string; category?: string; trending?: boolean; page?: number; limit?: number } = {}) =>
-    api.get('/api/curated-content', { params }),
-  deploy: async (id: number, circleId: number) => api.post(`/api/curated-content/${id}/deploy`, { circle_id: circleId }),
-};
-
-// Health Check
-export const healthService = {
-  check: () => api.get('/health'),
 };
 
 export default api;

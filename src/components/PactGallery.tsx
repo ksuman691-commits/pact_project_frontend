@@ -2,11 +2,9 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import { PartyPopper } from 'lucide-react';
 import AutoPlayVideo from '@/components/media/AutoPlayVideo';
 import { useSnapSwipe } from '@/hooks/useSnapSwipe';
 import ProofCarousel from './ProofCarousel';
-import type { CheerItem } from './CheerGallery';
 
 interface Proof {
   id: number;
@@ -26,56 +24,31 @@ export interface GalleryTile {
   uploadedAt?: string;
   uploader?: string;
   day?: number;
-  kind: 'proof' | 'cheer';
+  kind: 'proof';
 }
 
-/**
- * Merges proof submissions + active cheers into one deduped, most-recent-first
- * tile list. This is the single source of truth for "what photos does this
- * pact have" — both the feed card's hero slot and the detail-page carousel
- * call this same function so a pact never shows two different photo sets.
- * Proof tiles and cheer tiles are merged into this one list and rendered
- * through the exact same <Tile> markup below — there is no separate
- * render path per kind that could drift out of sync with the other.
- */
-export function buildGalleryTiles(proofs: Proof[], cheers: CheerItem[]): GalleryTile[] {
-  const activeCheers = cheers.filter(
-    (cheer) => !cheer.expires_at || new Date(cheer.expires_at).getTime() > Date.now(),
-  );
-
-  const proofTiles: GalleryTile[] = proofs.map((proof) => ({
-    id: proof.id,
-    url: proof.url,
-    type: proof.type,
-    description: proof.description,
-    uploadedAt: proof.uploadedAt,
-    uploader: proof.uploader,
-    day: proof.day,
-    kind: 'proof',
-  }));
-  const cheerTiles: GalleryTile[] = activeCheers
-    .filter((cheer) => cheer.photo_url)
-    .map((cheer) => ({
-      // Negate cheer ids so they can never collide with a proof id in the
-      // merged list (both id spaces start at 1+ from independent tables).
-      id: -cheer.id,
-      url: cheer.photo_url as string,
-      type: 'image',
-      uploadedAt: cheer.created_at ?? undefined,
-      uploader: cheer.sender_username ?? undefined,
-      kind: 'cheer',
-    }));
-
-  return [...proofTiles, ...cheerTiles].sort((a, b) => {
-    const aTime = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
-    const bTime = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
-    return bTime - aTime;
-  });
+/** Proofs as gallery tiles, most recent first. The feed card's hero and the full-screen carousel both use this. */
+export function buildGalleryTiles(proofs: Proof[]): GalleryTile[] {
+  return proofs
+    .map((proof): GalleryTile => ({
+      id: proof.id,
+      url: proof.url,
+      type: proof.type,
+      description: proof.description,
+      uploadedAt: proof.uploadedAt,
+      uploader: proof.uploader,
+      day: proof.day,
+      kind: 'proof',
+    }))
+    .sort((a, b) => {
+      const aTime = a.uploadedAt ? new Date(a.uploadedAt).getTime() : 0;
+      const bTime = b.uploadedAt ? new Date(b.uploadedAt).getTime() : 0;
+      return bTime - aTime;
+    });
 }
 
 interface PactGalleryProps {
   proofs: Proof[];
-  cheers: CheerItem[];
   /** Aspect ratio of each slide — square for the detail-page strip, 4/5 for the feed hero. */
   aspectClassName?: string;
   /**
@@ -102,7 +75,7 @@ interface PactGalleryProps {
    * own story-bar indicator fed by onActiveIndexChange instead.
    */
   dotsPosition?: 'below' | 'overlay' | 'none';
-  /** Hides the corner "Day N" / "Proof" badge on proof photos (cheer badges stay). The feed card draws its own. */
+  /** Hides the corner "Day N" / "Proof" badge on proof photos . The feed card draws its own. */
   hideProofBadge?: boolean;
   /** Fills the parent's height instead of sizing itself via aspectClassName — used by the feed hero. */
   fillHeight?: boolean;
@@ -150,7 +123,6 @@ interface PactGalleryProps {
  */
 export default function PactGallery({
   proofs,
-  cheers,
   aspectClassName = 'aspect-square',
   onActiveIndexChange,
   interactive = true,
@@ -180,7 +152,7 @@ export default function PactGallery({
     onActiveIndexChangeRef.current = onActiveIndexChange;
   }, [onActiveIndexChange]);
 
-  const tiles: GalleryTile[] = useMemo(() => buildGalleryTiles(proofs, cheers), [proofs, cheers]);
+  const tiles: GalleryTile[] = useMemo(() => buildGalleryTiles(proofs), [proofs]);
   // Total swipeable slide count — real tiles plus the optional trailing
   // "+ Add today" slot, which isn't a GalleryTile but still occupies a real
   // scroll-snap child and therefore needs its own dot.
@@ -274,7 +246,7 @@ export default function PactGallery({
               onClick={interactive ? () => handleTileClick(index) : undefined}
               aria-label={
                 interactive
-                  ? `${tile.kind === 'cheer' ? 'Cheer' : tile.type === 'video' ? 'Video proof' : 'Photo proof'}${tile.day ? `, day ${tile.day}` : ''}`
+                  ? `${tile.type === 'video' ? 'Video proof' : 'Photo proof'}${tile.day ? `, day ${tile.day}` : ''}`
                   : undefined
               }
               className={`cp-media-loading group relative ${fillHeight ? 'h-full' : aspectClassName} w-full flex-shrink-0 snap-center overflow-hidden bg-white/5 text-left focus:outline-none ${
@@ -301,7 +273,7 @@ export default function PactGallery({
                 ) : (
                   <Image
                     src={tile.url}
-                    alt={tile.description || (tile.kind === 'cheer' ? `Cheer from ${tile.uploader || 'a member'}` : 'Proof')}
+                    alt={tile.description || 'Proof'}
                     fill
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, 480px"
@@ -322,31 +294,10 @@ export default function PactGallery({
                 </div>
               )}
 
-              {(tile.kind === 'cheer' || !hideProofBadge) && (
-                <span
-                  className={`absolute left-2.5 top-2.5 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold text-white ${
-                    tile.kind === 'cheer' ? '' : 'bg-[var(--pact-violet)]'
-                  }`}
-                  style={tile.kind === 'cheer' ? { background: 'var(--pact-gold)' } : undefined}
-                >
-                  {tile.kind === 'cheer' && <PartyPopper className="h-2.5 w-2.5" />}
-                  {tile.kind === 'cheer' ? 'Cheer' : tile.day ? `Day ${tile.day}` : 'Proof'}
+              {!hideProofBadge && (
+                <span className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-full bg-[var(--pact-violet)] px-2.5 py-1 text-[10px] font-bold text-white">
+                  {tile.day ? `Day ${tile.day}` : 'Proof'}
                 </span>
-              )}
-
-              {/* Only cheer tiles need their own uploader credit here — proof
-                  tiles already show the same person in FeedPactCard's own
-                  top header row (creatorLabel), so repeating it was
-                  redundant. This is anchored to the top, under the kind
-                  badge, rather than the bottom — the bottom edge is already
-                  owned by FeedPactCard's own title/circle-name overlay, and
-                  two independently-sized absolute blocks anchored to the
-                  same edge collide by construction regardless of either
-                  one's text length. */}
-              {tile.kind === 'cheer' && tile.uploader && (
-                <div className="absolute left-2.5 top-10 max-w-[calc(100%-1.25rem)] truncate rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
-                  from @{tile.uploader}
-                </div>
               )}
             </Tile>
           ))}

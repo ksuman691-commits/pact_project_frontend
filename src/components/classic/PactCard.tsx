@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import TallyGrid, { type TallyCellStatus } from './TallyGrid'
 import CircleChip, { PersonalPactLabel } from './CircleChip'
-import { getPactProgress } from '@/components/PactProgressRing'
+import { getPactProgress } from '@/lib/pactProgress'
 
 function buildDays(total: number, completed: number, missed: number): TallyCellStatus[] {
   const days: TallyCellStatus[] = []

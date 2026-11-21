@@ -7,6 +7,7 @@ import QRCode from 'qrcode';
 import toast from 'react-hot-toast';
 import { Copy } from 'lucide-react';
 import { copyText } from '@/lib/circleInvite';
+import { useBackToClose } from '@/hooks/useBackToClose';
 
 /**
  * Circle invite QR sheet. Deliberately self-contained: it has its own QR
@@ -162,6 +163,7 @@ const buttonSecondary =
   'flex min-h-[52px] w-full items-center justify-center rounded-full border-[1.5px] border-[var(--navy)] bg-transparent px-6 text-[16px] font-semibold text-[var(--navy)] transition-colors hover:bg-[var(--navy)]/5 disabled:opacity-60';
 
 export function CircleInviteQRSheet({ circle, onClose }: { circle: CircleLike; onClose: () => void }) {
+  useBackToClose(true, onClose);
   const url = circleWallUrl(circle.id);
   const matrix = useMemo(() => buildMatrix(url), [url]);
   const [busy, setBusy] = useState<'share' | 'save' | null>(null);
