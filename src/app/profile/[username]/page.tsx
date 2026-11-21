@@ -3,7 +3,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import { Bell, BellOff, ChevronLeft, UserPlus } from 'lucide-react';
+import { Bell, BellOff, ChevronLeft, Plus, UserPlus, Zap } from 'lucide-react';
+import Link from 'next/link';
+import CreateDareModal from '@/components/CreateDareModal';
+import { usePaused } from '@/lib/appStatus';
 import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import AddToCircleSheet from '@/components/AddToCircleSheet';
@@ -52,6 +55,8 @@ export default function PublicProfilePage() {
   const [tab, setTab] = useState<Tab>('active');
   const [peopleSheet, setPeopleSheet] = useState<'followers' | 'following' | null>(null);
   const [showAddToCircle, setShowAddToCircle] = useState(false);
+  const [daring, setDaring] = useState(false);
+  const daresPaused = usePaused('dares');
 
   const userByUsernameQuery = useUserByUsername(username);
   const profileUser = userByUsernameQuery.data?.data;
@@ -192,8 +197,29 @@ export default function PublicProfilePage() {
             </>
           }
           footer={
-            (incomingStatus === 'pending' && incomingFollowId) || (supporters && supporters.count > 0) || sharedCircles.length > 0 ? (
             <>
+              {/* Do something together: the dare and pact flows start with this person already in. */}
+              <div className="flex gap-2">
+                {!daresPaused && (
+                  <button
+                    type="button"
+                    onClick={() => setDaring(true)}
+                    className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full text-[15px] font-extrabold transition active:scale-[0.98]"
+                    style={{ background: 'var(--dare)', color: INK, boxShadow: `inset 0 0 0 1.5px ${INK}` }}
+                  >
+                    <Zap className="size-4" strokeWidth={0} fill="currentColor" aria-hidden="true" />
+                    Dare {firstName}
+                  </button>
+                )}
+                <Link
+                  href={`/pacts/create?participantId=${profileUser.id}`}
+                  className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full text-[15px] font-extrabold transition active:scale-[0.98]"
+                  style={profileButton.outline}
+                >
+                  <Plus className="size-4" strokeWidth={2.6} aria-hidden="true" />
+                  Pact with {firstName}
+                </Link>
+              </div>
               {incomingStatus === 'pending' && incomingFollowId && (
                 <button type="button" onClick={() => rejectFollow.mutate(incomingFollowId)} disabled={isBusy} className="h-10 rounded-full text-[14px] font-bold" style={profileButton.quiet}>
                   Decline follow request
@@ -230,7 +256,6 @@ export default function PublicProfilePage() {
                 </div>
               )}
             </>
-            ) : undefined
           }
         />
 
@@ -285,6 +310,7 @@ export default function PublicProfilePage() {
       </div>
 
       <PeopleSheet open={peopleSheet === 'followers'} title="Followers" people={followers} emptyText={`No one follows ${firstName} yet.`} onClose={() => setPeopleSheet(null)} />
+      <CreateDareModal isOpen={daring} onClose={() => setDaring(false)} recipientId={profileUser.id} />
       <PeopleSheet open={peopleSheet === 'following'} title="Following" people={following} emptyText={`${firstName} isn't following anyone yet.`} onClose={() => setPeopleSheet(null)} />
       <AddToCircleSheet isOpen={showAddToCircle} onClose={() => setShowAddToCircle(false)} targetUserId={profileUser.id} targetName={name} />
     </main>
