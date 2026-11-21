@@ -108,7 +108,6 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
   const [posting, setPosting] = useState<string | null>(null)
   const [locked, setLocked] = useState(false)
   const [watchPrice, setWatchPrice] = useState<number | null>(null)
-  const [autoApprove, setAutoApprove] = useState(false)
   const [created, setCreated] = useState<{ id: number; title: string; days: number } | null>(null)
   // The full-screen "your pact is live" moment plays once, then the share screen is there underneath.
   const inputRef = useRef<HTMLInputElement>(null)
@@ -158,7 +157,6 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
       visibility: audience === 'circle' ? 'circle_only' : audience === 'followers' ? 'private' : 'public',
       media_locked: locked,
       watch_price: locked ? watchPrice : null,
-      watch_auto_approve: locked && watchPrice != null ? autoApprove : false,
       start_date: localToday(),
       duration_days: days,
       verification_method: 'video',
@@ -468,7 +466,7 @@ export default function NewPactFlow({ onExit, initialCircleId = null, initialTex
               </div>
               {locked && (
                 <div className="mt-3.5">
-                  <PriceChooser dark price={watchPrice} onPrice={setWatchPrice} autoApprove={autoApprove} onAutoApprove={setAutoApprove} />
+                  <PriceChooser dark price={watchPrice} onPrice={setWatchPrice} />
                   {watchPrice != null && (
                     <div className="mt-3 rounded-[14px] px-3.5 py-2.5 text-[13px] leading-snug" style={{ background: 'rgba(255,255,255,0.12)', color: '#EEF2FC' }}>
                       20 people at ₹{watchPrice} is <b className="text-white">₹{(20 * watchPrice).toLocaleString('en-IN')}</b> for one pact.
