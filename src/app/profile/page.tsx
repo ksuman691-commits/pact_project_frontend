@@ -88,7 +88,8 @@ function ProfileContent() {
   const name = user.full_name || user.username || 'You';
 
   const shareProfile = async () => {
-    const url = `${window.location.origin}/profile/${encodeURIComponent(user.username)}`;
+    // The public page: readable without an account, with a link preview of your numbers.
+    const url = `${window.location.origin}/u/${encodeURIComponent(user.username)}`;
     try {
       if (navigator.share) {
         await navigator.share({ title: `${name} on CirclePact`, url });

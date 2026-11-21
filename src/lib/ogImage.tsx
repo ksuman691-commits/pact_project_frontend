@@ -3,6 +3,29 @@ import { MARK_DARK, MARK_ON_DISC, MARK_RED, MARK_SWEEP, piePath } from '@/lib/ci
 
 export const OG_SIZE = { width: 1200, height: 630 }
 
+/**
+ * Inter Tight ExtraBold for preview images (the built-in font has no bold, so
+ * numbers come out thin). Fetched once per server instance; null if Google Fonts
+ * can't be reached, and the image falls back to the built-in font.
+ */
+let boldFont: Promise<ArrayBuffer | null> | null = null
+export function loadBoldFont(): Promise<ArrayBuffer | null> {
+  if (!boldFont) {
+    boldFont = (async () => {
+      try {
+        const css = await (await fetch('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@800', { signal: AbortSignal.timeout(4000) })).text()
+        const url = css.match(/src: url\((https:[^)]+)\) format\('(?:truetype|opentype)'\)/)?.[1]
+        if (!url) return null
+        return await (await fetch(url, { signal: AbortSignal.timeout(4000) })).arrayBuffer()
+      } catch {
+        boldFont = null
+        return null
+      }
+    })()
+  }
+  return boldFont
+}
+
 /** The preview card WhatsApp, iMessage and others show for a shared link: brand paper, the ring, one line. */
 export function ogImage(kicker: string, headline: string) {
   const dots = Array.from({ length: 8 })
