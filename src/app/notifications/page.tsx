@@ -13,6 +13,7 @@ import { notificationService, pactService } from '@/services/api';
 import toast from 'react-hot-toast';
 import { useMarkAllNotificationsAsRead, useNotifications } from '@/hooks/useNotifications';
 import { useAcceptFollow, usePendingFollowRequests, useRejectFollow } from '@/hooks/useFollows';
+import { useAcceptCircleInvite, useDeclineCircleInvite, useMyCircleInvites } from '@/hooks/useCircleInvites';
 import { RequestsList } from '@/components/requests/RequestsList';
 import { useRequestCount } from '@/components/requests/RequestsEntryCard';
 import Avatar from '@/components/Avatar';
@@ -106,6 +107,27 @@ export default function NotificationsPage() {
   const markAllAsRead = useMarkAllNotificationsAsRead();
   const pendingFollowRequestsQuery = usePendingFollowRequests();
   const acceptFollow = useAcceptFollow();
+  // Circle invites answer right here, like follow requests.
+  const circleInvites = useMyCircleInvites();
+  const acceptInvite = useAcceptCircleInvite();
+  const declineInvite = useDeclineCircleInvite();
+  const inviteFor = (notification: any) => {
+    const isInvite = notification?.subtype === 'circle_invite' || notification?.title === 'Circle invite';
+    if (!isInvite || !notification?.related_circle_id) return null;
+    return ((circleInvites.data as any[]) || []).find((invite) => invite.circle_id === notification.related_circle_id) ?? null;
+  };
+  const answerInvite = (invite: any, accept: boolean) => {
+    const vars = { circleId: invite.circle_id, inviteId: invite.id };
+    const done = {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
+        if (accept) router.push(`/circles/${invite.circle_id}`);
+      },
+    };
+    if (accept) acceptInvite.mutate(vars, done);
+    else declineInvite.mutate(vars, done);
+  };
   const rejectFollow = useRejectFollow();
 
   const notifications = useMemo(
@@ -249,6 +271,7 @@ export default function NotificationsPage() {
                       {rows.map((row, index) => {
                         const pendingFollowId = getPendingFollowIdForNotification(row.source);
                         const canRespondInline = isFollowRequestNotification(row.source) && !!pendingFollowId;
+                        const pendingInvite = inviteFor(row.source);
                         const wantsReview = row.kind === 'other' && String(row.source.title || '').toLowerCase().includes('wants to watch your pact');
                         return (
                           <div key={row.key} className={`px-4 py-3 ${index > 0 ? 'border-t border-[var(--hairline)]' : ''}`}>
@@ -281,6 +304,16 @@ export default function NotificationsPage() {
                                   Accept
                                 </button>
                                 <button onClick={() => rejectFollow.mutate(pendingFollowId)} disabled={acceptFollow.isPending || rejectFollow.isPending} className="h-9 rounded-full border border-[var(--hairline)] px-4 text-[13px] font-bold text-[var(--ink)] disabled:opacity-60">
+                                  Decline
+                                </button>
+                              </div>
+                            ) : null}
+                            {pendingInvite ? (
+                              <div className="ml-14 mt-2 flex gap-2">
+                                <button onClick={() => answerInvite(pendingInvite, true)} disabled={acceptInvite.isPending || declineInvite.isPending} className="h-9 rounded-full bg-[var(--navy)] px-4 text-[13px] font-bold text-white disabled:opacity-60">
+                                  Accept
+                                </button>
+                                <button onClick={() => answerInvite(pendingInvite, false)} disabled={acceptInvite.isPending || declineInvite.isPending} className="h-9 rounded-full border border-[var(--hairline)] px-4 text-[13px] font-bold text-[var(--ink)] disabled:opacity-60">
                                   Decline
                                 </button>
                               </div>
