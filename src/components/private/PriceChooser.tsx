@@ -19,25 +19,22 @@ function chip(on: boolean, dark: boolean): React.CSSProperties {
 
 /**
  * Price to watch a private pact, paid over UPI. There is no "free" lock: if a
- * pact's moments are free they're simply open. Plus when people get in once
- * they say they paid. `dark` is for the blue "paid moments" card in New Pact.
+ * pact's moments are free they're simply open. The creator lets each buyer in
+ * after checking the payment arrived (no automatic access since 22 Nov).
+ * `dark` is for the blue "paid moments" card in New Pact.
  */
 export default function PriceChooser({
   price,
   onPrice,
-  autoApprove,
-  onAutoApprove,
   disabled = false,
   dark = false,
   lockPrice = false,
 }: {
   price: number | null
   onPrice: (price: number | null) => void
-  autoApprove: boolean
-  onAutoApprove: (on: boolean) => void
   disabled?: boolean
   dark?: boolean
-  /** The price can't change (people have paid); the access switch still works. */
+  /** The price can't change (people have paid). */
   lockPrice?: boolean
 }) {
   const custom = price != null && !PRESETS.includes(price)
@@ -84,27 +81,6 @@ export default function PriceChooser({
         {lockPrice ? `The price stays ₹${price} because people have already paid.` : price == null ? 'Pick a price. Free moments don’t need a lock: switch Private off and everyone who sees the pact watches.' : `People pay ₹${price} to your UPI, then you let them in.`}
       </div>
 
-      {price != null && (
-        <button
-          type="button"
-          role="switch"
-          aria-checked={autoApprove}
-          disabled={disabled}
-          onClick={() => onAutoApprove(!autoApprove)}
-          className="mt-3 flex w-full items-center gap-3 rounded-[16px] px-3.5 py-3 text-left disabled:opacity-50"
-          style={dark ? { background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)' } : { background: '#FFFFFF', border: `1px solid ${LINE}` }}
-        >
-          <span className="min-w-0 flex-1">
-            <span className="block text-[14.5px] font-bold" style={{ color: text }}>Let them in when they say they paid</span>
-            <span className="block text-[12.5px] leading-snug" style={{ color: label }}>
-              {autoApprove ? 'Instant for buyers. Remove anyone whose payment never shows up.' : 'Off: you confirm each payment in your UPI app first.'}
-            </span>
-          </span>
-          <span className="relative h-7 w-12 shrink-0 rounded-full transition-colors" style={{ background: autoApprove ? (dark ? '#FFFFFF' : NAVY) : dark ? 'rgba(255,255,255,0.28)' : '#D4D5D9' }}>
-            <span className="absolute top-0.5 size-6 rounded-full transition-all" style={{ background: dark && autoApprove ? NAVY : '#FFFFFF', left: autoApprove ? 22 : 2, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
-          </span>
-        </button>
-      )}
     </div>
   )
 }

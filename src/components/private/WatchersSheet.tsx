@@ -42,14 +42,13 @@ function TipLine({ row }: { row: AccessRow }) {
  * The creator's control room for a pact: make it private, let people in,
  * turn them away or take access back.
  */
-export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watchPrice = null, watchAutoApprove = false, inCircle = false }: { open: boolean; onClose: () => void; pactId: number; mediaLocked: boolean; watchPrice?: number | null; watchAutoApprove?: boolean; inCircle?: boolean }) {
+export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watchPrice = null, inCircle = false }: { open: boolean; onClose: () => void; pactId: number; mediaLocked: boolean; watchPrice?: number | null; watchAutoApprove?: boolean; inCircle?: boolean }) {
   useBackToClose(open, onClose)
   const watchers = useWatchers(pactId, open)
   const resolve = useResolveWatcher(pactId)
   const setPrivate = useSetPactPrivate(pactId)
   const saveSettings = useUpdateWatchSettings(pactId)
   const [price, setPrice] = useState<number | null>(watchPrice)
-  const [auto, setAuto] = useState(watchAutoApprove)
   const [askKeep, setAskKeep] = useState(false)
   // The price stays tucked away so the people waiting on you come first.
   const [editPrice, setEditPrice] = useState(false)
@@ -58,14 +57,13 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
     setAskKeep(false)
     setEditPrice(false)
     setPrice(watchPrice)
-    setAuto(watchAutoApprove)
-  }, [open, watchPrice, watchAutoApprove])
+  }, [open, watchPrice])
   if (!open) return null
   // No saving a lock without a price: free moments are just open.
-  const settingsChanged = price != null && (price !== watchPrice || auto !== watchAutoApprove)
+  const settingsChanged = price != null && price !== watchPrice
   const saveWatch = async () => {
     try {
-      await saveSettings.mutateAsync({ watch_price: price, watch_auto_approve: price != null && auto })
+      await saveSettings.mutateAsync({ watch_price: price })
       toast.success(price != null ? `₹${price} to watch` : 'Free to ask')
     } catch (error: any) {
       toast.error(error?.response?.data?.detail || 'Could not save the price')
@@ -93,7 +91,7 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
     try {
       let shown = price ?? 21
       if (next) {
-        const saved = await saveSettings.mutateAsync({ media_locked: true, watch_price: shown, watch_auto_approve: auto, keep_members: keepMembers })
+        const saved = await saveSettings.mutateAsync({ media_locked: true, watch_price: shown, keep_members: keepMembers })
         // The server may keep the price people already paid instead of the one asked for.
         shown = saved?.watch_price ?? shown
         setPrice(shown)
@@ -166,7 +164,7 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
           <>
             {editPrice || price == null || settingsChanged ? (
               <div className="mt-3 rounded-[18px] p-3.5" style={{ background: '#FFFFFF', border: `1px solid ${LINE}` }}>
-                <PriceChooser price={price} onPrice={setPrice} autoApprove={auto} onAutoApprove={setAuto} disabled={saveSettings.isPending} lockPrice={hasPaid} />
+                <PriceChooser price={price} onPrice={setPrice} disabled={saveSettings.isPending} lockPrice={hasPaid} />
                 {!hasPaid && <div className="mt-2 text-[12.5px] leading-snug" style={{ color: MUTED }}>A new price only applies to people who ask from now on. Anyone already waiting keeps what they paid.</div>}
                 {settingsChanged && (
                   <button type="button" onClick={() => void saveWatch()} disabled={saveSettings.isPending} className="mt-3 h-11 w-full rounded-full text-[14.5px] font-extrabold disabled:opacity-60" style={{ background: NAVY, color: '#FFFFFF' }}>
@@ -178,7 +176,7 @@ export default function WatchersSheet({ open, onClose, pactId, mediaLocked, watc
               <div className="mt-3 flex min-h-12 items-center gap-3 rounded-[16px] px-3.5 py-2" style={{ background: '#FFFFFF', border: `1px solid ${LINE}` }}>
                 <span className="min-w-0 flex-1 text-[14px] font-bold" style={{ color: INK }}>
                   ₹{price} to watch
-                  <span className="font-medium" style={{ color: MUTED }}> · {auto ? 'instant access' : 'you confirm each payment'}</span>
+                  <span className="font-medium" style={{ color: MUTED }}> · you confirm each payment</span>
                 </span>
                 <button type="button" onClick={() => setEditPrice(true)} className="h-9 rounded-full px-3 text-[13px] font-extrabold" style={{ color: NAVY, border: `1px solid ${LINE}`, background: '#FBF8F1' }}>
                   {hasPaid ? 'Access' : 'Edit price'}
