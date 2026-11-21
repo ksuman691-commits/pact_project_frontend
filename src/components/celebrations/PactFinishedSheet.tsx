@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { RotateCcw, Share2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -8,6 +8,7 @@ import CircleMark, { MarkProgress } from '@/components/brand/CircleMark'
 import { useBackToClose } from '@/hooks/useBackToClose'
 import { fireConfetti, stopConfetti } from '@/lib/celebrations'
 import { EASE, haptic } from '@/lib/motion'
+import { sharePactCard, type DayMark } from '@/lib/pactShareCard'
 
 export interface PactFinishedData {
   pactId: number
@@ -19,6 +20,10 @@ export interface PactFinishedData {
   totalDays: number
   circleId: number | null
   circleName: string | null
+  /** First name for the share card: "Suman kept their word." */
+  name: string
+  /** One mark per day for the card, when the list carried them. */
+  days?: DayMark[] | null
 }
 
 function Stat({ value, label, delay }: { value: number; label: string; delay: number }) {
@@ -63,19 +68,17 @@ export default function PactFinishedSheet({ data, onClose, onNext }: { data: Pac
     }
   }, [data.kept, reduce])
 
+  const [sharing, setSharing] = useState(false)
+  // A story-sized picture of the pact (title, one dot per day, the numbers) for Instagram or WhatsApp.
   const onShare = async () => {
-    const url = `${window.location.origin}/pacts/${data.pactId}`
-    const text = data.kept
-      ? `I kept my pact on CirclePact: ${data.title}. ${data.daysPosted} of ${data.totalDays} days.`
-      : `${data.daysPosted} days of ${data.title} on CirclePact. Going again.`
+    if (sharing) return
+    setSharing(true)
     try {
-      if (navigator.share) await navigator.share({ title: data.title, text, url })
-      else {
-        await navigator.clipboard.writeText(`${text} ${url}`)
-        toast.success('Link copied')
-      }
-    } catch {
-      // Closed the share sheet: nothing to do.
+      await sharePactCard({ ...data, circleName: data.circleName })
+    } catch (err: any) {
+      if (err?.name !== 'AbortError') toast.error("Couldn't make the picture. Try again.")
+    } finally {
+      setSharing(false)
     }
   }
 
@@ -160,11 +163,12 @@ export default function PactFinishedSheet({ data, onClose, onNext }: { data: Pac
           <button
             type="button"
             onClick={() => void onShare()}
-            className="flex h-12 items-center justify-center gap-2 rounded-full text-[15px] font-bold text-white"
+            disabled={sharing}
+            className="flex h-12 items-center justify-center gap-2 rounded-full text-[15px] font-bold text-white disabled:opacity-60"
             style={{ boxShadow: 'inset 0 0 0 1.5px rgba(255,255,255,0.7)' }}
           >
             <Share2 className="size-4" strokeWidth={2.4} aria-hidden="true" />
-            Share
+            {sharing ? 'Making your card…' : 'Share your card'}
           </button>
         </div>
       </div>

@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth'
 import { useMyPacts } from '@/hooks/useMyPacts'
 import { resolvePactCompletionViewState } from '@/lib/pactCompletionState'
 import PactFinishedSheet, { type PactFinishedData } from './PactFinishedSheet'
+import { dayMarks } from '@/lib/pactShareCard'
 
 /** Pacts that ended longer ago than this are history, not news. */
 const RECENT_DAYS = 10
@@ -74,7 +75,10 @@ export default function PactFinishedHost() {
       totalDays: Number(p.total_days ?? p.duration_days ?? 0),
       circleId: p.circle_id ?? null,
       circleName: p.circle_name ?? null,
+      days: dayMarks(p),
+      name: String(user?.full_name || user?.username || 'I').split(' ')[0],
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query.data, userId])
 
   useEffect(() => {
