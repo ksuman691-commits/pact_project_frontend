@@ -1,6 +1,8 @@
 /* CirclePact service worker: shows push reminders and opens the right screen on tap.
  * Standard Web Push (no Firebase). The payload is JSON from the backend:
- * { kind, title, body, url, tag }.
+ * { kind, title, body, url, tag, quiet }.
+ * quiet: replace the notification with the same tag without buzzing again
+ * (several comments on one pact within a few minutes).
  */
 
 self.addEventListener('install', () => self.skipWaiting())
@@ -19,9 +21,9 @@ self.addEventListener('push', (event) => {
       body: data.body || '',
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
-      // One reminder per day replaces the previous one instead of stacking.
+      // One reminder per day (one per pact for comments) replaces the previous one instead of stacking.
       tag: data.tag || undefined,
-      renotify: Boolean(data.tag),
+      renotify: Boolean(data.tag) && !data.quiet,
       data: { url: data.url || '/feed' },
     }),
   )

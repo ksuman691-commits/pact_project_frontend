@@ -631,6 +631,8 @@ export interface PushPreferences {
   reminder_hour: 9 | 13 | 19;
   last_call: boolean;
   circle_nudges: boolean;
+  comments: boolean;
+  circle_pacts: boolean;
   /** Devices with push turned on for this account. */
   devices: number;
 }
