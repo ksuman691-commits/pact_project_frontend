@@ -4,6 +4,7 @@
  * pact's title and one dot per day (posted, rest day, missed).
  */
 import { MARK_RED, piePath, MARK_SWEEP } from '@/lib/circleMark'
+import toast from 'react-hot-toast'
 import { pactService } from '@/services/api'
 
 export type DayMark = 'posted' | 'rest' | 'missed'
@@ -273,4 +274,10 @@ export async function sharePactCard(input: PactCardInput & { pactId: number }): 
   a.download = file.name
   a.click()
   window.setTimeout(() => URL.revokeObjectURL(href), 2000)
+  try {
+    await navigator.clipboard?.writeText(url)
+    toast.success('Card saved and link copied')
+  } catch {
+    toast.success('Card saved')
+  }
 }
