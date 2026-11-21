@@ -31,21 +31,6 @@ export function useUnreadNotificationCount() {
   });
 }
 
-export function useMarkNotificationAsRead(notificationId: number) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: () => notificationService.markAsRead(notificationId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() });
-    },
-    onError: (error: any) => {
-      console.error('Failed to mark notification as read:', error);
-    },
-  });
-}
-
 export function useMarkAllNotificationsAsRead() {
   const queryClient = useQueryClient();
 
@@ -62,16 +47,3 @@ export function useMarkAllNotificationsAsRead() {
   });
 }
 
-export function useDeleteNotification(notificationId: number) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: () => notificationService.delete(notificationId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() });
-    },
-    onError: (error: any) => {
-      console.error('Failed to delete notification:', error);
-    },
-  });
-}

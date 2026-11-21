@@ -24,6 +24,7 @@ import {
   STORY_MAX_BYTES,
   STORY_MAX_SECONDS,
 } from '@/lib/stories'
+import { useBackToClose } from '@/hooks/useBackToClose'
 
 interface Clip {
   blob: Blob
@@ -87,6 +88,7 @@ function canRecordInPage() {
 }
 
 export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: rawTitle, canJoin = false, onJoin, initialClip = null, onCaptured, autoStart = true, onSkip, liveOnly = false, lockMode, introText }: StoryCaptureSheetProps) {
+  useBackToClose(isOpen, onClose)
   const pactTitle = rawTitle ? cleanTitle(rawTitle) : rawTitle
   const [step, setStep] = useState<Step>(initialClip ? 'preview' : 'idle')
   const [clip, setClip] = useState<Clip | null>(initialClip)

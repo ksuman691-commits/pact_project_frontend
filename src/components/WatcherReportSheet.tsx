@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Check, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { reportWatcher } from '@/lib/api/access'
+import { useBackToClose } from '@/hooks/useBackToClose'
 
 const REASONS = ['Vulgar Or Abusive Comments', 'Harassing Me Or Others', 'Spam Or Ads', 'Something Else']
 
@@ -32,6 +33,7 @@ export default function WatcherReportSheet({
   onClose: () => void
   onDone: () => void
 }) {
+  useBackToClose(true, onClose)
   const [reason, setReason] = useState(REASONS[0])
   const [busy, setBusy] = useState(false)
   const first = watcherName.trim().split(/\s+/)[0] || 'them'

@@ -57,19 +57,47 @@ export default function StoryRing({
   name,
   imageUrl,
   count,
+  pulseKey,
+  pulseDelay = 0,
 }: {
   state: RingState
   size: number
   name?: string | null
   imageUrl?: string | null
   count?: number | null
+  /**
+   * Set on an unseen ring to play the arrival: the ring turns into place and two
+   * echoes go out. It plays when the ring first shows and again whenever the key
+   * changes (a new moment arrived while the row was on screen).
+   */
+  pulseKey?: string | number | null
+  pulseDelay?: number
 }) {
   const radius = (size - 3) / 2
   const circumference = 2 * Math.PI * radius
   const paint = ringPaint(state, circumference, typeof count === 'number' ? count : 1)
+  const pulse = state === 'unseen' && pulseKey != null
+  const delay = { animationDelay: `${pulseDelay}ms` }
   return (
     <span className="relative inline-flex shrink-0" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true" className="absolute inset-0" style={{ transform: 'rotate(-90deg)' }}>
+      {pulse &&
+        [0, 260].map((extra) => (
+          <span
+            key={`${pulseKey}-${extra}`}
+            aria-hidden="true"
+            className="cp-ring-echo pointer-events-none absolute inset-0 rounded-full"
+            style={{ border: '2px solid var(--navy)', animationDelay: `${pulseDelay + 380 + extra}ms` }}
+          />
+        ))}
+      <svg
+        key={pulse ? `ring-${pulseKey}` : 'ring'}
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        aria-hidden="true"
+        className={`absolute inset-0${pulse ? ' cp-ring-in' : ''}`}
+        style={{ transform: 'rotate(-90deg)', ...(pulse ? delay : null) }}
+      >
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -81,7 +109,11 @@ export default function StoryRing({
           strokeDasharray={paint.dasharray}
         />
       </svg>
-      <span className="absolute inset-0 flex items-center justify-center" style={{ opacity: state === 'none' ? 0.7 : 1 }}>
+      <span
+        key={pulse ? `face-${pulseKey}` : 'face'}
+        className={`absolute inset-0 flex items-center justify-center${pulse ? ' cp-face-bump' : ''}`}
+        style={{ opacity: state === 'none' ? 0.7 : 1, ...(pulse ? { animationDelay: `${pulseDelay + 300}ms` } : null) }}
+      >
         <RingFace name={name} imageUrl={imageUrl} size={size - 12} />
       </span>
     </span>

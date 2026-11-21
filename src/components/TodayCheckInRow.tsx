@@ -11,6 +11,7 @@ import StreakChip from '@/components/StreakChip'
 import { STORIES_ENABLED } from '@/lib/stories'
 import { useTodayStatus, type TodayPact } from '@/hooks/useTodayStatus'
 import { useSnapSwipe } from '@/hooks/useSnapSwipe'
+import { useNow } from '@/hooks/useNow'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
 import type { MomentPerson } from '@/hooks/useMomentPeople'
 
@@ -86,6 +87,8 @@ interface SlideProps {
  * button is the one thing to tap.
  */
 function CheckInSlide({ pact, peers, fullWidth, onCapture, done, total, streak, onCreatePact }: SlideProps) {
+  // Ticks while the check-in is waiting, so "left today" and the last-hours edge stay true.
+  const now = useNow(30_000, !pact.posted_today)
   const hours = hoursLeft(pact)
   const urgent = !pact.posted_today && hours != null && hours < 24
   const dayLabel = pact.day && pact.total_days ? `Day ${pact.day} of ${pact.total_days}` : null
@@ -104,17 +107,19 @@ function CheckInSlide({ pact, peers, fullWidth, onCapture, done, total, streak, 
   const where = pact.circle_name || 'Personal'
   // Today's window: midnight in the pact's time zone. The watch fills up toward it.
   const endsAt = pact.day_ends_at ? Date.parse(pact.day_ends_at) : NaN
-  const todayMs = Number.isFinite(endsAt) ? Math.max(0, endsAt - Date.now()) : null
+  const todayMs = Number.isFinite(endsAt) ? Math.max(0, endsAt - now) : null
   const todayLeft = todayMs != null ? leftLabel(todayMs) : null
   const lastHours = todayMs != null && todayMs < 3 * 3_600_000
   const detail = todayLeft ? `${todayLeft} left` : urgent && hours != null ? endsLabel(hours) : peersLine || dayLabel
   const loud = todayLeft ? lastHours : urgent
+  // Last 3 hours and still waiting: a yellow edge with a light running round it (faster in the last hour).
+  const edge = !pact.posted_today && lastHours ? ` cp-last-hours${todayMs != null && todayMs < 3_600_000 ? ' cp-last-hour' : ''}` : ''
 
   return (
     <li
-      className="relative flex shrink-0 snap-start flex-col rounded-[20px] bg-[var(--navy)] pb-3 pl-3.5 pr-2.5 pt-2.5 text-white"
+      className={`relative flex shrink-0 snap-start flex-col rounded-[20px] bg-[var(--navy)] pb-3 pl-3.5 pr-2.5 pt-2.5 text-white${edge}`}
       style={{ width: fullWidth ? '100%' : `calc(100% - ${32 + GAP}px)` }}
-      aria-label={`${pact.title}${pact.posted_today ? ', checked in' : ', waiting'}`}
+      aria-label={`${pact.title}${pact.posted_today ? ', checked in' : lastHours && todayLeft ? `, waiting, ${todayLeft} left` : ', waiting'}`}
     >
       <div className="relative z-[1] flex min-h-6 items-center gap-1.5 text-[12px] font-semibold" style={{ color: '#D4DBFA' }}>
         <span>
@@ -182,7 +187,7 @@ function CheckInSlide({ pact, peers, fullWidth, onCapture, done, total, streak, 
             type="button"
             onClick={() => onCapture(pact)}
             aria-label={`Check in to ${pact.title}`}
-            className="flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-[var(--dare-deep)] pl-3.5 pr-4 text-[15px] font-bold text-[var(--ink)] shadow-[0_4px_12px_rgba(0,0,0,0.25)] transition active:scale-[0.97]"
+            className={`flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-[var(--dare-deep)] pl-3.5 pr-4 text-[15px] font-bold text-[var(--ink)] shadow-[0_4px_12px_rgba(0,0,0,0.25)] transition active:scale-[0.97]${lastHours ? ' cp-breathe' : ''}`}
           >
             <Camera className="h-[18px] w-[18px]" strokeWidth={2.2} aria-hidden="true" />
             Check in

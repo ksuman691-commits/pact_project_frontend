@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Scissors, X } from 'lucide-react'
 import { filmstrip, trimVideo } from '@/lib/camera/trimVideo'
 import { STORY_MAX_SECONDS } from '@/lib/stories'
+import { useBackToClose } from '@/hooks/useBackToClose'
 
 const FRAMES = 9
 // A hair under the limit, so the trimmed file never reads as 15.1 seconds.
@@ -27,6 +28,7 @@ export default function TrimSheet({
   onDone: (clip: { blob: Blob; contentType: string; duration: number }) => void
   onCancel: () => void
 }) {
+  useBackToClose(true, onCancel)
   const [url, setUrl] = useState<string | null>(null)
   const [frames, setFrames] = useState<string[]>([])
   const [start, setStart] = useState(0)

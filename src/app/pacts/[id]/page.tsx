@@ -14,7 +14,7 @@ import { usePact, usePactProofs } from '@/hooks/usePacts';
 import { useAuthStore } from '@/store/auth';
 import { pactService } from '@/services/api';
 import { markWatchingSeen } from '@/lib/api/access';
-import { getPactProgress } from '@/components/PactProgressRing';
+import { getPactProgress } from '@/lib/pactProgress';
 import { resolvePactCompletionViewState } from '@/lib/pactCompletionState';
 
 function PactDetailSkeleton() {

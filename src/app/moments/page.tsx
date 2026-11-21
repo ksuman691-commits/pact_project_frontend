@@ -7,7 +7,9 @@ import DetailPageHeader from '@/components/DetailPageHeader'
 import StoryViewer from '@/components/stories/StoryViewer'
 import { RingFace } from '@/components/stories/StoryRing'
 import { useCircles } from '@/hooks/useCircles'
-import { useMomentPeople, type MomentPerson } from '@/hooks/useMomentPeople'
+import { isLive, useMomentPeople, type MomentPerson } from '@/hooks/useMomentPeople'
+import { useNow } from '@/hooks/useNow'
+import { MARK_RED } from '@/lib/circleMark'
 import { useRequireAuth } from '@/hooks/useRequireAuth'
 import { postedAgo, STORIES_COMING_SOON, STORIES_ENABLED } from '@/lib/stories'
 
@@ -17,8 +19,9 @@ interface MomentCircle {
   stories_today_count?: number | null
 }
 
-function PersonRow({ person, onOpen }: { person: MomentPerson; onOpen: () => void }) {
+function PersonRow({ person, onOpen, now }: { person: MomentPerson; onOpen: () => void; now: number }) {
   const ago = postedAgo(person.stories[person.stories.length - 1]?.created_at)
+  const live = isLive(person, now)
   const count = person.stories.length
   const inCircle = person.circleId != null
   const who = person.name || 'Member'
@@ -32,16 +35,20 @@ function PersonRow({ person, onOpen }: { person: MomentPerson; onOpen: () => voi
         className="flex min-h-[64px] w-full items-center gap-3 px-3.5 py-2.5 text-left"
       >
         <span
-          className="flex shrink-0 items-center justify-center rounded-full p-[2.5px]"
+          className="relative flex shrink-0 items-center justify-center rounded-full p-[2.5px]"
           style={{ border: person.hasUnseen ? '2.5px solid var(--navy)' : '1.5px solid var(--hairline)' }}
         >
           <RingFace name={person.name} imageUrl={person.avatarUrl} size={40} />
+          {live && (
+            <span className="cp-pulse-dot absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-[var(--card)]" style={{ background: MARK_RED }} aria-hidden="true" />
+          )}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[14.5px] font-extrabold text-[var(--ink)]">{who}</span>
           <span className="block truncate text-[12.5px] font-semibold text-[var(--muted)]">
             {count} {count === 1 ? 'moment' : 'moments'}
-            {ago ? ` · ${ago}` : ''}
+            {ago ? ' · ' : ''}
+            {ago && <span style={live ? { color: MARK_RED, fontWeight: 800 } : undefined}>{ago}</span>}
           </span>
           <span className={`block truncate text-[12px] font-extrabold ${inCircle ? 'text-[var(--navy)]' : 'text-[var(--ink)]'}`}>{tag}</span>
         </span>
@@ -51,7 +58,7 @@ function PersonRow({ person, onOpen }: { person: MomentPerson; onOpen: () => voi
   )
 }
 
-function Group({ label, people, onOpen, navy }: { label: string; people: MomentPerson[]; onOpen: (p: MomentPerson) => void; navy?: boolean }) {
+function Group({ label, people, onOpen, navy, now }: { label: string; people: MomentPerson[]; onOpen: (p: MomentPerson) => void; navy?: boolean; now: number }) {
   if (people.length === 0) return null
   return (
     <section aria-label={label}>
@@ -60,7 +67,7 @@ function Group({ label, people, onOpen, navy }: { label: string; people: MomentP
       </h2>
       <ul className="overflow-hidden rounded-[16px] border border-[var(--hairline)] bg-[var(--card)]">
         {people.map((person) => (
-          <PersonRow key={person.userId} person={person} onOpen={() => onOpen(person)} />
+          <PersonRow key={person.userId} person={person} onOpen={() => onOpen(person)} now={now} />
         ))}
       </ul>
     </section>
@@ -73,6 +80,7 @@ export default function MomentsPage() {
   const circles = useMemo(() => (circlesQuery.data || []) as MomentCircle[], [circlesQuery.data])
   const { people, isLoading } = useMomentPeople(circles, user?.id)
   const [viewing, setViewing] = useState<MomentPerson | null>(null)
+  const now = useNow(60_000, people.length > 0)
 
   const fromCircles = people.filter((p) => p.circleId != null)
   const fromFollowing = people.filter((p) => p.circleId == null)
@@ -106,8 +114,8 @@ export default function MomentsPage() {
           </div>
         ) : (
           <>
-            <Group label="From Your Circles" people={fromCircles} onOpen={setViewing} navy />
-            <Group label="From People You Follow" people={fromFollowing} onOpen={setViewing} />
+            <Group label="From Your Circles" people={fromCircles} onOpen={setViewing} navy now={now} />
+            <Group label="From People You Follow" people={fromFollowing} onOpen={setViewing} now={now} />
           </>
         )}
       </div>

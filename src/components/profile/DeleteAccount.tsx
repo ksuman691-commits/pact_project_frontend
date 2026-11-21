@@ -6,6 +6,7 @@ import { Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api, { clearToken } from '@/services/api';
 import { useAuthStore } from '@/store/auth';
+import { useBackToClose } from '@/hooks/useBackToClose';
 
 const INK = '#17181D';
 const MUTED = '#5A5C63';
@@ -20,6 +21,7 @@ export default function DeleteAccount() {
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState('');
   const [busy, setBusy] = useState(false);
+  useBackToClose(open, () => !busy && setOpen(false));
   const ready = typed.trim() === 'DELETE';
 
   const confirm = async () => {

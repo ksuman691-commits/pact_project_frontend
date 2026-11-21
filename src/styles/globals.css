@@ -890,3 +890,45 @@ section + section {
 @keyframes cp-look-toast { 0% { opacity: 0; transform: scale(0.92); } 15% { opacity: 1; transform: none; } 70% { opacity: 1; } 100% { opacity: 0; } }
 .cp-look-toast { animation: cp-look-toast 1.1s ease-out forwards; }
 @media (prefers-reduced-motion: reduce) { .cp-look-toast { animation-duration: 1.4s; } }
+
+/* Moments: a friend's ring turns round into place, then two crisp echoes go out (StoryRing). */
+@keyframes cp-ring-in {
+  0% { transform: rotate(-230deg) scale(.84); opacity: 0; }
+  60% { transform: rotate(-80deg) scale(1.05); opacity: 1; }
+  100% { transform: rotate(-90deg) scale(1); opacity: 1; }
+}
+@keyframes cp-ring-echo { 0% { transform: scale(.96); opacity: .85; } 100% { transform: scale(1.22); opacity: 0; } }
+@keyframes cp-face-bump { 0%, 100% { transform: scale(1); } 45% { transform: scale(.9); } 75% { transform: scale(1.04); } }
+.cp-ring-in { animation: cp-ring-in .7s cubic-bezier(.22,1,.36,1) both; }
+.cp-ring-echo { animation: cp-ring-echo .85s cubic-bezier(.2,.7,.3,1) both; }
+.cp-face-bump { animation: cp-face-bump .6s cubic-bezier(.3,1.4,.5,1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .cp-ring-in, .cp-face-bump { animation: none; }
+  .cp-ring-echo { display: none; }
+}
+
+/* Today: the last 3 hours of a waiting check-in. A crisp yellow edge with a light running round it. */
+@property --cp-sweep { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+@keyframes cp-sweep { to { --cp-sweep: 360deg; } }
+@keyframes cp-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.045); } }
+.cp-last-hours { box-shadow: inset 0 0 0 2px var(--dare); }
+.cp-last-hours::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(from var(--cp-sweep), transparent 0 68%, rgba(255,255,255,.95) 80%, var(--dare) 88%, transparent 96%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: cp-sweep 2.8s linear infinite;
+  pointer-events: none;
+}
+.cp-last-hours.cp-last-hour::before { animation-duration: 1.6s; }
+.cp-breathe { animation: cp-breathe 2.4s ease-in-out infinite; }
+.cp-breathe:active { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .cp-last-hours::before { display: none; }
+  .cp-breathe { animation: none; }
+}

@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { Volume2, VolumeX, X } from 'lucide-react';
 import { useSnapSwipe } from '@/hooks/useSnapSwipe';
+import { useBackToClose } from '@/hooks/useBackToClose';
 
 const PHOTO_MS = 5000;
 
@@ -75,6 +76,7 @@ interface ProofCarouselProps {
  * video plays muted instead of stopping, and the sound button turns it on.
  */
 export default function ProofCarousel({ proofs, isOpen, onClose, initialIndex = 0 }: ProofCarouselProps) {
+  useBackToClose(isOpen, onClose);
   const items = useMemo(() => toStoryItems(proofs), [proofs]);
   const [activeIndex, setActiveIndex] = useState(initialIndex);
   const [muted, setMuted] = useState(false);

@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { dareService } from '@/services/api';
 import { queryKeys } from '@/lib/queryKeys';
+import { useBackToClose } from '@/hooks/useBackToClose';
 
 const REASONS: { id: 'scam' | 'unsafe' | 'mean' | 'spam' | 'other'; label: string; hint: string }[] = [
   { id: 'scam', label: 'Scam or fraud', hint: 'Asking you to pay first, fake rewards, or something feels off with money' },
@@ -20,6 +21,7 @@ const REASONS: { id: 'scam' | 'unsafe' | 'mean' | 'spam' | 'other'; label: strin
  * lists; the person who sent it is never told who reported.
  */
 export default function ReportDareSheet({ dareId, onClose, onDone }: { dareId: number; onClose: () => void; onDone?: () => void }) {
+  useBackToClose(true, onClose);
   const [reason, setReason] = useState<(typeof REASONS)[number]['id'] | null>(null);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
