@@ -101,6 +101,8 @@ function EndedResult({
   onRecap: () => void
 }) {
   const thumbs = moments.filter((m) => m.url).slice(-3)
+  // A week per row up to 4 weeks; longer pacts use smaller dots so the recap bar still fits.
+  const cols = total <= 28 ? 7 : total <= 60 ? 10 : 15
   const parts = [`${posted} posted`, rests ? `${rests} rest ${rests === 1 ? 'day' : 'days'}` : null, needed ? `${needed} needed` : null].filter(Boolean)
   return (
     <div className="absolute inset-0 z-10 flex flex-col overflow-hidden bg-[#1F3A93] px-5 pb-4 pt-5 text-white">
@@ -126,8 +128,12 @@ function EndedResult({
       <p className="relative mt-1.5 text-[13px] font-semibold" style={{ color: SOFT_TEXT }}>{parts.join(' · ')}</p>
 
       {days && (
-        <div className="relative mt-4 grid max-w-[300px] grid-cols-7 gap-[7px]" aria-label={`${posted} of ${total} days posted`}>
-          {days.slice(0, 63).map((kind, i) => (
+        <div
+          className="relative mt-4 grid"
+          style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: cols === 7 ? 7 : 5, maxWidth: cols === 7 ? 300 : 330 }}
+          aria-label={`${posted} of ${total} days posted`}
+        >
+          {days.slice(0, 120).map((kind, i) => (
             <DayDot key={i} kind={kind} />
           ))}
         </div>
@@ -733,7 +739,7 @@ export default function PactMomentsDetail({
                 </>
               ) : (
                 <button type="button" onClick={onRestart} className="h-12 w-full rounded-full bg-[var(--navy)] px-5 text-[14px] font-bold text-white">
-                  Start again
+                  Go again
                 </button>
               )
             ) : presentationEnded && watchingRecap ? (
