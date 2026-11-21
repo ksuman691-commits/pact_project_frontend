@@ -23,6 +23,7 @@ import { MarkProgress } from '@/components/brand/CircleMark'
 import type { ViewerMoment } from '@/components/MomentViewer'
 import type { PactDayStripEntry } from '@/types'
 import { pactInviteMessage } from '@/lib/inviteMessages'
+import { dayMarks, sharePactCard } from '@/lib/pactShareCard'
 
 type Moment = ViewerMoment & { userId?: number | string }
 
@@ -202,6 +203,42 @@ export default function PactMomentsDetail({
   const creatorId = pact?.creator_id ?? null
   const isCreatorView = viewerId != null && creatorId != null && String(viewerId) === String(creatorId)
   const creatorName = String(pact?.creator_full_name || pact?.creator_username || 'the creator')
+  const [makingCard, setMakingCard] = useState(false)
+  const shareCard = async () => {
+    if (makingCard || !pact) return
+    setMakingCard(true)
+    try {
+      const rests = Array.isArray(pact.rest_days) ? pact.rest_days.length : 0
+      await sharePactCard({
+        pactId: Number(pact.id),
+        title: cleanTitle(pact.title),
+        name: creatorName.split(' ')[0],
+        kept: completionLooksSuccessful,
+        daysPosted: Number(pact.days_completed ?? fallbackCompleted),
+        restDays: rests,
+        daysNeeded: Number(pact.days_required ?? total),
+        totalDays: total,
+        circleName: pact.circle_name ?? null,
+        days: dayMarks(pact),
+      })
+    } catch (err: any) {
+      if (err?.name !== 'AbortError') toast.error("Couldn't make the picture. Try again.")
+    } finally {
+      setMakingCard(false)
+    }
+  }
+  const shareCardButton = (
+    <button
+      type="button"
+      onClick={() => void shareCard()}
+      disabled={makingCard}
+      className="mt-4 flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[14px] font-extrabold text-[var(--navy)] disabled:opacity-60"
+      style={{ boxShadow: '0 0 0 2px #17181D' }}
+    >
+      <Share2 className="size-4" strokeWidth={2.4} aria-hidden="true" />
+      {makingCard ? 'Making your card…' : 'Share your card'}
+    </button>
+  )
   const myTips = useMyTipSettings(isCreatorView)
   const showTurnOnTips = isCreatorView && myTips.data != null && !myTips.data.enabled
   // Private pact tier: the server already stripped the media; show the ask instead.
@@ -426,6 +463,7 @@ export default function PactMomentsDetail({
                     <Play className="ml-1 size-10 fill-current" aria-hidden="true" />
                   </button>
                   <span className="mt-5 text-[13px] font-bold text-white">Watch recap</span>
+                  {isCreatorView && shareCardButton}
                 </>
               ) : completionView === 'partial' || completionView === 'provisional_not_completed' ? (
                 <>
@@ -434,6 +472,7 @@ export default function PactMomentsDetail({
                   <button type="button" onClick={() => { setActiveIndex(0); setWatchingRecap(true) }} className="mt-6 rounded-full border border-white/80 px-5 py-3 text-[15px] font-extrabold text-white">
                     Watch your moments
                   </button>
+                  {isCreatorView && shareCardButton}
                 </>
               ) : (
                 <>
