@@ -2,16 +2,18 @@
 // src/components/legal/LegalText.tsx (## headings, - bullets, **bold**, [links](/path)).
 // Items in [square brackets] must be filled in before this goes live.
 
-export const TERMS_UPDATED = '8 November 2026';
+export const TERMS_UPDATED = '22 November 2026';
 // Sent with consent; must match TERMS_VERSION in the backend's app/core/legal.py.
-export const TERMS_VERSION = '2026-11-08';
+export const TERMS_VERSION = '2026-11-22';
 
 export const TERMS = `
 These terms are the agreement between you and [Company legal name] ("CirclePact", "we", "us") for using the CirclePact app and website. By creating an account or using CirclePact you agree to them. If you don't agree, please don't use CirclePact.
 
 **Please read them carefully.** Among other things, they give us a licence to use what you post (section 4), limit our responsibility (sections 15 to 18), and require most disputes to go to arbitration on an individual basis (section 20). None of this takes away your rights over your personal data under India's Digital Personal Data Protection Act, 2023, which our [Privacy Policy](/privacy) explains.
 
-The short version: be 18 or older, post only real moments that are yours, be decent to people, and remember that money on CirclePact moves directly between people over UPI, not through us.
+The short version: be 18 or older, post only real moments that are yours, be decent to people, and remember that **real money is involved** in tips, paid pacts and dare rewards, and that taxes apply to it (section 8).
+
+**Money is involved on CirclePact.** People can tip each other, pay to watch a creator's paid pact, and offer a reward for completing a dare. These are real payments in Indian rupees. **GST and other taxes apply to them as Indian law requires** (section 8). CirclePact pays the taxes it owes and follows India's tax laws on every payment it is part of. CirclePact is **not** betting, gambling or a money game: nobody ever pays or puts up money to take part in a pact or a dare, and nobody can win money from someone else's loss.
 
 ## 1. Who can use CirclePact
 - You must be **18 or older**. If you give a false date of birth, you're responsible for the consequences and we may close your account.
@@ -58,7 +60,8 @@ You must not post, share or send anything that:
 - impersonates another person;
 - threatens the unity, integrity, defence, security or sovereignty of India, friendly relations with other countries or public order, or stops any offence being investigated;
 - contains viruses or other harmful code;
-- promotes gambling or betting, including betting on whether someone completes a pact or dare;
+- promotes gambling, betting or wagering, including betting on whether someone completes a pact or dare, or any arrangement where someone pays or puts up money to take part and expects to win money back;
+- promotes or arranges a pact or dare outside CirclePact's rules, or one that is illegal anywhere in India;
 - breaks any law in force.
 
 You also must not:
@@ -68,18 +71,28 @@ You also must not:
 - use bots or automated tools on CirclePact, or copy, reverse-engineer or try to get our source code, unless the law allows it;
 - get around locks, limits or security features, test our systems for weaknesses without our written permission, or interfere with how CirclePact works.
 
-## 7. Dares
+## 7. Dares, and what CirclePact does not promote
 - Dares are challenges people set each other. Nobody ever has to accept or do a dare, and you can say no without giving a reason.
 - Don't dare anyone to do anything risky to their health or safety, illegal, or humiliating.
 - A dare reward is a promise from the person who set the dare. It's paid between you over UPI (see section 8). We don't guarantee it will be paid.
+- **A dare reward is never a stake or a bet.** Only the person who set the dare can offer a reward. The person doing the dare never pays anything to accept it, and never loses or owes money for not finishing it. Dares where both sides put up money, where the loser pays, or where money depends on chance are not allowed.
+- **CirclePact does not promote, encourage or intend anyone to take part in unofficial or illegal dares or pacts.** Dares marked **Official** are the only dares CirclePact itself sets. Every other dare and pact is made by users, and we don't endorse it. Don't use CirclePact to arrange anything illegal, unsafe or outside these terms, on or off the app. We remove such dares and pacts when we find them or they're reported, and we may suspend or close the accounts involved and tell the authorities where the law requires.
 
-## 8. Money: tips, paid pacts and dare rewards
-- **All payments go directly from one person to another through their own UPI app.** CirclePact isn't a bank, payment service, wallet or escrow. We don't receive, hold or process the money and don't take a cut today. If we ever start charging a fee, we'll tell you before it applies.
+## 8. Money: tips, paid pacts, dare rewards and taxes
+- **Money is involved.** Tips, paid pacts and dare rewards are real payments, and you should treat them as such.
+- **Today, payments go directly from one person to another through their own UPI app.** CirclePact isn't a bank, payment service, wallet or escrow. We don't currently receive, hold or process the money and don't take a cut. If we start charging a fee or collecting payments ourselves (for example through in-app purchases or a payment provider), we'll tell you before it applies.
 - We give each payment a short code to put in the UPI note. That only helps match a payment to the right tip, pact or dare. The person receiving the money confirms when it arrives.
 - **Refunds and disputes are between you and the other person.** We can't reverse a UPI payment, and we're not responsible for payments sent to the wrong person, payments that fail, or fraud by another user. If you think it's fraud, report it to us and your bank or UPI app. We may remove access or restrict accounts involved.
 - **Paid pacts:** the creator decides who gets access and can take it away. Buy only if you trust the creator. Creators must deliver what they describe.
-- If you receive money, you're responsible for any tax on it.
 - In-app purchases through the App Store or Google Play, if we add them, will have their own terms.
+
+**Taxes, including GST**
+- **GST and other taxes apply to money on CirclePact.** CirclePact is a tax-paying business. We register for and pay GST and other taxes on what we charge, and we follow India's tax laws on every payment we are part of.
+- **When CirclePact charges you** (for example a fee, an in-app purchase or a paid pact sold through us), the price will include or add GST and any other tax the law requires, and we'll show the tax on your receipt.
+- **When CirclePact pays out or collects money for creators**, we'll deduct or collect tax (such as TDS or TCS) where the law requires and report it to the tax authorities. We may ask for your PAN and, if you have one, your GSTIN before paying you.
+- **When you receive tips, paid-pact payments or dare rewards directly from other people**, that money may be income for you. You're responsible for declaring it and paying any income tax and GST you owe on it.
+- We may share payment records with tax authorities when the law requires (see the [Privacy Policy](/privacy)).
+- Nothing here is tax advice. If you're unsure what you owe, ask a tax professional.
 
 ## 9. Reporting and grievances
 - You can report content or a person from inside the app, or write to our Grievance Officer.

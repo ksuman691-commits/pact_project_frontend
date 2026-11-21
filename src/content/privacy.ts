@@ -3,9 +3,9 @@
 // Rendered by src/components/legal/LegalText.tsx.
 // Items in [square brackets] must be filled in before this goes live.
 
-export const PRIVACY_UPDATED = '12 November 2026';
+export const PRIVACY_UPDATED = '22 November 2026';
 // Sent with consent; must match PRIVACY_VERSION in the backend's app/core/legal.py.
-export const PRIVACY_VERSION = '2026-11-12';
+export const PRIVACY_VERSION = '2026-11-22';
 
 export const PRIVACY = `
 This Privacy Policy is our notice to you under India's Digital Personal Data Protection Act, 2023 (the "DPDP Act") and the Digital Personal Data Protection Rules, 2025. It explains what personal data CirclePact collects, why, who we share it with, how long we keep it, and how you can use your rights. [Company legal name] ("CirclePact", "we", "us") decides how and why your personal data is used, so under the DPDP Act we are the **Data Fiduciary** and we're responsible for it, including when companies we hire handle it for us.
@@ -15,6 +15,7 @@ This Privacy Policy is our notice to you under India's Digital Personal Data Pro
 - **AI training is off.** We only use your posts to train AI if you switch it on.
 - **Advertising sharing is off.** We only share data with advertising partners if you switch it on.
 - You can change both at any time in **Edit profile → Privacy choices**, as easily as you turned them on.
+- **Money is involved** in tips, paid pacts and dare rewards, and GST and other taxes apply. We keep payment records and, where tax law requires, tax details such as your PAN, and share them with tax authorities (sections 2, 7 and 9).
 - You can see, correct and delete your data, name someone to act for you, and complain to us or to the Data Protection Board of India (section 11).
 - Questions go to our privacy contact, [Grievance Officer name] (section 15).
 
@@ -49,9 +50,10 @@ We also use some data without asking, where the DPDP Act allows it (section 7 of
 - **Circles you make or join, and who you follow:** to run circles and your feed.
 - **Reports you make, and the IP address a report came from:** to review reports and stop abuse of reporting.
 
-**Tips and paid pacts (optional)**
-- **Your UPI ID and payee name:** shown only to people who choose to tip you or buy access to your paid pact, so they can pay you.
-- **For each tip, paid pact or dare reward:** the amount, payment code, who it was between, and whether it was confirmed, so we can match payments and give buyers access. Payments happen in your UPI app; **we never see your bank, card or UPI PIN details.**
+**Tips, paid pacts and dare rewards (optional; money is involved)**
+- **Your UPI ID and payee name:** shown only to people who choose to tip you, buy access to your paid pact or pay you a dare reward, so they can pay you.
+- **For each tip, paid pact or dare reward:** the amount, payment code, who it was between, and whether it was confirmed, so we can match payments, give buyers access, and meet our tax and accounting duties. Payments happen in your UPI app; **we never see your bank, card or UPI PIN details.**
+- **Tax details (only when the law needs them):** if CirclePact charges you, pays you or collects money for you, we may ask for your PAN, your GSTIN if you have one, and your billing state, to charge the right GST, deduct or collect tax (such as TDS or TCS) and issue invoices and tax statements.
 
 **Collected automatically (needed)**
 - **Sign-in records:** a record of each device you're signed in on, so you stay signed in and can be signed out everywhere.
@@ -75,6 +77,7 @@ We also use some data without asking, where the DPDP Act allows it (section 7 of
 - **To keep CirclePact secure and working:** detecting and investigating security incidents, fixing problems and understanding how features are used.
 - **To contact you** about your account, security and changes to these terms.
 - **For legal reasons:** to meet our legal duties and respond to lawful requests.
+- **For taxes and accounts:** to charge and pay GST and other taxes, deduct or collect tax where required, keep the accounting records tax law requires, and stop tax fraud and money laundering.
 - **Optional uses you switch on:** AI training (section 4) and advertising (section 5).
 
 We don't use your data for any new purpose without telling you first and, where the law needs it, asking for your consent.
@@ -116,7 +119,9 @@ We'll keep this list up to date and tell you about new kinds of companies before
 
 **Others, only in these cases**
 - **Advertising partners,** only if you've switched that on (section 5).
-- **Our professional advisers** (lawyers, accountants, auditors), under a duty of confidentiality.
+- **Our professional advisers** (lawyers, chartered accountants, auditors, including for GST and tax filings), under a duty of confidentiality.
+- **Tax authorities** (such as the GST and Income Tax departments): payment and tax records, when tax law requires it.
+- **Payment providers and app stores,** if we start taking payments through them: what they need to process your payment.
 - **Government, courts and law enforcement,** when the law requires it or to protect someone's safety.
 - **A buyer or new owner,** if CirclePact is merged or sold. We'll tell you before your data moves, and you can delete your account first.
 
@@ -132,6 +137,7 @@ Your photos and videos are stored in India. Some companies in section 7, includi
 - **If you don't use CirclePact for 3 years,** we'll treat your account as no longer needed and delete it. We'll email you at least 48 hours before, so you can sign in to keep it.
 - **Security records:** the DPDP Rules require us to keep technical logs and the records of processing linked to them for **one year** from when the processing happened, to detect and investigate security incidents and respond to lawful requests. This can include some details of a deleted account. We use these only for those purposes and delete them after one year, unless another law needs us to keep them longer.
 - **Consent and grievance records** are kept as long as we need them to show we followed the law.
+- **Payment and tax records** (tips, paid pacts, dare rewards, invoices and tax details) are kept for as long as GST, income tax and accounting laws require, even after you delete your account. After your account is deleted they no longer show your name in the app.
 - When we no longer need data, we delete it, and we tell the companies in section 7 to delete it too.
 
 ## 10. Keeping your data safe
