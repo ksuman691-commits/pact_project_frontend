@@ -453,6 +453,11 @@ section + section {
 
 /* Glass-morphic surface card with hover lift + tap scale, shared physics
    with .pact-tile above. */
+.pact-card {
+  background: var(--card);
+  border: 1px solid var(--hairline);
+}
+
 .pact-flow .pact-card {
   background: var(--pact-surface);
   border: 1px solid var(--pact-hairline);
@@ -755,11 +760,12 @@ section + section {
   58% { opacity: 0.6; }
 }
 .cp-zap { animation: cp-zap 1.6s ease-in-out infinite; transform-origin: center; }
+/* A dare is waiting: a crisp yellow ring (paper gap, then 2 px yellow) that ticks out and back. */
 @keyframes cp-zap-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 210, 63, 0); }
-  50% { box-shadow: 0 0 0 5px rgba(255, 210, 63, 0.45); }
+  0%, 70%, 100% { box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--dare); }
+  82% { box-shadow: 0 0 0 3px var(--paper), 0 0 0 5.5px var(--dare); }
 }
-.cp-zap-glow { animation: cp-zap-glow 1.6s ease-in-out infinite; }
+.cp-zap-glow { box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--dare); animation: cp-zap-glow 2.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
   .cp-zap, .cp-zap-glow { animation: none; }
 }

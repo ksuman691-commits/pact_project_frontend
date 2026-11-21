@@ -422,7 +422,7 @@ export default function PactMomentsDetail({
                     <h2 className="text-[28px] font-extrabold leading-8 text-white">Completed</h2>
                     <p className="mt-1 text-[17px] font-bold text-white">{completed} of {total} days</p>
                   </div>
-                  <button type="button" aria-label="Watch recap" onClick={() => { setActiveIndex(0); setWatchingRecap(true) }} className="mt-9 flex size-24 items-center justify-center rounded-full bg-white text-[var(--navy)] shadow-[0_0_0_10px_rgba(255,255,255,0.28),0_0_0_22px_rgba(255,255,255,0.14)]">
+                  <button type="button" aria-label="Watch recap" onClick={() => { setActiveIndex(0); setWatchingRecap(true) }} className="mt-9 flex size-24 items-center justify-center rounded-full bg-white text-[var(--navy)] shadow-[0_0_0_5px_#1F3A93,0_0_0_7.5px_#FFFFFF,0_10px_24px_rgba(0,0,0,0.3)]">
                     <Play className="ml-1 size-10 fill-current" aria-hidden="true" />
                   </button>
                   <span className="mt-5 text-[13px] font-bold text-white">Watch recap</span>
@@ -500,7 +500,7 @@ export default function PactMomentsDetail({
           {!hasMoments && !isEnded && isParticipant && (
             <div className="absolute inset-0 z-10 flex flex-col items-center px-5 pb-5 text-center text-white">
               <div className="flex flex-1 flex-col items-center justify-center gap-3">
-                <button type="button" aria-label={`Post Day ${currentDay}`} onClick={onAddMoment} className="flex size-[96px] items-center justify-center rounded-full border-0 bg-[var(--navy)] text-white shadow-[0_0_0_10px_rgba(255,255,255,0.28),0_0_0_22px_rgba(255,255,255,0.14)] transition active:scale-95">
+                <button type="button" aria-label={`Post Day ${currentDay}`} onClick={onAddMoment} className="flex size-[96px] items-center justify-center rounded-full border-0 bg-[var(--navy)] text-white shadow-[0_0_0_5px_#1F3A93,0_0_0_7.5px_#FFFFFF,0_10px_24px_rgba(0,0,0,0.3)] transition active:scale-95">
                   <Camera className="size-10" strokeWidth={2} aria-hidden="true" />
                 </button>
                 <div className="mt-3 text-[26px] font-extrabold tracking-[-0.5px] text-white">Post Day {currentDay}</div>

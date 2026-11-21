@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { User } from '@/types';
-import { authService, clearToken, getRefreshToken, setAuthTokens, setToken } from '@/services/api';
+import { authService, cacheProfile, clearToken, getRefreshToken, readCachedProfile, setAuthTokens, setToken } from '@/services/api';
+import { isTransientError, retryBackoff } from '@/lib/transient';
 import { consentPayload, type ConsentChoices } from '@/lib/consent';
 
 interface AuthState {
@@ -138,50 +139,57 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
+  // Opens from the saved profile straight away when there is one, then checks the
+  // session with the server. A slow or unreachable server is retried and never
+  // signs anyone out; only the server rejecting the session does (the API client
+  // refreshes an expired access token on its own and sends people to log in when
+  // the refresh token is no longer valid).
   initAuth: async () => {
-    set({ isLoading: true });
-    try {
-      const storedToken =
-        typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      const storedRefreshToken = getRefreshToken();
+    const storedToken = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    const storedRefreshToken = getRefreshToken();
 
-      if (!storedToken && !storedRefreshToken) {
-        set({ user: null, token: null, isLoading: false, isInitialized: true });
-        return;
-      }
-
-      if (storedToken) {
-        setToken(storedToken);
-      }
-
-      try {
-        await authService.verify();
-      } catch {
-        if (!storedRefreshToken) {
-          throw new Error('No refresh token available');
-        }
-
-        const refreshed = await authService.refresh(storedRefreshToken);
-        const newAccessToken = refreshed.data?.access_token;
-        const newRefreshToken = refreshed.data?.refresh_token;
-        if (!newAccessToken || !newRefreshToken) {
-          throw new Error('Invalid refresh response');
-        }
-        setAuthTokens(newAccessToken, newRefreshToken);
-      }
-
-      const profile = await authService.getProfile();
-      const activeToken = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-
-      set({
-        user: profile.data,
-        token: activeToken,
-        isLoading: false,
-        isInitialized: true,
-      });
-    } catch (err: any) {
-      clearToken();
+    if (!storedToken && !storedRefreshToken) {
       set({ user: null, token: null, isLoading: false, isInitialized: true });
+      return;
+    }
+    if (storedToken) setToken(storedToken);
+
+    const cached = readCachedProfile<User>();
+    if (cached) set({ user: cached, token: storedToken, isLoading: false, isInitialized: true });
+    else set({ isLoading: true });
+
+    const ATTEMPTS = 4;
+    for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
+      try {
+        const profile = await authService.getProfile(20000);
+        set({
+          user: profile.data,
+          token: typeof window !== 'undefined' ? localStorage.getItem('access_token') : null,
+          isLoading: false,
+          isInitialized: true,
+        });
+        return;
+      } catch (err) {
+        if (!isTransientError(err)) {
+          clearToken();
+          set({ user: null, token: null, isLoading: false, isInitialized: true });
+          return;
+        }
+        if (attempt === ATTEMPTS - 1) {
+          // Still can't reach the server. Keep the tokens: with a saved profile the app
+          // carries on (its screens retry); without one, sign-in is the only way forward.
+          set({ isLoading: false, isInitialized: true });
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, retryBackoff(attempt)));
+      }
     }
   },
 }));
+
+// Keep the saved profile in step with every sign-in and profile change.
+if (typeof window !== 'undefined') {
+  useAuthStore.subscribe((state, previous) => {
+    if (state.user && state.user !== previous.user) cacheProfile(state.user);
+  });
+}

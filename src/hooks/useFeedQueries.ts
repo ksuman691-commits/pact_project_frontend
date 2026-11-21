@@ -3,6 +3,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { feedService, pactAdvancedService, socialService } from '@/services/api';
 import { queryKeys } from '@/lib/queryKeys';
+import { retryBackoff, retryTransient } from '@/lib/transient';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -17,9 +18,9 @@ export function usePersonalizedFeed(category = 'all', paidOnly = false) {
     // Short, so a pact someone just started in your circle shows up when you open or return to the app.
     staleTime: 1000 * 20,
     refetchOnWindowFocus: true,
-    // One automatic background retry, then the feed shows its Tap to retry state.
-    retry: 1,
-    retryDelay: 1000,
+    // Keeps the skeleton up through a slow start (about a minute) before showing Tap to retry.
+    retry: retryTransient(4),
+    retryDelay: retryBackoff,
   });
 }
 

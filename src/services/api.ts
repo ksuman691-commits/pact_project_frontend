@@ -168,7 +168,14 @@ api.interceptors.response.use(
     if (response && response.status === 401 && !isAuthEndpoint && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const newAccessToken = await refreshAccessTokenSilently();
+      let newAccessToken: string | null;
+      try {
+        newAccessToken = await refreshAccessTokenSilently();
+      } catch (refreshError: any) {
+        // Couldn't reach the server to refresh: report it as a hiccup (retried), not a sign-out.
+        if (refreshError && typeof refreshError === 'object') refreshError.cpTransient = true;
+        return Promise.reject(refreshError);
+      }
       if (newAccessToken) {
         const headers = originalRequest.headers as AxiosRequestHeaders | undefined;
         originalRequest.headers = {
@@ -234,6 +241,30 @@ export const clearToken = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem(PROFILE_CACHE_KEY);
+  }
+};
+
+// The signed-in profile, kept so the app opens straight away while the server
+// confirms the session in the background. Cleared with the tokens.
+const PROFILE_CACHE_KEY = 'cp:me';
+
+export const cacheProfile = (user: unknown) => {
+  if (typeof window === 'undefined' || !user) return;
+  try {
+    localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(user));
+  } catch {
+    // Storage full or blocked: the app just waits for the server instead.
+  }
+};
+
+export const readCachedProfile = <T,>(): T | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(PROFILE_CACHE_KEY);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
   }
 };
 
@@ -255,9 +286,15 @@ async function refreshAccessTokenSilently(): Promise<string | null> {
         setAuthTokens(newAccessToken, newRefreshToken);
         return newAccessToken as string;
       })
-      .catch(() => {
-        clearToken();
-        return null;
+      .catch((error) => {
+        // Only a real "no" from the server ends the session. A timeout or a server
+        // still starting up keeps the tokens, so the next try can succeed.
+        const status = error?.response?.status;
+        if (status === 400 || status === 401 || status === 403 || status === 422) {
+          clearToken();
+          return null;
+        }
+        throw error;
       })
       .finally(() => {
         refreshPromise = null;
@@ -274,8 +311,8 @@ export const authService = {
   googleLogin: (data: { id_token: string } & Record<string, unknown>) => api.post('/api/auth/google', data),
   acceptConsent: (data: Record<string, unknown>) => api.post('/api/users/me/consent', data),
   refresh: (refresh_token: string) => api.post('/api/auth/refresh', { refresh_token }),
-  getProfile: async () => {
-    const response = await api.get('/api/auth/me');
+  getProfile: async (timeout?: number) => {
+    const response = await api.get('/api/auth/me', timeout ? { timeout } : undefined);
     return { ...response, data: mapUser(response.data) };
   },
   uploadAvatar: async (file: File) => {

@@ -252,6 +252,14 @@ function PactsPageInner() {
   const endedMine = participantPacts.filter((p) => !isActive(p) && p.status !== 'cancelled')
   const kept = endedMine.filter(isFinishedPact).length
   const keptRate = endedMine.length ? kept / endedMine.length : 0
+  // "First one ends in 12 days": the soonest end among your running pacts.
+  const soonestEndDays = participantPacts
+    .filter(isActive)
+    .map((p) => (p.end_date ? Math.ceil((new Date(`${String(p.end_date).slice(0, 10)}T23:59:59`).getTime() - Date.now()) / 86_400_000) : null))
+    .filter((d): d is number => d != null && d >= 0)
+    .sort((x, y) => x - y)[0]
+  const firstEndsSub =
+    soonestEndDays == null ? 'Finish one to count it' : soonestEndDays === 0 ? 'Your first one ends today' : soonestEndDays === 1 ? 'Your first one ends tomorrow' : `First one ends in ${soonestEndDays} days`
   const runningCount = counts.Active
   const nothingYet = query.isSuccess && pacts.length === 0 && watchingAll.length === 0
 
@@ -288,7 +296,7 @@ function PactsPageInner() {
       label: 'Pacts kept',
       value: query.isSuccess ? kept : null,
       unit: endedMine.length ? `of ${endedMine.length}` : undefined,
-      sub: endedMine.length ? `${Math.round(keptRate * 100)}% finished` : 'Your first one ends soon',
+      sub: endedMine.length ? `${Math.round(keptRate * 100)}% finished` : firstEndsSub,
       icon: <CheckBadge />,
       visual: endedMine.length ? <MarkProgress value={keptRate} size={22} color="#4ADE80" track="rgba(255,255,255,0.18)" /> : undefined,
       hint: 'Ended pacts you finished',

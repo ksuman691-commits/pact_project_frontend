@@ -112,7 +112,7 @@ export default function PageHero({ tone, title, tagline, line, busy = false, chi
         </p>
       )}
       {line && (
-        <p className="cp-hero-title mt-1 max-w-[255px] text-[16.5px] font-medium leading-[1.3]" style={{ animationDelay: '140ms', color: dare ? 'var(--ink)' : '#FFFFFF' }}>
+        <p className="cp-hero-title mt-1 max-w-[222px] text-[16.5px] font-medium leading-[1.3]" style={{ animationDelay: '140ms', color: dare ? 'var(--ink)' : '#FFFFFF' }}>
           {line}
         </p>
       )}
