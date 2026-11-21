@@ -22,11 +22,12 @@ import { useBackToClose } from '@/hooks/useBackToClose';
  *  - Save image: downloads the same card as a PNG.
  */
 
-type CircleLike = { id: number; name: string; icon_emoji?: string | null; member_count?: number };
+type CircleLike = { id: number; name: string; icon_emoji?: string | null; member_count?: number; qr_seed?: string | null };
 
-export const circleWallUrl = (id: number) => {
+/** A private circle's wall opens only with its invite key (members get it from the API), so the link carries it. */
+export const circleWallUrl = (id: number, key?: string | null) => {
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://circlepact.com';
-  return `${origin}/circles/${id}/wall`;
+  return `${origin}/circles/${id}/wall${key ? `?k=${encodeURIComponent(key)}` : ''}`;
 };
 
 const INK = '#17181D';
@@ -164,7 +165,7 @@ const buttonSecondary =
 
 export function CircleInviteQRSheet({ circle, onClose }: { circle: CircleLike; onClose: () => void }) {
   useBackToClose(true, onClose);
-  const url = circleWallUrl(circle.id);
+  const url = circleWallUrl(circle.id, circle.qr_seed);
   const matrix = useMemo(() => buildMatrix(url), [url]);
   const [busy, setBusy] = useState<'share' | 'save' | null>(null);
 

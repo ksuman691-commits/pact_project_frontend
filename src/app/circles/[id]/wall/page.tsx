@@ -33,7 +33,9 @@ export default function CirclePublicWallPage() {
   useEffect(() => {
     let active = true;
     (async () => {
-      const result = await circlePublicWallService.getWall(circleId);
+      // A private circle's invite link carries its key (?k=); without it the wall is not found.
+      const key = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('k') : null;
+      const result = await circlePublicWallService.getWall(circleId, key);
       if (!active) return;
       setCircle(result);
       setNotFound(!result);
