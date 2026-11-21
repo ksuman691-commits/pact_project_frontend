@@ -227,16 +227,17 @@ export default function PactMomentsDetail({
       setMakingCard(false)
     }
   }
-  const shareCardButton = (
+  // One Share for an ended pact: its creator shares the picture with the link in one go;
+  // anyone else shares the link.
+  const shareButton = (
     <button
       type="button"
-      onClick={() => void shareCard()}
+      onClick={() => (isCreatorView ? void shareCard() : onShareRecap())}
       disabled={makingCard}
-      className="mt-4 flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[14px] font-extrabold text-[var(--navy)] disabled:opacity-60"
-      style={{ boxShadow: '0 0 0 2px #17181D' }}
+      className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-5 text-[14px] font-extrabold text-white disabled:opacity-60"
     >
-      <Share2 className="size-4" strokeWidth={2.4} aria-hidden="true" />
-      {makingCard ? 'Making your card…' : 'Share your card'}
+      <Share2 className="size-5" />
+      {makingCard ? 'Making your card…' : 'Share'}
     </button>
   )
   const myTips = useMyTipSettings(isCreatorView)
@@ -463,7 +464,6 @@ export default function PactMomentsDetail({
                     <Play className="ml-1 size-10 fill-current" aria-hidden="true" />
                   </button>
                   <span className="mt-5 text-[13px] font-bold text-white">Watch recap</span>
-                  {isCreatorView && shareCardButton}
                 </>
               ) : completionView === 'partial' || completionView === 'provisional_not_completed' ? (
                 <>
@@ -472,7 +472,6 @@ export default function PactMomentsDetail({
                   <button type="button" onClick={() => { setActiveIndex(0); setWatchingRecap(true) }} className="mt-6 rounded-full border border-white/80 px-5 py-3 text-[15px] font-extrabold text-white">
                     Watch your moments
                   </button>
-                  {isCreatorView && shareCardButton}
                 </>
               ) : (
                 <>
@@ -607,18 +606,24 @@ export default function PactMomentsDetail({
           <footer className="flex min-h-12 shrink-0 flex-wrap items-center gap-2">
             {presentationEnded && completionLooksSuccessful && !watchingRecap ? (
               <>
-                <button type="button" onClick={onShareRecap} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-5 text-[14px] font-extrabold text-white">
-                  <Share2 className="size-5" />
-                  Share recap
-                </button>
+                {shareButton}
                 <button type="button" onClick={onRestart} aria-label="Start again" className="flex size-12 items-center justify-center rounded-full bg-[var(--navy)] text-white">
                   <RotateCcw className="size-5" />
                 </button>
               </>
             ) : presentationEnded && !completionLooksSuccessful ? (
-              <button type="button" onClick={onRestart} className="h-12 w-full rounded-full bg-[var(--navy)] px-5 text-[14px] font-bold text-white">
-                Start again
-              </button>
+              isCreatorView && completionView !== 'empty' ? (
+                <>
+                  {shareButton}
+                  <button type="button" onClick={onRestart} aria-label="Start again" className="flex size-12 items-center justify-center rounded-full bg-[var(--navy)] text-white">
+                    <RotateCcw className="size-5" />
+                  </button>
+                </>
+              ) : (
+                <button type="button" onClick={onRestart} className="h-12 w-full rounded-full bg-[var(--navy)] px-5 text-[14px] font-bold text-white">
+                  Start again
+                </button>
+              )
             ) : presentationEnded && watchingRecap ? (
               <button type="button" onClick={() => setWatchingRecap(false)} aria-label="Close recap" className="flex size-12 items-center justify-center rounded-full border border-[var(--hairline)] text-[var(--navy)]">
                 <span aria-hidden="true">×</span>

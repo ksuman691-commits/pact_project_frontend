@@ -168,7 +168,7 @@ export default function PactFinishedSheet({ data, onClose, onNext }: { data: Pac
             style={{ boxShadow: 'inset 0 0 0 1.5px rgba(255,255,255,0.7)' }}
           >
             <Share2 className="size-4" strokeWidth={2.4} aria-hidden="true" />
-            {sharing ? 'Making your card…' : 'Share your card'}
+            {sharing ? 'Making your card…' : 'Share'}
           </button>
         </div>
       </div>
