@@ -202,6 +202,10 @@ api.interceptors.response.use(
       response.data.detail = detail.message || 'This is paused for a bit. Please try again later.';
       if (typeof window !== 'undefined') window.dispatchEvent(new Event('cp:feature-paused'));
     }
+    // Too many tries in a short time (the server's rate limits): show its plain message.
+    if (response?.status === 429 && detail && typeof detail === 'object' && detail.code === 'rate_limited') {
+      response.data.detail = detail.message || 'Too many tries. Please wait a little and try again.';
+    }
     return Promise.reject(error);
   }
 );
