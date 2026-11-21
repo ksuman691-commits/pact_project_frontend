@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { Share2 } from 'lucide-react'
+import { Lock, Share2 } from 'lucide-react'
 import Avatar from '@/components/Avatar'
 import CircleMark from '@/components/brand/CircleMark'
 import { CheckBadge, FlameBadge, GaugeBadge } from '@/components/hero/HeroBadges'
@@ -162,6 +162,12 @@ export default function PublicProfilePage() {
           <h2 className="mt-7 px-1 text-[17px] font-extrabold tracking-[-0.01em]">
             Showing up now {p.running_count > 0 && <span className="text-[var(--muted)]">{p.running_count}</span>}
           </h2>
+          {!mine && (p.followers_only_count ?? 0) > 0 && (
+            <p className="mt-1.5 flex items-center gap-1.5 px-1 text-[13.5px] font-semibold text-[var(--muted)]">
+              <Lock className="size-3.5" strokeWidth={2.6} aria-hidden="true" />
+              +{p.followers_only_count} followers-only {p.followers_only_count === 1 ? 'pact' : 'pacts'}. Follow {first} to see {p.followers_only_count === 1 ? 'it' : 'them'}.
+            </p>
+          )}
           {p.running.length === 0 ? (
             <p className="mt-2 px-1 text-[14px] text-[var(--muted)]">No public pacts running right now.</p>
           ) : (
