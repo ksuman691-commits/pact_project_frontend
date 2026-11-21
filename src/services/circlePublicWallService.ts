@@ -44,9 +44,9 @@ export type CirclePublicWallSummary = {
  * null otherwise, so the page can say nothing instead of guessing.
  */
 export const circlePublicWallService = {
-  getWall: async (circleId: number): Promise<CirclePublicWallSummary | null> => {
+  getWall: async (circleId: number, key?: string | null): Promise<CirclePublicWallSummary | null> => {
     try {
-      const response = await publicApi.get(`/api/circles/${circleId}/wall`);
+      const response = await publicApi.get(`/api/circles/${circleId}/wall`, { params: key ? { k: key } : undefined });
       const raw = response.data;
       if (!raw || typeof raw !== 'object') return null;
       const pacts: CirclePublicWallPact[] = Array.isArray(raw.pacts)
