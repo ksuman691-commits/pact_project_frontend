@@ -23,7 +23,8 @@ import { MarkProgress } from '@/components/brand/CircleMark'
 import type { ViewerMoment } from '@/components/MomentViewer'
 import type { PactDayStripEntry } from '@/types'
 import { pactInviteMessage } from '@/lib/inviteMessages'
-import { dayMarks, sharePactCard } from '@/lib/pactShareCard'
+import { dayMarks, sharePactCard, type DayMark } from '@/lib/pactShareCard'
+import { MARK_PATH, MARK_RED } from '@/lib/circleMark'
 
 type Moment = ViewerMoment & { userId?: number | string }
 
@@ -53,6 +54,121 @@ function SafePhoto({ src, alt = '', className = '' }: { src: string; alt?: strin
     <span aria-hidden="true" className={`block bg-[var(--paper)] ${className}`} />
   ) : (
     <Image src={src} alt={alt} fill unoptimized onError={() => setFailed(true)} className={className} />
+  )
+}
+
+const SOFT_TEXT = '#D4DBFA'
+
+/** One day of an ended pact: posted (tick), rest day (yellow) or missed (hollow). */
+function DayDot({ kind }: { kind: DayMark }) {
+  if (kind === 'posted')
+    return (
+      <span className="flex aspect-square w-full items-center justify-center rounded-full bg-white" style={{ boxShadow: '0 0 0 2px #17181D' }}>
+        <svg viewBox="0 0 24 24" className="w-[58%]" aria-hidden="true">
+          <path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke={MARK_RED} strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+    )
+  if (kind === 'rest') return <span className="aspect-square w-full rounded-full bg-[var(--dare)]" style={{ boxShadow: '0 0 0 2px #17181D' }} />
+  return <span className="aspect-square w-full rounded-full" style={{ boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.32)' }} />
+}
+
+/**
+ * An ended pact's result, drawn like its share card: the verdict pill, the
+ * count, one dot per day, and the moments themselves as the way into the recap.
+ */
+function EndedResult({
+  kept,
+  endedText,
+  counted,
+  total,
+  posted,
+  rests,
+  needed,
+  days,
+  moments,
+  onRecap,
+}: {
+  kept: boolean
+  endedText: string
+  counted: number
+  total: number
+  posted: number
+  rests: number
+  needed: number | null
+  days: DayMark[] | null
+  moments: Moment[]
+  onRecap: () => void
+}) {
+  const thumbs = moments.filter((m) => m.url).slice(-3)
+  const parts = [`${posted} posted`, rests ? `${rests} rest ${rests === 1 ? 'day' : 'days'}` : null, needed ? `${needed} needed` : null].filter(Boolean)
+  return (
+    <div className="absolute inset-0 z-10 flex flex-col overflow-hidden bg-[#1F3A93] px-5 pb-4 pt-5 text-white">
+      {/* The mark, big and cropped, like the page tops. */}
+      <svg viewBox="0 0 100 100" className="pointer-events-none absolute -right-20 -top-24 size-[300px]" aria-hidden="true">
+        <path d={MARK_PATH} fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="0.9" />
+      </svg>
+
+      <div className="relative flex items-center gap-2.5">
+        <span
+          className="flex h-8 items-center rounded-full px-3.5 text-[13px] font-extrabold text-[var(--ink)]"
+          style={{ background: kept ? 'var(--dare)' : '#FFFFFF', boxShadow: '0 0 0 2px #17181D' }}
+        >
+          {kept ? 'Pact kept' : 'Pact ended'}
+        </span>
+        <span className="text-[12.5px] font-semibold" style={{ color: SOFT_TEXT }}>{endedText}</span>
+      </div>
+
+      <div className="relative mt-4 flex items-baseline gap-2">
+        <span className="text-[60px] font-extrabold leading-[0.9] tracking-[-0.05em]">{counted}</span>
+        <span className="text-[18px] font-bold tracking-[-0.01em]">of {total} days</span>
+      </div>
+      <p className="relative mt-1.5 text-[13px] font-semibold" style={{ color: SOFT_TEXT }}>{parts.join(' · ')}</p>
+
+      {days && (
+        <div className="relative mt-4 grid max-w-[300px] grid-cols-7 gap-[7px]" aria-label={`${posted} of ${total} days posted`}>
+          {days.slice(0, 63).map((kind, i) => (
+            <DayDot key={i} kind={kind} />
+          ))}
+        </div>
+      )}
+
+      <div className="flex-1" />
+
+      {moments.length > 0 && (
+        <button
+          type="button"
+          onClick={onRecap}
+          className="relative mt-4 flex h-[60px] w-full items-center gap-3 rounded-[18px] bg-white pl-2.5 pr-2 text-left text-[var(--ink)] transition active:scale-[0.99]"
+          style={{ boxShadow: '0 0 0 2px #17181D' }}
+        >
+          <span className="flex shrink-0 pl-1" aria-hidden="true">
+            {thumbs.map((m, i) => (
+              <span
+                key={m.id}
+                className="relative -ml-2.5 size-10 overflow-hidden rounded-[11px] bg-[var(--navy)] first:ml-0"
+                style={{ boxShadow: '0 0 0 2px #FFFFFF, 0 0 0 3.5px #17181D', zIndex: i }}
+              >
+                {m.type === 'video' ? (
+                  <Play className="absolute left-1/2 top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 fill-white text-white" />
+                ) : (
+                  <SafePhoto src={m.url as string} alt="" className="size-full object-cover" />
+                )}
+              </span>
+            ))}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[15px] font-extrabold leading-tight">{kept ? 'Watch the recap' : 'Your moments'}</span>
+            <span className="block text-[12px] font-semibold text-[var(--muted)]">
+              {moments.length} {moments.length === 1 ? 'moment' : 'moments'}
+            </span>
+          </span>
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--navy)] text-white">
+            <Play className="ml-0.5 size-4 fill-current" aria-hidden="true" />
+          </span>
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -227,6 +343,17 @@ export default function PactMomentsDetail({
       setMakingCard(false)
     }
   }
+  const againButton = (
+    <button
+      type="button"
+      onClick={onRestart}
+      className="flex h-12 shrink-0 items-center gap-1.5 rounded-full px-4 text-[14px] font-extrabold text-[var(--navy)]"
+      style={{ boxShadow: 'inset 0 0 0 2px var(--navy)' }}
+    >
+      <RotateCcw className="size-[17px]" strokeWidth={2.6} />
+      Go again
+    </button>
+  )
   // One Share for an ended pact: its creator shares the picture with the link in one go;
   // anyone else shares the link.
   const shareButton = (
@@ -450,39 +577,28 @@ export default function PactMomentsDetail({
           {hasMoments && <div className="absolute inset-x-0 bottom-0 h-[190px] bg-[linear-gradient(180deg,rgba(18,19,26,0)_0%,rgba(18,19,26,0.72)_100%)]" />}
 
           {presentationEnded && !watchingRecap ? (
-            <div className={`absolute inset-0 z-10 flex flex-col items-center justify-center px-6 text-center text-white ${completionView === 'partial' || completionView === 'provisional_not_completed' || completionView === 'empty' ? 'bg-[rgba(20,39,102,0.55)]' : ''}`}>
-              {completionLooksSuccessful ? (
-                <>
-                  <span className="mb-3 flex size-12 items-center justify-center rounded-full border-[3px] border-white text-white">
-                    <Check className="size-6" strokeWidth={3} aria-hidden="true" />
-                  </span>
-                  <div className="mb-3 text-center">
-                    <h2 className="text-[28px] font-extrabold leading-8 text-white">Completed</h2>
-                    <p className="mt-1 text-[17px] font-bold text-white">{completed} of {total} days</p>
-                  </div>
-                  <button type="button" aria-label="Watch recap" onClick={() => { setActiveIndex(0); setWatchingRecap(true) }} className="mt-9 flex size-24 items-center justify-center rounded-full bg-white text-[var(--navy)] shadow-[0_0_0_5px_#1F3A93,0_0_0_7.5px_#FFFFFF,0_10px_24px_rgba(0,0,0,0.3)]">
-                    <Play className="ml-1 size-10 fill-current" aria-hidden="true" />
-                  </button>
-                  <span className="mt-5 text-[13px] font-bold text-white">Watch recap</span>
-                </>
-              ) : completionView === 'partial' || completionView === 'provisional_not_completed' ? (
-                <>
-                  <h2 className="text-[28px] font-extrabold leading-8 text-white">{endedLabel(pact?.end_date)}</h2>
-                  <p className="mt-1 text-[17px] font-bold text-white">{completed} of {total} days done</p>
-                  <button type="button" onClick={() => { setActiveIndex(0); setWatchingRecap(true) }} className="mt-6 rounded-full border border-white/80 px-5 py-3 text-[15px] font-extrabold text-white">
-                    Watch your moments
-                  </button>
-                </>
-              ) : (
-                <>
-                  <span className="mb-5 flex size-20 items-center justify-center rounded-full border-2 border-dashed border-white text-white">
-                    <ImageIcon className="size-9" aria-hidden="true" />
-                  </span>
-                  <h2 className="text-[26px] font-extrabold leading-8 text-white">Nothing was shared</h2>
-                  <p className="mt-2 max-w-[260px] text-[16px] font-semibold leading-5 text-white">This pact ended without moments</p>
-                </>
-              )}
-            </div>
+            completionView === 'empty' ? (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#1F3A93] px-6 text-center text-white">
+                <span className="mb-5 flex size-20 items-center justify-center rounded-full border-2 border-dashed border-white text-white">
+                  <ImageIcon className="size-9" aria-hidden="true" />
+                </span>
+                <h2 className="text-[26px] font-extrabold leading-8 text-white">Nothing was shared</h2>
+                <p className="mt-2 max-w-[260px] text-[16px] font-semibold leading-5 text-white">This pact ended without moments</p>
+              </div>
+            ) : (
+              <EndedResult
+                kept={completionLooksSuccessful}
+                endedText={endedLabel(pact?.end_date)}
+                counted={completed}
+                total={total}
+                posted={Number(pact?.days_completed ?? fallbackCompleted)}
+                rests={restDays}
+                needed={Number(pact?.days_required ?? 0) || null}
+                days={dayMarks(pact)}
+                moments={moments}
+                onRecap={() => { setActiveIndex(0); setWatchingRecap(true) }}
+              />
+            )
           ) : (
             <>
           {presentationEnded && watchingRecap && (
@@ -607,17 +723,13 @@ export default function PactMomentsDetail({
             {presentationEnded && completionLooksSuccessful && !watchingRecap ? (
               <>
                 {shareButton}
-                <button type="button" onClick={onRestart} aria-label="Start again" className="flex size-12 items-center justify-center rounded-full bg-[var(--navy)] text-white">
-                  <RotateCcw className="size-5" />
-                </button>
+                {againButton}
               </>
             ) : presentationEnded && !completionLooksSuccessful ? (
               isCreatorView && completionView !== 'empty' ? (
                 <>
                   {shareButton}
-                  <button type="button" onClick={onRestart} aria-label="Start again" className="flex size-12 items-center justify-center rounded-full bg-[var(--navy)] text-white">
-                    <RotateCcw className="size-5" />
-                  </button>
+                  {againButton}
                 </>
               ) : (
                 <button type="button" onClick={onRestart} className="h-12 w-full rounded-full bg-[var(--navy)] px-5 text-[14px] font-bold text-white">
