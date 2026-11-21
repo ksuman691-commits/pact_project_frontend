@@ -47,7 +47,9 @@ export function resolvePactCompletionViewState(
   const lastPactDate = addDays(pact.start_date, pact.duration_days - 1);
   if (today <= lastPactDate) return null;
 
-  return daysCompleted >= pact.days_required ? 'provisional_completed' : 'provisional_not_completed';
+  // Same rule as the server's finaliser: rest days (one a pact week) count toward finishing.
+  const rests = Array.isArray(pact.rest_days) ? pact.rest_days.length : 0;
+  return daysCompleted + rests >= pact.days_required ? 'provisional_completed' : 'provisional_not_completed';
 }
 
 export function pactLocalToday(pact: Pick<Pact, 'timezone'>, now = new Date()): string {

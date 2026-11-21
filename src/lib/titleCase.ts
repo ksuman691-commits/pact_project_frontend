@@ -3,9 +3,16 @@
  * alone (so "5km", "UPI" and "iPhone"-style words aren't flattened).
  * "Sleep early 20 nights in 30 Days" -> "Sleep Early 20 Nights In 30 Days".
  */
+// Units stay lower case after a number: "Run 5 km", not "Run 5 Km".
+const UNITS = new Set(['km', 'kms', 'k', 'm', 'mi', 'kg', 'kgs', 'g', 'lb', 'lbs', 'l', 'ml', 'min', 'mins', 'h', 'hr', 'hrs', 'am', 'pm', 'cm', 'x', 'cal', 'kcal'])
+
 export function titleCase(value: string | null | undefined): string {
   if (!value) return value ?? ''
-  return value.replace(/(^|[\s(\-/"“'‘])(\p{Ll})/gu, (_match, lead: string, letter: string) => lead + letter.toUpperCase())
+  return value.replace(/(^|[\s(\-/"“'‘])(\p{Ll})(\p{L}*)/gu, (match, lead: string, letter: string, rest: string, offset: number, whole: string) => {
+    const word = (letter + rest).toLowerCase()
+    if (UNITS.has(word) && /\d\s*$/.test(whole.slice(0, offset + lead.length))) return match
+    return lead + letter.toUpperCase() + rest
+  })
 }
 
 /**
