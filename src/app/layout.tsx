@@ -14,6 +14,7 @@ import QueryProvider from '@/providers/QueryProvider';
 import BottomNav from '@/components/BottomNav';
 import ReminderPrompt from '@/components/ReminderPrompt';
 import CelebrationHost from '@/components/celebrations/CelebrationHost';
+import PactFinishedHost from '@/components/celebrations/PactFinishedHost';
 import AppSplash from '@/components/brand/AppSplash';
 
 // "Classic" redesign type system v2 — ONE family site-wide (Inter Tight),
@@ -78,6 +79,7 @@ export default function RootLayout({
           <AppOnly>
             <BottomNav />
             <CelebrationHost />
+            <PactFinishedHost />
             <AppSplash />
             <ReminderPrompt />
           </AppOnly>

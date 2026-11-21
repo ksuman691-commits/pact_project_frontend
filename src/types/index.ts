@@ -89,6 +89,8 @@ export interface Pact {
   duration_days?: number;
   days_required?: number | null;
   days_completed?: number;
+  /** The creator's rest days so far, as day numbers (one a pact week); they count toward finishing. */
+  rest_days?: number[];
   outcome?: 'completed' | 'not_completed' | null;
   completion_rule?: 'manual' | 'moments_75';
   timezone?: string;
