@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import { useAuthStore } from '@/store/auth';
+import api from '@/services/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pact-project-backend-v2.onrender.com';
 
@@ -28,12 +29,29 @@ export default function NotificationRealtimeBridge() {
     let failures = 0;
     let closed = false;
 
-    const connect = () => {
-      // Read the token each time: after an hour the old one has expired, and the browser's own
-      // reconnect would keep retrying the stale URL.
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      if (!token || closed) return;
-      source = new EventSource(`${API_URL}/api/notifications/stream?token=${encodeURIComponent(token)}`);
+    const retry = () => {
+      // Reconnect ourselves, backing off: 2 s, 4 s … up to a minute.
+      failures += 1;
+      const delay = Math.min(60_000, 2000 * 2 ** Math.min(failures - 1, 5));
+      window.clearTimeout(retryTimer);
+      retryTimer = window.setTimeout(() => void connect(), delay);
+    };
+
+    const connect = async () => {
+      if (closed || typeof window === 'undefined' || !localStorage.getItem('access_token')) return;
+      // EventSource can't send headers, so the stream URL carries a two-minute ticket
+      // instead of the login token (which would end up in server logs). A fresh one
+      // each time: the API call refreshes an expired session first.
+      let ticket: string;
+      try {
+        const response = await api.post<{ ticket: string }>('/api/notifications/stream-ticket');
+        ticket = response.data.ticket;
+      } catch {
+        retry();
+        return;
+      }
+      if (closed) return;
+      source = new EventSource(`${API_URL}/api/notifications/stream?ticket=${encodeURIComponent(ticket)}`);
 
       source.onopen = () => {
         failures = 0;
@@ -62,17 +80,14 @@ export default function NotificationRealtimeBridge() {
       };
 
       source.onerror = () => {
-        // Reconnect ourselves with a fresh token, backing off: 2 s, 4 s … up to a minute.
+        // The ticket only opens the stream once; reconnect with a new one.
         source?.close();
         source = null;
-        failures += 1;
-        const delay = Math.min(60_000, 2000 * 2 ** Math.min(failures - 1, 5));
-        window.clearTimeout(retryTimer);
-        retryTimer = window.setTimeout(connect, delay);
+        retry();
       };
     };
 
-    connect();
+    void connect();
 
     return () => {
       closed = true;
