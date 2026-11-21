@@ -145,10 +145,10 @@ function ProfileContent() {
           actions={
             <>
               <button type="button" onClick={() => void shareProfile()} className="h-11 flex-1 rounded-full text-[15px] font-extrabold transition active:scale-[0.98]" style={profileButton.primary}>
-                Share Profile
+                Share profile
               </button>
               <button type="button" onClick={() => router.push('/profile/edit')} className="h-11 flex-1 rounded-full text-[15px] font-extrabold transition active:scale-[0.98]" style={profileButton.ghost}>
-                Edit Profile
+                Edit profile
               </button>
             </>
           }

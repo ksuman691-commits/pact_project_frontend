@@ -1112,7 +1112,8 @@ export default function FeedPactCard({
 
         {/* Mutual-goal matching only where people are browsing for company
             (Discover). Kept off the main feed card to keep it quiet. */}
-        {!isCreator && isPublicPact && (
+        {/* The wrapper only when there are matches: an empty one left a blank band under the actions. */}
+        {!isCreator && isPublicPact && goalMatches.length > 0 && (
           <div className="px-3 pb-2.5 pt-2">
             <GoalMatchStrip
               matches={goalMatches}

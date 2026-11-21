@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { retryBackoff, retryTransient } from '@/lib/transient';
 
 // Root cause of the "photos stop loading" reports: every photo/avatar URL
 // the backend returns is a presigned S3 GET URL that expires after exactly
@@ -24,6 +25,10 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 5,
       gcTime: 1000 * 60 * 10,
       refetchInterval: PRESIGNED_URL_TTL_MS - IMAGE_REFRESH_MARGIN_MS,
+      // Ride out a slow server start or a flaky connection instead of showing an error;
+      // a real answer (4xx) fails straight away. Hooks can still set their own.
+      retry: retryTransient(3),
+      retryDelay: retryBackoff,
     },
   },
 });

@@ -38,13 +38,13 @@ export default function NotFound() {
           className=" inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition"
           style={{ background: 'var(--navy)', color: '#fff' }}
         >
-          Back to Feed
+          Back to feed
         </Link>
         <Link
           href="/profile"
           className="pact-card inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-[var(--pact-text)] transition"
         >
-          Go to Profile
+          Go to profile
         </Link>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { pactAdvancedService } from '@/services/api'
 import { useAuthStore } from '@/store/auth'
+import { retryBackoff, retryTransient } from '@/lib/transient'
 
 export const MY_PACTS_STALE_MS = 2 * 60 * 1000
 
@@ -18,6 +19,7 @@ export function useMyPacts(limit = 30) {
     queryFn: () => pactAdvancedService.getMyPacts(0, limit),
     enabled: !!user?.id,
     staleTime: MY_PACTS_STALE_MS,
-    retry: 1,
+    retry: retryTransient(4),
+    retryDelay: retryBackoff,
   })
 }

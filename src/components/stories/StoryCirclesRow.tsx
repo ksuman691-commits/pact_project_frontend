@@ -132,7 +132,7 @@ export default function StoryCirclesRow({ circles, isLoading }: { circles: Story
         <div className="flex items-baseline justify-between pb-2">
           <h2 className="text-[12px] font-extrabold uppercase tracking-[0.07em] text-[var(--ink)]">Moments</h2>
           <Link href="/moments" className="flex min-h-[32px] items-center text-[13px] font-extrabold text-[var(--navy)]">
-            See All
+            See all
           </Link>
         </div>
       )}

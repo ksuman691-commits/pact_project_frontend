@@ -5,9 +5,9 @@ import LogoSpinner from '@/components/LogoSpinner'
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Bell, CheckCheck, Heart, MessageCircle, Settings } from 'lucide-react';
+import { Bell, CheckCheck, ChevronLeft, Heart, MessageCircle, Settings } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import TopNav from '@/components/TopNav';
+import { useSmartBack } from '@/hooks/useSmartBack';
 import { queryKeys } from '@/lib/queryKeys';
 import { notificationService, pactService } from '@/services/api';
 import toast from 'react-hot-toast';
@@ -84,6 +84,7 @@ function RowAvatar({ row }: { row: NotificationRow }) {
 
 export default function NotificationsPage() {
   const router = useRouter();
+  const goBack = useSmartBack('/feed');
   const queryClient = useQueryClient();
   const [isUpdating, setIsUpdating] = useState(false);
   // "Rahul missed yesterday" rows: nudged from here this visit.
@@ -200,11 +201,14 @@ export default function NotificationsPage() {
 
   return (
     <>
-      <TopNav showBack={true} showCategories={false} />
       <div className="min-h-screen bg-[var(--paper)] max-w-md mx-auto pb-20">
-        <div className="bg-[var(--card)] border-b border-[var(--hairline)] sticky top-24 z-30">
-          <div className="px-4 py-4 flex items-center justify-between">
-            <h1 className="text-xl font-bold text-[var(--ink)]">Notifications</h1>
+        {/* One compact row like every other detail page: back, title, settings, mark all read. */}
+        <div className="sticky top-0 z-30 border-b border-[var(--hairline)] bg-[var(--paper)]/95 pt-[env(safe-area-inset-top)] backdrop-blur">
+          <div className="flex h-14 items-center gap-1 pl-1 pr-3">
+            <button type="button" onClick={goBack} aria-label="Back" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--ink)]">
+              <ChevronLeft className="h-6 w-6" strokeWidth={2.2} />
+            </button>
+            <h1 className="min-w-0 flex-1 truncate text-[20px] font-extrabold tracking-[-0.02em] text-[var(--ink)]">Notifications</h1>
             <div className="flex items-center gap-2">
               <Link
                 href="/notifications/preferences"
