@@ -553,6 +553,9 @@ export const userService = {
   getRelationship: (userId: number) => api.get(`/api/users/${userId}/relationship`),
   getCircles: (userId: number) => api.get(`/api/users/${userId}/circles`),
   getStats: (userId: number) => api.get(`/api/users/${userId}/stats`),
+  /** Running followers-only pacts the viewer can't see yet: a count and kinds, never titles. */
+  getFollowersOnly: (userId: number) =>
+    api.get<{ total: number; hidden: number; categories: string[]; unlocked: boolean }>(`/api/users/${userId}/followers-only`),
   getPacts: async (userId: number) => {
     const response = await api.get(`/api/users/${userId}/pacts`);
     return { ...response, data: (response.data || []).map(mapPact) };

@@ -13,6 +13,7 @@ import AddToCircleSheet from '@/components/AddToCircleSheet';
 import CpScoreCard from '@/components/profile/CpScoreCard';
 import { ProfileEmpty } from '@/components/profile/ProfilePactCard';
 import FeedPactCard from '@/components/FeedPactCard';
+import FollowersOnlyTeaser from '@/components/profile/FollowersOnlyTeaser';
 import ProfileHeader, { profileButton } from '@/components/profile/ProfileHeader';
 import SegmentTabs from '@/components/profile/SegmentTabs';
 import PeopleSheet from '@/components/profile/PeopleSheet';
@@ -76,6 +77,14 @@ export default function PublicProfilePage() {
     staleTime: 1000 * 60,
   });
   const pacts = useMemo(() => (profilePactsQuery.data?.data || []) as any[], [profilePactsQuery.data]);
+  // What following unlocks: running followers-only pacts (count and kinds only).
+  const lockedQuery = useQuery({
+    queryKey: ['profile-followers-only', profileUserId],
+    queryFn: () => userService.getFollowersOnly(profileUserId as number),
+    enabled: typeof profileUserId === 'number' && profileUserId > 0,
+    staleTime: 1000 * 60,
+  });
+  const locked = lockedQuery.data?.data;
   // Live means active and not past its last day; everything else is done.
   const activePacts = useMemo(() => {
     const today = new Date().toLocaleDateString('en-CA');
@@ -111,6 +120,15 @@ export default function PublicProfilePage() {
     }
   };
   const isBusy = requestFollow.isPending || acceptFollow.isPending || rejectFollow.isPending || removeFollow.isPending;
+
+  // When a follow is accepted (or ends), the locked pacts open (or close): load both again.
+  const refetchPacts = profilePactsQuery.refetch;
+  const refetchLocked = lockedQuery.refetch;
+  useEffect(() => {
+    if (!profileUserId) return;
+    void refetchPacts();
+    void refetchLocked();
+  }, [outgoingStatus, profileUserId, refetchPacts, refetchLocked]);
 
   const handleFollow = async () => {
     if (typeof profileUserId !== 'number') return;
@@ -153,6 +171,18 @@ export default function PublicProfilePage() {
     incomingStatus === 'pending' ? 'Accept' : outgoingStatus === 'accepted' ? 'Following' : outgoingStatus === 'pending' ? 'Requested' : 'Follow';
   const followStyle = followLabel === 'Following' || followLabel === 'Requested' ? profileButton.quiet : profileButton.primary;
   const listed = tab === 'active' ? activePacts : completedPacts;
+  const lockedCount = locked && !locked.unlocked ? locked.hidden : 0;
+  const teaser =
+    tab === 'active' && lockedCount > 0 ? (
+      <FollowersOnlyTeaser
+        count={lockedCount}
+        categories={locked?.categories ?? []}
+        firstName={firstName}
+        requested={outgoingStatus === 'pending'}
+        busy={isBusy}
+        onFollow={() => void requestFollow.mutateAsync(profileUser.id)}
+      />
+    ) : null;
 
   return (
     <main className="min-h-screen pb-28" style={{ background: 'var(--paper)', color: INK }}>
@@ -298,13 +328,16 @@ export default function PublicProfilePage() {
           ) : profilePactsQuery.isLoading ? (
             <div className="pact-shimmer h-[220px] rounded-[22px]" aria-hidden="true" />
           ) : listed.length === 0 ? (
-            <ProfileEmpty title={tab === 'active' ? 'Nothing live right now' : 'Nothing finished yet'} text={tab === 'active' ? `When ${firstName} starts a pact you can see, it shows here.` : `Pacts ${firstName} finishes show here.`} />
+            teaser ?? <ProfileEmpty title={tab === 'active' ? 'Nothing live right now' : 'Nothing finished yet'} text={tab === 'active' ? `When ${firstName} starts a pact you can see, it shows here.` : `Pacts ${firstName} finishes show here.`} />
           ) : (
-            listed.map((pact: any) => (
-              <div key={pact.id} className="-mx-4">
-                <FeedPactCard pact={pact} />
-              </div>
-            ))
+            <>
+              {teaser}
+              {listed.map((pact: any) => (
+                <div key={pact.id} className="-mx-4">
+                  <FeedPactCard pact={pact} />
+                </div>
+              ))}
+            </>
           )}
         </div>
       </div>

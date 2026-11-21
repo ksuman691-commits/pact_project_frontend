@@ -14,6 +14,8 @@ export interface PublicProfile {
   followers: number
   running: { id: number; title: string; day: number; total_days: number | null; days_posted: number }[]
   running_count: number
+  /** Running followers-only pacts: a count only, to invite a follow. */
+  followers_only_count?: number
 }
 
 export const PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pact-project-backend-v2.onrender.com'
