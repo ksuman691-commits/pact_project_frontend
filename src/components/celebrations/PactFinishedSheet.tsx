@@ -82,7 +82,8 @@ export default function PactFinishedSheet({ data, onClose, onNext }: { data: Pac
     }
   }
 
-  const heading = data.kept ? 'You kept it.' : 'Your pact ended.'
+  // The small line above already says "Pact ended"; the heading gives the number instead of repeating it.
+  const heading = data.kept ? 'You kept it.' : `${counted} of ${data.daysNeeded} days.`
   const days = (n: number, word = 'day') => `${n} ${word}${n === 1 ? '' : 's'}`
   const posted = `${days(data.daysPosted)} posted${data.restDays ? ` and ${days(data.restDays, 'rest day')}` : ''}`
   const line = data.kept

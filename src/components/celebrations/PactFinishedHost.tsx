@@ -13,6 +13,10 @@ import { dayMarks } from '@/lib/pactShareCard'
 const RECENT_DAYS = 10
 const seenKey = (userId: number, pactId: number) => `cp:finished:${userId}:${pactId}`
 
+// At most one finish screen per app open. Module level, so closing it (which
+// re-renders and recomputes the next candidate) can't bring one straight back.
+let shownThisOpen = false
+
 function wasSeen(userId: number, pactId: number) {
   try {
     return window.localStorage.getItem(seenKey(userId, pactId)) != null
@@ -53,7 +57,7 @@ export default function PactFinishedHost() {
   const query = useMyPacts()
   const [showing, setShowing] = useState<PactFinishedData | null>(null)
 
-  const candidate = useMemo<PactFinishedData | null>(() => {
+  const candidate = useMemo<(PactFinishedData & { alsoEnded: number[] }) | null>(() => {
     if (userId == null || typeof window === 'undefined') return null
     const rows: any[] = (query.data as any)?.data ?? []
     const now = Date.now()
@@ -62,9 +66,12 @@ export default function PactFinishedHost() {
       .map((p) => ({ p, view: resolvePactCompletionViewState(p), end: endedAt(p) }))
       .filter(({ view, end }) => view && view !== 'empty' && end != null && now - end < RECENT_DAYS * 86_400_000 && now >= end)
       .filter(({ p }) => !wasSeen(userId, Number(p.id)))
-      .sort((a, b) => (b.end ?? 0) - (a.end ?? 0))[0]
-    if (!finished) return null
-    const { p, view } = finished
+      .sort((a, b) => (b.end ?? 0) - (a.end ?? 0))
+    if (!finished.length) return null
+    const { p, view } = finished[0]
+    // Only the newest one gets a screen; the others that ended in the same window are
+    // marked seen with it, so several ended pacts never queue up one after another.
+    const alsoEnded = finished.slice(1).map(({ p: other }) => Number(other.id))
     return {
       pactId: Number(p.id),
       title: p.title,
@@ -75,6 +82,7 @@ export default function PactFinishedHost() {
       totalDays: Number(p.total_days ?? p.duration_days ?? 0),
       circleId: p.circle_id ?? null,
       circleName: p.circle_name ?? null,
+      alsoEnded,
       days: dayMarks(p),
       name: String(user?.full_name || user?.username || 'I').split(' ')[0],
     }
@@ -82,7 +90,7 @@ export default function PactFinishedHost() {
   }, [query.data, userId])
 
   useEffect(() => {
-    if (!onHome || !candidate || showing || userId == null) return
+    if (!onHome || !candidate || showing || userId == null || shownThisOpen) return
     let tries = 0
     let timer = 0
     // Wait for Home to settle and for any other sheet or celebration to finish first.
@@ -90,7 +98,9 @@ export default function PactFinishedHost() {
       tries += 1
       const busy = document.body.dataset.celebrating === '1' || document.querySelector('[role="dialog"]')
       if (!busy) {
+        shownThisOpen = true
         markSeen(userId, candidate.pactId)
+        candidate.alsoEnded.forEach((id) => markSeen(userId, id))
         setShowing(candidate)
         return
       }
