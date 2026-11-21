@@ -35,6 +35,8 @@ export default function BottomNav() {
     pathname === '/verify-age' ||
     pathname === '/consent' ||
     pathname === '/' ||
+    // Public profile pages are a landing page of their own.
+    pathname?.startsWith('/u/') ||
     pathname === '/terms' ||
     pathname === '/privacy' ||
     pathname?.startsWith('/pacts/create') ||
