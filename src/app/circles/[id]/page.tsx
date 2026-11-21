@@ -7,7 +7,8 @@ import { queryKeys } from '@/lib/queryKeys'
 import { loginHrefForHere } from '@/lib/authNext'
 import { useRouter, useParams } from 'next/navigation'
 import { useRequireAuth } from '@/hooks/useRequireAuth'
-import { circleService, circleJoinRequestService, circleAdvancedService, pactService } from '@/services/api'
+import { circleService, circleJoinRequestService, circleAdvancedService, circleInviteService, pactService } from '@/services/api'
+import Avatar from '@/components/Avatar'
 import { Circle, Pact } from '@/types'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
@@ -36,6 +37,9 @@ export default function CircleDetailPage() {
   const [circle, setCircle] = useState<Circle | null>(null); const [members, setMembers] = useState<any[]>([]); const [pacts, setPacts] = useState<Pact[]>([]); const [loading, setLoading] = useState(true); const [isMember, setIsMember] = useState(false); const [qrOpen, setQrOpen] = useState(false); const [inviteModal, setInviteModal] = useState(false); const [leaveModal, setLeaveModal] = useState(false); const [leaving, setLeaving] = useState(false); const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const queryClient = useQueryClient(); const [deleteModal, setDeleteModal] = useState(false); const [deletingCircle, setDeletingCircle] = useState(false)
   const [requested, setRequested] = useState(false)
+  // Invited and not yet a member: Accept / Decline replaces Join or Ask to join.
+  const [invite, setInvite] = useState<{ id: number; message?: string | null; invited_by?: { id: number; username: string; full_name?: string | null; avatar_url?: string | null } | null } | null>(null)
+  const [answering, setAnswering] = useState(false)
   const [savingPrivacy, setSavingPrivacy] = useState(false)
   const [editing, setEditing] = useState(false)
   const [draftName, setDraftName] = useState('')
@@ -52,7 +56,7 @@ export default function CircleDetailPage() {
   // all" expand toggle, rather than the full roster always rendered flat.
   useSeedBackHistory('/circles')
   const smartBack = useSmartBack('/circles')
-  useEffect(() => { if (!isInitialized) return; if (!user) { router.push(loginHrefForHere()); return } (async () => { try { const c = await circleService.getById(circleId); setCircle(c.data); setIsMember(!!c.data?.is_member); setRequested(c.data?.my_join_request === 'pending'); const [m, p] = await Promise.allSettled([circleJoinRequestService.listMembers(circleId), circleService.listPacts(circleId)]); setMembers(m.status === 'fulfilled' ? m.value.data || [] : []); setPacts(p.status === 'fulfilled' ? p.value.data || [] : []) } catch { toast.error('Failed to load circle'); router.push('/circles') } finally { setLoading(false) } })() }, [isInitialized, user, router, circleId])
+  useEffect(() => { if (!isInitialized) return; if (!user) { router.push(loginHrefForHere()); return } (async () => { try { const c = await circleService.getById(circleId); setCircle(c.data); setIsMember(!!c.data?.is_member); setRequested(c.data?.my_join_request === 'pending'); setInvite(c.data?.my_invite ?? null); const [m, p] = await Promise.allSettled([circleJoinRequestService.listMembers(circleId), circleService.listPacts(circleId)]); setMembers(m.status === 'fulfilled' ? m.value.data || [] : []); setPacts(p.status === 'fulfilled' ? p.value.data || [] : []) } catch { toast.error('Failed to load circle'); router.push('/circles') } finally { setLoading(false) } })() }, [isInitialized, user, router, circleId])
   if (!isInitialized || loading) return <div className="flex min-h-screen items-center justify-center bg-[var(--paper)]"><LogoSpinner size={32} color="var(--navy)" /></div>
   if (!user) return null
   // Real not-found state instead of a blank screen — reachable when the load
@@ -66,7 +70,33 @@ export default function CircleDetailPage() {
       try { await circleJoinRequestService.sendRequest(circleId); setRequested(true); toast.success(`Asked to join. ${(circle as any)?.owner_username ? '@' + (circle as any).owner_username : 'The owner'} decides.`) } catch (error: any) { toast.error(error?.response?.data?.detail || 'Could not send your request') }
       return
     }
-    try { await circleService.join(circleId); setIsMember(true); await reloadAfterJoin(); toast.success('Joined circle') } catch (error: any) { toast.error(error?.response?.data?.detail || 'Failed to join circle') }
+    try { await circleService.join(circleId); setIsMember(true); setCircle((prev) => (prev ? ({ ...prev, member_count: Number((prev as any).member_count || 0) + 1, is_member: true } as any) : prev)); await reloadAfterJoin(); toast.success('Joined circle') } catch (error: any) { toast.error(error?.response?.data?.detail || 'Failed to join circle') }
+  }
+  const answerInvite = async (accept: boolean) => {
+    if (!invite || answering) return
+    setAnswering(true)
+    try {
+      if (accept) {
+        await circleInviteService.accept(circleId, invite.id)
+        setIsMember(true)
+        setInvite(null)
+        setCircle((prev) => (prev ? ({ ...prev, member_count: Number((prev as any).member_count || 0) + 1, is_member: true } as any) : prev))
+        await reloadAfterJoin()
+        toast.success(`You're in ${(circle as any)?.name || 'the circle'}`)
+      } else {
+        await circleInviteService.decline(circleId, invite.id)
+        setInvite(null)
+        toast.success('Invite declined')
+      }
+      void queryClient.invalidateQueries({ queryKey: ['circleInvites', 'mine'] })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount() })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.circles.all })
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || "Couldn't answer the invite. Try again.")
+    } finally {
+      setAnswering(false)
+    }
   }
   const togglePrivacy = async () => {
     if (!circle || savingPrivacy) return
@@ -286,11 +316,26 @@ export default function CircleDetailPage() {
       </div>
 
       <div className="mx-4 mt-5 flex gap-2.5">
-        {!isMember ? (
+        {!isMember && invite ? (
+          <div className="w-full rounded-[20px] border border-[var(--hairline)] bg-[var(--card)] p-3.5">
+            <div className="flex items-center gap-3">
+              <Avatar name={invite.invited_by?.full_name || invite.invited_by?.username || 'Someone'} avatarUrl={invite.invited_by?.avatar_url} size={40} />
+              <p className="min-w-0 flex-1 text-[14.5px] leading-snug text-[var(--ink)]">
+                <b>{invite.invited_by?.full_name || (invite.invited_by?.username ? `@${invite.invited_by.username}` : 'Someone')}</b> invited you to this circle
+                {isPrivateCircle ? <span className="text-[var(--muted)]">. No need to ask: you&apos;re let straight in.</span> : '.'}
+              </p>
+            </div>
+            {invite.message ? <p className="mt-2 rounded-[12px] bg-white px-3 py-2 text-[14px] text-[var(--ink)]">&ldquo;{invite.message}&rdquo;</p> : null}
+            <div className="mt-3 flex gap-2">
+              <button type="button" onClick={() => void answerInvite(true)} disabled={answering} className="flex h-12 flex-1 items-center justify-center rounded-full bg-[var(--navy)] text-[15.5px] font-extrabold text-white disabled:opacity-60">Accept</button>
+              <button type="button" onClick={() => void answerInvite(false)} disabled={answering} className="flex h-12 flex-1 items-center justify-center rounded-full border border-[var(--hairline)] bg-white text-[15.5px] font-bold text-[var(--ink)] disabled:opacity-60">Decline</button>
+            </div>
+          </div>
+        ) : !isMember ? (
           requested ? (
             <div className="flex h-[52px] w-full items-center justify-center rounded-full border-[1.5px] border-[var(--line)] text-[15px] font-semibold text-[var(--muted)]">Requested · waiting for the owner</div>
           ) : (
-            <button onClick={handleJoin} className="flex h-[52px] w-full items-center justify-center rounded-full bg-[var(--navy)] text-[16px] font-extrabold text-white transition hover:bg-[var(--navy-hover)]">{isPrivateCircle ? 'Ask to Join' : 'Join Circle'}</button>
+            <button onClick={handleJoin} className="flex h-[52px] w-full items-center justify-center rounded-full bg-[var(--navy)] text-[16px] font-extrabold text-white transition hover:bg-[var(--navy-hover)]">{isPrivateCircle ? 'Ask to join' : 'Join circle'}</button>
           )
         ) : (
           <>
@@ -310,7 +355,7 @@ export default function CircleDetailPage() {
         <h2 className="px-1 text-[20px] font-extrabold tracking-[-0.025em]" style={{ color: '#17181D' }}>Pacts{pacts.length ? ` · ${pacts.length}` : ''}</h2>
         <div className="mt-3 flex flex-col gap-3.5">
           {!isMember && (isPrivateCircle || pacts.length === 0) ? (
-            <p className="px-1 text-[14px] text-[var(--muted)]">{isPrivateCircle ? 'Members only. Ask to join to see its pacts.' : 'Join this circle to see its pacts.'}</p>
+            <p className="px-1 text-[14px] text-[var(--muted)]">{invite ? 'Accept the invite to see its pacts.' : isPrivateCircle ? 'Members only. Ask to join to see its pacts.' : 'Join this circle to see its pacts.'}</p>
           ) : pacts.length === 0 ? (
             <p className="px-1 text-[14px] text-[var(--muted)]">No pacts here yet. Start the first one.</p>
           ) : (

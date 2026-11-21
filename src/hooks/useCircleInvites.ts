@@ -71,7 +71,8 @@ export function useAcceptCircleInvite() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CIRCLE_INVITES_KEY });
       queryClient.invalidateQueries({ queryKey: queryKeys.circles.all });
-      toast.success('Joined circle!');
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+      toast.success("You're in the circle");
     },
     onError: (error: any) => {
       const status = error?.response?.status;
@@ -92,6 +93,7 @@ export function useDeclineCircleInvite() {
       circleInviteService.decline(circleId, inviteId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CIRCLE_INVITES_KEY });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
       toast.success('Invite declined');
     },
     onError: (error: any) => {
