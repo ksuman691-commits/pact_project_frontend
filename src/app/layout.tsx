@@ -14,6 +14,7 @@ import QueryProvider from '@/providers/QueryProvider';
 import BottomNav from '@/components/BottomNav';
 import ReminderPrompt from '@/components/ReminderPrompt';
 import CelebrationHost from '@/components/celebrations/CelebrationHost';
+import AppUpdater from '@/components/AppUpdater';
 import PactFinishedHost from '@/components/celebrations/PactFinishedHost';
 import AppSplash from '@/components/brand/AppSplash';
 
@@ -78,6 +79,7 @@ export default function RootLayout({
           <AppPullToRefresh>{children}</AppPullToRefresh>
           <AppOnly>
             <BottomNav />
+            <AppUpdater />
             <CelebrationHost />
             <PactFinishedHost />
             <AppSplash />
