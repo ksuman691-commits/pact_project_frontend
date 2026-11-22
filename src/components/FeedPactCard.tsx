@@ -538,8 +538,8 @@ export default function FeedPactCard({
       ? `Day ${dayNo}${totalDays ? ` of ${totalDays}` : ''}`
       : null;
   const postedText =
-    slideDay && (pactEnded || slideDay !== dayNo || sameDayTiles.length > 1)
-      ? `Posted Day ${slideDay}${sameDayTiles.length > 1 && positionInDay > 0 ? ` · ${positionInDay} of ${sameDayTiles.length}` : ''}`
+    slideDay && (pactEnded || slideDay !== dayNo)
+      ? `Posted Day ${slideDay}`
       : null;
   const privateTag = pact.media_locked ? (pact.watch_price ? `Private · ₹${pact.watch_price}` : 'Private') : null;
   const todayKey = new Date().toDateString();
@@ -838,29 +838,29 @@ export default function FeedPactCard({
           <Avatar name={user?.full_name || user?.username || 'You'} avatarUrl={user?.avatar_url || null} size={29} />
         </CircleWatch>
       ) : (
-      <span className={`inline-flex h-[34px] w-[34px] shrink-0 overflow-hidden rounded-full ${onPhoto ? 'ring-2 ring-white/70' : ''}`}>
+      <span className={`inline-flex h-[38px] w-[38px] shrink-0 overflow-hidden rounded-full ${onPhoto ? 'ring-2 ring-white/80' : ''}`}>
         {momentStory ? (
-          <Avatar name={momentAuthor === 'You' ? user?.full_name || user?.username || 'You' : momentAuthor} avatarUrl={momentStory.avatar_url || (momentAuthor === 'You' ? user?.avatar_url : null) || null} size={34} />
+          <Avatar name={momentAuthor === 'You' ? user?.full_name || user?.username || 'You' : momentAuthor} avatarUrl={momentStory.avatar_url || (momentAuthor === 'You' ? user?.avatar_url : null) || null} size={38} />
         ) : creatorProfileHref ? (
-          <UserAvatarLink name={creatorAvatarName} avatarUrl={creatorAvatarUrl} username={creatorUsername} size={34} stopPropagation />
+          <UserAvatarLink name={creatorAvatarName} avatarUrl={creatorAvatarUrl} username={creatorUsername} size={38} stopPropagation />
         ) : (
-          <Avatar name={creatorAvatarName} avatarUrl={creatorAvatarUrl} size={34} />
+          <Avatar name={creatorAvatarName} avatarUrl={creatorAvatarUrl} size={38} />
         )}
       </span>
       )}
       <div className="min-w-0" style={onPhoto ? { color: '#fff', textShadow: '0 1px 6px rgba(0,0,0,0.45)' } : undefined}>
-        <div className={`truncate text-[14.5px] font-bold ${onPhoto ? '' : 'text-[var(--ink)]'}`}>{momentStory ? momentAuthor : creatorLabel === 'You' ? 'You' : pact.creator_full_name || `@${creatorLabel}`}</div>
+        <div className={`truncate text-[15.5px] font-extrabold ${onPhoto ? '' : 'text-[var(--ink)]'}`}>{momentStory ? momentAuthor : creatorLabel === 'You' ? 'You' : pact.creator_full_name || `@${creatorLabel}`}</div>
         {headerSub && <div className={`truncate text-[12px] ${onPhoto ? '' : 'text-[var(--muted)]'}`} style={onPhoto ? { opacity: 0.92 } : undefined}>{headerSub}</div>}
       </div>
     </div>
   );
 
   const mediaCaption = (
-    <div className="pointer-events-none absolute inset-x-3.5 bottom-3.5" style={{ color: '#fff' }}>
+    <div className="pointer-events-none absolute inset-x-4 bottom-4" style={{ color: '#fff' }}>
       {(badgeText || postedText || privateTag || watch) && (
         <div className="flex flex-wrap items-center gap-1.5">
           {badgeText && (
-            <span className="flex items-center gap-1.5 rounded-[9px] px-2.5 py-[3px] text-[11.5px] font-extrabold" style={{ color: '#fff', backgroundColor: pactEnded ? (finishedPact ? '#15803D' : '#B42318') : 'rgba(255,255,255,0.24)' }}>
+            <span className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-extrabold" style={{ backdropFilter: 'blur(8px)', color: '#fff', backgroundColor: pactEnded ? (finishedPact ? '#15803D' : '#B42318') : 'rgba(255,255,255,0.24)' }}>
               {totalDays > 0 && (
                 <MarkProgress
                   value={pactEnded ? (finishedPact ? 1 : Number(pact.days_completed ?? 0) / totalDays) : dayNo / totalDays}
@@ -875,16 +875,16 @@ export default function FeedPactCard({
           )}
           {todayWatch && (
             <span
-              className="rounded-[9px] px-2.5 py-[3px] text-[11.5px] font-extrabold tabular-nums"
+              className="rounded-full px-2.5 py-1 text-[12px] font-extrabold tabular-nums"
               style={
                 todayWatch.done
-                  ? { color: '#fff', backgroundColor: '#2E8B57' }
+                  ? { color: '#fff', backgroundColor: '#16A34A' }
                   : todayWatch.endsAt - Date.now() < 3 * 3_600_000
                     ? { color: '#17181D', backgroundColor: '#FFD23F' }
                     : { color: '#fff', backgroundColor: 'rgba(255,255,255,0.24)' }
               }
             >
-              {todayWatch.done ? 'Done today' : `${todayWatch.leftLabel} left today`}
+              {todayWatch.done ? '✓ Done today' : `${todayWatch.leftLabel} left today`}
             </span>
           )}
           {postedText && (
@@ -907,7 +907,7 @@ export default function FeedPactCard({
           )}
         </div>
       )}
-      <h2 className="mt-1.5 line-clamp-2 text-balance text-[20px] font-extrabold leading-[1.15] tracking-[-0.02em]" style={{ color: '#fff', textShadow: '0 1px 8px rgba(0,0,0,0.45)' }}>
+      <h2 className="mt-2 line-clamp-2 text-balance text-[25px] font-extrabold leading-[1.08] tracking-[-0.03em]" style={{ color: '#fff', textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>
         {cleanTitle(pact.title)}
       </h2>
       {tiles.length === 0 && !momentStory && !pactEnded && (
@@ -1019,7 +1019,7 @@ export default function FeedPactCard({
         transition={{ duration: 0.2, ease: 'easeOut' }}
         onClick={handleCardNavigate}
         className={`${chromeless ? '' : 'pact-card'} group relative mx-1.5 cursor-pointer transition-colors hover:border-[var(--pact-violet)]/60 sm:mx-0 ${
-          chromeless ? '' : 'rounded-[22px]'
+          chromeless ? '' : 'rounded-[26px] shadow-[0_10px_30px_-18px_rgba(23,24,29,0.45)]'
         } ${moreMenuOpen ? 'overflow-visible' : 'overflow-hidden'}`}
       >
         {lockedForMe ? (
@@ -1043,13 +1043,13 @@ export default function FeedPactCard({
               <PactGallery
                 proofs={galleryProofs ?? proofs}
                 interactive
-                aspectClassName="aspect-[4/5]"
+                aspectClassName="aspect-[3/4]"
                 dotsPosition="none"
                 hideProofBadge
                 onActiveIndexChange={setActiveProofIndex}
               />
             ) : (
-              <div className="relative aspect-[4/5] w-full overflow-hidden cp-media-loading bg-[var(--ink)]">
+              <div className="relative aspect-[3/4] w-full overflow-hidden cp-media-loading bg-[var(--ink)]">
                 {isPhotoStory(momentStory!) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={momentStory!.video_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -1060,7 +1060,7 @@ export default function FeedPactCard({
               </div>
             )}
             <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/55 to-transparent" />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/75 to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
 
             <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center gap-2.5 pl-3.5 pr-0.5 pt-2">
               {identity(true)}
