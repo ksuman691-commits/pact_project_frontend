@@ -40,5 +40,11 @@
     "@types/react-dom": "^19.3.0",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.5.29"
+  },
+  "pnpm": {
+    "overrides": {
+      "sharp": "^0.35.5",
+      "postcss": "^8.5.33"
+    }
   }
 }
