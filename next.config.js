@@ -37,7 +37,6 @@ const nextConfig = {
     return [{ source: '/:path*', headers: securityHeaders }];
   },
   reactStrictMode: true,
-  swcMinify: true,
   // Baked into the app so an open copy can tell when a newer one is live (AppUpdater).
   env: {
     NEXT_PUBLIC_BUILD_ID: process.env.VERCEL_GIT_COMMIT_SHA || 'dev',

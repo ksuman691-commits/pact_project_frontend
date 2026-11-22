@@ -261,7 +261,7 @@ export default function ProofCarousel({ proofs, isOpen, onClose, initialIndex = 
             className="relative h-full w-full flex-shrink-0 snap-center cursor-pointer"
           >
             {item.media_type === 'image' ? (
-              <Image src={item.url} alt={item.description || 'Proof'} fill className="object-contain" priority={index === initialIndex} />
+              <Image src={item.url} alt={item.description || 'Proof'} fill className="object-contain" preload={index === initialIndex} />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-[var(--ink)]">
                 <video
