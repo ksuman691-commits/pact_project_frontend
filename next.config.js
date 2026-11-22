@@ -41,6 +41,13 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_BUILD_ID: process.env.VERCEL_GIT_COMMIT_SHA || 'dev',
   },
+  // Local runs only: forward /api/* to a backend on this machine, as Vercel does in
+  // production (vercel.json, which also adds the secret header). Never set on Vercel.
+  async rewrites() {
+    const target = process.env.LOCAL_API_PROXY_TARGET
+    if (!target || process.env.VERCEL) return []
+    return [{ source: '/api/:path((?!version$).*)', destination: `${target}/api/:path` }]
+  },
   async redirects() {
     // People type these; the screens live under /auth.
     return [

@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import { useAuthStore } from '@/store/auth';
-import api from '@/services/api';
+import api, { hasSession } from '@/services/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pact-project-backend-v2.onrender.com';
 
@@ -38,7 +38,7 @@ export default function NotificationRealtimeBridge() {
     };
 
     const connect = async () => {
-      if (closed || typeof window === 'undefined' || !localStorage.getItem('access_token')) return;
+      if (closed || typeof window === 'undefined' || !hasSession()) return;
       // EventSource can't send headers, so the stream URL carries a two-minute ticket
       // instead of the login token (which would end up in server logs). A fresh one
       // each time: the API call refreshes an expired session first.

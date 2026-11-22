@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { User } from '@/types';
-import { authService, cacheProfile, clearToken, getRefreshToken, readCachedProfile, setAuthTokens, setToken } from '@/services/api';
+import { applySession, authService, cacheProfile, clearToken, hasSession, moveSessionToCookies, readCachedProfile, setToken } from '@/services/api';
 import { isTransientError, retryBackoff } from '@/lib/transient';
 import { consentPayload, type ConsentChoices } from '@/lib/consent';
 
@@ -41,10 +41,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         date_of_birth,
         ...consentPayload(consent),
       });
-      const { access_token, refresh_token } = response.data;
-      setAuthTokens(access_token, refresh_token);
+      applySession(response.data);
       const profile = await authService.getProfile();
-      set({ user: profile.data, token: access_token, isLoading: false });
+      set({ user: profile.data, token: response.data.access_token ?? null, isLoading: false });
     } catch (err: any) {
       set({
         error: err.response?.data?.detail || 'Registration failed',
@@ -58,10 +57,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await authService.login({ email, password });
-      const { access_token, refresh_token } = response.data;
-      setAuthTokens(access_token, refresh_token);
+      applySession(response.data);
       const profile = await authService.getProfile();
-      set({ user: profile.data, token: access_token, isLoading: false });
+      set({ user: profile.data, token: response.data.access_token ?? null, isLoading: false });
     } catch (err: any) {
       set({
         error: err.response?.data?.detail || 'Login failed',
@@ -75,10 +73,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await authService.googleLogin({ id_token: idToken, ...(consent ? consentPayload(consent) : {}) });
-      const { access_token, refresh_token } = response.data;
-      setAuthTokens(access_token, refresh_token);
+      applySession(response.data);
       const profile = await authService.getProfile();
-      set({ user: profile.data, token: access_token, isLoading: false });
+      set({ user: profile.data, token: response.data.access_token ?? null, isLoading: false });
     } catch (err: any) {
       set({
         error: err.response?.data?.detail || 'Google sign-in failed',
@@ -145,10 +142,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   // refreshes an expired access token on its own and sends people to log in when
   // the refresh token is no longer valid).
   initAuth: async () => {
+    // Tokens left in localStorage from before cookie sessions are swapped first.
+    await moveSessionToCookies();
     const storedToken = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-    const storedRefreshToken = getRefreshToken();
 
-    if (!storedToken && !storedRefreshToken) {
+    if (!hasSession()) {
       set({ user: null, token: null, isLoading: false, isInitialized: true });
       return;
     }

@@ -2,6 +2,21 @@ import axios, { AxiosInstance, AxiosRequestHeaders, InternalAxiosRequestConfig }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pact-project-backend-v2.onrender.com';
 
+/**
+ * With NEXT_PUBLIC_SAME_ORIGIN_API=1 the app calls the API on its own address
+ * (/api/*, which Vercel forwards to the backend; vercel.json). The backend then
+ * keeps the session in HttpOnly cookies that scripts on the page can't read,
+ * instead of handing tokens to localStorage (security audit M1). Without it the
+ * app talks to the backend directly with tokens, as before.
+ */
+export const SAME_ORIGIN_API = process.env.NEXT_PUBLIC_SAME_ORIGIN_API === '1';
+const API_BASE = SAME_ORIGIN_API ? '' : API_URL;
+
+// Set while the session lives in cookies: the app knows someone is signed in
+// without being able to see the session itself.
+const COOKIE_SESSION_KEY = 'cp:session';
+const COOKIE_SESSION = 'cookie';
+
 let token: string | null = null;
 let refreshToken: string | null = null;
 let refreshPromise: Promise<string | null> | null = null;
@@ -12,16 +27,19 @@ if (typeof window !== 'undefined') {
 }
 
 const api: AxiosInstance = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+// X-CP-Request: the backend accepts a change made with the session cookie only
+// when this header is present, and another website can't add it.
 const refreshClient = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
+    ...(SAME_ORIGIN_API ? { 'X-CP-Request': '1' } : {}),
   },
 });
 
@@ -141,11 +159,12 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     }
   }
 
-  if (token) {
+  if (token || SAME_ORIGIN_API) {
     const headers = config.headers as AxiosRequestHeaders | undefined;
     config.headers = {
       ...(headers ?? {}),
-      Authorization: `Bearer ${token}`,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(SAME_ORIGIN_API ? { 'X-CP-Request': '1' } : {}),
     } as AxiosRequestHeaders;
   }
 
@@ -175,6 +194,10 @@ api.interceptors.response.use(
         // Couldn't reach the server to refresh: report it as a hiccup (retried), not a sign-out.
         if (refreshError && typeof refreshError === 'object') refreshError.cpTransient = true;
         return Promise.reject(refreshError);
+      }
+      if (newAccessToken === COOKIE_SESSION) {
+        // The new session is in the cookie the browser now holds.
+        return api.request(originalRequest);
       }
       if (newAccessToken) {
         const headers = originalRequest.headers as AxiosRequestHeaders | undefined;
@@ -245,7 +268,71 @@ export const clearToken = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem(COOKIE_SESSION_KEY);
     localStorage.removeItem(PROFILE_CACHE_KEY);
+  }
+};
+
+const isCookieSession = () => {
+  if (typeof window === 'undefined') return false;
+  try {
+    return localStorage.getItem(COOKIE_SESSION_KEY) === COOKIE_SESSION;
+  } catch {
+    return false;
+  }
+};
+
+/** The session now lives in HttpOnly cookies: drop any tokens this browser still kept. */
+const markCookieSession = () => {
+  token = null;
+  refreshToken = null;
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.setItem(COOKIE_SESSION_KEY, COOKIE_SESSION);
+  }
+};
+
+/** Someone may be signed in on this browser (tokens or a cookie session). */
+export const hasSession = () => {
+  if (typeof window === 'undefined') return false;
+  try {
+    return !!localStorage.getItem('access_token') || !!localStorage.getItem('refresh_token') || isCookieSession();
+  } catch {
+    return false;
+  }
+};
+
+/** What a sign-in, sign-up or refresh answered: cookies, or tokens to keep. */
+export const applySession = (data: { access_token?: string | null; refresh_token?: string | null; session?: string }) => {
+  if (data?.session === COOKIE_SESSION) {
+    markCookieSession();
+    return;
+  }
+  if (!data?.access_token) throw new Error('Invalid sign-in response');
+  setAuthTokens(data.access_token, data.refresh_token);
+};
+
+/**
+ * Moving to cookies: a browser that still keeps tokens in localStorage swaps its
+ * refresh token for the cookie session once, so nobody is signed out by the move.
+ * A no-op unless the app calls the API on its own address.
+ */
+export const moveSessionToCookies = async () => {
+  if (!SAME_ORIGIN_API || typeof window === 'undefined') return;
+  const stored = getRefreshToken();
+  if (!stored) {
+    // An access token alone can't be swapped; it simply expires.
+    if (localStorage.getItem('access_token')) localStorage.removeItem('access_token');
+    return;
+  }
+  try {
+    const response = await refreshClient.post('/api/auth/refresh', { refresh_token: stored });
+    applySession(response.data);
+  } catch (error: any) {
+    const status = error?.response?.status;
+    if (status === 400 || status === 401 || status === 403 || status === 422) clearToken();
+    // Otherwise keep it and try again next time the app opens.
   }
 };
 
@@ -274,14 +361,20 @@ export const readCachedProfile = <T,>(): T | null => {
 
 async function refreshAccessTokenSilently(): Promise<string | null> {
   const currentRefreshToken = getRefreshToken();
-  if (!currentRefreshToken) {
+  const cookieSession = SAME_ORIGIN_API && !currentRefreshToken && isCookieSession();
+  if (!currentRefreshToken && !cookieSession) {
     return null;
   }
 
   if (!refreshPromise) {
     refreshPromise = refreshClient
-      .post('/api/auth/refresh', { refresh_token: currentRefreshToken })
+      // With a cookie session the browser sends the refresh cookie itself.
+      .post('/api/auth/refresh', cookieSession ? {} : { refresh_token: currentRefreshToken })
       .then((response) => {
+        if (response.data?.session === COOKIE_SESSION) {
+          markCookieSession();
+          return COOKIE_SESSION;
+        }
         const newAccessToken = response.data?.access_token;
         const newRefreshToken = response.data?.refresh_token;
         if (!newAccessToken || !newRefreshToken) {
