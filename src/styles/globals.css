@@ -834,6 +834,12 @@ section + section {
 .cp-hero-title { animation: cp-rise 520ms cubic-bezier(.2,.8,.2,1) both; }
 .cp-tile { animation: cp-rise 560ms cubic-bezier(.2,.9,.25,1.15) both; }
 .cp-hero-float { animation: cp-hero-float 9s ease-in-out infinite; }
+/* A bottom sheet rising into place (Who can see). */
+@keyframes cp-sheet-rise {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.cp-sheet-rise { animation: cp-sheet-rise 0.32s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .cp-hero-spark { opacity: 0; animation: cp-hero-spark 3.6s ease-in-out infinite; }
 .cp-spark { left: 0; top: 0; opacity: 0; animation: cp-spark-out 900ms cubic-bezier(.15,.8,.3,1) forwards; }
 .cp-hero-sheen::before {
@@ -847,7 +853,7 @@ section + section {
   animation: cp-cta-shine 4.5s ease-in-out 1.5s infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .cp-hero, .cp-hero-title, .cp-tile, .cp-hero-float { animation: none; }
+  .cp-hero, .cp-hero-title, .cp-tile, .cp-hero-float, .cp-sheet-rise { animation: none; }
   .cp-hero-spark { animation: none; opacity: 0.35; }
   .cp-spark, .cp-hero-sheen::before, .cp-hero-cta::after { display: none; }
 }

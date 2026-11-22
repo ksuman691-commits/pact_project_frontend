@@ -31,6 +31,8 @@ type Moment = ViewerMoment & { userId?: number | string }
 type Props = {
   pact: any
   moments: Moment[]
+  /** The moments are still on their way: show the full-screen frame, not the empty-pact card. */
+  momentsLoading?: boolean
   participants: any[]
   progress: { completed: number; total: number; missed: number } | null
   isEnded: boolean
@@ -192,6 +194,7 @@ function EndedResult({
 export default function PactMomentsDetail({
   pact,
   moments,
+  momentsLoading = false,
   participants,
   progress,
   isEnded,
@@ -447,6 +450,7 @@ export default function PactMomentsDetail({
   // the pact's name, who posted and like / comment / share on the picture. Swipe for
   // other moments; scroll down for the day strip and the rest.
   const immersive = hasMoments && !lockedForMe && (!presentationEnded || watchingRecap) && Boolean(current?.url)
+  const waitingForMoments = momentsLoading && !hasMoments && !lockedForMe && !presentationEnded
   const glassChip = 'flex h-7 items-center gap-1.5 rounded-full pl-2 pr-2.5 text-[12px] font-extrabold text-white'
   const glass = { background: 'rgba(0,0,0,0.32)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } as React.CSSProperties
   const heroEl = immersive ? (
@@ -905,6 +909,22 @@ export default function PactMomentsDetail({
 
     </>
   )
+
+  if (waitingForMoments) {
+    return (
+      <main className="min-h-[calc(100dvh-72px)] bg-[var(--paper)]" aria-busy="true">
+        <div className="relative w-full overflow-hidden bg-[#111216] text-white" style={{ height: 'calc(100dvh - 72px)' }}>
+          <div className="absolute inset-0 animate-pulse bg-[radial-gradient(120%_80%_at_30%_20%,#2A2C35_0%,#15161B_60%,#0E0F12_100%)]" />
+          <div className="absolute inset-x-0 top-0 z-10 px-3" style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}>
+            <button type="button" onClick={smartBack} aria-label="Go back" className="flex size-11 items-center justify-center rounded-full text-white" style={{ background: 'rgba(255,255,255,0.12)' }}>
+              <ChevronLeft className="size-6" strokeWidth={2.2} aria-hidden="true" />
+            </button>
+            <h1 className="mt-2.5 line-clamp-2 px-1 text-[26px] font-extrabold leading-[1.08] tracking-[-0.03em]">{cleanTitle(pact?.title)}</h1>
+          </div>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className={`flex min-h-[calc(100dvh-72px)] flex-col bg-[var(--paper)] text-[var(--ink)] ${immersive ? 'pb-3' : 'px-4 pb-3 pt-2'}`}>

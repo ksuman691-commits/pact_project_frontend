@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, Globe, Heart, Lock, UserPlus, Users, X } from 'lucide-react'
+import { Camera, Check, ChevronRight, Globe, Heart, Lock, UserPlus, Users, X } from 'lucide-react'
+import PageHero from '@/components/PageHero'
 import BodyPortal from '@/components/BodyPortal'
 import OrbitRing from '@/components/circles/OrbitRing'
 import type { OrbitMember } from '@/components/circles/OrbitRing'
@@ -17,7 +18,7 @@ const CARD = '#FBF8F1'
 
 type PostedMoment = { id: number | string; userId?: number | string; day?: number | null; uploadedAt?: string | null; authorName?: string; username?: string; avatarUrl?: string }
 
-type Person = { id: string; name: string; avatarUrl: string | null; isYou: boolean; isCreator: boolean; moment: PostedMoment | null }
+type Person = { id: string; name: string; /** The real name, for the initial even when name reads 'You'. */ fullName: string; avatarUrl: string | null; isYou: boolean; isCreator: boolean; moment: PostedMoment | null }
 
 export type AudienceKind = 'circle' | 'paid' | 'followers' | 'public'
 
@@ -55,7 +56,7 @@ export function buildPeople({ pact, participants, moments, currentDay, viewerId,
     if (seen.has(id)) return
     seen.add(id)
     const isYou = viewerId != null && String(viewerId) === id
-    people.push({ id, name: isYou ? 'You' : name, avatarUrl, isYou, isCreator: id === creatorId, moment: today.get(id) ?? null })
+    people.push({ id, name: isYou ? 'You' : name, fullName: name, avatarUrl, isYou, isCreator: id === creatorId, moment: today.get(id) ?? null })
   }
   participants.forEach((person: any) => {
     const id = person?.id ?? person?.user_id
@@ -69,7 +70,7 @@ export function buildPeople({ pact, participants, moments, currentDay, viewerId,
   return people.sort((a, b) => Number(Boolean(b.moment)) - Number(Boolean(a.moment)) || Number(b.isYou) - Number(a.isYou))
 }
 
-function PersonFace({ person, size, ring }: { person: Pick<Person, 'name' | 'avatarUrl'>; size: number; ring?: React.CSSProperties }) {
+function PersonFace({ person, size, ring }: { person: Pick<Person, 'name' | 'avatarUrl'> & { fullName?: string }; size: number; ring?: React.CSSProperties }) {
   const [broken, setBroken] = useState(false)
   const showPhoto = person.avatarUrl && !broken
   return (
@@ -81,20 +82,8 @@ function PersonFace({ person, size, ring }: { person: Pick<Person, 'name' | 'ava
         // eslint-disable-next-line @next/next/no-img-element
         <img src={person.avatarUrl!} alt="" onError={() => setBroken(true)} className="size-full object-cover" />
       ) : (
-        String(person.name || '?').charAt(0).toUpperCase()
+        String(person.fullName || person.name || '?').charAt(0).toUpperCase()
       )}
-    </span>
-  )
-}
-
-/** Posted: solid navy ring. Not yet: dashed. */
-function StatusFace({ person, size, posted }: { person: Pick<Person, 'name' | 'avatarUrl'>; size: number; posted: boolean }) {
-  return (
-    <span className="relative inline-flex shrink-0" style={{ width: size, height: size }}>
-      <span className="absolute inset-0 rounded-full" style={{ border: posted ? `3px solid ${NAVY}` : '2px dashed #B9AF9B' }} aria-hidden="true" />
-      <span className="absolute" style={{ inset: 5 }}>
-        <PersonFace person={person} size={size - 10} />
-      </span>
     </span>
   )
 }
@@ -235,8 +224,10 @@ function AudienceRow({ icon, dark, title, sub, href }: { icon: React.ReactNode; 
 }
 
 /**
- * Who posted today and who can see this pact, in one sheet. Only the person
- * who started the pact gets Invite and Make Private; everyone else reads.
+ * Who posted today and who can see this pact, in one sheet. It opens on the
+ * same animated navy top as the Pacts and Circles pages, with the day's numbers;
+ * below, each line says plainly who can see (green) and who can't (red). Only
+ * the person who started the pact gets Invite and Make private.
  */
 export function PactAudienceSheet({
   open,
@@ -275,8 +266,10 @@ export function PactAudienceSheet({
 }) {
   useBackToClose(open, onClose)
   if (!open) return null
-  const { people, kind, circle } = audience
+  const { people, posted, circle } = audience
   const creatorFirst = firstName(creatorName)
+  const whose = isCreatorView ? 'your' : `${creatorFirst}'s`
+  const circleName = pact?.circle_name || circle?.name || 'the circle'
   const names = (Array.isArray(circle?.members_preview) ? circle.members_preview : []).filter((member: any) => member?.name).map((member: any) => firstName(member.name))
   const memberCount = Number(circle?.member_count ?? 0)
   const circleSub = memberCount > 0
@@ -284,59 +277,122 @@ export function PactAudienceSheet({
     : 'Everyone in the circle'
   const watchers = Number(pact?.watcher_count ?? 0)
   const price = pact?.watch_price ? `₹${pact.watch_price}` : null
+  const inCircle = pact?.circle_id != null
+  const visibility: string = pact?.visibility || 'public'
+  const locked = Boolean(pact?.media_locked)
+
+  // Who can see the moments, and who can't, in plain words.
+  const canSee: { icon: React.ReactNode; title: string; sub: string; href?: string }[] = []
+  const cantSee: { title: string; sub: string }[] = []
+  if (inCircle) canSee.push({ icon: <Users className="size-5" strokeWidth={2} />, title: `Members of ${circleName}`, sub: circleSub, href: `/circles/${pact.circle_id}` })
+  if (!locked && visibility === 'public') canSee.push({ icon: <Globe className="size-5" strokeWidth={2} />, title: 'Everyone on CirclePact', sub: 'It can show up on anyone’s feed' })
+  if (!locked && visibility === 'private') canSee.push({ icon: <Heart className="size-5" strokeWidth={2} />, title: `People who follow ${isCreatorView ? 'you' : creatorFirst}`, sub: 'It shows on their feed' })
+  if (locked) canSee.push({ icon: <Lock className="size-5" strokeWidth={2} />, title: isCreatorView ? 'People you let in' : `People ${creatorFirst} lets in`, sub: `${price ? `${price} to watch · ` : ''}${watchers} approved so far` })
+  if (visibility === 'circle_only' || (inCircle && visibility !== 'public' && visibility !== 'private')) cantSee.push({ title: `Anyone outside ${circleName}`, sub: 'They don’t see its moments' })
+  else if (locked) cantSee.push({ title: 'Everyone else', sub: 'They see the pact, but not the photos and videos' })
+  else if (visibility === 'private') cantSee.push({ title: `People who don’t follow ${isCreatorView ? 'you' : creatorFirst}`, sub: 'They don’t see its moments' })
+
+  const headline = locked
+    ? `Only people ${isCreatorView ? 'you let in' : `${creatorFirst} lets in`} see ${whose} moments.`
+    : visibility === 'public'
+      ? `Anyone on CirclePact can see ${whose} moments.`
+      : visibility === 'private'
+        ? `Only ${isCreatorView ? 'your' : `${creatorFirst}'s`} followers see these moments.`
+        : `Only ${circleName} sees these moments.`
+  const fmt = (value?: string | null) => (value ? new Date(`${String(value).slice(0, 10)}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '')
+  const from = fmt(pact?.start_date)
+  const to = fmt(pact?.end_date)
+  const allPosted = people.length > 0 && posted.length === people.length
+  const nonePosted = posted.length === 0
+
+  const tile = 'flex min-h-[92px] flex-col justify-between rounded-[18px] px-3 py-2.5'
+  const tileStyle = { background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)' } as React.CSSProperties
 
   return (
     <BodyPortal>
       <div role="dialog" aria-modal="true" aria-label="Who can see this pact" className="fixed inset-0 z-[90] flex items-end justify-center">
         <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0" style={{ background: 'rgba(15,16,20,0.55)' }} />
-        <div className="relative max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-[24px] pb-[max(1.5rem,env(safe-area-inset-bottom))]" style={{ background: '#F4EFE4', color: INK }}>
-          <div className="mx-auto mt-2.5 h-[5px] w-10 rounded-full" style={{ background: '#D9D2C2' }} />
-          <div className="flex items-center pl-5 pr-2 pt-1.5">
-            <div className="flex-1 text-[18px] font-extrabold tracking-[-0.02em]">Who Can See</div>
-            <button type="button" onClick={onClose} aria-label="Close" className="flex size-11 items-center justify-center">
+        <div className="cp-sheet-rise relative max-h-[92vh] w-full max-w-md overflow-y-auto overflow-x-hidden rounded-t-[28px] pb-[max(1.5rem,env(safe-area-inset-bottom))]" style={{ background: '#F4EFE4', color: INK }}>
+          <div className="relative">
+            <span className="absolute left-1/2 top-2.5 z-10 h-[5px] w-10 -translate-x-1/2 rounded-full bg-white/40" aria-hidden="true" />
+            <button type="button" onClick={onClose} aria-label="Close" className="absolute right-3 top-3 z-10 flex size-11 items-center justify-center rounded-full text-white" style={{ background: 'rgba(255,255,255,0.14)' }}>
               <X className="size-[22px]" strokeWidth={2.2} />
             </button>
+            <PageHero
+              tone="navy"
+              title="Who can see"
+              tagline={<>Started by {isCreatorView ? 'you' : creatorName}{from ? ` · ${from}${to ? ` – ${to}` : ''}` : ''}</>}
+              line={headline}
+            >
+              <div className="grid grid-cols-3 gap-2">
+                <div className={tile} style={tileStyle}>
+                  <span className="flex size-7 items-center justify-center rounded-full" style={{ background: ended ? 'rgba(255,255,255,0.2)' : allPosted ? '#22C55E' : nonePosted ? '#E5363B' : '#F5B300' }} aria-hidden="true">
+                    {allPosted ? <Check className="size-4 text-white" strokeWidth={3} /> : <Camera className="size-[15px] text-white" strokeWidth={2.4} />}
+                  </span>
+                  <span>
+                    <span className="block text-[22px] font-extrabold leading-none tabular-nums">{posted.length}<span className="text-[13px] font-bold text-white/70"> of {people.length}</span></span>
+                    <span className="mt-1 block text-[11.5px] font-bold text-white/80">{ended ? 'Posted last day' : `Posted · Day ${currentDay}`}</span>
+                  </span>
+                </div>
+                <div className={tile} style={tileStyle}>
+                  <span className="flex size-7 items-center justify-center rounded-full bg-white text-[var(--navy)]" aria-hidden="true">
+                    {locked ? <Lock className="size-[15px]" strokeWidth={2.4} /> : inCircle && visibility !== 'public' && visibility !== 'private' ? <Users className="size-[15px]" strokeWidth={2.4} /> : visibility === 'private' ? <Heart className="size-[15px]" strokeWidth={2.4} /> : <Globe className="size-[15px]" strokeWidth={2.4} />}
+                  </span>
+                  <span>
+                    <span className="block text-[15px] font-extrabold leading-tight">{locked ? 'Private' : visibility === 'public' ? 'Everyone' : visibility === 'private' ? 'Followers' : 'Circle'}</span>
+                    <span className="mt-1 block text-[11.5px] font-bold text-white/80">Can watch</span>
+                  </span>
+                </div>
+                <div className={tile} style={tileStyle}>
+                  <span className="flex size-7 items-center justify-center rounded-full bg-white text-[var(--navy)]" aria-hidden="true">
+                    <UserPlus className="size-[15px]" strokeWidth={2.4} />
+                  </span>
+                  <span>
+                    <span className="block text-[22px] font-extrabold leading-none tabular-nums">{people.length}</span>
+                    <span className="mt-1 block text-[11.5px] font-bold text-white/80">{people.length === 1 ? 'In the pact' : 'In the pact'}</span>
+                  </span>
+                </div>
+              </div>
+            </PageHero>
           </div>
 
-          {(() => {
-            const fmt = (value?: string | null) => (value ? new Date(`${String(value).slice(0, 10)}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '')
-            const from = fmt(pact?.start_date)
-            const to = fmt(pact?.end_date)
-            const owner = (
-              <>
-                <PersonFace person={{ name: creatorName, avatarUrl: pact?.creator_avatar_url || null }} size={28} />
-                <span className="min-w-0 flex-1 truncate text-[13.5px]" style={{ color: MUTED }}>
-                  Started by <span className="font-extrabold" style={{ color: INK }}>{isCreatorView ? 'you' : creatorName}</span>
-                  {from ? ` · ${from}${to ? ` – ${to}` : ''}` : ''}
-                </span>
-              </>
-            )
-            return pact?.creator_username ? (
-              <Link href={`/profile/${encodeURIComponent(pact.creator_username)}`} className="flex items-center gap-2.5 px-5 pt-2">{owner}</Link>
-            ) : (
-              <div className="flex items-center gap-2.5 px-5 pt-2">{owner}</div>
-            )
-          })()}
-
-          <Section>{ended ? 'IN THIS PACT' : 'TODAY'}</Section>
+          <Section>{ended ? 'IN THIS PACT' : `TODAY · DAY ${currentDay}`}</Section>
           {people.map((person) => {
             const at = timeOf(person.moment?.uploadedAt)
-            const role = person.isCreator ? 'Creator · ' : ''
+            const didPost = Boolean(person.moment)
             return (
               <div key={person.id} className="flex items-center gap-3 px-5 py-2">
-                <StatusFace person={person} size={44} posted={Boolean(person.moment)} />
+                <span className="relative inline-flex shrink-0" style={{ width: 46, height: 46 }}>
+                  <span className="absolute inset-0 rounded-full" style={{ border: ended || !canViewMoments ? `2px solid ${LINE}` : didPost ? '3px solid #16A34A' : '2px dashed #E5363B' }} aria-hidden="true" />
+                  <span className="absolute" style={{ inset: 5 }}>
+                    <PersonFace person={person} size={36} />
+                  </span>
+                </span>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-[15px] font-extrabold">{person.name}</div>
-                  <div className="text-[13px]" style={{ color: MUTED }}>
-                    {ended || !canViewMoments ? (person.isCreator ? 'Creator' : 'In the pact') : person.moment ? `${role}Posted${at ? ` at ${at}` : ' today'}` : `${role}not posted yet`}
+                  <div className="truncate text-[15px] font-extrabold">
+                    {person.name}
+                    {person.isCreator && <span className="ml-1.5 text-[12px] font-bold" style={{ color: MUTED }}>Started it</span>}
                   </div>
+                  {ended || !canViewMoments ? (
+                    <div className="text-[13px]" style={{ color: MUTED }}>In the pact</div>
+                  ) : didPost ? (
+                    <span className="mt-0.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-extrabold" style={{ background: '#E6F4EA', color: '#15803D' }}>
+                      <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />
+                      Posted{at ? ` · ${at}` : ' today'}
+                    </span>
+                  ) : (
+                    <span className="mt-0.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-extrabold" style={{ background: '#FDECEA', color: '#B42318' }}>
+                      <X className="size-3.5" strokeWidth={3} aria-hidden="true" />
+                      Not posted yet
+                    </span>
+                  )}
                 </div>
-                {person.moment && canViewMoments && !ended && (
-                  <button type="button" onClick={() => onWatch(person.moment!.id)} className="h-11 shrink-0 rounded-full px-4 text-[13.5px] font-extrabold" style={{ border: `1px solid ${INK}`, color: INK }}>
-                    Watch
+                {didPost && canViewMoments && !ended && (
+                  <button type="button" onClick={() => onWatch(person.moment!.id)} className="h-11 shrink-0 rounded-full px-4 text-[13.5px] font-extrabold" style={{ border: `1.5px solid ${INK}`, color: INK }}>
+                    See it
                   </button>
                 )}
-                {person.isYou && !person.moment && isParticipant && !ended && (
+                {person.isYou && !didPost && isParticipant && !ended && (
                   <button type="button" onClick={onPost} className="h-11 shrink-0 rounded-full px-4 text-[13.5px] font-extrabold" style={{ background: NAVY, color: '#FFFFFF' }}>
                     Post Day {currentDay}
                   </button>
@@ -345,57 +401,81 @@ export function PactAudienceSheet({
             )
           })}
 
-          <Section>SEEN BY</Section>
-          {kind === 'circle' && (
-            <AudienceRow dark icon={<Users className="size-5" strokeWidth={2} />} title={pact?.circle_name || circle?.name || 'Circle'} sub={circleSub} href={`/circles/${pact.circle_id}`} />
-          )}
-          {kind === 'followers' && (
-            <AudienceRow icon={<Heart className="size-5" strokeWidth={2} />} title="Followers" sub={`People who follow ${creatorFirst}`} />
-          )}
-          {kind === 'public' && (
-            <AudienceRow icon={<Globe className="size-5" strokeWidth={2} />} title="Everyone" sub="Anyone on CirclePact can watch" />
-          )}
-          {pact?.media_locked && (
-            <AudienceRow
-              dark={kind !== 'circle'}
-              icon={<Lock className="size-5" strokeWidth={2} />}
-              title={price ? `Private · ${price} to watch` : 'Private'}
-              sub={`${watchers > 0 ? `${watchers} approved to watch · ` : ''}${kind === 'circle' ? 'Paid on top of the circle' : `Paid straight to ${isCreatorView ? 'you' : creatorFirst}`}`}
-            />
-          )}
+          <Section>WHO CAN SEE THE MOMENTS</Section>
+          {canSee.map((row) => {
+            const body = (
+              <>
+                <span className="relative flex size-11 shrink-0 items-center justify-center rounded-full" style={{ background: '#E6F4EA', color: '#15803D' }}>
+                  {row.icon}
+                  <span className="absolute -bottom-0.5 -right-0.5 flex size-[18px] items-center justify-center rounded-full border-2 border-[#F4EFE4]" style={{ background: '#16A34A' }} aria-hidden="true">
+                    <Check className="size-2.5 text-white" strokeWidth={4} />
+                  </span>
+                </span>
+                <span className="block min-w-0 flex-1">
+                  <span className="block truncate text-[15px] font-extrabold">{row.title}</span>
+                  <span className="block text-[13px] leading-snug" style={{ color: MUTED }}>{row.sub}</span>
+                </span>
+                {row.href && <ChevronRight className="size-4 shrink-0" strokeWidth={2.4} style={{ color: MUTED }} aria-hidden="true" />}
+              </>
+            )
+            return row.href ? (
+              <Link key={row.title} href={row.href} className="flex items-center gap-3 px-5 py-2" aria-label={`Can see: ${row.title}`}>{body}</Link>
+            ) : (
+              <div key={row.title} className="flex items-center gap-3 px-5 py-2" aria-label={`Can see: ${row.title}`}>{body}</div>
+            )
+          })}
+          {cantSee.map((row) => (
+            <div key={row.title} className="flex items-center gap-3 px-5 py-2" aria-label={`Can't see: ${row.title}`}>
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-full" style={{ background: '#FDECEA', color: '#B42318' }}>
+                <X className="size-5" strokeWidth={2.6} />
+              </span>
+              <span className="block min-w-0 flex-1">
+                <span className="block truncate text-[15px] font-extrabold">{row.title}</span>
+                <span className="block text-[13px] leading-snug" style={{ color: MUTED }}>{row.sub}</span>
+              </span>
+            </div>
+          ))}
+
           {isCreatorView && !ended && (
-            <button type="button" onClick={onInvite} className="flex w-full items-center gap-3 px-5 py-2 text-left">
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-full" style={{ background: CARD, border: `1.5px solid ${LINE}` }}>
+            <button type="button" onClick={onInvite} className="mx-5 mt-3 flex w-[calc(100%-2.5rem)] items-center gap-3 rounded-[20px] px-3.5 py-3 text-left transition active:scale-[0.99]" style={{ background: CARD, border: `1px solid ${LINE}` }}>
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-full text-white" style={{ background: NAVY }}>
                 <UserPlus className="size-5" strokeWidth={2} />
               </span>
               <span className="block min-w-0 flex-1">
-                <span className="block text-[15px] font-extrabold">Invite Someone To This Pact</span>
-                <span className="block text-[13px]" style={{ color: MUTED }}>They post and watch with you</span>
+                <span className="block text-[15px] font-extrabold">Invite someone to join</span>
+                <span className="block text-[13px] leading-snug" style={{ color: MUTED }}>They post their own moments here and see everyone&apos;s</span>
               </span>
+              <ChevronRight className="size-4 shrink-0" strokeWidth={2.4} style={{ color: MUTED }} aria-hidden="true" />
             </button>
           )}
 
           {isCreatorView && showTurnOnTips && (
-            <AudienceRow icon={<Heart className="size-5" strokeWidth={2} />} title="Turn On Tips" sub="Let people tip you for your pacts" href="/profile/tips" />
+            <AudienceRow icon={<Heart className="size-5" strokeWidth={2} />} title="Turn on tips" sub="Let people tip you for your pacts" href="/profile/tips" />
           )}
 
           {isCreatorView ? (
-            <div className="mx-5 mt-5 rounded-[22px] p-4" style={{ background: CARD, border: `1px solid ${LINE}` }}>
-              <div className="flex items-center gap-2.5 text-[15px] font-extrabold">
-                <Lock className="size-[18px]" strokeWidth={2.2} aria-hidden="true" />
-                {pact?.media_locked ? 'Private pact' : 'Want fewer eyes on it?'}
+            <div className="mx-5 mt-4 overflow-hidden rounded-[22px]" style={{ background: CARD, border: `1px solid ${LINE}` }}>
+              <div className="flex items-start gap-3 p-4">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full" style={{ background: locked ? '#E8ECF7' : '#F3EEE4', color: NAVY }}>
+                  <Lock className="size-[18px]" strokeWidth={2.2} aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[15px] font-extrabold">{locked ? `Private${price ? ` · ${price} to watch` : ''}` : 'Make it private'}</div>
+                  <div className="mt-1 text-[13.5px] leading-[1.45]" style={{ color: MUTED }}>
+                    {locked
+                      ? pendingAsks > 0
+                        ? `${pendingAsks} ${pendingAsks === 1 ? 'person is' : 'people are'} waiting for you to let them in.`
+                        : `${watchers} approved. Change the price or let people in.`
+                      : 'Only people you approve can watch the photos and videos. You can ask a small price to watch.'}
+                  </div>
+                </div>
               </div>
-              <div className="mt-1.5 text-[13.5px] leading-[1.45]" style={{ color: MUTED }}>
-                {pact?.media_locked
-                  ? `${price ? `${price} to watch. ` : ''}${pendingAsks > 0 ? `${pendingAsks} waiting for you.` : 'Change the price or let people in.'}`
-                  : 'Make this pact private. Only you and people you approve can watch, and you can ask a small price.'}
-              </div>
-              <button type="button" onClick={onPrivacy} className="mt-3 h-12 w-full rounded-full text-[15px] font-extrabold" style={{ background: INK, color: '#FFFFFF' }}>
-                {pact?.media_locked ? (pendingAsks > 0 ? `Manage · ${pendingAsks} asking` : 'Manage') : 'Make Private'}
+              <button type="button" onClick={onPrivacy} className="h-12 w-full text-[15px] font-extrabold text-white" style={{ background: pendingAsks > 0 ? '#E5363B' : NAVY }}>
+                {locked ? (pendingAsks > 0 ? `Review ${pendingAsks} ${pendingAsks === 1 ? 'request' : 'requests'}` : 'Manage who can watch') : 'Make private'}
               </button>
             </div>
           ) : (
-            <div className="mx-5 mt-5 flex items-start gap-2.5 rounded-[18px] px-4 py-3.5" style={{ background: CARD, border: `1px solid ${LINE}` }}>
+            <div className="mx-5 mt-4 flex items-start gap-2.5 rounded-[18px] px-4 py-3.5" style={{ background: CARD, border: `1px solid ${LINE}` }}>
               <Lock className="mt-px size-[18px] shrink-0" strokeWidth={2.2} style={{ color: MUTED }} aria-hidden="true" />
               <div className="text-[13.5px] leading-[1.45]" style={{ color: MUTED }}>
                 Only <b style={{ color: INK }}>{creatorFirst}</b>, who started this pact, can change who sees it.
