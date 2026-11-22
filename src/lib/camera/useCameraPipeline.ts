@@ -9,6 +9,49 @@ import { drawFaceEffect, loadFaceTracker, poseFrom, type FaceEffectId, type Face
 /** Longest side of what's drawn and recorded. */
 const MAX_SIDE = 1280
 
+/**
+ * Some phones (seen on Android 10, Chrome 157) draw the WebGL look with a
+ * black diagonal wedge across the top, though the camera itself is fine.
+ * We compare a tiny thumbnail of the drawn frame with the raw camera now and
+ * then; if WebGL has blacked out a real part of the picture, this phone
+ * switches to the plain 2D drawing (with the look's CSS filter) for good.
+ */
+const GL_BROKEN_KEY = 'cp_camera_gl_broken'
+const CHECK_W = 36
+const CHECK_H = 64
+
+function glKnownBroken(): boolean {
+  try {
+    return window.localStorage.getItem(GL_BROKEN_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function rememberGlBroken() {
+  try {
+    window.localStorage.setItem(GL_BROKEN_KEY, '1')
+  } catch {
+    // Private mode: it's only remembered for this session.
+  }
+}
+
+/** Share of the thumbnail that is black in the drawn frame but clearly lit in the camera. */
+function blackedOutShare(drawn: Uint8ClampedArray, camera: Uint8ClampedArray): number {
+  let bad = 0
+  const n = drawn.length / 4
+  for (let i = 0; i < drawn.length; i += 4) {
+    const out = drawn[i] * 0.299 + drawn[i + 1] * 0.587 + drawn[i + 2] * 0.114
+    const src = camera[i] * 0.299 + camera[i + 1] * 0.587 + camera[i + 2] * 0.114
+    if (out < 12 && src > 90) bad++
+  }
+  return bad / n
+}
+
+function supportsCanvasFilter(ctx: CanvasRenderingContext2D): boolean {
+  return typeof (ctx as any).filter === 'string'
+}
+
 export type EffectStatus = 'idle' | 'loading' | 'ready' | 'error'
 
 /**
@@ -21,6 +64,7 @@ export function useCameraPipeline({
   videoRef,
   active,
   look,
+  lookCss = 'none',
   mirror,
   effect,
   streak,
@@ -28,6 +72,8 @@ export function useCameraPipeline({
   videoRef: React.RefObject<HTMLVideoElement | null>
   active: boolean
   look: LookParams
+  /** The same look as a CSS filter, used where WebGL can't be trusted. */
+  lookCss?: string
   mirror: boolean
   effect: FaceEffectId
   streak: number
@@ -36,13 +82,13 @@ export function useCameraPipeline({
   const [ready, setReady] = useState(false)
   const [effectStatus, setEffectStatus] = useState<EffectStatus>('idle')
   const [faceFound, setFaceFound] = useState(true)
-  const live = useRef({ look, mirror, effect, streak, effectSince: 0 })
+  const live = useRef({ look, lookCss, mirror, effect, streak, effectSince: 0 })
   const trackerRef = useRef<FaceLandmarker | null>(null)
 
   useEffect(() => {
     if (live.current.effect !== effect) live.current.effectSince = performance.now()
-    live.current = { ...live.current, look, mirror, effect, streak }
-  }, [look, mirror, effect, streak])
+    live.current = { ...live.current, look, lookCss, mirror, effect, streak }
+  }, [look, lookCss, mirror, effect, streak])
 
   // Load the face tracker the first time an effect is picked.
   useEffect(() => {
@@ -68,7 +114,16 @@ export function useCameraPipeline({
       setReady(false)
       return
     }
-    const renderer = LookRenderer.create()
+    let renderer = glKnownBroken() ? null : LookRenderer.create()
+    // Tiny canvases for the WebGL health check.
+    const checkA = document.createElement('canvas')
+    const checkB = document.createElement('canvas')
+    checkA.width = checkB.width = CHECK_W
+    checkA.height = checkB.height = CHECK_H
+    const ctxA = checkA.getContext('2d', { willReadFrequently: true })
+    const ctxB = checkB.getContext('2d', { willReadFrequently: true })
+    let frameNo = 0
+    let strikes = 0
     let raf = 0
     let pose: FacePose | null = null
     let missed = 0
@@ -95,17 +150,38 @@ export function useCameraPipeline({
       }
       const ctx = out.getContext('2d')
       if (!ctx) return
-      const { look: lk, mirror: mr, effect: fx, streak: st, effectSince } = live.current
+      const { look: lk, lookCss: css, mirror: mr, effect: fx, streak: st, effectSince } = live.current
+      frameNo++
       try {
         if (renderer) {
           renderer.render(video, w, h, lk, mr)
           ctx.drawImage(renderer.canvas, 0, 0, w, h)
-        } else {
+          // Every 10th frame: has WebGL blacked out part of a lit picture?
+          if (frameNo % 10 === 0 && ctxA && ctxB) {
+            ctxA.drawImage(out, 0, 0, CHECK_W, CHECK_H)
+            ctxB.save()
+            if (mr) {
+              ctxB.translate(CHECK_W, 0)
+              ctxB.scale(-1, 1)
+            }
+            ctxB.drawImage(video, 0, 0, CHECK_W, CHECK_H)
+            ctxB.restore()
+            const share = blackedOutShare(ctxA.getImageData(0, 0, CHECK_W, CHECK_H).data, ctxB.getImageData(0, 0, CHECK_W, CHECK_H).data)
+            strikes = share > 0.08 ? strikes + 1 : 0
+            if (strikes >= 2) {
+              renderer.dispose()
+              renderer = null
+              rememberGlBroken()
+            }
+          }
+        }
+        if (!renderer) {
           ctx.save()
           if (mr) {
             ctx.translate(w, 0)
             ctx.scale(-1, 1)
           }
+          if (css && css !== 'none' && supportsCanvasFilter(ctx)) ctx.filter = css
           ctx.drawImage(video, 0, 0, w, h)
           ctx.restore()
         }
