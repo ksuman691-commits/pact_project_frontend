@@ -17,19 +17,17 @@ import { markWatchingSeen } from '@/lib/api/access';
 import { getPactProgress } from '@/lib/pactProgress';
 import { resolvePactCompletionViewState } from '@/lib/pactCompletionState';
 
+/** While the pact loads: the same full-screen dark frame the moment will fill, so nothing jumps. */
 function PactDetailSkeleton() {
   return (
-    <main className="min-h-[calc(100dvh-72px)] bg-[var(--paper)] px-[14px] pb-3 pt-5">
-      <div className="mx-auto flex h-[calc(100dvh-92px)] max-w-[390px] flex-col gap-[14px] rounded-[32px] border border-[var(--hairline)] bg-[var(--card)] p-[18px_16px_16px]">
-        <div className="h-1 w-full animate-pulse rounded-full bg-[var(--card-muted)]" />
-        <div className="flex h-11 items-center gap-3">
-          <div className="size-11 animate-pulse rounded-full bg-[var(--card-muted)]" />
-          <div className="flex-1 space-y-2">
-            <div className="h-4 w-32 animate-pulse rounded-full bg-[var(--card-muted)]" />
-            <div className="h-3 w-24 animate-pulse rounded-full bg-[var(--card-muted)]" />
-          </div>
-        </div>
-        <div className="flex-1 animate-pulse rounded-[24px] bg-[var(--card-muted)]" />
+    <main className="min-h-[calc(100dvh-72px)] bg-[var(--paper)]" aria-busy="true" aria-label="Loading pact">
+      <div className="relative w-full overflow-hidden bg-[#111216]" style={{ height: 'calc(100dvh - 72px)' }}>
+        <div className="absolute inset-0 animate-pulse bg-[radial-gradient(120%_80%_at_30%_20%,#2A2C35_0%,#15161B_60%,#0E0F12_100%)]" />
+        <div className="absolute left-3 top-3 size-11 rounded-full bg-white/10" />
+        <div className="absolute left-4 right-16 top-[72px] h-7 rounded-full bg-white/10" />
+        <div className="absolute left-4 top-[112px] h-4 w-40 rounded-full bg-white/10" />
+        <div className="absolute bottom-24 left-4 h-5 w-48 rounded-full bg-white/10" />
+        <div className="absolute bottom-10 left-4 right-4 h-10 rounded-full bg-white/10" />
       </div>
     </main>
   );
@@ -62,9 +60,13 @@ export default function PactDetailPage() {
   const { data: momentsData } = usePactProofs(pactId, 50);
 
   const pact = pactData?.data;
+  // Until the pact's own list of moments arrives, start from the ones the feed already
+  // had (recent_proofs), so the page opens on the same picture instead of an empty card.
+  const momentsLoading = momentsData === undefined;
+  const feedProofs = pact?.recent_proofs;
   const moments = useMemo(
     () =>
-      (momentsData?.data || [])
+      (momentsData?.data || (Array.isArray(feedProofs) ? feedProofs : []))
         .map((moment: any) => ({
           id: moment.id,
           url: moment.proof_url || moment.file_url || undefined,
@@ -78,7 +80,7 @@ export default function PactDetailPage() {
           avatarUrl: moment.avatar_url || undefined,
         }))
         .sort((left: any, right: any) => new Date(right.uploadedAt || 0).getTime() - new Date(left.uploadedAt || 0).getTime()),
-    [momentsData?.data],
+    [momentsData?.data, feedProofs],
   );
   // A paid watcher opening the pact clears its "new" count.
   const watchedByMe = pact?.media_access === 'approved';
@@ -199,10 +201,7 @@ export default function PactDetailPage() {
 
   if (isLoading) {
     return (
-      <>
-        <DetailPageHeader title="Loading pact…" maxWidthClassName="max-w-md" />
-        <PactDetailSkeleton />
-      </>
+      <PactDetailSkeleton />
     );
   }
 
@@ -237,6 +236,7 @@ export default function PactDetailPage() {
       <PactMomentsDetail
         pact={pact}
         moments={moments}
+        momentsLoading={momentsLoading}
         participants={participants}
         progress={progress}
         isEnded={isEnded}

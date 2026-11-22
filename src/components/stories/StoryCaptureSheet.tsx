@@ -653,6 +653,107 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
     )
   }
 
+  // Reviewing the shot: the photo or video fills the screen (no beige), with the
+  // pact on top and Retake / Post at the bottom. Posting fills a green bar; done is a green tick.
+  if (step === 'preview' && clip) {
+    const photo = isPhotoClip(clip)
+    const glass = { background: 'rgba(0,0,0,0.38)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' } as React.CSSProperties
+    const permissionError = phase === 'error' && !!error && isParticipantPermissionError(error)
+    return (
+      <div role="dialog" aria-modal="true" aria-label="Post a moment" className="fixed inset-0 z-[80] overflow-hidden bg-black text-white">
+        {photo ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={clip.url} alt="" aria-hidden="true" className="absolute inset-0 size-full scale-125 object-cover opacity-80 blur-3xl saturate-150" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={clip.url} alt="Your photo" className="absolute inset-0 size-full object-contain" />
+          </>
+        ) : (
+          <video src={clip.url} autoPlay loop muted playsInline className="absolute inset-0 size-full object-cover" />
+        )}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/70 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black/85 via-black/45 to-transparent" />
+
+        <header className="absolute inset-x-0 top-0 z-10 flex items-center gap-3 px-4" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
+          <button type="button" onClick={closeSheet} disabled={busy} aria-label="Close" className="flex size-11 shrink-0 items-center justify-center rounded-full text-white disabled:opacity-40" style={glass}>
+            <X className="size-5" />
+          </button>
+          <div className="min-w-0" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>
+            <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-white/75">{phase === 'done' ? 'Posted to' : 'Posting to'}</p>
+            <p className="truncate text-[17px] font-extrabold tracking-[-0.02em]">{pactTitle || 'Your pact'}</p>
+          </div>
+          <span className="ml-auto shrink-0 rounded-full px-2.5 py-1 text-[12px] font-bold tabular-nums text-white/90" style={glass}>
+            {photo ? 'Photo' : `${clip.duration.toFixed(1)} s`} · {formatMb(clip.blob.size)}
+          </span>
+        </header>
+
+        <div className="absolute inset-x-0 bottom-0 z-10 px-4" style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}>
+          {phase === 'done' ? (
+            <div className="flex flex-col items-center gap-3 text-center" aria-live="polite">
+              <span className="flex size-16 items-center justify-center rounded-full" style={{ background: '#16A34A', boxShadow: '0 0 0 6px rgba(22,163,74,0.25)' }}>
+                <Check className="size-8 text-white" strokeWidth={3} aria-hidden="true" />
+              </span>
+              <p className="text-[20px] font-extrabold">Moment posted</p>
+              <p className="-mt-2 text-[14px] text-white/80">Today counts for this pact.</p>
+              <button type="button" onClick={closeSheet} className="h-14 w-full rounded-full bg-white text-[16px] font-extrabold text-[var(--navy)]">
+                Done
+              </button>
+            </div>
+          ) : busy ? (
+            <div className="flex flex-col gap-2.5" aria-live="polite">
+              <p className="text-[15px] font-bold">
+                {phase === 'requesting' ? 'Getting ready…' : phase === 'uploading' ? `Uploading · ${Math.round(progress * 100)}%` : 'Saving your moment…'}
+              </p>
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/20">
+                <div className="h-full rounded-full transition-[width]" style={{ width: `${Math.round((phase === 'saving' ? 1 : progress) * 100)}%`, background: '#22C55E' }} />
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {permissionError ? (
+                <div role="alert" className="rounded-[16px] px-4 py-3 text-[14px] font-semibold" style={{ background: '#FDECEA', color: '#8A1C12' }}>
+                  <p>Join this pact to post a moment.</p>
+                  <div className="mt-3 flex gap-3">
+                    {canJoin && onJoin && <button type="button" onClick={async () => { const joined = await onJoin(); if (joined && clip) await post({ blob: clip.blob, contentType: clip.contentType, durationSeconds: clip.duration }) }} className="h-11 flex-1 rounded-full bg-[var(--navy)] text-sm font-bold text-white">Join this pact</button>}
+                    <button type="button" onClick={closeSheet} className="h-11 flex-1 rounded-full border border-[#E9B4AE] text-sm font-bold">Close</button>
+                  </div>
+                </div>
+              ) : phase === 'error' && error ? (
+                <p role="alert" className="rounded-[16px] px-4 py-3 text-[14px] font-semibold" style={{ background: '#FDECEA', color: '#8A1C12' }}>{error}</p>
+              ) : null}
+              {phase === 'error' && error && !permissionError && !retryable ? (
+                <button type="button" onClick={closeSheet} className="h-14 w-full rounded-full bg-white text-[16px] font-extrabold text-[var(--ink)]">Close</button>
+              ) : !permissionError && (
+                <div className="flex gap-3">
+                  <button type="button" onClick={retake} className="flex h-14 flex-1 items-center justify-center gap-2 rounded-full text-[16px] font-bold text-white" style={glass}>
+                    <RotateCcw className="size-[18px]" aria-hidden="true" />
+                    Retake
+                  </button>
+                  <button
+                    type="button"
+                    disabled={comingSoon}
+                    onClick={() => {
+                      if (onCaptured) {
+                        onCaptured({ blob: clip.blob, contentType: clip.contentType, duration: clip.duration })
+                        return
+                      }
+                      void post({ blob: clip.blob, contentType: clip.contentType, durationSeconds: clip.duration })
+                    }}
+                    className="flex h-14 flex-[1.4] items-center justify-center gap-2 rounded-full bg-white text-[16px] font-extrabold text-[var(--navy)] disabled:opacity-50"
+                    style={{ boxShadow: '0 10px 24px -10px rgba(0,0,0,0.6)' }}
+                  >
+                    <Check className="size-5" strokeWidth={3} aria-hidden="true" />
+                    {comingSoon ? STORIES_COMING_SOON : onCaptured ? 'Use this' : phase === 'error' ? 'Try again' : 'Post'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div role="dialog" aria-modal="true" aria-label="Post a moment" className="fixed inset-0 z-[80] flex flex-col bg-[var(--paper)] text-[var(--ink)]">
       <header className="flex items-center justify-between gap-3 px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
