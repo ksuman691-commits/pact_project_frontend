@@ -813,6 +813,7 @@ export default function PactMomentsDetail({
           moments={orderedMoments}
           startIndex={Math.max(0, orderedMoments.findIndex((moment) => moment.id === current.id))}
           pactId={Number(pact.id)}
+          title={pact?.title}
           likeCount={Number(pact?.like_count ?? 0)}
           liked={Boolean(pact?.is_liked_by_me)}
           onClose={() => setViewerOpen(false)}
