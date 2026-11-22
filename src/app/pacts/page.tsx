@@ -8,7 +8,8 @@ import PageHero from '@/components/PageHero'
 import HeroStats, { HeroSteps, type HeroStat } from '@/components/HeroStats'
 import { MarkProgress } from '@/components/brand/CircleMark'
 import { useCpScore } from '@/hooks/useCpScore'
-import { CheckBadge, FlameBadge, GaugeBadge } from '@/components/hero/HeroBadges'
+import { CheckBadge, CP_METALS, CpClockBadge, cpMetal, FlameBadge } from '@/components/hero/HeroBadges'
+import CpScorePopover from '@/components/profile/CpScorePopover'
 import { useUserStats } from '@/hooks/useUserQueries'
 import { useTodayStatus } from '@/hooks/useTodayStatus'
 import { Suspense, useEffect, useMemo, useState } from 'react'
@@ -93,6 +94,7 @@ function PactsPageInner() {
   const [filter, setFilter] = useState<(typeof filters)[number]>('All')
   const [search, setSearch] = useState('')
   const [pactLimit, setPactLimit] = useState(30)
+  const [scoreOpen, setScoreOpen] = useState(false)
 
   // /pacts?filter=Active seeds the tab on mount (stat card deep link).
   useEffect(() => {
@@ -287,19 +289,19 @@ function PactsPageInner() {
       unit: streak === 1 ? 'day' : 'days',
       sub: streakSub,
       icon: <FlameBadge />,
-      hint: 'Days in a row you showed up',
-      onSelect: () => setFilter('Active'),
-      selected: false,
+      hint: 'Days in a row you showed up. Shows your active pacts',
+      selected: filter === 'Active',
+      onSelect: () => setFilter(filter === 'Active' ? 'All' : 'Active'),
     },
     {
       key: 'kept',
-      label: 'Pacts kept',
+      label: 'Completed',
       value: query.isSuccess ? kept : null,
       unit: endedMine.length ? `of ${endedMine.length}` : undefined,
-      sub: endedMine.length ? `${Math.round(keptRate * 100)}% finished` : firstEndsSub,
+      sub: endedMine.length ? `${Math.round(keptRate * 100)}% of ended pacts` : firstEndsSub,
       icon: <CheckBadge />,
       visual: endedMine.length ? <MarkProgress value={keptRate} size={22} color="#4ADE80" track="rgba(255,255,255,0.18)" /> : undefined,
-      hint: 'Ended pacts you finished',
+      hint: 'Ended pacts you completed. Shows your ended pacts',
       selected: filter === 'Ended',
       onSelect: () => setFilter(filter === 'Ended' ? 'All' : 'Ended'),
     },
@@ -308,10 +310,12 @@ function PactsPageInner() {
       label: 'CP Score',
       value: scoreValue,
       sub: scoreSub,
-      icon: <GaugeBadge value={scoreValue} />,
+      icon: <CpClockBadge value={scoreValue} />,
       visual: scoreData?.trend && scoreData.trend.length > 1 ? <Sparkline points={scoreData.trend.map((t) => t.score)} /> : undefined,
-      hint: 'Your public reliability score, 0 to 100',
-      href: (user as any)?.username ? `/profile/${(user as any).username}/score` : '/profile',
+      hint: 'Your public reliability score, 0 to 100. Opens a quick look',
+      onSelect: () => setScoreOpen(true),
+      valueColor: scoreValue != null ? CP_METALS[cpMetal(scoreValue)].onNavy : undefined,
+      selected: false,
     },
   ]
 
@@ -555,6 +559,13 @@ function PactsPageInner() {
       {STORIES_ENABLED && capturePact && (
         <StoryCaptureSheet isOpen onClose={() => setCapturePact(null)} pactId={Number(capturePact.id)} pactTitle={capturePact.title} canJoin={Boolean(capturePact.can_join)} onJoin={joinCapturePact} />
       )}
+      <CpScorePopover
+        open={scoreOpen}
+        onClose={() => setScoreOpen(false)}
+        data={scoreData}
+        anchorKey="score"
+        fullHref={(user as any)?.username ? `/profile/${(user as any).username}/score` : '/profile'}
+      />
     </main>
   )
 }

@@ -24,6 +24,8 @@ export interface HeroStat {
   href?: string
   /** Read out with the label. */
   hint?: string
+  /** Colour of the number on an unselected tile (e.g. the CP Score's metal). */
+  valueColor?: string
 }
 
 interface HeroStatsProps {
@@ -96,7 +98,7 @@ export default function HeroStats({ tone, label, stats, action, ready = true }: 
               <span className="mt-3 flex items-baseline gap-1">
                 <span
                   className="text-[30px] font-bold leading-none tracking-[-0.04em] tabular-nums"
-                  style={{ color: stat.selected ? undefined : dare ? 'var(--dare)' : '#FFFFFF' }}
+                  style={{ color: stat.selected ? undefined : stat.valueColor ?? (dare ? 'var(--dare)' : '#FFFFFF') }}
                 >
                   {stat.value == null ? '–' : typeof stat.value === 'number' ? <CountUp value={stat.value} ready={ready} delay={0.08 * i} /> : stat.value}
                 </span>
@@ -126,11 +128,11 @@ export default function HeroStats({ tone, label, stats, action, ready = true }: 
           }
           const aria = `${stat.label}${stat.hint ? ` (${stat.hint.toLowerCase()})` : ''}: ${stat.value ?? 'loading'}${stat.unit ? ` ${stat.unit}` : ''}`
           return stat.href ? (
-            <Link key={stat.key} href={stat.href} className={tileBase} style={style} aria-label={aria}>
+            <Link key={stat.key} href={stat.href} className={tileBase} style={style} aria-label={aria} data-stat={stat.key}>
               {body}
             </Link>
           ) : (
-            <button key={stat.key} type="button" onClick={stat.onSelect} aria-pressed={!!stat.selected} aria-label={aria} className={tileBase} style={style}>
+            <button key={stat.key} type="button" onClick={stat.onSelect} aria-pressed={!!stat.selected} aria-label={aria} className={tileBase} style={style} data-stat={stat.key}>
               {body}
             </button>
           )
