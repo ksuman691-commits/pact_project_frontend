@@ -8,7 +8,6 @@ import TodayCheckInRow from '@/components/TodayCheckInRow'
 import WelcomeHeader from '@/components/WelcomeHeader'
 import FeaturedDareCard from '@/components/FeaturedDareCard'
 import YourCirclesRail from '@/components/YourCirclesRail'
-import StoryCirclesRow from '@/components/stories/StoryCirclesRow'
 import { useMomentPeople } from '@/hooks/useMomentPeople'
 import { STORIES_ENABLED } from '@/lib/stories'
 import CreatePactFlowModal from '@/components/create-pact-flow/CreatePactFlowModal'
@@ -132,17 +131,14 @@ export default function FeedPageClient() {
             nobody else has posted today. */}
         {isInitialized && user && (
           <div className="max-w-md mx-auto px-4">
-            {STORIES_ENABLED ? (
-              <StoryCirclesRow circles={circles} isLoading={circlesLoading} />
-            ) : (
-              <YourCirclesRail circles={circles} isLoading={circlesLoading} />
-            )}
+            {/* Moments live inside the Today card now (see TodayCheckInRow). */}
+            {!STORIES_ENABLED && <YourCirclesRail circles={circles} isLoading={circlesLoading} />}
           </div>
         )}
 
         {isInitialized && user && (
           <div className="max-w-md mx-auto px-4 pb-3 pt-3">
-            <TodayCheckInRow onCreatePact={handleCreatePact} peers={momentPeople.people} streak={currentStreak} />
+            <TodayCheckInRow onCreatePact={handleCreatePact} peers={momentPeople.people} streak={currentStreak} circles={STORIES_ENABLED ? circles : []} />
           </div>
         )}
 

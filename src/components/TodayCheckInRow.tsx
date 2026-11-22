@@ -2,7 +2,10 @@
 
 import CircleMark from '@/components/brand/CircleMark'
 import CircleWatch from '@/components/brand/CircleWatch'
-import SetupSlide, { useSetupSteps, type SetupStep } from '@/components/home/SetupSlide'
+import SetupSlide, { useSetupSteps } from '@/components/home/SetupSlide'
+import { MomentsLine, MomentsPanel, useTodayMoments, type MomentsCircle } from '@/components/home/TodayMoments'
+import StoryViewer from '@/components/stories/StoryViewer'
+import { PostTodaySheet } from '@/components/stories/StoryCirclesRow'
 import { useCallback, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -15,9 +18,7 @@ import { useNow } from '@/hooks/useNow'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
 import type { MomentPerson } from '@/hooks/useMomentPeople'
 
-const GAP = 8
-
-type Slide = { kind: 'pact'; pact: TodayPact } | { kind: 'setup'; step: SetupStep }
+const GAP = 16
 
 /** Hours left until the end of the pact's last day (local midnight after end_date). */
 function hoursLeft(pact: TodayPact): number | null {
@@ -50,43 +51,17 @@ function timeOf(iso?: string | null): string | null {
   return when.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).toLowerCase()
 }
 
-/** A small solid face for "who already posted": the card-coloured RingFace vanishes on a card. */
-function PeerFace({ name, imageUrl, tone }: { name?: string | null; imageUrl?: string | null; tone: string }) {
-  const [failed, setFailed] = useState(false)
-  const initials = (name || '?').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('')
-  return (
-    <span
-      className="flex h-[22px] w-[22px] items-center justify-center overflow-hidden rounded-full text-[9px] font-extrabold text-white"
-      style={{ background: tone, boxShadow: '0 0 0 2px var(--card)' }}
-      aria-hidden="true"
-    >
-      {imageUrl && !failed ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={imageUrl} alt="" className="h-full w-full object-cover" onError={() => setFailed(true)} />
-      ) : (
-        initials
-      )}
-    </span>
-  )
-}
-
-interface SlideProps {
+interface PanelProps {
   pact: TodayPact
   peers: MomentPerson[]
-  fullWidth: boolean
   onCapture: (pact: TodayPact) => void
-  done: number
-  total: number
-  streak: number
-  onCreatePact?: () => void
 }
 
 /**
- * One slim navy card per pact: today's count and streak on top, the pact and
- * who's posted in the middle, a thin progress bar underneath. The yellow
- * button is the one thing to tap.
+ * One pact inside the Today card: the watch filling toward midnight, the pact's
+ * full name, time left (or checked in), and one big button.
  */
-function CheckInSlide({ pact, peers, fullWidth, onCapture, done, total, streak, onCreatePact }: SlideProps) {
+function PactPanel({ pact, peers, onCapture }: PanelProps) {
   // Ticks while the check-in is waiting, so "left today" and the last-hours edge stay true.
   const now = useNow(30_000, !pact.posted_today)
   const hours = hoursLeft(pact)
@@ -94,7 +69,6 @@ function CheckInSlide({ pact, peers, fullWidth, onCapture, done, total, streak, 
   const dayLabel = pact.day && pact.total_days ? `Day ${pact.day} of ${pact.total_days}` : null
   const circlePeers = pact.circle_id != null ? peers.filter((p) => p.circleId === Number(pact.circle_id)) : []
   const firstPeer = circlePeers[0]?.name?.split(' ')[0] || 'Someone'
-  // Who in this pact's circle already posted today, stated as a fact, never a guilt trip.
   const peersLine =
     circlePeers.length === 1
       ? `${firstPeer} posted`
@@ -104,202 +78,248 @@ function CheckInSlide({ pact, peers, fullWidth, onCapture, done, total, streak, 
           ? `${firstPeer} and ${circlePeers.length - 1} others posted`
           : null
   const postedAt = timeOf(pact.posted_at)
-  const where = pact.circle_name || 'Personal'
-  // Today's window: midnight in the pact's time zone. The watch fills up toward it.
   const endsAt = pact.day_ends_at ? Date.parse(pact.day_ends_at) : NaN
   const todayMs = Number.isFinite(endsAt) ? Math.max(0, endsAt - now) : null
   const todayLeft = todayMs != null ? leftLabel(todayMs) : null
   const lastHours = todayMs != null && todayMs < 3 * 3_600_000
-  const detail = todayLeft ? `${todayLeft} left` : urgent && hours != null ? endsLabel(hours) : peersLine || dayLabel
-  const loud = todayLeft ? lastHours : urgent
-  // Last 3 hours and still waiting: a yellow edge with a light running round it (faster in the last hour).
-  const edge = !pact.posted_today && lastHours ? ` cp-last-hours${todayMs != null && todayMs < 3_600_000 ? ' cp-last-hour' : ''}` : ''
 
   return (
     <li
-      className={`relative flex shrink-0 snap-start flex-col rounded-[20px] bg-[var(--navy)] pb-3 pl-3.5 pr-2.5 pt-2.5 text-white${edge}`}
-      style={{ width: fullWidth ? '100%' : `calc(100% - ${32 + GAP}px)` }}
-      aria-label={`${pact.title}${pact.posted_today ? ', checked in' : lastHours && todayLeft ? `, waiting, ${todayLeft} left` : ', waiting'}`}
+      className="flex w-full shrink-0 snap-start flex-col"
+      aria-label={`${pact.title}${pact.posted_today ? ', checked in' : todayLeft ? `, waiting, ${todayLeft} left` : ', waiting'}`}
     >
-      <div className="relative z-[1] flex min-h-6 items-center gap-1.5 text-[12px] font-semibold" style={{ color: '#D4DBFA' }}>
-        <span>
-          Today <span key={done} className="cp-tick inline-block text-white">{done}</span>/{total}
-        </span>
-        {streak > 0 && <StreakChip streak={streak} tone="onNavy" />}
-        <span className="flex-1" />
-        {onCreatePact && (
-          <button type="button" onClick={onCreatePact} className="cp-hit relative flex h-6 items-center gap-0.5 pr-1 text-[12.5px] font-bold text-white" style={{ ['--cp-hit' as string]: '10px' }}>
-            <Plus className="h-3.5 w-3.5" strokeWidth={2.8} aria-hidden="true" />
-            New pact
-          </button>
-        )}
-      </div>
-
-      <div className="mt-1 flex items-center gap-3">
-        {todayMs != null && (
+      <div className="flex items-start gap-3">
+        {todayMs != null ? (
           <CircleWatch
-            size={36}
+            size={46}
             elapsed={1 - Math.min(1, todayMs / 86_400_000)}
             endsAt={endsAt}
             state={pact.posted_today ? 'done' : 'running'}
             title={pact.posted_today ? 'Checked in today' : `${todayLeft} left to check in today`}
           />
+        ) : (
+          <span className="mt-0.5 flex size-[46px] shrink-0 items-center justify-center rounded-full bg-white">
+            <CircleMark size={28} />
+          </span>
         )}
         <div className="min-w-0 flex-1">
-          {/* The text opens the pact; the button keeps its own job. */}
-          <Link href={`/pacts/${pact.id}`} className="block truncate text-[16px] font-bold tracking-[-0.015em] text-white">
+          {/* The name opens the pact; the button keeps its own job. */}
+          <Link href={`/pacts/${pact.id}`} className="line-clamp-2 text-[21px] font-extrabold leading-[1.12] tracking-[-0.02em] text-white">
             {pact.title}
           </Link>
-          {pact.posted_today ? (
-            <p className="mt-px flex items-center gap-1 truncate text-[12.5px] font-semibold text-white">
-              <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={3.2} aria-hidden="true" />
-              {postedAt ? `Checked in · ${postedAt}` : 'Checked in'}
-            </p>
-          ) : pact.nudged_by?.count ? (
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+            {pact.posted_today ? (
+              <span className="flex items-center gap-1 rounded-full px-2.5 py-[3px] text-[12.5px] font-extrabold text-white" style={{ background: '#16A34A' }}>
+                <Check className="size-3.5" strokeWidth={3.2} aria-hidden="true" />
+                {postedAt ? `Checked in · ${postedAt}` : 'Checked in'}
+              </span>
+            ) : todayLeft ? (
+              <span
+                className={`rounded-full px-2.5 py-[3px] text-[12.5px] font-extrabold tabular-nums ${lastHours ? 'cp-breathe' : ''}`}
+                style={lastHours ? { background: 'var(--dare)', color: '#17181D' } : { background: 'rgba(255,255,255,0.16)', color: '#FFFFFF' }}
+              >
+                {todayLeft} left
+              </span>
+            ) : urgent && hours != null ? (
+              <span className="rounded-full px-2.5 py-[3px] text-[12.5px] font-extrabold" style={{ background: 'var(--dare)', color: '#17181D' }}>{endsLabel(hours)}</span>
+            ) : null}
+            {dayLabel && <span className="text-[13px] font-semibold" style={{ color: '#C9D3F5' }}>{dayLabel}</span>}
+          </div>
+          {!pact.posted_today && pact.nudged_by?.count ? (
             // Being nudged by several people is the point: show who, where you check in.
-            <p key={pact.nudged_by.count} className="cp-pop-in mt-px truncate text-[12.5px] font-bold text-[var(--dare)]">{pact.nudged_by.line}</p>
-          ) : (
-            <p className="mt-px truncate text-[12.5px]" style={{ color: '#D4DBFA' }}>
-              {todayLeft ? (
-                <span className={loud ? 'font-bold text-[var(--dare)]' : 'font-bold text-white'}>{todayLeft} left today</span>
-              ) : where}
-              {!todayLeft && detail && (
-                <>
-                  {' · '}
-                  <span className={loud ? 'font-bold text-[var(--dare)]' : todayLeft ? 'font-bold text-white' : undefined}>{detail}</span>
-                </>
-              )}
-            </p>
-          )}
+            <p key={pact.nudged_by.count} className="cp-pop-in mt-1 truncate text-[13px] font-bold text-[var(--dare)]">{pact.nudged_by.line}</p>
+          ) : !pact.posted_today && peersLine ? (
+            <p className="mt-1 truncate text-[13px] font-semibold" style={{ color: '#C9D3F5' }}>{peersLine}</p>
+          ) : null}
         </div>
-        {pact.posted_today ? (
-          <button
-            type="button"
-            onClick={() => onCapture(pact)}
-            aria-label={`Add another moment to ${pact.title}`}
-            className="flex h-11 shrink-0 items-center gap-1.5 rounded-full border-[1.5px] border-white/70 pl-3 pr-3.5 text-[14px] font-bold text-white transition active:scale-[0.97]"
-          >
-            <Camera className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
-            Add
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => onCapture(pact)}
-            aria-label={`Check in to ${pact.title}`}
-            className={`flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-[var(--dare-deep)] pl-3.5 pr-4 text-[15px] font-bold text-[var(--ink)] shadow-[0_4px_12px_rgba(0,0,0,0.25)] transition active:scale-[0.97]${lastHours ? ' cp-breathe' : ''}`}
-          >
-            <Camera className="h-[18px] w-[18px]" strokeWidth={2.2} aria-hidden="true" />
-            Check in
-          </button>
-        )}
       </div>
-
-      <div className="mr-1 mt-2.5 h-1 overflow-hidden rounded-full bg-white/20" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={done} aria-label={`${done} of ${total} pacts checked in today`}>
-        <div className="h-full rounded-full bg-white transition-[width] duration-500" style={{ width: `${total ? Math.max(done ? 4 : 0, (done / total) * 100) : 0}%` }} />
-      </div>
+      <span className="block h-3.5 shrink-0" aria-hidden="true" />
+      {pact.posted_today ? (
+        <button
+          type="button"
+          onClick={() => onCapture(pact)}
+          aria-label={`Add another moment to ${pact.title}`}
+          className="mt-auto flex h-12 w-full items-center justify-center gap-2 rounded-full border-[1.5px] border-white/70 text-[15px] font-extrabold text-white transition active:scale-[0.98]"
+        >
+          <Camera className="h-[18px] w-[18px]" strokeWidth={2.2} aria-hidden="true" />
+          Add another moment
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => onCapture(pact)}
+          aria-label={`Check in to ${pact.title}`}
+          className={`cp-btn-shine mt-auto flex h-[50px] w-full items-center justify-center gap-2 rounded-full bg-[var(--dare-deep)] text-[17px] font-extrabold text-[var(--ink)] shadow-[0_8px_18px_-10px_rgba(0,0,0,0.5)] transition active:scale-[0.98]${lastHours ? ' cp-breathe' : ''}`}
+        >
+          <Camera className="h-[19px] w-[19px]" strokeWidth={2.2} aria-hidden="true" />
+          Check in for today
+        </button>
+      )}
     </li>
   )
 }
 
 /**
- * Home's Today: one slide per active pact, swiped left to right. Pacts still
- * waiting for today's moment come first; checked-in ones move to the end.
- * When every pact is checked in it shrinks to one quiet line.
+ * Home's Today: one navy card. On top, today's count and streak; then one
+ * panel per active pact, swiped left to right (waiting ones first); a thin
+ * progress line; and at the bottom who posted a moment today. The black and
+ * yellow Moments button opens the moments at the top of the card and slides
+ * the check-in part down.
  */
-export default function TodayCheckInRow({ onCreatePact, peers = [], streak = 0 }: { onCreatePact?: () => void; peers?: MomentPerson[]; streak?: number }) {
+export default function TodayCheckInRow({
+  onCreatePact,
+  peers = [],
+  streak = 0,
+  circles = [],
+}: {
+  onCreatePact?: () => void
+  peers?: MomentPerson[]
+  streak?: number
+  /** The viewer's circles, for the moments at the bottom of the card. */
+  circles?: MomentsCircle[]
+}) {
   const router = useRouter()
   const { pacts, allDone, isLoading } = useTodayStatus()
   const [capturePact, setCapturePact] = useState<TodayPact | null>(null)
   const [index, setIndex] = useState(0)
+  const [momentsOpen, setMomentsOpen] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [viewing, setViewing] = useState<MomentPerson | null>(null)
+  const [viewingOwn, setViewingOwn] = useState(false)
   const scrollerRef = useRef<HTMLUListElement>(null)
+  const moments = useTodayMoments(circles)
 
   const waiting = pacts.filter((p) => !p.posted_today)
   const done = pacts.filter((p) => p.posted_today)
-  // Setup steps (first pact, photo, circle) ride at the end of the same swipe, after every check-in.
+  // Setup steps (first pact, photo, circle) sit under the card.
   const setup = useSetupSteps(pacts.length)
   const showFirst = setup.steps.includes('first')
-  const slides: Slide[] = [
-    ...(allDone ? [] : [...waiting, ...done].map((pact) => ({ kind: 'pact' as const, pact }))),
-    ...setup.steps.map((step) => ({ kind: 'setup' as const, step })),
-  ]
-  const single = slides.length === 1
+  const panels = allDone ? [] : [...waiting, ...done]
 
   const stepOf = useCallback((scroller: HTMLElement) => {
     const first = scroller.firstElementChild as HTMLElement | null
     return first ? first.offsetWidth + GAP : scroller.clientWidth
   }, [])
-  useSnapSwipe(scrollerRef, slides.length, slides.length > 1, stepOf)
+  useSnapSwipe(scrollerRef, panels.length, panels.length > 1, stepOf)
 
   const onScroll = () => {
     const scroller = scrollerRef.current
     if (!scroller) return
-    // The last slide can't scroll to the start edge, so the end of the scroll counts as the last slide.
     const atEnd = scroller.scrollLeft >= scroller.scrollWidth - scroller.clientWidth - 2
-    const next = atEnd ? slides.length - 1 : Math.round(scroller.scrollLeft / Math.max(1, stepOf(scroller)))
-    if (next !== index) setIndex(Math.max(0, Math.min(slides.length - 1, next)))
+    const next = atEnd ? panels.length - 1 : Math.round(scroller.scrollLeft / Math.max(1, stepOf(scroller)))
+    if (next !== index) setIndex(Math.max(0, Math.min(panels.length - 1, next)))
   }
 
   const capture = (pact: TodayPact) => {
     if (STORIES_ENABLED) setCapturePact(pact)
     else router.push(`/pacts/${pact.id}`)
   }
+  const nextPact = panels[index + 1]
 
-  const newPact = (
-    <button type="button" onClick={onCreatePact} className="-my-2 flex h-11 items-center gap-1 px-1 text-[14px] font-extrabold text-[var(--navy)]">
-      <Plus className="h-[15px] w-[15px]" strokeWidth={2.8} aria-hidden="true" />
-      New pact
-    </button>
-  )
-
-  const setupCount = setup.steps.length
-  const rail =
-    slides.length === 0 ? null : (
-      <>
-        <ul
-          ref={scrollerRef}
-          onScroll={onScroll}
-          className="scrollbar-hide -mx-4 flex snap-x snap-mandatory overflow-x-auto scroll-px-4 px-4"
-          style={{ gap: GAP, overscrollBehaviorX: 'contain' }}
-          aria-label={`${waiting.length} ${waiting.length === 1 ? 'pact' : 'pacts'} waiting for today's moment`}
-        >
-          {slides.map((slide) =>
-            slide.kind === 'pact' ? (
-              <CheckInSlide key={slide.pact.id} pact={slide.pact} peers={peers} fullWidth={single} onCapture={capture} done={done.length} total={pacts.length} streak={streak} onCreatePact={onCreatePact} />
-            ) : (
-              <SetupSlide
-                key={slide.step}
-                step={slide.step}
-                position={setup.steps.indexOf(slide.step) + 1}
-                count={setupCount}
-                fullWidth={single}
-                width={`calc(100% - ${32 + GAP}px)`}
-                onCreatePact={onCreatePact}
-                onSnooze={setup.snooze}
-              />
-            ),
-          )}
-        </ul>
-        {!single && (
-          <div className="flex items-center justify-center gap-1 pt-0.5" aria-hidden="true">
-            {slides.slice(0, 5).map((slide, i) => (
-              <span key={slide.kind === 'pact' ? slide.pact.id : slide.step} className="h-1 rounded-full transition-all" style={{ width: Math.min(index, 4) === i ? 16 : 4, background: Math.min(index, 4) === i ? 'var(--navy)' : 'var(--hairline)' }} />
-            ))}
-            {slides.length > 5 && <span className="pl-0.5 text-[11px] font-semibold leading-none text-[var(--muted)]">+{slides.length - 5}</span>}
-          </div>
-        )}
-      </>
+  const setupRail =
+    setup.steps.length === 0 ? null : (
+      <ul className="scrollbar-hide -mx-4 flex snap-x snap-mandatory overflow-x-auto scroll-px-4 px-4" style={{ gap: 8 }} aria-label="Get set up">
+        {setup.steps.map((step, i) => (
+          <SetupSlide
+            key={step}
+            step={step}
+            position={i + 1}
+            count={setup.steps.length}
+            fullWidth={setup.steps.length === 1}
+            width={`calc(100% - ${32 + 8}px)`}
+            onCreatePact={onCreatePact}
+            onSnooze={setup.snooze}
+          />
+        ))}
+      </ul>
     )
+
+  const card = (
+    <div className="relative overflow-hidden rounded-[28px] bg-[var(--navy)] px-4 pb-4 pt-4 text-white shadow-[0_14px_30px_-20px_rgba(31,58,147,0.9)]">
+      {/* The mark, faint, in the corner. */}
+      <svg viewBox="0 0 100 100" className="pointer-events-none absolute -right-16 -top-20 size-[220px] opacity-[0.16]" aria-hidden="true">
+        <circle cx="50" cy="50" r="44" fill="none" stroke="#fff" strokeWidth="1.2" />
+        <path d="M50 50 L50 6 A44 44 0 0 1 88 28 Z" fill="none" stroke="#fff" strokeWidth="1.2" />
+      </svg>
+
+      <div className="relative flex min-h-7 items-center gap-2">
+        {allDone ? (
+          <>
+            <CircleMark size={20} animation="close" tick />
+            <span className="text-[13px] font-extrabold uppercase tracking-[0.08em]" style={{ color: '#86EFAC' }}>
+              {pacts.length === 1 ? 'Checked in today' : `All ${pacts.length} checked in`}
+            </span>
+          </>
+        ) : (
+          <span className="text-[13px] font-extrabold uppercase tracking-[0.08em]" style={{ color: '#C9D3F5' }}>
+            Today · <span key={done.length} className="cp-tick inline-block text-white">{done.length}</span> of {pacts.length}
+          </span>
+        )}
+        {streak > 0 && <StreakChip streak={streak} tone="onNavy" />}
+        <span className="flex-1" />
+        {onCreatePact && (
+          <button type="button" onClick={onCreatePact} className="cp-hit relative flex h-7 items-center gap-0.5 text-[14px] font-extrabold text-white" style={{ ['--cp-hit' as string]: '10px' }}>
+            <Plus className="h-4 w-4" strokeWidth={2.8} aria-hidden="true" />
+            New pact
+          </button>
+        )}
+      </div>
+
+      {momentsOpen && (
+        <MomentsPanel
+          data={moments}
+          open
+          onToggle={() => setMomentsOpen(false)}
+          onViewOwn={() => setViewingOwn(true)}
+          onPost={() => setPickerOpen(true)}
+          onView={setViewing}
+        />
+      )}
+
+      {panels.length > 0 && (
+        <div key={momentsOpen ? 'down' : 'up'} className={momentsOpen ? 'cp-slide-down' : undefined}>
+          <ul
+            ref={scrollerRef}
+            onScroll={onScroll}
+            className="scrollbar-hide relative mt-3.5 flex snap-x snap-mandatory overflow-x-auto"
+            style={{ gap: GAP, overscrollBehaviorX: 'contain' }}
+            aria-label={`${waiting.length} ${waiting.length === 1 ? 'pact' : 'pacts'} waiting for today's moment`}
+          >
+            {panels.map((pact) => (
+              <PactPanel key={pact.id} pact={pact} peers={peers} onCapture={capture} />
+            ))}
+          </ul>
+          <div className="relative mt-3.5 flex items-center gap-2.5">
+            <div className="h-[5px] flex-1 overflow-hidden rounded-full bg-white/20" role="progressbar" aria-valuemin={0} aria-valuemax={pacts.length} aria-valuenow={done.length} aria-label={`${done.length} of ${pacts.length} pacts checked in today`}>
+              <div className="h-full rounded-full bg-white transition-[width] duration-500" style={{ width: `${pacts.length ? Math.max(done.length ? 4 : 0, (done.length / pacts.length) * 100) : 0}%` }} />
+            </div>
+            {nextPact ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const scroller = scrollerRef.current
+                  if (scroller) scroller.scrollTo({ left: (index + 1) * stepOf(scroller), behavior: 'smooth' })
+                }}
+                className="max-w-[60%] truncate text-[12.5px] font-bold"
+                style={{ color: '#C9D3F5' }}
+              >
+                Next: {nextPact.title} ›
+              </button>
+            ) : panels.length > 1 ? (
+              <span className="text-[12.5px] font-bold" style={{ color: '#C9D3F5' }}>{index + 1} of {panels.length}</span>
+            ) : null}
+          </div>
+        </div>
+      )}
+
+      {!momentsOpen && <MomentsLine data={moments} open={false} onToggle={() => setMomentsOpen(true)} />}
+    </div>
+  )
 
   return (
     <section aria-label="Today" className="mb-0 flex flex-col gap-2">
       {isLoading ? (
-        <>
-          <div className="flex items-center gap-2 px-0.5">
-            <h2 className="text-[17px] font-extrabold tracking-[-0.01em] text-[var(--ink)]">Today</h2>
-          </div>
-          <div className="pact-shimmer h-[112px] rounded-[20px]" aria-hidden="true" />
-        </>
+        <div className="pact-shimmer h-[230px] rounded-[28px]" aria-hidden="true" />
       ) : pacts.length === 0 && !showFirst ? (
         <>
           <div className="flex items-center gap-2 px-0.5">
@@ -320,31 +340,41 @@ export default function TodayCheckInRow({ onCreatePact, peers = [], streak = 0 }
               New pact
             </button>
           </div>
-          {rail}
+          {setupRail}
         </>
-      ) : allDone ? (
-        <>
-          <div className="flex min-h-[32px] items-center gap-2 px-0.5">
-            <h2 className="text-[17px] font-extrabold tracking-[-0.01em] text-[var(--ink)]">Today</h2>
-            {/* Every pact done today: the circle closes. */}
-            <CircleMark size={20} animation="close" tick className="ml-1" />
-            <span className="min-w-0 flex-1 truncate text-[13.5px] font-bold" style={{ color: 'var(--success, #2E7D4F)' }}>
-              {pacts.length === 1 ? 'Checked in' : `All ${pacts.length} checked in`}
-            </span>
-            {newPact}
-          </div>
-          {rail}
-        </>
+      ) : pacts.length === 0 ? (
+        setupRail
       ) : (
         <>
           <h2 className="sr-only">Today</h2>
-          {rail}
+          {card}
+          {panels.length > 1 && (
+            <div className="flex items-center justify-center gap-1 pt-0.5" aria-hidden="true">
+              {panels.slice(0, 5).map((pact, i) => (
+                <span key={pact.id} className="h-1 rounded-full transition-all" style={{ width: Math.min(index, 4) === i ? 16 : 4, background: Math.min(index, 4) === i ? 'var(--navy)' : 'var(--hairline)' }} />
+              ))}
+              {panels.length > 5 && <span className="pl-0.5 text-[11px] font-semibold leading-none text-[var(--muted)]">+{panels.length - 5}</span>}
+            </div>
+          )}
+          {setupRail}
         </>
       )}
 
       {capturePact && (
         <StoryCaptureSheet isOpen onClose={() => setCapturePact(null)} pactId={Number(capturePact.id)} pactTitle={capturePact.title} />
       )}
+      {pickerOpen && (
+        <PostTodaySheet
+          circles={circles}
+          onClose={() => setPickerOpen(false)}
+          onPick={(pact) => {
+            setPickerOpen(false)
+            setCapturePact(pact)
+          }}
+        />
+      )}
+      <StoryViewer open={viewingOwn} onClose={() => setViewingOwn(false)} stories={moments.myStories} />
+      <StoryViewer open={viewing !== null} onClose={() => setViewing(null)} stories={viewing?.stories ?? []} circleId={viewing?.circleId} circleName={viewing?.circleName} />
     </section>
   )
 }
