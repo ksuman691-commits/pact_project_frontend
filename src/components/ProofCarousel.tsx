@@ -6,8 +6,6 @@ import { Volume2, VolumeX, X } from 'lucide-react';
 import { useSnapSwipe } from '@/hooks/useSnapSwipe';
 import { useBackToClose } from '@/hooks/useBackToClose';
 
-const PHOTO_MS = 5000;
-
 interface Proof {
   id: number;
   url: string;
@@ -173,20 +171,10 @@ export default function ProofCarousel({ proofs, isOpen, onClose, initialIndex = 
   const advanceRef = useRef(advance);
   advanceRef.current = advance;
 
-  // A photo stays up for 5 seconds, then the next moment comes on.
+  // A photo stays up until you swipe or tap on (its bar shows full), like a post.
   const currentIsPhoto = items[activeIndex]?.media_type === 'image';
   useEffect(() => {
-    if (!isOpen || !currentIsPhoto) return;
-    const started = performance.now();
-    const timer = window.setInterval(() => {
-      const next = Math.min(1, (performance.now() - started) / PHOTO_MS);
-      setFraction(next);
-      if (next >= 1) {
-        window.clearInterval(timer);
-        advanceRef.current();
-      }
-    }, 80);
-    return () => window.clearInterval(timer);
+    if (isOpen && currentIsPhoto) setFraction(1);
   }, [isOpen, activeIndex, currentIsPhoto]);
 
   useEffect(() => {

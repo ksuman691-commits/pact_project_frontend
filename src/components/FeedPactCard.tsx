@@ -415,7 +415,7 @@ export default function FeedPactCard({
   // one of those other fields saw the passive "Proof photo" viewer empty
   // state instead of their own "Add today's proof photo" upload CTA.
   // Over when it's closed, or when its last day has passed even if nobody closed it.
-  const pastEnd = Boolean(pact.end_date) && String(pact.end_date).slice(0, 10) < new Date().toLocaleDateString('en-CA');
+  const pastEnd = Boolean(pact.end_date) && String(pact.end_date).slice(0, 10) <= new Date().toLocaleDateString('en-CA');
   const pactEnded = (Boolean(pact.status) && pact.status !== 'active') || pastEnd;
   const uploadAllowed = !pactEnded && (canUploadProof ?? Boolean(isCreator || isParticipant));
   const [captureOpen, setCaptureOpen] = useState(false);

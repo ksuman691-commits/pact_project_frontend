@@ -166,7 +166,7 @@ function PactsPageInner() {
   const isBroken = (p: any) => p.status === 'failed' || p.status === 'cancelled'
   // Live means active and its last day hasn't passed; anything past its end goes to Ended.
   const todayIso = new Date().toLocaleDateString('en-CA')
-  const isActive = (p: any) => p.status === 'active' && (!p.end_date || String(p.end_date).slice(0, 10) >= todayIso)
+  const isActive = (p: any) => p.status === 'active' && (!p.end_date || String(p.end_date).slice(0, 10) > todayIso)
 
   const active = useMemo(
     () => {
@@ -257,7 +257,7 @@ function PactsPageInner() {
   // "First one ends in 12 days": the soonest end among your running pacts.
   const soonestEndDays = participantPacts
     .filter(isActive)
-    .map((p) => (p.end_date ? Math.ceil((new Date(`${String(p.end_date).slice(0, 10)}T23:59:59`).getTime() - Date.now()) / 86_400_000) : null))
+    .map((p) => (p.end_date ? Math.ceil((new Date(`${String(p.end_date).slice(0, 10)}T00:00:00`).getTime() - Date.now()) / 86_400_000) : null))
     .filter((d): d is number => d != null && d >= 0)
     .sort((x, y) => x - y)[0]
   const firstEndsSub =
