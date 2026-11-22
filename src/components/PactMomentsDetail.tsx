@@ -5,7 +5,7 @@ import Image from 'next/image'
 import AutoPlayVideo from '@/components/media/AutoPlayVideo'
 import { cleanTitle } from '@/lib/titleCase'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Camera, Check, ChevronLeft, Flag, Globe, Heart, Image as ImageIcon, Lock, MessageCircle, Play, RotateCcw, Share, Share2, Users, X } from 'lucide-react'
+import { Camera, Check, ChevronDown, ChevronLeft, Flag, Globe, Heart, Image as ImageIcon, Lock, MessageCircle, Play, RotateCcw, Share, Share2, Users, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import LockedMedia from '@/components/private/LockedMedia'
 import WatchersSheet from '@/components/private/WatchersSheet'
@@ -48,12 +48,20 @@ type Props = {
   onStartOwnVersion: () => void
 }
 
-function SafePhoto({ src, alt = '', className = '' }: { src: string; alt?: string; className?: string }) {
+function SafePhoto({ src, alt = '', className = '', onShape }: { src: string; alt?: string; className?: string; /** Tells whether the photo is taller than wide. */ onShape?: (tall: boolean) => void }) {
   const [failed, setFailed] = useState(false)
   return failed ? (
     <span aria-hidden="true" className={`block bg-[var(--paper)] ${className}`} />
   ) : (
-    <Image src={src} alt={alt} fill unoptimized onError={() => setFailed(true)} className={className} />
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      unoptimized
+      onError={() => setFailed(true)}
+      onLoad={(event) => onShape?.(event.currentTarget.naturalHeight >= event.currentTarget.naturalWidth)}
+      className={className}
+    />
   )
 }
 
@@ -277,6 +285,9 @@ export default function PactMomentsDetail({
     if (next.day != null) setSelectedDay(next.day)
   }
   const swipeRef = useRef<{ x: number; y: number; at: number } | null>(null)
+  // Whether the photo on the full-screen hero is taller than wide (wide ones fit inside, over a blur).
+  const [heroTall, setHeroTall] = useState<boolean | null>(null)
+  useEffect(() => setHeroTall(null), [current?.id])
   const lastSwipeAt = useRef(0)
   const momentAgo = (() => {
     if (!current?.day) return null
@@ -421,6 +432,8 @@ export default function PactMomentsDetail({
 
   const selectDay = (entry: (PactDayStripEntry & { video_url?: string | null })) => {
     setSelectedDay(entry.day)
+    // The picture is at the top of the page: bring it back into view.
+    if (typeof window !== 'undefined' && window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' })
     const first = orderedMoments.find((moment) => moment.day === entry.day)
     const index = first ? displayMoments.findIndex((moment) => moment.id === first.id) : -1
     if (first && index >= 0) {
@@ -429,10 +442,156 @@ export default function PactMomentsDetail({
     }
   }
 
-  return (
-    <main className="flex min-h-[calc(100dvh-72px)] flex-col bg-[var(--paper)] px-4 pb-3 pt-2 text-[var(--ink)]">
-      {/* pb-24: clearance for the floating BottomNav. The media card takes whatever height is left. */}
-      <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col gap-2 pb-24">
+
+  // A pact with moments opens as the moment itself: full screen, edge to edge, with
+  // the pact's name, who posted and like / comment / share on the picture. Swipe for
+  // other moments; scroll down for the day strip and the rest.
+  const immersive = hasMoments && !lockedForMe && (!presentationEnded || watchingRecap) && Boolean(current?.url)
+  const glassChip = 'flex h-7 items-center gap-1.5 rounded-full pl-2 pr-2.5 text-[12px] font-extrabold text-white'
+  const glass = { background: 'rgba(0,0,0,0.32)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } as React.CSSProperties
+  const heroEl = immersive ? (
+    <section
+      aria-label={`${cleanTitle(pact?.title)}: moments`}
+      className="relative w-full shrink-0 overflow-hidden bg-black text-white"
+      style={{ height: 'calc(100dvh - 72px)' }}
+      onTouchStart={(event) => {
+        const touch = event.touches[0]
+        swipeRef.current = touch && event.touches.length === 1 ? { x: touch.clientX, y: touch.clientY, at: performance.now() } : null
+      }}
+      onTouchEnd={(event) => {
+        const start = swipeRef.current
+        swipeRef.current = null
+        const touch = event.changedTouches[0]
+        if (!start || !touch) return
+        const dx = touch.clientX - start.x
+        const dy = touch.clientY - start.y
+        const flick = Math.abs(dx) / Math.max(1, performance.now() - start.at) > 0.3
+        if (Math.abs(dx) < Math.abs(dy) * 1.2 || (Math.abs(dx) < 40 && !(flick && Math.abs(dx) >= 24))) return
+        lastSwipeAt.current = Date.now()
+        stepMoment(dx < 0 ? 1 : -1)
+      }}
+    >
+      {current.type === 'video' ? (
+        <AutoPlayVideo key={current.id} src={current.url as string} soundButtonClassName="right-3 top-[168px]" className="absolute inset-0 size-full object-cover" />
+      ) : (
+        <>
+          {/* A blurred copy fills the edges when a wide photo fits inside the screen. */}
+          {heroTall === false && <SafePhoto key={`bg-${current.id}`} src={current.url as string} className="scale-110 object-cover opacity-60 blur-2xl" />}
+          <SafePhoto
+            key={current.id}
+            src={current.url as string}
+            alt={caption}
+            onShape={setHeroTall}
+            className={heroTall === false ? 'object-contain' : 'object-cover'}
+          />
+        </>
+      )}
+
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-black/70 via-black/30 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
+
+      {/* Top: back, audience, length, menu; then the pact and who posted. */}
+      <div className="absolute inset-x-0 top-0 z-20 px-3" style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}>
+        <div className="flex items-center gap-1.5">
+          <button type="button" onClick={smartBack} aria-label="Go back" className="flex size-11 shrink-0 items-center justify-center rounded-full text-white" style={glass}>
+            <ChevronLeft className="size-6" strokeWidth={2.2} aria-hidden="true" />
+          </button>
+          <span className={glassChip} style={glass}>
+            {pact?.media_locked ? <Lock className="size-[13px]" strokeWidth={2.4} aria-hidden="true" /> : pact?.circle_id != null ? <Users className="size-[13px]" strokeWidth={2.4} aria-hidden="true" /> : pact?.visibility === 'private' ? <Heart className="size-[13px]" strokeWidth={2.4} aria-hidden="true" /> : <Globe className="size-[13px]" strokeWidth={2.4} aria-hidden="true" />}
+            {pact?.media_locked ? (pact?.watch_price ? `Private · ₹${pact.watch_price}` : 'Private') : pact?.circle_id != null ? 'Circle only' : pact?.visibility === 'private' ? 'Followers' : 'Public'}
+          </span>
+          <span className="flex h-7 items-center rounded-full px-2.5 text-[12px] font-bold text-white" style={glass}>
+            {pact?.proof_submission_frequency === 'weekly' ? 'Weekly' : 'Daily'} · {total} days
+          </span>
+          {presentationEnded && watchingRecap ? (
+            <button type="button" onClick={() => setWatchingRecap(false)} aria-label="Close recap" className="ml-auto flex size-11 items-center justify-center rounded-full text-white" style={glass}>
+              <X className="size-5" />
+            </button>
+          ) : (
+            pact?.id != null && (isCreatorView || isParticipant) && <PactOwnerMenu pact={pact} role={isCreatorView ? 'creator' : 'member'} onDark />
+          )}
+        </div>
+        <h1 className="mt-2.5 line-clamp-2 px-1 text-[26px] font-extrabold leading-[1.08] tracking-[-0.03em] text-white" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.45)' }}>
+          {cleanTitle(pact?.title)}
+        </h1>
+        <div className="mt-2 flex items-center gap-2.5 px-1" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>
+          <span className="flex size-[30px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy)] text-[11px] font-extrabold text-white ring-2 ring-white/80">
+            {String(current.authorName || current.username || 'Y').split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'Y'}
+          </span>
+          <span className="min-w-0 flex-1 truncate text-[13.5px] font-bold">
+            {current.authorName || current.username || 'You'}
+            <span className="font-semibold text-white/80"> · {momentWhen}</span>
+          </span>
+          {!presentationEnded && (
+            <span className="flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-extrabold text-white" style={glass}>
+              {isParticipant && !isEnded && postedToday && <Check className="size-3.5" strokeWidth={3} style={{ color: '#4ADE80' }} aria-label={`Day ${currentDay} done`} />}
+              Day {day} of {total}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {displayMoments.length > 1 && (
+        <>
+          <button type="button" aria-label="Previous moment" onClick={() => stepMoment(-1)} className="absolute bottom-[34%] left-0 top-[30%] z-10 w-[22%]" />
+          <button type="button" aria-label="Next moment" onClick={() => stepMoment(1)} className="absolute bottom-[34%] right-0 top-[30%] z-10 w-[22%]" />
+        </>
+      )}
+
+      {/* Bottom: which day, the caption, then like / comment / share and posting. */}
+      <div className="absolute inset-x-0 bottom-0 z-20 px-4 pb-3">
+        <div className="flex items-center gap-2">
+          <span className="rounded-[9px] px-2.5 py-[3px] text-[12px] font-extrabold" style={{ backgroundColor: 'rgba(255,255,255,0.24)' }}>
+            Day {current.day || day}
+            {currentDayMoments.length > 1 ? ` · ${positionInDay + 1} of ${currentDayMoments.length}` : ''}
+          </span>
+          {displayMoments.length > 1 && (
+            <span className="text-[12px] font-bold tabular-nums text-white/75">
+              {Math.max(0, displayMoments.findIndex((moment) => moment.id === current.id)) + 1} / {displayMoments.length}
+            </span>
+          )}
+        </div>
+        <p className="mt-1.5 line-clamp-2 text-[18px] font-extrabold leading-[1.2]" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>{caption}</p>
+        {isMoments75 && !presentationEnded && (
+          <p className="mt-0.5 text-[12.5px] font-semibold text-white/80">{completed} of {requiredDays} days to finish</p>
+        )}
+        {!presentationEnded && (
+          <div className="-mx-2 mt-2 flex items-center gap-0.5 [&_button]:text-white">
+            <LikeButton variant="row" pactId={Number(pact.id)} count={Number(pact?.like_count ?? 0)} liked={Boolean(pact?.is_liked_by_me)} />
+            <button type="button" onClick={() => onComment(false)} aria-label={`Comments, ${Number(pact?.comment_count ?? 0)}`} className="flex h-11 items-center gap-1.5 px-2 text-[14px] font-extrabold transition active:scale-95">
+              <MessageCircle className="h-[24px] w-[24px]" strokeWidth={2} />
+              {Number(pact?.comment_count ?? 0) > 0 && Number(pact?.comment_count ?? 0)}
+            </button>
+            <button type="button" onClick={() => void sharePact()} aria-label="Share pact" className="flex h-11 w-10 items-center justify-center transition active:scale-95">
+              <Share className="h-[22px] w-[22px]" strokeWidth={2} />
+            </button>
+            <div className="ml-auto flex items-center gap-1.5">
+              {!isCreatorView && (
+                <TipButton variant="soft" creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} count={Number(pact?.tip_count ?? 0)} pactId={Number(pact?.id)} tipsEnabled={typeof pact?.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined} locked={Boolean(pact?.media_locked)} />
+              )}
+              {isParticipant && !isEnded && (
+                <button
+                  type="button"
+                  onClick={onAddMoment}
+                  aria-label={postedToday ? 'Add another moment' : `Post Day ${currentDay}`}
+                  className="flex h-10 items-center gap-1.5 rounded-full bg-white px-3.5 text-[13.5px] font-extrabold !text-[var(--navy)] transition active:scale-95"
+                >
+                  <Camera className="h-4 w-4" strokeWidth={2.3} aria-hidden="true" />
+                  {postedToday ? 'Add' : `Post Day ${currentDay}`}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+        <div className="pointer-events-none mt-1 flex justify-center text-white/70" aria-hidden="true">
+          <ChevronDown className="size-5 animate-bounce [animation-duration:2s]" strokeWidth={2.4} />
+        </div>
+      </div>
+    </section>
+  ) : null
+
+  const headerEl = (
+    <>
         <div className="shrink-0">
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
             <button type="button" onClick={smartBack} aria-label="Go back" className="-ml-2 flex size-11 shrink-0 items-center justify-center rounded-full text-[var(--ink)]">
@@ -468,6 +627,10 @@ export default function PactMomentsDetail({
           </h1>
         </div>
 
+    </>
+  )
+  const stripEl = (
+    <>
         {(() => {
           const dayCount = !presentationEnded ? (
             <div className="shrink-0 text-right leading-[1.25]">
@@ -544,8 +707,16 @@ export default function PactMomentsDetail({
           )
         })()}
 
+    </>
+  )
+  const audienceEl = (
+    <>
         <PactAudienceLine pact={pact} audience={audience} ended={presentationEnded || isEnded} isCreatorView={isCreatorView} creatorName={creatorName} pendingAsks={pendingAsks} canViewMoments={!lockedForMe && pact?.can_view_moments !== false} onOpen={() => setAudienceOpen(true)} />
 
+    </>
+  )
+  const mediaEl = (
+    <>
         <section
           onTouchStart={(event) => {
             const touch = event.touches[0]
@@ -697,7 +868,10 @@ export default function PactMomentsDetail({
             </>
           )}
         </section>
-
+    </>
+  )
+  const actionsEl = (
+    <>
         {!presentationEnded && !lockedForMe && (hasMoments || isParticipant) && (
           <div className="-mx-1 -mt-1 flex shrink-0 items-center gap-1">
             <LikeButton variant="row" pactId={Number(pact.id)} count={Number(pact?.like_count ?? 0)} liked={Boolean(pact?.is_liked_by_me)} />
@@ -729,6 +903,22 @@ export default function PactMomentsDetail({
           </div>
         )}
 
+    </>
+  )
+
+  return (
+    <main className={`flex min-h-[calc(100dvh-72px)] flex-col bg-[var(--paper)] text-[var(--ink)] ${immersive ? 'pb-3' : 'px-4 pb-3 pt-2'}`}>
+      {heroEl}
+      {/* pb-24: clearance for the floating BottomNav. The media card takes whatever height is left. */}
+      <div className={`mx-auto flex w-full max-w-[420px] flex-1 flex-col gap-2 pb-24 ${immersive ? 'px-4 pt-3' : ''}`}>
+        {!immersive && headerEl}
+        {immersive && (
+          <h2 className="text-[13px] font-extrabold uppercase tracking-[0.08em] text-[var(--muted)]">Days</h2>
+        )}
+        {stripEl}
+        {audienceEl}
+        {!immersive && mediaEl}
+        {!immersive && actionsEl}
         {(isEnded || presentationEnded) && (
           <footer className="flex min-h-12 shrink-0 flex-wrap items-center gap-2">
             {presentationEnded && completionLooksSuccessful && !watchingRecap ? (
