@@ -9,7 +9,7 @@ import { NextResponse, type NextRequest } from 'next/server';
  */
 const CONSOLE_HOST = process.env.NEXT_PUBLIC_CONSOLE_HOST?.toLowerCase();
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const host = (request.headers.get('host') || '').split(':')[0].toLowerCase();
   const { pathname } = request.nextUrl;
   const isConsolePath = pathname === '/console' || pathname.startsWith('/console/');
