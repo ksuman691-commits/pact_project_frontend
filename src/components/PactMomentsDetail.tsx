@@ -105,7 +105,7 @@ function EndedResult({
   const cols = total <= 28 ? 7 : total <= 60 ? 10 : 15
   const parts = [`${posted} posted`, rests ? `${rests} rest ${rests === 1 ? 'day' : 'days'}` : null, needed ? `${needed} needed` : null].filter(Boolean)
   return (
-    <div className="absolute inset-0 z-10 flex flex-col overflow-hidden bg-[#1F3A93] px-5 pb-4 pt-5 text-white">
+    <div className="absolute inset-0 z-10 flex flex-col overflow-hidden px-5 pb-4 pt-5 text-white" style={{ background: kept ? '#15803D' : '#1F3A93' }}>
       {/* The mark, big and cropped, like the page tops. */}
       <svg viewBox="0 0 100 100" className="pointer-events-none absolute -right-20 -top-24 size-[300px]" aria-hidden="true">
         <path d={MARK_PATH} fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="0.9" />
@@ -114,9 +114,9 @@ function EndedResult({
       <div className="relative flex items-center gap-2.5">
         <span
           className="flex h-8 items-center rounded-full px-3.5 text-[13px] font-extrabold text-[var(--ink)]"
-          style={{ background: kept ? 'var(--dare)' : '#FFFFFF', boxShadow: '0 0 0 2px #17181D' }}
+          style={kept ? { background: '#FFFFFF', color: '#15803D', boxShadow: '0 0 0 2px #17181D' } : { background: '#FDECEA', color: '#B42318', boxShadow: '0 0 0 2px #17181D' }}
         >
-          {kept ? 'Pact kept' : 'Pact ended'}
+          {kept ? 'Completed' : 'Not completed'}
         </span>
         <span className="text-[12.5px] font-semibold" style={{ color: SOFT_TEXT }}>{endedText}</span>
       </div>
@@ -349,12 +349,13 @@ export default function PactMomentsDetail({
       setMakingCard(false)
     }
   }
+  // Red when the pact wasn't completed (try it again); outlined after a completed one.
   const againButton = (
     <button
       type="button"
       onClick={onRestart}
-      className="flex h-12 shrink-0 items-center gap-1.5 rounded-full px-4 text-[14px] font-extrabold text-[var(--navy)]"
-      style={{ boxShadow: 'inset 0 0 0 2px var(--navy)' }}
+      className="flex h-12 shrink-0 items-center gap-1.5 rounded-full px-4 text-[14px] font-extrabold"
+      style={completionLooksSuccessful ? { color: 'var(--navy)', boxShadow: 'inset 0 0 0 2px var(--navy)' } : { background: '#D92D20', color: '#FFFFFF', boxShadow: '0 6px 14px -6px rgba(217,45,32,0.6)' }}
     >
       <RotateCcw className="size-[17px]" strokeWidth={2.6} />
       Go again
@@ -367,7 +368,8 @@ export default function PactMomentsDetail({
       type="button"
       onClick={() => (isCreatorView ? void shareCard() : onShareRecap())}
       disabled={makingCard}
-      className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--navy)] px-5 text-[14px] font-extrabold text-white disabled:opacity-60"
+      className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full px-5 text-[14px] font-extrabold text-white disabled:opacity-60"
+      style={{ background: completionLooksSuccessful ? '#15803D' : 'var(--navy)' }}
     >
       <Share2 className="size-5" />
       {makingCard ? 'Making your card…' : 'Share'}
@@ -738,7 +740,7 @@ export default function PactMomentsDetail({
                   {againButton}
                 </>
               ) : (
-                <button type="button" onClick={onRestart} className="h-12 w-full rounded-full bg-[var(--navy)] px-5 text-[14px] font-bold text-white">
+                <button type="button" onClick={onRestart} className="h-12 w-full rounded-full px-5 text-[14px] font-bold text-white" style={{ background: '#D92D20' }}>
                   Go again
                 </button>
               )

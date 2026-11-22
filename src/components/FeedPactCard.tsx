@@ -860,7 +860,7 @@ export default function FeedPactCard({
       {(badgeText || postedText || privateTag || watch) && (
         <div className="flex flex-wrap items-center gap-1.5">
           {badgeText && (
-            <span className="flex items-center gap-1.5 rounded-[9px] px-2.5 py-[3px] text-[11.5px] font-extrabold" style={{ color: '#fff', backgroundColor: 'rgba(255,255,255,0.24)' }}>
+            <span className="flex items-center gap-1.5 rounded-[9px] px-2.5 py-[3px] text-[11.5px] font-extrabold" style={{ color: '#fff', backgroundColor: pactEnded ? (finishedPact ? '#15803D' : '#B42318') : 'rgba(255,255,255,0.24)' }}>
               {totalDays > 0 && (
                 <MarkProgress
                   value={pactEnded ? (finishedPact ? 1 : Number(pact.days_completed ?? 0) / totalDays) : dayNo / totalDays}

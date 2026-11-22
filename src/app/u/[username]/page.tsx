@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import { Lock, Share2 } from 'lucide-react'
 import Avatar from '@/components/Avatar'
 import CircleMark from '@/components/brand/CircleMark'
-import { CheckBadge, FlameBadge, GaugeBadge } from '@/components/hero/HeroBadges'
+import { CheckBadge, CpClockBadge, FlameBadge } from '@/components/hero/HeroBadges'
 import api from '@/services/api'
 import { useAuthStore } from '@/store/auth'
 import { MARK_PATH } from '@/lib/circleMark'
@@ -143,7 +143,7 @@ export default function PublicProfilePage() {
 
               <div className="mt-5 grid grid-cols-3 gap-2">
                 <Tile
-                  icon={<GaugeBadge value={p.cp_score.score} />}
+                  icon={<CpClockBadge value={p.cp_score.score} />}
                   value={p.cp_score.score != null ? String(Math.round(p.cp_score.score)) : '–'}
                   label="CP Score"
                   sub={p.cp_score.band ?? undefined}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { useReducedMotion } from 'framer-motion'
 
 /*
@@ -93,6 +93,63 @@ export function GaugeBadge({ value }: { value: number | null }) {
       </g>
       <circle cx={cx} cy={cy} r={2.1} fill={INK} />
     </Disc>
+  )
+}
+
+/** CP Score metal: bronze below 50, silver 50–74, gold 75 and up. */
+export type CpMetal = 'bronze' | 'silver' | 'gold'
+
+export function cpMetal(score: number | null | undefined): CpMetal {
+  const s = Number(score ?? 0)
+  return s >= 75 ? 'gold' : s >= 50 ? 'silver' : 'bronze'
+}
+
+export const CP_METALS: Record<CpMetal, { name: string; light: string; mid: string; dark: string; face: string; hand: string; onNavy: string; pillBg: string; pillFg: string }> = {
+  bronze: { name: 'Bronze', light: '#FFD9B8', mid: '#C77B3F', dark: '#7A3F12', face: '#FFF4EB', hand: '#4A2308', onNavy: '#FFC9A3', pillBg: '#F8E6D6', pillFg: '#6B3510' },
+  silver: { name: 'Silver', light: '#FFFFFF', mid: '#BFC5CF', dark: '#5E6673', face: '#FBFCFD', hand: '#262B33', onNavy: '#E6E9EE', pillBg: '#ECEEF2', pillFg: '#333A45' },
+  gold: { name: 'Gold', light: '#FFF0B3', mid: '#E8B23A', dark: '#9C6208', face: '#FFF8E3', hand: '#5A3803', onNavy: '#FCE38A', pillBg: '#FFF2CC', pillFg: '#6B4700' },
+}
+
+/** The phone's time, ticking once a second (still with reduced motion: a clock is information). */
+function useNow() {
+  const [now, setNow] = useState<Date | null>(null)
+  useEffect(() => {
+    const tick = () => setNow(new Date())
+    tick()
+    const id = window.setInterval(tick, 1000)
+    return () => window.clearInterval(id)
+  }, [])
+  return now
+}
+
+/**
+ * The CP Score badge: a metal clock (bronze, silver or gold by score) whose
+ * hands show the current time. Something earned, and alive.
+ */
+export function CpClockBadge({ value, size = 32 }: { value: number | null; size?: number }) {
+  const metal = CP_METALS[cpMetal(value)]
+  const gid = useId().replace(/:/g, '')
+  const now = useNow()
+  const sec = now ? now.getSeconds() : 0
+  const min = now ? now.getMinutes() + sec / 60 : 10
+  const hr = now ? (now.getHours() % 12) + min / 60 : 10
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" role="img" aria-label={`${metal.name} CP clock`} className="block shrink-0 overflow-visible">
+      <defs>
+        <linearGradient id={`m${gid}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor={metal.light} />
+          <stop offset=".5" stopColor={metal.mid} />
+          <stop offset="1" stopColor={metal.dark} />
+        </linearGradient>
+      </defs>
+      <circle cx="16" cy="16" r={15.25} fill={`url(#m${gid})`} stroke={INK} strokeWidth={EDGE} />
+      <circle cx="16" cy="16" r={11.4} fill={metal.face} stroke={metal.dark} strokeOpacity={0.45} strokeWidth={0.8} />
+      <path d="M16 5.9v1.7M26.1 16h-1.7M16 26.1v-1.7M5.9 16h1.7" stroke={metal.dark} strokeWidth={1.2} strokeLinecap="round" />
+      <path d="M16 16V10.2" stroke={metal.hand} strokeWidth={2} strokeLinecap="round" transform={`rotate(${(hr * 30).toFixed(1)} 16 16)`} />
+      <path d="M16 16V7.9" stroke={metal.hand} strokeWidth={1.3} strokeLinecap="round" transform={`rotate(${(min * 6).toFixed(1)} 16 16)`} />
+      <path d="M16 18V7.3" stroke="#E5363B" strokeWidth={0.7} strokeLinecap="round" transform={`rotate(${sec * 6} 16 16)`} />
+      <circle cx="16" cy="16" r={1.3} fill="#E5363B" />
+    </svg>
   )
 }
 
