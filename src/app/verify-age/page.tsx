@@ -107,6 +107,8 @@ export default function VerifyAgePage() {
         <p className="text-center text-[15px] leading-relaxed text-[var(--ink-soft)]">
           You need to be {MIN_AGE} or older to use CirclePact, so we&apos;ve deleted this account and its details.
         </p>
+        {/* A full page load on purpose: it clears everything the app held for the deleted account. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/" className={`${authPrimaryButtonClass} mt-6 flex items-center justify-center`}>OK</a>
       </AuthShell>
     );

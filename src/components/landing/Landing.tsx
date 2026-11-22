@@ -101,7 +101,7 @@ function PactPreview() {
 export default function Landing() {
   const reduce = useReducedMotion();
   const rise = (delay: number) =>
-    reduce ? {} : { initial: { opacity: 0, y: 14 }, animate: { opacity: 1, y: 0 }, transition: { delay, duration: 0.45, ease: [0.22, 1, 0.36, 1] } };
+    reduce ? {} : { initial: { opacity: 0, y: 14 }, animate: { opacity: 1, y: 0 }, transition: { delay, duration: 0.45, ease: [0.22, 1, 0.36, 1] as const } };
 
   return (
     <div className="min-h-dvh" style={{ background: 'var(--paper)', color: INK }}>

@@ -8,8 +8,9 @@ export const contentType = 'image/png'
 export const alt = 'A CirclePact profile'
 
 /** The link preview for a shared profile: their name and real numbers on navy, like the app's page tops. */
-export default async function Image({ params }: { params: { username: string } }) {
-  const username = decodeURIComponent(params.username)
+export default async function Image({ params }: { params: Promise<{ username: string }> }) {
+  // Next 15+: route params arrive as a Promise.
+  const username = decodeURIComponent((await params).username)
   const p = await fetchPublicProfile(username)
   if (!p) return ogImage('CirclePact', 'Say it. Do it. Let people see.')
   const name = publicName(p)

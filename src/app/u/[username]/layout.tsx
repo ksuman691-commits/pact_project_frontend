@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import { fetchPublicProfile, publicName, publicSummary } from '@/lib/publicProfile'
 
-export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
-  const username = decodeURIComponent(params.username)
+export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
+  // Next 15+: route params arrive as a Promise.
+  const username = decodeURIComponent((await params).username)
   const profile = await fetchPublicProfile(username)
   const title = profile ? `${publicName(profile)} on CirclePact` : 'CirclePact'
   const description = profile ? publicSummary(profile) : 'Say it. Do it. Let people see.'
