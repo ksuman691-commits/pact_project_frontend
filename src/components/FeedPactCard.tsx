@@ -16,6 +16,7 @@ import { ChevronRight, Flag, Trash2, MessageCircle, Check, Camera, Heart, MoreVe
 import BodyPortal from './BodyPortal';
 import StoryCaptureSheet from './stories/StoryCaptureSheet';
 import CommentsBottomSheet from './CommentsBottomSheet';
+import MomentViewer from './MomentViewer';
 import Avatar from './Avatar';
 import UserAvatarLink from './UserAvatarLink';
 import GoalMatchStrip from './GoalMatchStrip';
@@ -284,6 +285,8 @@ export default function FeedPactCard({
   const [confirmDeleteMoment, setConfirmDeleteMoment] = useState(false);
   const { remove: removeMoment, deleting: deletingMoment } = useDeleteMoment();
   const [commentSheetOpen, setCommentSheetOpen] = useState(false);
+  // Tapping the photo opens the moments full screen right here (one tap), not the pact page.
+  const [viewerAt, setViewerAt] = useState<number | null>(null);
   // The feed/detail list responses don't serialize a live comment count yet
   // (see BACKEND_SPEC_COMMENT_COUNT.md — the `Pact.comment_count` column
   // exists and is kept up to date server-side, it's just never included in
@@ -657,6 +660,10 @@ export default function FeedPactCard({
     }
 
     event.stopPropagation();
+    if (tiles.length > 0 && !momentStory && !lockedForMe) {
+      setViewerAt(Math.min(activeProofIndex, tiles.length - 1));
+      return;
+    }
     handleCardNavigate();
   };
 
@@ -1133,7 +1140,33 @@ export default function FeedPactCard({
         </BodyPortal>
       )}
 
+      {viewerAt != null && (
+        <BodyPortal>
+          <MomentViewer
+            moments={tiles.map((tile: any) => ({
+              id: tile.id,
+              url: tile.url,
+              type: tile.type,
+              description: tile.description,
+              day: tile.day,
+              uploadedAt: tile.uploadedAt,
+              authorName: tile.uploader || pact.creator_full_name || undefined,
+            }))}
+            startIndex={viewerAt}
+            pactId={Number(pact.id)}
+            title={pact.title}
+            pactHref={resolvedDetailHref}
+            likeCount={likeCount}
+            liked={liked}
+            onClose={() => setViewerAt(null)}
+            onIndexChange={() => {}}
+            onComment={() => setCommentSheetOpen(true)}
+          />
+        </BodyPortal>
+      )}
+
       <CommentsBottomSheet
+        aboveViewer={viewerAt != null}
         pactId={pact.id}
         pactTitle={pact.title}
         commentCount={commentCount}

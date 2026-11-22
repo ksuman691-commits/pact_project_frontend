@@ -1,7 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ChevronLeft, Flag, MessageCircle, Play, Send, Trash2, Volume2, VolumeX } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { ChevronLeft, ChevronRight, Flag, MessageCircle, Play, Send, Trash2, Volume2, VolumeX } from 'lucide-react'
 import toast from 'react-hot-toast'
 import DeleteMomentSheet from '@/components/stories/DeleteMomentSheet'
 import ReportMomentSheet from '@/components/stories/ReportMomentSheet'
@@ -28,6 +30,8 @@ interface MomentViewerProps {
   pactId: number
   /** The pact's name, shown in the top bar. */
   title?: string
+  /** When set (opened from the feed), the pact's name links to its page. */
+  pactHref?: string
   likeCount: number
   liked: boolean
   onClose: () => void
@@ -35,9 +39,9 @@ interface MomentViewerProps {
   onComment: () => void
 }
 
-const INK = '#17181D'
-const MUTED = '#5A5C63'
-const PAPER = '#F3EEE4'
+const SOFT = 'rgba(255,255,255,0.78)'
+const SHADE_TOP = 'linear-gradient(to bottom, rgba(0,0,0,0.55), rgba(0,0,0,0))'
+const SHADE_BOTTOM = 'linear-gradient(to top, rgba(0,0,0,0.72), rgba(0,0,0,0.35) 55%, rgba(0,0,0,0))'
 
 function when(iso?: string) {
   if (!iso) return null
@@ -53,7 +57,7 @@ function Avatar({ moment }: { moment: ViewerMoment }) {
   const [broken, setBroken] = useState(false)
   const letter = (moment.authorName || moment.username || 'M').charAt(0).toUpperCase()
   return (
-    <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-[13px] font-extrabold text-white" style={{ background: '#1F3A93' }}>
+    <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full text-[13px] font-extrabold text-white" style={{ background: '#1F3A93', boxShadow: '0 0 0 2px rgba(255,255,255,0.85)' }}>
       {moment.avatarUrl && !broken ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={moment.avatarUrl} alt="" className="size-full object-cover" onError={() => setBroken(true)} />
@@ -91,7 +95,7 @@ function FeedVideo({ src, muted, onToggleSound }: { src?: string; muted: boolean
         type="button"
         onClick={onToggleSound}
         aria-label={muted ? 'Turn sound on' : 'Turn sound off'}
-        className="absolute bottom-3 right-3 flex size-9 items-center justify-center rounded-full text-white"
+        className="absolute right-3 top-[76px] z-10 flex size-10 items-center justify-center rounded-full text-white"
         style={{ background: 'rgba(0,0,0,0.55)' }}
       >
         {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
@@ -111,16 +115,20 @@ function FeedVideo({ src, muted, onToggleSound }: { src?: string; muted: boolean
 }
 
 /**
- * A pact's moments as a scrolling feed of big posts, one per day, like
- * Instagram: who posted it and which day on top, the photo or video full
- * width, then like / comment / share and the caption. Opens at the moment
- * you tapped. Nothing moves on by itself.
+ * A pact's moments full screen, one per screen, scrolling (with snap) through
+ * the days like Instagram / Reels: the photo or video fills the screen, who
+ * posted it and which day float on top, like / comment / share and the
+ * caption float at the bottom. Opens at the moment you tapped; nothing moves
+ * on by itself.
  */
-export default function MomentViewer({ moments, startIndex, pactId, title, likeCount, liked, onClose, onIndexChange, onComment }: MomentViewerProps) {
+export default function MomentViewer({ moments, startIndex, pactId, title, pactHref, likeCount, liked, onClose, onIndexChange, onComment }: MomentViewerProps) {
   const me = useAuthStore((state) => state.user)
+  const router = useRouter()
   const { remove: removeMoment, deleting } = useDeleteMoment()
   const [muted, setMuted] = useState(true)
   const [failed, setFailed] = useState<Set<string>>(() => new Set())
+  // Photos taller than wide fill the screen; wide ones fit inside it.
+  const [portrait, setPortrait] = useState<Record<string, boolean>>({})
   const [deleteTarget, setDeleteTarget] = useState<ViewerMoment | null>(null)
   const [reportTarget, setReportTarget] = useState<ViewerMoment | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -164,7 +172,7 @@ export default function MomentViewer({ moments, startIndex, pactId, title, likeC
   // Open at the moment that was tapped.
   useEffect(() => {
     const el = itemRefs.current.get(startIndex)
-    if (el && scrollRef.current) scrollRef.current.scrollTop = el.offsetTop - 8
+    if (el && scrollRef.current) scrollRef.current.scrollTop = el.offsetTop
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Tell the page which moment is on screen (it highlights that day).
@@ -182,6 +190,22 @@ export default function MomentViewer({ moments, startIndex, pactId, title, likeC
     return () => io.disconnect()
   }, [moments.length])
 
+  // Going to the pact page: close first (popping the viewer's history entry), then navigate.
+  const openPact = (event: React.MouseEvent) => {
+    if (!pactHref) return
+    event.preventDefault()
+    let done = false
+    const go = () => {
+      if (done) return
+      done = true
+      window.removeEventListener('popstate', go)
+      router.push(pactHref)
+    }
+    window.addEventListener('popstate', go)
+    window.setTimeout(go, 700)
+    close()
+  }
+
   const share = async () => {
     const url = `${window.location.origin}/pacts/${pactId}`
     try {
@@ -197,25 +221,40 @@ export default function MomentViewer({ moments, startIndex, pactId, title, likeC
 
   if (moments.length === 0) return null
 
+  const titleBlock = (
+    <div className="min-w-0">
+      <div className="flex items-center gap-0.5 truncate text-[16px] font-extrabold tracking-[-0.02em] text-white">
+        <span className="truncate">{title || 'Moments'}</span>
+        {pactHref && <ChevronRight className="size-4 shrink-0" strokeWidth={2.8} aria-hidden="true" />}
+      </div>
+      <div className="text-[12px] font-semibold" style={{ color: SOFT }}>
+        {moments.length} {moments.length === 1 ? 'moment' : 'moments'}
+      </div>
+    </div>
+  )
+
   return (
-    <div role="dialog" aria-modal="true" aria-label="Moments" className="fixed inset-0 z-[100] flex flex-col" style={{ background: PAPER, color: INK, paddingTop: 'env(safe-area-inset-top)' }}>
-      <header className="flex h-14 shrink-0 items-center gap-1 border-b px-2" style={{ borderColor: '#E3DACA', background: PAPER }}>
-        <button type="button" aria-label="Close moments" onClick={close} className="flex size-11 items-center justify-center rounded-full">
-          <ChevronLeft className="size-6" />
+    <div role="dialog" aria-modal="true" aria-label="Moments" className="fixed inset-0 z-[100] bg-black text-white">
+      {/* Top bar floats over the picture. */}
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center gap-1 px-2 pb-6" style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))', background: SHADE_TOP }}>
+        <button type="button" aria-label="Close moments" onClick={close} className="pointer-events-auto flex size-11 items-center justify-center rounded-full">
+          <ChevronLeft className="size-7" />
         </button>
-        <div className="min-w-0">
-          <div className="truncate text-[16px] font-extrabold tracking-[-0.02em]">{title || 'Moments'}</div>
-          <div className="text-[12px] font-semibold" style={{ color: MUTED }}>
-            {moments.length} {moments.length === 1 ? 'moment' : 'moments'}
-          </div>
-        </div>
+        {pactHref ? (
+          <Link href={pactHref} onClick={openPact} className="pointer-events-auto min-w-0" aria-label={`Open ${title || 'pact'}`}>
+            {titleBlock}
+          </Link>
+        ) : (
+          titleBlock
+        )}
       </header>
 
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <div ref={scrollRef} className="h-full snap-y snap-mandatory overflow-y-auto overscroll-contain" style={{ scrollbarWidth: 'none' }}>
         {moments.map((moment, i) => {
           const mine = me?.id != null && moment.userId != null && Number(moment.userId) === me.id
           const broken = moment.url ? failed.has(moment.url) : true
           const stamp = when(moment.uploadedAt)
+          const name = moment.authorName || moment.username || 'Member'
           return (
             <article
               key={moment.id}
@@ -224,66 +263,79 @@ export default function MomentViewer({ moments, startIndex, pactId, title, likeC
                 if (el) itemRefs.current.set(i, el)
                 else itemRefs.current.delete(i)
               }}
-              className="pb-5 pt-3"
+              className="relative h-[100dvh] w-full snap-start snap-always overflow-hidden bg-black"
               aria-label={`Day ${moment.day ?? i + 1}`}
             >
-              <div className="flex items-center gap-2.5 px-4 pb-2.5">
+              {moment.type === 'video' ? (
+                <FeedVideo src={moment.url} muted={muted} onToggleSound={() => setMuted((m) => !m)} />
+              ) : !broken ? (
+                <>
+                  {/* A soft blurred copy fills any edges; the photo itself is never cropped much. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={moment.url} alt="" aria-hidden="true" className="absolute inset-0 size-full scale-110 object-cover opacity-60 blur-2xl" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={moment.url}
+                    alt={moment.description || `Day ${moment.day ?? i + 1} moment`}
+                    loading={Math.abs(i - startIndex) <= 1 ? 'eager' : 'lazy'}
+                    className="relative size-full object-cover"
+                    style={{ objectFit: portrait[String(moment.id)] === false ? 'contain' : 'cover' }}
+                    onLoad={(event) => {
+                      const img = event.currentTarget
+                      const tall = img.naturalHeight >= img.naturalWidth
+                      setPortrait((prev) => (prev[String(moment.id)] === tall ? prev : { ...prev, [String(moment.id)]: tall }))
+                    }}
+                    onError={() => moment.url && setFailed((prev) => new Set(prev).add(moment.url as string))}
+                  />
+                </>
+              ) : (
+                <div className="flex size-full items-center justify-center text-[14px]" style={{ color: SOFT }}>This photo couldn&apos;t load.</div>
+              )}
+
+              {/* Who and which day, under the top bar. */}
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center gap-2.5 px-4 pb-8 pt-[calc(max(0.5rem,env(safe-area-inset-top))+3.75rem)]" style={{ background: SHADE_TOP }}>
                 <Avatar moment={moment} />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[14.5px] font-bold">{moment.authorName || moment.username || 'Member'}</div>
-                  <div className="truncate text-[12px] font-semibold" style={{ color: MUTED }}>
+                <div className="min-w-0 flex-1" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+                  <div className="truncate text-[14.5px] font-bold">{name}</div>
+                  <div className="truncate text-[12px] font-semibold" style={{ color: SOFT }}>
                     Day {moment.day ?? i + 1}
                     {stamp ? ` · ${stamp}` : ''}
                   </div>
                 </div>
                 {typeof moment.id === 'number' && mine && (
-                  <button type="button" aria-label={`Delete day ${moment.day ?? i + 1} moment`} onClick={() => setDeleteTarget(moment)} className="flex size-11 items-center justify-center rounded-full" style={{ color: MUTED }}>
+                  <button type="button" aria-label={`Delete day ${moment.day ?? i + 1} moment`} onClick={() => setDeleteTarget(moment)} className="pointer-events-auto flex size-11 items-center justify-center rounded-full" style={{ background: 'rgba(0,0,0,0.35)' }}>
                     <Trash2 className="size-5" />
                   </button>
                 )}
                 {typeof moment.id === 'number' && !mine && me?.id != null && (
-                  <button type="button" aria-label="Report this moment" onClick={() => setReportTarget(moment)} className="flex size-11 items-center justify-center rounded-full" style={{ color: MUTED }}>
+                  <button type="button" aria-label="Report this moment" onClick={() => setReportTarget(moment)} className="pointer-events-auto flex size-11 items-center justify-center rounded-full" style={{ background: 'rgba(0,0,0,0.35)' }}>
                     <Flag className="size-5" />
                   </button>
                 )}
               </div>
 
-              <div className="relative w-full overflow-hidden bg-black" style={{ aspectRatio: '4 / 5' }}>
-                {moment.type === 'video' ? (
-                  <FeedVideo src={moment.url} muted={muted} onToggleSound={() => setMuted((m) => !m)} />
-                ) : !broken ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={moment.url}
-                    alt={moment.description || `Day ${moment.day ?? i + 1} moment`}
-                    loading={Math.abs(i - startIndex) <= 1 ? 'eager' : 'lazy'}
-                    className="size-full object-cover"
-                    onError={() => moment.url && setFailed((prev) => new Set(prev).add(moment.url as string))}
-                  />
-                ) : (
-                  <div className="flex size-full items-center justify-center text-[14px] text-white/80">This photo couldn&apos;t load.</div>
+              {/* Like / comment / share and the caption, over the bottom of the picture. */}
+              <div className="absolute inset-x-0 bottom-0 z-10 px-2.5 pt-16" style={{ background: SHADE_BOTTOM, paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+                {moment.description && (
+                  <p className="px-1.5 pb-1.5 text-[14px] leading-snug" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+                    <span className="font-bold">{name}</span> {moment.description}
+                  </p>
                 )}
+                <div className="flex items-center gap-1 [&_button]:text-white">
+                  <LikeButton pactId={pactId} count={likeCount} liked={liked} variant="row" />
+                  <button type="button" onClick={onComment} aria-label="Comments" className="flex size-11 items-center justify-center rounded-full">
+                    <MessageCircle className="size-6" />
+                  </button>
+                  <button type="button" onClick={() => void share()} aria-label="Share this pact" className="flex size-11 items-center justify-center rounded-full">
+                    <Send className="size-6" />
+                  </button>
+                  {moments.length > 1 && (
+                    <span className="ml-auto pr-1.5 text-[12.5px] font-semibold tabular-nums" style={{ color: SOFT }}>
+                      {i + 1} / {moments.length}
+                    </span>
+                  )}
+                </div>
               </div>
-
-              <div className="flex items-center gap-1 px-2.5 pt-1.5">
-                <LikeButton pactId={pactId} count={likeCount} liked={liked} variant="row" />
-                <button type="button" onClick={onComment} aria-label="Comments" className="flex size-11 items-center justify-center rounded-full">
-                  <MessageCircle className="size-6" />
-                </button>
-                <button type="button" onClick={() => void share()} aria-label="Share this pact" className="flex size-11 items-center justify-center rounded-full">
-                  <Send className="size-6" />
-                </button>
-                {moments.length > 1 && (
-                  <span className="ml-auto pr-1.5 text-[12.5px] font-semibold tabular-nums" style={{ color: MUTED }}>
-                    {i + 1} / {moments.length}
-                  </span>
-                )}
-              </div>
-              {moment.description && (
-                <p className="px-4 pt-1 text-[14px] leading-snug">
-                  <span className="font-bold">{moment.authorName || moment.username || 'Member'}</span> {moment.description}
-                </p>
-              )}
             </article>
           )
         })}
