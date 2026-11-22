@@ -33,8 +33,6 @@ function audienceLabel(visibility?: string | null) {
 
 const HOLD_MS = 220
 const SEEN_AFTER_SECONDS = 1
-/** How long a photo moment stays up before the next one. */
-const PHOTO_MS = 5000
 
 export default function StoryViewer({ open, onClose, stories, startIndex = 0, circleId, circleName, isLoading, unavailable }: StoryViewerProps) {
   const [index, setIndex] = useState(startIndex)
@@ -153,26 +151,19 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
     else void video.play().catch(() => {})
   }, [paused, viewersOpen, composing, confirmDelete, reporting, index])
 
-  // A photo has no timeline of its own: it stays up for PHOTO_MS, pausing like a video does.
+  // A photo stays up until you tap on (its bar shows full); it counts as seen after a second.
   useEffect(() => {
     photoElapsed.current = 0
   }, [index])
   useEffect(() => {
-    if (!open || !photo || broken || paused || viewersOpen || composing || confirmDelete || reporting) return
-    let last = performance.now()
-    const timer = window.setInterval(() => {
-      const now = performance.now()
-      photoElapsed.current += now - last
-      last = now
-      setFraction(Math.min(1, photoElapsed.current / PHOTO_MS))
-      if (photoElapsed.current >= PHOTO_MS) {
-        window.clearInterval(timer)
-        if (story) markSeen(story.id)
-        go(1)
-      }
-    }, 50)
-    return () => window.clearInterval(timer)
-  }, [open, photo, broken, paused, viewersOpen, composing, confirmDelete, reporting, index, go, markSeen, story])
+    if (!open || !photo || broken) return
+    setFraction(1)
+    const timer = window.setTimeout(() => {
+      photoElapsed.current = SEEN_AFTER_SECONDS * 1000
+      if (story) markSeen(story.id)
+    }, SEEN_AFTER_SECONDS * 1000)
+    return () => window.clearTimeout(timer)
+  }, [open, photo, broken, index, markSeen, story])
 
   const sendReaction = async (emoji: string) => {
     if (!story) return

@@ -1,11 +1,11 @@
 'use client'
 
-import { endedLabel } from '@/lib/pactEnded'
+import { daysSinceEnded, endedLabel, endedOnDate } from '@/lib/pactEnded'
 import Image from 'next/image'
 import AutoPlayVideo from '@/components/media/AutoPlayVideo'
 import { cleanTitle } from '@/lib/titleCase'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Camera, Check, ChevronLeft, Globe, Heart, Image as ImageIcon, Lock, MessageCircle, Play, RotateCcw, Share, Share2, Users, X } from 'lucide-react'
+import { Camera, Check, ChevronLeft, Flag, Globe, Heart, Image as ImageIcon, Lock, MessageCircle, Play, RotateCcw, Share, Share2, Users, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import LockedMedia from '@/components/private/LockedMedia'
 import WatchersSheet from '@/components/private/WatchersSheet'
@@ -118,7 +118,10 @@ function EndedResult({
         >
           {kept ? 'Completed' : 'Not completed'}
         </span>
-        <span className="text-[12.5px] font-semibold" style={{ color: SOFT_TEXT }}>{endedText}</span>
+        <span className="flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-extrabold text-white" style={{ background: 'rgba(255,255,255,0.18)', boxShadow: 'inset 0 0 0 1.5px rgba(255,255,255,0.55)' }}>
+          <Flag className="size-3.5" strokeWidth={2.6} aria-hidden="true" />
+          {endedText}
+        </span>
       </div>
 
       <div className="relative mt-4 flex items-baseline gap-2">
@@ -596,7 +599,7 @@ export default function PactMomentsDetail({
             ) : (
               <EndedResult
                 kept={completionLooksSuccessful}
-                endedText={endedLabel(pact?.end_date)}
+                endedText={daysSinceEnded(pact?.end_date) != null ? `${endedLabel(pact?.end_date)} · ${endedOnDate(pact?.end_date)}` : endedLabel(pact?.end_date)}
                 counted={completed}
                 total={total}
                 posted={Number(pact?.days_completed ?? fallbackCompleted)}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Flag, MessageCircle, Play, Trash2, Volume2, VolumeX, X } from 'lucide-react'
+import { Flag, MessageCircle, Play, Send, Trash2, Volume2, VolumeX, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import DeleteMomentSheet from '@/components/stories/DeleteMomentSheet'
 import ReportMomentSheet from '@/components/stories/ReportMomentSheet'
@@ -34,7 +34,6 @@ interface MomentViewerProps {
   onComment: () => void
 }
 
-const PHOTO_DURATION_MS = 5000
 const HOLD_MS = 220
 
 export default function MomentViewer({ moments, startIndex, pactId, likeCount, liked, onClose, onIndexChange, onComment }: MomentViewerProps) {
@@ -131,18 +130,24 @@ export default function MomentViewer({ moments, startIndex, pactId, likeCount, l
     if (videoRef.current) videoRef.current.muted = muted
   }, [muted])
 
+  // Like a post, not a story: a photo stays up until you swipe or tap to the
+  // next one (its bar shows full), and a video loops instead of moving on.
   useEffect(() => {
-    if (moment?.type === 'video' || paused) return
-    const timer = window.setInterval(() => {
-      const nextFraction = startingFraction.current + (Date.now() - startedAt.current) / PHOTO_DURATION_MS
-      setFraction(Math.min(1, nextFraction))
-      if (nextFraction >= 1) {
-        if (index === moments.length - 1) close()
-        else go(1)
+    if (moment && moment.type !== 'video') setFraction(1)
+  }, [index, moment])
+
+  const share = async () => {
+    const url = `${window.location.origin}/pacts/${pactId}`
+    try {
+      if (navigator.share) await navigator.share({ url, title: 'CirclePact' })
+      else {
+        await navigator.clipboard.writeText(url)
+        toast.success('Link copied')
       }
-    }, 80)
-    return () => window.clearInterval(timer)
-  }, [close, go, index, moment?.type, moments.length, paused])
+    } catch {
+      // Closing the share sheet is not an error.
+    }
+  }
 
   const pause = () => {
     setPaused(true)
@@ -257,8 +262,8 @@ export default function MomentViewer({ moments, startIndex, pactId, likeCount, l
             onTimeUpdate={(event) => { const v = event.currentTarget; if (v.duration > 0) setFraction(v.currentTime / v.duration) }}
             onPlay={() => setPlayRejected(false)}
             onPause={() => { if (!paused) setPaused(true) }}
-            // Like stories: when a video finishes, the next moment comes on; after the last, the viewer closes.
-            onEnded={() => { if (index === moments.length - 1) close(); else go(1) }}
+            // Like a post: the video loops; swipe or tap for the next moment.
+            loop
             onError={() => setPlayRejected(true)}
           />
         ) : moment.url && !photoFailed ? (
@@ -270,9 +275,11 @@ export default function MomentViewer({ moments, startIndex, pactId, likeCount, l
         )}
       </div>
       {moment.description && <p className="shrink-0 px-5 pb-2 text-center text-sm text-white/85">{moment.description}</p>}
-      <footer className="flex shrink-0 items-center justify-center gap-5 px-5 pb-4 pt-2">
+      <footer className="flex shrink-0 items-center gap-4 px-5 pb-4 pt-2">
         <LikeButton pactId={pactId} count={likeCount} liked={liked} />
         <button type="button" onClick={onComment} aria-label="Comment on this moment" className="flex size-12 items-center justify-center rounded-full bg-white/15"><MessageCircle className="size-5" /></button>
+        <button type="button" onClick={() => void share()} aria-label="Share this pact" className="flex size-12 items-center justify-center rounded-full bg-white/15"><Send className="size-5" /></button>
+        {moments.length > 1 && <span className="ml-auto text-[13px] font-semibold tabular-nums text-white/75">{index + 1} / {moments.length}</span>}
       </footer>
       {reporting && typeof moment.id === 'number' && (
         <ReportMomentSheet pactId={pactId} proofId={moment.id} onClose={() => { setReporting(false); resume() }} />

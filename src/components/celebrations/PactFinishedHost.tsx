@@ -113,8 +113,8 @@ export default function PactFinishedHost() {
   if (!showing) return null
   const close = () => setShowing(null)
   const next = () => {
+    // A fresh pact through the normal flow, carrying over only the name.
     const params = new URLSearchParams({ note: showing.title })
-    if (showing.circleId) params.set('circleId', String(showing.circleId))
     const url = `/pacts/create?${params.toString()}`
     // Closing pops the sheet's history step; navigate after that pop lands, or it would undo the push.
     let done = false

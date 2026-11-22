@@ -76,7 +76,7 @@ function ProfileContent() {
   }, [createdPacts, joinedPacts]);
   // Same rule as the feed and the Pacts tab: live means active and not past its last day.
   const todayKey = new Date().toLocaleDateString('en-CA');
-  const isLive = (p: any) => p.status === 'active' && (!p.end_date || String(p.end_date).slice(0, 10) >= todayKey);
+  const isLive = (p: any) => p.status === 'active' && (!p.end_date || String(p.end_date).slice(0, 10) > todayKey);
   const activePacts = allPacts.filter(isLive);
   const finishedPacts = allPacts.filter((p: any) => !isLive(p));
 

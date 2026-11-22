@@ -249,7 +249,8 @@ export default function PactDetailPage() {
         onStartOwnVersion={handleStartOwnVersion}
         onInvite={() => void handleInvite()}
         onAddMoment={() => setStoryCaptureOpen(true)}
-        onRestart={() => router.push(`/pacts/create?pactId=${pact.id}`)}
+        // Go again starts a fresh pact through the normal flow, carrying over only the name.
+        onRestart={() => router.push(`/pacts/create?note=${encodeURIComponent(pact.title || '')}`)}
         onShareRecap={() => void handleShareRecap()}
         onComment={(aboveViewer = false) => { setCommentsAboveViewer(aboveViewer); setCommentsOpen(true) }}
       />

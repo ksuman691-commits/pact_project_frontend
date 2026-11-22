@@ -88,7 +88,7 @@ export default function PublicProfilePage() {
   // Live means active and not past its last day; everything else is done.
   const activePacts = useMemo(() => {
     const today = new Date().toLocaleDateString('en-CA');
-    return pacts.filter((p) => p.status === 'active' && (!p.end_date || String(p.end_date).slice(0, 10) >= today));
+    return pacts.filter((p) => p.status === 'active' && (!p.end_date || String(p.end_date).slice(0, 10) > today));
   }, [pacts]);
   const completedPacts = useMemo(() => pacts.filter((p) => !activePacts.includes(p) && p.status !== 'cancelled'), [pacts, activePacts]);
 
