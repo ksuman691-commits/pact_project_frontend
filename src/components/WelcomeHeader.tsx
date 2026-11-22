@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { Bell, Search, Zap } from 'lucide-react'
 import { useState } from 'react'
 import LogoMark from '@/components/LogoMark'
+import CircleMark from '@/components/brand/CircleMark'
+import { useTodayStatus } from '@/hooks/useTodayStatus'
 import UserAvatarLink from '@/components/UserAvatarLink'
 import MemberSearchModal from '@/components/MemberSearchModal'
 
@@ -40,14 +42,34 @@ export default function WelcomeHeader({
 }: WelcomeHeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false)
   const waiting = pendingDares > 0
+  // Pacts still waiting for today's moment: a red count on the Pacts button.
+  const { pacts: todayPacts } = useTodayStatus()
+  const pactsWaiting = todayPacts.filter((p) => !p.posted_today).length
 
   return (
     <>
       <header className="mx-auto max-w-md px-4 pb-1 pt-4" style={{ ['--cp-hit' as string]: '2px' }}>
         <div className="flex items-center gap-1.5">
           <h1 className="m-0 mr-auto flex min-w-0 items-center overflow-hidden">
-            <LogoMark size={20} />
+            <LogoMark size={23} animate />
           </h1>
+
+          {/* Pacts first, then Dares. */}
+          <Link
+            href="/pacts"
+            aria-label={pactsWaiting > 0 ? `Pacts, ${pactsWaiting} waiting for today's moment` : 'Pacts'}
+            className="cp-hit relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--navy)] transition active:scale-95"
+            style={{ boxShadow: '0 6px 14px -8px rgba(31,58,147,0.7)' }}
+          >
+            <span className="flex size-[26px] items-center justify-center rounded-full bg-white">
+              <CircleMark size={18} />
+            </span>
+            {pactsWaiting > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-[var(--paper)] px-1 text-[10px] font-bold text-white" style={{ background: '#E5363B' }} aria-hidden="true">
+                {pactsWaiting > 9 ? '9+' : pactsWaiting}
+              </span>
+            )}
+          </Link>
 
           <Link
             href="/dares?tab=for-you"
