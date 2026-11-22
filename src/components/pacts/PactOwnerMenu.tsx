@@ -45,7 +45,7 @@ function addDays(iso: string | null | undefined, days: number): string | null {
  * Paid pacts (people paid to watch) keep what people paid for: title typo fixes only, no extending,
  * no deleting. The server has the final say and its message is shown as-is.
  */
-export default function PactOwnerMenu({ pact, role = 'creator' }: { pact: PactLike; role?: 'creator' | 'member' }) {
+export default function PactOwnerMenu({ pact, role = 'creator', onDark = false }: { pact: PactLike; role?: 'creator' | 'member'; /** White glass button for use over a photo. */ onDark?: boolean }) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [sheet, setSheet] = useState<Sheet>(null)
@@ -151,7 +151,8 @@ export default function PactOwnerMenu({ pact, role = 'creator' }: { pact: PactLi
         type="button"
         onClick={() => setSheet('menu')}
         aria-label="Pact options"
-        className="ml-auto flex size-11 shrink-0 items-center justify-center rounded-full text-[var(--ink)]"
+        className={`ml-auto flex size-11 shrink-0 items-center justify-center rounded-full ${onDark ? 'text-white' : 'text-[var(--ink)]'}`}
+        style={onDark ? { background: 'rgba(0,0,0,0.32)', backdropFilter: 'blur(8px)' } : undefined}
       >
         <MoreHorizontal className="size-5" strokeWidth={2} aria-hidden="true" />
       </button>
