@@ -130,6 +130,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
     videoRef: liveVideoRef,
     active: isOpen && step === 'live',
     look: (CAMERA_FILTERS.find((f) => f.id === filterId) ?? CAMERA_FILTERS[0]).gl,
+    lookCss: (CAMERA_FILTERS.find((f) => f.id === filterId) ?? CAMERA_FILTERS[0]).css,
     mirror: facing === 'user',
     effect: effectId,
     streak,
