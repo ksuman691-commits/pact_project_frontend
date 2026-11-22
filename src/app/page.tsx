@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth'
 import Landing from '@/components/landing/Landing'
+import { hasSession } from '@/services/api'
 
 export default function HomePage() {
   const router = useRouter()
@@ -15,7 +16,7 @@ export default function HomePage() {
 
   useEffect(() => {
     try {
-      setMaybeSignedIn(!!localStorage.getItem('access_token'))
+      setMaybeSignedIn(hasSession())
     } catch {
       setMaybeSignedIn(false)
     }
