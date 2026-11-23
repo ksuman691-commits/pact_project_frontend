@@ -284,6 +284,9 @@ export default function FeedPactCard({
   const [confirmDeleteMoment, setConfirmDeleteMoment] = useState(false);
   const { remove: removeMoment, deleting: deletingMoment } = useDeleteMoment();
   const [commentSheetOpen, setCommentSheetOpen] = useState(false);
+  // Double-tap the photo: a big heart pops (and the pact is liked).
+  const [heartBurst, setHeartBurst] = useState(0);
+  const tapTimerRef = useRef<number | null>(null);
   // The feed/detail list responses don't serialize a live comment count yet
   // (see BACKEND_SPEC_COMMENT_COUNT.md — the `Pact.comment_count` column
   // exists and is kept up to date server-side, it's just never included in
@@ -657,7 +660,18 @@ export default function FeedPactCard({
     }
 
     event.stopPropagation();
-    handleCardNavigate();
+    // One tap opens the pact; a second tap within 260ms is a double-tap: like it, with a big heart.
+    if (tapTimerRef.current) {
+      window.clearTimeout(tapTimerRef.current);
+      tapTimerRef.current = null;
+      setHeartBurst((n) => n + 1);
+      if (!liked) void handleLikeTap();
+      return;
+    }
+    tapTimerRef.current = window.setTimeout(() => {
+      tapTimerRef.current = null;
+      handleCardNavigate();
+    }, 260);
   };
 
   const handleReport = async (reason: 'fake_or_ai' | 'spam' | 'offensive') => {
@@ -828,15 +842,17 @@ export default function FeedPactCard({
   const identity = (onPhoto: boolean) => (
     <div className="pointer-events-auto flex min-w-0 flex-1 items-center gap-2.5" onClick={(event) => event.stopPropagation()}>
       {todayWatch ? (
+        <span className={todayWatch.done ? 'cp-glow-green inline-flex' : 'inline-flex'}>
         <CircleWatch
-          size={46}
+          size={48}
           elapsed={todayWatch.elapsed}
           endsAt={todayWatch.endsAt}
           state={todayWatch.done ? 'done' : 'running'}
           title={todayWatch.done ? 'Checked in today' : `${todayWatch.leftLabel} left to check in today`}
         >
-          <Avatar name={user?.full_name || user?.username || 'You'} avatarUrl={user?.avatar_url || null} size={29} />
+          <Avatar name={user?.full_name || user?.username || 'You'} avatarUrl={user?.avatar_url || null} size={30} />
         </CircleWatch>
+        </span>
       ) : (
       <span className={`inline-flex h-[38px] w-[38px] shrink-0 overflow-hidden rounded-full ${onPhoto ? 'ring-2 ring-white/80' : ''}`}>
         {momentStory ? (
@@ -855,51 +871,50 @@ export default function FeedPactCard({
     </div>
   );
 
+  // Days counted toward finishing (posted + rest days), for the progress line on the photo.
+  const finishNeeded = Number(pact.days_required ?? 0) || (totalDays ? Math.ceil(0.75 * totalDays) : 0);
+  const finishDone = Math.min(finishNeeded || Infinity, Number(pact.days_completed ?? 0) + restDays);
+  const progressShare = pactEnded
+    ? (finishedPact ? 1 : totalDays ? Math.min(1, finishDone / Math.max(1, finishNeeded)) : 0)
+    : totalDays ? Math.min(1, Math.max(0.02, dayNo / totalDays)) : 0;
   const mediaCaption = (
-    <div className="pointer-events-none absolute inset-x-4 bottom-4" style={{ color: '#fff' }}>
-      {(badgeText || postedText || privateTag || watch) && (
-        <div className="flex flex-wrap items-center gap-1.5">
-          {badgeText && (
-            <span className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-extrabold" style={{ backdropFilter: 'blur(8px)', color: '#fff', backgroundColor: pactEnded ? (finishedPact ? '#15803D' : '#B42318') : 'rgba(255,255,255,0.24)' }}>
-              {totalDays > 0 && (
-                <MarkProgress
-                  value={pactEnded ? (finishedPact ? 1 : Number(pact.days_completed ?? 0) / totalDays) : dayNo / totalDays}
-                  size={12}
-                  color="#fff"
-                  track="rgba(255,255,255,0.32)"
-                />
-              )}
-              {showMomentum && !pactEnded ? '🔥 ' : ''}
-              {badgeText}
+    <div className="pointer-events-none absolute bottom-4 left-4 right-[76px]" style={{ color: '#fff' }}>
+      {(todayWatch || pactEnded || privateTag || watch || (showMomentum && !pactEnded)) && (
+        <div className="cp-rise-1 flex flex-wrap items-center gap-1.5">
+          {pactEnded && (
+            <span className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[12.5px] font-extrabold" style={{ background: finishedPact ? '#16A34A' : '#B42318' }}>
+              {finishedPact ? <Check className="size-3.5" strokeWidth={3} aria-hidden="true" /> : null}
+              {finishedPact ? 'Completed' : endedShort(pact.end_date)}
             </span>
           )}
           {todayWatch && (
             <span
-              className="rounded-full px-2.5 py-1 text-[12px] font-extrabold tabular-nums"
+              className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[12.5px] font-extrabold tabular-nums"
               style={
                 todayWatch.done
                   ? { color: '#fff', backgroundColor: '#16A34A' }
                   : todayWatch.endsAt - Date.now() < 3 * 3_600_000
                     ? { color: '#17181D', backgroundColor: '#FFD23F' }
-                    : { color: '#fff', backgroundColor: 'rgba(255,255,255,0.24)' }
+                    : { color: '#fff', backgroundColor: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }
               }
             >
-              {todayWatch.done ? '✓ Done today' : `${todayWatch.leftLabel} left today`}
+              {todayWatch.done ? <Check className="size-3.5" strokeWidth={3} aria-hidden="true" /> : null}
+              {todayWatch.done ? 'Done today' : `${todayWatch.leftLabel} left today`}
             </span>
           )}
-          {postedText && (
-            <span className="rounded-[9px] px-2 py-[3px] text-[11px] font-bold" style={{ color: '#fff', backgroundColor: 'rgba(255,255,255,0.14)' }}>
-              {postedText}
+          {showMomentum && !pactEnded && (
+            <span className="rounded-full px-2.5 py-1 text-[12.5px] font-extrabold" style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}>
+              <span className="cp-flame-outer inline-block">🔥</span> On a roll
             </span>
           )}
           {watch ? (
-            <span className="flex items-center gap-1 rounded-[9px] bg-white px-2.5 py-[3px] text-[11.5px] font-extrabold text-[var(--navy)]">
+            <span className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[12.5px] font-extrabold text-[var(--navy)]">
               <Check className="size-3" strokeWidth={3} aria-hidden="true" />
               Watching
             </span>
           ) : (
             privateTag && (
-              <span className="flex items-center gap-1 rounded-[9px] bg-white px-2.5 py-[3px] text-[11.5px] font-extrabold text-[var(--navy)]">
+              <span className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[12.5px] font-extrabold text-[var(--navy)]">
                 <Lock className="size-3" strokeWidth={2.6} aria-hidden="true" />
                 {privateTag}
               </span>
@@ -907,25 +922,108 @@ export default function FeedPactCard({
           )}
         </div>
       )}
-      <h2 className="mt-2 line-clamp-2 text-balance text-[25px] font-extrabold leading-[1.08] tracking-[-0.03em]" style={{ color: '#fff', textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>
+      <h2 className="cp-rise-2 mt-2 line-clamp-2 text-balance text-[30px] font-extrabold leading-[1.04] tracking-[-0.035em]" style={{ color: '#fff', textShadow: '0 2px 14px rgba(0,0,0,0.5)' }}>
         {cleanTitle(pact.title)}
       </h2>
-      {tiles.length === 0 && !momentStory && !pactEnded && (
-        <p className="mt-1 text-[12.5px] font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>No moments yet</p>
+      {(postedText || tiles.length > 1 || (tiles.length === 0 && !momentStory && !pactEnded)) && (
+        <p className="cp-rise-2 mt-1 text-[13.5px] font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>
+          {tiles.length === 0 && !momentStory && !pactEnded
+            ? 'No moments yet'
+            : [postedText, tiles.length > 1 ? `moment ${Math.min(activeProofIndex + 1, tiles.length)} of ${tiles.length}` : null].filter(Boolean).join(' · ')}
+        </p>
       )}
-      {tiles.length > 1 && (
-        <div className="mt-2 flex items-center gap-[5px]" aria-label={`Moment ${Math.min(activeProofIndex + 1, tiles.length)} of ${tiles.length}`} role="img">
-          {tiles.map((tile, index) => (
-            <span
-              key={`${tile.kind}-${tile.id}`}
-              className="h-1.5 rounded-full transition-all duration-200"
-              style={{ width: index === activeProofIndex ? 16 : 6, background: index === activeProofIndex ? '#FFFFFF' : 'rgba(255,255,255,0.5)' }}
-            />
-          ))}
+      {totalDays > 0 && (
+        <div className="cp-rise-3 mt-3">
+          <div className="flex justify-between gap-2 text-[12.5px] font-extrabold" style={{ color: 'rgba(255,255,255,0.92)' }}>
+            <span>{badgeText}</span>
+            {finishNeeded > 0 && !pactEnded && <span className="truncate">{Math.max(0, Math.min(finishNeeded, finishDone))} of {finishNeeded} days to finish</span>}
+          </div>
+          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/25">
+            <div className="cp-fill-x h-full rounded-full" style={{ width: `${Math.round(progressShare * 100)}%`, background: pactEnded && !finishedPact ? '#F87171' : '#22C55E' }} />
+          </div>
         </div>
       )}
     </div>
   );
+
+  // Like, comment and share stacked on the right of the photo, Reels-style.
+  const disc = 'relative flex size-12 items-center justify-center rounded-full';
+  const discStyle = { background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } as React.CSSProperties;
+  const rail = (
+    <div className="cp-rise-2 absolute bottom-[132px] right-3 z-10 flex flex-col items-center gap-3.5 text-white" onClick={(event) => event.stopPropagation()} style={{ textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>
+      <button type="button" onClick={() => void handleLikeTap()} aria-label={liked ? 'unlike this pact' : 'like this pact'} aria-pressed={liked} className="flex flex-col items-center gap-1 text-[13px] font-extrabold">
+        <span className={disc} style={discStyle}>
+          <span className={`inline-flex transition-transform ${isLikeBouncing ? 'scale-125' : 'scale-100'}`} style={{ transitionDuration: '150ms' }}>
+            <Heart className="h-[27px] w-[27px]" strokeWidth={2} fill={liked ? 'var(--like)' : 'none'} color={liked ? 'var(--like)' : '#fff'} />
+          </span>
+          {liked && isLikeBouncing && (
+            <span className="pointer-events-none absolute left-1/2 top-1/2" aria-hidden="true">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <span key={i} className="cp-spark cp-spark-like" style={{ ['--a' as string]: `${i * 60}deg` }} />
+              ))}
+            </span>
+          )}
+        </span>
+        {likeLabelCount ?? 'Like'}
+      </button>
+      <button type="button" onClick={() => setCommentSheetOpen(true)} aria-label="open chat" className="flex flex-col items-center gap-1 text-[13px] font-extrabold">
+        <span className={disc} style={discStyle}>
+          <MessageCircle className="h-[25px] w-[25px]" strokeWidth={2} />
+        </span>
+        {chatLabelCount ?? 'Chat'}
+      </button>
+      <button type="button" onClick={() => void handleCopyShareLink()} aria-label="share pact" className="flex flex-col items-center gap-1 text-[13px] font-extrabold">
+        <span className={disc} style={discStyle}>
+          <Share className="h-[23px] w-[23px]" strokeWidth={2} />
+        </span>
+        Share
+      </button>
+    </div>
+  );
+
+  // Under the photo: one big button (post / add / join) and Tip.
+  const bottomActions = (showAddPill || (showJoinCta && !showAddPill) || !isCreator || (watch && watchNew > 0)) ? (
+    // empty:hidden: with no button and no tips there is nothing to show, so no blank strip.
+    <div className={`flex items-center gap-2 px-3 pb-3 pt-3 empty:hidden ${showAddPill || showJoinCta ? '' : 'justify-end'}`} onClick={(event) => event.stopPropagation()}>
+      {watch && watchNew > 0 && (
+        <span className="flex h-11 items-center gap-1.5 rounded-full bg-[var(--navy)]/10 px-3 text-[13px] font-extrabold text-[var(--navy)]">
+          <span className="size-2 rounded-full bg-[var(--navy)]" aria-hidden="true" />
+          {watchNew} new
+        </span>
+      )}
+      {showAddPill ? (
+        postedToday ? (
+          <button type="button" onClick={openCamera} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full border-[1.5px] border-[var(--navy)] text-[15px] font-extrabold text-[var(--navy)] transition active:scale-[0.98]">
+            <Camera className="h-[18px] w-[18px]" strokeWidth={2.2} aria-hidden="true" />
+            Add another moment
+          </button>
+        ) : (
+          <button type="button" onClick={openCamera} className="cp-btn-shine flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--navy)] text-[15px] font-extrabold text-white transition active:scale-[0.98]" style={{ boxShadow: '0 10px 22px -12px rgba(31,58,147,0.8)' }}>
+            <Camera className="h-[18px] w-[18px]" strokeWidth={2.2} aria-hidden="true" />
+            Post Day {dayNo || 1}
+          </button>
+        )
+      ) : showJoinCta ? (
+        <button type="button" onClick={handleJoinPact} disabled={showJoinedState || isJoining} aria-label={showJoinedState ? 'Joined' : 'Join pact'} className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-full text-[15px] font-extrabold transition active:scale-[0.98] ${showJoinedState ? 'border border-[var(--hairline)] bg-[var(--card-muted)] text-[var(--muted)]' : 'bg-[var(--navy)] text-white'} ${isJoining ? 'opacity-70' : ''}`}>
+          {showJoinedState && <Check className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" />}
+          {showJoinedState ? 'Joined' : isJoining ? 'Joining…' : 'Join this pact'}
+        </button>
+      ) : null}
+      {!isCreator && (
+        <TipButton
+          variant="soft"
+          creatorId={pact.creator_id ?? pact.user_id ?? pact.creator?.id}
+          creatorName={pact.creator_full_name || creatorLabel}
+          creatorAvatarUrl={creatorAvatarUrl}
+          context={pact.title}
+          count={Number(pact.tip_count ?? 0)}
+          pactId={Number(pact.id)}
+          tipsEnabled={typeof pact.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined}
+          locked={Boolean(pact.media_locked)}
+        />
+      )}
+    </div>
+  ) : null;
 
   const actionBar = (floating: boolean) => (
     <div
@@ -1039,17 +1137,18 @@ export default function FeedPactCard({
              horizontal swipes reach PactGallery; tapping the photo opens the viewer. */
           <>
           <div className="relative w-full" onClick={handleMediaTap} style={transformStyle}>
+            <div className="cp-kenburns overflow-hidden">
             {tiles.length > 0 ? (
               <PactGallery
                 proofs={galleryProofs ?? proofs}
                 interactive
-                aspectClassName="aspect-[3/4]"
+                aspectClassName="aspect-[5/8]"
                 dotsPosition="none"
                 hideProofBadge
                 onActiveIndexChange={setActiveProofIndex}
               />
             ) : (
-              <div className="relative aspect-[3/4] w-full overflow-hidden cp-media-loading bg-[var(--ink)]">
+              <div className="relative aspect-[5/8] w-full overflow-hidden cp-media-loading bg-[var(--ink)]">
                 {isPhotoStory(momentStory!) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={momentStory!.video_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -1059,18 +1158,34 @@ export default function FeedPactCard({
                 )}
               </div>
             )}
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/55 to-transparent" />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
+            </div>
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/60 to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[52%] bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
 
-            <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center gap-2.5 pl-3.5 pr-0.5 pt-2">
+            {tiles.length > 1 && (
+              <div className="pointer-events-none absolute inset-x-4 top-3 flex gap-[5px]" aria-hidden="true">
+                {tiles.map((tile, index) => (
+                  <span key={`${tile.kind}-${tile.id}`} className="h-[3px] flex-1 rounded-full transition-colors duration-300" style={{ background: index === activeProofIndex ? '#FFFFFF' : 'rgba(255,255,255,0.4)' }} />
+                ))}
+              </div>
+            )}
+
+            <div className={`cp-rise-1 pointer-events-none absolute inset-x-0 top-0 flex items-center gap-2.5 pl-4 pr-0.5 ${tiles.length > 1 ? 'pt-6' : 'pt-3'}`}>
               {identity(true)}
               {kebab(true)}
             </div>
 
+            {heartBurst > 0 && (
+              <span key={heartBurst} className="pointer-events-none absolute left-1/2 top-[42%] z-20 -ml-[60px] -mt-[60px]" aria-hidden="true">
+                <Heart className="cp-heart-pop size-[120px]" fill="#FF3B5C" color="#FFFFFF" strokeWidth={1.2} />
+              </span>
+            )}
+
+            {rail}
             {mediaCaption}
 
           </div>
-            {actionBar(false)}
+            {bottomActions}
           </>
         ) : (
           <>

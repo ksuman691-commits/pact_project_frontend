@@ -44,7 +44,7 @@ function groupPactsByCircle(pacts: any[], circles: StoryCircle[]) {
   return Array.from(groups.values()).sort((a, b) => order(a) - order(b))
 }
 
-function PostTodaySheet({ circles, onClose, onPick }: { circles: StoryCircle[]; onClose: () => void; onPick: (pact: any) => void }) {
+export function PostTodaySheet({ circles, onClose, onPick }: { circles: StoryCircle[]; onClose: () => void; onPick: (pact: any) => void }) {
   // Already warmed by the Home row, so this normally renders from cache.
   useBackToClose(true, onClose)
   const query = useMyPacts()
