@@ -946,38 +946,56 @@ export default function FeedPactCard({
     </div>
   );
 
-  // Like, comment and share stacked on the right of the photo, Reels-style.
-  const disc = 'relative flex size-12 items-center justify-center rounded-full';
-  const discStyle = { background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } as React.CSSProperties;
-  const rail = (
-    <div className="cp-rise-2 absolute bottom-[132px] right-3 z-10 flex flex-col items-center gap-3.5 text-white" onClick={(event) => event.stopPropagation()} style={{ textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>
-      <button type="button" onClick={() => void handleLikeTap()} aria-label={liked ? 'unlike this pact' : 'like this pact'} aria-pressed={liked} className="flex flex-col items-center gap-1 text-[13px] font-extrabold">
-        <span className={disc} style={discStyle}>
-          <span className={`inline-flex transition-transform ${isLikeBouncing ? 'scale-125' : 'scale-100'}`} style={{ transitionDuration: '150ms' }}>
-            <Heart className="h-[27px] w-[27px]" strokeWidth={2} fill={liked ? 'var(--like)' : 'none'} color={liked ? 'var(--like)' : '#fff'} />
-          </span>
-          {liked && isLikeBouncing && (
-            <span className="pointer-events-none absolute left-1/2 top-1/2" aria-hidden="true">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <span key={i} className="cp-spark cp-spark-like" style={{ ['--a' as string]: `${i * 60}deg` }} />
-              ))}
+  // Under the photo (photo-first card): status chip, title, day line and a thin progress bar.
+  const statusChip = pactEnded ? (
+    <span className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[12.5px] font-extrabold ${finishedPact ? 'bg-[#DCFCE7] text-[#166534]' : 'bg-[#FEE4E2] text-[#912018]'}`}>
+      {finishedPact ? <Check className="size-3.5" strokeWidth={3} aria-hidden="true" /> : null}
+      {finishedPact ? 'Completed' : endedShort(pact.end_date)}
+    </span>
+  ) : todayWatch ? (
+    <span
+      className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[12.5px] font-extrabold tabular-nums ${
+        todayWatch.done
+          ? 'bg-[#DCFCE7] text-[#166534]'
+          : todayWatch.endsAt - Date.now() < 3 * 3_600_000
+            ? 'bg-[#FFD23F] text-[#17181D]'
+            : 'bg-[var(--card-muted)] text-[var(--ink)]'
+      }`}
+    >
+      {todayWatch.done ? <Check className="size-3.5" strokeWidth={3} aria-hidden="true" /> : null}
+      {todayWatch.done ? 'Done today' : `${todayWatch.leftLabel} left today`}
+    </span>
+  ) : null;
+  const dayLine = [totalDays > 0 ? badgeText : null, showMomentum && !pactEnded ? 'On a roll' : null].filter(Boolean).join(' · ');
+  const belowPhotoCaption = (
+    <div className="px-4 pt-0.5">
+      <h2 className="line-clamp-2 text-[17px] font-extrabold leading-[1.25] tracking-[-0.015em] text-[var(--ink)]">{cleanTitle(pact.title)}</h2>
+      {(watch || privateTag) && (
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {watch ? (
+            <span className="flex items-center gap-1 rounded-full bg-[var(--navy)]/10 px-2.5 py-0.5 text-[12px] font-extrabold text-[var(--navy)]">
+              <Check className="size-3" strokeWidth={3} aria-hidden="true" />
+              Watching
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 rounded-full bg-[var(--navy)]/10 px-2.5 py-0.5 text-[12px] font-extrabold text-[var(--navy)]">
+              <Lock className="size-3" strokeWidth={2.6} aria-hidden="true" />
+              {privateTag}
             </span>
           )}
-        </span>
-        {likeLabelCount ?? 'Like'}
-      </button>
-      <button type="button" onClick={() => setCommentSheetOpen(true)} aria-label="open chat" className="flex flex-col items-center gap-1 text-[13px] font-extrabold">
-        <span className={disc} style={discStyle}>
-          <MessageCircle className="h-[25px] w-[25px]" strokeWidth={2} />
-        </span>
-        {chatLabelCount ?? 'Chat'}
-      </button>
-      <button type="button" onClick={() => void handleCopyShareLink()} aria-label="share pact" className="flex flex-col items-center gap-1 text-[13px] font-extrabold">
-        <span className={disc} style={discStyle}>
-          <Share className="h-[23px] w-[23px]" strokeWidth={2} />
-        </span>
-        Share
-      </button>
+        </div>
+      )}
+      {totalDays > 0 && (
+        <>
+          <div className="mt-2 flex justify-between gap-2 text-[12.5px] font-bold text-[var(--muted)]">
+            <span className="truncate">{dayLine}</span>
+            {finishNeeded > 0 && !pactEnded && <span className="shrink-0">{Math.max(0, Math.min(finishNeeded, finishDone))} of {finishNeeded} days to finish</span>}
+          </div>
+          <div className="mt-1.5 h-[5px] overflow-hidden rounded-full bg-[var(--ink)]/10">
+            <div className="cp-fill-x h-full rounded-full" style={{ width: `${Math.round(progressShare * 100)}%`, background: pactEnded && !finishedPact ? '#F87171' : '#16A34A' }} />
+          </div>
+        </>
+      )}
     </div>
   );
 
@@ -1024,6 +1042,38 @@ export default function FeedPactCard({
       )}
     </div>
   ) : null;
+
+  const actionBarSocial = (
+    <div className="flex items-center px-1 pt-1" onClick={(event) => event.stopPropagation()}>
+      <button
+        type="button"
+        onClick={() => void handleLikeTap()}
+        aria-label={liked ? 'unlike this pact' : 'like this pact'}
+        aria-pressed={liked}
+        className={`flex h-11 items-center gap-1.5 px-2 text-[14px] font-extrabold transition ${liked ? 'text-[var(--like)]' : 'text-[var(--ink)]'} ${isLikeBouncing ? 'scale-110' : 'scale-100'}`}
+        style={{ transitionDuration: '150ms' }}
+      >
+        <span className="relative inline-flex">
+          <Heart className="h-6 w-6" strokeWidth={2} fill={liked ? 'var(--like)' : 'none'} />
+          {liked && isLikeBouncing && (
+            <span className="pointer-events-none absolute left-1/2 top-1/2" aria-hidden="true">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <span key={i} className="cp-spark cp-spark-like" style={{ ['--a' as string]: `${i * 60}deg` }} />
+              ))}
+            </span>
+          )}
+        </span>
+        {likeLabelCount}
+      </button>
+      <button type="button" onClick={() => setCommentSheetOpen(true)} aria-label="open chat" className="flex h-11 items-center gap-1.5 px-2 text-[14px] font-extrabold text-[var(--ink)] transition active:scale-95">
+        <MessageCircle className="h-[23px] w-[23px]" strokeWidth={2} />
+        {chatLabelCount}
+      </button>
+      <button type="button" onClick={() => void handleCopyShareLink()} aria-label="share pact" className="flex h-11 w-11 items-center justify-center text-[var(--ink)] transition active:scale-95">
+        <Share className="h-[21px] w-[21px]" strokeWidth={2} />
+      </button>
+    </div>
+  );
 
   const actionBar = (floating: boolean) => (
     <div
@@ -1136,19 +1186,23 @@ export default function FeedPactCard({
           /* The photo fills the card. Gradients are pointer-events-none so
              horizontal swipes reach PactGallery; tapping the photo opens the viewer. */
           <>
+          <div className="flex items-center gap-2.5 pb-2 pl-3.5 pr-0.5 pt-2">
+            {identity(false)}
+            {kebab(false)}
+          </div>
           <div className="relative w-full" onClick={handleMediaTap} style={transformStyle}>
             <div className="cp-kenburns overflow-hidden">
             {tiles.length > 0 ? (
               <PactGallery
                 proofs={galleryProofs ?? proofs}
                 interactive
-                aspectClassName="aspect-[5/8]"
+                aspectClassName="aspect-[4/5]"
                 dotsPosition="none"
                 hideProofBadge
                 onActiveIndexChange={setActiveProofIndex}
               />
             ) : (
-              <div className="relative aspect-[5/8] w-full overflow-hidden cp-media-loading bg-[var(--ink)]">
+              <div className="relative aspect-[4/5] w-full overflow-hidden cp-media-loading bg-[var(--ink)]">
                 {isPhotoStory(momentStory!) ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={momentStory!.video_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -1159,21 +1213,20 @@ export default function FeedPactCard({
               </div>
             )}
             </div>
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/60 to-transparent" />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[52%] bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
-
+            {/* Only the moment bars sit on the photo, over a faint shade so they stay visible on white. */}
             {tiles.length > 1 && (
-              <div className="pointer-events-none absolute inset-x-4 top-3 flex gap-[5px]" aria-hidden="true">
-                {tiles.map((tile, index) => (
-                  <span key={`${tile.kind}-${tile.id}`} className="h-[3px] flex-1 rounded-full transition-colors duration-300" style={{ background: index === activeProofIndex ? '#FFFFFF' : 'rgba(255,255,255,0.4)' }} />
-                ))}
-              </div>
+              <>
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-black/25 to-transparent" />
+                <div className="pointer-events-none absolute inset-x-3 top-2.5 flex gap-1" aria-hidden="true">
+                  {tiles.map((tile, index) => (
+                    <span key={`${tile.kind}-${tile.id}`} className="h-[2.5px] flex-1 rounded-full transition-colors duration-300" style={{ background: index === activeProofIndex ? '#FFFFFF' : 'rgba(255,255,255,0.5)' }} />
+                  ))}
+                </div>
+                <span className="pointer-events-none absolute right-3 top-[22px] rounded-full bg-black/45 px-2 py-0.5 text-[12px] font-bold tabular-nums text-white">
+                  {Math.min(activeProofIndex + 1, tiles.length)}/{tiles.length}
+                </span>
+              </>
             )}
-
-            <div className={`cp-rise-1 pointer-events-none absolute inset-x-0 top-0 flex items-center gap-2.5 pl-4 pr-0.5 ${tiles.length > 1 ? 'pt-6' : 'pt-3'}`}>
-              {identity(true)}
-              {kebab(true)}
-            </div>
 
             {heartBurst > 0 && (
               <span key={heartBurst} className="pointer-events-none absolute left-1/2 top-[42%] z-20 -ml-[60px] -mt-[60px]" aria-hidden="true">
@@ -1181,10 +1234,12 @@ export default function FeedPactCard({
               </span>
             )}
 
-            {rail}
-            {mediaCaption}
-
           </div>
+            <div className="flex items-center pr-2">
+              <div className="min-w-0 flex-1">{actionBarSocial}</div>
+              {statusChip}
+            </div>
+            {belowPhotoCaption}
             {bottomActions}
           </>
         ) : (
