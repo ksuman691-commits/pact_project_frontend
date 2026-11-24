@@ -7,6 +7,7 @@ import { usePendingDareCount } from '@/hooks/usePendingDareCount'
 import { useAuthStore } from '@/store/auth'
 import QuickPostButton from '@/components/QuickPostButton'
 import { STORIES_ENABLED } from '@/lib/stories'
+import { MARK_RED } from '@/lib/circleMark'
 
 // Leaderboard was dropped from the nav deliberately (it 404s and we're not
 // fixing that route here) — exactly 4 items, Home → Circles → Pacts → Dares.
@@ -20,6 +21,14 @@ const authItems = [
   { href: '/pacts', label: 'Pacts', icon: Users },
   { href: '/dares', label: 'Dares', icon: Zap },
 ]
+
+// Each tab's fill under its ink outline (Dares has always been yellow on ink).
+const TAB_FILL: Record<string, string> = {
+  '/feed': '#C9D3F5',
+  '/circles': MARK_RED,
+  '/pacts': '#86EFAC',
+  '/dares': 'var(--dare)',
+}
 
 // Classic redesign: the floating gradient pill (which has twice caused
 // content below it to be hidden/overlapped) is replaced with a flat,
@@ -84,16 +93,13 @@ export default function BottomNav() {
             aria-current={active ? 'page' : undefined}
           >
             <span className="relative flex items-center justify-center">
-              {isDares ? (
-                // Dares are yellow on ink everywhere; the bolt flickers while one waits for you.
-                <Icon
-                  className={`h-[22px] w-[22px] ${pendingForYouCount > 0 ? 'cp-zap' : ''}`}
-                  strokeWidth={1.6}
-                  style={{ color: 'var(--ink)', fill: 'var(--dare)' }}
-                />
-              ) : (
-                <Icon className="h-5 w-5" strokeWidth={1.8} style={{ color: active ? 'var(--navy)' : 'var(--muted)' }} />
-              )}
+              {/* Every tab has the same look as Dares: an ink outline over its own colour.
+                  The bolt flickers while a dare waits for you. */}
+              <Icon
+                className={`h-[22px] w-[22px] ${isDares && pendingForYouCount > 0 ? 'cp-zap' : ''}`}
+                strokeWidth={1.6}
+                style={{ color: 'var(--ink)', fill: TAB_FILL[item.href] }}
+              />
               {isDares && pendingForYouCount > 0 && (
                 <span
                   aria-hidden="true"
@@ -113,8 +119,8 @@ export default function BottomNav() {
             <span
               className="text-[12px] leading-none"
               style={{
-                color: isDares ? 'var(--ink)' : active ? 'var(--navy)' : 'var(--muted)',
-                fontWeight: active || isDares ? 600 : 400,
+                color: active && !isDares ? 'var(--navy)' : 'var(--ink)',
+                fontWeight: active ? 700 : 600,
               }}
             >
               {item.label}

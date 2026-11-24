@@ -104,7 +104,7 @@ function PactPanel({ pact, peers, onCapture }: PanelProps) {
         )}
         <div className="min-w-0 flex-1">
           {/* The name opens the pact; the button keeps its own job. */}
-          <Link href={`/pacts/${pact.id}`} className="line-clamp-2 text-[21px] font-extrabold leading-[1.12] tracking-[-0.02em] text-white">
+          <Link href={`/pacts/${pact.id}`} className="line-clamp-1 text-[21px] font-extrabold leading-[1.12] tracking-[-0.02em] text-white">
             {pact.title}
           </Link>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -163,8 +163,8 @@ function PactPanel({ pact, peers, onCapture }: PanelProps) {
  * Home's Today: one navy card. On top, today's count and streak; then one
  * panel per active pact, swiped left to right (waiting ones first); a thin
  * progress line; and at the bottom who posted a moment today. The black and
- * yellow Moments button opens the moments at the top of the card and slides
- * the check-in part down.
+ * yellow Moments button opens the moments in place at the bottom of the card,
+ * and Hide closes them from the same spot.
  */
 export default function TodayCheckInRow({
   onCreatePact,
@@ -265,19 +265,8 @@ export default function TodayCheckInRow({
         )}
       </div>
 
-      {momentsOpen && (
-        <MomentsPanel
-          data={moments}
-          open
-          onToggle={() => setMomentsOpen(false)}
-          onViewOwn={() => setViewingOwn(true)}
-          onPost={() => setPickerOpen(true)}
-          onView={setViewing}
-        />
-      )}
-
       {panels.length > 0 && (
-        <div key={momentsOpen ? 'down' : 'up'} className={momentsOpen ? 'cp-slide-down' : undefined}>
+        <div>
           <ul
             ref={scrollerRef}
             onScroll={onScroll}
@@ -312,7 +301,19 @@ export default function TodayCheckInRow({
         </div>
       )}
 
-      {!momentsOpen && <MomentsLine data={moments} open={false} onToggle={() => setMomentsOpen(true)} />}
+      {/* Moments open in place: the Hide button sits exactly where Moments was. */}
+      {momentsOpen ? (
+        <MomentsPanel
+          data={moments}
+          open
+          onToggle={() => setMomentsOpen(false)}
+          onViewOwn={() => setViewingOwn(true)}
+          onPost={() => setPickerOpen(true)}
+          onView={setViewing}
+        />
+      ) : (
+        <MomentsLine data={moments} open={false} onToggle={() => setMomentsOpen(true)} />
+      )}
     </div>
   )
 
