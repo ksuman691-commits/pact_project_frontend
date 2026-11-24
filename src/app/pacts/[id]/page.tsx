@@ -15,6 +15,7 @@ import { useAuthStore } from '@/store/auth';
 import { pactService } from '@/services/api';
 import { markWatchingSeen } from '@/lib/api/access';
 import { getPactProgress } from '@/lib/pactProgress';
+import { isTransientError } from '@/lib/transient';
 import { resolvePactCompletionViewState } from '@/lib/pactCompletionState';
 
 /** While the pact loads: the same full-screen dark frame the moment will fill, so nothing jumps. */
@@ -56,7 +57,7 @@ export default function PactDetailPage() {
   const [joinedLocally, setJoinedLocally] = useState(false);
   const [joining, setJoining] = useState(false);
   const pactId = Number(params.id);
-  const { data: pactData, isLoading, isError, refetch: refetchPact } = usePact(pactId);
+  const { data: pactData, isLoading, isError, error: pactError, failureCount, refetch: refetchPact } = usePact(pactId);
   const { data: momentsData } = usePactProofs(pactId, 50);
 
   const pact = pactData?.data;
@@ -201,7 +202,40 @@ export default function PactDetailPage() {
 
   if (isLoading) {
     return (
-      <PactDetailSkeleton />
+      <>
+        <PactDetailSkeleton />
+        {failureCount >= 2 && (
+          // Still trying: most often the server is waking up, which takes up to a minute.
+          <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 top-1/2 z-30 flex justify-center px-6">
+            <span className="rounded-full bg-black/60 px-4 py-2 text-[13.5px] font-semibold text-white backdrop-blur">
+              Connecting… this can take up to a minute
+            </span>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  if (isError && isTransientError(pactError)) {
+    // The server didn't answer (or is still starting): not the same as a missing pact.
+    return (
+      <>
+        <DetailPageHeader title="Couldn't load" backHref="/feed" maxWidthClassName="max-w-md" />
+        <div className="flex min-h-[calc(100dvh-60px)] items-center justify-center bg-[var(--paper)] px-4">
+          <div className="max-w-sm rounded-[28px] border border-[var(--hairline)] bg-[var(--card)] p-8 text-center">
+            <AlertCircle className="mx-auto h-10 w-10 text-[var(--muted)]" />
+            <h2 className="mt-4 text-xl font-black text-[var(--ink)]">Couldn&apos;t reach CirclePact</h2>
+            <p className="mt-2 text-sm text-[var(--muted)]">The server is taking too long to answer. Check your connection and try again.</p>
+            <button
+              type="button"
+              onClick={() => void refetchPact()}
+              className="mt-6 rounded-full bg-[var(--navy)] px-5 py-3 text-sm font-semibold text-white hover:bg-[var(--navy-hover)]"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      </>
     );
   }
 

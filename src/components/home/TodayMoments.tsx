@@ -113,7 +113,7 @@ export function MomentsLine({ data, open, onToggle }: { data: TodayMomentsData; 
   )
 }
 
-/** Open: the moments at the top of the Today card, big faces you tap to watch. */
+/** Open: the moments at the bottom of the Today card, big faces you tap to watch. */
 export function MomentsPanel({
   data,
   open,
@@ -131,7 +131,7 @@ export function MomentsPanel({
 }) {
   const posted = data.people.length + (data.postedToday ? 1 : 0)
   return (
-    <div className="cp-fade-down relative mt-3.5">
+    <div className="cp-fade-down relative mt-3.5 border-t border-white/15 pt-3">
       <div className="flex items-center gap-2.5">
         <div className="min-w-0 flex-1">
           <h3 className="text-[20px] font-extrabold tracking-[-0.02em] text-white">Moments today</h3>
@@ -187,7 +187,6 @@ export function MomentsPanel({
       <Link href="/moments" className="mt-3.5 flex h-11 items-center justify-center rounded-full text-[15px] font-extrabold" style={{ background: '#17181D', color: YELLOW }}>
         See all moments
       </Link>
-      <div className="mt-4 h-px bg-white/15" />
     </div>
   )
 }

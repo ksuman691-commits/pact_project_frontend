@@ -27,7 +27,9 @@ const queryClient = new QueryClient({
       refetchInterval: PRESIGNED_URL_TTL_MS - IMAGE_REFRESH_MARGIN_MS,
       // Ride out a slow server start or a flaky connection instead of showing an error;
       // a real answer (4xx) fails straight away. Hooks can still set their own.
-      retry: retryTransient(3),
+      // A server waking from sleep answers 429 at once for about a minute, so a few
+      // quick retries aren't enough: 8 tries with backoff cover roughly 50 s.
+      retry: retryTransient(8),
       retryDelay: retryBackoff,
     },
   },

@@ -13,7 +13,7 @@ export function isTransientError(error: any): boolean {
   return status === 408 || status === 429 || status === 502 || status === 503 || status === 504 || status === 500
 }
 
-/** React Query `retry` that keeps trying through a slow start (about a minute with 12 s timeouts). */
+/** React Query `retry` that keeps trying through a slow start. Fast 429s from a waking server need more tries than timeouts do. */
 export const retryTransient =
   (attempts = 4) =>
   (failureCount: number, error: unknown) =>
