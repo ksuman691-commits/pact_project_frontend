@@ -215,6 +215,17 @@ export default function PactMomentsDetail({
   const [activeIndex, setActiveIndex] = useState(0)
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const [selectedMomentId, setSelectedMomentId] = useState<number | string | null>(null)
+  // Press and hold the photo to hide everything on it (like Instagram Stories); let go to bring it back.
+  const [chromeHidden, setChromeHidden] = useState(false)
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const holdStart = useRef<{ x: number; y: number } | null>(null)
+  const heldRef = useRef(false)
+  const endHold = () => {
+    if (holdTimer.current) clearTimeout(holdTimer.current)
+    holdTimer.current = null
+    holdStart.current = null
+    setChromeHidden(false)
+  }
   const [viewerOpen, setViewerOpen] = useState(false)
   const [watchingRecap, setWatchingRecap] = useState(false)
   const stripRef = useRef<HTMLDivElement>(null)
@@ -456,8 +467,34 @@ export default function PactMomentsDetail({
   const heroEl = immersive ? (
     <section
       aria-label={`${cleanTitle(pact?.title)}: moments`}
-      className="relative w-full shrink-0 overflow-hidden bg-black text-white"
-      style={{ height: 'calc(100dvh - 72px)' }}
+      className="relative w-full shrink-0 select-none overflow-hidden bg-black text-white"
+      style={{ height: 'calc(100dvh - 72px)', WebkitTouchCallout: 'none' }}
+      onContextMenu={(event) => event.preventDefault()}
+      onPointerDown={(event) => {
+        if (!event.isPrimary || (event.target as HTMLElement).closest('button, a, [role="menu"]')) return
+        heldRef.current = false
+        holdStart.current = { x: event.clientX, y: event.clientY }
+        if (holdTimer.current) clearTimeout(holdTimer.current)
+        holdTimer.current = setTimeout(() => {
+          heldRef.current = true
+          setChromeHidden(true)
+        }, 260)
+      }}
+      onPointerMove={(event) => {
+        const start = holdStart.current
+        if (start && !heldRef.current && Math.hypot(event.clientX - start.x, event.clientY - start.y) > 10) endHold()
+      }}
+      onPointerUp={endHold}
+      onPointerCancel={endHold}
+      onPointerLeave={endHold}
+      onClickCapture={(event) => {
+        // Letting go after a hold must not also count as a tap (next / previous moment).
+        if (heldRef.current) {
+          heldRef.current = false
+          event.stopPropagation()
+          event.preventDefault()
+        }
+      }}
       onTouchStart={(event) => {
         const touch = event.touches[0]
         swipeRef.current = touch && event.touches.length === 1 ? { x: touch.clientX, y: touch.clientY, at: performance.now() } : null
@@ -491,46 +528,32 @@ export default function PactMomentsDetail({
         </>
       )}
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-black/70 via-black/30 to-transparent" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
+      <div className={`pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/40 to-transparent transition-opacity duration-200 ${chromeHidden ? 'opacity-0' : ''}`} />
+      <div className={`pointer-events-none absolute inset-x-0 bottom-0 h-[32%] bg-gradient-to-t from-black/70 via-black/25 to-transparent transition-opacity duration-200 ${chromeHidden ? 'opacity-0' : ''}`} />
 
-      {/* Top: back, audience, length, menu; then the pact and who posted. */}
-      <div className="absolute inset-x-0 top-0 z-20 px-3" style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}>
-        <div className="flex items-center gap-1.5">
-          <button type="button" onClick={smartBack} aria-label="Go back" className="flex size-11 shrink-0 items-center justify-center rounded-full text-white" style={glass}>
+      {/* Top: back, one small chip (audience and day), menu. Nothing else covers the photo. */}
+      <div className={`absolute inset-x-0 top-0 z-20 px-2 transition-opacity duration-200 ${chromeHidden ? 'pointer-events-none opacity-0' : ''}`} style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}>
+        <div className="flex items-center gap-1">
+          <button type="button" onClick={smartBack} aria-label="Go back" className="flex size-11 shrink-0 items-center justify-center rounded-full text-white" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }}>
             <ChevronLeft className="size-6" strokeWidth={2.2} aria-hidden="true" />
           </button>
-          <span className={glassChip} style={glass}>
+          <span className={glassChip} style={glass} title={`${pact?.proof_submission_frequency === 'weekly' ? 'Weekly' : 'Daily'} · ${total} days`}>
             {pact?.media_locked ? <Lock className="size-[13px]" strokeWidth={2.4} aria-hidden="true" /> : pact?.circle_id != null ? <Users className="size-[13px]" strokeWidth={2.4} aria-hidden="true" /> : pact?.visibility === 'private' ? <Heart className="size-[13px]" strokeWidth={2.4} aria-hidden="true" /> : <Globe className="size-[13px]" strokeWidth={2.4} aria-hidden="true" />}
-            {pact?.media_locked ? (pact?.watch_price ? `Private · ₹${pact.watch_price}` : 'Private') : pact?.circle_id != null ? 'Circle only' : pact?.visibility === 'private' ? 'Followers' : 'Public'}
-          </span>
-          <span className="flex h-7 items-center rounded-full px-2.5 text-[12px] font-bold text-white" style={glass}>
-            {pact?.proof_submission_frequency === 'weekly' ? 'Weekly' : 'Daily'} · {total} days
+            {pact?.media_locked ? (pact?.watch_price ? `Private · ₹${pact.watch_price}` : 'Private') : pact?.circle_id != null ? 'Circle' : pact?.visibility === 'private' ? 'Followers' : 'Public'}
+            {!presentationEnded && (
+              <>
+                <span aria-hidden="true">·</span>
+                {isParticipant && !isEnded && postedToday && <Check className="size-3.5" strokeWidth={3} style={{ color: '#4ADE80' }} aria-label={`Day ${currentDay} done`} />}
+                Day {day} of {total}
+              </>
+            )}
           </span>
           {presentationEnded && watchingRecap ? (
             <button type="button" onClick={() => setWatchingRecap(false)} aria-label="Close recap" className="ml-auto flex size-11 items-center justify-center rounded-full text-white" style={glass}>
               <X className="size-5" />
             </button>
           ) : (
-            pact?.id != null && (isCreatorView || isParticipant) && <PactOwnerMenu pact={pact} role={isCreatorView ? 'creator' : 'member'} onDark />
-          )}
-        </div>
-        <h1 className="mt-2.5 line-clamp-2 px-1 text-[26px] font-extrabold leading-[1.08] tracking-[-0.03em] text-white" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.45)' }}>
-          {cleanTitle(pact?.title)}
-        </h1>
-        <div className="mt-2 flex items-center gap-2.5 px-1" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>
-          <span className="flex size-[30px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy)] text-[11px] font-extrabold text-white ring-2 ring-white/80">
-            {String(current.authorName || current.username || 'Y').split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'Y'}
-          </span>
-          <span className="min-w-0 flex-1 truncate text-[13.5px] font-bold">
-            {current.authorName || current.username || 'You'}
-            <span className="font-semibold text-white/80"> · {momentWhen}</span>
-          </span>
-          {!presentationEnded && (
-            <span className="flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-extrabold text-white" style={glass}>
-              {isParticipant && !isEnded && postedToday && <Check className="size-3.5" strokeWidth={3} style={{ color: '#4ADE80' }} aria-label={`Day ${currentDay} done`} />}
-              Day {day} of {total}
-            </span>
+            pact?.id != null && (isCreatorView || isParticipant) && <span className="ml-auto"><PactOwnerMenu pact={pact} role={isCreatorView ? 'creator' : 'member'} onDark /></span>
           )}
         </div>
       </div>
@@ -543,24 +566,24 @@ export default function PactMomentsDetail({
       )}
 
       {/* Bottom: which day, the caption, then like / comment / share and posting. */}
-      <div className="absolute inset-x-0 bottom-0 z-20 px-4 pb-3">
+      <div className={`absolute inset-x-0 bottom-0 z-20 px-4 pb-3 transition-opacity duration-200 ${chromeHidden ? 'pointer-events-none opacity-0' : ''}`} style={{ textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>
         <div className="flex items-center gap-2">
-          <span className="rounded-[9px] px-2.5 py-[3px] text-[12px] font-extrabold" style={{ backgroundColor: 'rgba(255,255,255,0.24)' }}>
-            Day {current.day || day}
-            {currentDayMoments.length > 1 ? ` · ${positionInDay + 1} of ${currentDayMoments.length}` : ''}
+          <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy)] text-[10.5px] font-extrabold text-white ring-[1.5px] ring-white/85" style={{ textShadow: 'none' }}>
+            {String(current.authorName || current.username || 'Y').split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'Y'}
           </span>
-          {displayMoments.length > 1 && (
-            <span className="text-[12px] font-bold tabular-nums text-white/75">
-              {Math.max(0, displayMoments.findIndex((moment) => moment.id === current.id)) + 1} / {displayMoments.length}
-            </span>
-          )}
+          <span className="min-w-0 truncate text-[14px] font-extrabold">{current.authorName || current.username || 'You'}</span>
+          <span className="shrink-0 text-[13px] font-semibold text-white/85">{momentWhen}</span>
         </div>
-        <p className="mt-1.5 line-clamp-2 text-[18px] font-extrabold leading-[1.2]" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.5)' }}>{caption}</p>
-        {isMoments75 && !presentationEnded && (
-          <p className="mt-0.5 text-[12.5px] font-semibold text-white/80">{completed} of {requiredDays} days to finish</p>
-        )}
+        <p className="mt-1.5 line-clamp-1 text-[15px] font-bold leading-[1.3]">{cleanTitle(pact?.title)}</p>
+        <p className="mt-0.5 line-clamp-2 text-[13px] font-semibold text-white/85">
+          {[
+            caption,
+            currentDayMoments.length > 1 ? `${positionInDay + 1} of ${currentDayMoments.length}` : null,
+            isMoments75 && !presentationEnded ? `${completed} of ${requiredDays} days to finish` : null,
+          ].filter(Boolean).join(' · ')}
+        </p>
         {!presentationEnded && (
-          <div className="-mx-2 mt-2 flex items-center gap-0.5 [&_button]:text-white">
+          <div className="-mx-2 mt-1 flex items-center gap-0.5 [&_button]:text-white">
             <LikeButton variant="row" pactId={Number(pact.id)} count={Number(pact?.like_count ?? 0)} liked={Boolean(pact?.is_liked_by_me)} />
             <button type="button" onClick={() => onComment(false)} aria-label={`Comments, ${Number(pact?.comment_count ?? 0)}`} className="flex h-11 items-center gap-1.5 px-2 text-[14px] font-extrabold transition active:scale-95">
               <MessageCircle className="h-[24px] w-[24px]" strokeWidth={2} />
@@ -578,7 +601,8 @@ export default function PactMomentsDetail({
                   type="button"
                   onClick={onAddMoment}
                   aria-label={postedToday ? 'Add another moment' : `Post Day ${currentDay}`}
-                  className="flex h-10 items-center gap-1.5 rounded-full bg-white px-3.5 text-[13.5px] font-extrabold !text-[var(--navy)] transition active:scale-95"
+                  className="flex h-10 items-center gap-1.5 rounded-full bg-white/95 px-3.5 text-[13.5px] font-extrabold !text-[var(--navy)] transition active:scale-95"
+                  style={{ textShadow: 'none' }}
                 >
                   <Camera className="h-4 w-4" strokeWidth={2.3} aria-hidden="true" />
                   {postedToday ? 'Add' : `Post Day ${currentDay}`}
