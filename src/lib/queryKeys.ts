@@ -59,6 +59,7 @@ export const queryKeys = {
     detail: (id: number) => [...queryKeys.circles.details(), id],
     public: () => [...queryKeys.circles.all, 'public'],
     members: (circleId: number) => [...queryKeys.circles.detail(circleId), 'members'],
+    invites: (circleId: number) => [...queryKeys.circles.detail(circleId), 'invites'],
     pacts: (circleId: number) => [...queryKeys.circles.detail(circleId), 'pacts'],
     search: (query: string) => [...queryKeys.circles.all, 'search', query],
     analytics: (circleId: number) => [...queryKeys.circles.detail(circleId), 'analytics'],

@@ -1,11 +1,11 @@
 'use client';
 
 import LogoSpinner from '@/components/LogoSpinner';
-import React, { useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Plus, Check, Loader, Users } from 'lucide-react';
 import { useCircles } from '@/hooks/useCircles';
-import { useInviteUserToCircle } from '@/hooks/useCircleMutations';
+import { useInviteUserToCircle, usePendingCircleInvites } from '@/hooks/useCircleMutations';
 
 interface AddToCircleSheetProps {
   isOpen: boolean;
@@ -25,16 +25,14 @@ interface AddToCircleSheetProps {
  */
 function CircleRow({ circle, targetUserId }: { circle: any; targetUserId: number }) {
   const invite = useInviteUserToCircle(circle.id);
-  const [added, setAdded] = useState(false);
+  // Already asked (now or earlier) stays "Invited", so the same person can't be invited twice.
+  const { data: invitedIds = [] } = usePendingCircleInvites(circle.id);
+  const added = invitedIds.includes(targetUserId);
 
-  const handleAdd = async () => {
+  const handleAdd = () => {
     if (invite.isPending || added) return;
-    try {
-      await invite.mutateAsync({ userId: targetUserId });
-      setAdded(true);
-    } catch {
-      // Error toast already handled inside useInviteUserToCircle.
-    }
+    // Errors get their toast inside useInviteUserToCircle.
+    invite.mutate({ userId: targetUserId });
   };
 
   return (
@@ -70,7 +68,7 @@ function CircleRow({ circle, targetUserId }: { circle: any; targetUserId: number
         ) : (
           <Plus className="h-3.5 w-3.5" />
         )}
-        {invite.isPending ? 'Adding' : added ? 'Added' : 'Add'}
+        {invite.isPending ? 'Sending' : added ? 'Invited' : 'Add'}
       </button>
     </div>
   );
