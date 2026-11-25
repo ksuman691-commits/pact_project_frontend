@@ -472,7 +472,7 @@ export default function PactMomentsDetail({
       style={{ height: 'calc(100dvh - 72px)', WebkitTouchCallout: 'none' }}
       onContextMenu={(event) => event.preventDefault()}
       onPointerDown={(event) => {
-        if (!event.isPrimary || (event.target as HTMLElement).closest('button, a, [role="menu"]')) return
+        if (!event.isPrimary || (event.target as HTMLElement).closest('button, a, input, textarea, [role="menu"], [role="dialog"]')) return
         heldRef.current = false
         holdStart.current = { x: event.clientX, y: event.clientY }
         if (holdTimer.current) clearTimeout(holdTimer.current)
@@ -579,7 +579,7 @@ export default function PactMomentsDetail({
             <span className="font-medium text-white/75"> · {momentWhen}</span>
           </p>
         </div>
-        <h2 className="mt-2.5 line-clamp-1 text-[17px] font-extrabold leading-[1.25] tracking-[-0.015em]">{cleanTitle(pact?.title)}</h2>
+        <h2 className="mt-2.5 line-clamp-1 text-[17px] font-extrabold leading-[1.25] tracking-[-0.015em] text-white">{cleanTitle(pact?.title)}</h2>
         {(() => {
           const line = [
             caption,
@@ -952,7 +952,7 @@ export default function PactMomentsDetail({
             <button type="button" onClick={smartBack} aria-label="Go back" className="flex size-11 items-center justify-center rounded-full text-white" style={{ background: 'rgba(255,255,255,0.12)' }}>
               <ChevronLeft className="size-6" strokeWidth={2.2} aria-hidden="true" />
             </button>
-            <h1 className="mt-2.5 line-clamp-2 px-1 text-[26px] font-extrabold leading-[1.08] tracking-[-0.03em]">{cleanTitle(pact?.title)}</h1>
+            <h1 className="mt-2.5 line-clamp-2 px-1 text-[26px] font-extrabold leading-[1.08] tracking-[-0.03em] text-white">{cleanTitle(pact?.title)}</h1>
           </div>
         </div>
       </main>

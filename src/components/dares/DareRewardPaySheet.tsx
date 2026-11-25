@@ -11,6 +11,7 @@ import { copyText } from '@/lib/circleInvite'
 import { buildUpiUri, isLikelyMobile } from '@/lib/upi'
 import { toErrorMessage } from '@/lib/errorMessages'
 import { useBackToClose } from '@/hooks/useBackToClose'
+import BodyPortal from '@/components/BodyPortal'
 
 type Payment = { status: string; amount: number; code: string; upi_id: string; payee_name?: string | null }
 
@@ -70,50 +71,52 @@ export default function DareRewardPaySheet({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true" aria-label={`Pay ${payeeName}`} onClick={(e) => e.stopPropagation()}>
-      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 cursor-default" style={{ background: 'rgba(23,24,29,0.52)' }} />
-      <div className="relative flex max-h-[92vh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-t-[22px] bg-[var(--card)] px-6 pb-8 pt-3 text-[var(--ink)]" style={{ boxShadow: '0 -12px 30px -12px rgba(23,24,29,0.35)' }}>
-        <div className="mx-auto h-1 w-10 rounded-full bg-[var(--seat-border)]" aria-hidden="true" />
-        {!payment && !error && (
-          <div className="flex justify-center py-10"><LogoSpinner size={32} /></div>
-        )}
-        {error && <p className="py-6 text-center text-[14px] text-[var(--muted)]">{error}</p>}
-        {payment && (
-          <>
-            <div className="text-center">
-              <h2 className="text-[22px] font-extrabold tracking-[-0.02em]">Pay {payeeName} ₹{payment.amount}</h2>
-              <p className="mt-1 text-[14px] leading-[1.45] text-[var(--muted)]">Send it in your UPI app, then tap I&apos;ve paid. CirclePact never holds the money.</p>
-            </div>
-
-            {mobile ? (
-              <a href={uri} className="flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[var(--ink)] px-6 text-[16px] font-bold text-[var(--dare)]">
-                <ExternalLink className="size-4" strokeWidth={2.2} aria-hidden="true" />
-                Open UPI app
-              </a>
-            ) : (
-              <div className="mx-auto rounded-[12px] bg-white p-3" style={{ boxShadow: '0 1px 2px rgba(60,45,20,0.12)' }}>
-                <CircleQR url={uri} size={176} label={`UPI QR to pay ${payeeName} ₹${payment.amount}`} />
-                <p className="mt-2 text-center text-[12px] text-[var(--muted)]">Scan with any UPI app</p>
+    <BodyPortal>
+      <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true" aria-label={`Pay ${payeeName}`} onClick={(e) => e.stopPropagation()}>
+        <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 cursor-default" style={{ background: 'rgba(23,24,29,0.52)' }} />
+        <div className="relative flex max-h-[92vh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-t-[22px] bg-[var(--card)] px-6 pb-8 pt-3 text-[var(--ink)]" style={{ boxShadow: '0 -12px 30px -12px rgba(23,24,29,0.35)' }}>
+          <div className="mx-auto h-1 w-10 rounded-full bg-[var(--seat-border)]" aria-hidden="true" />
+          {!payment && !error && (
+            <div className="flex justify-center py-10"><LogoSpinner size={32} /></div>
+          )}
+          {error && <p className="py-6 text-center text-[14px] text-[var(--muted)]">{error}</p>}
+          {payment && (
+            <>
+              <div className="text-center">
+                <h2 className="text-[22px] font-extrabold tracking-[-0.02em]">Pay {payeeName} ₹{payment.amount}</h2>
+                <p className="mt-1 text-[14px] leading-[1.45] text-[var(--muted)]">Send it in your UPI app, then tap I&apos;ve paid. CirclePact never holds the money.</p>
               </div>
-            )}
 
-            <dl className="divide-y divide-[var(--line)] rounded-[16px] border border-[var(--line)] bg-[var(--paper)] text-[14px]">
-              <Row label="UPI ID" value={payment.upi_id} onCopy={() => copy(payment.upi_id, 'UPI ID')} />
-              <Row label="Note" value={payment.code} hint="Put this in the payment note so they can match it" onCopy={() => copy(payment.code, 'Code')} />
-            </dl>
+              {mobile ? (
+                <a href={uri} className="flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-[var(--ink)] px-6 text-[16px] font-bold text-[var(--dare)]">
+                  <ExternalLink className="size-4" strokeWidth={2.2} aria-hidden="true" />
+                  Open UPI app
+                </a>
+              ) : (
+                <div className="mx-auto rounded-[12px] bg-white p-3" style={{ boxShadow: '0 1px 2px rgba(60,45,20,0.12)' }}>
+                  <CircleQR url={uri} size={176} label={`UPI QR to pay ${payeeName} ₹${payment.amount}`} />
+                  <p className="mt-2 text-center text-[12px] text-[var(--muted)]">Scan with any UPI app</p>
+                </div>
+              )}
 
-            <button
-              type="button"
-              onClick={() => void markSent()}
-              disabled={step.isPending}
-              className="flex min-h-[52px] items-center justify-center rounded-full border-[1.5px] border-[var(--ink)] px-6 text-[16px] font-bold text-[var(--ink)] disabled:opacity-50"
-            >
-              {step.isPending ? 'Saving…' : "I've paid"}
-            </button>
-          </>
-        )}
+              <dl className="divide-y divide-[var(--line)] rounded-[16px] border border-[var(--line)] bg-[var(--paper)] text-[14px]">
+                <Row label="UPI ID" value={payment.upi_id} onCopy={() => copy(payment.upi_id, 'UPI ID')} />
+                <Row label="Note" value={payment.code} hint="Put this in the payment note so they can match it" onCopy={() => copy(payment.code, 'Code')} />
+              </dl>
+
+              <button
+                type="button"
+                onClick={() => void markSent()}
+                disabled={step.isPending}
+                className="flex min-h-[52px] items-center justify-center rounded-full border-[1.5px] border-[var(--ink)] px-6 text-[16px] font-bold text-[var(--ink)] disabled:opacity-50"
+              >
+                {step.isPending ? 'Saving…' : "I've paid"}
+              </button>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </BodyPortal>
   )
 }
 
