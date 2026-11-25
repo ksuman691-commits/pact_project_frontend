@@ -21,3 +21,36 @@ export const retryTransient =
 
 /** 1 s, 2 s, 4 s, then 8 s between tries. */
 export const retryBackoff = (attempt: number) => Math.min(1000 * 2 ** attempt, 8000)
+
+/**
+ * The server didn't really answer: no reply, a gateway error, or a 429 with no reason
+ * attached (Render's "waking up" page). Our own rate limit always says why, so it is
+ * NOT counted here and is never retried.
+ */
+export function isServerNotReady(error: any): boolean {
+  if (!error || error.code === 'ERR_CANCELED' || error.name === 'CanceledError') return false
+  const response = error.response
+  if (!response) return true
+  const status = Number(response.status)
+  if (status === 502 || status === 503 || status === 504) return response.data?.detail?.code !== 'feature_paused'
+  return status === 429 && !response.data?.detail
+}
+
+/**
+ * Run a one-off request (signing in) and keep retrying while the server is starting,
+ * for up to about a minute (1, 2, 4, then 8 s apart). `onWaiting` fires once, on the
+ * first retry, so the screen can say what's happening.
+ */
+export async function untilServerAnswers<T>(request: () => Promise<T>, onWaiting?: () => void, maxWaitMs = 60_000): Promise<T> {
+  const started = Date.now()
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await request()
+    } catch (error) {
+      const delay = retryBackoff(attempt)
+      if (!isServerNotReady(error) || Date.now() - started + delay > maxWaitMs) throw error
+      if (attempt === 0) onWaiting?.()
+      await new Promise((resolve) => setTimeout(resolve, delay))
+    }
+  }
+}

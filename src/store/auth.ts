@@ -1,8 +1,11 @@
 import { create } from 'zustand';
 import { User } from '@/types';
 import { applySession, authService, cacheProfile, clearToken, hasSession, moveSessionToCookies, readCachedProfile, setToken } from '@/services/api';
-import { isTransientError, retryBackoff } from '@/lib/transient';
+import toast from 'react-hot-toast';
+import { isServerNotReady, isTransientError, retryBackoff, untilServerAnswers } from '@/lib/transient';
 import { consentPayload, type ConsentChoices } from '@/lib/consent';
+
+export const UNREACHABLE = "Couldn't reach CirclePact. Check your connection and try again.";
 
 interface AuthState {
   user: User | null;
@@ -56,13 +59,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await authService.login({ email, password });
+      const waiting = { id: '' as string };
+      const response = await untilServerAnswers(
+        () => authService.login({ email, password }),
+        () => {
+          waiting.id = toast.loading('Connecting to CirclePact… this can take up to a minute');
+        },
+      ).finally(() => {
+        if (waiting.id) toast.dismiss(waiting.id);
+      });
       applySession(response.data);
       const profile = await authService.getProfile();
       set({ user: profile.data, token: response.data.access_token ?? null, isLoading: false });
     } catch (err: any) {
       set({
-        error: err.response?.data?.detail || 'Login failed',
+        error: isServerNotReady(err) ? UNREACHABLE : err.response?.data?.detail || 'Login failed',
         isLoading: false,
       });
       throw err;
@@ -72,13 +83,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   loginWithGoogle: async (idToken, consent) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await authService.googleLogin({ id_token: idToken, ...(consent ? consentPayload(consent) : {}) });
+      // Signing in is often the first call after a quiet spell, so wait out a server that's still starting.
+      const waiting = { id: '' as string };
+      const response = await untilServerAnswers(
+        () => authService.googleLogin({ id_token: idToken, ...(consent ? consentPayload(consent) : {}) }),
+        () => {
+          waiting.id = toast.loading('Connecting to CirclePact… this can take up to a minute');
+        },
+      ).finally(() => {
+        if (waiting.id) toast.dismiss(waiting.id);
+      });
       applySession(response.data);
       const profile = await authService.getProfile();
       set({ user: profile.data, token: response.data.access_token ?? null, isLoading: false });
     } catch (err: any) {
       set({
-        error: err.response?.data?.detail || 'Google sign-in failed',
+        error: isServerNotReady(err) ? UNREACHABLE : err.response?.data?.detail || 'Google sign-in failed',
         isLoading: false,
       });
       throw err;

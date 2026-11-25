@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { readNext } from '@/lib/authNext';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/auth';
+import { UNREACHABLE, useAuthStore } from '@/store/auth';
+import { isServerNotReady } from '@/lib/transient';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import AuthShell, { authInputClass, authLabelClass, authPrimaryButtonClass } from '@/components/AuthShell';
@@ -40,7 +41,7 @@ export default function Login() {
         router.push('/auth/paused');
         return;
       }
-      toast.error(error.response?.data?.detail || 'Sign in failed');
+      toast.error(isServerNotReady(error) ? UNREACHABLE : error.response?.data?.detail || 'Sign in failed');
     }
   };
 
