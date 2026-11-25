@@ -1,0 +1,11 @@
+# Findings checked by hand and confirmed not to be secrets.
+# Format: <commit>:<file>:<rule>:<line>, as Gitleaks prints in "Fingerprint:".
+
+# BACKEND_IMPLEMENTATION_GUIDE.md (deleted since) showed example API responses whose
+# access token was only the standard HS256 JWT header prefix followed by three dots:
+# no payload or signature, so not a real token. Checked 24 Nov 2026.
+1fde68a69606840cc93abbbb0fdbabaeb410740b:BACKEND_IMPLEMENTATION_GUIDE.md:generic-api-key:93
+1fde68a69606840cc93abbbb0fdbabaeb410740b:BACKEND_IMPLEMENTATION_GUIDE.md:generic-api-key:132
+
+# The first version of this file quoted that same placeholder in a comment.
+5ca933702db4a9deddb3dd366c248ab281b5ab98:.gitleaksignore:generic-api-key:5
