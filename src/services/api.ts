@@ -936,6 +936,8 @@ export const circleAdvancedService = {
   // friendly "not available yet" toast instead of a generic error.
   inviteUser: (circleId: number, userId: number, message?: string) =>
   api.post(`/api/circles/${circleId}/invite`, { user_id: userId, message }),
+  // Pending invites in a circle (members only), so the invite screens show "Invited".
+  listInvites: (circleId: number) => api.get(`/api/circles/${circleId}/invites`),
   removeMember: (circleId: number, userId: number) =>
   api.delete(`/api/circles/${circleId}/members/${userId}`),
   updateMember: (circleId: number, userId: number, data: any) =>

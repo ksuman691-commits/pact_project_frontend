@@ -1,5 +1,6 @@
 'use client'
 
+import Avatar from '@/components/Avatar'
 import { daysSinceEnded, endedLabel, endedOnDate } from '@/lib/pactEnded'
 import Image from 'next/image'
 import AutoPlayVideo from '@/components/media/AutoPlayVideo'
@@ -534,7 +535,7 @@ export default function PactMomentsDetail({
       {/* Top: back, one small chip (audience and day), menu. Nothing else covers the photo. */}
       <div className={`absolute inset-x-0 top-0 z-20 px-2 transition-opacity duration-200 ${chromeHidden ? 'pointer-events-none opacity-0' : ''}`} style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}>
         <div className="flex items-center gap-1">
-          <button type="button" onClick={smartBack} aria-label="Go back" className="flex size-11 shrink-0 items-center justify-center rounded-full text-white" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }}>
+          <button type="button" onClick={smartBack} aria-label="Go back" className="flex size-11 shrink-0 items-center justify-center rounded-full text-white" style={glass}>
             <ChevronLeft className="size-6" strokeWidth={2.2} aria-hidden="true" />
           </button>
           <span className={glassChip} style={glass} title={`${pact?.proof_submission_frequency === 'weekly' ? 'Weekly' : 'Daily'} · ${total} days`}>
@@ -566,33 +567,41 @@ export default function PactMomentsDetail({
       )}
 
       {/* Bottom: which day, the caption, then like / comment / share and posting. */}
-      <div className={`absolute inset-x-0 bottom-0 z-20 px-4 pb-3 transition-opacity duration-200 ${chromeHidden ? 'pointer-events-none opacity-0' : ''}`} style={{ textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>
-        <div className="flex items-center gap-2">
-          <span className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--navy)] text-[10.5px] font-extrabold text-white ring-[1.5px] ring-white/85" style={{ textShadow: 'none' }}>
-            {String(current.authorName || current.username || 'Y').split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'Y'}
+      {/* One block, one left edge and one right edge (16 px): who and when, the pact, the caption,
+          then the actions with Post on the same baseline. */}
+      <div className={`absolute inset-x-0 bottom-0 z-20 px-4 pb-2 transition-opacity duration-200 ${chromeHidden ? 'pointer-events-none opacity-0' : ''}`} style={{ textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}>
+        <div className="flex items-center gap-2.5">
+          <span className="shrink-0 rounded-full ring-[1.5px] ring-white/85" style={{ textShadow: 'none' }}>
+            <Avatar name={current.authorName || current.username || 'You'} avatarUrl={current.avatarUrl} size={32} />
           </span>
-          <span className="min-w-0 truncate text-[14px] font-extrabold">{current.authorName || current.username || 'You'}</span>
-          <span className="shrink-0 text-[13px] font-semibold text-white/85">{momentWhen}</span>
+          <p className="min-w-0 truncate text-[14px] leading-tight">
+            <span className="font-extrabold">{current.authorName || current.username || 'You'}</span>
+            <span className="font-medium text-white/75"> · {momentWhen}</span>
+          </p>
         </div>
-        <p className="mt-1.5 line-clamp-1 text-[15px] font-bold leading-[1.3]">{cleanTitle(pact?.title)}</p>
-        <p className="mt-0.5 line-clamp-2 text-[13px] font-semibold text-white/85">
-          {[
+        <h2 className="mt-2.5 line-clamp-1 text-[17px] font-extrabold leading-[1.25] tracking-[-0.015em]">{cleanTitle(pact?.title)}</h2>
+        {(() => {
+          const line = [
             caption,
             currentDayMoments.length > 1 ? `${positionInDay + 1} of ${currentDayMoments.length}` : null,
             isMoments75 && !presentationEnded ? `${completed} of ${requiredDays} days to finish` : null,
-          ].filter(Boolean).join(' · ')}
-        </p>
+          ].filter(Boolean).join(' · ')
+          return line ? <p className="mt-1 line-clamp-2 text-[14px] leading-[1.35] text-white/90">{line}</p> : null
+        })()}
         {!presentationEnded && (
-          <div className="-mx-2 mt-1 flex items-center gap-0.5 [&_button]:text-white">
-            <LikeButton variant="row" pactId={Number(pact.id)} count={Number(pact?.like_count ?? 0)} liked={Boolean(pact?.is_liked_by_me)} />
-            <button type="button" onClick={() => onComment(false)} aria-label={`Comments, ${Number(pact?.comment_count ?? 0)}`} className="flex h-11 items-center gap-1.5 px-2 text-[14px] font-extrabold transition active:scale-95">
-              <MessageCircle className="h-[24px] w-[24px]" strokeWidth={2} />
-              {Number(pact?.comment_count ?? 0) > 0 && Number(pact?.comment_count ?? 0)}
-            </button>
-            <button type="button" onClick={() => void sharePact()} aria-label="Share pact" className="flex h-11 w-10 items-center justify-center transition active:scale-95">
-              <Share className="h-[22px] w-[22px]" strokeWidth={2} />
-            </button>
-            <div className="ml-auto flex items-center gap-1.5">
+          <div className="mt-2 flex h-11 items-center [&_button]:text-white">
+            {/* -ml-2 lines the heart up with the text above (the buttons carry 8 px of padding). */}
+            <div className="-ml-2 flex items-center gap-1">
+              <LikeButton variant="row" pactId={Number(pact.id)} count={Number(pact?.like_count ?? 0)} liked={Boolean(pact?.is_liked_by_me)} />
+              <button type="button" onClick={() => onComment(false)} aria-label={`Comments, ${Number(pact?.comment_count ?? 0)}`} className="flex h-11 items-center gap-1.5 px-2 text-[15px] font-bold tabular-nums transition active:scale-95">
+                <MessageCircle className="h-6 w-6" strokeWidth={2} />
+                {Number(pact?.comment_count ?? 0) > 0 && Number(pact?.comment_count ?? 0)}
+              </button>
+              <button type="button" onClick={() => void sharePact()} aria-label="Share pact" className="flex h-11 w-11 items-center justify-center transition active:scale-95">
+                <Share className="h-[22px] w-[22px]" strokeWidth={2} />
+              </button>
+            </div>
+            <div className="ml-auto flex items-center gap-2">
               {!isCreatorView && (
                 <TipButton variant="soft" creatorId={creatorId} creatorName={creatorName} creatorAvatarUrl={pact?.creator_avatar_url} context={pact?.title} count={Number(pact?.tip_count ?? 0)} pactId={Number(pact?.id)} tipsEnabled={typeof pact?.creator_tips_enabled === 'boolean' ? pact.creator_tips_enabled : undefined} locked={Boolean(pact?.media_locked)} />
               )}
@@ -601,7 +610,7 @@ export default function PactMomentsDetail({
                   type="button"
                   onClick={onAddMoment}
                   aria-label={postedToday ? 'Add another moment' : `Post Day ${currentDay}`}
-                  className="flex h-10 items-center gap-1.5 rounded-full bg-white/95 px-3.5 text-[13.5px] font-extrabold !text-[var(--navy)] transition active:scale-95"
+                  className="flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-[14px] font-extrabold !text-[var(--navy)] shadow-[0_2px_10px_rgba(0,0,0,0.25)] transition active:scale-95"
                   style={{ textShadow: 'none' }}
                 >
                   <Camera className="h-4 w-4" strokeWidth={2.3} aria-hidden="true" />
@@ -611,7 +620,7 @@ export default function PactMomentsDetail({
             </div>
           </div>
         )}
-        <div className="pointer-events-none mt-1 flex justify-center text-white/70" aria-hidden="true">
+        <div className="pointer-events-none flex justify-center text-white/60" aria-hidden="true">
           <ChevronDown className="size-5 animate-bounce [animation-duration:2s]" strokeWidth={2.4} />
         </div>
       </div>
