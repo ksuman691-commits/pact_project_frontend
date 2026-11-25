@@ -19,6 +19,8 @@ export function safeNext(value: string | null | undefined, fallback = '/'): stri
     try {
       const url = new URL(value, window.location.origin)
       if (url.origin !== window.location.origin) return fallback
+      // Checked again after the browser tidies the path ("/./auth/login" is /auth/login).
+      if (url.pathname.startsWith('/auth/')) return fallback
       return `${url.pathname}${url.search}${url.hash}`
     } catch {
       return fallback
