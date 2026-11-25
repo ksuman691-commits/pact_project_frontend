@@ -5,7 +5,8 @@ import { useState } from 'react';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { useAuthStore } from '@/store/auth';
+import { isServerNotReady } from '@/lib/transient';
+import { UNREACHABLE, useAuthStore } from '@/store/auth';
 import { readNext } from '@/lib/authNext';
 import { EMPTY_CONSENT, isPolicyVersionMismatch, type ConsentChoices } from '@/lib/consent';
 import ConsentNotice from '@/components/legal/ConsentNotice';
@@ -47,6 +48,11 @@ export default function GoogleSignInButton({ consent }: { consent?: ConsentChoic
       }
       if (isPolicyVersionMismatch(error)) {
         toast.error('Our Terms or Privacy Policy just changed. Refresh the page to see the latest.');
+        return;
+      }
+      if (isServerNotReady(error)) {
+        // Still no answer after about a minute of retries: say so, not "sign-in failed".
+        toast.error(UNREACHABLE);
         return;
       }
       toast.error(typeof detail === 'string' ? detail : detail?.message || 'Google sign-in failed');
