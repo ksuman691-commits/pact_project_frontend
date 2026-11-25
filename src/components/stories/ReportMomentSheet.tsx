@@ -5,6 +5,7 @@ import { Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { pactService, type MomentReportReason } from '@/services/api';
 import { useBackToClose } from '@/hooks/useBackToClose';
+import BodyPortal from '@/components/BodyPortal';
 
 const REASONS: { id: MomentReportReason; label: string; hint: string }[] = [
   { id: 'fake_or_ai', label: 'Fake or AI proof', hint: 'Not really them, a stock photo, or made with AI' },
@@ -36,74 +37,76 @@ export default function ReportMomentSheet({ pactId, proofId, onClose }: { pactId
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[130] flex items-end justify-center bg-black/50 px-3 pb-3"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="report-moment-title"
-      onClick={(e) => e.stopPropagation()}
-      onPointerDown={(e) => e.stopPropagation()}
-      onPointerUp={(e) => e.stopPropagation()}
-    >
-      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 cursor-default" />
-      <div className="relative z-10 w-full max-w-md rounded-[26px] border border-[var(--line)] bg-[var(--card)] px-[18px] pb-4 pt-5 text-[var(--ink)] shadow-2xl">
-        <button type="button" onClick={onClose} aria-label="Close" className="absolute right-3 top-3 flex size-11 items-center justify-center rounded-full text-[var(--muted)]">
-          <X className="size-5" aria-hidden="true" />
-        </button>
-        <h2 id="report-moment-title" className="pr-10 text-[22px] font-bold tracking-[-0.03em]">Report this moment</h2>
-        <p className="mt-1.5 text-[13.5px] leading-[1.5] text-[var(--muted)]">Our team checks every report. We don&apos;t tell them who reported.</p>
+    <BodyPortal>
+      <div
+        className="fixed inset-0 z-[130] flex items-end justify-center bg-black/50 px-3 pb-3"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="report-moment-title"
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        onPointerUp={(e) => e.stopPropagation()}
+      >
+        <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 cursor-default" />
+        <div className="relative z-10 w-full max-w-md rounded-[26px] border border-[var(--line)] bg-[var(--card)] px-[18px] pb-4 pt-5 text-[var(--ink)] shadow-2xl">
+          <button type="button" onClick={onClose} aria-label="Close" className="absolute right-3 top-3 flex size-11 items-center justify-center rounded-full text-[var(--muted)]">
+            <X className="size-5" aria-hidden="true" />
+          </button>
+          <h2 id="report-moment-title" className="pr-10 text-[22px] font-bold tracking-[-0.03em]">Report this moment</h2>
+          <p className="mt-1.5 text-[13.5px] leading-[1.5] text-[var(--muted)]">Our team checks every report. We don&apos;t tell them who reported.</p>
 
-        <div className="mt-4 flex flex-col gap-2" role="radiogroup" aria-label="Why are you reporting it?">
-          {REASONS.map((item) => {
-            const picked = reason === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                role="radio"
-                aria-checked={picked}
-                onClick={() => setReason(item.id)}
-                className="flex min-h-[56px] items-center gap-3 rounded-[16px] border px-3.5 text-left transition active:scale-[0.99]"
-                style={picked ? { background: 'var(--ink)', borderColor: 'var(--ink)', color: 'white' } : { borderColor: 'var(--line)' }}
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] font-bold">{item.label}</span>
-                  <span className="block text-[12.5px]" style={{ color: picked ? '#C9C8CF' : 'var(--muted)' }}>{item.hint}</span>
-                </span>
-                {picked && (
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[var(--dare)] text-[var(--ink)]">
-                    <Check className="size-3.5" strokeWidth={3.5} aria-hidden="true" />
+          <div className="mt-4 flex flex-col gap-2" role="radiogroup" aria-label="Why are you reporting it?">
+            {REASONS.map((item) => {
+              const picked = reason === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={picked}
+                  onClick={() => setReason(item.id)}
+                  className="flex min-h-[56px] items-center gap-3 rounded-[16px] border px-3.5 text-left transition active:scale-[0.99]"
+                  style={picked ? { background: 'var(--ink)', borderColor: 'var(--ink)', color: 'white' } : { borderColor: 'var(--line)' }}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[15px] font-bold">{item.label}</span>
+                    <span className="block text-[12.5px]" style={{ color: picked ? '#C9C8CF' : 'var(--muted)' }}>{item.hint}</span>
                   </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {reason && (
-          <div className="cp-pop-in mt-3">
-            <label htmlFor="report-moment-note" className="mb-1 block text-[13px] font-bold">
-              Anything we should know? <span className="font-medium text-[var(--muted)]">(up to you)</span>
-            </label>
-            <textarea
-              id="report-moment-note"
-              value={note}
-              onChange={(e) => setNote(e.target.value.slice(0, 300))}
-              rows={2}
-              className="w-full resize-none rounded-[14px] border border-[var(--line)] bg-[var(--paper)] px-3.5 py-2.5 text-[16px] outline-none focus:border-[var(--ink)]"
-            />
+                  {picked && (
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[var(--dare)] text-[var(--ink)]">
+                      <Check className="size-3.5" strokeWidth={3.5} aria-hidden="true" />
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
-        )}
 
-        <button
-          type="button"
-          onClick={() => void submit()}
-          disabled={!reason || busy}
-          className="mt-4 flex h-[52px] w-full items-center justify-center rounded-full bg-[#B3261E] text-[16px] font-bold text-white disabled:opacity-40"
-        >
-          {busy ? 'Sending…' : 'Report moment'}
-        </button>
+          {reason && (
+            <div className="cp-pop-in mt-3">
+              <label htmlFor="report-moment-note" className="mb-1 block text-[13px] font-bold">
+                Anything we should know? <span className="font-medium text-[var(--muted)]">(up to you)</span>
+              </label>
+              <textarea
+                id="report-moment-note"
+                value={note}
+                onChange={(e) => setNote(e.target.value.slice(0, 300))}
+                rows={2}
+                className="w-full resize-none rounded-[14px] border border-[var(--line)] bg-[var(--paper)] px-3.5 py-2.5 text-[16px] outline-none focus:border-[var(--ink)]"
+              />
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => void submit()}
+            disabled={!reason || busy}
+            className="mt-4 flex h-[52px] w-full items-center justify-center rounded-full bg-[#B3261E] text-[16px] font-bold text-white disabled:opacity-40"
+          >
+            {busy ? 'Sending…' : 'Report moment'}
+          </button>
+        </div>
       </div>
-    </div>
+    </BodyPortal>
   );
 }

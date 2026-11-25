@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import BodyPortal from '@/components/BodyPortal'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { CalendarPlus, Lock, LogOut, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
@@ -157,126 +158,132 @@ export default function PactOwnerMenu({ pact, role = 'creator', onDark = false }
         <MoreHorizontal className="size-5" strokeWidth={2} aria-hidden="true" />
       </button>
 
-      {sheet && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true" aria-label={sheet === 'edit' ? 'Edit pact' : sheet === 'extend' ? 'Extend pact' : 'Pact options'}>
-          <button type="button" aria-label="Close" onClick={() => setSheet(null)} className="absolute inset-0 cursor-default" style={{ background: 'rgba(23,24,29,0.52)' }} />
-          <div className="relative w-full max-w-md rounded-t-[22px] bg-[var(--card)] px-6 pb-8 pt-3 text-[var(--ink)]" style={{ boxShadow: '0 -12px 30px -12px rgba(23,24,29,0.35)' }}>
-            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--seat-border)]" aria-hidden="true" />
+      {/* Sheets and confirms go to <body>: drawn inside the photo's layer they sat under the
+          bottom nav, and the photo's press-and-hold would catch taps on them. */}
+      {(sheet || confirming) && (
+        <BodyPortal>
+          {sheet && (
+            <div className="fixed inset-0 z-[70] flex items-end justify-center" role="dialog" aria-modal="true" aria-label={sheet === 'edit' ? 'Edit pact' : sheet === 'extend' ? 'Extend pact' : 'Pact options'}>
+              <button type="button" aria-label="Close" onClick={() => setSheet(null)} className="absolute inset-0 cursor-default" style={{ background: 'rgba(23,24,29,0.52)' }} />
+              <div className="relative max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-[22px] bg-[var(--card)] px-6 pt-3 text-[var(--ink)]" style={{ boxShadow: '0 -12px 30px -12px rgba(23,24,29,0.35)', paddingBottom: 'max(2rem, calc(env(safe-area-inset-bottom) + 1rem))' }}>
+                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--seat-border)]" aria-hidden="true" />
 
-            {sheet === 'menu' && role === 'member' && (
-              <button type="button" onClick={() => setConfirming('leave')} className={row} style={{ color: '#B3261E' }}>
-                <LogOut className="size-5 shrink-0" strokeWidth={2} aria-hidden="true" />
-                Leave pact
-              </button>
-            )}
-
-            {sheet === 'menu' && role === 'creator' && (
-              <>
-                <button type="button" onClick={() => setSheet('edit')} className={row}>
-                  <Pencil className="size-5 shrink-0" strokeWidth={2} aria-hidden="true" />
-                  Edit title and details
-                </button>
-                {!running
-                  ? lockedRow(CalendarPlus, 'Extend', 'This pact has ended. Start a new one to keep going.')
-                  : isPaid
-                    ? lockedRow(CalendarPlus, 'Extend', 'People paid to watch this pact as it is, so its length stays.')
-                    : (
-                      <button type="button" onClick={() => setSheet('extend')} className={row}>
-                        <CalendarPlus className="size-5 shrink-0" strokeWidth={2} aria-hidden="true" />
-                        Extend
-                      </button>
-                    )}
-                {isPaid ? (
-                  lockedRow(Lock, 'Delete pact', "Paid pacts can't be deleted. People pay to watch them, so they stay up.")
-                ) : (
-                  <button type="button" onClick={() => setConfirming('delete')} className={row} style={{ color: '#B3261E' }}>
-                    <Trash2 className="size-5 shrink-0" strokeWidth={2} aria-hidden="true" />
-                    Delete pact
+                {sheet === 'menu' && role === 'member' && (
+                  <button type="button" onClick={() => setConfirming('leave')} className={row} style={{ color: '#B3261E' }}>
+                    <LogOut className="size-5 shrink-0" strokeWidth={2} aria-hidden="true" />
+                    Leave pact
                   </button>
                 )}
-              </>
-            )}
 
-            {sheet === 'edit' && (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  saveEdit()
-                }}
-              >
-                <h2 className="text-[19px] font-extrabold tracking-[-0.02em]">Edit pact</h2>
-                {isPaid && <p className="mt-1 text-[13px] leading-[1.45] text-[var(--muted)]">People paid to watch this pact, so you can fix small typos in the title only.</p>}
-                <label className="mt-4 block text-[13px] font-bold text-[var(--muted)]" htmlFor="pact-title">Title</label>
-                <input id="pact-title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} className="mt-1.5 h-12 w-full rounded-2xl border border-[var(--hairline)] bg-white px-3.5 text-[16px] font-semibold" />
-                <label className="mt-3 block text-[13px] font-bold text-[var(--muted)]" htmlFor="pact-details">Details</label>
-                <textarea
-                  id="pact-details"
-                  value={details}
-                  onChange={(e) => setDetails(e.target.value)}
-                  disabled={isPaid}
-                  rows={3}
-                  placeholder="What counts, the rule, anything that helps people keep you honest"
-                  className="mt-1.5 w-full resize-none rounded-2xl border border-[var(--hairline)] bg-white px-3.5 py-3 text-[16px] disabled:opacity-60"
-                />
-                <button type="submit" disabled={busy} className="mt-4 h-12 w-full rounded-full bg-[var(--navy)] text-[15px] font-extrabold text-white disabled:opacity-60">
-                  {busy ? 'Saving…' : 'Save'}
-                </button>
-              </form>
-            )}
-
-            {sheet === 'extend' && (
-              <div>
-                <h2 className="text-[19px] font-extrabold tracking-[-0.02em]">Extend this pact</h2>
-                <p className="mt-1 text-[13.5px] text-[var(--muted)]">Keep going without starting over. Your streak and moments stay.</p>
-                <div className="mt-4 grid grid-cols-4 gap-2" role="radiogroup" aria-label="Days to add">
-                  {EXTEND_OPTIONS.map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      role="radio"
-                      aria-checked={extra === n}
-                      onClick={() => setExtra(n)}
-                      className={`h-11 rounded-full text-[14px] font-extrabold ${extra === n ? 'bg-[var(--ink)] text-white' : 'border border-[var(--hairline)] bg-white'}`}
-                    >
-                      +{n}
+                {sheet === 'menu' && role === 'creator' && (
+                  <>
+                    <button type="button" onClick={() => setSheet('edit')} className={row}>
+                      <Pencil className="size-5 shrink-0" strokeWidth={2} aria-hidden="true" />
+                      Edit title and details
                     </button>
-                  ))}
-                </div>
-                <p className="mt-3 text-[13.5px] font-semibold">
-                  {total ? `${total} → ${total + extra} days` : `+${extra} days`}
-                  {addDays(pact.end_date, extra) ? ` · now ends ${addDays(pact.end_date, extra)}` : ''}
-                </p>
-                <button type="button" onClick={saveExtend} disabled={busy} className="mt-4 h-12 w-full rounded-full bg-[var(--navy)] text-[15px] font-extrabold text-white disabled:opacity-60">
-                  {busy ? 'Extending…' : `Add ${extra} days`}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+                    {!running
+                      ? lockedRow(CalendarPlus, 'Extend', 'This pact has ended. Start a new one to keep going.')
+                      : isPaid
+                        ? lockedRow(CalendarPlus, 'Extend', 'People paid to watch this pact as it is, so its length stays.')
+                        : (
+                          <button type="button" onClick={() => setSheet('extend')} className={row}>
+                            <CalendarPlus className="size-5 shrink-0" strokeWidth={2} aria-hidden="true" />
+                            Extend
+                          </button>
+                        )}
+                    {isPaid ? (
+                      lockedRow(Lock, 'Delete pact', "Paid pacts can't be deleted. People pay to watch them, so they stay up.")
+                    ) : (
+                      <button type="button" onClick={() => setConfirming('delete')} className={row} style={{ color: '#B3261E' }}>
+                        <Trash2 className="size-5 shrink-0" strokeWidth={2} aria-hidden="true" />
+                        Delete pact
+                      </button>
+                    )}
+                  </>
+                )}
 
-      <ConfirmModal
-        isOpen={confirming === 'delete'}
-        onClose={() => (busy ? undefined : setConfirming(null))}
-        onConfirm={() => void remove()}
-        title="Delete this pact?"
-        description={`"${pact.title ?? 'This pact'}" and all its moments, comments and likes will be gone for good.${
-          others > 0 ? ` ${others} ${others === 1 ? 'person' : 'people'} joined, and they'll be told.` : ''
-        }`}
-        confirmLabel="Delete pact"
-        destructive
-        loading={busy}
-      />
-      <ConfirmModal
-        isOpen={confirming === 'leave'}
-        onClose={() => (busy ? undefined : setConfirming(null))}
-        onConfirm={() => void leave()}
-        title="Leave this pact?"
-        description="Days you've already missed stay on your CP Score. Leaving within a week of joining counts as quitting (−2)."
-        confirmLabel="Leave pact"
-        destructive
-        loading={busy}
-      />
+                {sheet === 'edit' && (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      saveEdit()
+                    }}
+                  >
+                    <h2 className="text-[19px] font-extrabold tracking-[-0.02em]">Edit pact</h2>
+                    {isPaid && <p className="mt-1 text-[13px] leading-[1.45] text-[var(--muted)]">People paid to watch this pact, so you can fix small typos in the title only.</p>}
+                    <label className="mt-4 block text-[13px] font-bold text-[var(--muted)]" htmlFor="pact-title">Title</label>
+                    <input id="pact-title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} className="mt-1.5 h-12 w-full rounded-2xl border border-[var(--hairline)] bg-white px-3.5 text-[16px] font-semibold" />
+                    <label className="mt-3 block text-[13px] font-bold text-[var(--muted)]" htmlFor="pact-details">Details</label>
+                    <textarea
+                      id="pact-details"
+                      value={details}
+                      onChange={(e) => setDetails(e.target.value)}
+                      disabled={isPaid}
+                      rows={3}
+                      placeholder="What counts, the rule, anything that helps people keep you honest"
+                      className="mt-1.5 w-full resize-none rounded-2xl border border-[var(--hairline)] bg-white px-3.5 py-3 text-[16px] disabled:opacity-60"
+                    />
+                    <button type="submit" disabled={busy} className="mt-4 h-12 w-full rounded-full bg-[var(--navy)] text-[15px] font-extrabold text-white disabled:opacity-60">
+                      {busy ? 'Saving…' : 'Save'}
+                    </button>
+                  </form>
+                )}
+
+                {sheet === 'extend' && (
+                  <div>
+                    <h2 className="text-[19px] font-extrabold tracking-[-0.02em]">Extend this pact</h2>
+                    <p className="mt-1 text-[13.5px] text-[var(--muted)]">Keep going without starting over. Your streak and moments stay.</p>
+                    <div className="mt-4 grid grid-cols-4 gap-2" role="radiogroup" aria-label="Days to add">
+                      {EXTEND_OPTIONS.map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          role="radio"
+                          aria-checked={extra === n}
+                          onClick={() => setExtra(n)}
+                          className={`h-11 rounded-full text-[14px] font-extrabold ${extra === n ? 'bg-[var(--ink)] text-white' : 'border border-[var(--hairline)] bg-white'}`}
+                        >
+                          +{n}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="mt-3 text-[13.5px] font-semibold">
+                      {total ? `${total} → ${total + extra} days` : `+${extra} days`}
+                      {addDays(pact.end_date, extra) ? ` · now ends ${addDays(pact.end_date, extra)}` : ''}
+                    </p>
+                    <button type="button" onClick={saveExtend} disabled={busy} className="mt-4 h-12 w-full rounded-full bg-[var(--navy)] text-[15px] font-extrabold text-white disabled:opacity-60">
+                      {busy ? 'Extending…' : `Add ${extra} days`}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <ConfirmModal
+            isOpen={confirming === 'delete'}
+            onClose={() => (busy ? undefined : setConfirming(null))}
+            onConfirm={() => void remove()}
+            title="Delete this pact?"
+            description={`"${pact.title ?? 'This pact'}" and all its moments, comments and likes will be gone for good.${
+              others > 0 ? ` ${others} ${others === 1 ? 'person' : 'people'} joined, and they'll be told.` : ''
+            }`}
+            confirmLabel="Delete pact"
+            destructive
+            loading={busy}
+          />
+          <ConfirmModal
+            isOpen={confirming === 'leave'}
+            onClose={() => (busy ? undefined : setConfirming(null))}
+            onConfirm={() => void leave()}
+            title="Leave this pact?"
+            description="Days you've already missed stay on your CP Score. Leaving within a week of joining counts as quitting (−2)."
+            confirmLabel="Leave pact"
+            destructive
+            loading={busy}
+          />
+        </BodyPortal>
+      )}
     </>
   )
 }
