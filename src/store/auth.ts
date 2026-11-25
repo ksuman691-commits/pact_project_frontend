@@ -63,7 +63,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const response = await untilServerAnswers(
         () => authService.login({ email, password }),
         () => {
-          waiting.id = toast.loading('Connecting to CirclePact… this can take up to a minute');
+          waiting.id = toast.loading('Connecting to CirclePact… this can take a minute or two');
         },
       ).finally(() => {
         if (waiting.id) toast.dismiss(waiting.id);
@@ -88,7 +88,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const response = await untilServerAnswers(
         () => authService.googleLogin({ id_token: idToken, ...(consent ? consentPayload(consent) : {}) }),
         () => {
-          waiting.id = toast.loading('Connecting to CirclePact… this can take up to a minute');
+          waiting.id = toast.loading('Connecting to CirclePact… this can take a minute or two');
         },
       ).finally(() => {
         if (waiting.id) toast.dismiss(waiting.id);

@@ -38,10 +38,10 @@ export function isServerNotReady(error: any): boolean {
 
 /**
  * Run a one-off request (signing in) and keep retrying while the server is starting,
- * for up to about a minute (1, 2, 4, then 8 s apart). `onWaiting` fires once, on the
+ * for up to about two minutes (1, 2, 4, then 8 s apart): a sleeping Render server took ~65 s to wake. `onWaiting` fires once, on the
  * first retry, so the screen can say what's happening.
  */
-export async function untilServerAnswers<T>(request: () => Promise<T>, onWaiting?: () => void, maxWaitMs = 60_000): Promise<T> {
+export async function untilServerAnswers<T>(request: () => Promise<T>, onWaiting?: () => void, maxWaitMs = 120_000): Promise<T> {
   const started = Date.now()
   for (let attempt = 0; ; attempt += 1) {
     try {
