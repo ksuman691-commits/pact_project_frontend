@@ -1,0 +1,8 @@
+# Findings checked by hand and confirmed not to be secrets.
+# Format: <commit>:<file>:<rule>:<line>, as Gitleaks prints in "Fingerprint:".
+
+# BACKEND_IMPLEMENTATION_GUIDE.md (deleted since) showed example API responses with
+# "access_token": "eyJhbGciOiJIUzI1NiIs..." — only the standard HS256 JWT header
+# prefix plus "...", no payload or signature. Checked 24 Nov 2026.
+1fde68a69606840cc93abbbb0fdbabaeb410740b:BACKEND_IMPLEMENTATION_GUIDE.md:generic-api-key:93
+1fde68a69606840cc93abbbb0fdbabaeb410740b:BACKEND_IMPLEMENTATION_GUIDE.md:generic-api-key:132
