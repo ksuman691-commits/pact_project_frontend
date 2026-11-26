@@ -9,7 +9,7 @@ import { Bell, CheckCheck, ChevronLeft, Heart, MessageCircle, Settings } from 'l
 import { useQueryClient } from '@tanstack/react-query';
 import { useSmartBack } from '@/hooks/useSmartBack';
 import { queryKeys } from '@/lib/queryKeys';
-import { notificationService, pactService } from '@/services/api';
+import { circleWallService, notificationService, pactService } from '@/services/api';
 import toast from 'react-hot-toast';
 import { useMarkAllNotificationsAsRead, useNotifications } from '@/hooks/useNotifications';
 import { useAcceptFollow, usePendingFollowRequests, useRejectFollow } from '@/hooks/useFollows';
@@ -28,6 +28,10 @@ const isJoinRequestNotification = (notification: any) => {
 const notificationTarget = (notification: any) => {
   // A team announcement opens wherever the team pointed it.
   if (notification?.link) return notification.link as string;
+  // "3 people congratulated you": the kept pact's update on the circle's Wall, with its notes.
+  if (notification?.subtype === 'congrats' && notification.related_circle_id) {
+    return `/circles/${notification.related_circle_id}${notification.related_pact_id ? `?kept=${notification.related_pact_id}` : ''}`;
+  }
   // "Priya says they tipped you ₹51" goes to the creator's confirm screen.
   if (`${notification?.title || ''}`.toLowerCase().includes('says they tipped you')) return '/profile/tips/inbox';
   // "Priya wants to watch your pact" opens the pact with the asks sheet up.
@@ -101,6 +105,23 @@ export default function NotificationsPage() {
         return next;
       });
       toast.error(error?.response?.data?.detail || "Couldn't send the nudge. Try again.");
+    }
+  };
+
+  // "Thank everyone" on a congrats line: one tap, sent from here.
+  const [thanked, setThanked] = useState<Set<number>>(() => new Set());
+  const thankEveryone = async (n: RawNotification) => {
+    if (!n.related_circle_id || !n.related_pact_id) return;
+    setThanked((prev) => new Set(prev).add(n.id));
+    try {
+      await circleWallService.thanksForPact(n.related_circle_id, n.related_pact_id);
+    } catch (error: any) {
+      setThanked((prev) => {
+        const next = new Set(prev);
+        next.delete(n.id);
+        return next;
+      });
+      toast.error(error?.response?.data?.detail || "Couldn't send thanks. Try again.");
     }
   };
 
@@ -331,6 +352,20 @@ export default function NotificationsPage() {
                                     Nudge {String(row.source.title || '').split(' ')[0]}
                                   </button>
                                 )}
+                              </div>
+                            ) : null}
+                            {row.source.subtype === 'congrats' && row.source.related_circle_id && row.source.related_pact_id ? (
+                              <div className="ml-14 mt-2 flex gap-2">
+                                {thanked.has(row.source.id) ? (
+                                  <span className="cp-pop-in inline-flex h-9 items-center rounded-full bg-[#E6F2EA] px-4 text-[13px] font-bold text-[#22663F]">Thanks sent</span>
+                                ) : (
+                                  <button onClick={() => void thankEveryone(row.source)} className="h-9 rounded-full bg-[var(--navy)] px-4 text-[13px] font-bold text-white">
+                                    Thank everyone
+                                  </button>
+                                )}
+                                <button onClick={() => void openRow(row)} className="h-9 rounded-full border border-[var(--navy)] px-4 text-[13px] font-bold text-[var(--navy)]">
+                                  Read notes
+                                </button>
                               </div>
                             ) : null}
                             {wantsReview ? (

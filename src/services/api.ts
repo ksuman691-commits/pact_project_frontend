@@ -475,6 +475,12 @@ export interface WallPost {
   joined_by_me: boolean;
   joiners: WallPerson[];
   can_delete: boolean;
+  /** Say congrats: only on a kept pact, never your own. */
+  can_congrats?: boolean;
+  congrats_count?: number;
+  congratulated_by_me?: boolean;
+  congratulators?: WallPerson[];
+  thanked?: boolean;
 }
 export interface WallComment {
   id: number;
@@ -502,6 +508,11 @@ export const circleWallService = {
     api.post(`/api/circles/${circleId}/posts/${postId}/comments`, { text, ...(parentId ? { parent_id: parentId } : {}) }).then((r) => r.data as WallComment),
   deleteComment: (circleId: number, postId: number, commentId: number) =>
     api.delete(`/api/circles/${circleId}/posts/${postId}/comments/${commentId}`),
+  congrats: (circleId: number, postId: number) => api.post(`/api/circles/${circleId}/posts/${postId}/congrats`).then((r) => r.data as WallPost),
+  undoCongrats: (circleId: number, postId: number) => api.delete(`/api/circles/${circleId}/posts/${postId}/congrats`).then((r) => r.data as WallPost),
+  thanks: (circleId: number, postId: number) => api.post(`/api/circles/${circleId}/posts/${postId}/thanks`).then((r) => r.data as WallPost),
+  /** From the notification, which knows the pact rather than the post. */
+  thanksForPact: (circleId: number, pactId: number) => api.post(`/api/circles/${circleId}/kept/${pactId}/thanks`).then((r) => r.data as WallPost),
 };
 
 export const circleService = {
