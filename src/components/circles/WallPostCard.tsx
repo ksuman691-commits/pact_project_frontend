@@ -81,9 +81,9 @@ export default function WallPostCard({
         <p className="mt-1.5 text-[13px] font-semibold" style={{ color: kept ? '#DCE3F7' : MUTED }}>
           {d.days_posted ?? 0} of {d.total_days ?? 0} days{Number(d.rest_days ?? 0) > 0 ? ` · ${d.rest_days} rest ${Number(d.rest_days) === 1 ? 'day' : 'days'}` : ''}
         </p>
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+        {footer && <div className="mt-3">{footer}</div>}
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-2" style={{ color: kept ? '#DCE3F7' : MUTED }}>
           {talk}
-          {footer}
         </div>
       </article>
     );

@@ -9,6 +9,7 @@ import { circleWallService, type WallPost } from '@/services/api';
 import { useAuthStore } from '@/store/auth';
 import WallPostCard from './WallPostCard';
 import WallPostSheet, { wallKey } from './WallPostSheet';
+import CongratsBar from './CongratsBar';
 
 const INK = '#17181D';
 const MUTED = '#5B5E6B';
@@ -33,7 +34,7 @@ type Page = { rows: WallPost[]; total: number };
 export default function CircleWall({
   circleId,
   circleName,
-  renderFooter,
+  renderFooter: renderFooterProp,
 }: {
   circleId: number;
   circleName: string;
@@ -57,6 +58,29 @@ export default function CircleWall({
     staleTime: 1000 * 30,
   });
   const posts = (query.data?.pages ?? []).flatMap((p) => p.rows);
+  // Say congrats under a kept pact, unless the page asked for something else.
+  const renderFooter =
+    renderFooterProp ??
+    ((post: WallPost, change: (next: WallPost) => void) =>
+      post.kind === 'pact_kept' ? <CongratsBar post={post} circleId={circleId} me={me} onChange={change} /> : null);
+
+  // "3 people congratulated you" links to /circles/{id}?kept={pactId}: open that update once the Wall is in.
+  const [keptPact, setKeptPact] = useState<number | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const raw = Number(new URL(window.location.href).searchParams.get('kept'));
+    return Number.isFinite(raw) && raw > 0 ? raw : null;
+  });
+  if (keptPact && query.isSuccess) {
+    const found = posts.find((p) => p.kind === 'pact_kept' && p.pact?.id === keptPact);
+    setKeptPact(null);
+    if (found) setOpenId(found.id);
+  }
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has('kept')) return;
+    url.searchParams.delete('kept');
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+  }, []);
   const opened = posts.find((p) => p.id === openId) ?? (linkedPost?.id === openId ? linkedPost : null);
 
   // A notification links to /circles/{id}?post={postId}: open that post.
