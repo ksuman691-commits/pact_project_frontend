@@ -665,6 +665,15 @@ export const leaderboardService = {
 };
 
 // Social Services (Likes, Comments, Shares)
+export interface MomentQuestion {
+  proof_id: number;
+  day_number?: number | null;
+  question: string;
+  options: { index: number; label: string; count: number }[];
+  answer_count: number;
+  my_answer?: number | null;
+}
+
 export const socialService = {
   // Pact Interactions
   likePact: (pactId: number) => api.post(`/api/pacts/${pactId}/like`),
@@ -672,8 +681,25 @@ export const socialService = {
   getPactLikes: (pactId: number) => api.get(`/api/pacts/${pactId}/likes`),
   
   // Comments
-  addComment: (pactId: number, text: string, parentId?: number | null) =>
-    api.post(`/api/pacts/${pactId}/comments`, parentId ? { text, parent_id: parentId } : { text }),
+  /** dayNumber: which day's moment it's about (left out: the latest moment; replies take their parent's). */
+  addComment: (pactId: number, text: string, parentId?: number | null, dayNumber?: number | null) =>
+    api.post(`/api/pacts/${pactId}/comments`, {
+      text,
+      ...(parentId ? { parent_id: parentId } : {}),
+      ...(!parentId && typeof dayNumber === 'number' && dayNumber > 0 ? { day_number: dayNumber } : {}),
+    }),
+  /** Days that have comments, newest first; day_number null = older comments ("Earlier"). */
+  getCommentDays: (pactId: number) =>
+    api
+      .get(`/api/pacts/${pactId}/comments/days`)
+      .then((response) => (Array.isArray(response.data) ? response.data : []) as { day_number: number | null; count: number }[]),
+  /** The poster adds or changes the question under their moment. A blank question removes it. */
+  setMomentQuestion: (pactId: number, proofId: number, question: string, options: string[]) =>
+    api.put(`/api/pacts/${pactId}/proofs/${proofId}/question`, { question, options }).then((response) => response.data as MomentQuestion | null),
+  answerMomentQuestion: (pactId: number, proofId: number, option: number) =>
+    api.post(`/api/pacts/${pactId}/proofs/${proofId}/answer`, { option }).then((response) => response.data as MomentQuestion),
+  clearMomentAnswer: (pactId: number, proofId: number) =>
+    api.delete(`/api/pacts/${pactId}/proofs/${proofId}/answer`).then((response) => response.data as MomentQuestion),
   likeComment: (pactId: number, commentId: number) =>
     api.post(`/api/pacts/${pactId}/comments/${commentId}/like`),
   unlikeComment: (pactId: number, commentId: number) =>
@@ -687,8 +713,9 @@ export const socialService = {
     })),
   deleteComment: (pactId: number, commentId: number) =>
     api.delete(`/api/pacts/${pactId}/comments/${commentId}`),
-  getComments: (pactId: number, skip = 0, limit = 20, sort: 'top' | 'newest' | 'oldest' = 'oldest') =>
-    api.get(`/api/pacts/${pactId}/comments`, { params: { skip, limit, sort } }).then((response) => {
+  /** day: only that day's comments (0 = "Earlier", comments from before days); left out: all. */
+  getComments: (pactId: number, skip = 0, limit = 20, sort: 'top' | 'newest' | 'oldest' = 'oldest', day?: number | null) =>
+    api.get(`/api/pacts/${pactId}/comments`, { params: { skip, limit, sort, ...(typeof day === 'number' ? { day } : {}) } }).then((response) => {
       const payload = response.data;
       const rows = Array.isArray(payload)
         ? payload

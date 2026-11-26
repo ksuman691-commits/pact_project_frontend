@@ -7,7 +7,8 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
 import { usePactComments } from '@/hooks/useFeedQueries';
 import { queryKeys } from '@/lib/queryKeys';
-import { socialService } from '@/services/api';
+import { socialService, type MomentQuestion } from '@/services/api';
+import MomentQuestionCard from '@/components/MomentQuestionCard';
 import UserAvatarLink from '@/components/UserAvatarLink';
 import { parseApiDate } from '@/lib/dareCountdown';
 import WatcherReportSheet from '@/components/WatcherReportSheet';
@@ -31,6 +32,10 @@ export interface PactComment {
   liked_by_me?: boolean;
   reply_count?: number;
   is_creator?: boolean;
+  /** The day of the moment this comment is about (null on older comments). */
+  day_number?: number | null;
+  /** How the commenter answered that day's question, for "voted Hill". */
+  answer_label?: string | null;
   /** Creator only: this commenter paid to watch, so they can be reported. */
   reportable_watcher?: boolean;
   watcher_report_count?: number;
@@ -143,7 +148,10 @@ function CommentRow({
           {comment.is_creator && (
             <span className="rounded-[6px] px-1.5 py-px text-[10.5px] font-extrabold tracking-[0.04em]" style={{ background: '#E8ECF7', color: NAVY }}>CREATOR</span>
           )}
-          <span className="text-[13px]" style={{ color: MUTED }}>{shortAgo(comment.created_at)}</span>
+          <span className="text-[13px]" style={{ color: MUTED }}>
+            {comment.answer_label ? `voted ${comment.answer_label} · ` : ''}
+            {shortAgo(comment.created_at)}
+          </span>
         </div>
         <CommentText text={comment.text} />
         <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -269,14 +277,41 @@ interface CommentSectionProps {
   onCountChange?: (count: number) => void;
   /** A comment (or reply) to scroll to and highlight, from a notification. */
   focusCommentId?: number | null;
+  /** The latest moment's question, pinned above that day's comments. */
+  question?: MomentQuestion | null;
+  /** First name of whoever asked it ("Priya asks"). */
+  askerName?: string;
+  creatorId?: number | null;
 }
 
-export default function CommentSection({ pactId, initialCount, onCountChange, focusCommentId = null }: CommentSectionProps) {
+/** 'all', a day number, or 0 for "Earlier" (comments from before days). */
+type DayChoice = 'all' | number;
+
+export default function CommentSection({
+  pactId,
+  initialCount,
+  onCountChange,
+  focusCommentId = null,
+  question = null,
+  askerName = 'They',
+  creatorId = null,
+}: CommentSectionProps) {
   const { user } = useAuthStore();
   const me = typeof user?.id === 'number' ? user.id : user?.id != null ? Number(user.id) : undefined;
   const queryClient = useQueryClient();
   const [sort, setSort] = useState<Sort>('top');
-  const query = usePactComments(pactId, sort);
+  // Comments are grouped by the day of the moment they're about. Tabs show once there are two groups.
+  const days = useQuery({
+    queryKey: [...queryKeys.pacts.comments(pactId), 'days'],
+    queryFn: () => socialService.getCommentDays(pactId),
+    staleTime: 1000 * 30,
+  });
+  const dayList = days.data ?? [];
+  const showDays = dayList.length >= 2;
+  const [chosenDay, setChosenDay] = useState<DayChoice | null>(focusCommentId ? 'all' : null);
+  const latestDay = dayList.find((d) => d.day_number != null)?.day_number ?? null;
+  const day: DayChoice = !showDays ? 'all' : chosenDay ?? (latestDay ?? 'all');
+  const query = usePactComments(pactId, sort, days.isFetched || !!focusCommentId, day === 'all' ? null : day);
   const startCount = useRef(initialCount);
   const net = useRef(0);
   const [text, setText] = useState('');
@@ -399,7 +434,7 @@ export default function CommentSection({ pactId, initialCount, onCountChange, fo
     if (replyTo && /^@\S+$/.test(body)) return;
     setPosting(true);
     try {
-      const response = await socialService.addComment(pactId, body, replyTo?.id ?? null);
+      const response = await socialService.addComment(pactId, body, replyTo?.id ?? null, typeof day === 'number' && day > 0 ? day : null);
       const created = response.data as PactComment;
       report(1);
       setText('');
@@ -419,6 +454,13 @@ export default function CommentSection({ pactId, initialCount, onCountChange, fo
       setPosting(false);
     }
   };
+
+  // One tap starts a comment; people can add to it before posting.
+  const chipDay = typeof day === 'number' && day > 0 ? day : latestDay;
+  const quickReplies =
+    me != null && creatorId != null && me === Number(creatorId)
+      ? ['Thank you all', 'See you tomorrow', 'Same time tomorrow?']
+      : [chipDay ? `Strong Day ${chipDay}` : 'Strong one', 'How did it feel?', 'Same time tomorrow?'];
 
   const deleted = (comment: PactComment) => {
     // Taking a comment down takes its replies with it.
@@ -445,7 +487,42 @@ export default function CommentSection({ pactId, initialCount, onCountChange, fo
         </span>
       </div>
 
+      {showDays && (
+        <div className="flex shrink-0 gap-2 overflow-x-auto px-5 pb-1.5 pt-1 [scrollbar-width:none]" role="tablist" aria-label="Comments by day">
+          {([{ key: 'all' as DayChoice, label: 'All' }] as { key: DayChoice; label: string; count?: number }[])
+            .concat(
+              dayList.map((d) => ({
+                key: (d.day_number ?? 0) as DayChoice,
+                label: d.day_number == null ? 'Earlier' : `Day ${d.day_number}${d.day_number === latestDay ? ' · latest' : ''}`,
+                count: d.count,
+              })),
+            )
+            .map((tab) => {
+              const active = day === tab.key;
+              return (
+                <button
+                  key={String(tab.key)}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setChosenDay(tab.key)}
+                  className="min-h-9 shrink-0 rounded-full px-3.5 text-[13px] font-extrabold"
+                  style={active ? { background: NAVY, color: '#FFFFFF' } : { background: '#EAE4D6', color: '#3E4150' }}
+                >
+                  {tab.label}
+                  {tab.count != null ? ` · ${tab.count}` : ''}
+                </button>
+              );
+            })}
+        </div>
+      )}
+
       <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
+        {question && (day === 'all' || day === question.day_number) && (
+          <div className="px-2 pb-1 pt-1.5">
+            <MomentQuestionCard pactId={pactId} question={question} askerName={askerName} />
+          </div>
+        )}
         {query.isLoading ? (
           <p className="py-10 text-center text-[14px]" style={{ color: MUTED }}>Loading comments…</p>
         ) : query.isError ? (
@@ -528,6 +605,24 @@ export default function CommentSection({ pactId, initialCount, onCountChange, fo
             <button type="button" onClick={() => { setReplyTo(null); setText(''); }} aria-label="Cancel reply" className="flex size-11 shrink-0 items-center justify-center" style={{ color: MUTED }}>
               <X className="size-[18px]" />
             </button>
+          </div>
+        )}
+        {!replyTo && !text && (
+          <div className="flex gap-2 overflow-x-auto px-4 pt-2.5 [scrollbar-width:none]">
+            {quickReplies.map((line) => (
+              <button
+                key={line}
+                type="button"
+                onClick={() => {
+                  setText(`${line} `);
+                  window.setTimeout(() => inputRef.current?.focus(), 30);
+                }}
+                className="h-[34px] shrink-0 rounded-full px-3 text-[13px] font-bold"
+                style={{ background: '#FFFFFF', border: `1px solid ${LINE}`, color: INK }}
+              >
+                {line}
+              </button>
+            ))}
           </div>
         )}
         <form onSubmit={submit} className="flex items-center gap-3 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2.5">

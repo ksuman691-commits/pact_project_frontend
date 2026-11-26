@@ -50,11 +50,11 @@ export function useUserJoinedPacts(userId: number) {
   });
 }
 
-export function usePactComments(pactId: number, sort: 'top' | 'newest' | 'oldest' = 'oldest', enabled = true) {
+export function usePactComments(pactId: number, sort: 'top' | 'newest' | 'oldest' = 'oldest', enabled = true, day?: number | null) {
   return useInfiniteQuery({
-    queryKey: [...queryKeys.pacts.comments(pactId), sort],
+    queryKey: [...queryKeys.pacts.comments(pactId), sort, day ?? 'all'],
     queryFn: ({ pageParam = 0 }) =>
-      socialService.getComments(pactId, pageParam, ITEMS_PER_PAGE, sort),
+      socialService.getComments(pactId, pageParam, ITEMS_PER_PAGE, sort, day),
     getNextPageParam: (lastPage, pages) =>
       lastPage.data?.length === ITEMS_PER_PAGE ? pages.length * ITEMS_PER_PAGE : undefined,
     initialPageParam: 0,

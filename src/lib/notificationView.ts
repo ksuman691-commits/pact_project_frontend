@@ -24,7 +24,7 @@ export interface RawNotification {
   created_at: string;
 }
 
-export type RowKind = 'pact_like' | 'pact_comment' | 'comment_like' | 'comment_reply' | 'other';
+export type RowKind = 'pact_like' | 'pact_comment' | 'comment_like' | 'comment_reply' | 'thread_reply' | 'question_answer' | 'other';
 
 export interface NotificationRow {
   key: string;
@@ -52,7 +52,15 @@ const firstName = (actor: NotificationActor) => String(nameOf(actor)).trim().spl
 /** Older rows have no subtype; their titles say what they are. */
 export function kindOf(n: RawNotification): RowKind {
   const subtype = n.subtype;
-  if (subtype === 'pact_like' || subtype === 'pact_comment' || subtype === 'comment_like' || subtype === 'comment_reply') return subtype;
+  if (
+    subtype === 'pact_like' ||
+    subtype === 'pact_comment' ||
+    subtype === 'comment_like' ||
+    subtype === 'comment_reply' ||
+    subtype === 'thread_reply' ||
+    subtype === 'question_answer'
+  )
+    return subtype;
   const title = String(n.title || '');
   if (title === 'New like') return 'pact_like';
   if (title === 'New comment') return 'pact_comment';
@@ -94,7 +102,12 @@ function single(n: RawNotification, kind: RowKind): NotificationRow {
     verb = 'commented on';
     pactTitle = cut >= 0 ? body.slice(0, cut) : body;
     tail = cut >= 0 ? body.slice(cut + 2) : undefined;
-  } else if (kind === 'comment_like' || kind === 'comment_reply') {
+  } else if (kind === 'question_answer') {
+    // "answered your question: {question}"
+    const cut = rest.indexOf(': ');
+    verb = 'answered your question';
+    tail = cut >= 0 ? rest.slice(cut + 2) : undefined;
+  } else if (kind === 'comment_like' || kind === 'comment_reply' || kind === 'thread_reply') {
     const cut = rest.indexOf(': ');
     verb = cut >= 0 ? rest.slice(0, cut) : rest;
     tail = cut >= 0 ? rest.slice(cut + 2) : undefined;
@@ -115,8 +128,10 @@ function single(n: RawNotification, kind: RowKind): NotificationRow {
 }
 
 /**
- * One row per notification, except that several likes on the same pact
- * (within the same New/Earlier section) fold into one line.
+ * One row per notification, except that several likes, comments or answers on
+ * the same pact (within the same New/Earlier section) fold into one line:
+ * "Karan, Ananya and 2 others commented on Run 5 km", so a busy pact is one
+ * line to reply to, not six.
  */
 export function buildRows(notifications: RawNotification[], isNew: (n: RawNotification) => boolean): { fresh: NotificationRow[]; earlier: NotificationRow[] } {
   const fresh: NotificationRow[] = [];
@@ -126,14 +141,15 @@ export function buildRows(notifications: RawNotification[], isNew: (n: RawNotifi
     const kind = kindOf(n);
     const bucket = isNew(n) ? fresh : earlier;
     const row = single(n, kind);
-    if (kind === 'pact_like' && n.related_pact_id != null && n.actor) {
-      const key = `like:${n.related_pact_id}:${bucket === fresh ? 'new' : 'old'}`;
+    if ((kind === 'pact_like' || kind === 'pact_comment' || kind === 'question_answer') && n.related_pact_id != null && n.actor) {
+      const key = `${kind}:${n.related_pact_id}:${bucket === fresh ? 'new' : 'old'}`;
       const existing = groups.get(key);
       if (existing) {
         existing.ids.push(n.id);
         existing.unread = existing.unread || !n.is_read;
         if (!existing.actors.some((a) => a.id === n.actor!.id)) existing.actors.push(n.actor);
         existing.names = namesLine(existing.actors);
+        if (kind === 'pact_comment' && existing.actors.length > 1) existing.tail = undefined;
         continue;
       }
       row.key = key;
@@ -150,7 +166,8 @@ export function rowTarget(row: NotificationRow): string | null {
   const n = row.source;
   if (!n.related_pact_id) return null;
   if (row.kind === 'pact_like') return `/pacts/${n.related_pact_id}`;
-  if (row.kind === 'pact_comment' || row.kind === 'comment_like' || row.kind === 'comment_reply') {
+  if (row.kind === 'question_answer') return `/pacts/${n.related_pact_id}?comment=open`;
+  if (row.kind === 'pact_comment' || row.kind === 'comment_like' || row.kind === 'comment_reply' || row.kind === 'thread_reply') {
     return n.related_comment_id ? `/pacts/${n.related_pact_id}?comment=${n.related_comment_id}` : `/pacts/${n.related_pact_id}`;
   }
   return null;

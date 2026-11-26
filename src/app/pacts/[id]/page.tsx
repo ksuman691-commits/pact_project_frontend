@@ -44,13 +44,21 @@ export default function PactDetailPage() {
   const [commentsAboveViewer, setCommentsAboveViewer] = useState(false);
   const [liveCommentCount, setLiveCommentCount] = useState<number | null>(null);
   const [focusCommentId, setFocusCommentId] = useState<number | null>(null);
+  // ?comment=open (from "3 people answered your question"): open the comments, nothing to highlight.
+  const [openCommentsFromLink, setOpenCommentsFromLink] = useState(false);
   // A comment notification opens the pact with ?comment=ID: show that comment, highlighted.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const url = new URL(window.location.href);
-    const raw = Number(url.searchParams.get('comment'));
-    if (!Number.isFinite(raw) || raw <= 0) return;
-    setFocusCommentId(raw);
+    const param = url.searchParams.get('comment');
+    const raw = Number(param);
+    if (param === 'open') {
+      setOpenCommentsFromLink(true);
+    } else if (!Number.isFinite(raw) || raw <= 0) {
+      return;
+    } else {
+      setFocusCommentId(raw);
+    }
     url.searchParams.delete('comment');
     window.history.replaceState(window.history.state, '', url.pathname + (url.search ? url.search : '') + url.hash);
   }, []);
@@ -101,12 +109,12 @@ export default function PactDetailPage() {
   // has mounted keeps the sheet's back-button history entry from being pushed twice.
   const openedFromLink = useRef(false);
   useEffect(() => {
-    if (focusCommentId && pact && !openedFromLink.current) {
+    if ((focusCommentId || openCommentsFromLink) && pact && !openedFromLink.current) {
       openedFromLink.current = true;
       setCommentsAboveViewer(false);
       setCommentsOpen(true);
     }
-  }, [focusCommentId, pact]);
+  }, [focusCommentId, openCommentsFromLink, pact]);
 
   const joinPact = async (): Promise<boolean> => {
     if (!pact || joining || !pact.can_join) return false;
@@ -305,6 +313,9 @@ export default function PactDetailPage() {
         onCountChange={setLiveCommentCount}
         aboveViewer={commentsAboveViewer}
         focusCommentId={focusCommentId}
+        question={pact.moment_question ?? null}
+        askerName={String(pact.creator_full_name || pact.creator_username || 'They').split(/\s+/)[0]}
+        creatorId={pact.creator_id ?? null}
       />
     </>
   );

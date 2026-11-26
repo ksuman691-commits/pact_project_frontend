@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import CommentSection from './CommentSection';
+import type { MomentQuestion } from '@/services/api';
 import { cleanTitle } from '@/lib/titleCase';
 import { useBackToClose } from '@/hooks/useBackToClose';
 
@@ -18,6 +19,10 @@ interface CommentsBottomSheetProps {
   aboveViewer?: boolean;
   /** A comment or reply to scroll to and highlight (from a notification). */
   focusCommentId?: number | null;
+  /** The latest moment's question, pinned above that day's comments. */
+  question?: MomentQuestion | null;
+  askerName?: string;
+  creatorId?: number | null;
 }
 
 /**
@@ -34,6 +39,9 @@ export default function CommentsBottomSheet({
   onCountChange,
   aboveViewer = false,
   focusCommentId = null,
+  question = null,
+  askerName,
+  creatorId = null,
 }: CommentsBottomSheetProps) {
   useBackToClose(isOpen, onClose);
   if (typeof document === 'undefined') return null;
@@ -72,7 +80,15 @@ export default function CommentsBottomSheet({
                 <X className="size-[22px]" strokeWidth={2.2} />
               </button>
             </div>
-            <CommentSection pactId={pactId} initialCount={commentCount} onCountChange={onCountChange} focusCommentId={focusCommentId} />
+            <CommentSection
+              pactId={pactId}
+              initialCount={commentCount}
+              onCountChange={onCountChange}
+              focusCommentId={focusCommentId}
+              question={question}
+              askerName={askerName}
+              creatorId={creatorId}
+            />
           </motion.div>
         </>
       )}
