@@ -452,6 +452,58 @@ export const profileTimezoneService = {
 };
 
 // Circle Services
+// A circle's Wall: members' posts and the app's own updates (pact kept, new pact, missed a day).
+export interface WallPerson {
+  id: number;
+  username?: string;
+  full_name?: string | null;
+  avatar_url?: string | null;
+}
+export type WallKind = 'note' | 'sprint' | 'shoutout' | 'ask' | 'pact_kept' | 'pact_ended' | 'new_pact' | 'missed';
+export interface WallPost {
+  id: number;
+  circle_id: number;
+  kind: WallKind;
+  body: string;
+  created_at: string;
+  author?: WallPerson | null;
+  subject?: WallPerson | null;
+  pact?: { id: number; title: string } | null;
+  data: Record<string, any>;
+  comment_count: number;
+  join_count: number;
+  joined_by_me: boolean;
+  joiners: WallPerson[];
+  can_delete: boolean;
+}
+export interface WallComment {
+  id: number;
+  post_id: number;
+  parent_id?: number | null;
+  user?: WallPerson | null;
+  text: string;
+  created_at: string;
+  can_delete: boolean;
+}
+export const circleWallService = {
+  list: (circleId: number, skip = 0, limit = 20) =>
+    api
+      .get(`/api/circles/${circleId}/posts`, { params: { skip, limit } })
+      .then((r) => ({ rows: (r.data?.data ?? []) as WallPost[], total: Number(r.data?.pagination?.total ?? 0) })),
+  get: (circleId: number, postId: number) => api.get(`/api/circles/${circleId}/posts/${postId}`).then((r) => r.data as WallPost),
+  create: (circleId: number, kind: 'note' | 'sprint' | 'shoutout' | 'ask', text: string) =>
+    api.post(`/api/circles/${circleId}/posts`, { kind, text }).then((r) => r.data as WallPost),
+  remove: (circleId: number, postId: number) => api.delete(`/api/circles/${circleId}/posts/${postId}`),
+  join: (circleId: number, postId: number) => api.post(`/api/circles/${circleId}/posts/${postId}/join`).then((r) => r.data as WallPost),
+  leave: (circleId: number, postId: number) => api.delete(`/api/circles/${circleId}/posts/${postId}/join`).then((r) => r.data as WallPost),
+  comments: (circleId: number, postId: number) =>
+    api.get(`/api/circles/${circleId}/posts/${postId}/comments`).then((r) => (Array.isArray(r.data) ? r.data : []) as WallComment[]),
+  comment: (circleId: number, postId: number, text: string, parentId?: number | null) =>
+    api.post(`/api/circles/${circleId}/posts/${postId}/comments`, { text, ...(parentId ? { parent_id: parentId } : {}) }).then((r) => r.data as WallComment),
+  deleteComment: (circleId: number, postId: number, commentId: number) =>
+    api.delete(`/api/circles/${circleId}/posts/${postId}/comments/${commentId}`),
+};
+
 export const circleService = {
   create: async (data: any) => {
     const response = await api.post('/api/circles', data);

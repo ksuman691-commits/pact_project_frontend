@@ -23,6 +23,7 @@ import FeedPactCard from '@/components/FeedPactCard'
 import StoryCaptureSheet from '@/components/stories/StoryCaptureSheet'
 import OrbitRing from '@/components/circles/OrbitRing'
 import CircleBoard from '@/components/circles/CircleBoard'
+import CircleWall from '@/components/circles/CircleWall'
 import Seat from '@/components/classic/Seat'
 
 const PRIVACY_LABEL: Record<string, string> = {
@@ -52,6 +53,8 @@ export default function CircleDetailPage() {
   // today" read endpoint yet to hydrate this from).
   const [nudgedIds, setNudgedIds] = useState<Set<number>>(new Set())
   const [capturePact, setCapturePact] = useState<any | null>(null)
+  // Members land on the Wall; Pacts is one tap away.
+  const [tab, setTab] = useState<'wall' | 'pacts'>('wall')
   // Grid layout (mockup): a handful of members shown up front with a "See
   // all" expand toggle, rather than the full roster always rendered flat.
   useSeedBackHistory('/circles')
@@ -351,8 +354,31 @@ export default function CircleDetailPage() {
         )}
       </div>
 
-      <section className="mx-4 mt-8">
-        <h2 className="px-1 text-[20px] font-extrabold tracking-[-0.025em]" style={{ color: '#17181D' }}>Pacts{pacts.length ? ` · ${pacts.length}` : ''}</h2>
+      {isMember && (
+        <div role="tablist" aria-label="Circle" className="mx-4 mt-7 flex gap-6 border-b px-1" style={{ borderColor: '#DCD3C1' }}>
+          {([['wall', 'Wall'], ['pacts', `Pacts${pacts.length ? ` · ${pacts.length}` : ''}`]] as const).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              aria-selected={tab === key}
+              onClick={() => setTab(key)}
+              className="-mb-px min-h-11 border-b-[3px] text-[16px] font-extrabold"
+              style={tab === key ? { borderColor: '#1F3A93', color: '#1F3A93' } : { borderColor: 'transparent', color: '#5A5C63' }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+      {isMember && tab === 'wall' && (
+        <div className="mx-4 mt-4">
+          <CircleWall circleId={circleId} circleName={circle.name} />
+        </div>
+      )}
+
+      {(!isMember || tab === 'pacts') && <section className={isMember ? 'mx-4 mt-4' : 'mx-4 mt-8'}>
+        {!isMember && <h2 className="px-1 text-[20px] font-extrabold tracking-[-0.025em]" style={{ color: '#17181D' }}>Pacts{pacts.length ? ` · ${pacts.length}` : ''}</h2>}
         <div className="mt-3 flex flex-col gap-3.5">
           {!isMember && (isPrivateCircle || pacts.length === 0) ? (
             <p className="px-1 text-[14px] text-[var(--muted)]">{invite ? 'Accept the invite to see its pacts.' : isPrivateCircle ? 'Members only. Ask to join to see its pacts.' : 'Join this circle to see its pacts.'}</p>
@@ -369,7 +395,7 @@ export default function CircleDetailPage() {
             })
           )}
         </div>
-      </section>
+      </section>}
 
       {isMember && Number((circle as any).quiet_days ?? 0) >= 5 && (
         // A quiet circle: offer a short, shared restart instead of a guilt trip.
