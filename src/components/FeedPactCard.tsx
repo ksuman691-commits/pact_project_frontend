@@ -16,6 +16,7 @@ import { ChevronRight, Flag, Trash2, MessageCircle, Check, Camera, Heart, MoreVe
 import BodyPortal from './BodyPortal';
 import StoryCaptureSheet from './stories/StoryCaptureSheet';
 import CommentsBottomSheet from './CommentsBottomSheet';
+import CardConversation from './CardConversation';
 import Avatar from './Avatar';
 import UserAvatarLink from './UserAvatarLink';
 import GoalMatchStrip from './GoalMatchStrip';
@@ -1240,6 +1241,18 @@ export default function FeedPactCard({
               {statusChip}
             </div>
             {belowPhotoCaption}
+            {!chromeless && (
+              <CardConversation
+                pactId={Number(pact.id)}
+                creatorName={String(creatorAvatarName || creatorLabel || '')}
+                creatorId={pact.creator_id ?? null}
+                question={pact.moment_question ?? null}
+                topComment={pact.top_comment ?? null}
+                commentCount={commentCount}
+                onOpenComments={() => setCommentSheetOpen(true)}
+                onCommented={() => setLiveCommentCount((current) => (current ?? Number(pact.comment_count ?? 0)) + 1)}
+              />
+            )}
             {bottomActions}
           </>
         ) : (
@@ -1310,6 +1323,9 @@ export default function FeedPactCard({
         isOpen={commentSheetOpen}
         onClose={() => setCommentSheetOpen(false)}
         onCountChange={setLiveCommentCount}
+        question={pact.moment_question ?? null}
+        askerName={isOwnPact ? 'You' : String(creatorAvatarName || creatorLabel || 'They').split(/\s+/)[0]}
+        creatorId={pact.creator_id ?? null}
       />
 
       {reportSheetOpen && (

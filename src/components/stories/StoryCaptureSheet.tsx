@@ -13,6 +13,7 @@ import type { FaceEffectId } from '@/lib/camera/faceEffects'
 import { useAuthStore } from '@/store/auth'
 import { useUserStats } from '@/hooks/useUserQueries'
 import { usePactStoriesToday, usePostStory } from '@/hooks/useStories'
+import AskCirclePanel from './AskCirclePanel'
 import {
   isImageFile,
   preparePhoto,
@@ -142,7 +143,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
   const stopTimerRef = useRef<number | null>(null)
 
   const today = usePactStoriesToday(pactId, isOpen)
-  const { phase, progress, error, retryable, unavailable: postUnavailable, post, reset } = usePostStory(pactId)
+  const { phase, progress, error, retryable, unavailable: postUnavailable, post, reset, proofId } = usePostStory(pactId)
   const comingSoon = !onCaptured && (today.unavailable || postUnavailable)
   const autoStarted = useRef(false)
   // If the camera hasn't come up after a few seconds, offer the gallery and a retry instead of a dead screen.
@@ -695,6 +696,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
               </span>
               <p className="text-[20px] font-extrabold">Moment posted</p>
               <p className="-mt-2 text-[14px] text-white/80">Today counts for this pact.</p>
+              {proofId && <AskCirclePanel pactId={pactId} proofId={proofId} dark />}
               <button type="button" onClick={closeSheet} className="h-14 w-full rounded-full bg-white text-[16px] font-extrabold text-[var(--navy)]">
                 Done
               </button>
@@ -841,6 +843,7 @@ export default function StoryCaptureSheet({ isOpen, onClose, pactId, pactTitle: 
                   <Check className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
                 </span>
                 <p className="text-[16px] font-semibold">Moment posted.</p>
+                {proofId && <AskCirclePanel pactId={pactId} proofId={proofId} />}
                 <button type="button" onClick={closeSheet} className="h-12 w-full rounded-full text-[15px] font-semibold" style={{ background: 'var(--navy)', color: '#fff' }}>
                   Done
                 </button>

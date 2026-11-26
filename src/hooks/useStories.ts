@@ -99,12 +99,15 @@ export function usePostStory(pactId: number) {
   const [error, setError] = useState<string | null>(null)
   const [retryable, setRetryable] = useState(false)
   const [unavailable, setUnavailable] = useState(false)
+  // The moment that was just posted, so the poster can ask a question on it.
+  const [proofId, setProofId] = useState<number | null>(null)
 
   const post = useCallback(
     async ({ blob, contentType, durationSeconds }: { blob: Blob; contentType: string; durationSeconds: number }) => {
       setError(null)
       setRetryable(false)
       setProgress(0)
+      setProofId(null)
       try {
         if (contentType.startsWith('image/')) {
           // Photo moments go through the pact's photo upload (checked for safety there),
@@ -112,7 +115,8 @@ export function usePostStory(pactId: number) {
           setPhase('uploading')
           const extension = contentType === 'image/png' ? 'png' : contentType === 'image/webp' ? 'webp' : contentType.includes('hei') ? 'heic' : 'jpg'
           const file = new File([blob], `moment.${extension}`, { type: contentType })
-          await pactService.uploadProofFile(pactId, file, 'photo', undefined, undefined, setProgress)
+          const uploaded = await pactService.uploadProofFile(pactId, file, 'photo', undefined, undefined, setProgress)
+          setProofId(Number((uploaded as any)?.data?.id) || null)
           setPhase('saving')
         } else {
           setPhase('requesting')
@@ -120,10 +124,11 @@ export function usePostStory(pactId: number) {
           setPhase('uploading')
           await putStoryVideo(upload_url, blob, contentType, setProgress)
           setPhase('saving')
-          await createStory(pactId, {
+          const story = await createStory(pactId, {
             object_key,
             duration_seconds: Math.min(STORY_MAX_SECONDS, Math.max(1, Math.round(durationSeconds))),
           })
+          setProofId(Number((story as any)?.proof_id) || null)
         }
         setPhase('done')
         // The reminder sheet offers itself once, after a first check-in (src/components/ReminderPrompt.tsx).
@@ -159,9 +164,10 @@ export function usePostStory(pactId: number) {
     setProgress(0)
     setError(null)
     setRetryable(false)
+    setProofId(null)
   }, [])
 
-  return { phase, progress, error, retryable, unavailable, post, reset }
+  return { phase, progress, error, retryable, unavailable, post, reset, proofId }
 }
 
 /** Delete one of your own moments (by its proof or its story) and refresh everything that shows it. */
