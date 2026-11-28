@@ -3,9 +3,9 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { dareService } from '@/services/api';
+import { dareService, mapDare } from '@/services/api';
 import { queryKeys } from '@/lib/queryKeys';
-import { useCreateDare } from '@/hooks/useDareMutations';
+import { showSentDares, useCreateDare } from '@/hooks/useDareMutations';
 import { useUser } from '@/hooks/useUserQueries';
 import { resolveDareSteps } from '@/lib/createDareFlow/steps';
 import { dareDraftToApiPayload } from '@/lib/createDareFlow/toApiPayload';
@@ -103,7 +103,8 @@ export function CreateDareFlowProvider({
         const { recipient_user_ids: _one, audience: _audience, ...payload } = dareDraftToApiPayload(draft, 0) as Record<string, unknown>;
         const response = await dareService.createForCircle({ ...payload, circle_id: draft.circle.id });
         const sent = response.data;
-        await queryClient.invalidateQueries({ queryKey: queryKeys.dares.all });
+        await queryClient.invalidateQueries({ queryKey: queryKeys.dares.all, refetchType: 'all' });
+        showSentDares(queryClient, (Array.isArray(sent.dares) ? sent.dares : []).filter((dare: any) => dare?.title && dare?.creator_id != null).map(mapDare));
         setCreatedDare({ id: sent.dares?.[0]?.id, title: draft.title.trim(), sentTo: [sent.circle_name], failedFor: [], circle: { name: sent.circle_name, sent: sent.sent } });
         setStepIndex(resolvedSteps.length - 1);
       } catch (error: any) {

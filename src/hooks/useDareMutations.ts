@@ -2,11 +2,30 @@
 
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import type { Dare } from '@/types';
-import { dareService } from '@/services/api';
+import { dareService, mapDare } from '@/services/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { toErrorMessage } from '@/lib/errorMessages';
 import { useMissingDobRedirect } from '@/hooks/useMissingDobRedirect';
 import toast from 'react-hot-toast';
+
+/**
+ * Puts dares you just sent at the top of your own list if the refetched list doesn't
+ * have them yet (the server can be a moment behind, or list them past the first page),
+ * so the Sent tab shows the new dare straight away.
+ */
+export function showSentDares(queryClient: QueryClient, dares: Dare[]) {
+  // Only whole dares: a bare id would draw an empty card.
+  const fresh = dares.filter((dare) => dare && dare.id != null && dare.title && dare.creator_id != null);
+  if (fresh.length === 0) return;
+  queryClient.setQueryData(queryKeys.dares.mine(), (old: any) => {
+    if (!old?.pages?.length) return old;
+    const have = new Set(old.pages.flatMap((page: any) => (page.data ?? []).map((dare: Dare) => dare.id)));
+    const missing = fresh.filter((dare) => !have.has(dare.id));
+    if (missing.length === 0) return old;
+    const [first, ...rest] = old.pages;
+    return { ...old, pages: [{ ...first, data: [...missing, ...(first.data ?? [])] }, ...rest] };
+  });
+}
 
 export function useCreateDare() {
   const queryClient = useQueryClient();
@@ -18,11 +37,13 @@ export function useCreateDare() {
     // refetched; the success screen then links to a list that already holds
     // the new dare. `dares.all` is the prefix of the feed/mine keys, so it
     // covers every dares query, including ones not currently mounted.
-    onSuccess: () =>
-      Promise.all([
+    onSuccess: async (response: any) => {
+      await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.dares.all, refetchType: 'all' }),
         queryClient.invalidateQueries({ queryKey: queryKeys.feed.all }),
-      ]),
+      ]);
+      showSentDares(queryClient, [response?.data]);
+    },
     onError: (error: any) => {
       toast.error(toErrorMessage(error, 'Failed to create dare'));
       redirectIfMissingDob(error);

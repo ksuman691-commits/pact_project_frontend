@@ -850,7 +850,7 @@ export const pactAdvancedService = {
 // the wrong (always-undefined) fields is what produced "Invalid Date" and a
 // permanently unreachable Claim flow. See src/types/index.ts for the full
 // real Dare shape.
-const mapDare = (raw: any) => ({
+export const mapDare = (raw: any) => ({
   ...raw,
   dare_uuid: raw?.dare_uuid ?? String(raw?.id ?? ''),
   recipientCount: raw?.recipient_count ?? raw?.recipients?.length ?? 0,
