@@ -150,6 +150,7 @@ function CommentRow({
           )}
           <span className="text-[13px]" style={{ color: MUTED }}>
             {comment.answer_label ? `voted ${comment.answer_label} · ` : ''}
+            {comment.day_number != null ? `Day ${comment.day_number} · ` : ''}
             {shortAgo(comment.created_at)}
           </span>
         </div>
@@ -284,9 +285,6 @@ interface CommentSectionProps {
   creatorId?: number | null;
 }
 
-/** 'all', a day number, or 0 for "Earlier" (comments from before days). */
-type DayChoice = 'all' | number;
-
 export default function CommentSection({
   pactId,
   initialCount,
@@ -299,19 +297,18 @@ export default function CommentSection({
   const { user } = useAuthStore();
   const me = typeof user?.id === 'number' ? user.id : user?.id != null ? Number(user.id) : undefined;
   const queryClient = useQueryClient();
-  const [sort, setSort] = useState<Sort>('top');
-  // Comments are grouped by the day of the moment they're about. Tabs show once there are two groups.
+  // One list, newest first, like Instagram: no Top/Newest switch and no day tabs (they hid most
+  // comments behind the latest day). Each comment carries its day as a small label instead.
+  const sort: Sort = 'newest';
+  // The days are still read for the latest one: a new comment belongs to it, and the quick replies name it.
   const days = useQuery({
     queryKey: [...queryKeys.pacts.comments(pactId), 'days'],
     queryFn: () => socialService.getCommentDays(pactId),
     staleTime: 1000 * 30,
   });
   const dayList = days.data ?? [];
-  const showDays = dayList.length >= 2;
-  const [chosenDay, setChosenDay] = useState<DayChoice | null>(focusCommentId ? 'all' : null);
   const latestDay = dayList.find((d) => d.day_number != null)?.day_number ?? null;
-  const day: DayChoice = !showDays ? 'all' : chosenDay ?? (latestDay ?? 'all');
-  const query = usePactComments(pactId, sort, days.isFetched || !!focusCommentId, day === 'all' ? null : day);
+  const query = usePactComments(pactId, sort, true, null);
   const startCount = useRef(initialCount);
   const net = useRef(0);
   const [text, setText] = useState('');
@@ -434,7 +431,7 @@ export default function CommentSection({
     if (replyTo && /^@\S+$/.test(body)) return;
     setPosting(true);
     try {
-      const response = await socialService.addComment(pactId, body, replyTo?.id ?? null, typeof day === 'number' && day > 0 ? day : null);
+      const response = await socialService.addComment(pactId, body, replyTo?.id ?? null, latestDay);
       const created = response.data as PactComment;
       report(1);
       setText('');
@@ -442,9 +439,6 @@ export default function CommentSection({
       setReplyTo(null);
       if (parent) {
         setExpanded((prev) => ({ ...prev, [parent]: true }));
-      } else if (sort === 'top') {
-        // Your new comment goes first so you can see it.
-        setSort('newest');
       }
       await queryClient.invalidateQueries({ queryKey: queryKeys.pacts.comments(pactId) });
       setHighlightId(created.id);
@@ -456,7 +450,7 @@ export default function CommentSection({
   };
 
   // One tap starts a comment; people can add to it before posting.
-  const chipDay = typeof day === 'number' && day > 0 ? day : latestDay;
+  const chipDay = latestDay;
   const quickReplies =
     me != null && creatorId != null && me === Number(creatorId)
       ? ['Thank you all', 'See you tomorrow', 'Same time tomorrow?']
@@ -469,56 +463,14 @@ export default function CommentSection({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-center gap-1 px-5 pb-1 pt-1">
-        {(['top', 'newest'] as Sort[]).map((value) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => setSort(value)}
-            aria-pressed={sort === value}
-            className="min-h-9 rounded-full px-3.5 text-[13px] font-extrabold"
-            style={sort === value ? { background: INK, color: '#FFFFFF' } : { color: MUTED }}
-          >
-            {value === 'top' ? 'Top' : 'Newest'}
-          </button>
-        ))}
-        <span className="ml-auto text-[13px] font-semibold" style={{ color: MUTED }}>
-          {Math.max(0, startCount.current + net.current)} {Math.max(0, startCount.current + net.current) === 1 ? 'comment' : 'comments'}
+      <div className="flex shrink-0 items-center px-5 pb-1.5 pt-1">
+        <span className="text-[13px] font-semibold" style={{ color: MUTED }}>
+          {Math.max(0, startCount.current + net.current)} {Math.max(0, startCount.current + net.current) === 1 ? 'comment' : 'comments'} · newest first
         </span>
       </div>
 
-      {showDays && (
-        <div className="flex shrink-0 gap-2 overflow-x-auto px-5 pb-1.5 pt-1 [scrollbar-width:none]" role="tablist" aria-label="Comments by day">
-          {([{ key: 'all' as DayChoice, label: 'All' }] as { key: DayChoice; label: string; count?: number }[])
-            .concat(
-              dayList.map((d) => ({
-                key: (d.day_number ?? 0) as DayChoice,
-                label: d.day_number == null ? 'Earlier' : `Day ${d.day_number}${d.day_number === latestDay ? ' · latest' : ''}`,
-                count: d.count,
-              })),
-            )
-            .map((tab) => {
-              const active = day === tab.key;
-              return (
-                <button
-                  key={String(tab.key)}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => setChosenDay(tab.key)}
-                  className="min-h-9 shrink-0 rounded-full px-3.5 text-[13px] font-extrabold"
-                  style={active ? { background: NAVY, color: '#FFFFFF' } : { background: '#EAE4D6', color: '#3E4150' }}
-                >
-                  {tab.label}
-                  {tab.count != null ? ` · ${tab.count}` : ''}
-                </button>
-              );
-            })}
-        </div>
-      )}
-
       <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
-        {question && (day === 'all' || day === question.day_number) && (
+        {question && (
           <div className="px-2 pb-1 pt-1.5">
             <MomentQuestionCard pactId={pactId} question={question} askerName={askerName} />
           </div>
