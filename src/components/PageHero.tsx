@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import CircleMark from '@/components/brand/CircleMark'
 import HeroMark from '@/components/brand/HeroMark'
 
@@ -14,12 +15,14 @@ interface PageHeroProps {
   line?: React.ReactNode
   /** The page is still loading its numbers: the big mark turns until it's done. */
   busy?: boolean
+  /** The page's main action, as a pill beside the title (New pact, Send a dare, New circle). */
+  action?: { label: string; icon: React.ReactNode; href?: string; onClick?: () => void }
   children?: React.ReactNode
 }
 
 const SPARKS = Array.from({ length: 14 }, (_, i) => {
   const angle = (i / 14) * Math.PI * 2 + (i % 2 ? 0.2 : 0)
-  const dist = 95 + (i % 3) * 38
+  const dist = 60 + (i % 3) * 26
   return { dx: Math.cos(angle) * dist, dy: Math.sin(angle) * dist, size: 4 + (i % 3) * 2.5, delay: (i % 4) * 30 }
 })
 
@@ -29,14 +32,14 @@ const SPARKS = Array.from({ length: 14 }, (_, i) => {
  * mark draws itself when the page opens, closes as you pull down, turns while
  * the page loads, then pops with a crisp ring and sparks when the numbers land. Reduced motion keeps all of it still.
  */
-export default function PageHero({ tone, title, tagline, line, busy = false, children }: PageHeroProps) {
+export default function PageHero({ tone, title, tagline, line, busy = false, action, children }: PageHeroProps) {
   const dare = tone === 'dare'
   const circle = tone === 'circle'
   const [popKey, setPopKey] = useState(0)
 
   return (
     <section
-      className={`cp-hero relative isolate overflow-hidden rounded-b-[34px] px-5 pb-5 pt-9 ${dare ? 'bg-[var(--dare)] text-[var(--ink)]' : circle ? 'bg-[var(--circles)] text-white' : 'bg-[var(--navy)] text-white'}`}
+      className={`cp-hero relative isolate overflow-hidden rounded-b-[26px] px-4 pb-3.5 pt-4 ${dare ? 'bg-[var(--dare)] text-[var(--ink)]' : circle ? 'bg-[var(--circles)] text-white' : 'bg-[var(--navy)] text-white'}`}
     >
       {/* A flat, even tone: one quiet step lighter at the top. No blur. */}
       <span
@@ -46,10 +49,10 @@ export default function PageHero({ tone, title, tagline, line, busy = false, chi
       />
 
       {/* The mark, set into the colour: a tone of the background with a crisp 2px edge, and two orbit rings. */}
-      <span aria-hidden="true" className="pointer-events-none absolute -z-10" style={{ right: -66, top: -64 }}>
+      <span aria-hidden="true" className="pointer-events-none absolute -z-10" style={{ right: -46, top: -50 }}>
         <span className="cp-hero-float block">
           <HeroMark
-            size={224}
+            size={140}
             color={dare ? '#FFC414' : circle ? '#EF5256' : '#2A4CB0'}
             stroke={dare ? '#17181D' : 'rgba(255,255,255,0.55)'}
             ringColor={dare ? 'rgba(23,24,29,0.16)' : 'rgba(255,255,255,0.16)'}
@@ -61,7 +64,7 @@ export default function PageHero({ tone, title, tagline, line, busy = false, chi
 
       {/* Sparks thrown out by the pop, from the mark's centre. */}
       {popKey > 0 && (
-        <span key={popKey} aria-hidden="true" className="pointer-events-none absolute -z-10" style={{ right: 46, top: 48 }}>
+        <span key={popKey} aria-hidden="true" className="pointer-events-none absolute -z-10" style={{ right: 24, top: 20 }}>
           {SPARKS.map((s, i) => (
             <span
               key={i}
@@ -84,9 +87,8 @@ export default function PageHero({ tone, title, tagline, line, busy = false, chi
 
       {/* Three small four-point stars that twinkle. */}
       {[
-        { top: '13%', left: '56%', size: 12, delay: '0s' },
-        { top: '8%', left: '68%', size: 9, delay: '1.3s' },
-        { top: '30%', left: '83%', size: 10, delay: '2.4s' },
+        { top: '10%', left: '52%', size: 9, delay: '0s' },
+        { top: '24%', left: '62%', size: 7, delay: '1.3s' },
       ].map((s, i) => (
         <svg
           key={i}
@@ -101,23 +103,37 @@ export default function PageHero({ tone, title, tagline, line, busy = false, chi
         </svg>
       ))}
 
-      <h1 className="cp-hero-title flex items-center gap-2.5 text-[46px] font-bold leading-none tracking-[-0.05em]" style={{ color: dare ? 'var(--ink)' : '#FFFFFF' }}>
-        <span className={`flex size-10 items-center justify-center rounded-full shadow-[0_6px_16px_-6px_rgba(0,0,0,0.45)] ${dare ? 'bg-[var(--ink)]' : 'bg-white'}`}>
-          <CircleMark size={24} animation="draw" delay={0.15} />
-        </span>
-        {title}
-      </h1>
-      {tagline && (
-        <p className="cp-hero-title mt-2.5 text-[13px] font-bold" style={{ animationDelay: '80ms', color: dare ? 'rgba(23,24,29,0.62)' : circle ? 'rgba(255,226,224,0.92)' : 'rgba(212,219,250,0.85)' }}>
-          {tagline}
+      {/* Kept short on purpose: title and the main action on one line, then one line of news. */}
+      <div className="flex items-center gap-3">
+        <h1 className="cp-hero-title flex min-w-0 flex-1 items-center gap-2 text-[28px] font-bold leading-none tracking-[-0.04em]" style={{ color: dare ? 'var(--ink)' : '#FFFFFF' }}>
+          <span className={`flex size-7 shrink-0 items-center justify-center rounded-full shadow-[0_4px_10px_-4px_rgba(0,0,0,0.45)] ${dare ? 'bg-[var(--ink)]' : 'bg-white'}`}>
+            <CircleMark size={17} animation="draw" delay={0.15} />
+          </span>
+          <span className="truncate">{title}</span>
+        </h1>
+        {action &&
+          (() => {
+            const className = 'cp-hero-cta relative flex h-9 shrink-0 items-center gap-1.5 overflow-hidden rounded-full px-3.5 text-[13.5px] font-extrabold shadow-[0_4px_12px_-6px_rgba(0,0,0,0.5)] transition active:scale-95'
+            const style = { background: dare ? 'var(--ink)' : '#FFFFFF', color: dare ? 'var(--dare)' : circle ? 'var(--circles-deep)' : 'var(--navy)' }
+            return action.href ? (
+              <Link href={action.href} className={className} style={style}>
+                {action.icon}
+                {action.label}
+              </Link>
+            ) : (
+              <button type="button" onClick={action.onClick} className={className} style={style}>
+                {action.icon}
+                {action.label}
+              </button>
+            )
+          })()}
+      </div>
+      {(line || tagline) && (
+        <p className="cp-hero-title mt-1.5 line-clamp-2 max-w-[88%] text-[13.5px] font-medium leading-[1.35]" style={{ animationDelay: '100ms', color: dare ? 'var(--ink)' : '#FFFFFF' }}>
+          {line ?? tagline}
         </p>
       )}
-      {line && (
-        <p className="cp-hero-title mt-1 max-w-[222px] text-[16.5px] font-medium leading-[1.3]" style={{ animationDelay: '140ms', color: dare ? 'var(--ink)' : '#FFFFFF' }}>
-          {line}
-        </p>
-      )}
-      {children && <div className="mt-5">{children}</div>}
+      {children && <div className="mt-3">{children}</div>}
     </section>
   )
 }

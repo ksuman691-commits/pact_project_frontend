@@ -77,9 +77,9 @@ export default function HeroStats({ tone, label, stats, action, ready = true }: 
   const dare = tone === 'dare'
   const on = ON_COLOUR[tone === 'circle' ? 'circle' : 'navy']
   const tileBase =
-    'cp-tile group relative flex min-h-[132px] flex-col overflow-hidden rounded-[18px] p-3 text-left transition active:scale-[0.97]'
+    'cp-tile group relative flex min-h-[76px] flex-col overflow-hidden rounded-[14px] px-2.5 py-2 text-left transition active:scale-[0.97]'
   const actionClass =
-    'cp-hero-cta relative flex h-[52px] w-full items-center justify-center gap-2 overflow-hidden rounded-full text-[16px] font-bold transition active:scale-[0.98]'
+    'cp-hero-cta relative flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-full text-[15px] font-bold transition active:scale-[0.98]'
 
   return (
     <section aria-label={label}>
@@ -89,37 +89,41 @@ export default function HeroStats({ tone, label, stats, action, ready = true }: 
             <>
               {/* soft light on the top edge */}
               <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-1/2" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.05), transparent)' }} />
-              <span className="flex items-center justify-between">
+              {/* One row: small badge, the number, and the corner picture (or a chevron). */}
+              <span className="flex items-center gap-1.5">
                 {/* Remounted when the numbers land, so the badge's own motion plays with the pop. */}
-                <span key={ready ? 'ready' : 'wait'} className="cp-badge-pop flex">
-                  {stat.iconBg ? (
-                    <span className="flex size-8 items-center justify-center rounded-full" style={{ background: stat.iconBg, boxShadow: 'inset 0 0 0 1.5px #17181D' }}>
-                      {stat.icon}
-                    </span>
-                  ) : (
-                    stat.icon
-                  )}
+                <span key={ready ? 'ready' : 'wait'} className="cp-badge-pop relative flex size-6 shrink-0 items-center justify-center">
+                  <span className="flex scale-75">
+                    {stat.iconBg ? (
+                      <span className="flex size-8 items-center justify-center rounded-full" style={{ background: stat.iconBg, boxShadow: 'inset 0 0 0 1.5px #17181D' }}>
+                        {stat.icon}
+                      </span>
+                    ) : (
+                      stat.icon
+                    )}
+                  </span>
                 </span>
-                {stat.visual ?? <ChevronRight className="h-4 w-4 opacity-50" strokeWidth={2.4} aria-hidden="true" />}
-              </span>
-              <span className="mt-3 flex items-baseline gap-1">
+              <span className="flex min-w-0 flex-1 items-baseline gap-1">
                 <span
-                  className="text-[30px] font-bold leading-none tracking-[-0.04em] tabular-nums"
+                  className="text-[22px] font-bold leading-none tracking-[-0.04em] tabular-nums"
                   style={{ color: stat.selected ? undefined : stat.valueColor ?? (dare ? 'var(--dare)' : '#FFFFFF') }}
                 >
                   {stat.value == null ? '–' : typeof stat.value === 'number' ? <CountUp value={stat.value} ready={ready} delay={0.08 * i} /> : stat.value}
                 </span>
                 {stat.unit && stat.value != null && (
-                  <span className="text-[12.5px] font-semibold" style={{ color: stat.selected ? undefined : dare ? '#C9C8CF' : on.soft }}>
+                  <span className="truncate text-[11.5px] font-semibold" style={{ color: stat.selected ? undefined : dare ? '#C9C8CF' : on.soft }}>
                     {stat.unit}
                   </span>
                 )}
               </span>
-              <span className="mt-1 block truncate text-[13px] font-bold" style={{ color: stat.selected ? undefined : '#FFFFFF' }}>
+                <span className="flex shrink-0">{stat.visual ?? <ChevronRight className="h-3.5 w-3.5 opacity-50" strokeWidth={2.4} aria-hidden="true" />}</span>
+              </span>
+              <span className="mt-1.5 block truncate text-[12.5px] font-bold leading-tight" style={{ color: stat.selected ? undefined : '#FFFFFF' }}>
                 {stat.label}
               </span>
               {stat.sub && (
-                <span className="mt-0.5 line-clamp-2 block text-[11.5px] font-medium leading-[1.3]" style={{ color: stat.selected ? undefined : dare ? '#B5B4BC' : on.soft }}>
+                // One line, so the three tiles always line up.
+                <span className="mt-0.5 block truncate text-[11px] font-medium leading-[1.3]" style={{ color: stat.selected ? undefined : dare ? '#B5B4BC' : on.soft }}>
                   {stat.sub}
                 </span>
               )}
@@ -146,7 +150,7 @@ export default function HeroStats({ tone, label, stats, action, ready = true }: 
         })}
       </div>
       {action && (
-        <div className="cp-tile mt-2.5" style={{ animationDelay: '400ms' }}>
+        <div className="cp-tile mt-2" style={{ animationDelay: '400ms' }}>
           {action.href ? (
             <Link href={action.href} className={actionClass} style={{ background: dare ? 'var(--ink)' : '#FFFFFF', color: dare ? 'var(--dare)' : on.strong }}>
               {action.icon}
@@ -184,7 +188,7 @@ export function HeroSteps({ tone, steps }: { tone: 'dare' | 'navy' | 'circle'; s
       {steps.map((step, i) => (
         <li
           key={step.title}
-          className="cp-tile relative flex min-h-[118px] flex-col rounded-[18px] p-3"
+          className="cp-tile relative flex min-h-[84px] flex-col rounded-[14px] p-2.5"
           style={{
             animationDelay: `${120 + i * 110}ms`,
             background: dare ? 'var(--ink)' : 'rgba(255,255,255,0.12)',
@@ -193,13 +197,13 @@ export function HeroSteps({ tone, steps }: { tone: 'dare' | 'navy' | 'circle'; s
           }}
         >
           <span className="flex items-center justify-between">
-            <span className="flex size-8 items-center justify-center rounded-full" style={{ background: dare ? 'var(--dare)' : '#FFFFFF', color: dare ? 'var(--ink)' : on.strong, boxShadow: 'inset 0 0 0 1.5px #17181D' }}>
+            <span className="flex size-7 items-center justify-center rounded-full" style={{ background: dare ? 'var(--dare)' : '#FFFFFF', color: dare ? 'var(--ink)' : on.strong, boxShadow: 'inset 0 0 0 1.5px #17181D' }}>
               {step.icon}
             </span>
             <span className="text-[12px] font-bold opacity-60">{i + 1}</span>
           </span>
-          <span className="mt-auto block pt-2 text-[14px] font-bold leading-tight">{step.title}</span>
-          <span className="mt-0.5 block text-[11.5px] leading-snug" style={{ color: dare ? '#B5B4BC' : on.soft }}>
+          <span className="mt-auto block pt-1.5 text-[13px] font-bold leading-tight">{step.title}</span>
+          <span className="mt-0.5 block text-[11px] leading-snug" style={{ color: dare ? '#B5B4BC' : on.soft }}>
             {step.body}
           </span>
         </li>

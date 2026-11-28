@@ -22,12 +22,13 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'for-you', label: 'For you' },
   { id: 'sent', label: 'Sent' },
   { id: 'discover', label: 'Discover' },
-  { id: 'history', label: 'Done by you' },
+  // Done and didn't-happen dares, newest first.
+  { id: 'history', label: 'History' },
 ];
 
 const EMPTY: Record<Tab, { title: string; body: string; cta?: 'create' | 'discover' }> = {
   'for-you': { title: 'No dares waiting on you', body: 'When someone dares you, it shows up here with a clock.', cta: 'discover' },
-  sent: { title: 'Nothing in play right now', body: 'Dares you sent that finished or ran out of time are in Done by you. Dare one person to do one thing, soon.', cta: 'create' },
+  sent: { title: 'Nothing in play right now', body: 'Dares you sent that finished or ran out of time are in History. Dare one person to do one thing, soon.', cta: 'create' },
   discover: { title: 'Nothing shared yet', body: 'Finished dares people choose to show off appear here.', cta: 'create' },
   history: { title: 'Nothing done yet', body: 'Dares you finish, and dares you mark done for friends, land here.' },
 };
@@ -94,7 +95,7 @@ function DaresPageInner() {
         history.push(dare);
       }
       // Counts dares you did and dares you sent and marked done: both are
-      // "done" from where you sit, and both live in the Done by you list.
+      // "done" from where you sit, and both live in History.
       if (role !== 'viewer' && dareState(dare) === 'completed') {
         doneByYou += 1;
         if (dare.reward_amount) {
@@ -181,9 +182,9 @@ function DaresPageInner() {
     },
     {
       key: 'done',
-      label: 'Done by you',
+      label: 'Completed',
       value: mine.isSuccess ? lists.doneByYou : null,
-      sub: lists.won > 0 ? `₹${lists.won} won` : lists.paid > 0 ? `₹${lists.paid} paid out` : lists.doneByYou > 0 ? 'Proof or it didn\u2019t happen' : 'None yet',
+      sub: lists.won > 0 ? `₹${lists.won} won` : lists.paid > 0 ? `₹${lists.paid} paid out` : lists.doneByYou > 0 ? 'Proof checked' : 'None yet',
       icon: <CheckBadge />,
       hint: 'Dares you did, and dares you sent and marked done',
       selected: tab === 'history',
@@ -208,7 +209,7 @@ function DaresPageInner() {
   return (
     <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
       <div className="mx-auto max-w-2xl">
-        <PageHero tone="dare" title="Dares" tagline="Proof or it didn't happen" line={heroLine} busy={mine.isFetching}>
+        <PageHero tone="dare" title="Dares" tagline="Proof or it didn't happen" line={heroLine} busy={mine.isFetching} action={nothingYet ? undefined : sendAction}>
           {nothingYet ? (
             <>
               <HeroSteps
@@ -222,7 +223,7 @@ function DaresPageInner() {
               <HeroStats tone="dare" label="Start" stats={[]} action={sendAction} />
             </>
           ) : (
-            <HeroStats tone="dare" label="Your dares at a glance" stats={heroStats} ready={mine.isSuccess} action={sendAction} />
+            <HeroStats tone="dare" label="Your dares at a glance" stats={heroStats} ready={mine.isSuccess} />
           )}
           {daresPaused && <PausedNote text={daresPaused} className="mt-3" />}
         </PageHero>
