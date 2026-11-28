@@ -17,6 +17,7 @@ import { markWatchingSeen } from '@/lib/api/access';
 import { getPactProgress } from '@/lib/pactProgress';
 import { isTransientError } from '@/lib/transient';
 import { resolvePactCompletionViewState } from '@/lib/pactCompletionState';
+import { usePendingMoments } from '@/lib/pendingMoments';
 
 /** While the pact loads: the same full-screen dark frame the moment will fill, so nothing jumps. */
 function PactDetailSkeleton() {
@@ -73,9 +74,29 @@ export default function PactDetailPage() {
   // had (recent_proofs), so the page opens on the same picture instead of an empty card.
   const momentsLoading = momentsData === undefined;
   const feedProofs = pact?.recent_proofs;
+  // Your just-posted moment shows here at once too, until the server's list has it.
+  const pendingMoments = usePendingMoments(pactId);
+  const todayDay = pact?.current_day != null ? Number(pact.current_day) : undefined;
   const moments = useMemo(
-    () =>
-      (momentsData?.data || (Array.isArray(feedProofs) ? feedProofs : []))
+    () => {
+      const server = momentsData?.data || (Array.isArray(feedProofs) ? feedProofs : []);
+      const serverIds = new Set(server.map((moment: any) => moment.id));
+      const local = pendingMoments
+        .filter((moment) => !serverIds.has(moment.id))
+        .map((moment) => ({
+          id: moment.id,
+          proof_url: moment.url,
+          proof_type: moment.type,
+          caption: '',
+          // Posted just now, so it counts for the pact's today.
+          day_number: todayDay,
+          uploaded_at: moment.uploadedAt,
+          submitted_by: user?.id,
+          username: moment.uploader,
+          full_name: moment.uploaderName,
+          avatar_url: user?.avatar_url,
+        }));
+      return [...local, ...server]
         .map((moment: any) => ({
           id: moment.id,
           url: moment.proof_url || moment.file_url || undefined,
@@ -88,8 +109,9 @@ export default function PactDetailPage() {
           authorName: moment.full_name || moment.name || moment.username || moment.submitted_by_username,
           avatarUrl: moment.avatar_url || undefined,
         }))
-        .sort((left: any, right: any) => new Date(right.uploadedAt || 0).getTime() - new Date(left.uploadedAt || 0).getTime()),
-    [momentsData?.data, feedProofs],
+        .sort((left: any, right: any) => new Date(right.uploadedAt || 0).getTime() - new Date(left.uploadedAt || 0).getTime());
+    },
+    [momentsData?.data, feedProofs, pendingMoments, user?.id, user?.avatar_url, todayDay],
   );
   // A paid watcher opening the pact clears its "new" count.
   const watchedByMe = pact?.media_access === 'approved';

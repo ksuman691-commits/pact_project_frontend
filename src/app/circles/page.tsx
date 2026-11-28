@@ -90,14 +90,14 @@ export default function CirclesPage() {
     <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
       <div className="mx-auto max-w-2xl">
         <PageHero
-          tone="navy"
+          tone="circle"
           title="Circles"
           tagline="Your people, keeping you honest"
           busy={circlesQuery.isFetching}
           line={!circlesQuery.isSuccess || !allActivityKnown ? 'Loading your circles…' : activeCircles > 0 ? <><b>{activeCircles} {activeCircles === 1 ? 'circle is' : 'circles are'} moving</b> this week.</> : circles.length > 0 ? 'Quiet week. Post something to wake them up.' : 'Start a circle with the people who keep you honest.'}
         >
           <HeroStats
-            tone="navy"
+            tone="circle"
             label="Your circles at a glance"
             ready={circlesQuery.isSuccess}
             stats={glance.map((stat, i) => ({
@@ -106,8 +106,8 @@ export default function CirclesPage() {
               hint: stat.hint,
               value: circlesQuery.isSuccess ? stat.value : null,
               sub: i === 0 ? 'You belong to' : i === 1 ? 'Posted this week' : 'Need a nudge',
-              icon: i === 0 ? <Users className="size-4 text-[var(--navy)]" strokeWidth={2.4} aria-hidden="true" /> : i === 1 ? <Sparkles className="size-4 text-white" strokeWidth={2.4} aria-hidden="true" /> : <Moon className="size-4 text-[var(--ink)]" strokeWidth={2.4} aria-hidden="true" />,
-              iconBg: i === 0 ? '#FFFFFF' : i === 1 ? '#22C55E' : '#A5B4FC',
+              icon: i === 0 ? <Users className="size-4 text-[var(--circles-deep)]" strokeWidth={2.4} aria-hidden="true" /> : i === 1 ? <Sparkles className="size-4 text-white" strokeWidth={2.4} aria-hidden="true" /> : <Moon className="size-4 text-[var(--ink)]" strokeWidth={2.4} aria-hidden="true" />,
+              iconBg: i === 0 ? '#FFFFFF' : i === 1 ? '#22C55E' : '#FFD23F',
               selected: membershipFilter === stat.filter,
               onSelect: () => setMembershipFilter(stat.filter),
             }))}

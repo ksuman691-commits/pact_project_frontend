@@ -3,7 +3,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import AutoPlayVideo from '@/components/media/AutoPlayVideo';
-import { useSnapSwipe } from '@/hooks/useSnapSwipe';
 import ProofCarousel from './ProofCarousel';
 
 interface Proof {
@@ -13,6 +12,8 @@ interface Proof {
   description?: string;
   uploadedAt?: string;
   uploader?: string;
+  /** The poster's display name, when the server sends one. */
+  uploaderName?: string;
   day?: number;
 }
 
@@ -23,6 +24,7 @@ export interface GalleryTile {
   description?: string;
   uploadedAt?: string;
   uploader?: string;
+  uploaderName?: string;
   day?: number;
   kind: 'proof';
 }
@@ -37,6 +39,7 @@ export function buildGalleryTiles(proofs: Proof[]): GalleryTile[] {
       description: proof.description,
       uploadedAt: proof.uploadedAt,
       uploader: proof.uploader,
+      uploaderName: proof.uploaderName,
       day: proof.day,
       kind: 'proof',
     }))
@@ -211,7 +214,16 @@ export default function PactGallery({
     // stale ones.
   }, [slideCount, firstTileId, lastTileId]);
 
-  useSnapSwipe(scrollerRef, slideCount);
+  // A new newest photo (just posted, or the first one deleted) goes back to the start.
+  useEffect(() => {
+    scrollerRef.current?.scrollTo({ left: 0 });
+  }, [firstTileId]);
+
+  // No JS swipe helper here: it fired its own smooth scroll while the browser's
+  // snap animation was still running, and on Android the two fought, so the
+  // next photo jumped into place instead of sliding. The browser's own
+  // scroll-snap follows the finger and settles by itself; snap-always keeps a
+  // fast flick to one photo at a time.
 
   if (tiles.length === 0 && !trailingSlot) return null;
 
@@ -235,7 +247,7 @@ export default function PactGallery({
       <div className={`relative ${fillHeight ? 'h-full' : ''}`}>
         <div
           ref={scrollerRef}
-          className={`flex snap-x snap-mandatory overflow-x-auto scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+          className={`flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
             fillHeight ? 'h-full' : ''
           }`}
         >
@@ -249,7 +261,7 @@ export default function PactGallery({
                   ? `${tile.type === 'video' ? 'Video proof' : 'Photo proof'}${tile.day ? `, day ${tile.day}` : ''}`
                   : undefined
               }
-              className={`cp-media-loading group relative ${fillHeight ? 'h-full' : aspectClassName} w-full flex-shrink-0 snap-center overflow-hidden bg-white/5 text-left focus:outline-none ${
+              className={`cp-media-loading group relative ${fillHeight ? 'h-full' : aspectClassName} w-full flex-shrink-0 snap-center snap-always overflow-hidden bg-white/5 text-left focus:outline-none ${
                 interactive ? 'rounded-2xl' : ''
               }`}
             >
@@ -277,10 +289,11 @@ export default function PactGallery({
                     fill
                     className="object-cover"
                     sizes="(max-width: 768px) 100vw, 480px"
-                    // Lazy: the browser still fetches the next slides well before
-                    // a swipe reaches them (its lazy margin is over a screen wide),
-                    // but cards further down the feed no longer all load on open.
-                    loading="lazy"
+                    // The photo on screen and its neighbours load now, so a swipe
+                    // slides onto a photo that's already there instead of one
+                    // that pops in; the rest wait until they're near.
+                    loading={Math.abs(index - activeSlide) <= 1 ? 'eager' : 'lazy'}
+                    draggable={false}
                     onError={() =>
                       setFailedTileKeys((prev) => new Set(prev).add(`${tile.kind}-${tile.id}`))
                     }

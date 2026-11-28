@@ -28,6 +28,8 @@ import { useDeleteMoment, usePactStoriesToday } from '@/hooks/useStories';
 import DeleteMomentSheet from './stories/DeleteMomentSheet';
 import { MarkProgress } from './brand/CircleMark';
 import { isPhotoStory, postedAgo } from '@/lib/stories';
+import { pactLocalToday } from '@/lib/pactCompletionState';
+import { settlePendingMoments, usePendingMoments } from '@/lib/pendingMoments';
 import { getDisplayName } from '@/lib/displayName';
 import { hasPactMomentum } from '@/lib/pactMomentum';
 import { pactService, socialService } from '@/services/api';
@@ -73,6 +75,8 @@ interface FeedPactCardProps {
   hideHeroAndTitle?: boolean;
   /** Full proof list fetched separately by a detail page; the feed falls back to the proofs on the pact. */
   galleryProofs?: any[];
+  /** The home feed: the card and its photo run edge to edge, like Instagram. */
+  edgeToEdge?: boolean;
 }
 
 const REPORT_OPTIONS = [
@@ -137,6 +141,7 @@ function getProofs(pact: any) {
           description: proof?.caption || proof?.description || '',
           uploadedAt: proof?.uploaded_at || proof?.created_at || null,
           uploader: proof?.uploader || proof?.username || null,
+          uploaderName: proof?.full_name || proof?.uploader_full_name || proof?.name || null,
           // Was `?? index + 1`: recent_proofs is newest-first, so any proof
           // missing a real day_number (the upload flow didn't send one
           // until this was fixed — see ProofUploadModal) silently got
@@ -275,6 +280,7 @@ export default function FeedPactCard({
   chromeless = false,
   hideHeroAndTitle = false,
   galleryProofs,
+  edgeToEdge = false,
   }: FeedPactCardProps) {
   const router = useRouter();
   const { user } = useAuthStore();
@@ -389,11 +395,23 @@ export default function FeedPactCard({
   const proofs = useMemo(() => getProofs(pact), [pact]);
   const media = useMemo(() => getMedia(pact), [pact]);
   const progressInfo = useMemo(() => getDurationProgress(pact), [pact]);
+  // Your own just-posted moments go in front until the server's list has them (see pendingMoments).
+  const pendingMoments = usePendingMoments(Number(pact.id));
+  const serverProofs = galleryProofs ?? proofs;
+  const shownProofs = useMemo(() => {
+    if (pendingMoments.length === 0) return serverProofs;
+    const serverIds = new Set(serverProofs.map((proof: any) => proof?.id));
+    const local = pendingMoments
+      .filter((moment) => !serverIds.has(moment.id))
+      .map((moment) => ({ id: moment.id, url: moment.url, type: moment.type, description: '', uploadedAt: moment.uploadedAt, uploader: moment.uploader, uploaderName: moment.uploaderName, day: undefined }));
+    return local.length ? [...local, ...serverProofs] : serverProofs;
+  }, [pendingMoments, serverProofs]);
+  useEffect(() => {
+    if (pendingMoments.length === 0) return;
+    settlePendingMoments(Number(pact.id), serverProofs.map((proof: any) => Number(proof?.id)).filter((id: number) => id > 0));
+  }, [pendingMoments, serverProofs, pact.id]);
   // One tile list for the hero and the carousel.
-  const tiles = useMemo(
-    () => buildGalleryTiles(galleryProofs ?? proofs),
-    [galleryProofs, proofs],
-  );
+  const tiles = useMemo(() => buildGalleryTiles(shownProofs), [shownProofs]);
   const activeProof = tiles[activeProofIndex] ?? tiles[0] ?? null;
   const isExiting = exitDirection !== null;
   const resolvedDetailHref = detailHref || `/pacts/${pact.id}`;
@@ -526,8 +544,26 @@ export default function FeedPactCard({
     : 'current_day' in pact
       ? 0
       : progressInfo ? Math.min(progressInfo.totalDays, Math.max(1, progressInfo.elapsedDays)) : 0;
-  // The badge follows the moment on screen: swipe to a Day 1 clip and it says Day 1.
-  const slideDay = tiles.length > 0 && activeProof?.day ? Number(activeProof.day) : null;
+  // The pill on the photo follows the moment on screen: swipe to a Day 22 photo and it says Day 22.
+  // Older photos were saved without a day, so work it out from when they went up (pact's own calendar).
+  const slideDay = (() => {
+    if (tiles.length === 0 || !activeProof) return null;
+    if (activeProof.day) return Number(activeProof.day);
+    if (!activeProof.uploadedAt || !pact.start_date) return null;
+    try {
+      const posted = pactLocalToday(pact, new Date(activeProof.uploadedAt));
+      const diff = Math.round((Date.parse(`${posted}T00:00:00Z`) - Date.parse(`${String(pact.start_date).slice(0, 10)}T00:00:00Z`)) / 86_400_000);
+      return Number.isFinite(diff) && diff >= 0 ? diff + 1 : null;
+    } catch {
+      return null;
+    }
+  })();
+  const slideWho = activeProof
+    ? activeProof.uploader && activeProof.uploader === user?.username
+      ? 'You'
+      : String(activeProof.uploaderName || activeProof.uploader || pact.creator_full_name || creatorLabel || '').trim().split(/\s+/)[0] || null
+    : null;
+  const slideWhen = formatPostedAt(activeProof?.uploadedAt);
   // "Day 1 · 2 of 3" when a day has several moments, counted in the order you swipe them.
   const sameDayTiles = slideDay ? tiles.filter((tile) => Number(tile.day) === slideDay) : [];
   const positionInDay = activeProof ? sameDayTiles.findIndex((tile) => tile.id === activeProof.id) + 1 : 0;
@@ -671,8 +707,8 @@ export default function FeedPactCard({
     }
     tapTimerRef.current = window.setTimeout(() => {
       tapTimerRef.current = null;
-      handleCardNavigate();
-    }, 260);
+      openOnActivePhoto();
+    }, 240);
   };
 
   const handleReport = async (reason: 'fake_or_ai' | 'spam' | 'offensive') => {
@@ -770,6 +806,16 @@ export default function FeedPactCard({
   const handleCardNavigate = () => {
     router.push(resolvedDetailHref);
   };
+  // A tap on the photo opens the pact on that same photo, not on whichever one the page picks.
+  const openOnActivePhoto = () => {
+    const momentId = activeProof && typeof activeProof.id === 'number' && activeProof.id > 0 ? activeProof.id : null;
+    if (momentId == null) {
+      handleCardNavigate();
+      return;
+    }
+    const joiner = resolvedDetailHref.includes('?') ? '&' : '?';
+    router.push(`${resolvedDetailHref}${joiner}moment=${momentId}`);
+  };
 
   // Immersive layout: the photo IS the card. Header, title and actions float
   // on it. Cards without a photo (or the detail page, which renders its own
@@ -780,8 +826,10 @@ export default function FeedPactCard({
   // (not a cheer photo, and not the single-photo fallback built from the pact).
   const realProofIds = useMemo(() => {
     const source: any[] = galleryProofs ?? (Array.isArray(pact.recent_proofs) ? pact.recent_proofs : []);
-    return new Set(source.map((p: any) => p?.id).filter((id: any) => typeof id === 'number' && id > 0));
-  }, [galleryProofs, pact.recent_proofs]);
+    const ids = new Set(source.map((p: any) => p?.id).filter((id: any) => typeof id === 'number' && id > 0));
+    pendingMoments.forEach((moment) => ids.add(moment.id));
+    return ids;
+  }, [galleryProofs, pact.recent_proofs, pendingMoments]);
   const myUsername = user?.username || null;
   const deletableMoment: { proofId?: number; storyId?: number; day?: number | null } | null =
     momentStory && user?.id != null && momentStory.user_id === user.id
@@ -796,6 +844,8 @@ export default function FeedPactCard({
         : null;
 
   const immersive = !lockedForMe && !hideHeroAndTitle && (tiles.length > 0 || momentStory !== null);
+  // Edge to edge only for a photo card on the home feed; every other card keeps its rounded frame.
+  const fullBleed = edgeToEdge && immersive && !chromeless;
   const momentAuthor = momentStory ? (user?.id != null && momentStory.user_id === user.id ? 'You' : momentStory.name || 'Member') : null;
   const likeLabelCount = likeCount > 0 ? formatCompactCount(likeCount) : null;
   const chatLabelCount = commentCount > 0 ? formatCompactCount(commentCount) : null;
@@ -967,10 +1017,34 @@ export default function FeedPactCard({
       {todayWatch.done ? 'Done today' : `${todayWatch.leftLabel} left today`}
     </span>
   ) : null;
-  const dayLine = [totalDays > 0 ? badgeText : null, showMomentum && !pactEnded ? 'On a roll' : null].filter(Boolean).join(' · ');
+  // Instagram-style dots under the photo: at most five, the window sliding with the swipe.
+  const photoDots = (() => {
+    const count = tiles.length;
+    const windowSize = Math.min(5, count);
+    const start = Math.max(0, Math.min(count - windowSize, activeProofIndex - 2));
+    return Array.from({ length: windowSize }, (_, i) => {
+      const index = start + i;
+      const atEdge = count > 5 && ((i === 0 && start > 0) || (i === windowSize - 1 && start + windowSize < count));
+      return { index, active: index === activeProofIndex, size: index === activeProofIndex ? 7 : atEdge ? 4 : 6 };
+    });
+  })();
+  // One mark per day for pacts up to about six weeks, a plain bar for longer ones.
+  const segmented = totalDays > 0 && totalDays <= 45;
+  const daysToFinish = Math.max(0, finishNeeded - Math.min(finishNeeded, finishDone));
+  const progressRight = pactEnded ? badgeText : dayNo && totalDays ? `Day ${dayNo}/${totalDays}` : null;
+  const progressLeft = pactEnded
+    ? null
+    : showMomentum
+      ? '🔥 On a roll'
+      : todayWatch && !todayWatch.done
+        ? `${todayWatch.leftLabel} left today`
+        : todayWatch?.done
+          ? 'Done today'
+          : null;
   const belowPhotoCaption = (
-    <div className="px-4 pt-0.5">
-      <h2 className="line-clamp-2 text-[17px] font-extrabold leading-[1.25] tracking-[-0.015em] text-[var(--ink)]">{cleanTitle(pact.title)}</h2>
+    <div className="px-3.5 pt-0.5">
+      {/* The pact's name, bold, so it's clear what this pact is about. */}
+      <h2 className="line-clamp-2 text-[16px] font-extrabold leading-[1.3] tracking-[-0.01em] text-[var(--ink)]">{cleanTitle(pact.title)}</h2>
       {(watch || privateTag) && (
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {watch ? (
@@ -988,42 +1062,59 @@ export default function FeedPactCard({
       )}
       {totalDays > 0 && (
         <>
-          <div className="mt-2 flex justify-between gap-2 text-[12.5px] font-bold text-[var(--muted)]">
-            <span className="truncate">{dayLine}</span>
-            {finishNeeded > 0 && !pactEnded && <span className="shrink-0">{Math.max(0, Math.min(finishNeeded, finishDone))} of {finishNeeded} days to finish</span>}
+          <div className="mt-2.5 flex items-center gap-2.5">
+            {segmented && !pactEnded ? (
+              <div className="flex flex-1 gap-[2px]" aria-hidden="true">
+                {Array.from({ length: totalDays }, (_, i) => {
+                  const dayIndex = i + 1;
+                  const background =
+                    dayIndex < dayNo || (dayIndex === dayNo && postedToday)
+                      ? '#16A34A'
+                      : dayIndex === dayNo
+                        ? 'var(--pacts)'
+                        : 'var(--hairline)';
+                  return <span key={i} className="h-1 flex-1 rounded-[2px]" style={{ background }} />;
+                })}
+              </div>
+            ) : (
+              <div className="h-1 flex-1 overflow-hidden rounded-full bg-[var(--ink)]/10" aria-hidden="true">
+                <div className="cp-fill-x h-full rounded-full" style={{ width: `${Math.round(progressShare * 100)}%`, background: pactEnded && !finishedPact ? '#F87171' : '#16A34A' }} />
+              </div>
+            )}
+            {progressRight && <span className="shrink-0 text-[12px] font-extrabold tabular-nums text-[var(--ink)]">{progressRight}</span>}
           </div>
-          <div className="mt-1.5 h-[5px] overflow-hidden rounded-full bg-[var(--ink)]/10">
-            <div className="cp-fill-x h-full rounded-full" style={{ width: `${Math.round(progressShare * 100)}%`, background: pactEnded && !finishedPact ? '#F87171' : '#16A34A' }} />
-          </div>
+          {(progressLeft || (finishNeeded > 0 && !pactEnded)) && (
+            <div className="mt-1 flex justify-between gap-2 text-[12px] font-medium text-[var(--muted)]">
+              <span className="truncate">{progressLeft}</span>
+              {finishNeeded > 0 && !pactEnded && (
+                <span className="shrink-0">{daysToFinish > 0 ? `${daysToFinish} more to finish` : 'Finish line reached'}</span>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>
   );
 
-  // Under the photo: one big button (post / add / join) and Tip.
-  const bottomActions = (showAddPill || (showJoinCta && !showAddPill) || !isCreator || (watch && watchNew > 0)) ? (
+  // Under the card: one full-width "Post Day N" until today's moment is in (after
+  // that it's the small Add in the action row), or Join for people outside the pact; Tip beside it.
+  const showPostButton = showAddPill && !postedToday;
+  const bottomActions = (showPostButton || (showJoinCta && !showAddPill) || !isCreator || (watch && watchNew > 0)) ? (
     // empty:hidden: with no button and no tips there is nothing to show, so no blank strip.
-    <div className={`flex items-center gap-2 px-3 pb-3 pt-3 empty:hidden ${showAddPill || showJoinCta ? '' : 'justify-end'}`} onClick={(event) => event.stopPropagation()}>
+    <div className={`flex items-center gap-2 px-3 pb-3 pt-3 empty:hidden ${showPostButton || (showJoinCta && !showAddPill) ? '' : 'justify-end'}`} onClick={(event) => event.stopPropagation()}>
       {watch && watchNew > 0 && (
         <span className="flex h-11 items-center gap-1.5 rounded-full bg-[var(--navy)]/10 px-3 text-[13px] font-extrabold text-[var(--navy)]">
           <span className="size-2 rounded-full bg-[var(--navy)]" aria-hidden="true" />
           {watchNew} new
         </span>
       )}
-      {showAddPill ? (
-        postedToday ? (
-          <button type="button" onClick={openCamera} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full border-[1.5px] border-[var(--navy)] text-[15px] font-extrabold text-[var(--navy)] transition active:scale-[0.98]">
-            <Camera className="h-[18px] w-[18px]" strokeWidth={2.2} aria-hidden="true" />
-            Add another moment
-          </button>
-        ) : (
-          <button type="button" onClick={openCamera} className="cp-btn-shine flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--navy)] text-[15px] font-extrabold text-white transition active:scale-[0.98]" style={{ boxShadow: '0 10px 22px -12px rgba(31,58,147,0.8)' }}>
-            <Camera className="h-[18px] w-[18px]" strokeWidth={2.2} aria-hidden="true" />
-            Post Day {dayNo || 1}
-          </button>
-        )
-      ) : showJoinCta ? (
-        <button type="button" onClick={handleJoinPact} disabled={showJoinedState || isJoining} aria-label={showJoinedState ? 'Joined' : 'Join pact'} className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-full text-[15px] font-extrabold transition active:scale-[0.98] ${showJoinedState ? 'border border-[var(--hairline)] bg-[var(--card-muted)] text-[var(--muted)]' : 'bg-[var(--navy)] text-white'} ${isJoining ? 'opacity-70' : ''}`}>
+      {showPostButton ? (
+        <button type="button" onClick={openCamera} className="cp-btn-shine flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--pacts)] text-[15px] font-extrabold text-white transition active:scale-[0.98]" style={{ boxShadow: '0 10px 22px -12px rgba(47,107,255,0.9)' }}>
+          <Camera className="h-[18px] w-[18px]" strokeWidth={2.2} aria-hidden="true" />
+          Post Day {dayNo || 1}{todayWatch && !todayWatch.done ? ` · ${todayWatch.leftLabel} left` : ''}
+        </button>
+      ) : showJoinCta && !showAddPill ? (
+        <button type="button" onClick={handleJoinPact} disabled={showJoinedState || isJoining} aria-label={showJoinedState ? 'Joined' : 'Join pact'} className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-full text-[15px] font-extrabold transition active:scale-[0.98] ${showJoinedState ? 'border border-[var(--hairline)] bg-[var(--card-muted)] text-[var(--muted)]' : 'bg-[var(--pacts)] text-white'} ${isJoining ? 'opacity-70' : ''}`}>
           {showJoinedState && <Check className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" />}
           {showJoinedState ? 'Joined' : isJoining ? 'Joining…' : 'Join this pact'}
         </button>
@@ -1161,14 +1252,14 @@ export default function FeedPactCard({
 
   return (
     <>
+      {/* No press-shrink on the card: it moved the photo under the finger mid-swipe. */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        whileTap={{ scale: 0.99 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
         onClick={handleCardNavigate}
-        className={`${chromeless ? '' : 'pact-card'} group relative mx-1.5 cursor-pointer transition-colors hover:border-[var(--pact-violet)]/60 sm:mx-0 ${
-          chromeless ? '' : 'rounded-[26px] shadow-[0_10px_30px_-18px_rgba(23,24,29,0.45)]'
+        className={`${chromeless ? '' : 'pact-card'} group relative cursor-pointer transition-colors hover:border-[var(--pact-violet)]/60 ${
+          fullBleed ? 'mx-0 rounded-none sm:rounded-[26px]' : `mx-1.5 sm:mx-0 ${chromeless ? '' : 'rounded-[26px] shadow-[0_10px_30px_-18px_rgba(23,24,29,0.45)]'}`
         } ${moreMenuOpen ? 'overflow-visible' : 'overflow-hidden'}`}
       >
         {lockedForMe ? (
@@ -1184,19 +1275,19 @@ export default function FeedPactCard({
             {actionBar(false)}
           </>
         ) : immersive ? (
-          /* The photo fills the card. Gradients are pointer-events-none so
-             horizontal swipes reach PactGallery; tapping the photo opens the viewer. */
+          /* Instagram-style: header, the photo edge to edge, the action row, the pact's
+             name in bold, its progress, one comment. Swipes are the browser's own
+             scroll-snap inside PactGallery; a tap opens the pact on the photo on screen. */
           <>
           <div className="flex items-center gap-2.5 pb-2 pl-3.5 pr-0.5 pt-2">
             {identity(false)}
             {kebab(false)}
           </div>
-          <div className="relative w-full" onClick={handleMediaTap} style={transformStyle}>
-            <div className="cp-kenburns overflow-hidden">
+          <div className="relative w-full select-none" onClick={handleMediaTap} style={transformStyle}>
             {tiles.length > 0 ? (
               <PactGallery
-                proofs={galleryProofs ?? proofs}
-                interactive
+                proofs={shownProofs}
+                interactive={false}
                 aspectClassName="aspect-[4/5]"
                 dotsPosition="none"
                 hideProofBadge
@@ -1213,20 +1304,19 @@ export default function FeedPactCard({
                 )}
               </div>
             )}
-            </div>
-            {/* Only the moment bars sit on the photo, over a faint shade so they stay visible on white. */}
             {tiles.length > 1 && (
-              <>
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-black/25 to-transparent" />
-                <div className="pointer-events-none absolute inset-x-3 top-2.5 flex gap-1" aria-hidden="true">
-                  {tiles.map((tile, index) => (
-                    <span key={`${tile.kind}-${tile.id}`} className="h-[2.5px] flex-1 rounded-full transition-colors duration-300" style={{ background: index === activeProofIndex ? '#FFFFFF' : 'rgba(255,255,255,0.5)' }} />
-                  ))}
-                </div>
-                <span className="pointer-events-none absolute right-3 top-[22px] rounded-full bg-black/45 px-2 py-0.5 text-[12px] font-bold tabular-nums text-white">
-                  {Math.min(activeProofIndex + 1, tiles.length)}/{tiles.length}
-                </span>
-              </>
+              <span className="pointer-events-none absolute right-3 top-3 rounded-full bg-black/55 px-2 py-0.5 text-[12px] font-bold tabular-nums tracking-[0.02em] text-white">
+                {Math.min(activeProofIndex + 1, tiles.length)}/{tiles.length}
+              </span>
+            )}
+            {/* Whose photo this is and which day it counts for: follows the swipe. */}
+            {tiles.length > 0 && (slideDay || slideWho) && (
+              <span className="pointer-events-none absolute bottom-3 left-3 flex max-w-[calc(100%-24px)] items-center gap-1.5 rounded-full bg-black/60 py-1 pl-1 pr-2.5 text-[12.5px] font-bold text-white">
+                {slideDay && (
+                  <span className="shrink-0 rounded-full bg-white px-1.5 py-px text-[11.5px] font-extrabold text-[var(--ink)]">Day {slideDay}</span>
+                )}
+                <span className="truncate">{[slideWho, slideWhen].filter(Boolean).join(' · ')}</span>
+              </span>
             )}
 
             {heartBurst > 0 && (
@@ -1234,11 +1324,31 @@ export default function FeedPactCard({
                 <Heart className="cp-heart-pop size-[120px]" fill="#FF3B5C" color="#FFFFFF" strokeWidth={1.2} />
               </span>
             )}
-
           </div>
-            <div className="flex items-center pr-2">
+            <div className="relative flex h-12 items-center pr-2.5">
               <div className="min-w-0 flex-1">{actionBarSocial}</div>
-              {statusChip}
+              {tiles.length > 1 && (
+                <div className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1" aria-hidden="true">
+                  {photoDots.map((dot) => (
+                    <span
+                      key={dot.index}
+                      className="rounded-full transition-all duration-200"
+                      style={{ width: dot.size, height: dot.size, background: dot.active ? 'var(--pacts)' : '#CFC9BD' }}
+                    />
+                  ))}
+                </div>
+              )}
+              {pactEnded ? statusChip : showAddPill && postedToday ? (
+                <button
+                  type="button"
+                  onClick={(event) => { event.stopPropagation(); openCamera(); }}
+                  aria-label="Add another moment"
+                  className="flex h-9 items-center gap-1.5 rounded-full border-[1.5px] border-[var(--pacts)] px-3 text-[13px] font-extrabold text-[var(--pacts-ink)] transition active:scale-95"
+                >
+                  <Camera className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
+                  Add
+                </button>
+              ) : null}
             </div>
             {belowPhotoCaption}
             {!chromeless && (
@@ -1250,7 +1360,7 @@ export default function FeedPactCard({
                 topComment={pact.top_comment ?? null}
                 commentCount={commentCount}
                 onOpenComments={() => setCommentSheetOpen(true)}
-                onCommented={() => setLiveCommentCount((current) => (current ?? Number(pact.comment_count ?? 0)) + 1)}
+                postedAgo={postedAgo(activeProof?.uploadedAt ?? momentStory?.created_at ?? null)}
               />
             )}
             {bottomActions}

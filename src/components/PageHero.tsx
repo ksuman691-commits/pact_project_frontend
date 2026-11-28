@@ -5,8 +5,8 @@ import CircleMark from '@/components/brand/CircleMark'
 import HeroMark from '@/components/brand/HeroMark'
 
 interface PageHeroProps {
-  /** Yellow for dares, navy for pacts and circles. */
-  tone: 'dare' | 'navy'
+  /** Yellow for dares, navy for pacts, red for circles: each tab has its own colour. */
+  tone: 'dare' | 'navy' | 'circle'
   title: string
   /** What this page is, in a few words. Always there, so the page explains itself. */
   tagline?: React.ReactNode
@@ -24,24 +24,25 @@ const SPARKS = Array.from({ length: 14 }, (_, i) => {
 })
 
 /**
- * The coloured top of Dares, Pacts and Circles. The whole top is the colour,
+ * The coloured top of Dares (yellow), Pacts (navy) and Circles (red). The whole top is the colour,
  * like the "Dare sent." screen; a big CirclePact mark sits sunk into it. The
  * mark draws itself when the page opens, closes as you pull down, turns while
  * the page loads, then pops with a crisp ring and sparks when the numbers land. Reduced motion keeps all of it still.
  */
 export default function PageHero({ tone, title, tagline, line, busy = false, children }: PageHeroProps) {
   const dare = tone === 'dare'
+  const circle = tone === 'circle'
   const [popKey, setPopKey] = useState(0)
 
   return (
     <section
-      className={`cp-hero relative isolate overflow-hidden rounded-b-[34px] px-5 pb-5 pt-9 ${dare ? 'bg-[var(--dare)] text-[var(--ink)]' : 'bg-[var(--navy)] text-white'}`}
+      className={`cp-hero relative isolate overflow-hidden rounded-b-[34px] px-5 pb-5 pt-9 ${dare ? 'bg-[var(--dare)] text-[var(--ink)]' : circle ? 'bg-[var(--circles)] text-white' : 'bg-[var(--navy)] text-white'}`}
     >
       {/* A flat, even tone: one quiet step lighter at the top. No blur. */}
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-20"
-        style={{ background: dare ? 'linear-gradient(180deg, #FFDA5C 0%, #FFD23F 55%)' : 'linear-gradient(180deg, #2546A6 0%, #1F3A93 60%)' }}
+        style={{ background: dare ? 'linear-gradient(180deg, #FFDA5C 0%, #FFD23F 55%)' : circle ? 'linear-gradient(180deg, #EC4A4F 0%, #E5363B 60%)' : 'linear-gradient(180deg, #2546A6 0%, #1F3A93 60%)' }}
       />
 
       {/* The mark, set into the colour: a tone of the background with a crisp 2px edge, and two orbit rings. */}
@@ -49,7 +50,7 @@ export default function PageHero({ tone, title, tagline, line, busy = false, chi
         <span className="cp-hero-float block">
           <HeroMark
             size={224}
-            color={dare ? '#FFC414' : '#2A4CB0'}
+            color={dare ? '#FFC414' : circle ? '#EF5256' : '#2A4CB0'}
             stroke={dare ? '#17181D' : 'rgba(255,255,255,0.55)'}
             ringColor={dare ? 'rgba(23,24,29,0.16)' : 'rgba(255,255,255,0.16)'}
             busy={busy}
@@ -69,7 +70,7 @@ export default function PageHero({ tone, title, tagline, line, busy = false, chi
                 width: s.size + 2,
                 height: s.size + 2,
                 borderRadius: i % 2 ? 999 : 2,
-                background: i % 3 === 0 ? '#E5363B' : dare ? '#FFFFFF' : '#FFD23F',
+                background: i % 3 === 0 ? (circle ? '#FFFFFF' : '#E5363B') : dare ? '#FFFFFF' : '#FFD23F',
                 boxShadow: '0 0 0 1.5px #17181D',
                 animationDelay: `${s.delay}ms`,
                 ['--dx' as string]: `${s.dx}px`,
@@ -107,7 +108,7 @@ export default function PageHero({ tone, title, tagline, line, busy = false, chi
         {title}
       </h1>
       {tagline && (
-        <p className="cp-hero-title mt-2.5 text-[13px] font-bold" style={{ animationDelay: '80ms', color: dare ? 'rgba(23,24,29,0.62)' : 'rgba(212,219,250,0.85)' }}>
+        <p className="cp-hero-title mt-2.5 text-[13px] font-bold" style={{ animationDelay: '80ms', color: dare ? 'rgba(23,24,29,0.62)' : circle ? 'rgba(255,226,224,0.92)' : 'rgba(212,219,250,0.85)' }}>
           {tagline}
         </p>
       )}

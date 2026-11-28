@@ -8,6 +8,8 @@ import { queryKeys } from '@/lib/queryKeys'
 import api, { pactService } from '@/services/api'
 import toast from 'react-hot-toast'
 import { MOMENT_POSTED_EVENT } from '@/lib/push'
+import { addPendingMoment, removePendingMoment } from '@/lib/pendingMoments'
+import { useAuthStore } from '@/store/auth'
 
 export const storyKeys = {
   all: ['stories'] as const,
@@ -108,6 +110,7 @@ export function usePostStory(pactId: number) {
       setRetryable(false)
       setProgress(0)
       setProofId(null)
+      let postedId: number | null = null
       try {
         if (contentType.startsWith('image/')) {
           // Photo moments go through the pact's photo upload (checked for safety there),
@@ -116,7 +119,8 @@ export function usePostStory(pactId: number) {
           const extension = contentType === 'image/png' ? 'png' : contentType === 'image/webp' ? 'webp' : contentType.includes('hei') ? 'heic' : 'jpg'
           const file = new File([blob], `moment.${extension}`, { type: contentType })
           const uploaded = await pactService.uploadProofFile(pactId, file, 'photo', undefined, undefined, setProgress)
-          setProofId(Number((uploaded as any)?.data?.id) || null)
+          postedId = Number((uploaded as any)?.data?.id) || null
+          setProofId(postedId)
           setPhase('saving')
         } else {
           setPhase('requesting')
@@ -128,7 +132,22 @@ export function usePostStory(pactId: number) {
             object_key,
             duration_seconds: Math.min(STORY_MAX_SECONDS, Math.max(1, Math.round(durationSeconds))),
           })
-          setProofId(Number((story as any)?.proof_id) || null)
+          postedId = Number((story as any)?.proof_id) || null
+          setProofId(postedId)
+        }
+        // Show it on the card and the pact page right away, from this phone's own copy,
+        // until the server's lists include it.
+        if (postedId) {
+          const me = useAuthStore.getState().user
+          addPendingMoment({
+            id: postedId,
+            pactId,
+            url: URL.createObjectURL(blob),
+            type: contentType.startsWith('image/') ? 'image' : 'video',
+            uploadedAt: new Date().toISOString(),
+            uploader: me?.username ?? null,
+            uploaderName: me?.full_name ?? null,
+          })
         }
         setPhase('done')
         // The reminder sheet offers itself once, after a first check-in (src/components/ReminderPrompt.tsx).
@@ -178,7 +197,10 @@ export function useDeleteMoment() {
     async (target: { pactId: number; proofId?: number; storyId?: number }) => {
       setDeleting(true)
       try {
-        if (target.proofId != null) await api.delete(`/api/pacts/${target.pactId}/proofs/${target.proofId}`)
+        if (target.proofId != null) {
+          await api.delete(`/api/pacts/${target.pactId}/proofs/${target.proofId}`)
+          removePendingMoment(target.proofId)
+        }
         else if (target.storyId != null) await api.delete(`/api/stories/${target.storyId}`)
         void Promise.all([
           queryClient.invalidateQueries({ queryKey: storyKeys.all }),

@@ -247,12 +247,13 @@ export default function PactFeed({
         return (
         <div
           key={pact.id}
-          // Cards sit 6 px from the screen edge, past the feed's 16 px padding, like every page.
+          // The feed's 16 px padding is cancelled so a photo card runs edge to edge (cards without a photo keep a 6 px margin).
           className={`-mx-4 ${isNew ? 'pact-new-item' : 'pact-list-item'}`}
           style={isNew ? undefined : { animationDelay: `${Math.min(index, 8) * 40}ms` }}
         >
         <FeedPactCard
           pact={pact}
+          edgeToEdge
           userVote={pact.userVote || (pact as any).user_vote}
           onVote={handleVote}
           onDismiss={removePact}
