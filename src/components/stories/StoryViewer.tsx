@@ -10,6 +10,7 @@ import ReportMomentSheet from './ReportMomentSheet'
 import { reactToStory, replyToStory, STORY_REACTIONS } from '@/lib/api/stories'
 import { useAuthStore } from '@/store/auth'
 import { useDeleteMoment, useMarkStorySeen, useStoryViewers } from '@/hooks/useStories'
+import { useFollowState, useRequestFollow } from '@/hooks/useFollows'
 import { useBackToClose } from '@/hooks/useBackToClose'
 import { isPhotoStory, monogram, postedAgo, STORIES_COMING_SOON, type PactStory } from '@/lib/stories'
 import { RingFace } from './StoryRing'
@@ -72,6 +73,14 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
   const story = stories[index]
   const photo = !!story && isPhotoStory(story)
   const isOwn = !!story && user?.id != null && story.user_id === user.id
+  // Follow next to their name, like Instagram: shown until you follow them.
+  const followUserId = open && story && !isOwn ? story.user_id : undefined
+  const followState = useFollowState(followUserId)
+  const requestFollow = useRequestFollow(followUserId)
+  const outgoing = (followState.data?.data as any)?.outgoing_status as string | null | undefined
+  const [followTapped, setFollowTapped] = useState<number | null>(null)
+  const showFollow = followUserId != null && followState.isFetched && outgoing !== 'accepted'
+  const followRequested = outgoing === 'pending' || followTapped === followUserId
   const viewersQuery = useStoryViewers(story?.id ?? null, open && isOwn)
   const viewers = viewersQuery.data?.viewers ?? []
   const replies = viewersQuery.data?.replies ?? []
@@ -276,13 +285,30 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
       <div className="relative z-10 flex items-center justify-between gap-2 py-2 pl-3 pr-1" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.45)' }}>
         {/* Their photo and name are one link to their profile. */}
         {story && story.username && !isOwn ? (
-          <Link href={`/profile/${encodeURIComponent(story.username)}`} onClick={goTo(`/profile/${encodeURIComponent(story.username)}`)} className="flex min-w-0 items-center gap-2.5">
-            <RingFace name={story.name} imageUrl={story.avatar_url} size={32} />
-            <span className="min-w-0">
-              <span className="block truncate text-[14px] font-bold text-white">{story.name || 'Member'}</span>
-              {postedAgo(story.created_at) && <span className="block text-[12px] text-white/80">{postedAgo(story.created_at)}</span>}
-            </span>
-          </Link>
+          <div className="flex min-w-0 items-center gap-2">
+            <Link href={`/profile/${encodeURIComponent(story.username)}`} onClick={goTo(`/profile/${encodeURIComponent(story.username)}`)} className="flex min-w-0 items-center gap-2.5">
+              <RingFace name={story.name} imageUrl={story.avatar_url} size={32} />
+              <span className="min-w-0">
+                <span className="block truncate text-[14px] font-bold text-white">{story.name || 'Member'}</span>
+                {postedAgo(story.created_at) && <span className="block text-[12px] text-white/80">{postedAgo(story.created_at)}</span>}
+              </span>
+            </Link>
+            {showFollow && (
+              <button
+                type="button"
+                disabled={followRequested || requestFollow.isPending}
+                onClick={() => {
+                  if (followUserId == null) return
+                  setFollowTapped(followUserId)
+                  requestFollow.mutate(followUserId, { onError: () => setFollowTapped(null) })
+                }}
+                className="flex h-8 shrink-0 items-center rounded-lg border border-white/80 px-3 text-[13px] font-bold text-white transition active:scale-95 disabled:border-white/40 disabled:text-white/70"
+                style={{ textShadow: 'none' }}
+              >
+                {followRequested ? 'Requested' : 'Follow'}
+              </button>
+            )}
+          </div>
         ) : story ? (
           <div className="flex min-w-0 items-center gap-2.5">
             <RingFace name={story.name} imageUrl={story.avatar_url} size={32} />
@@ -342,8 +368,8 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
                 if (event.key === 'Enter') void sendReply()
               }}
               maxLength={300}
-              placeholder={`Reply to ${(story.name || 'them').split(' ')[0]}…`}
-              aria-label="Reply to this moment"
+              placeholder={`Message ${(story.name || 'them').split(' ')[0]} privately…`}
+              aria-label="Send a private reply to this moment"
               className="h-11 min-w-0 flex-1 rounded-full border px-4 text-[16px] outline-none placeholder:text-white/60"
               style={{ background: 'rgba(255,255,255,0.12)', borderColor: 'rgba(255,255,255,0.3)', color: '#fff' }}
             />
@@ -367,7 +393,11 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
               </div>
             )}
           </div>
-          {sent === '✓' && <div className="text-[12px]" style={{ color: 'rgba(255,255,255,0.75)' }}>Reply sent</div>}
+          {sent && (
+            <div className="text-[12px]" style={{ color: 'rgba(255,255,255,0.8)' }}>
+              {sent === '✓' ? 'Sent' : `${sent} sent`} to {(story.name || 'them').split(' ')[0]}. Only they see it, in their notifications.
+            </div>
+          )}
         </div>
       )}
 
