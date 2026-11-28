@@ -36,6 +36,8 @@ export function useMyDares(options?: { enabled?: boolean }) {
     // firing this while logged out 401s, which triggers the API client's
     // hard-redirect-to-login, which remounts the caller and fires again.
     enabled: options?.enabled ?? true,
+    // Short, so coming back to the app shows a proof or an answer that came in meanwhile.
+    staleTime: 30_000,
   });
 }
 
@@ -55,6 +57,10 @@ export function useDareDetail(dareId: number | null | undefined, options?: { ena
       return dareService.getById(dareId);
     },
     enabled: !!dareId && (options?.enabled ?? true),
+    // A dare changes under you (accepted, proof posted): opening it, or coming back to the
+    // app, always asks again instead of showing what was cached minutes ago.
+    staleTime: 0,
+    refetchOnWindowFocus: 'always',
     // A dare you can't see answers 404; asking again won't change that.
     retry: (count, error: any) => ![403, 404].includes(error?.response?.status) && count < 2,
   });
