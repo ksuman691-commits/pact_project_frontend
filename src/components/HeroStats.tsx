@@ -29,7 +29,7 @@ export interface HeroStat {
 }
 
 interface HeroStatsProps {
-  tone: 'dare' | 'navy'
+  tone: 'dare' | 'navy' | 'circle'
   label: string
   stats: HeroStat[]
   action?: { label: string; icon: React.ReactNode; href?: string; onClick?: () => void }
@@ -67,8 +67,15 @@ export function CountUp({ value, ready = true, delay = 0 }: { value: number; rea
  * and a small picture, and the page's main action under them. Tiles rise in
  * one after another; numbers count up once the data is in.
  */
+// On a coloured hero (navy for Pacts, red for Circles): the tile, its soft text, and the strong colour for a selected tile.
+const ON_COLOUR = {
+  navy: { tile: '#2A4AAC', tileShadow: 'rgba(10,20,70,0.55)', soft: '#C7D0F7', strong: 'var(--navy)' },
+  circle: { tile: '#C42A2F', tileShadow: 'rgba(90,10,14,0.5)', soft: '#FFD9D6', strong: 'var(--circles-deep)' },
+} as const
+
 export default function HeroStats({ tone, label, stats, action, ready = true }: HeroStatsProps) {
   const dare = tone === 'dare'
+  const on = ON_COLOUR[tone === 'circle' ? 'circle' : 'navy']
   const tileBase =
     'cp-tile group relative flex min-h-[132px] flex-col overflow-hidden rounded-[18px] p-3 text-left transition active:scale-[0.97]'
   const actionClass =
@@ -103,7 +110,7 @@ export default function HeroStats({ tone, label, stats, action, ready = true }: 
                   {stat.value == null ? '–' : typeof stat.value === 'number' ? <CountUp value={stat.value} ready={ready} delay={0.08 * i} /> : stat.value}
                 </span>
                 {stat.unit && stat.value != null && (
-                  <span className="text-[12.5px] font-semibold" style={{ color: stat.selected ? undefined : dare ? '#C9C8CF' : '#C7D0F7' }}>
+                  <span className="text-[12.5px] font-semibold" style={{ color: stat.selected ? undefined : dare ? '#C9C8CF' : on.soft }}>
                     {stat.unit}
                   </span>
                 )}
@@ -112,7 +119,7 @@ export default function HeroStats({ tone, label, stats, action, ready = true }: 
                 {stat.label}
               </span>
               {stat.sub && (
-                <span className="mt-0.5 line-clamp-2 block text-[11.5px] font-medium leading-[1.3]" style={{ color: stat.selected ? undefined : dare ? '#B5B4BC' : '#C7D0F7' }}>
+                <span className="mt-0.5 line-clamp-2 block text-[11.5px] font-medium leading-[1.3]" style={{ color: stat.selected ? undefined : dare ? '#B5B4BC' : on.soft }}>
                   {stat.sub}
                 </span>
               )}
@@ -121,10 +128,10 @@ export default function HeroStats({ tone, label, stats, action, ready = true }: 
           const style: React.CSSProperties = {
             animationDelay: `${120 + i * 90}ms`,
             ...(stat.selected
-              ? { background: dare ? 'var(--dare)' : '#FFFFFF', color: dare ? 'var(--ink)' : 'var(--navy)', boxShadow: '0 10px 24px -12px rgba(0,0,0,0.5)' }
+              ? { background: dare ? 'var(--dare)' : '#FFFFFF', color: dare ? 'var(--ink)' : on.strong, boxShadow: '0 10px 24px -12px rgba(0,0,0,0.5)' }
               : dare
                 ? { background: 'var(--ink)', color: '#fff', boxShadow: '0 3px 0 rgba(23,24,29,0.35)' }
-                : { background: '#2A4AAC', color: '#fff', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.22), 0 2px 0 rgba(10,20,70,0.55)' }),
+                : { background: on.tile, color: '#fff', boxShadow: `inset 0 0 0 1px rgba(255,255,255,0.22), 0 2px 0 ${on.tileShadow}` }),
           }
           const aria = `${stat.label}${stat.hint ? ` (${stat.hint.toLowerCase()})` : ''}: ${stat.value ?? 'loading'}${stat.unit ? ` ${stat.unit}` : ''}`
           return stat.href ? (
@@ -141,12 +148,12 @@ export default function HeroStats({ tone, label, stats, action, ready = true }: 
       {action && (
         <div className="cp-tile mt-2.5" style={{ animationDelay: '400ms' }}>
           {action.href ? (
-            <Link href={action.href} className={actionClass} style={{ background: dare ? 'var(--ink)' : '#FFFFFF', color: dare ? 'var(--dare)' : 'var(--navy)' }}>
+            <Link href={action.href} className={actionClass} style={{ background: dare ? 'var(--ink)' : '#FFFFFF', color: dare ? 'var(--dare)' : on.strong }}>
               {action.icon}
               {action.label}
             </Link>
           ) : (
-            <button type="button" onClick={action.onClick} className={actionClass} style={{ background: dare ? 'var(--ink)' : '#FFFFFF', color: dare ? 'var(--dare)' : 'var(--navy)' }}>
+            <button type="button" onClick={action.onClick} className={actionClass} style={{ background: dare ? 'var(--ink)' : '#FFFFFF', color: dare ? 'var(--dare)' : on.strong }}>
               {action.icon}
               {action.label}
             </button>
@@ -169,8 +176,9 @@ export function TinyFace({ name, avatarUrl, ring }: { name: string; avatarUrl?: 
 }
 
 /** For someone with nothing here yet: how this page works, in three steps. */
-export function HeroSteps({ tone, steps }: { tone: 'dare' | 'navy'; steps: { icon: React.ReactNode; title: string; body: string }[] }) {
+export function HeroSteps({ tone, steps }: { tone: 'dare' | 'navy' | 'circle'; steps: { icon: React.ReactNode; title: string; body: string }[] }) {
   const dare = tone === 'dare'
+  const on = ON_COLOUR[tone === 'circle' ? 'circle' : 'navy']
   return (
     <ol className="grid grid-cols-3 gap-2" aria-label="How it works">
       {steps.map((step, i) => (
@@ -185,13 +193,13 @@ export function HeroSteps({ tone, steps }: { tone: 'dare' | 'navy'; steps: { ico
           }}
         >
           <span className="flex items-center justify-between">
-            <span className="flex size-8 items-center justify-center rounded-full" style={{ background: dare ? 'var(--dare)' : '#FFFFFF', color: dare ? 'var(--ink)' : 'var(--navy)', boxShadow: 'inset 0 0 0 1.5px #17181D' }}>
+            <span className="flex size-8 items-center justify-center rounded-full" style={{ background: dare ? 'var(--dare)' : '#FFFFFF', color: dare ? 'var(--ink)' : on.strong, boxShadow: 'inset 0 0 0 1.5px #17181D' }}>
               {step.icon}
             </span>
             <span className="text-[12px] font-bold opacity-60">{i + 1}</span>
           </span>
           <span className="mt-auto block pt-2 text-[14px] font-bold leading-tight">{step.title}</span>
-          <span className="mt-0.5 block text-[11.5px] leading-snug" style={{ color: dare ? '#B5B4BC' : '#C7D0F7' }}>
+          <span className="mt-0.5 block text-[11.5px] leading-snug" style={{ color: dare ? '#B5B4BC' : on.soft }}>
             {step.body}
           </span>
         </li>

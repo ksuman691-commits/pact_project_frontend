@@ -2,12 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, Circle, Zap } from 'lucide-react'
 import { usePendingDareCount } from '@/hooks/usePendingDareCount'
 import { useAuthStore } from '@/store/auth'
 import QuickPostButton from '@/components/QuickPostButton'
 import { STORIES_ENABLED } from '@/lib/stories'
-import { MARK_RED } from '@/lib/circleMark'
 
 // Leaderboard was dropped from the nav deliberately (it 404s and we're not
 // fixing that route here) — exactly 4 items, Home → Circles → Pacts → Dares.
@@ -15,26 +13,54 @@ import { MARK_RED } from '@/lib/circleMark'
 // the Discover tabs on the Pacts and Dares pages instead, since those tabs
 // already cover "browse things you haven't joined yet" and a separate
 // bottom-nav entry for essentially the same purpose was redundant.
-const authItems = [
-  { href: '/feed', label: 'Home', icon: Home },
-  { href: '/circles', label: 'Circles', icon: Circle },
-  { href: '/pacts', label: 'Pacts', icon: Users },
-  { href: '/dares', label: 'Dares', icon: Zap },
-]
-
-// Each tab's fill under its ink outline (Dares has always been yellow on ink).
-const TAB_FILL: Record<string, string> = {
-  '/feed': '#C9D3F5',
-  '/circles': MARK_RED,
-  '/pacts': '#86EFAC',
-  '/dares': 'var(--dare)',
+/*
+ * Each tab has its own solid, bright icon in its own colour (Home navy, Circles red,
+ * Pacts blue, Dares yellow) instead of an outline with colour poured in, and it
+ * springs up when its tab opens.
+ */
+function HomeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[26px] w-[26px]" aria-hidden="true">
+      <path d="M3.5 10.6 12 3.8l8.5 6.8V19a1.8 1.8 0 0 1-1.8 1.8H15v-5.6h-6v5.6H5.3A1.8 1.8 0 0 1 3.5 19z" fill="#1F3A93" />
+      <path d="M9 20.8v-5.6h6v5.6z" fill="#7FA0FF" />
+    </svg>
+  )
+}
+function CirclesIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[26px] w-[26px]" aria-hidden="true">
+      <circle cx="9" cy="12" r="6.5" fill="#E5363B" />
+      <circle cx="15" cy="12" r="6.5" fill="#FF7A6B" fillOpacity="0.9" />
+      <path d="M12 6.7a6.5 6.5 0 0 1 0 10.6 6.5 6.5 0 0 1 0-10.6z" fill="#B81F2A" />
+    </svg>
+  )
+}
+function PactsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[26px] w-[26px]" aria-hidden="true">
+      <circle cx="9" cy="8" r="3.6" fill="#2F6BFF" />
+      <path d="M2.5 19.5c0-3.6 2.9-6.3 6.5-6.3s6.5 2.7 6.5 6.3z" fill="#2F6BFF" />
+      <circle cx="16.5" cy="8.6" r="3" fill="#7FA8FF" />
+      <path d="M14.8 13.6c.6-.2 1.1-.3 1.7-.3 3 0 5.3 2.3 5.3 5.4v.8h-4.6c0-2.3-.9-4.4-2.4-5.9z" fill="#7FA8FF" />
+    </svg>
+  )
+}
+function DaresIcon({ flicker }: { flicker: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className={`h-[26px] w-[26px] ${flicker ? 'cp-zap' : ''}`} aria-hidden="true">
+      <path d="M13.8 2.5 4.6 13.4h6.1l-1.4 8.1 9.3-11.1h-6.2z" fill="#FFC814" stroke="#17181D" strokeWidth={1.4} strokeLinejoin="round" />
+    </svg>
+  )
 }
 
-// Classic redesign: the floating gradient pill (which has twice caused
-// content below it to be hidden/overlapped) is replaced with a flat,
-// edge-to-edge bar fixed to the bottom of the viewport. Every page's
-// scrollable content is expected to reserve bottom padding (see
-// `pb-nav-safe` usage across pages) so nothing sits underneath it.
+const authItems = [
+  { href: '/feed', label: 'Home', color: 'var(--navy)' },
+  { href: '/circles', label: 'Circles', color: 'var(--circles-deep)' },
+  { href: '/pacts', label: 'Pacts', color: 'var(--pacts-ink)' },
+  // Yellow text is unreadable on the cream bar, so the Dares label stays ink.
+  { href: '/dares', label: 'Dares', color: 'var(--ink)' },
+]
+
 export default function BottomNav() {
   const pathname = usePathname()
   const { user, isInitialized } = useAuthStore()
@@ -79,7 +105,6 @@ export default function BottomNav() {
       }}
     >
       {authItems.map((item, index) => {
-        const Icon = item.icon
         const active = isActive(item.href)
         const isDares = item.href === '/dares'
         const link = (
@@ -93,13 +118,10 @@ export default function BottomNav() {
             aria-current={active ? 'page' : undefined}
           >
             <span className="relative flex items-center justify-center">
-              {/* Every tab has the same look as Dares: an ink outline over its own colour.
-                  The bolt flickers while a dare waits for you. */}
-              <Icon
-                className={`h-[22px] w-[22px] ${isDares && pendingForYouCount > 0 ? 'cp-zap' : ''}`}
-                strokeWidth={1.6}
-                style={{ color: 'var(--ink)', fill: TAB_FILL[item.href] }}
-              />
+              {/* Remounted when the tab opens, so the pop plays each time. */}
+              <span key={active ? 'on' : 'off'} className={active ? 'cp-tab-pop flex' : 'flex'}>
+                {item.href === '/feed' ? <HomeIcon /> : item.href === '/circles' ? <CirclesIcon /> : item.href === '/pacts' ? <PactsIcon /> : <DaresIcon flicker={isDares && pendingForYouCount > 0} />}
+              </span>
               {isDares && pendingForYouCount > 0 && (
                 <span
                   aria-hidden="true"
@@ -114,13 +136,13 @@ export default function BottomNav() {
             <span
               aria-hidden="true"
               className="h-[5px] w-[5px] rounded-full"
-              style={{ background: active ? (isDares ? 'var(--ink)' : 'var(--navy)') : 'transparent' }}
+              style={{ background: active ? item.color : 'transparent' }}
             />
             <span
               className="text-[12px] leading-none"
               style={{
-                color: active && !isDares ? 'var(--navy)' : 'var(--ink)',
-                fontWeight: active ? 700 : 600,
+                color: active ? item.color : '#3D3C39',
+                fontWeight: active ? 800 : 600,
               }}
             >
               {item.label}
