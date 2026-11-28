@@ -46,7 +46,8 @@ export function rewardOwed(dare: Dare): boolean {
 }
 
 export type DareNext =
-  | 'respond' // person dared: accept or decline
+  | 'respond' // person dared: accept or decline (or ask for more)
+  | 'answer_ask' // creator: they asked for more
   | 'post_proof' // person dared: on the clock
   | 'review' // creator: proof is in
   | 'pay' // creator: done, reward to send
@@ -69,6 +70,7 @@ export function nextStep(dare: Dare, role: DareRole): DareNext {
     return null
   }
   if (role === 'creator') {
+    if (state === 'awaiting_response' && dare.ask?.status === 'pending') return 'answer_ask'
     if (state === 'awaiting_review') return 'review'
     if (rewardOwed(dare) && dare.payee_upi_ready && dare.reward?.status !== 'sent') return 'pay'
   }

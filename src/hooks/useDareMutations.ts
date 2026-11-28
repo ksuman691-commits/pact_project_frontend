@@ -85,6 +85,38 @@ export function useAcceptDare() {
   });
 }
 
+/** The person dared asks for a bigger reward before saying yes. */
+export function useAskMore() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ dareId, amount, note }: { dareId: number; amount: number; note?: string }) => dareService.askMore(dareId, amount, note),
+    onSuccess: (_, { dareId, amount }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.dares.detail(dareId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dares.all });
+      toast.success(`Asked for ₹${amount}`);
+    },
+    onError: (error: any) => {
+      toast.error(toErrorMessage(error, "Couldn't send that. Try again."));
+    },
+  });
+}
+
+/** The creator answers an ask: agree to the new amount, or keep it as it was. */
+export function useAnswerAsk() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ dareId, agree }: { dareId: number; agree: boolean }) => dareService.answerAsk(dareId, agree),
+    onSuccess: (_, { dareId, agree }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.dares.detail(dareId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dares.all });
+      toast.success(agree ? "Done. We've told them" : "Kept as it was. We've told them");
+    },
+    onError: (error: any) => {
+      toast.error(toErrorMessage(error, "Couldn't send that. Try again."));
+    },
+  });
+}
+
 export function useDeclineDare() {
   const queryClient = useQueryClient();
 

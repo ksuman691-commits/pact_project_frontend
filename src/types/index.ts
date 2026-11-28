@@ -267,6 +267,15 @@ export interface DareRewardState {
   resolved_at?: string | null;
 }
 
+export interface DareAsk {
+  amount: number;
+  note?: string | null;
+  /** pending: waiting on the creator · agreed · kept · withdrawn (they accepted anyway) */
+  status: 'pending' | 'agreed' | 'kept' | 'withdrawn';
+  asked_at?: string | null;
+  answered_at?: string | null;
+}
+
 export interface Dare {
   id: number;
   dare_uuid?: string;
@@ -324,6 +333,8 @@ export interface Dare {
   reward?: DareRewardState | null;
   /** The person dared has a UPI ID, so the creator can pay. */
   payee_upi_ready?: boolean | null;
+  /** "Ask for more": the person dared asked once for a bigger reward. Only the two of them see it. */
+  ask?: DareAsk | null;
   shared_publicly?: boolean;
   completed_at?: string | null;
   proof_caption?: string | null;

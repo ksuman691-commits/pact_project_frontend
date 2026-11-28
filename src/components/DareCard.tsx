@@ -3,7 +3,7 @@
 import { MarkProgress } from '@/components/brand/CircleMark';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Camera, Check, Clock, Flag, Link2, LogOut, MoreHorizontal, Trash2, X, Zap } from 'lucide-react';
+import { Camera, Check, Clock, Flag, IndianRupee, Link2, LogOut, MoreHorizontal, Trash2, X, Zap } from 'lucide-react';
 import ReportDareSheet from '@/components/dares/ReportDareSheet';
 import toast from 'react-hot-toast';
 import type { Dare, DareState } from '@/types';
@@ -12,10 +12,11 @@ import AutoPlayVideo from '@/components/media/AutoPlayVideo';
 import ConfirmModal from '@/components/ConfirmModal';
 import DareProofUploadModal from '@/components/DareProofUploadModal';
 import DareRewardPaySheet from '@/components/dares/DareRewardPaySheet';
+import AskMoreSheet from '@/components/dares/AskMoreSheet';
 import SparkRing from '@/components/dares/SparkRing';
 import CircleWatch from '@/components/brand/CircleWatch';
 import { useAuthStore } from '@/store/auth';
-import { useAcceptDare, useCancelDare, useClaimDare, useDareRewardStep, useDeclineDare, useDeleteDareProof, useLeaveDare, useReviewDare } from '@/hooks/useDareMutations';
+import { useAcceptDare, useAnswerAsk, useCancelDare, useClaimDare, useDareRewardStep, useDeclineDare, useDeleteDareProof, useLeaveDare, useReviewDare } from '@/hooks/useDareMutations';
 import { copyText } from '@/lib/circleInvite';
 import { parseApiDate } from '@/lib/dareCountdown';
 import {
@@ -102,6 +103,7 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
   const [reportOpen, setReportOpen] = useState(false);
   const [confirmDeleteProof, setConfirmDeleteProof] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [askOpen, setAskOpen] = useState(false);
 
   const accept = useAcceptDare();
   const decline = useDeclineDare();
@@ -111,6 +113,7 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
   const cancel = useCancelDare();
   const leave = useLeaveDare();
   const deleteProof = useDeleteDareProof();
+  const answerAsk = useAnswerAsk();
 
   // Who sits on top of the card: whoever the viewer is dealing with.
   const face: DareFace = role === 'creator' ? recipient ?? { name: 'Someone' } : role === 'viewer' && recipient && state === 'completed' ? recipient : creator;
@@ -252,14 +255,64 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
 
   let bar: React.ReactNode = null;
   if (next === 'respond') {
+    // Ask for more: once, on a dare made for you alone, before you say yes.
+    const ask = dare.ask ?? null;
+    const canAsk = !ask && !dare.is_official && dare.audience === 'individual';
+    const askLine = !ask
+      ? null
+      : ask.status === 'pending'
+        ? `You asked for ₹${ask.amount}. Waiting on ${otherName}, or say yes now${reward ? ` at ₹${reward}` : ''}.`
+        : ask.status === 'agreed'
+          ? `${otherName} agreed to ₹${ask.amount}.`
+          : ask.status === 'kept'
+            ? reward
+              ? `${otherName} kept it at ₹${reward}.`
+              : `${otherName} kept it without a reward.`
+            : null;
     bar = (
-      <div className="grid w-full grid-cols-2 gap-2">
-        <button type="button" className={secondary} disabled={decline.isPending || accept.isPending} onClick={() => decline.mutate(dare.id)}>
-          Decline
-        </button>
-        <button type="button" className={primary} disabled={accept.isPending || decline.isPending} onClick={() => accept.mutate(dare.id)}>
-          <Zap className="size-4" strokeWidth={2.4} aria-hidden="true" />
-          {accept.isPending ? 'Accepting…' : reward ? `Accept for ₹${reward}` : 'Accept dare'}
+      <div className="w-full">
+        {askLine && <p className="mb-2 text-[13px] font-semibold text-[var(--muted)]">{askLine}</p>}
+        <div className="grid w-full grid-cols-2 gap-2">
+          <button type="button" className={secondary} disabled={decline.isPending || accept.isPending} onClick={() => decline.mutate(dare.id)}>
+            Decline
+          </button>
+          <button type="button" className={primary} disabled={accept.isPending || decline.isPending} onClick={() => accept.mutate(dare.id)}>
+            <Zap className="size-4" strokeWidth={2.4} aria-hidden="true" />
+            {accept.isPending ? 'Accepting…' : reward ? `Accept for ₹${reward}` : 'Accept dare'}
+          </button>
+        </div>
+        {canAsk && (
+          <button
+            type="button"
+            onClick={() => setAskOpen(true)}
+            className="mt-1.5 flex h-11 w-full items-center justify-center gap-1.5 rounded-full text-[14px] font-extrabold text-[var(--ink)] transition active:scale-95"
+          >
+            <IndianRupee className="size-4" strokeWidth={2.4} aria-hidden="true" />
+            Ask for more
+          </button>
+        )}
+      </div>
+    );
+  } else if (next === 'answer_ask' && dare.ask) {
+    const ask = dare.ask;
+    bar = (
+      <div className="w-full">
+        <p className="mb-2 text-[13.5px] leading-[1.4] text-[var(--ink)]">
+          <span className="font-extrabold">{otherName} asks ₹{ask.amount}</span>
+          <span className="text-[var(--muted)]">{reward ? ` · you offered ₹${reward}` : ' · no reward on it yet'}</span>
+          {ask.note && <span className="mt-0.5 block text-[var(--muted)]">“{ask.note}”</span>}
+        </p>
+        <div className="grid w-full grid-cols-2 gap-2">
+          <button type="button" className={secondary} disabled={answerAsk.isPending} onClick={() => answerAsk.mutate({ dareId: dare.id, agree: false })}>
+            {reward ? `Keep ₹${reward}` : 'Keep it free'}
+          </button>
+          <button type="button" className={primary} disabled={answerAsk.isPending} onClick={() => answerAsk.mutate({ dareId: dare.id, agree: true })}>
+            <Check className="size-4" strokeWidth={2.6} aria-hidden="true" />
+            Agree to ₹{ask.amount}
+          </button>
+        </div>
+        <button type="button" onClick={() => setConfirmCancel(true)} className="mt-1.5 flex h-11 w-full items-center justify-center text-[14px] font-bold text-[#B3261E]">
+          Call it off
         </button>
       </div>
     );
@@ -417,6 +470,11 @@ export default function DareCard({ dare, variant = 'feed' }: DareCardProps) {
       </article>
 
       {/* Sheets and dialogs sit outside the card so taps inside them never open the dare. */}
+      {role === 'doer' && state === 'awaiting_response' && (
+        <div onClick={stop}>
+          <AskMoreSheet isOpen={askOpen} onClose={() => setAskOpen(false)} dareId={dare.id} current={Number(dare.reward_amount ?? 0)} creatorName={otherName} />
+        </div>
+      )}
       {role === 'doer' && state === 'in_progress' && (
         <div onClick={stop}>
           <DareProofUploadModal isOpen={proofOpen} onClose={() => setProofOpen(false)} dareId={dare.id} dareTitle={dare.title} toName={creator.name} method={dare.verification_method} />
