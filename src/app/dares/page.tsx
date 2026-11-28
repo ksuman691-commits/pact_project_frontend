@@ -118,7 +118,14 @@ function DaresPageInner() {
       return new Date(a.respond_by).getTime() - new Date(b.respond_by).getTime();
     };
     forYou.sort(byUrgency);
-    sent.sort(byUrgency);
+    // Sent: what needs you first, then the newest dare on top, so one you just sent is
+    // right there (sorting by deadline put a fresh dare with a long clock at the bottom).
+    sent.sort((a, b) => {
+      const actA = nextStep(a, 'creator') ? 0 : 1;
+      const actB = nextStep(b, 'creator') ? 0 : 1;
+      if (actA !== actB) return actA - actB;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
     return { forYou, sent, history, yourMove, inPlay, doneByYou, won, paid, soonest: soonest as number | null, waitingOn };
   }, [all, user?.id]);
 
