@@ -9,13 +9,31 @@ import { useEffect, useRef } from 'react'
 let pendingSteps = 0
 let pendingTimer: number | null = null
 
+// Overlays can sit inside each other (the dare proof screen opens the camera
+// inside it). The step an overlay removes when it closes by itself must not count
+// as Back for the one still open: that was closing the whole dare proof screen the
+// moment you tapped "Use this", so the photo was never sent.
+let ownPops = 0
+let watching = false
+
+function watchOwnPops() {
+  if (watching) return
+  watching = true
+  window.addEventListener('popstate', () => {
+    if (ownPops > 0) window.setTimeout(() => (ownPops = Math.max(0, ownPops - 1)), 0)
+  })
+}
+
 function schedulePop() {
   if (pendingTimer !== null) return
   pendingTimer = window.setTimeout(() => {
     const steps = pendingSteps
     pendingSteps = 0
     pendingTimer = null
-    if (steps > 0 && window.history.state?.__overlay) window.history.go(-steps)
+    if (steps > 0 && window.history.state?.__overlay) {
+      ownPops += 1
+      window.history.go(-steps)
+    }
   }, 0)
 }
 
@@ -34,6 +52,7 @@ export function useBackToClose(open: boolean, onClose: () => void) {
 
   useEffect(() => {
     if (!open || typeof window === 'undefined') return
+    watchOwnPops()
     let owned = true
     if (pendingSteps > 0 && window.history.state?.__overlay) {
       pendingSteps -= 1
@@ -42,6 +61,8 @@ export function useBackToClose(open: boolean, onClose: () => void) {
     }
 
     const onPop = () => {
+      // Our own clean-up step, not the person pressing Back.
+      if (ownPops > 0) return
       owned = false
       closeRef.current()
     }
