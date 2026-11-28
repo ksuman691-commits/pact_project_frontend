@@ -65,6 +65,9 @@ export default function NotificationRealtimeBridge() {
               unread_count: parsed.unread_count,
             });
             queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() });
+            // Most dare news (accepted, proof posted, marked done) arrives as a notification.
+            // Refresh the dares on screen so a proof shows up without leaving and coming back.
+            queryClient.invalidateQueries({ queryKey: queryKeys.dares.all });
           }
           if (parsed.moment && typeof parsed.moment === 'object') {
             // Every moments list (Home row, See All, pact rings) and the circles' "posted today" counts.
