@@ -29,6 +29,7 @@ import DeleteMomentSheet from './stories/DeleteMomentSheet';
 import { MarkProgress } from './brand/CircleMark';
 import { isPhotoStory, postedAgo } from '@/lib/stories';
 import { pactLocalToday } from '@/lib/pactCompletionState';
+import { settlePendingMoments, usePendingMoments } from '@/lib/pendingMoments';
 import { getDisplayName } from '@/lib/displayName';
 import { hasPactMomentum } from '@/lib/pactMomentum';
 import { pactService, socialService } from '@/services/api';
@@ -394,11 +395,23 @@ export default function FeedPactCard({
   const proofs = useMemo(() => getProofs(pact), [pact]);
   const media = useMemo(() => getMedia(pact), [pact]);
   const progressInfo = useMemo(() => getDurationProgress(pact), [pact]);
+  // Your own just-posted moments go in front until the server's list has them (see pendingMoments).
+  const pendingMoments = usePendingMoments(Number(pact.id));
+  const serverProofs = galleryProofs ?? proofs;
+  const shownProofs = useMemo(() => {
+    if (pendingMoments.length === 0) return serverProofs;
+    const serverIds = new Set(serverProofs.map((proof: any) => proof?.id));
+    const local = pendingMoments
+      .filter((moment) => !serverIds.has(moment.id))
+      .map((moment) => ({ id: moment.id, url: moment.url, type: moment.type, description: '', uploadedAt: moment.uploadedAt, uploader: moment.uploader, uploaderName: moment.uploaderName, day: undefined }));
+    return local.length ? [...local, ...serverProofs] : serverProofs;
+  }, [pendingMoments, serverProofs]);
+  useEffect(() => {
+    if (pendingMoments.length === 0) return;
+    settlePendingMoments(Number(pact.id), serverProofs.map((proof: any) => Number(proof?.id)).filter((id: number) => id > 0));
+  }, [pendingMoments, serverProofs, pact.id]);
   // One tile list for the hero and the carousel.
-  const tiles = useMemo(
-    () => buildGalleryTiles(galleryProofs ?? proofs),
-    [galleryProofs, proofs],
-  );
+  const tiles = useMemo(() => buildGalleryTiles(shownProofs), [shownProofs]);
   const activeProof = tiles[activeProofIndex] ?? tiles[0] ?? null;
   const isExiting = exitDirection !== null;
   const resolvedDetailHref = detailHref || `/pacts/${pact.id}`;
@@ -813,8 +826,10 @@ export default function FeedPactCard({
   // (not a cheer photo, and not the single-photo fallback built from the pact).
   const realProofIds = useMemo(() => {
     const source: any[] = galleryProofs ?? (Array.isArray(pact.recent_proofs) ? pact.recent_proofs : []);
-    return new Set(source.map((p: any) => p?.id).filter((id: any) => typeof id === 'number' && id > 0));
-  }, [galleryProofs, pact.recent_proofs]);
+    const ids = new Set(source.map((p: any) => p?.id).filter((id: any) => typeof id === 'number' && id > 0));
+    pendingMoments.forEach((moment) => ids.add(moment.id));
+    return ids;
+  }, [galleryProofs, pact.recent_proofs, pendingMoments]);
   const myUsername = user?.username || null;
   const deletableMoment: { proofId?: number; storyId?: number; day?: number | null } | null =
     momentStory && user?.id != null && momentStory.user_id === user.id
@@ -1271,7 +1286,7 @@ export default function FeedPactCard({
           <div className="relative w-full select-none" onClick={handleMediaTap} style={transformStyle}>
             {tiles.length > 0 ? (
               <PactGallery
-                proofs={galleryProofs ?? proofs}
+                proofs={shownProofs}
                 interactive={false}
                 aspectClassName="aspect-[4/5]"
                 dotsPosition="none"
