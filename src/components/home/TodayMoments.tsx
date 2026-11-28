@@ -82,7 +82,7 @@ export function MomentsButton({ open, onToggle, count }: { open: boolean; onTogg
       onClick={onToggle}
       aria-expanded={open}
       aria-label={open ? 'Hide moments' : `Show moments${count ? `, ${count}` : ''}`}
-      className="flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[14.5px] font-extrabold transition active:scale-95"
+      className="flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-[13.5px] font-extrabold transition active:scale-95"
       style={{ background: '#17181D', color: YELLOW }}
     >
       {open ? 'Hide' : 'Moments'}
@@ -95,18 +95,18 @@ export function MomentsButton({ open, onToggle, count }: { open: boolean; onTogg
 export function MomentsLine({ data, open, onToggle }: { data: TodayMomentsData; open: boolean; onToggle: () => void }) {
   const faces = data.people.slice(0, 2)
   return (
-    <div className="relative mt-3.5 flex items-center gap-2.5 border-t border-white/15 pt-3">
+    <div className="relative mt-3 flex items-center gap-2.5 border-t border-white/15 pt-2.5">
       <span className="flex">
-        <Face name={data.myName} imageUrl={data.myAvatar} size={38} ring={data.postedToday ? GREEN : 'rgba(255,255,255,0.7)'} dashed={!data.postedToday} />
+        <Face name={data.myName} imageUrl={data.myAvatar} size={32} ring={data.postedToday ? GREEN : 'rgba(255,255,255,0.7)'} dashed={!data.postedToday} />
         {faces.map((person) => (
           <span key={person.userId} className="-ml-2.5">
-            <Face name={person.name} imageUrl={person.avatarUrl} size={38} ring={GREEN} />
+            <Face name={person.name} imageUrl={person.avatarUrl} size={32} ring={GREEN} />
           </span>
         ))}
       </span>
       <span className="min-w-0 flex-1 leading-tight">
-        <span className="block truncate text-[15px] font-extrabold text-white">{data.postedToday ? 'You posted today' : 'Your moment is waiting'}</span>
-        <span className="block truncate text-[13px] font-semibold" style={{ color: SOFT }}>{data.loading ? 'Checking who posted…' : othersLine(data.people)}</span>
+        <span className="block truncate text-[14px] font-extrabold text-white">{data.postedToday ? 'You posted today' : 'Your moment is waiting'}</span>
+        <span className="block truncate text-[12.5px] font-semibold" style={{ color: SOFT }}>{data.loading ? 'Checking who posted…' : othersLine(data.people)}</span>
       </span>
       <MomentsButton open={open} onToggle={onToggle} count={data.people.length + (data.postedToday ? 1 : 0)} />
     </div>
