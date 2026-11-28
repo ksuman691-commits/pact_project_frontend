@@ -215,7 +215,19 @@ export default function PactMomentsDetail({
   const smartBack = useSmartBack('/feed')
   const [activeIndex, setActiveIndex] = useState(0)
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
-  const [selectedMomentId, setSelectedMomentId] = useState<number | string | null>(null)
+  // A feed card opens the pact with ?moment=ID: start on that photo, the one that was tapped.
+  const [selectedMomentId, setSelectedMomentId] = useState<number | string | null>(() => {
+    if (typeof window === 'undefined') return null
+    const raw = Number(new URLSearchParams(window.location.search).get('moment'))
+    return Number.isFinite(raw) && raw > 0 ? raw : null
+  })
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    if (!url.searchParams.has('moment')) return
+    url.searchParams.delete('moment')
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash)
+  }, [])
   // Press and hold the photo to hide everything on it (like Instagram Stories); let go to bring it back.
   const [chromeHidden, setChromeHidden] = useState(false)
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -276,7 +288,9 @@ export default function PactMomentsDetail({
   const displayMoments = completionLooksSuccessful && watchingRecap ? recapMoments : moments
   const orderedMoments = useMemo(() => [...moments].sort((a, b) => (a.day ?? 0) - (b.day ?? 0) || new Date(a.uploadedAt || 0).getTime() - new Date(b.uploadedAt || 0).getTime()), [moments])
   const hasMoments = displayMoments.length > 0
-  const effectiveDay = selectedDay ?? currentDay
+  // Opened on a tapped photo: its day is the selected day until another is picked.
+  const linkedMoment = selectedDay == null && selectedMomentId != null ? moments.find((moment) => moment.id === selectedMomentId) : undefined
+  const effectiveDay = selectedDay ?? linkedMoment?.day ?? currentDay
   // A day opens on its first moment, so swiping forward goes through it in order.
   const dayMoment = (displayMoments === moments ? orderedMoments : displayMoments).find((moment) => moment.day === effectiveDay)
   const current = displayMoments.find((moment) => moment.id === selectedMomentId) || dayMoment || displayMoments[activeIndex] || displayMoments[0]

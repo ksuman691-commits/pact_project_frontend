@@ -26,6 +26,11 @@
   /* Dares: yellow on ink. Navy stays for pacts and check-ins. */
   --dare: #FFD23F;
   --dare-deep: #F5B800;
+  /* One colour per tab: Pacts bright blue, Circles red (Dares yellow above). */
+  --pacts: #2F6BFF;
+  --pacts-ink: #1F4FD1;
+  --circles: #E5363B;
+  --circles-deep: #C42A2F;
   --hairline: #DCD3C1;
   --hairline-soft: #DCD3C1;
   --seat-border: #CFC5B0;

@@ -1,13 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Heart, Loader } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { useQueryClient } from '@tanstack/react-query';
-import { socialService, type MomentQuestion } from '@/services/api';
-import { queryKeys } from '@/lib/queryKeys';
+import { Heart } from 'lucide-react';
+import { type MomentQuestion } from '@/services/api';
 import { useAuthStore } from '@/store/auth';
-import UserAvatarLink from '@/components/UserAvatarLink';
 import MomentQuestionCard from '@/components/MomentQuestionCard';
 
 const INK = '#17181D';
@@ -27,7 +22,7 @@ const first = (p: { full_name?: string | null; username?: string | null }) =>
 
 /**
  * Under the photo on a feed card: the poster's question, the top comment with the
- * creator's reply, "View all N comments", and a box to comment without opening anything.
+ * creator's reply, "View all N comments" and when the photo went up. Commenting happens in the sheet.
  */
 export default function CardConversation({
   pactId,
@@ -37,7 +32,7 @@ export default function CardConversation({
   topComment,
   commentCount,
   onOpenComments,
-  onCommented,
+  postedAgo,
 }: {
   pactId: number;
   creatorName: string;
@@ -46,33 +41,12 @@ export default function CardConversation({
   topComment?: CardTopComment | null;
   commentCount: number;
   onOpenComments: () => void;
-  onCommented: () => void;
+  /** "1 hour ago": when the photo on screen went up, as the card's last line. */
+  postedAgo?: string | null;
 }) {
   const { user } = useAuthStore();
-  const queryClient = useQueryClient();
-  const [text, setText] = useState('');
-  const [posting, setPosting] = useState(false);
-  const [mine, setMine] = useState<string[]>([]);
   const isCreator = user?.id != null && creatorId != null && Number(user.id) === Number(creatorId);
   const creatorFirst = creatorName.split(/\s+/)[0] || 'them';
-
-  const submit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    const body = text.trim();
-    if (!body || posting) return;
-    setPosting(true);
-    try {
-      await socialService.addComment(pactId, body);
-      setMine((prev) => [...prev, body]);
-      setText('');
-      onCommented();
-      void queryClient.invalidateQueries({ queryKey: queryKeys.pacts.comments(pactId) });
-    } catch (error: any) {
-      toast.error(error?.response?.data?.detail || "Couldn't post that. Try again.");
-    } finally {
-      setPosting(false);
-    }
-  };
 
   const reply = topComment?.creator_reply ?? null;
 
@@ -99,36 +73,17 @@ export default function CardConversation({
           <span className="break-words">{reply.text}</span>
         </div>
       )}
-      {mine.map((line, index) => (
-        <div key={index} className="px-1 pt-0.5 text-[14px] leading-[1.35]" style={{ color: INK }}>
-          <span className="font-extrabold">You</span> <span className="break-words">{line}</span>
-        </div>
-      ))}
-      {commentCount > (topComment ? 1 : 0) + mine.length && (
+      {commentCount > (topComment ? 1 : 0) && (
         <button type="button" onClick={onOpenComments} className="-my-1 flex min-h-9 items-center px-1 text-[13px] font-bold" style={{ color: MUTED }}>
           View all {commentCount} comments
         </button>
       )}
 
-      <form onSubmit={submit} className="flex items-center gap-2 pb-1 pt-2">
-        <UserAvatarLink name={user?.full_name || user?.username} avatarUrl={user?.avatar_url} size={28} />
-        <input
-          type="text"
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          placeholder={isCreator ? 'Reply to your circle…' : `Add a comment for ${creatorFirst}…`}
-          aria-label="Add a comment"
-          maxLength={1000}
-          disabled={posting}
-          className="h-10 min-w-0 flex-1 rounded-full px-3.5 text-[14px] focus:outline-none"
-          style={{ background: '#FFFFFF', border: '1px solid rgba(23,24,29,0.14)', color: INK }}
-        />
-        {text.trim() && (
-          <button type="submit" disabled={posting} className="flex min-h-10 min-w-11 items-center justify-center text-[14px] font-extrabold disabled:opacity-50" style={{ color: '#1F3A93' }}>
-            {posting ? <Loader className="size-4 animate-spin" /> : 'Post'}
-          </button>
-        )}
-      </form>
+      {postedAgo && (
+        <div className="px-1 pb-1 pt-1 text-[11.5px] font-medium" style={{ color: MUTED }}>
+          {postedAgo}
+        </div>
+      )}
     </div>
   );
 }
