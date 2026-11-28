@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronRight, Eye, Flag, Globe, Send, Trash2, User, Users, X } from 'lucide-react'
+import { ChevronRight, Eye, Flag, Send, Trash2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import DeleteMomentSheet from './DeleteMomentSheet'
 import ReportMomentSheet from './ReportMomentSheet'
@@ -25,12 +25,6 @@ interface StoryViewerProps {
   unavailable?: boolean
 }
 
-function audienceLabel(visibility?: string | null) {
-  if (visibility === 'public') return 'Public Pact'
-  if (visibility === 'circle') return 'Circle Pact'
-  return 'Followers Only'
-}
-
 const HOLD_MS = 220
 const SEEN_AFTER_SECONDS = 1
 
@@ -47,6 +41,8 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
   const [replyText, setReplyText] = useState('')
   const [sent, setSent] = useState<string | null>(null)
   const [sendError, setSendError] = useState(false)
+  // Fill the screen like Instagram; a landscape photo or video is shown whole instead of cropped.
+  const [fitWhole, setFitWhole] = useState(false)
   const { user } = useAuthStore()
   const router = useRouter()
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -64,6 +60,7 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
   useEffect(() => {
     setFraction(0)
     setBroken(false)
+    setFitWhole(false)
     setPaused(false)
     setViewersOpen(false)
     setComposing(false)
@@ -215,68 +212,29 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
   const emptyText = unavailable ? `${STORIES_COMING_SOON}.` : isLoading ? 'Loading moments…' : 'No moments yet today.'
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Moments" className="fixed inset-0 z-[90] flex flex-col bg-[var(--ink)] text-[var(--paper)]">
-      <div className="flex gap-1 px-3 pt-[max(0.75rem,env(safe-area-inset-top))]" aria-hidden="true">
-        {stories.map((s, i) => (
-          <span key={s.id} className="h-[3px] flex-1 overflow-hidden rounded-full" style={{ background: 'rgba(244,239,228,0.3)' }}>
-            <span className="block h-full rounded-full bg-[var(--paper)]" style={{ width: `${i < index ? 100 : i === index ? Math.round(fraction * 100) : 0}%` }} />
-          </span>
-        ))}
-      </div>
-
-      <div className="flex items-center justify-between gap-3 px-4 py-3">
-        <div className="flex min-w-0 items-center gap-2.5">
-          {story && <RingFace name={story.name} imageUrl={story.avatar_url} size={36} />}
-          <div className="min-w-0">
-            {story && (story.username && !isOwn ? (
-              <Link href={`/profile/${encodeURIComponent(story.username)}`} onClick={goTo(`/profile/${encodeURIComponent(story.username)}`)} className="block truncate text-[14px] font-semibold" style={{ color: 'var(--paper)' }}>
-                {story.name || 'Member'}
-              </Link>
-            ) : (
-              <div className="truncate text-[14px] font-semibold" style={{ color: 'var(--paper)' }}>{story.name || 'Member'}</div>
-            ))}
-            <div className="flex items-center gap-2 text-[12px]" style={{ color: 'rgba(244,239,228,0.75)' }}>
-              {story && postedAgo(story.created_at) && <span>shared {postedAgo(story.created_at)}</span>}
-              {circleId != null && circleName && (
-                <Link href={`/circles/${circleId}`} onClick={goTo(`/circles/${circleId}`)} className="flex items-center gap-1.5 font-semibold text-[var(--paper)]">
-                  <span
-                    className="flex h-5 w-5 items-center justify-center rounded-full text-[8px] font-bold"
-                    style={{ border: '1.5px solid var(--paper)' }}
-                    aria-hidden="true"
-                  >
-                    {monogram(circleName)}
-                  </span>
-                  <span className="truncate">{circleName}</span>
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center">
-          {story && !isOwn && story.pact_id != null && story.proof_id != null && (
-            <button type="button" onClick={() => setReporting(true)} aria-label="Report this moment" className="flex h-11 w-11 items-center justify-center rounded-full">
-              <Flag className="h-5 w-5" />
-            </button>
-          )}
-          <button type="button" onClick={close} aria-label="Close moments" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
-            <X className="h-6 w-6" />
-          </button>
-        </div>
-      </div>
-
+    <div role="dialog" aria-modal="true" aria-label="Moments" className="fixed inset-0 z-[90] flex flex-col bg-black text-[var(--paper)]">
+      {/* The moment fills the whole screen, edge to edge; the top bar and the reply bar float over it. */}
       {story ? (
         <div
-          className="relative flex flex-1 touch-none select-none items-center justify-center overflow-hidden"
+          className="absolute inset-0 touch-none select-none overflow-hidden"
           onPointerDown={onPointerDown}
           onPointerUp={onPointerUp}
           onPointerCancel={() => setPaused(false)}
           onContextMenu={(event) => event.preventDefault()}
         >
           {broken ? (
-            <p className="px-8 text-center text-[15px]">This {photo ? 'photo' : 'video'} couldn&apos;t load. Tap to go on.</p>
+            <p className="flex h-full items-center justify-center px-8 text-center text-[15px]">This {photo ? 'photo' : 'video'} couldn&apos;t load. Tap to go on.</p>
           ) : photo ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img key={story.id} src={story.video_url} alt={`${story.name || 'Member'}'s moment`} draggable={false} className="h-full w-full object-contain" onError={() => setBroken(true)} />
+            <img
+              key={story.id}
+              src={story.video_url}
+              alt={`${story.name || 'Member'}'s moment`}
+              draggable={false}
+              className={`h-full w-full ${fitWhole ? 'object-contain' : 'object-cover'}`}
+              onLoad={(event) => setFitWhole(event.currentTarget.naturalWidth > event.currentTarget.naturalHeight)}
+              onError={() => setBroken(true)}
+            />
           ) : (
             <video
               key={story.id}
@@ -284,7 +242,8 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
               src={story.video_url}
               autoPlay
               playsInline
-              className="h-full w-full object-contain"
+              className={`h-full w-full ${fitWhole ? 'object-contain' : 'object-cover'}`}
+              onLoadedMetadata={(event) => setFitWhole(event.currentTarget.videoWidth > event.currentTarget.videoHeight)}
               onTimeUpdate={(event) => {
                 const v = event.currentTarget
                 const total = Number.isFinite(v.duration) && v.duration > 0 ? v.duration : story.duration_seconds || 0
@@ -298,47 +257,79 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
             />
           )}
           {paused && <span className="sr-only">Paused</span>}
-          {!isOwn && story.pact_id != null && story.pact_title && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3.5 pb-2.5 pt-10">
-              <div
-                className="pointer-events-auto flex flex-col items-start gap-1.5"
-                onPointerDown={(event) => event.stopPropagation()}
-                onPointerUp={(event) => event.stopPropagation()}
-              >
-                <div className="flex max-w-full items-center gap-2">
-                  <span className="inline-flex h-[22px] shrink-0 items-center gap-1 rounded-full bg-[var(--card)] px-2.5 text-[10.5px] font-extrabold text-[var(--ink)]">
-                    {story.pact_visibility === 'public' ? <Globe className="size-3" aria-hidden="true" /> : story.pact_visibility === 'circle' ? <Users className="size-3" aria-hidden="true" /> : <User className="size-3" aria-hidden="true" />}
-                    {audienceLabel(story.pact_visibility)}
-                  </span>
-                  <Link href={`/pacts/${story.pact_id}`} onClick={goTo(`/pacts/${story.pact_id}`)} className="flex min-h-[28px] min-w-0 items-center gap-0.5 text-[14px] font-extrabold text-white">
-                    <span className="truncate">{story.pact_title}</span>
-                    <ChevronRight className="size-3.5 shrink-0" strokeWidth={2.8} aria-hidden="true" />
-                  </Link>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Link href={`/pacts/${story.pact_id}`} onClick={goTo(`/pacts/${story.pact_id}`)} className="flex h-9 items-center rounded-full bg-[var(--navy)] px-3.5 text-[12px] font-extrabold text-white">
-                    Open Pact
-                  </Link>
-                  {story.username && (
-                    <Link
-                      href={`/profile/${encodeURIComponent(story.username)}`}
-                      onClick={goTo(`/profile/${encodeURIComponent(story.username)}`)}
-                      className="flex h-9 items-center rounded-full border-[1.5px] border-white/70 bg-black/30 px-3.5 text-[12px] font-extrabold text-white"
-                    >
-                      Visit {(story.name || 'Profile').split(' ')[0]}
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Shade top and bottom so the white text over the photo stays readable. */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/55 to-transparent" aria-hidden="true" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/65 to-transparent" aria-hidden="true" />
         </div>
       ) : (
         <div className="flex flex-1 items-center justify-center px-8 text-center text-[15px]">{emptyText}</div>
       )}
 
+      <div className="relative z-10 flex gap-1 px-2 pt-[max(0.5rem,env(safe-area-inset-top))]" aria-hidden="true">
+        {stories.map((s, i) => (
+          <span key={s.id} className="h-[2.5px] flex-1 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.35)' }}>
+            <span className="block h-full rounded-full bg-white" style={{ width: `${i < index ? 100 : i === index ? Math.round(fraction * 100) : 0}%` }} />
+          </span>
+        ))}
+      </div>
+
+      <div className="relative z-10 flex items-center justify-between gap-2 py-2 pl-3 pr-1" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.45)' }}>
+        {/* Their photo and name are one link to their profile. */}
+        {story && story.username && !isOwn ? (
+          <Link href={`/profile/${encodeURIComponent(story.username)}`} onClick={goTo(`/profile/${encodeURIComponent(story.username)}`)} className="flex min-w-0 items-center gap-2.5">
+            <RingFace name={story.name} imageUrl={story.avatar_url} size={32} />
+            <span className="min-w-0">
+              <span className="block truncate text-[14px] font-bold text-white">{story.name || 'Member'}</span>
+              {postedAgo(story.created_at) && <span className="block text-[12px] text-white/80">{postedAgo(story.created_at)}</span>}
+            </span>
+          </Link>
+        ) : story ? (
+          <div className="flex min-w-0 items-center gap-2.5">
+            <RingFace name={story.name} imageUrl={story.avatar_url} size={32} />
+            <span className="min-w-0">
+              <span className="block truncate text-[14px] font-bold text-white">{story.name || 'Member'}</span>
+              {postedAgo(story.created_at) && <span className="block text-[12px] text-white/80">{postedAgo(story.created_at)}</span>}
+            </span>
+          </div>
+        ) : (
+          <span />
+        )}
+        <div className="flex min-w-0 shrink-0 items-center">
+          {circleId != null && circleName && (
+            <Link href={`/circles/${circleId}`} onClick={goTo(`/circles/${circleId}`)} className="mr-1 flex h-9 max-w-[120px] items-center gap-1.5 rounded-full px-1.5 text-[12px] font-semibold text-white" aria-label={`Open ${circleName}`}>
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold" style={{ border: '1.5px solid #fff' }} aria-hidden="true">
+                {monogram(circleName)}
+              </span>
+              <span className="truncate">{circleName}</span>
+            </Link>
+          )}
+          {story && !isOwn && story.pact_id != null && story.proof_id != null && (
+            // Small, like Instagram's: the moment is what you look at.
+            <button type="button" onClick={() => setReporting(true)} aria-label="Report this moment" className="flex size-10 items-center justify-center rounded-full text-white/85">
+              <Flag className="size-4" strokeWidth={2.2} />
+            </button>
+          )}
+          <button type="button" onClick={close} aria-label="Close moments" className="flex size-10 shrink-0 items-center justify-center rounded-full text-white">
+            <X className="size-6" strokeWidth={2.2} />
+          </button>
+        </div>
+      </div>
+
+      {/* Fills the middle so the reply bar sits at the bottom. */}
+      <div className="flex-1" aria-hidden="true" />
+
+      {/* Which pact it's from: one quiet link above the reply bar. */}
+      {story && !isOwn && story.pact_id != null && story.pact_title && (
+        <div className="relative z-10 px-4 pb-1" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+          <Link href={`/pacts/${story.pact_id}`} onClick={goTo(`/pacts/${story.pact_id}`)} className="inline-flex min-h-[36px] max-w-full items-center gap-0.5 text-[14px] font-extrabold text-white">
+            <span className="truncate">{story.pact_title}</span>
+            <ChevronRight className="size-4 shrink-0" strokeWidth={2.8} aria-hidden="true" />
+          </Link>
+        </div>
+      )}
+
       {story && !isOwn && (
-        <div className="flex flex-col gap-2 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
+        <div className="relative z-10 flex flex-col gap-2 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
           {sendError && <div className="text-[12px]" style={{ color: '#F6B8B8' }}>Could not send. Try again.</div>}
           <div className="flex items-center gap-2">
             <input
@@ -381,7 +372,7 @@ export default function StoryViewer({ open, onClose, stories, startIndex = 0, ci
       )}
 
       {isOwn && (
-        <div className="flex items-center pr-2">
+        <div className="relative z-10 flex items-center pr-2">
         <button
           type="button"
           onClick={() => setViewersOpen(true)}
