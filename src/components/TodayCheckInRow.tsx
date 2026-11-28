@@ -91,55 +91,55 @@ function PactPanel({ pact, peers, onCapture }: PanelProps) {
       <div className="flex items-start gap-3">
         {todayMs != null ? (
           <CircleWatch
-            size={46}
+            size={40}
             elapsed={1 - Math.min(1, todayMs / 86_400_000)}
             endsAt={endsAt}
             state={pact.posted_today ? 'done' : 'running'}
             title={pact.posted_today ? 'Checked in today' : `${todayLeft} left to check in today`}
           />
         ) : (
-          <span className="mt-0.5 flex size-[46px] shrink-0 items-center justify-center rounded-full bg-white">
-            <CircleMark size={28} />
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white">
+            <CircleMark size={24} />
           </span>
         )}
         <div className="min-w-0 flex-1">
           {/* The name opens the pact; the button keeps its own job. */}
-          <Link href={`/pacts/${pact.id}`} className="line-clamp-1 text-[21px] font-extrabold leading-[1.12] tracking-[-0.02em] text-white">
+          <Link href={`/pacts/${pact.id}`} className="line-clamp-1 text-[18px] font-extrabold leading-[1.15] tracking-[-0.02em] text-white">
             {pact.title}
           </Link>
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
             {pact.posted_today ? (
-              <span className="flex items-center gap-1 rounded-full px-2.5 py-[3px] text-[12.5px] font-extrabold text-white" style={{ background: '#16A34A' }}>
+              <span className="flex items-center gap-1 rounded-full px-2 py-[2px] text-[12px] font-extrabold text-white" style={{ background: '#16A34A' }}>
                 <Check className="size-3.5" strokeWidth={3.2} aria-hidden="true" />
                 {postedAt ? `Checked in · ${postedAt}` : 'Checked in'}
               </span>
             ) : todayLeft ? (
               <span
-                className={`rounded-full px-2.5 py-[3px] text-[12.5px] font-extrabold tabular-nums ${lastHours ? 'cp-breathe' : ''}`}
+                className={`rounded-full px-2 py-[2px] text-[12px] font-extrabold tabular-nums ${lastHours ? 'cp-breathe' : ''}`}
                 style={lastHours ? { background: 'var(--dare)', color: '#17181D' } : { background: 'rgba(255,255,255,0.16)', color: '#FFFFFF' }}
               >
                 {todayLeft} left
               </span>
             ) : urgent && hours != null ? (
-              <span className="rounded-full px-2.5 py-[3px] text-[12.5px] font-extrabold" style={{ background: 'var(--dare)', color: '#17181D' }}>{endsLabel(hours)}</span>
+              <span className="rounded-full px-2 py-[2px] text-[12px] font-extrabold" style={{ background: 'var(--dare)', color: '#17181D' }}>{endsLabel(hours)}</span>
             ) : null}
-            {dayLabel && <span className="text-[13px] font-semibold" style={{ color: '#C9D3F5' }}>{dayLabel}</span>}
+            {dayLabel && <span className="text-[12.5px] font-semibold" style={{ color: '#C9D3F5' }}>{dayLabel}</span>}
           </div>
           {!pact.posted_today && pact.nudged_by?.count ? (
             // Being nudged by several people is the point: show who, where you check in.
-            <p key={pact.nudged_by.count} className="cp-pop-in mt-1 truncate text-[13px] font-bold text-[var(--dare)]">{pact.nudged_by.line}</p>
+            <p key={pact.nudged_by.count} className="cp-pop-in mt-0.5 truncate text-[12.5px] font-bold text-[var(--dare)]">{pact.nudged_by.line}</p>
           ) : !pact.posted_today && peersLine ? (
-            <p className="mt-1 truncate text-[13px] font-semibold" style={{ color: '#C9D3F5' }}>{peersLine}</p>
+            <p className="mt-0.5 truncate text-[12.5px] font-semibold" style={{ color: '#C9D3F5' }}>{peersLine}</p>
           ) : null}
         </div>
       </div>
-      <span className="block h-3.5 shrink-0" aria-hidden="true" />
+      <span className="block h-2.5 shrink-0" aria-hidden="true" />
       {pact.posted_today ? (
         <button
           type="button"
           onClick={() => onCapture(pact)}
           aria-label={`Add another moment to ${pact.title}`}
-          className="mt-auto flex h-12 w-full items-center justify-center gap-2 rounded-full border-[1.5px] border-white/70 text-[15px] font-extrabold text-white transition active:scale-[0.98]"
+          className="mt-auto flex h-11 w-full items-center justify-center gap-2 rounded-full border-[1.5px] border-white/70 text-[14.5px] font-extrabold text-white transition active:scale-[0.98]"
         >
           <Camera className="h-[18px] w-[18px]" strokeWidth={2.2} aria-hidden="true" />
           Add another moment
@@ -149,9 +149,9 @@ function PactPanel({ pact, peers, onCapture }: PanelProps) {
           type="button"
           onClick={() => onCapture(pact)}
           aria-label={`Check in to ${pact.title}`}
-          className={`cp-btn-shine mt-auto flex h-[50px] w-full items-center justify-center gap-2 rounded-full bg-[var(--dare-deep)] text-[17px] font-extrabold text-[var(--ink)] shadow-[0_8px_18px_-10px_rgba(0,0,0,0.5)] transition active:scale-[0.98]${lastHours ? ' cp-breathe' : ''}`}
+          className={`cp-btn-shine mt-auto flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[var(--dare-deep)] text-[15.5px] font-extrabold text-[var(--ink)] shadow-[0_8px_18px_-10px_rgba(0,0,0,0.5)] transition active:scale-[0.98]${lastHours ? ' cp-breathe' : ''}`}
         >
-          <Camera className="h-[19px] w-[19px]" strokeWidth={2.2} aria-hidden="true" />
+          <Camera className="h-[18px] w-[18px]" strokeWidth={2.2} aria-hidden="true" />
           Check in for today
         </button>
       )}
@@ -214,7 +214,6 @@ export default function TodayCheckInRow({
     if (STORIES_ENABLED) setCapturePact(pact)
     else router.push(`/pacts/${pact.id}`)
   }
-  const nextPact = panels[index + 1]
 
   const setupRail =
     setup.steps.length === 0 ? null : (
@@ -235,14 +234,16 @@ export default function TodayCheckInRow({
     )
 
   const card = (
-    <div className="relative overflow-hidden rounded-[28px] bg-[var(--navy)] px-4 pb-4 pt-4 text-white shadow-[0_14px_30px_-20px_rgba(31,58,147,0.9)]">
+    <div className="relative overflow-hidden rounded-[24px] bg-[var(--navy)] px-4 pb-3 pt-3 text-white shadow-[0_14px_30px_-20px_rgba(31,58,147,0.9)]">
       {/* The mark, faint, in the corner. */}
-      <svg viewBox="0 0 100 100" className="pointer-events-none absolute -right-16 -top-20 size-[220px] opacity-[0.16]" aria-hidden="true">
+      <svg viewBox="0 0 100 100" className="pointer-events-none absolute -right-14 -top-16 size-[180px] opacity-[0.16]" aria-hidden="true">
         <circle cx="50" cy="50" r="44" fill="none" stroke="#fff" strokeWidth="1.2" />
         <path d="M50 50 L50 6 A44 44 0 0 1 88 28 Z" fill="none" stroke="#fff" strokeWidth="1.2" />
       </svg>
 
-      <div className="relative flex min-h-7 items-center gap-2">
+      {/* Top line: which pact of how many (1/12, follows the swipe), the streak, New pact.
+          The old "Today · 1 of 12" count and the progress line are gone to keep the card short. */}
+      <div className="relative flex min-h-6 items-center gap-2">
         {allDone ? (
           <>
             <CircleMark size={20} animation="close" tick />
@@ -250,15 +251,15 @@ export default function TodayCheckInRow({
               {pacts.length === 1 ? 'Checked in today' : `All ${pacts.length} checked in`}
             </span>
           </>
-        ) : (
-          <span className="text-[13px] font-extrabold uppercase tracking-[0.08em]" style={{ color: '#C9D3F5' }}>
-            Today · <span key={done.length} className="cp-tick inline-block text-white">{done.length}</span> of {pacts.length}
+        ) : panels.length > 1 ? (
+          <span className="rounded-full bg-white/15 px-2 py-[1px] text-[12px] font-extrabold tabular-nums text-white" aria-label={`Pact ${index + 1} of ${panels.length}`}>
+            {index + 1}/{panels.length}
           </span>
-        )}
+        ) : null}
         {streak > 0 && <StreakChip streak={streak} tone="onNavy" />}
         <span className="flex-1" />
         {onCreatePact && (
-          <button type="button" onClick={onCreatePact} className="cp-hit relative flex h-7 items-center gap-0.5 text-[14px] font-extrabold text-white" style={{ ['--cp-hit' as string]: '10px' }}>
+          <button type="button" onClick={onCreatePact} className="cp-hit relative flex h-6 items-center gap-0.5 text-[13.5px] font-extrabold text-white" style={{ ['--cp-hit' as string]: '10px' }}>
             <Plus className="h-4 w-4" strokeWidth={2.8} aria-hidden="true" />
             New pact
           </button>
@@ -270,7 +271,7 @@ export default function TodayCheckInRow({
           <ul
             ref={scrollerRef}
             onScroll={onScroll}
-            className="scrollbar-hide relative mt-3.5 flex snap-x snap-mandatory overflow-x-auto"
+            className="scrollbar-hide relative mt-2 flex snap-x snap-mandatory overflow-x-auto"
             style={{ gap: GAP, overscrollBehaviorX: 'contain' }}
             aria-label={`${waiting.length} ${waiting.length === 1 ? 'pact' : 'pacts'} waiting for today's moment`}
           >
@@ -278,26 +279,6 @@ export default function TodayCheckInRow({
               <PactPanel key={pact.id} pact={pact} peers={peers} onCapture={capture} />
             ))}
           </ul>
-          <div className="relative mt-3.5 flex items-center gap-2.5">
-            <div className="h-[5px] flex-1 overflow-hidden rounded-full bg-white/20" role="progressbar" aria-valuemin={0} aria-valuemax={pacts.length} aria-valuenow={done.length} aria-label={`${done.length} of ${pacts.length} pacts checked in today`}>
-              <div className="h-full rounded-full bg-white transition-[width] duration-500" style={{ width: `${pacts.length ? Math.max(done.length ? 4 : 0, (done.length / pacts.length) * 100) : 0}%` }} />
-            </div>
-            {nextPact ? (
-              <button
-                type="button"
-                onClick={() => {
-                  const scroller = scrollerRef.current
-                  if (scroller) scroller.scrollTo({ left: (index + 1) * stepOf(scroller), behavior: 'smooth' })
-                }}
-                className="max-w-[60%] truncate text-[12.5px] font-bold"
-                style={{ color: '#C9D3F5' }}
-              >
-                Next: {nextPact.title} ›
-              </button>
-            ) : panels.length > 1 ? (
-              <span className="text-[12.5px] font-bold" style={{ color: '#C9D3F5' }}>{index + 1} of {panels.length}</span>
-            ) : null}
-          </div>
         </div>
       )}
 
@@ -320,7 +301,7 @@ export default function TodayCheckInRow({
   return (
     <section aria-label="Today" className="mb-0 flex flex-col gap-2">
       {isLoading ? (
-        <div className="pact-shimmer h-[230px] rounded-[28px]" aria-hidden="true" />
+        <div className="pact-shimmer h-[200px] rounded-[24px]" aria-hidden="true" />
       ) : pacts.length === 0 && !showFirst ? (
         <>
           <div className="flex items-center gap-2 px-0.5">
@@ -349,14 +330,6 @@ export default function TodayCheckInRow({
         <>
           <h2 className="sr-only">Today</h2>
           {card}
-          {panels.length > 1 && (
-            <div className="flex items-center justify-center gap-1 pt-0.5" aria-hidden="true">
-              {panels.slice(0, 5).map((pact, i) => (
-                <span key={pact.id} className="h-1 rounded-full transition-all" style={{ width: Math.min(index, 4) === i ? 16 : 4, background: Math.min(index, 4) === i ? 'var(--navy)' : 'var(--hairline)' }} />
-              ))}
-              {panels.length > 5 && <span className="pl-0.5 text-[11px] font-semibold leading-none text-[var(--muted)]">+{panels.length - 5}</span>}
-            </div>
-          )}
           {setupRail}
         </>
       )}
