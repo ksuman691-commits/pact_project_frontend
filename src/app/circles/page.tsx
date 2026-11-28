@@ -94,6 +94,7 @@ export default function CirclesPage() {
           title="Circles"
           tagline="Your people, keeping you honest"
           busy={circlesQuery.isFetching}
+          action={circlesPaused ? undefined : { label: 'New circle', href: '/circles/create', icon: <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" /> }}
           line={!circlesQuery.isSuccess || !allActivityKnown ? 'Loading your circles…' : activeCircles > 0 ? <><b>{activeCircles} {activeCircles === 1 ? 'circle is' : 'circles are'} moving</b> this week.</> : circles.length > 0 ? 'Quiet week. Post something to wake them up.' : 'Start a circle with the people who keep you honest.'}
         >
           <HeroStats
@@ -111,7 +112,6 @@ export default function CirclesPage() {
               selected: membershipFilter === stat.filter,
               onSelect: () => setMembershipFilter(stat.filter),
             }))}
-            action={circlesPaused ? undefined : { label: 'New circle', href: '/circles/create', icon: <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" /> }}
           />
           {circlesPaused && <PausedNote text={circlesPaused} className="mt-3" />}
         </PageHero>

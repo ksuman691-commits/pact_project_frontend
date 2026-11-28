@@ -269,9 +269,9 @@ function PactsPageInner() {
     streak == null
       ? ' '
       : runningCount === 0
-        ? bestStreak > 0 ? `Best ${bestStreak} days` : 'Starts with your first pact'
+        ? bestStreak > 0 ? `Best ${bestStreak} days` : 'Start a pact'
         : leftToday != null && leftToday > 0
-          ? streak > 0 ? 'Post today to keep it' : 'Post today to start'
+          ? streak > 0 ? 'Post to keep it' : 'Post to start'
           : leftToday === 0
             ? 'Safe for today'
             : bestStreak > 0 ? `Best ${bestStreak} days` : ' '
@@ -279,6 +279,8 @@ function PactsPageInner() {
   const scoreValue = scoreData && scoreData.status !== 'unavailable' && scoreData.score != null ? Math.round(scoreData.score) : null
   const scoreSub = !scoreData
     ? ' '
+    : scoreValue == null
+      ? 'Not rated yet'
     : [scoreData.is_new ? 'New' : scoreData.band, scoreData.change_30d ? `${scoreData.change_30d > 0 ? '▲' : '▼'}${Math.abs(scoreData.change_30d)} in 30 days` : null].filter(Boolean).join(' · ') || ' '
 
   const heroStats: HeroStat[] = [
@@ -298,9 +300,10 @@ function PactsPageInner() {
       label: 'Completed',
       value: query.isSuccess ? kept : null,
       unit: endedMine.length ? `of ${endedMine.length}` : undefined,
-      sub: endedMine.length ? `${Math.round(keptRate * 100)}% of ended pacts` : firstEndsSub,
+      sub: endedMine.length ? `${Math.round(keptRate * 100)}% kept` : firstEndsSub,
       icon: <CheckBadge />,
-      visual: endedMine.length ? <MarkProgress value={keptRate} size={22} color="#4ADE80" track="rgba(255,255,255,0.18)" /> : undefined,
+      // No ring at 0%: an empty ring read as a grey blob.
+      visual: endedMine.length && kept > 0 ? <MarkProgress value={keptRate} size={22} color="#4ADE80" track="rgba(255,255,255,0.18)" /> : undefined,
       hint: 'Ended pacts you completed. Shows your ended pacts',
       selected: filter === 'Ended',
       onSelect: () => setFilter(filter === 'Ended' ? 'All' : 'Ended'),
@@ -330,7 +333,14 @@ function PactsPageInner() {
   return (
     <main className="min-h-screen bg-[var(--paper)] pb-[120px] text-[var(--ink)]">
       <div className="mx-auto max-w-2xl">
-        <PageHero tone="navy" title="Pacts" tagline="Promises you keep, out loud" line={heroLine} busy={query.isFetching || statsQuery.isFetching}>
+        <PageHero
+          tone="navy"
+          title="Pacts"
+          tagline="Promises you keep, out loud"
+          line={heroLine}
+          busy={query.isFetching || statsQuery.isFetching}
+          action={nothingYet ? undefined : { label: 'New pact', href: '/pacts/create', icon: <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" /> }}
+        >
           {nothingYet ? (
             <>
               <HeroSteps
@@ -349,7 +359,6 @@ function PactsPageInner() {
               label="How you're doing"
               stats={heroStats}
               ready={query.isSuccess}
-              action={{ label: 'New pact', href: '/pacts/create', icon: <Plus className="h-4 w-4" strokeWidth={2.6} aria-hidden="true" /> }}
             />
           )}
         </PageHero>
