@@ -894,6 +894,10 @@ export const dareService = {
   },
   claim: (id: number) => api.post(`/api/dares/${id}/claim`),
   accept: (id: number) => api.post(`/api/dares/${id}/accept`),
+  /** Before saying yes: ask once for a bigger reward. */
+  askMore: (id: number, amount: number, note?: string) => api.post(`/api/dares/${id}/ask-more`, { amount, note: note || undefined }),
+  /** The creator agrees to the amount asked, or keeps it as it was. */
+  answerAsk: (id: number, agree: boolean) => api.post(`/api/dares/${id}/ask-more/answer`, { agree }),
   decline: (id: number) => api.post(`/api/dares/${id}/decline`),
   /** One video, or up to 4 photos sent together as one proof. */
   uploadProof: (id: number, files: File | File[], proofType: 'photo' | 'video' | 'checklist' = 'photo', caption?: string) => {
